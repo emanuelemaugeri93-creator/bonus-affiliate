@@ -1,0 +1,397 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Bee Worksheet Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Codystar&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #F9A825;
+            --primary-light: #FFF9C4;
+            --accent: #FDD835;
+            --secondary: #000000;
+            --text: #37474F;
+            --bg: #FFFDE7;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        body { font-family: 'Nunito', sans-serif; background: var(--bg); height: 100vh; display: flex; overflow: hidden; color: var(--text); }
+
+        /* DECORATION */
+        .deco-bg { position: absolute; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .honeycomb { position: absolute; font-size: 80px; opacity: 0.06; }
+        .h1 { top: 5%; left: 3%; animation: float 7s infinite alternate; }
+        .h2 { top: 30%; right: 4%; animation: float 5s infinite alternate-reverse; }
+        .h3 { bottom: 10%; left: 8%; animation: float 9s infinite alternate; }
+        @keyframes float { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-20px) rotate(10deg); } }
+
+        /* LAYOUT */
+        .app-container { display: flex; width: 100%; height: 100%; z-index: 10; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 360px; background: white; padding: 25px; display: flex; flex-direction: column; gap: 14px;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.08); overflow-y: auto; border-right: 6px solid var(--primary-light);
+            flex-shrink: 0;
+        }
+        .logo { font-family: 'Chewy', cursive; font-size: 2rem; color: var(--secondary); text-align: center; line-height: 1.1; margin-bottom: 5px; }
+        .logo span { color: var(--primary); }
+        .bee-icon { font-size: 2.5rem; text-align: center; display: block; }
+
+        .control-group label { font-weight: 800; color: #5D4037; font-size: 0.82rem; text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 0.5px; }
+        .input-ui {
+            width: 100%; padding: 11px 14px; border: 3px solid #E0E0E0; border-radius: 12px;
+            font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem; color: #455A64;
+            background: #FAFAFA; outline: none; transition: 0.2s; cursor: pointer;
+        }
+        .input-ui:focus { border-color: var(--primary); background: white; }
+        textarea.input-ui { resize: vertical; min-height: 130px; line-height: 1.6; }
+
+        .input-brand { border-color: #FFD54F; background: #FFFDE7; }
+        .input-brand:focus { border-color: #FFC107; background: white; }
+
+        .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .mode-btn {
+            border: 3px solid #E0E0E0; background: white; border-radius: 12px; padding: 10px 5px;
+            font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.8rem; color: #78909C;
+            cursor: pointer; text-align: center; transition: 0.2s; line-height: 1.3;
+        }
+        .mode-btn .mode-icon { font-size: 1.5rem; display: block; margin-bottom: 3px; }
+        .mode-btn.active { border-color: var(--primary); background: var(--primary-light); color: #5D4037; }
+
+        .btn {
+            border: none; width: 100%; padding: 15px; border-radius: 15px; cursor: pointer;
+            font-family: 'Chewy', cursive; font-size: 1.5rem; text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s; margin-top: 5px;
+        }
+        .btn-gen { background: var(--accent); color: #5D4037; box-shadow: 0 5px 0 #F9A825; }
+        .btn-gen:active { transform: translateY(5px); box-shadow: none; }
+        .btn-print { background: #212121; color: white; box-shadow: 0 5px 0 #000; }
+        .btn-print:active { transform: translateY(5px); box-shadow: none; }
+
+        /* WORKSPACE */
+        .workspace { flex: 1; padding: 40px; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start; }
+
+        /* PAPER */
+        .paper {
+            background: white; width: 210mm; min-height: 297mm; padding: 12mm 15mm;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12); border-radius: 10px;
+            border-top: 14px solid var(--primary); border-bottom: 14px solid var(--secondary);
+            display: flex; flex-direction: column;
+        }
+
+        .paper-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-bottom: 3px dashed #FFE082; padding-bottom: 12px; margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+        .title-block .title-text { font-family: 'Chewy', cursive; font-size: 2.6rem; color: var(--secondary); line-height: 1; }
+        .title-block .title-text span { color: var(--primary); }
+        .title-block .subtitle { font-size: 0.85rem; font-weight: 700; color: #90A4AE; text-transform: uppercase; letter-spacing: 1px; }
+        .bee-header-icon { font-size: 3.5rem; }
+        .student-info { width: 42%; }
+        .line-input { border-bottom: 2px solid #E0E0E0; height: 28px; margin-bottom: 8px; display: flex; justify-content: space-between; color: #B0BEC5; font-size: 0.85rem; align-items: flex-end; padding-bottom: 2px; }
+
+        .section-title { font-family: 'Chewy', cursive; font-size: 1.4rem; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+        /* WORD LIST MODE */
+        .wordlist-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-grow: 1; }
+        .word-item {
+            display: flex; align-items: center; gap: 12px;
+            background: #FFFDE7; border: 2px solid #FFE082; border-radius: 12px; padding: 8px 14px;
+        }
+        .word-num { font-family: 'Chewy', cursive; font-size: 1.4rem; color: var(--primary); width: 28px; flex-shrink: 0; }
+        .write-line { flex: 1; border-bottom: 2px dashed #CFD8DC; height: 30px; }
+        .word-label { font-size: 1rem; font-weight: 800; color: var(--text); min-width: 80px; }
+
+        /* MISSING LETTERS MODE */
+        .miss-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex-grow: 1; }
+        .miss-card {
+            border: 2px solid #FFE082; border-radius: 12px; padding: 10px 14px;
+            display: flex; flex-direction: column; align-items: center; gap: 8px; background: #FFFDE7;
+        }
+        .word-boxes { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+        .char-box {
+            width: 36px; height: 44px;
+            border: 2px solid #546E7A; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; font-weight: 900; background: white; color: #37474F;
+        }
+        .char-box.empty { background: #FFF9C4; border: 2px dashed #FFB300; color: transparent; }
+        .miss-hint { font-size: 0.72rem; font-weight: 700; color: #90A4AE; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* TRACING MODE */
+        .trace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex-grow: 1; }
+        .trace-card {
+            border: 2px solid #E0E0E0; border-radius: 15px; padding: 12px; text-align: center; background: #FAFAFA;
+        }
+        .trace-word {
+            font-family: 'Codystar', cursive; font-size: 2rem;
+            color: #BDBDBD; letter-spacing: 2px; line-height: 1.3; margin: 5px 0;
+        }
+        .trace-ref { font-size: 0.8rem; color: #78909C; font-weight: 700; }
+        .trace-lines { margin-top: 8px; }
+        .trace-line { border-bottom: 2px dashed #E0E0E0; height: 32px; margin-bottom: 4px; }
+
+        /* UNSCRAMBLE MODE */
+        .unscramble-grid { display: grid; grid-template-columns: 1fr; gap: 10px; flex-grow: 1; }
+        .unscramble-card {
+            display: flex; align-items: center; gap: 15px;
+            border: 2px solid #FFE082; border-radius: 12px; padding: 10px 16px; background: #FFFDE7;
+        }
+        .scramble-num { font-family: 'Chewy', cursive; font-size: 1.3rem; color: var(--primary); width: 28px; }
+        .scramble-letters { display: flex; gap: 5px; flex-wrap: wrap; }
+        .scramble-box {
+            width: 34px; height: 40px; background: white; border: 2px solid #FFB300; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: 900; color: #5D4037;
+        }
+        .answer-line { flex: 1; border-bottom: 2px solid #E0E0E0; height: 40px; position: relative; }
+        .answer-label { position: absolute; bottom: 3px; right: 0; font-size: 0.72rem; color: #B0BEC5; font-weight: 700; }
+
+        /* PAPER FOOTER */
+        .paper-footer { margin-top: auto; padding-top: 15px; text-align: center; color: #B0BEC5; font-size: 0.82rem; font-weight: 700; flex-shrink: 0; border-top: 2px dashed #FFE082; }
+
+        /* EMPTY STATE */
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 15px; opacity: 0.5; }
+        .empty-state .big-bee { font-size: 6rem; }
+        .empty-state p { font-family: 'Chewy', cursive; font-size: 1.8rem; color: #5D4037; }
+
+        /* PRINT */
+        @media print {
+            body { background: white; height: auto; overflow: visible; }
+            .sidebar, .deco-bg { display: none !important; }
+            .workspace { padding: 0; display: block; overflow: visible; }
+            .paper { box-shadow: none; border-radius: 0; width: 100%; min-height: 0; padding: 10mm 15mm; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="deco-bg">
+    <div class="honeycomb h1">🍯</div>
+    <div class="honeycomb h2">🐝</div>
+    <div class="honeycomb h3">🌸</div>
+</div>
+
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <span class="bee-icon">🐝</span>
+        <div class="logo"><span>Spelling Bee</span><br>Worksheet Generator</div>
+
+        <div class="control-group">
+            <label>📝 Enter Your Words (one per line)</label>
+            <textarea class="input-ui" id="wordInput" placeholder="apple&#10;banana&#10;school&#10;friend&#10;garden&#10;beautiful&#10;adventure&#10;elephant&#10;surprise&#10;mountain"></textarea>
+        </div>
+
+        <div class="control-group">
+            <label>🎯 Exercise Type</label>
+            <div class="mode-grid">
+                <button class="mode-btn active" onclick="setMode('wordlist')" id="btn-wordlist">
+                    <span class="mode-icon">📋</span>Write the Words
+                </button>
+                <button class="mode-btn" onclick="setMode('missing')" id="btn-missing">
+                    <span class="mode-icon">🔤</span>Missing Letters
+                </button>
+                <button class="mode-btn" onclick="setMode('trace')" id="btn-trace">
+                    <span class="mode-icon">✏️</span>Trace & Write
+                </button>
+                <button class="mode-btn" onclick="setMode('unscramble')" id="btn-unscramble">
+                    <span class="mode-icon">🔀</span>Unscramble
+                </button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>📚 Difficulty Level</label>
+            <select class="input-ui" id="levelSelect">
+                <option value="beginner">⭐ Beginner (show all hints)</option>
+                <option value="intermediate" selected>⭐⭐ Intermediate (some hints)</option>
+                <option value="advanced">⭐⭐⭐ Advanced (few hints)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>🏫 Class / Title (optional)</label>
+            <input type="text" class="input-ui input-brand" id="classTitle" placeholder="e.g. Grade 3 — Week 5">
+        </div>
+
+        <div class="control-group">
+            <label>🏷️ Footer Branding (optional)</label>
+            <input type="text" class="input-ui input-brand" id="brandingText" placeholder="e.g. www.yoursite.com">
+        </div>
+
+        <button class="btn btn-gen" onclick="generateWorksheet()">🐝 Generate Worksheet!</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ Print / Save PDF</button>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="workspace" id="workspace">
+        <div class="empty-state">
+            <div class="big-bee">🐝</div>
+            <p>Add words & click Generate!</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let currentMode = 'wordlist';
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + mode).classList.add('active');
+    }
+
+    function getWords() {
+        return document.getElementById('wordInput').value
+            .split('\n')
+            .map(w => w.trim().toLowerCase())
+            .filter(w => w.length > 0);
+    }
+
+    function scrambleWord(word) {
+        let arr = word.split('');
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        // make sure it's actually different
+        if (arr.join('') === word && word.length > 1) {
+            [arr[0], arr[1]] = [arr[1], arr[0]];
+        }
+        return arr.join('');
+    }
+
+    function getMissingLetters(word, level) {
+        let hide = [];
+        if (level === 'beginner') {
+            // hide ~30% — only vowels
+            for (let i = 0; i < word.length; i++) {
+                if ('aeiou'.includes(word[i]) && Math.random() > 0.4) hide.push(i);
+            }
+        } else if (level === 'intermediate') {
+            // hide ~40%
+            let count = Math.ceil(word.length * 0.4);
+            let positions = [...Array(word.length).keys()].sort(() => Math.random() - 0.5);
+            hide = positions.slice(0, count);
+        } else {
+            // hide ~60%
+            let count = Math.ceil(word.length * 0.6);
+            let positions = [...Array(word.length).keys()].sort(() => Math.random() - 0.5);
+            hide = positions.slice(0, count);
+        }
+        return hide;
+    }
+
+    function generateWorksheet() {
+        const words = getWords();
+        if (words.length === 0) { alert('Please enter at least one word!'); return; }
+
+        const level = document.getElementById('levelSelect').value;
+        const classTitle = document.getElementById('classTitle').value || 'Spelling Bee Worksheet';
+        const branding = document.getElementById('brandingText').value;
+
+        const levelLabels = { beginner: '⭐ Beginner', intermediate: '⭐⭐ Intermediate', advanced: '⭐⭐⭐ Advanced' };
+        const levelLabel = levelLabels[level];
+
+        let exerciseHTML = '';
+
+        if (currentMode === 'wordlist') {
+            exerciseHTML = `<div class="section-title">✏️ Write Each Spelling Word 3 Times</div>
+            <div class="wordlist-grid">`;
+            words.forEach((word, i) => {
+                exerciseHTML += `<div class="word-item">
+                    <span class="word-num">${i+1}.</span>
+                    <span class="word-label">${word}</span>
+                    <div class="write-line"></div>
+                    <div class="write-line"></div>
+                </div>`;
+            });
+            exerciseHTML += `</div>`;
+
+        } else if (currentMode === 'missing') {
+            exerciseHTML = `<div class="section-title">🔤 Fill in the Missing Letters</div>
+            <div class="miss-list">`;
+            words.forEach((word, i) => {
+                const hidden = getMissingLetters(word, level);
+                let boxes = '';
+                for (let c = 0; c < word.length; c++) {
+                    if (hidden.includes(c)) {
+                        boxes += `<div class="char-box empty">_</div>`;
+                    } else {
+                        boxes += `<div class="char-box">${word[c].toUpperCase()}</div>`;
+                    }
+                }
+                exerciseHTML += `<div class="miss-card">
+                    <div class="word-boxes">${boxes}</div>
+                    <div class="miss-hint">${i+1}. ${word.length} letters</div>
+                </div>`;
+            });
+            exerciseHTML += `</div>`;
+
+        } else if (currentMode === 'trace') {
+            exerciseHTML = `<div class="section-title">✏️ Trace the Word, Then Write It</div>
+            <div class="trace-grid">`;
+            words.forEach(word => {
+                exerciseHTML += `<div class="trace-card">
+                    <div class="trace-ref">${word}</div>
+                    <div class="trace-word">${word}</div>
+                    <div class="trace-lines">
+                        <div class="trace-line"></div>
+                        <div class="trace-line"></div>
+                    </div>
+                </div>`;
+            });
+            exerciseHTML += `</div>`;
+
+        } else if (currentMode === 'unscramble') {
+            exerciseHTML = `<div class="section-title">🔀 Unscramble the Words</div>
+            <div class="unscramble-grid">`;
+            words.forEach((word, i) => {
+                const scrambled = scrambleWord(word);
+                let boxes = '';
+                for (const c of scrambled) {
+                    boxes += `<div class="scramble-box">${c.toUpperCase()}</div>`;
+                }
+                exerciseHTML += `<div class="unscramble-card">
+                    <span class="scramble-num">${i+1}.</span>
+                    <div class="scramble-letters">${boxes}</div>
+                    <div class="answer-line"><span class="answer-label">Write here</span></div>
+                </div>`;
+            });
+            exerciseHTML += `</div>`;
+        }
+
+        const footerText = branding ? `🐝 ${branding} &nbsp;|&nbsp; ${levelLabel} &nbsp;|&nbsp; ${words.length} words` : `🐝 Spelling Bee Worksheet &nbsp;|&nbsp; ${levelLabel} &nbsp;|&nbsp; ${words.length} words`;
+
+        const paperHTML = `
+        <div class="paper">
+            <div class="paper-header">
+                <div class="title-block">
+                    <div class="title-text"><span>🐝 Spelling</span> Bee</div>
+                    <div class="subtitle">${classTitle}</div>
+                </div>
+                <div class="student-info">
+                    <div class="line-input"><span>Name:</span></div>
+                    <div class="line-input"><span>Date:</span><span>Score: ___/10</span></div>
+                </div>
+            </div>
+            ${exerciseHTML}
+            <div class="paper-footer">${footerText}</div>
+        </div>`;
+
+        document.getElementById('workspace').innerHTML = paperHTML;
+    }
+</script>
+
+</body>
+</html>
