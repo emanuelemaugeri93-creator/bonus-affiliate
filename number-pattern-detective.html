@@ -1,0 +1,338 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Pattern Detective</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root { --stroke: #1e272e; }
+[data-theme="mono"]   { --c1:#fff; --c2:#f5f6fa; --c3:#dcdde1; --c4:#fff; --c5:#f5f6fa; --c6:#dcdde1; }
+[data-theme="candy"]  { --c1:#ff9ff3; --c2:#feca57; --c3:#48dbfb; --c4:#1dd1a1; --c5:#ff6b6b; --c6:#c8d6e5; }
+[data-theme="pastel"] { --c1:#ffeaa7; --c2:#dfe6e9; --c3:#fab1a0; --c4:#a29bfe; --c5:#fd79a8; --c6:#55efc4; }
+[data-theme="neon"]   { --c1:#0abde3; --c2:#00d2d3; --c3:#1dd1a1; --c4:#10ac84; --c5:#0abde3; --c6:#48dbfb; }
+[data-theme="sunset"] { --c1:#fad7a1; --c2:#f8c471; --c3:#f5b041; --c4:#fad7a1; --c5:#f8c471; --c6:#f5b041; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: #1a1a2e; display: flex; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+#sidebar {
+  width: 340px; min-width: 340px; background: #16213e; color: #fff;
+  padding: 20px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+  border-right: 5px solid #0abde3;
+}
+#sidebar::-webkit-scrollbar { display: none; }
+.app-title { font-size: 22px; font-weight: 900; text-align: center; color: #feca57; text-shadow: 2px 2px 0 #e17055; }
+.app-desc { font-size: 12px; text-align: center; background: #0abde3; color: #fff; padding: 4px 8px; border-radius: 8px; font-weight: 900; margin-top: 4px; }
+.ctrl-group { background: rgba(255,255,255,0.07); padding: 12px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.12); }
+.ctrl-label { display: block; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #feca57; margin-bottom: 6px; letter-spacing: 0.5px; }
+select, .txt-input {
+  width: 100%; padding: 9px 11px; border-radius: 8px; border: 3px solid #1e272e;
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 900;
+  background: #fff; color: #1e272e; outline: none; margin-bottom: 8px; cursor: pointer;
+}
+.txt-input { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.25); }
+.txt-input::placeholder { color: rgba(255,255,255,0.4); }
+.btn {
+  width: 100%; padding: 11px; border-radius: 10px; border: 3px solid #1e272e;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900;
+  cursor: pointer; margin-bottom: 8px; box-shadow: 4px 4px 0 rgba(0,0,0,0.35); transition: 0.1s;
+}
+.btn:active { transform: translate(3px,3px); box-shadow: 0 0 0; }
+.btn-gen    { background: #feca57; color: #1e272e; font-size: 17px; padding: 14px; }
+.btn-ans    { background: #ff4757; color: #fff; }
+.btn-print  { background: #48dbfb; color: #1e272e; }
+.btn-png    { background: #ff9ff3; color: #1e272e; }
+.btn-cert   { background: #a29bfe; color: #fff; }
+
+/* PREVIEW */
+#preview {
+  flex: 1; padding: 24px; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start;
+  background-image: radial-gradient(#3a3a5c 2px, transparent 2px); background-size: 28px 28px;
+}
+#preview::-webkit-scrollbar { display: none; }
+
+/* A4 PAPER */
+.paper {
+  width: 210mm; height: 297mm; min-height: 297mm; max-height: 297mm;
+  background: #fff; border: 6px solid #1e272e; border-radius: 18px;
+  box-shadow: 14px 14px 0 rgba(0,0,0,0.4);
+  padding: 10mm 14mm; display: flex; flex-direction: column; color: #1e272e; overflow: hidden;
+}
+[contenteditable] { outline: none; border-radius: 5px; border: 2px dashed transparent; transition: 0.2s; }
+[contenteditable]:hover, [contenteditable]:focus { background: rgba(0,0,0,0.04); border-color: #1e272e; }
+
+.ws-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  border-bottom: 6px solid #1e272e; padding-bottom: 10px; margin-bottom: 12px; flex-shrink: 0;
+}
+.ws-title { font-size: 36px; font-weight: 900; text-transform: uppercase; line-height: 1; text-shadow: 3px 3px 0 #feca57; }
+.ws-sub { font-size: 12px; font-weight: 900; background: #1e272e; color: #fff; display: inline-block; padding: 4px 10px; border-radius: 8px; margin-top: 8px; }
+.student-box { display: flex; flex-direction: column; gap: 7px; width: 230px; }
+.s-row { display: flex; align-items: flex-end; font-size: 14px; font-weight: 900; }
+.s-label { margin-right: 8px; white-space: nowrap; }
+.s-line { flex: 1; border-bottom: 3px dashed #1e272e; height: 17px; }
+
+/* ROWS */
+.rows-wrap { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-height: 0; }
+.p-row {
+  border: 4px solid #1e272e; border-radius: 13px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px; box-shadow: 5px 5px 0 #1e272e; flex: 1; max-height: 14%;
+}
+.row-1{background:var(--c1)} .row-2{background:var(--c2)} .row-3{background:var(--c3)}
+.row-4{background:var(--c4)} .row-5{background:var(--c5)} .row-6{background:var(--c6)}
+
+.seq { display: flex; align-items: center; gap: 6px; flex: 1; }
+.num-box {
+  min-width: 48px; height: 48px; border: 3px solid #1e272e; border-radius: 9px;
+  display: flex; justify-content: center; align-items: center; background: #fff;
+  font-size: 1.25rem; font-weight: 900; box-shadow: 3px 3px 0 #1e272e; padding: 0 6px;
+}
+.arrow { font-size: 1.1rem; color: #1e272e; opacity: 0.45; font-weight: 900; }
+.q-box {
+  min-width: 52px; height: 52px; border: 4px dashed #1e272e; border-radius: 9px;
+  display: flex; justify-content: center; align-items: center; background: rgba(255,255,255,0.55);
+  font-size: 1.5rem; font-weight: 900; padding: 0 4px;
+}
+.divider { width: 4px; height: 72%; background: #1e272e; margin: 0 12px; border-radius: 2px; opacity: 0.2; }
+.choices { display: flex; gap: 7px; }
+.choice {
+  min-width: 54px; height: 54px; border: 4px solid #1e272e; border-radius: 50%;
+  display: flex; justify-content: center; align-items: center; background: #fff;
+  font-size: 1.05rem; font-weight: 900; box-shadow: 3px 3px 0 #1e272e; transition: 0.2s; padding: 0 5px;
+}
+.show-answers .choice.correct { background: #feca57; transform: scale(1.15); }
+.badge {
+  font-size: 0.6rem; font-weight: 900; background: #1e272e; color: #feca57;
+  padding: 2px 7px; border-radius: 20px; margin-left: 8px; text-transform: uppercase; white-space: nowrap;
+}
+.footer { margin-top: auto; padding-top: 10px; text-align: center; color: #90A4AE; font-size: 0.75rem; font-weight: 900; flex-shrink: 0; border-top: 3px dashed #CFD8DC; }
+
+/* CERT MODAL */
+#cert-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 300; }
+.cert-inner { background: #feca57; padding: 32px; border-radius: 18px; width: 420px; border: 5px solid #1e272e; box-shadow: 12px 12px 0 rgba(0,0,0,0.5); }
+.cert-inner h2 { font-size: 24px; margin: 0 0 16px; color: #1e272e; text-align: center; }
+.cert-inner input { width: 100%; padding: 11px; margin-bottom: 10px; border: 3px solid #1e272e; border-radius: 9px; font-size: 15px; font-weight: 900; font-family: 'Nunito', sans-serif; outline: none; }
+#hidden-cert { position: absolute; top: -9999px; left: -9999px; }
+#render-cert { width: 1000px; height: 700px; background: #fff; border: 14px solid #1e272e; padding: 24px; font-family: 'Nunito', sans-serif; display: flex; flex-direction: column; }
+#render-cert-inner { border: 6px solid #feca57; width: 100%; height: 100%; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background-image: radial-gradient(#dcdde1 3px, transparent 3px); background-size: 38px 38px; }
+
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body { background: none; margin: 0; padding: 0; display: block; overflow: hidden; }
+  #sidebar, #cert-modal, #hidden-cert { display: none !important; }
+  #preview { padding: 0; display: block; width: 100%; height: 100%; overflow: hidden; background: none; }
+  .paper { box-shadow: none !important; margin: 0; width: 100%; height: 100%; max-height: 100vh; border: 6px solid #1e272e !important; border-radius: 0 !important; }
+  [contenteditable] { border: none !important; background: none !important; }
+}
+</style>
+</head>
+<body data-theme="mono">
+
+<div id="sidebar">
+  <p class="app-title">🔢 NUMBER PATTERN<br>DETECTIVE</p>
+  <p class="app-desc">Number Sequences Worksheet Studio (A4)</p>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">🎨 Color Scheme</span>
+    <select id="cfg-theme" onchange="document.body.setAttribute('data-theme',this.value)">
+      <option value="mono" selected>⬜ Grayscale (Print Safe)</option>
+      <option value="candy">🍬 Cotton Candy</option>
+      <option value="neon">💡 Neon Blue</option>
+      <option value="pastel">🌸 Pastel Dream</option>
+      <option value="sunset">🌅 Warm Sunset</option>
+    </select>
+    <span class="ctrl-label">⭐ Difficulty</span>
+    <select id="cfg-diff">
+      <option value="easy">⭐ Easy — Add/Subtract</option>
+      <option value="medium" selected>⭐⭐ Medium — Mixed Rules</option>
+      <option value="hard">⭐⭐⭐ Hard — Multiply/Fibonacci</option>
+      <option value="mixed">🔀 All Types</option>
+    </select>
+    <span class="ctrl-label">🔢 Number Range</span>
+    <select id="cfg-range">
+      <option value="small" selected>Small (1–10)</option>
+      <option value="medium">Medium (1–50)</option>
+      <option value="large">Large (1–200)</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">🏫 Class / Title</span>
+    <input class="txt-input" id="classTitle" placeholder="e.g. Grade 4 — Week 3">
+    <span class="ctrl-label">🏷️ Footer Branding</span>
+    <input class="txt-input" id="brandText" placeholder="e.g. www.yoursite.com">
+  </div>
+
+  <button class="btn btn-gen" onclick="generate()">🎲 GENERATE PATTERNS!</button>
+  <button class="btn btn-ans" id="btn-ans" onclick="toggleAnswers()">👁️ SHOW ANSWER KEY</button>
+  <button class="btn btn-print" onclick="window.print()">🖨️ PRINT A4</button>
+  <button class="btn btn-png" onclick="savePNG()">💾 SAVE AS PNG</button>
+  <button class="btn btn-cert" onclick="document.getElementById('cert-modal').style.display='flex'">🎓 CERTIFICATE</button>
+</div>
+
+<div id="preview">
+  <div class="paper" id="worksheet">
+    <div class="ws-header">
+      <div>
+        <div class="ws-title" id="txt-title" contenteditable spellcheck="false">NUMBER PATTERN DETECTIVE</div>
+        <div class="ws-sub" id="txt-sub" contenteditable spellcheck="false">Find the missing number — circle the correct answer!</div>
+      </div>
+      <div class="student-box">
+        <div class="s-row"><span class="s-label" contenteditable spellcheck="false">Name:</span><div class="s-line"></div></div>
+        <div class="s-row"><span class="s-label" contenteditable spellcheck="false">Date:</span><div class="s-line"></div></div>
+        <div class="s-row"><span class="s-label" contenteditable spellcheck="false">Score:</span><div class="s-line"></div></div>
+      </div>
+    </div>
+    <div class="rows-wrap" id="rows-wrap"></div>
+    <div class="footer" id="footer">🔢 Number Pattern Detective</div>
+  </div>
+</div>
+
+<!-- CERT MODAL -->
+<div id="cert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);justify-content:center;align-items:center;z-index:300;">
+  <div class="cert-inner">
+    <h2>🏆 Achievement Certificate</h2>
+    <input type="text" id="cert-name" placeholder="Student Name (optional)">
+    <input type="text" id="cert-class" placeholder="Class / Grade (optional)">
+    <button class="btn btn-gen" style="margin-bottom:8px;" onclick="makeCert()">DOWNLOAD CERTIFICATE</button>
+    <button class="btn btn-ans" onclick="document.getElementById('cert-modal').style.display='none'">CANCEL</button>
+  </div>
+</div>
+
+<div id="hidden-cert">
+  <div id="render-cert">
+    <div id="render-cert-inner">
+      <h1 id="c-title" style="font-size:52px;font-weight:900;margin:0;text-transform:uppercase;">CERTIFICATE OF EXCELLENCE</h1>
+      <p id="c-sub" style="font-size:22px;font-weight:700;color:#e17055;margin:10px 0 20px;">This certificate is proudly awarded to</p>
+      <h2 id="c-name" style="font-size:60px;font-weight:900;margin:0;color:#1e272e;">STUDENT NAME</h2>
+      <div style="width:560px;height:4px;background:#1e272e;margin:10px 0;"></div>
+      <p id="c-class" style="font-size:26px;font-weight:900;color:#0abde3;margin:8px 0 25px;">Class: 1A</p>
+      <p style="font-size:26px;font-weight:700;margin:0;">For successfully completing</p>
+      <h3 id="c-course" style="font-size:36px;font-weight:900;color:#feca57;margin:8px 0;text-shadow:2px 2px 0 #1e272e;">NUMBER PATTERN DETECTIVE</h3>
+      <p id="c-date" style="font-size:20px;font-weight:900;margin-top:30px;color:#576574;">Date: 2026</p>
+    </div>
+  </div>
+</div>
+
+<script>
+let answersOn = false;
+
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function getRangeMax(){
+  const v = document.getElementById('cfg-range').value;
+  return v==='small'?10 : v==='medium'?50 : 200;
+}
+
+function makeSeq(diff){
+  const rMax = getRangeMax();
+  const types = diff==='easy'  ? ['add','sub'] :
+                diff==='medium'? ['add','sub','mul','skip'] :
+                diff==='hard'  ? ['mul','fib','sq','pow2'] : ['add','sub','mul','skip','fib','sq','pow2'];
+  const type = types[rand(0,types.length-1)];
+  let seq=[], ans=0, label='', wp=[];
+
+  if(type==='add'){
+    const s=rand(1,Math.min(rMax,30)), st=rand(1,Math.max(2,Math.floor(rMax/6)));
+    seq=[s,s+st,s+st*2,s+st*3,s+st*4]; ans=s+st*5; label='+'+st;
+    wp=[ans-1,ans+1,ans-st,ans+st,ans+2];
+  } else if(type==='sub'){
+    const st=rand(1,Math.max(2,Math.floor(rMax/6))), s=rand(st*5+2,Math.min(rMax+st*5,200));
+    seq=[s,s-st,s-st*2,s-st*3,s-st*4]; ans=s-st*5; label='-'+st;
+    wp=[ans+1,ans-1,ans+st,ans+2,ans-2];
+  } else if(type==='mul'){
+    const m=rand(2,3), s=rand(1,Math.min(3,rMax));
+    seq=[s,s*m,s*m*m,s*m*m*m,s*m*m*m*m]; ans=s*Math.pow(m,5); label='×'+m;
+    wp=[ans-m,ans+m,ans*2,Math.max(1,Math.floor(ans/2)),ans+1];
+  } else if(type==='fib'){
+    const a=rand(1,4),b=rand(a+1,a+5);
+    const f=[a,b,a+b]; f.push(f[1]+f[2]); f.push(f[2]+f[3]); f.push(f[3]+f[4]);
+    seq=f.slice(0,5); ans=f[5]; label='Fibonacci';
+    wp=[ans-1,ans+1,ans-seq[4],ans+seq[4]];
+  } else if(type==='sq'){
+    const off=rand(0,4);
+    seq=[(1+off)**2,(2+off)**2,(3+off)**2,(4+off)**2,(5+off)**2];
+    ans=(6+off)**2; label='Squares';
+    wp=[ans-1,ans+1,ans-2,(5+off)**2+1];
+  } else if(type==='pow2'){
+    const s=rand(1,3); seq=[s,s*2,s*4,s*8,s*16]; ans=s*32; label='×2';
+    wp=[ans-s,ans+s,s*16+1,ans-1];
+  } else { // skip
+    const s=rand(1,Math.min(rMax,15)), st=rand(2,4);
+    seq=[s,s+st*2,s+st*4,s+st*6,s+st*8]; ans=s+st*10; label='+'+(st*2);
+    wp=[ans-st,ans+st,ans-1,ans+1];
+  }
+
+  // build 3 choices
+  const wrong = [...new Set(wp.filter(n=>n>0&&n!==ans))].slice(0,2);
+  while(wrong.length<2){ wrong.push(ans + wrong.length + 1); }
+  const choices = [ans, wrong[0], wrong[1]].sort(()=>Math.random()-0.5);
+  return {seq, ans, label, choices};
+}
+
+function generate(){
+  if(answersOn) toggleAnswers();
+  const diff = document.getElementById('cfg-diff').value;
+  const ct   = document.getElementById('classTitle').value || 'Number Patterns';
+  const br   = document.getElementById('brandText').value  || 'numberpatterndetective.com';
+  document.getElementById('footer').innerHTML = '🔢 Number Pattern Detective &nbsp;|&nbsp; '+ct+' &nbsp;|&nbsp; '+br;
+
+  const wrap = document.getElementById('rows-wrap');
+  wrap.innerHTML = '';
+  for(let i=0;i<6;i++){
+    const p = makeSeq(diff);
+    const seqH = p.seq.map(n=>`<div class="num-box">${n}</div><div class="arrow">→</div>`).join('')
+                 + `<div class="q-box">?</div>`;
+    const choH = p.choices.map(c=>`<div class="choice${c===p.ans?' correct':''}">${c}</div>`).join('');
+    wrap.innerHTML += `<div class="p-row row-${i+1}">
+      <div class="seq">${seqH}</div>
+      <div class="divider"></div>
+      <div class="choices">${choH}</div>
+      <span class="badge">${p.label}</span>
+    </div>`;
+  }
+}
+
+function toggleAnswers(){
+  answersOn = !answersOn;
+  const btn = document.getElementById('btn-ans');
+  const ws  = document.getElementById('worksheet');
+  if(answersOn){
+    btn.textContent='👁️ HIDE ANSWER KEY'; btn.style.background='#fff'; btn.style.color='#1e272e';
+    ws.classList.add('show-answers');
+  } else {
+    btn.textContent='👁️ SHOW ANSWER KEY'; btn.style.background='#ff4757'; btn.style.color='#fff';
+    ws.classList.remove('show-answers');
+  }
+}
+
+function savePNG(){
+  const ws = document.getElementById('worksheet');
+  htmlToImage.toPng(ws,{pixelRatio:2,backgroundColor:'#fff'}).then(d=>{
+    const a=document.createElement('a');
+    a.download='NumberPatternDetective.png'; a.href=d; a.click();
+  });
+}
+
+function makeCert(){
+  const name  = document.getElementById('cert-name').value.trim()  || 'Master Detective';
+  const cls   = document.getElementById('cert-class').value.trim() || '';
+  document.getElementById('c-name').textContent  = name.toUpperCase();
+  document.getElementById('c-class').textContent = cls ? 'Class: '+cls : '';
+  document.getElementById('c-class').style.display = cls ? 'block' : 'none';
+  document.getElementById('c-date').textContent  = 'Date: '+new Date().toLocaleDateString();
+  document.getElementById('cert-modal').style.display='none';
+  htmlToImage.toPng(document.getElementById('render-cert'),{pixelRatio:2,backgroundColor:'#fff'}).then(d=>{
+    const a=document.createElement('a'); a.download='Certificate.png'; a.href=d; a.click();
+  });
+}
+
+generate();
+</script>
+</body>
+</html>
