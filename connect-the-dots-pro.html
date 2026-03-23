@@ -1,0 +1,612 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect the Dots Generator Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: #1a1a2e; display: flex; height: 100vh; overflow: hidden; }
+
+#sidebar {
+  width: 340px; min-width: 340px; background: #16213e; color: #fff;
+  padding: 16px 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 9px;
+  border-right: 5px solid #1dd1a1;
+}
+#sidebar::-webkit-scrollbar { display: none; }
+.app-title { font-size: 18px; font-weight: 900; text-align: center; color: #1dd1a1; text-shadow: 2px 2px 0 #10ac84; line-height: 1.2; }
+.app-desc { font-size: 11px; text-align: center; background: #1dd1a1; color: #1e272e; padding: 3px 8px; border-radius: 8px; font-weight: 900; }
+
+/* SHAPE GRID */
+.shape-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
+.shape-card {
+  background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 10px; padding: 6px 4px; cursor: pointer; text-align: center;
+  transition: 0.15s; display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.shape-card:hover { background: rgba(29,209,161,0.2); border-color: #1dd1a1; }
+.shape-card.selected { background: #1dd1a1; border-color: #10ac84; }
+.shape-card.selected .shape-label { color: #1e272e; }
+.shape-icon { font-size: 20px; line-height: 1; }
+.shape-label { font-size: 9px; font-weight: 900; color: #ccc; text-transform: uppercase; }
+.shape-card.selected .shape-label { color: #1e272e; }
+
+.ctrl-group { background: rgba(255,255,255,0.07); padding: 11px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.12); }
+.ctrl-label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #1dd1a1; margin-bottom: 5px; letter-spacing: 0.5px; }
+select {
+  width: 100%; padding: 8px 10px; border-radius: 8px; border: 3px solid #1e272e;
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900;
+  background: #fff; color: #1e272e; outline: none; margin-bottom: 7px; cursor: pointer;
+}
+select:last-child { margin-bottom: 0; }
+.txt-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #fff; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; outline: none; margin-bottom: 7px; }
+.txt-input::placeholder { color: rgba(255,255,255,0.35); }
+.txt-input:last-child { margin-bottom: 0; }
+
+.range-row { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.range-row:last-child { margin-bottom: 0; }
+.range-lbl { font-size: 10px; font-weight: 900; color: #ccc; min-width: 76px; }
+.range-row input[type=range] { flex: 1; accent-color: #1dd1a1; }
+.range-val { font-size: 11px; font-weight: 900; color: #1dd1a1; min-width: 26px; text-align: right; }
+.color-row { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.color-row:last-child { margin-bottom: 0; }
+.color-row label { font-size: 10px; font-weight: 900; color: #ccc; flex: 1; }
+.color-row input[type=color] { width: 34px; height: 26px; border: 2px solid rgba(255,255,255,0.25); border-radius: 6px; cursor: pointer; background: none; padding: 1px; }
+
+.btn { width: 100%; padding: 10px; border-radius: 10px; border: 3px solid #1e272e; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 900; cursor: pointer; margin-bottom: 7px; box-shadow: 4px 4px 0 rgba(0,0,0,0.4); transition: 0.1s; }
+.btn:active { transform: translate(3px,3px); box-shadow: 0 0 0; }
+.btn:last-child { margin-bottom: 0; }
+.btn-gen    { background: #1dd1a1; color: #1e272e; font-size: 15px; padding: 13px; }
+.btn-red    { background: #ff4757; color: #fff; }
+.btn-blue   { background: #48dbfb; color: #1e272e; }
+.btn-pink   { background: #ff9ff3; color: #1e272e; }
+.btn-warn   { background: #feca57; color: #1e272e; }
+
+/* DRAW TAB */
+.tabs { display: flex; gap: 5px; }
+.tab-btn { flex: 1; padding: 7px 4px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff; font-family: 'Nunito', sans-serif; font-size: 10px; font-weight: 900; cursor: pointer; text-align: center; transition: 0.2s; }
+.tab-btn.active { background: #1dd1a1; color: #1e272e; border-color: #10ac84; }
+.tab-panel { display: none; flex-direction: column; gap: 9px; }
+.tab-panel.active { display: flex; }
+#draw-canvas { width: 100%; aspect-ratio: 1; border-radius: 10px; border: 3px dashed rgba(255,255,255,0.2); background: #0f0f1e; cursor: crosshair; touch-action: none; display: block; }
+.draw-tools { display: flex; gap: 5px; }
+.draw-tool-btn { flex: 1; padding: 7px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); color: #fff; font-family: 'Nunito', sans-serif; font-size: 10px; font-weight: 900; cursor: pointer; text-align: center; }
+.draw-tool-btn.active { background: #feca57; color: #1e272e; border-color: #f9a825; }
+
+/* PREVIEW */
+#preview {
+  flex: 1; padding: 20px; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start;
+  background-image: radial-gradient(#3a3a5c 2px, transparent 2px); background-size: 28px 28px;
+}
+#preview::-webkit-scrollbar { display: none; }
+.paper {
+  width: 210mm; height: 297mm; min-height: 297mm; max-height: 297mm;
+  background: #fff; border: 6px solid #1e272e; border-radius: 18px;
+  box-shadow: 14px 14px 0 rgba(0,0,0,0.4);
+  padding: 8mm 11mm; display: flex; flex-direction: column; color: #1e272e; overflow: hidden;
+}
+[contenteditable] { outline: none; border-radius: 5px; border: 2px dashed transparent; transition: 0.2s; }
+[contenteditable]:hover,[contenteditable]:focus { background: rgba(0,0,0,0.04); border-color: #1e272e; }
+.ws-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 5px solid #1e272e; padding-bottom: 7px; margin-bottom: 7px; flex-shrink: 0; }
+.ws-title { font-size: 26px; font-weight: 900; text-transform: uppercase; line-height: 1; text-shadow: 3px 3px 0 #1dd1a1; }
+.ws-sub { font-size: 10px; font-weight: 900; background: #1e272e; color: #fff; display: inline-block; padding: 3px 9px; border-radius: 7px; margin-top: 5px; }
+.student-box { display: flex; flex-direction: column; gap: 5px; width: 195px; }
+.s-row { display: flex; align-items: flex-end; font-size: 11px; font-weight: 900; }
+.s-label { margin-right: 7px; white-space: nowrap; }
+.s-line { flex: 1; border-bottom: 3px dashed #1e272e; height: 14px; }
+.canvas-wrap { flex: 1; display: flex; justify-content: center; align-items: center; }
+#dot-canvas { display: block; max-width: 100%; max-height: 100%; }
+.footer { padding-top: 6px; text-align: center; color: #90A4AE; font-size: 0.68rem; font-weight: 900; flex-shrink: 0; border-top: 3px dashed #CFD8DC; }
+
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body { background: none; margin: 0; padding: 0; display: block; overflow: hidden; }
+  #sidebar { display: none !important; }
+  #preview { padding: 0; display: block; width: 100%; height: 100%; overflow: hidden; background: none; }
+  .paper { box-shadow: none !important; margin: 0; width: 100%; height: 100%; max-height: 100vh; border: 6px solid #1e272e !important; border-radius: 0 !important; }
+  [contenteditable] { border: none !important; background: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <p class="app-title">🔴 CONNECT THE DOTS<br>GENERATOR PRO</p>
+  <p class="app-desc">A4 KDP-Ready · 24 Shapes · Draw Mode</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('preset')">🐾 Presets</button>
+    <button class="tab-btn" onclick="switchTab('draw')">✏️ Draw</button>
+    <button class="tab-btn" onclick="switchTab('settings')">⚙️ Style</button>
+    <button class="tab-btn" onclick="switchTab('page')">📄 Page</button>
+  </div>
+
+  <!-- PRESETS TAB -->
+  <div class="tab-panel active" id="tab-preset">
+    <div class="ctrl-group">
+      <span class="ctrl-label">🐾 Animals</span>
+      <div class="shape-grid" id="animal-grid"></div>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">🌟 Objects & Nature</span>
+      <div class="shape-grid" id="object-grid"></div>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">⭐ Difficulty</span>
+      <select id="cfg-diff" onchange="loadSelected()">
+        <option value="easy">⭐ Easy (15–20 dots)</option>
+        <option value="medium" selected>⭐⭐ Medium (25–35 dots)</option>
+        <option value="hard">⭐⭐⭐ Hard (40–55 dots)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- DRAW TAB -->
+  <div class="tab-panel" id="tab-draw">
+    <div class="ctrl-group">
+      <span class="ctrl-label">✏️ Draw Your Custom Shape</span>
+      <canvas id="draw-canvas" width="300" height="300"></canvas>
+      <div class="draw-tools" style="margin-top:7px;">
+        <button class="draw-tool-btn active" id="tool-pen" onclick="setTool('pen')">🖊 Pen</button>
+        <button class="draw-tool-btn" id="tool-line" onclick="setTool('line')">📏 Line</button>
+        <button class="draw-tool-btn" id="tool-undo" onclick="undoLast()">↩ Undo</button>
+        <button class="draw-tool-btn" id="tool-clear" onclick="clearDraw()">🗑 Clear</button>
+      </div>
+      <button class="btn btn-gen" style="margin-top:8px;margin-bottom:0;" onclick="applyDrawing()">✅ APPLY TO WORKSHEET</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="ctrl-group">
+      <span class="ctrl-label">🔵 Dot Settings</span>
+      <div class="range-row">
+        <span class="range-lbl">Dot Size</span>
+        <input type="range" id="dotsize" min="2" max="12" value="5" oninput="document.getElementById('dot-val').textContent=this.value;redraw()">
+        <span class="range-val" id="dot-val">5</span>
+      </div>
+      <div class="range-row">
+        <span class="range-lbl">Line Width</span>
+        <input type="range" id="linewidth" min="1" max="6" value="2" oninput="document.getElementById('lw-val').textContent=this.value;redraw()">
+        <span class="range-val" id="lw-val">2</span>
+      </div>
+      <div class="color-row">
+        <label>Dot Color</label>
+        <input type="color" id="dot-color" value="#1e272e" oninput="redraw()">
+      </div>
+      <div class="color-row">
+        <label>Line Color (solution)</label>
+        <input type="color" id="line-color" value="#aaaaaa" oninput="redraw()">
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">🔢 Numbers</span>
+      <div class="range-row">
+        <span class="range-lbl">Font Size</span>
+        <input type="range" id="fontsize" min="7" max="22" value="11" oninput="document.getElementById('fs-val').textContent=this.value;redraw()">
+        <span class="range-val" id="fs-val">11</span>
+      </div>
+      <div class="range-row">
+        <span class="range-lbl">Label Distance</span>
+        <input type="range" id="labeldist" min="6" max="28" value="13" oninput="document.getElementById('ld-val').textContent=this.value;redraw()">
+        <span class="range-val" id="ld-val">13</span>
+      </div>
+      <div class="color-row">
+        <label>Number Color</label>
+        <input type="color" id="num-color" value="#1e272e" oninput="redraw()">
+      </div>
+      <span class="ctrl-label" style="margin-top:5px;">Number Style</span>
+      <select id="cfg-numstyle" onchange="redraw()">
+        <option value="numbers" selected>1 2 3 Numbers</option>
+        <option value="letters">A B C Letters</option>
+        <option value="roman">I II III Roman</option>
+      </select>
+      <span class="ctrl-label" style="margin-top:5px;">Number Background</span>
+      <select id="cfg-numbg" onchange="redraw()">
+        <option value="none" selected>None (plain)</option>
+        <option value="circle">⚪ White circle</option>
+        <option value="box">⬜ White box</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">🖼️ Border Style</span>
+      <select id="cfg-border" onchange="redraw()">
+        <option value="none">No border</option>
+        <option value="dashed" selected>— Dashed line</option>
+        <option value="double">═ Double line</option>
+        <option value="stars">⭐ Stars</option>
+        <option value="dots">● Polka dots</option>
+        <option value="hearts">❤️ Hearts</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- PAGE TAB -->
+  <div class="tab-panel" id="tab-page">
+    <div class="ctrl-group">
+      <span class="ctrl-label">📄 Worksheet Texts</span>
+      <input class="txt-input" id="ws-title-input" placeholder="Title (e.g. Connect the Dots)" oninput="document.getElementById('ws-title').textContent=this.value||'CONNECT THE DOTS'">
+      <input class="txt-input" id="ws-sub-input" placeholder="Subtitle / instructions">
+      <input class="txt-input" id="classTitle" placeholder="Class / Grade">
+      <input class="txt-input" id="brandText" placeholder="Footer branding / your site">
+    </div>
+    <div class="ctrl-group">
+      <span class="ctrl-label">📊 Extra Elements</span>
+      <select id="cfg-extra" onchange="redraw()">
+        <option value="none">None</option>
+        <option value="colorbox" selected>🎨 Color Me! box</option>
+        <option value="stars">⭐ Star rating (1-5)</option>
+        <option value="both">Both</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn btn-red" id="btn-sol" onclick="toggleSolution()">👁️ SHOW SOLUTION</button>
+  <button class="btn btn-blue" onclick="window.print()">🖨️ PRINT A4</button>
+  <button class="btn btn-pink" onclick="savePNG(false)">💾 SAVE STUDENT PNG</button>
+  <button class="btn btn-warn" onclick="savePNG(true)">🗝️ SAVE ANSWER KEY PNG</button>
+</div>
+
+<!-- PREVIEW -->
+<div id="preview">
+  <div class="paper" id="worksheet">
+    <div class="ws-header">
+      <div>
+        <div class="ws-title" id="ws-title" contenteditable spellcheck="false">CONNECT THE DOTS</div>
+        <div class="ws-sub" id="ws-sub" contenteditable spellcheck="false">Connect the dots in order, then color your picture!</div>
+      </div>
+      <div class="student-box">
+        <div class="s-row"><span class="s-label" contenteditable spellcheck="false">Name:</span><div class="s-line"></div></div>
+        <div class="s-row"><span class="s-label" contenteditable spellcheck="false">Date:</span><div class="s-line"></div></div>
+        <div class="s-row"><span class="s-label" contenteditable spellcheck="false">Score:</span><div class="s-line"></div></div>
+      </div>
+    </div>
+    <div class="canvas-wrap"><canvas id="dot-canvas" width="700" height="700"></canvas></div>
+    <div id="extra-section"></div>
+    <div class="footer" id="footer">🔴 Connect the Dots Generator Pro &nbsp;|&nbsp; Mini World Empire</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  SHAPE DATABASE — high-fidelity point arrays
+//  All coords normalized 0..1
+// ══════════════════════════════════════════════
+function circle(cx,cy,r,n=40){ const p=[]; for(let i=0;i<=n;i++) p.push([cx+r*Math.cos(i/n*Math.PI*2-Math.PI/2), cy+r*Math.sin(i/n*Math.PI*2-Math.PI/2)]); return p; }
+function arc(cx,cy,r,a1,a2,n=20){ const p=[]; for(let i=0;i<=n;i++){ const a=a1+(a2-a1)*i/n; p.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]); } return p; }
+
+const SHAPES = {
+  // ── ANIMALS ──
+  elephant: { icon:'🐘', label:'Elephant', group:'animal', pts:{
+    easy: [[.50,.10],[.62,.09],[.71,.14],[.76,.22],[.74,.30],[.80,.36],[.84,.46],[.82,.57],[.76,.63],[.74,.74],[.77,.87],[.70,.92],[.64,.87],[.64,.76],[.58,.72],[.50,.74],[.42,.72],[.36,.76],[.36,.87],[.29,.92],[.23,.87],[.26,.74],[.24,.63],[.18,.57],[.16,.46],[.20,.36],[.26,.30],[.24,.22],[.29,.14],[.38,.09],[.50,.10]],
+    medium: [[.50,.08],[.58,.07],[.66,.09],[.72,.13],[.76,.20],[.77,.27],[.74,.32],[.70,.30],[.78,.37],[.83,.44],[.84,.52],[.82,.59],[.78,.64],[.75,.70],[.74,.78],[.76,.85],[.74,.91],[.68,.93],[.62,.91],[.61,.83],[.61,.74],[.56,.71],[.50,.73],[.44,.71],[.39,.74],[.39,.83],[.38,.91],[.32,.93],[.26,.91],[.24,.85],[.26,.78],[.25,.70],[.22,.64],[.18,.59],[.16,.52],[.17,.44],[.22,.37],[.30,.30],[.26,.27],[.27,.20],[.31,.13],[.37,.09],[.42,.07],[.50,.08]],
+    hard: [[.50,.06],[.55,.06],[.61,.07],[.67,.09],[.72,.12],[.76,.17],[.78,.23],[.77,.29],[.74,.33],[.70,.31],[.66,.30],[.72,.32],[.79,.38],[.83,.45],[.85,.52],[.84,.59],[.81,.64],[.78,.68],[.76,.73],[.75,.79],[.76,.85],[.75,.90],[.72,.93],[.67,.93],[.63,.91],[.61,.86],[.61,.80],[.61,.74],[.57,.71],[.53,.70],[.50,.71],[.47,.70],[.43,.71],[.39,.74],[.39,.80],[.39,.86],[.37,.91],[.33,.93],[.28,.93],[.25,.90],[.24,.85],[.25,.79],[.26,.73],[.24,.68],[.21,.64],[.18,.59],[.15,.52],[.15,.45],[.17,.38],[.21,.33],[.27,.30],[.30,.31],[.26,.29],[.23,.23],[.24,.17],[.28,.12],[.33,.09],[.39,.07],[.44,.06],[.50,.06]]
+  }},
+  cat: { icon:'🐱', label:'Cat', group:'animal', pts:{
+    easy: [[.50,.06],[.62,.04],[.70,.07],[.74,.15],[.71,.22],[.78,.30],[.82,.40],[.80,.52],[.74,.60],[.72,.72],[.70,.88],[.62,.92],[.56,.86],[.56,.74],[.50,.72],[.44,.74],[.44,.86],[.38,.92],[.30,.88],[.28,.72],[.26,.60],[.20,.52],[.18,.40],[.22,.30],[.29,.22],[.26,.15],[.30,.07],[.38,.04],[.50,.06]],
+    medium: [[.50,.05],[.58,.03],[.64,.04],[.70,.07],[.74,.13],[.75,.20],[.72,.26],[.70,.23],[.67,.22],[.78,.32],[.82,.41],[.82,.51],[.78,.59],[.74,.65],[.72,.73],[.71,.82],[.68,.90],[.62,.93],[.56,.89],[.55,.79],[.55,.73],[.50,.71],[.45,.73],[.45,.79],[.44,.89],[.38,.93],[.32,.90],[.29,.82],[.28,.73],[.26,.65],[.22,.59],[.18,.51],[.18,.41],[.22,.32],[.33,.22],[.30,.23],[.28,.26],[.25,.20],[.26,.13],[.30,.07],[.36,.04],[.42,.03],[.50,.05]],
+    hard: [[.50,.04],[.55,.03],[.60,.03],[.65,.04],[.70,.07],[.73,.11],[.75,.17],[.75,.22],[.73,.26],[.70,.25],[.68,.22],[.65,.22],[.63,.23],[.75,.30],[.80,.37],[.83,.44],[.83,.52],[.81,.58],[.77,.63],[.74,.68],[.72,.74],[.71,.80],[.70,.86],[.68,.91],[.63,.93],[.58,.92],[.55,.88],[.55,.81],[.55,.74],[.52,.72],[.50,.71],[.48,.72],[.45,.74],[.45,.81],[.45,.88],[.42,.92],[.37,.93],[.32,.91],[.30,.86],[.29,.80],[.28,.74],[.26,.68],[.23,.63],[.19,.58],[.17,.52],[.17,.44],[.20,.37],[.25,.30],[.37,.23],[.35,.22],[.32,.22],[.30,.25],[.27,.26],[.25,.22],[.25,.17],[.27,.11],[.30,.07],[.35,.04],[.40,.03],[.45,.03],[.50,.04]]
+  }},
+  dog: { icon:'🐶', label:'Dog', group:'animal', pts:{
+    easy: [[.35,.06],[.24,.10],[.20,.20],[.24,.28],[.18,.34],[.14,.44],[.17,.54],[.24,.60],[.27,.72],[.24,.84],[.30,.92],[.40,.88],[.40,.76],[.50,.73],[.60,.76],[.60,.88],[.70,.92],[.76,.84],[.73,.72],[.76,.60],[.83,.54],[.86,.44],[.82,.34],[.76,.28],[.80,.20],[.76,.10],[.65,.06],[.56,.12],[.50,.08],[.44,.12],[.35,.06]],
+    medium: [[.36,.05],[.28,.07],[.22,.12],[.18,.20],[.19,.27],[.23,.31],[.18,.36],[.13,.44],[.14,.52],[.18,.58],[.24,.62],[.27,.68],[.27,.76],[.25,.84],[.27,.90],[.34,.93],[.40,.90],[.41,.82],[.41,.76],[.46,.73],[.50,.72],[.54,.73],[.59,.76],[.59,.82],[.60,.90],[.66,.93],[.73,.90],[.75,.84],[.73,.76],[.73,.68],[.76,.62],[.82,.58],[.86,.52],[.87,.44],[.82,.36],[.77,.31],[.81,.27],[.82,.20],[.78,.12],[.72,.07],[.64,.05],[.58,.08],[.53,.10],[.50,.08],[.47,.10],[.42,.08],[.36,.05]],
+    hard: [[.36,.04],[.30,.05],[.24,.08],[.19,.13],[.17,.19],[.17,.25],[.20,.30],[.24,.32],[.19,.37],[.13,.43],[.12,.50],[.14,.56],[.18,.61],[.22,.64],[.26,.68],[.27,.73],[.27,.79],[.25,.85],[.25,.90],[.30,.93],[.36,.93],[.40,.91],[.42,.86],[.42,.80],[.41,.75],[.44,.73],[.50,.71],[.56,.73],[.59,.75],[.58,.80],[.58,.86],[.60,.91],[.64,.93],[.70,.93],[.75,.90],[.75,.85],[.73,.79],[.73,.73],[.74,.68],[.78,.64],[.82,.61],[.86,.56],[.88,.50],[.87,.43],[.81,.37],[.76,.32],[.80,.30],[.83,.25],[.83,.19],[.81,.13],[.76,.08],[.70,.05],[.64,.04],[.58,.06],[.54,.09],[.50,.07],[.46,.09],[.42,.06],[.36,.04]]
+  }},
+  fish: { icon:'🐟', label:'Fish', group:'animal', pts:{
+    easy: [[.20,.50],[.14,.38],[.10,.24],[.22,.30],[.32,.24],[.45,.21],[.58,.24],[.68,.32],[.76,.40],[.82,.50],[.76,.60],[.68,.68],[.58,.76],[.45,.79],[.32,.76],[.22,.70],[.10,.76],[.14,.62],[.20,.50]],
+    medium: [[.20,.50],[.16,.42],[.12,.33],[.10,.24],[.15,.27],[.22,.28],[.28,.26],[.34,.23],[.42,.20],[.52,.21],[.61,.24],[.68,.29],[.74,.36],[.79,.43],[.82,.50],[.79,.57],[.74,.64],[.68,.71],[.61,.76],[.52,.79],[.42,.80],[.34,.77],[.28,.74],[.22,.72],[.15,.73],[.10,.76],[.12,.67],[.16,.58],[.20,.50]],
+    hard: [[.20,.50],[.17,.44],[.14,.38],[.11,.31],[.09,.24],[.13,.25],[.17,.26],[.22,.27],[.27,.25],[.31,.23],[.36,.21],[.41,.19],[.47,.18],[.53,.19],[.58,.21],[.63,.24],[.68,.28],[.72,.33],[.76,.39],[.79,.44],[.82,.50],[.79,.56],[.76,.61],[.72,.67],[.68,.72],[.63,.76],[.58,.79],[.53,.81],[.47,.82],[.41,.81],[.36,.79],[.31,.77],[.27,.75],[.22,.73],[.17,.74],[.13,.75],[.09,.76],[.11,.69],[.14,.62],[.17,.56],[.20,.50]]
+  }},
+  butterfly: { icon:'🦋', label:'Butterfly', group:'animal', pts:{
+    easy: [[.50,.44],[.43,.36],[.33,.24],[.21,.20],[.14,.28],[.16,.40],[.24,.48],[.34,.53],[.44,.55],[.50,.55],[.56,.55],[.66,.53],[.76,.48],[.84,.40],[.86,.28],[.79,.20],[.67,.24],[.57,.36],[.50,.44],[.49,.64],[.47,.76],[.50,.88],[.53,.76],[.51,.64],[.50,.55]],
+    medium: [[.50,.42],[.46,.37],[.41,.30],[.33,.22],[.24,.18],[.17,.21],[.13,.28],[.13,.37],[.17,.44],[.23,.49],[.31,.53],[.40,.56],[.46,.57],[.50,.57],[.54,.57],[.60,.56],[.69,.53],[.77,.49],[.83,.44],[.87,.37],[.87,.28],[.83,.21],[.76,.18],[.67,.22],[.59,.30],[.54,.37],[.50,.42],[.50,.57],[.49,.64],[.47,.71],[.46,.79],[.48,.85],[.50,.88],[.52,.85],[.54,.79],[.53,.71],[.51,.64],[.50,.57]],
+    hard: [[.50,.41],[.47,.38],[.44,.33],[.39,.27],[.33,.21],[.26,.17],[.19,.18],[.14,.22],[.11,.28],[.11,.35],[.13,.42],[.17,.47],[.21,.51],[.26,.54],[.32,.56],[.38,.57],[.44,.57],[.50,.57],[.56,.57],[.62,.57],[.68,.56],[.74,.54],[.79,.51],[.83,.47],[.87,.42],[.89,.35],[.89,.28],[.86,.22],[.81,.18],[.74,.17],[.67,.21],[.61,.27],[.56,.33],[.53,.38],[.50,.41],[.50,.57],[.49,.62],[.48,.67],[.47,.73],[.46,.79],[.47,.84],[.49,.88],[.51,.88],[.53,.84],[.54,.79],[.53,.73],[.52,.67],[.51,.62],[.50,.57]]
+  }},
+  rabbit: { icon:'🐰', label:'Rabbit', group:'animal', pts:{
+    easy: [[.40,.06],[.34,.03],[.29,.08],[.30,.18],[.37,.26],[.30,.32],[.22,.38],[.18,.50],[.21,.62],[.27,.70],[.27,.80],[.30,.91],[.38,.93],[.42,.86],[.42,.76],[.50,.73],[.58,.76],[.58,.86],[.62,.93],[.70,.91],[.73,.80],[.73,.70],[.79,.62],[.82,.50],[.78,.38],[.70,.32],[.63,.26],[.70,.18],[.71,.08],[.66,.03],[.60,.06],[.55,.16],[.50,.20],[.45,.16],[.40,.06]],
+    medium: [[.40,.05],[.36,.02],[.31,.05],[.28,.10],[.28,.17],[.31,.23],[.36,.27],[.32,.32],[.25,.36],[.19,.42],[.17,.50],[.19,.58],[.23,.64],[.27,.68],[.27,.76],[.27,.83],[.29,.90],[.35,.93],[.41,.91],[.43,.85],[.43,.78],[.43,.73],[.47,.71],[.50,.71],[.53,.71],[.57,.73],[.57,.78],[.57,.85],[.59,.91],[.65,.93],[.71,.90],[.73,.83],[.73,.76],[.73,.68],[.77,.64],[.81,.58],[.83,.50],[.81,.42],[.75,.36],[.68,.32],[.64,.27],[.69,.23],[.72,.17],[.72,.10],[.69,.05],[.64,.02],[.60,.05],[.56,.14],[.52,.19],[.50,.20],[.48,.19],[.44,.14],[.40,.05]],
+    hard: []
+  }},
+  bird: { icon:'🐦', label:'Bird', group:'animal', pts:{
+    easy: [[.50,.06],[.60,.09],[.68,.16],[.74,.25],[.78,.35],[.82,.29],[.88,.33],[.82,.42],[.77,.52],[.70,.60],[.64,.64],[.62,.74],[.64,.87],[.57,.93],[.50,.90],[.43,.93],[.36,.87],[.38,.74],[.36,.64],[.30,.60],[.23,.52],[.18,.42],[.12,.33],[.18,.29],[.22,.35],[.26,.25],[.32,.16],[.40,.09],[.50,.06]],
+    medium: [[.50,.05],[.56,.06],[.62,.09],[.68,.14],[.73,.21],[.76,.29],[.78,.36],[.82,.30],[.86,.28],[.90,.32],[.85,.39],[.80,.45],[.76,.52],[.71,.59],[.65,.64],[.62,.70],[.62,.78],[.62,.86],[.58,.92],[.50,.91],[.42,.92],[.38,.86],[.38,.78],[.38,.70],[.35,.64],[.29,.59],[.24,.52],[.20,.45],[.15,.39],[.10,.32],[.14,.28],[.18,.30],[.22,.36],[.24,.29],[.27,.21],[.32,.14],[.38,.09],[.44,.06],[.50,.05]],
+    hard: []
+  }},
+  turtle: { icon:'🐢', label:'Turtle', group:'animal', pts:{
+    easy: [[.50,.16],[.60,.18],[.69,.23],[.76,.32],[.79,.42],[.78,.53],[.73,.61],[.79,.66],[.82,.73],[.78,.80],[.71,.82],[.65,.78],[.62,.72],[.50,.75],[.38,.72],[.35,.78],[.29,.82],[.22,.80],[.18,.73],[.21,.66],[.27,.61],[.22,.53],[.21,.42],[.24,.32],[.31,.23],[.40,.18],[.50,.16]],
+    medium: [[.50,.14],[.57,.15],[.64,.17],[.70,.21],[.76,.27],[.79,.34],[.81,.42],[.80,.50],[.78,.57],[.73,.62],[.79,.67],[.82,.74],[.80,.80],[.74,.84],[.67,.82],[.62,.76],[.56,.74],[.50,.75],[.44,.74],[.38,.76],[.33,.82],[.26,.84],[.20,.80],[.18,.74],[.21,.67],[.27,.62],[.22,.57],[.20,.50],[.19,.42],[.21,.34],[.24,.27],[.30,.21],[.36,.17],[.43,.15],[.50,.14]],
+    hard: []
+  }},
+  whale: { icon:'🐳', label:'Whale', group:'animal', pts:{
+    easy: [[.15,.50],[.12,.40],[.14,.28],[.22,.20],[.33,.16],[.45,.16],[.57,.18],[.68,.24],[.76,.32],[.82,.41],[.85,.50],[.82,.59],[.76,.66],[.66,.72],[.54,.74],[.42,.72],[.30,.68],[.20,.58],[.15,.50],[.10,.40],[.05,.46],[.08,.53],[.15,.50]],
+    medium: [[.15,.50],[.13,.44],[.11,.38],[.12,.31],[.14,.25],[.19,.19],[.26,.15],[.33,.13],[.40,.12],[.48,.12],[.55,.14],[.62,.17],[.68,.22],[.74,.28],[.78,.35],[.82,.42],[.84,.50],[.82,.58],[.78,.65],[.73,.70],[.66,.74],[.58,.76],[.50,.76],[.42,.74],[.34,.70],[.26,.64],[.20,.57],[.16,.51],[.10,.40],[.05,.44],[.06,.50],[.09,.54],[.15,.50]],
+    hard: []
+  }},
+  fox: { icon:'🦊', label:'Fox', group:'animal', pts:{
+    easy: [[.50,.06],[.40,.03],[.30,.09],[.26,.20],[.30,.30],[.22,.26],[.18,.36],[.19,.47],[.25,.56],[.28,.68],[.25,.81],[.31,.92],[.40,.90],[.43,.78],[.50,.75],[.57,.78],[.60,.90],[.69,.92],[.75,.81],[.72,.68],[.75,.56],[.81,.47],[.82,.36],[.78,.26],[.70,.30],[.74,.20],[.70,.09],[.60,.03],[.50,.06]],
+    medium: [[.50,.05],[.44,.03],[.37,.04],[.30,.08],[.26,.15],[.25,.22],[.28,.29],[.22,.26],[.17,.33],[.16,.42],[.18,.50],[.22,.57],[.26,.62],[.28,.68],[.27,.76],[.25,.83],[.26,.90],[.33,.93],[.40,.91],[.43,.84],[.44,.77],[.44,.74],[.47,.72],[.50,.71],[.53,.72],[.56,.74],[.56,.77],[.57,.84],[.60,.91],[.67,.93],[.74,.90],[.75,.83],[.73,.76],[.72,.68],[.74,.62],[.78,.57],[.82,.50],[.84,.42],[.83,.33],[.78,.26],[.72,.29],[.75,.22],[.74,.15],[.70,.08],[.63,.04],[.56,.03],[.50,.05]],
+    hard: []
+  }},
+  duck: { icon:'🦆', label:'Duck', group:'animal', pts:{
+    easy: [[.50,.08],[.58,.05],[.66,.08],[.72,.15],[.70,.22],[.76,.26],[.80,.20],[.84,.26],[.79,.33],[.72,.37],[.78,.46],[.81,.56],[.78,.66],[.72,.73],[.72,.83],[.66,.91],[.50,.92],[.34,.91],[.28,.83],[.28,.73],[.22,.66],[.19,.56],[.22,.46],[.28,.37],[.21,.33],[.16,.26],[.20,.20],[.24,.26],[.30,.22],[.28,.15],[.34,.08],[.42,.05],[.50,.08]],
+    medium: [[.50,.07],[.56,.05],[.62,.05],[.67,.07],[.72,.11],[.74,.17],[.72,.23],[.70,.22],[.67,.22],[.76,.27],[.80,.21],[.83,.21],[.85,.27],[.81,.33],[.74,.37],[.72,.38],[.79,.45],[.82,.53],[.81,.61],[.78,.68],[.73,.73],[.72,.80],[.71,.87],[.67,.91],[.58,.93],[.50,.93],[.42,.93],[.33,.91],[.29,.87],[.28,.80],[.27,.73],[.22,.68],[.19,.61],[.18,.53],[.21,.45],[.28,.38],[.26,.37],[.19,.33],[.15,.27],[.17,.21],[.20,.21],[.24,.27],[.28,.23],[.26,.17],[.28,.11],[.33,.07],[.38,.05],[.44,.05],[.50,.07]],
+    hard: []
+  }},
+  // ── OBJECTS ──
+  star: { icon:'⭐', label:'Star', group:'object', pts:{
+    easy: (()=>{ const p=[]; const or=0.40,ir=0.18; for(let i=0;i<11;i++){ const r=i%2===0?or:ir, a=(i*36-90)*Math.PI/180; p.push([.5+r*Math.cos(a),.5+r*Math.sin(a)]); } return p; })(),
+    medium: (()=>{ const p=[]; const or=0.42,ir=0.17; for(let i=0;i<12;i++){ const r=i%2===0?or:ir, a=(i*36-90)*Math.PI/180; p.push([.5+r*Math.cos(a),.5+r*Math.sin(a)]); const mx=p[p.length-1]; if(i%2===0&&i<10){ const a2=a+18*Math.PI/180; p.push([.5+(ir+.06)*Math.cos(a2),.5+(ir+.06)*Math.sin(a2)]); } } return p; })(),
+    hard: (()=>{ const p=[]; const or=0.42,ir=0.16; for(let i=0;i<=20;i++){ const r=i%2===0?or:ir, a=(i*36-90)*Math.PI/180; p.push([.5+r*Math.cos(a),.5+r*Math.sin(a)]); } return p; })()
+  }},
+  heart: { icon:'❤️', label:'Heart', group:'object', pts:{
+    easy: (()=>{ const p=[]; for(let t=0;t<=Math.PI*2;t+=Math.PI/10){ p.push([.5+.34*(16*Math.pow(Math.sin(t),3))/16, .5-.34*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))/16]); } return p; })(),
+    medium: (()=>{ const p=[]; for(let t=0;t<=Math.PI*2;t+=Math.PI/14){ p.push([.5+.36*(16*Math.pow(Math.sin(t),3))/16, .5-.36*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))/16]); } return p; })(),
+    hard: (()=>{ const p=[]; for(let t=0;t<=Math.PI*2;t+=Math.PI/20){ p.push([.5+.37*(16*Math.pow(Math.sin(t),3))/16, .5-.37*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))/16]); } return p; })()
+  }},
+  house: { icon:'🏠', label:'House', group:'object', pts:{
+    easy: [[.50,.09],[.76,.32],[.70,.32],[.70,.89],[.30,.89],[.30,.32],[.24,.32],[.50,.09],[.70,.32],[.30,.32],[.30,.89],[.44,.89],[.44,.67],[.56,.67],[.56,.89],[.70,.89]],
+    medium: [[.50,.08],[.60,.16],[.70,.24],[.76,.30],[.72,.33],[.70,.32],[.70,.89],[.60,.89],[.60,.67],[.55,.67],[.55,.54],[.45,.54],[.45,.67],[.40,.67],[.40,.89],[.30,.89],[.30,.32],[.28,.33],[.24,.30],[.30,.24],[.40,.16],[.50,.08]],
+    hard: [[.50,.07],[.55,.11],[.60,.15],[.65,.19],[.70,.24],[.74,.28],[.77,.31],[.73,.34],[.70,.32],[.70,.50],[.68,.50],[.68,.40],[.60,.40],[.60,.50],[.70,.50],[.70,.89],[.60,.89],[.60,.67],[.56,.67],[.56,.54],[.50,.54],[.44,.54],[.44,.67],[.40,.67],[.40,.89],[.30,.89],[.30,.50],[.40,.50],[.40,.40],[.32,.40],[.32,.50],[.30,.50],[.30,.32],[.27,.34],[.23,.31],[.26,.28],[.30,.24],[.35,.19],[.40,.15],[.45,.11],[.50,.07]]
+  }},
+  rocket: { icon:'🚀', label:'Rocket', group:'object', pts:{
+    easy: [[.50,.06],[.59,.15],[.64,.27],[.67,.40],[.73,.46],[.80,.56],[.77,.64],[.67,.62],[.67,.75],[.65,.88],[.60,.94],[.50,.92],[.40,.94],[.35,.88],[.33,.75],[.33,.62],[.23,.64],[.20,.56],[.27,.46],[.33,.40],[.36,.27],[.41,.15],[.50,.06]],
+    medium: [[.50,.05],[.54,.09],[.58,.14],[.62,.20],[.65,.27],[.67,.34],[.68,.41],[.72,.45],[.76,.50],[.80,.57],[.79,.63],[.74,.65],[.67,.62],[.67,.70],[.67,.78],[.65,.87],[.62,.93],[.57,.95],[.50,.93],[.43,.95],[.38,.93],[.35,.87],[.33,.78],[.33,.70],[.33,.62],[.26,.65],[.21,.63],[.20,.57],[.24,.50],[.28,.45],[.32,.41],[.33,.34],[.35,.27],[.38,.20],[.42,.14],[.46,.09],[.50,.05]],
+    hard: []
+  }},
+  flower: { icon:'🌸', label:'Flower', group:'object', pts:{
+    easy: (()=>{ const p=[]; for(let i=0;i<9;i++){ const a=i*40*Math.PI/180; p.push([.5+.38*Math.cos(a),.5+.38*Math.sin(a)]); p.push([.5+.20*Math.cos(a+20*Math.PI/180),.5+.20*Math.sin(a+20*Math.PI/180)]); } p.push(p[0]); return p; })(),
+    medium: (()=>{ const p=[]; for(let i=0;i<12;i++){ const a=i*30*Math.PI/180; p.push([.5+.40*Math.cos(a),.5+.40*Math.sin(a)]); p.push([.5+.21*Math.cos(a+15*Math.PI/180),.5+.21*Math.sin(a+15*Math.PI/180)]); } p.push(p[0]); return p; })(),
+    hard: (()=>{ const p=[]; for(let i=0;i<16;i++){ const a=i*22.5*Math.PI/180; const r=i%2===0?.42:.20; p.push([.5+r*Math.cos(a),.5+r*Math.sin(a)]); } p.push(p[0]); return p; })()
+  }},
+  sun: { icon:'☀️', label:'Sun', group:'object', pts:{
+    easy: (()=>{ const p=[]; for(let i=0;i<13;i++){ const r=i%2===0?.44:.28, a=(i*30-90)*Math.PI/180; p.push([.5+r*Math.cos(a),.5+r*Math.sin(a)]); } p.push(p[0]); return p; })(),
+    medium: (()=>{ const p=[]; for(let i=0;i<17;i++){ const r=i%2===0?.44:.27, a=(i*24-90)*Math.PI/180; p.push([.5+r*Math.cos(a),.5+r*Math.sin(a)]); } p.push(p[0]); return p; })(),
+    hard: (()=>{ const p=[]; for(let i=0;i<25;i++){ const r=i%2===0?.44:.25, a=(i*18-90)*Math.PI/180; p.push([.5+r*Math.cos(a),.5+r*Math.sin(a)]); } p.push(p[0]); return p; })()
+  }},
+  tree: { icon:'🌲', label:'Tree', group:'object', pts:{
+    easy: [[.50,.06],[.64,.22],[.58,.22],[.71,.38],[.62,.38],[.76,.55],[.63,.55],[.61,.68],[.59,.90],[.50,.93],[.41,.90],[.39,.68],[.37,.55],[.24,.55],[.38,.38],[.29,.38],[.42,.22],[.36,.22],[.50,.06]],
+    medium: [[.50,.05],[.57,.12],[.62,.18],[.66,.22],[.60,.22],[.66,.28],[.72,.35],[.75,.40],[.65,.40],[.70,.47],[.77,.54],[.63,.55],[.62,.60],[.61,.66],[.60,.72],[.59,.90],[.55,.93],[.50,.94],[.45,.93],[.41,.90],[.40,.72],[.39,.66],[.38,.60],[.37,.55],[.23,.54],[.30,.47],[.35,.40],[.25,.40],[.28,.35],[.34,.28],[.40,.22],[.34,.22],[.38,.18],[.43,.12],[.50,.05]],
+    hard: []
+  }},
+  car: { icon:'🚗', label:'Car', group:'object', pts:{
+    easy: [[.18,.55],[.18,.45],[.26,.33],[.40,.26],[.56,.25],[.70,.33],[.82,.45],[.82,.55],[.82,.62],[.72,.62],[.67,.70],[.54,.75],[.46,.75],[.33,.70],[.28,.62],[.18,.62],[.18,.55]],
+    medium: [[.17,.56],[.17,.48],[.19,.42],[.23,.36],[.28,.31],[.34,.27],[.40,.24],[.48,.23],[.56,.23],[.63,.25],[.69,.29],[.74,.34],[.78,.40],[.81,.46],[.83,.52],[.83,.58],[.83,.63],[.74,.63],[.70,.68],[.63,.73],[.55,.76],[.45,.76],[.37,.73],[.30,.68],[.26,.63],[.17,.63],[.17,.56]],
+    hard: []
+  }},
+  crown: { icon:'👑', label:'Crown', group:'object', pts:{
+    easy: [[.15,.74],[.15,.36],[.24,.50],[.38,.20],[.50,.44],[.62,.20],[.76,.50],[.85,.36],[.85,.74],[.15,.74]],
+    medium: [[.13,.76],[.13,.40],[.18,.38],[.18,.43],[.25,.31],[.28,.43],[.32,.34],[.36,.43],[.50,.22],[.64,.43],[.68,.34],[.72,.43],[.75,.31],[.82,.43],[.82,.38],[.87,.40],[.87,.76],[.80,.76],[.80,.66],[.70,.66],[.70,.76],[.60,.76],[.60,.66],[.50,.66],[.40,.76],[.30,.76],[.30,.66],[.20,.66],[.20,.76],[.13,.76]],
+    hard: []
+  }},
+  balloon: { icon:'🎈', label:'Balloon', group:'object', pts:{
+    easy: (()=>{ const p=[]; for(let t=0;t<=Math.PI*2;t+=Math.PI/10) p.push([.5+.34*Math.cos(t),.44+.36*Math.sin(t)]); p.push([.50,.80],[.48,.88],[.52,.88],[.48,.92],[.52,.92],[.50,.96]); return p; })(),
+    medium: (()=>{ const p=[]; for(let t=0;t<=Math.PI*2;t+=Math.PI/14) p.push([.5+.36*Math.cos(t),.44+.38*Math.sin(t)]); p.push([.50,.82],[.49,.85],[.48,.88],[.51,.88],[.49,.91],[.51,.91],[.50,.95]); return p; })(),
+    hard: (()=>{ const p=[]; for(let t=0;t<=Math.PI*2;t+=Math.PI/20) p.push([.5+.36*Math.cos(t),.44+.38*Math.sin(t)]); p.push([.50,.82],[.48,.86],[.47,.89],[.49,.89],[.48,.92],[.52,.92],[.51,.89],[.53,.89],[.52,.86],[.50,.82]); return p; })()
+  }},
+  moon: { icon:'🌙', label:'Moon', group:'object', pts:{
+    easy: (()=>{ const p=[]; for(let t=-0.3;t<=Math.PI+0.3;t+=Math.PI/12) p.push([.5+.40*Math.cos(t),.5+.42*Math.sin(t)]); for(let t=Math.PI+0.1;t>=-0.1;t-=Math.PI/10) p.push([.5+.30*Math.cos(t)-.10,.5+.40*Math.sin(t)]); return p; })(),
+    medium: (()=>{ const p=[]; for(let t=-0.3;t<=Math.PI+0.3;t+=Math.PI/16) p.push([.5+.40*Math.cos(t),.5+.42*Math.sin(t)]); for(let t=Math.PI+0.1;t>=-0.1;t-=Math.PI/13) p.push([.5+.29*Math.cos(t)-.10,.5+.40*Math.sin(t)]); return p; })(),
+    hard: []
+  }},
+  lightning: { icon:'⚡', label:'Lightning', group:'object', pts:{
+    easy: [[.55,.06],[.34,.46],[.52,.46],[.45,.94],[.66,.48],[.48,.48],[.55,.06]],
+    medium: [[.56,.05],[.50,.14],[.43,.23],[.37,.33],[.36,.41],[.46,.41],[.42,.50],[.38,.59],[.44,.53],[.51,.53],[.44,.66],[.44,.94],[.50,.84],[.55,.73],[.60,.84],[.64,.94],[.64,.53],[.71,.53],[.64,.41],[.54,.41],[.58,.33],[.62,.23],[.58,.14],[.56,.05]],
+    hard: []
+  }}
+};
+
+const ANIMAL_KEYS = ['elephant','cat','dog','fish','butterfly','rabbit','bird','turtle','whale','fox','duck','whale'];
+const OBJECT_KEYS = ['star','heart','house','rocket','flower','sun','tree','car','crown','balloon','moon','lightning'];
+
+// ── STATE ──
+let masterPoints = [];
+let showSolution = false;
+let selectedShape = 'elephant';
+let drawTool = 'pen';
+let drawnStrokes = [];
+let currentStroke = [];
+let isDrawing = false;
+
+// ── TABS ──
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['preset','draw','settings','page'][i]===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── BUILD SHAPE GRIDS ──
+function buildGrids(){
+  const ag = document.getElementById('animal-grid');
+  const og = document.getElementById('object-grid');
+  const animalKeys = ['elephant','cat','dog','fish','butterfly','rabbit','bird','turtle','whale','fox','duck'];
+  const objectKeys = ['star','heart','house','rocket','flower','sun','tree','car','crown','balloon','moon','lightning'];
+  animalKeys.forEach(k=>{ if(SHAPES[k]) ag.innerHTML+=shapeCard(k); });
+  objectKeys.forEach(k=>{ if(SHAPES[k]) og.innerHTML+=shapeCard(k); });
+}
+function shapeCard(k){ const s=SHAPES[k]; return `<div class="shape-card${k===selectedShape?' selected':''}" id="sc-${k}" onclick="selectShape('${k}')"><span class="shape-icon">${s.icon}</span><span class="shape-label">${s.label}</span></div>`; }
+function selectShape(k){
+  document.querySelectorAll('.shape-card').forEach(c=>c.classList.remove('selected'));
+  const el=document.getElementById('sc-'+k); if(el) el.classList.add('selected');
+  selectedShape=k; loadSelected();
+}
+
+// ── LOAD PRESET ──
+function loadSelected(){
+  const diff  = document.getElementById('cfg-diff').value;
+  const shape = SHAPES[selectedShape];
+  if(!shape) return;
+  let pts = shape.pts[diff];
+  if(!pts || pts.length<4){
+    pts = shape.pts['medium'] || shape.pts['easy'] || [];
+  }
+  if(pts.length<4){ alert('Shape not available at this difficulty yet.'); return; }
+  masterPoints = [...pts];
+  showSolution=false;
+  document.getElementById('btn-sol').textContent='👁️ SHOW SOLUTION';
+  document.getElementById('btn-sol').style.background='#ff4757';
+  document.getElementById('btn-sol').style.color='#fff';
+  redraw();
+}
+
+// ── DRAW TAB ──
+const dc = document.getElementById('draw-canvas');
+const dctx = dc.getContext('2d');
+function clearDrawBg(){ dctx.fillStyle='#0f0f1e'; dctx.fillRect(0,0,300,300); }
+clearDrawBg();
+
+function setTool(t){ drawTool=t; document.querySelectorAll('.draw-tool-btn').forEach(b=>b.classList.remove('active')); document.getElementById('tool-'+t).classList.add('active'); }
+
+function getXY(e){ const r=dc.getBoundingClientRect(); const src=e.touches?e.touches[0]:e; return [(src.clientX-r.left)/r.width,(src.clientY-r.top)/r.height]; }
+
+dc.addEventListener('mousedown', e=>{ isDrawing=true; currentStroke=[getXY(e)]; });
+dc.addEventListener('mousemove', e=>{ if(!isDrawing) return; currentStroke.push(getXY(e)); renderDraw(); });
+dc.addEventListener('mouseup',   ()=>{ if(currentStroke.length>1) drawnStrokes.push([...currentStroke]); isDrawing=false; currentStroke=[]; renderDraw(); });
+dc.addEventListener('touchstart', e=>{ e.preventDefault(); isDrawing=true; currentStroke=[getXY(e)]; },{passive:false});
+dc.addEventListener('touchmove',  e=>{ e.preventDefault(); if(!isDrawing) return; currentStroke.push(getXY(e)); renderDraw(); },{passive:false});
+dc.addEventListener('touchend',   e=>{ e.preventDefault(); if(currentStroke.length>1) drawnStrokes.push([...currentStroke]); isDrawing=false; currentStroke=[]; renderDraw(); },{passive:false});
+
+function renderDraw(){
+  clearDrawBg();
+  const allS=[...drawnStrokes]; if(currentStroke.length>1) allS.push(currentStroke);
+  allS.forEach(s=>{
+    dctx.beginPath(); dctx.moveTo(s[0][0]*300,s[0][1]*300);
+    for(let i=1;i<s.length;i++) dctx.lineTo(s[i][0]*300,s[i][1]*300);
+    dctx.strokeStyle='#1dd1a1'; dctx.lineWidth=3; dctx.lineJoin='round'; dctx.lineCap='round'; dctx.stroke();
+  });
+}
+
+function undoLast(){ drawnStrokes.pop(); renderDraw(); }
+function clearDraw(){ drawnStrokes=[]; currentStroke=[]; clearDrawBg(); }
+
+function applyDrawing(){
+  const all=[]; drawnStrokes.forEach(s=>all.push(...s));
+  if(all.length<4){ alert('Draw something first!'); return; }
+  const n=parseInt(document.getElementById('cfg-diff').value==='easy'?18:document.getElementById('cfg-diff').value==='hard'?45:28);
+  masterPoints=subsample(all,n); redraw(); switchTab('preset');
+}
+
+// ── HELPERS ──
+function subsample(pts,n){ if(pts.length<=n) return pts; const r=[pts[0]]; const step=(pts.length-1)/(n-1); for(let i=1;i<n-1;i++) r.push(pts[Math.round(i*step)]); r.push(pts[pts.length-1]); return r; }
+function toRoman(n){ const v=[1000,900,500,400,100,90,50,40,10,9,5,4,1],s=['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I']; let r=''; for(let i=0;i<v.length;i++) while(n>=v[i]){r+=s[i];n-=v[i];} return r; }
+function getLabel(i){ const st=document.getElementById('cfg-numstyle').value; if(st==='letters') return String.fromCharCode(65+(i%26)); if(st==='roman') return toRoman(i+1); return String(i+1); }
+
+// ── DRAW WORKSHEET ──
+function redraw(){ if(masterPoints.length<2) return; drawWorksheet(masterPoints, showSolution); }
+
+function drawWorksheet(pts, withLines){
+  const canvas=document.getElementById('dot-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const dotR   = parseInt(document.getElementById('dotsize').value);
+  const lw     = parseInt(document.getElementById('linewidth').value);
+  const fs     = parseInt(document.getElementById('fontsize').value);
+  const ld     = parseInt(document.getElementById('labeldist').value);
+  const dotCol = document.getElementById('dot-color').value;
+  const numCol = document.getElementById('num-color').value;
+  const linCol = document.getElementById('line-color').value;
+  const border = document.getElementById('cfg-border').value;
+  const numBg  = document.getElementById('cfg-numbg').value;
+  const extra  = document.getElementById('cfg-extra').value;
+  const ct     = document.getElementById('classTitle').value||'Connect the Dots';
+  const br     = document.getElementById('brandText').value||'Mini World Empire';
+  const sub    = document.getElementById('ws-sub-input').value||'Connect the dots in order, then color your picture!';
+  document.getElementById('ws-sub').textContent=sub;
+  document.getElementById('footer').innerHTML='🔴 '+ct+' &nbsp;|&nbsp; '+br;
+
+  ctx.clearRect(0,0,W,H);
+
+  // BORDER
+  if(border==='dashed'){ ctx.setLineDash([10,6]); ctx.strokeStyle='#ccc'; ctx.lineWidth=1.5; ctx.strokeRect(6,6,W-12,H-12); ctx.setLineDash([]); }
+  else if(border==='double'){ ctx.strokeStyle='#ccc'; ctx.lineWidth=1.5; ctx.strokeRect(5,5,W-10,H-10); ctx.strokeRect(12,12,W-24,H-24); }
+  else if(border==='stars'){ ctx.font='14px serif'; ctx.fillStyle='#d0d0d0'; for(let x=18;x<W;x+=36){ctx.fillText('⭐',x-7,18); ctx.fillText('⭐',x-7,H-4);} for(let y=30;y<H-20;y+=36){ctx.fillText('⭐',2,y); ctx.fillText('⭐',W-20,y);} }
+  else if(border==='dots'){ ctx.fillStyle='#d0d0d0'; for(let x=10;x<W;x+=18){ctx.beginPath();ctx.arc(x,10,2.5,0,Math.PI*2);ctx.fill(); ctx.beginPath();ctx.arc(x,H-10,2.5,0,Math.PI*2);ctx.fill();} for(let y=22;y<H-16;y+=18){ctx.beginPath();ctx.arc(10,y,2.5,0,Math.PI*2);ctx.fill(); ctx.beginPath();ctx.arc(W-10,y,2.5,0,Math.PI*2);ctx.fill();} }
+  else if(border==='hearts'){ ctx.font='14px serif'; ctx.fillStyle='#ffb0b0'; for(let x=18;x<W;x+=36){ctx.fillText('❤',x-7,18); ctx.fillText('❤',x-7,H-4);} for(let y=30;y<H-20;y+=36){ctx.fillText('❤',2,y); ctx.fillText('❤',W-20,y);} }
+
+  // Scale points to canvas
+  const pad=54;
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  const mnX=Math.min(...xs), mxX=Math.max(...xs), mnY=Math.min(...ys), mxY=Math.max(...ys);
+  const rngX=mxX-mnX||1, rngY=mxY-mnY||1;
+  const scaleX=(W-pad*2)/rngX, scaleY=(H-pad*2)/rngY, scale=Math.min(scaleX,scaleY);
+  const offX=(W-(rngX)*scale)/2, offY=(H-(rngY)*scale)/2;
+  const mapped=pts.map(([px,py])=>[offX+(px-mnX)*scale, offY+(py-mnY)*scale]);
+
+  // Solution lines
+  if(withLines){
+    ctx.beginPath(); ctx.moveTo(mapped[0][0],mapped[0][1]);
+    for(let i=1;i<mapped.length;i++) ctx.lineTo(mapped[i][0],mapped[i][1]);
+    ctx.closePath();
+    ctx.strokeStyle=linCol; ctx.lineWidth=lw; ctx.setLineDash([8,5]); ctx.lineJoin='round'; ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // Dots + labels
+  for(let i=0;i<mapped.length;i++){
+    const [x,y]=mapped[i];
+    // dot
+    ctx.beginPath(); ctx.arc(x,y,dotR,0,Math.PI*2); ctx.fillStyle=dotCol; ctx.fill();
+    // label offset from center of shape
+    const cx=offX+rngX*scale/2+offX*0, cy=offY+rngY*scale/2;
+    const dx=x-(W/2), dy=y-(H/2), len=Math.sqrt(dx*dx+dy*dy)||1;
+    const lx=x+(dx/len)*ld, ly=y+(dy/len)*ld;
+    const label=getLabel(i);
+    ctx.font=`900 ${fs}px Nunito, sans-serif`;
+    // number background
+    if(numBg==='circle'){
+      const m=ctx.measureText(label), r=Math.max(m.width/2+3,7);
+      ctx.beginPath(); ctx.arc(lx,ly,r,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.88)'; ctx.fill();
+    } else if(numBg==='box'){
+      const m=ctx.measureText(label);
+      ctx.fillStyle='rgba(255,255,255,0.88)'; ctx.fillRect(lx-m.width/2-3,ly-fs/2-2,m.width+6,fs+4);
+    }
+    ctx.fillStyle=numCol; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label, lx, ly);
+  }
+
+  // EXTRA SECTION
+  const extSec=document.getElementById('extra-section');
+  extSec.innerHTML='';
+  if(extra==='colorbox'||extra==='both'){
+    extSec.innerHTML+=`<div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-shrink:0;">
+      <span style="font-size:11px;font-weight:900;color:#90A4AE;">🎨 Color me with:</span>
+      ${[...Array(6)].map(()=>`<div style="width:26px;height:26px;border:2px solid #ccc;border-radius:5px;"></div>`).join('')}
+    </div>`;
+  }
+  if(extra==='stars'||extra==='both'){
+    extSec.innerHTML+=`<div style="display:flex;gap:4px;align-items:center;margin-top:4px;flex-shrink:0;">
+      <span style="font-size:11px;font-weight:900;color:#90A4AE;">⭐ Rate it:</span>
+      ${[...Array(5)].map(()=>`<span style="font-size:18px;color:#e0e0e0;">☆</span>`).join('')}
+    </div>`;
+  }
+}
+
+// ── SOLUTION TOGGLE ──
+function toggleSolution(){
+  showSolution=!showSolution;
+  const btn=document.getElementById('btn-sol');
+  if(showSolution){ btn.textContent='👁️ HIDE SOLUTION'; btn.style.background='#fff'; btn.style.color='#1e272e'; }
+  else             { btn.textContent='👁️ SHOW SOLUTION'; btn.style.background='#ff4757'; btn.style.color='#fff'; }
+  redraw();
+}
+
+// ── SAVE ──
+function savePNG(answerKey){
+  const prev=showSolution;
+  if(answerKey){ showSolution=true; redraw(); }
+  const ws=document.getElementById('worksheet');
+  htmlToImage.toPng(ws,{pixelRatio:2,backgroundColor:'#fff'}).then(d=>{
+    const a=document.createElement('a');
+    a.download=answerKey?'ConnectDots_AnswerKey.png':'ConnectDots_Student.png';
+    a.href=d; a.click();
+    showSolution=prev; redraw();
+  });
+}
+
+// ── INIT ──
+buildGrids();
+loadSelected();
+</script>
+</body>
+</html>
