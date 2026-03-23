@@ -1,0 +1,639 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini World Scene Builder 🌍</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --primary: #7C3AED; --primary-light: #A78BFA; --primary-dark: #5B21B6;
+  --accent: #F59E0B; --accent2: #10B981; --danger: #EF4444;
+  --bg: #0F0A1E; --card: #1A1130; --card2: #231848;
+  --border: #3D2B6B; --text: #F0E6FF; --muted: #9B89C0;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-light); }
+
+/* --- STRUTTURA A 2 COLONNE --- */
+.app-shell { display: flex; height: 100vh; width: 100vw; }
+.sidebar { width: 380px; background: rgba(26,17,48,1); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10; }
+.main-area { flex: 1; background-image: radial-gradient(ellipse at 50% 0%, #2D1B69 0%, transparent 70%); background-color: var(--bg); overflow-y: auto; padding: 40px; scroll-behavior: smooth; position: relative; }
+
+/* --- TOP HEADER MAIN AREA (Per il bottone Clear) --- */
+.main-header {
+  display: flex; justify-content: flex-end; align-items: center;
+  max-width: 800px; margin: 0 auto 20px auto; min-height: 40px;
+}
+.btn-clear {
+  background: transparent; border: 1px solid var(--danger); color: var(--danger);
+  border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 800; font-family: 'Nunito', sans-serif;
+  cursor: pointer; display: none; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.btn-clear:hover { background: rgba(239,68,68,0.1); }
+
+/* --- SIDEBAR HEADER --- */
+.sidebar-header {
+  padding: 24px 20px 20px; border-bottom: 1px solid var(--border);
+  text-align: center; background: linear-gradient(180deg, #2D1B69 0%, #1A1130 100%); flex-shrink: 0;
+}
+.logo-container { display: flex; justify-content: center; margin-bottom: 12px; }
+.sidebar-header h1 {
+  font-size: 22px; font-weight: 900;
+  background: linear-gradient(135deg, #C4B5FD, #818CF8, #38BDF8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  line-height: 1.2; margin: 0;
+}
+.sidebar-header p { color: var(--muted); font-size: 12px; margin-top: 6px; font-weight: 600; }
+
+/* --- SIDEBAR BODY --- */
+.sidebar-body { flex: 1; overflow-y: auto; padding: 20px 18px; }
+
+/* --- ACCORDION --- */
+.acc-item { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; transition: border-color 0.2s; }
+.acc-item.is-open { border-color: var(--primary); box-shadow: 0 4px 20px rgba(124,58,237,0.15); }
+.acc-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; cursor: pointer; user-select: none; }
+.acc-head:hover { background: rgba(124,58,237,0.1); border-radius: 12px; }
+.acc-num { width: 24px; height: 24px; background: var(--primary); border-radius: 50%; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; color: #fff; }
+.acc-title { font-size: 14px; font-weight: 800; flex: 1; color: var(--text); }
+.acc-sel { font-size: 10px; font-weight: 800; color: var(--accent2); display: none; }
+.acc-arrow { font-size: 12px; color: var(--muted); transition: transform 0.2s; }
+.acc-item.is-open .acc-arrow { transform: rotate(180deg); color: var(--primary-light); }
+.acc-body-wrap { display: none; border-top: 1px solid var(--border); }
+.acc-item.is-open .acc-body-wrap { display: block; }
+.acc-body-inner { padding: 16px; }
+
+/* --- OPTIONS GRID --- */
+.options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.option-btn { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 6px; cursor: pointer; text-align: center; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 6px; user-select: none; }
+.option-btn:hover { border-color: var(--primary-light); background: #2A1F50; }
+.option-btn.selected { border-color: var(--primary); background: linear-gradient(135deg, #3D2B6B, #2A1F50); box-shadow: 0 0 0 2px rgba(124,58,237,0.3); }
+.option-btn .emoji { font-size: 24px; line-height: 1; }
+.option-btn .label { font-size: 11px; font-weight: 700; color: var(--text); }
+.option-btn.selected .label { color: var(--primary-light); }
+.option-btn.custom-tile { border-style: dashed; border-color: var(--primary-light); }
+.option-btn.custom-tile.selected { border-style: solid; }
+
+/* --- CUSTOM PANELS --- */
+.custom-panel { display: none; background: #0A0618; border: 1px solid var(--primary); border-radius: 10px; padding: 14px; flex-direction: column; gap: 10px; margin-top: 10px; }
+.custom-panel label { font-size: 11px; font-weight: 800; color: var(--primary-light); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px; }
+.fi { width: 100%; background: var(--card2); border: 1.5px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Nunito', sans-serif; font-size: 13px; padding: 10px; outline: none; }
+.fi:focus { border-color: var(--primary-light); }
+.fi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+textarea.fi { resize: vertical; min-height: 60px; }
+
+/* --- EXTRAS --- */
+.extra-toggle { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--card); border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; user-select: none; transition: 0.2s; }
+.extra-toggle.active { border-color: var(--accent2); color: var(--accent2); background: rgba(16,185,129,0.08); }
+.extra-toggle .check { margin-left: auto; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.extra-toggle.active .check { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+
+/* --- SLIDER --- */
+.slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
+input[type=range] { flex: 1; -webkit-appearance: none; height: 6px; border-radius: 50px; background: linear-gradient(90deg, var(--primary) var(--pct, 50%), var(--border) var(--pct, 50%)); outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--primary-light); border: 2px solid #fff; cursor: pointer; }
+.slider-val { min-width: 80px; text-align: right; font-size: 12px; font-weight: 800; color: var(--primary-light); }
+.slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); font-weight: 700; }
+
+.val-hint { font-size: 12px; color: #F87171; margin-top: 10px; font-weight: 800; display: none; text-align: center; }
+
+/* --- FOOTER / GENERATE BTN --- */
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); background: #1A1130; flex-shrink: 0; }
+.gen-btn { width: 100%; background: linear-gradient(135deg, #7C3AED, #4F46E5); color: #fff; border: none; border-radius: 50px; padding: 16px; font-size: 16px; font-weight: 900; font-family: 'Nunito', sans-serif; cursor: pointer; box-shadow: 0 4px 20px rgba(124,58,237,0.4); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.gen-btn:hover { background: linear-gradient(135deg, #6D28D9, #4338CA); }
+
+/* --- MAIN AREA CONTENT --- */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; max-width: 500px; margin: 60px auto; }
+.empty-icon { font-size: 64px; margin-bottom: 20px; }
+.empty-title { font-size: 24px; font-weight: 900; margin-bottom: 10px; }
+.empty-desc { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+.ebadge { background: var(--card2); border: 1px solid var(--border); border-radius: 50px; padding: 6px 14px; font-size: 11px; font-weight: 800; color: var(--primary-light); display: inline-block; margin: 4px; }
+
+.gens-container { display: flex; flex-direction: column; gap: 24px; width: 100%; max-width: 800px; margin: 0 auto; }
+
+.prompt-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.pc-head { background: linear-gradient(135deg, #2D1B69, #1E3A5F); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border-radius: 13px 13px 0 0; }
+.pc-head-left { display: flex; align-items: center; gap: 14px; }
+.pc-number { background: rgba(0,0,0,0.3); color: var(--primary-light); font-size: 12px; font-weight: 900; padding: 4px 10px; border-radius: 8px; }
+.pc-icons { font-size: 26px; }
+.pc-title { font-size: 15px; font-weight: 900; color: #fff; }
+.pc-meta { font-size: 11px; color: var(--primary-light); margin-top: 2px; }
+
+.btn-del { background: transparent; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px; transition: color 0.2s; }
+.btn-del:hover { color: var(--danger); }
+
+.pc-body { padding: 24px; }
+.p-section-title { font-size: 11px; font-weight: 900; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+.p-box { background: #0A0618; border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 14px; line-height: 1.7; color: #D4C5F9; font-family: 'Courier New', monospace; white-space: pre-wrap; word-break: break-word; margin-bottom: 20px; }
+.p-box.neg { color: #F87171; font-size: 13px; }
+
+.p-actions { display: flex; gap: 12px; margin-bottom: 20px; }
+.btn-copy { flex: 1; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif; cursor: pointer; border: 2px solid transparent; text-align: center; transition: all 0.2s;}
+.btn-copy-pos { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-copy-neg { background: transparent; color: #F87171; border-color: #F87171; }
+.copy-success { background: var(--accent2) !important; border-color: var(--accent2) !important; color: #fff !important; }
+
+.p-tip { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 14px; font-size: 13px; color: #FCD34D; line-height: 1.6; }
+
+@media(max-width: 800px) {
+  .app-shell { flex-direction: column; overflow: auto; }
+  .sidebar { width: 100%; flex-shrink: 0; border-right: none; border-bottom: 2px solid var(--border); }
+  .sidebar-body { overflow: visible; }
+  .main-area { flex: none; overflow: visible; padding: 20px 16px; }
+  body { overflow: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="url(#grad1)"/>
+          <path d="M 25 45 Q 35 35 45 50 T 60 45 T 75 55 Q 65 70 45 65 T 25 45 Z" fill="#10B981" opacity="0.9"/>
+          <ellipse cx="50" cy="50" rx="48" ry="12" transform="rotate(-15 50 50)" stroke="#FCD34D" stroke-width="3" fill="none"/>
+          <defs>
+            <linearGradient id="grad1" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#38BDF8"/>
+              <stop offset="1" stop-color="#3D2B6B"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h1>Mini World Builder</h1>
+      <p>Unlimited Generations • Bonus Tool</p>
+    </div>
+
+    <div class="sidebar-body">
+
+      <!-- 1. ANIMAL -->
+      <div class="acc-item is-open" id="acc-animal">
+        <div class="acc-head">
+          <div class="acc-num">1</div>
+          <div class="acc-title">Animal 🐾</div>
+          <div class="acc-sel" id="sel-animal">✓ Done</div>
+          <div class="acc-arrow">▼</div>
+        </div>
+        <div class="acc-body-wrap">
+          <div class="acc-body-inner">
+            <div class="options-grid">
+              <div class="option-btn" data-group="animal" data-val="fox" data-p="a playful fox"><div class="emoji">🦊</div><div class="label">Fox</div></div>
+              <div class="option-btn" data-group="animal" data-val="owl" data-p="a wise owl"><div class="emoji">🦉</div><div class="label">Owl</div></div>
+              <div class="option-btn" data-group="animal" data-val="bunny" data-p="an adorable bunny"><div class="emoji">🐰</div><div class="label">Bunny</div></div>
+              <div class="option-btn" data-group="animal" data-val="cat" data-p="a curious cat"><div class="emoji">🐱</div><div class="label">Cat</div></div>
+              <div class="option-btn" data-group="animal" data-val="bear" data-p="a gentle bear cub"><div class="emoji">🐻</div><div class="label">Bear</div></div>
+              <div class="option-btn custom-tile" data-group="animal" data-val="custom"><div class="emoji">✏️</div><div class="label">Custom</div></div>
+            </div>
+            <div class="custom-panel" id="custom-animal-panel">
+              <label>Custom Animal</label>
+              <input class="fi" id="c-animal-name" type="text" placeholder="e.g. Red panda...">
+              <div class="fi-row">
+                <select class="fi" id="c-animal-mood"><option value="">Mood...</option><option value="playful">Playful</option><option value="fierce">Fierce</option><option value="magical">Magical</option><option value="cute">Cute</option></select>
+                <input class="fi" id="c-animal-acc" type="text" placeholder="Accessory...">
+              </div>
+            </div>
+            <div class="val-hint" id="val-animal">⚠ Please select an animal</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. ENVIRONMENT -->
+      <div class="acc-item is-open" id="acc-env">
+        <div class="acc-head">
+          <div class="acc-num">2</div>
+          <div class="acc-title">Environment 🌏</div>
+          <div class="acc-sel" id="sel-env">✓ Done</div>
+          <div class="acc-arrow">▼</div>
+        </div>
+        <div class="acc-body-wrap">
+          <div class="acc-body-inner">
+            <div class="options-grid">
+              <div class="option-btn" data-group="env" data-val="forest" data-p="in an enchanted forest" data-d="ancient oaks, glowing mushrooms, moss, fireflies"><div class="emoji">🌲</div><div class="label">Forest</div></div>
+              <div class="option-btn" data-group="env" data-val="ocean" data-p="in an ocean world" data-d="coral reefs, sea anemones, bubbles"><div class="emoji">🌊</div><div class="label">Ocean</div></div>
+              <div class="option-btn" data-group="env" data-val="space" data-p="in outer space" data-d="planets, twinkling stars, nebulae"><div class="emoji">🚀</div><div class="label">Space</div></div>
+              <div class="option-btn" data-group="env" data-val="mountain" data-p="on a snowy mountain" data-d="snow peaks, pine forests"><div class="emoji">⛰️</div><div class="label">Mountain</div></div>
+              <div class="option-btn" data-group="env" data-val="castle" data-p="in a fairy tale castle" data-d="stone towers, gardens"><div class="emoji">🏰</div><div class="label">Castle</div></div>
+              <div class="option-btn custom-tile" data-group="env" data-val="custom"><div class="emoji">✏️</div><div class="label">Custom</div></div>
+            </div>
+            <div class="custom-panel" id="custom-env-panel">
+              <label>Custom Location</label>
+              <input class="fi" id="c-env-name" type="text" placeholder="e.g. Ancient library...">
+              <label style="margin-top:6px;">Background Details</label>
+              <textarea class="fi" id="c-env-details" placeholder="e.g. towering bookshelves..."></textarea>
+            </div>
+            <div class="val-hint" id="val-env">⚠ Please select an environment</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. STYLE -->
+      <div class="acc-item is-open" id="acc-style">
+        <div class="acc-head">
+          <div class="acc-num">3</div>
+          <div class="acc-title">Art Style 🎨</div>
+          <div class="acc-sel" id="sel-style">✓ Done</div>
+          <div class="acc-arrow">▼</div>
+        </div>
+        <div class="acc-body-wrap">
+          <div class="acc-body-inner">
+            <div class="options-grid">
+              <div class="option-btn" data-group="style" data-val="cute" data-p="kawaii cute chibi style, rounded shapes" data-q="clean outlines, black and white" data-n="realistic, photographic, dark"><div class="emoji">🌸</div><div class="label">Cute</div></div>
+              <div class="option-btn" data-group="style" data-val="detailed" data-p="highly detailed fantasy illustration" data-q="detailed clean lineart, fine lines, black and white" data-n="simple, minimalist, blurry"><div class="emoji">🔍</div><div class="label">Detailed</div></div>
+              <div class="option-btn" data-group="style" data-val="minimal" data-p="clean minimal illustration, elegant shapes" data-q="simple bold lines, black and white" data-n="complex, cluttered, detailed"><div class="emoji">◻️</div><div class="label">Minimal</div></div>
+              <div class="option-btn" data-group="style" data-val="storybook" data-p="classic fairy tale storybook style" data-q="expressive lineart, black and white" data-n="digital 3d, realistic"><div class="emoji">📖</div><div class="label">Storybook</div></div>
+              <div class="option-btn" data-group="style" data-val="mandala" data-p="mandala zentangle coloring page" data-q="symmetrical detailed lineart, black and white" data-n="asymmetrical, realistic, simple"><div class="emoji">🔮</div><div class="label">Mandala</div></div>
+              <div class="option-btn custom-tile" data-group="style" data-val="custom"><div class="emoji">✏️</div><div class="label">Custom</div></div>
+            </div>
+            <div class="custom-panel" id="custom-style-panel">
+              <label>Custom Style</label>
+              <input class="fi" id="c-style-name" type="text" placeholder="e.g. Art Nouveau...">
+              <label style="margin-top:6px;">Negative (Avoid)</label>
+              <input class="fi" id="c-style-neg" type="text" placeholder="e.g. realistic...">
+            </div>
+            <div class="val-hint" id="val-style">⚠ Please select a style</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. EXTRAS -->
+      <div class="acc-item" id="acc-extras">
+        <div class="acc-head">
+          <div class="acc-num">4</div>
+          <div class="acc-title">Extras ✨</div>
+          <div class="acc-arrow">▼</div>
+        </div>
+        <div class="acc-body-wrap">
+          <div class="acc-body-inner">
+            <div class="extra-toggle" data-val="with seasonal falling leaves"><div class="emoji">🍂</div> Seasonal Mood <div class="check">✓</div></div>
+            <div class="extra-toggle" data-val="surrounded by a decorative ornate border frame"><div class="emoji">🖼️</div> Decorative Frame <div class="check">✓</div></div>
+            <div class="extra-toggle" data-val="with magical sparkles"><div class="emoji">✨</div> Magic & Sparkles <div class="check">✓</div></div>
+            <div style="margin-top:10px;">
+              <label style="font-size:11px;font-weight:800;color:var(--primary-light);text-transform:uppercase;display:block;margin-bottom:6px;">Custom Extra Element</label>
+              <input class="fi" id="c-extra-text" type="text" placeholder="e.g. riding a bicycle...">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. COMPLEXITY -->
+      <div class="acc-item" id="acc-complexity">
+        <div class="acc-head">
+          <div class="acc-num">5</div>
+          <div class="acc-title">Complexity 🎯</div>
+          <div class="acc-arrow">▼</div>
+        </div>
+        <div class="acc-body-wrap">
+          <div class="acc-body-inner">
+            <div class="slider-row">
+              <input type="range" id="comp-slider" min="1" max="3" value="2" step="1" style="--pct: 50%">
+            </div>
+            <div class="slider-labels"><span>👶 Kids</span><span id="comp-label">🎓 Intermediate</span><span>🧑‍🎨 Adults</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="gen-btn" id="btn-generate">✨ Generate Prompt</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-area" id="main-area">
+
+    <!-- CLEAR BUTTON HEADER -->
+    <div class="main-header">
+      <button class="btn-clear" id="btn-clear" onclick="clearHistory()">🗑️ Clear All</button>
+    </div>
+
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🎨</div>
+      <div class="empty-title">Ready to create magic?</div>
+      <div class="empty-desc">Your settings are pre-configured. Just hit Generate to get your first AI coloring page prompt! (You can generate unlimited variations!)</div>
+      <div>
+        <span class="ebadge">1️⃣ Settings</span>
+        <span class="ebadge">2️⃣ Generate</span>
+        <span class="ebadge">3️⃣ Copy to MidJourney</span>
+      </div>
+    </div>
+
+    <div class="gens-container" id="gens-container"></div>
+  </div>
+</div>
+
+<script>
+var state = { animal: null, env: null, style: null };
+var activeExtras = [];
+var historyData = [];
+var genCount = 0;
+
+// ARRAYS ESPANSI: per garantire che ogni prompt sia unico, aggiungiamo molte più variabili randomiche e descrittori unici ad ogni generazione.
+var vPoses = [
+  'sitting gracefully', 'standing proudly', 'playfully jumping', 'curled up cozily', 'exploring curiously',
+  'gazing upward in wonder', 'mid-leap in action', 'perched confidently', 'peeking out shyly', 'walking forward'
+];
+var vComps = [
+  'centered full body composition', 'slightly off-center dynamic framing', 'close-up portrait with detailed background',
+  'wide angle shot showing the full environment', 'low angle perspective looking up', 'top-down bird\'s eye view',
+  'cinematic framing', 'three-quarter view perspective'
+];
+var vLights = [
+  'soft diffused lighting', 'dramatic side lighting', 'gentle backlight creating a halo', 'dappled light filtering through',
+  'warm ambient glow', 'cool mystical moonlight', 'ethereal magical lighting', 'high contrast dramatic light'
+];
+var vDetails = [
+  'with fine cross-hatching texture', 'with delicate dot-work stippling', 'with intricate geometric micro-patterns',
+  'with ornate flowing decorative lines', 'with richly layered detailed textures', 'with zentangle inspired motifs',
+  'with clean crisp uniform line weight', 'with expressive varied line thickness'
+];
+
+var compLabels = { "1": "Kids (Simple)", "2": "Intermediate", "3": "Adults (Complex)" };
+var compPrompts = {
+  "1": "very simple bold outlines, large easy-to-color areas, minimal detail",
+  "2": "medium complexity, balanced detail level, satisfying to color",
+  "3": "highly complex intricate linework, numerous small detailed areas, challenging"
+};
+
+window.onload = function() {
+  // 1. Inizializzazione Accordion
+  var accHeads = document.querySelectorAll('.acc-head');
+  for (var i = 0; i < accHeads.length; i++) {
+    accHeads[i].onclick = function() {
+      this.parentElement.classList.toggle('is-open');
+    };
+  }
+
+  // 2. Inizializzazione Opzioni Base
+  var opts = document.querySelectorAll('.option-btn');
+  for (var j = 0; j < opts.length; j++) {
+    opts[j].onclick = function() {
+      var group = this.getAttribute('data-group');
+      var val = this.getAttribute('data-val');
+
+      var groupOpts = document.querySelectorAll('.option-btn[data-group="' + group + '"]');
+      for (var k = 0; k < groupOpts.length; k++) {
+        groupOpts[k].classList.remove('selected');
+      }
+
+      this.classList.add('selected');
+      state[group] = this;
+
+      var valHint = document.getElementById('val-' + group);
+      if(valHint) valHint.style.display = 'none';
+      var selBadge = document.getElementById('sel-' + group);
+      if(selBadge) selBadge.style.display = 'block';
+
+      var panel = document.getElementById('custom-' + group + '-panel');
+      if(panel) {
+        panel.style.display = (val === 'custom') ? 'flex' : 'none';
+      }
+    };
+  }
+
+  // 3. Pre-selezione
+  function preselect(group, val) {
+    var btn = document.querySelector('.option-btn[data-group="'+group+'"][data-val="'+val+'"]');
+    if(btn) btn.click();
+  }
+  preselect('animal', 'fox');
+  preselect('env', 'forest');
+  preselect('style', 'cute');
+  document.getElementById('acc-env').classList.remove('is-open');
+  document.getElementById('acc-style').classList.remove('is-open');
+
+  // 4. Inizializzazione Extras
+  var extras = document.querySelectorAll('.extra-toggle');
+  for (var x = 0; x < extras.length; x++) {
+    extras[x].onclick = function() {
+      var val = this.getAttribute('data-val');
+      if (this.classList.contains('active')) {
+        this.classList.remove('active');
+        var index = activeExtras.indexOf(val);
+        if (index !== -1) activeExtras.splice(index, 1);
+      } else {
+        this.classList.add('active');
+        activeExtras.push(val);
+      }
+    };
+  }
+
+  // 5. Slider
+  var slider = document.getElementById('comp-slider');
+  var sLabel = document.getElementById('comp-label');
+  if (slider) {
+    slider.oninput = function() {
+      sLabel.innerHTML = '🎓 ' + compLabels[this.value];
+      this.style.setProperty('--pct', ((this.value - 1) / 2 * 100) + '%');
+    };
+  }
+
+  // 6. Generate
+  var genBtn = document.getElementById('btn-generate');
+  if (genBtn) {
+    genBtn.onclick = handleGenerate;
+  }
+};
+
+function getRnd(arr) {
+  // Aggiungiamo un ulteriore grado di entropia matematica per la sicurezza
+  var randomIndex = Math.floor(Math.random() * arr.length);
+  return arr[randomIndex];
+}
+
+function getGroupData(group) {
+  var sel = state[group];
+  if (!sel) return null;
+  var isCustom = (sel.getAttribute('data-val') === 'custom');
+
+  if (group === 'animal') {
+    if (!isCustom) return { p: sel.getAttribute('data-p'), l: sel.querySelector('.label').innerText, e: sel.querySelector('.emoji').innerText };
+    var name = document.getElementById('c-animal-name').value || 'a majestic creature';
+    var mood = document.getElementById('c-animal-mood').value;
+    var acc = document.getElementById('c-animal-acc').value;
+    var p = name;
+    if(mood) p += ", " + mood;
+    if(acc) p += ", " + acc;
+    return { p: p, l: name, e: '✏️' };
+  }
+
+  if (group === 'env') {
+    if (!isCustom) return { p: sel.getAttribute('data-p'), d: sel.getAttribute('data-d'), l: sel.querySelector('.label').innerText, e: sel.querySelector('.emoji').innerText };
+    var loc = document.getElementById('c-env-name').value || 'an unknown location';
+    var det = document.getElementById('c-env-details').value || 'various scenic elements';
+    return { p: "in " + loc, d: det, l: loc, e: '✏️' };
+  }
+
+  if (group === 'style') {
+    if (!isCustom) return { p: sel.getAttribute('data-p'), q: sel.getAttribute('data-q'), n: sel.getAttribute('data-n'), l: sel.querySelector('.label').innerText, e: sel.querySelector('.emoji').innerText, v: sel.getAttribute('data-val') };
+    var sName = document.getElementById('c-style-name').value || 'custom drawn';
+    var sNeg = document.getElementById('c-style-neg').value || 'realistic, photographic';
+    return { p: sName + " art style", q: "black and white coloring page", n: sNeg, l: sName, e: '✏️', v: 'custom' };
+  }
+  return null;
+}
+
+function handleGenerate() {
+  var a = getGroupData('animal');
+  var e = getGroupData('env');
+  var s = getGroupData('style');
+
+  var valid = true;
+  if (!a) { document.getElementById('val-animal').style.display = 'block'; document.getElementById('acc-animal').classList.add('is-open'); valid = false; }
+  if (!e) { document.getElementById('val-env').style.display = 'block'; document.getElementById('acc-env').classList.add('is-open'); valid = false; }
+  if (!s) { document.getElementById('val-style').style.display = 'block'; document.getElementById('acc-style').classList.add('is-open'); valid = false; }
+  if (!valid) return;
+
+  genCount++;
+  var sliderVal = document.getElementById('comp-slider').value;
+
+  // INIEZIONE VARIABILI UNICHE AD OGNI CLICK
+  var randPose = getRnd(vPoses);
+  var randComp = getRnd(vComps);
+  var randLight = getRnd(vLights);
+  var randDetail = getRnd(vDetails);
+
+  // Costruzione Prompt 
+  var promptStr = "coloring page illustration of " + a.p + ", " + randPose + " " + e.p + ", background features " + e.d + ", " + s.p + ", " + randComp + ", " + randLight + ", " + randDetail;
+
+  // Extras
+  var customExtra = document.getElementById('c-extra-text').value;
+  var finalExtras = activeExtras.slice();
+  if (customExtra) finalExtras.push(customExtra);
+  if (finalExtras.length > 0) {
+    promptStr += ", " + finalExtras.join(", ");
+  }
+
+  promptStr += ", " + compPrompts[sliderVal] + ", " + s.q + ", white background, printable coloring book format, lineart only, no fill, high resolution --ar 8.5:11 --v 6.0";
+
+  // Aggiunta di un seed casuale alla fine di MidJourney per assicurarsi un output fisicamente diverso
+  var randomSeed = Math.floor(Math.random() * 1000000000);
+  promptStr += " --s 250 --seed " + randomSeed;
+
+  var negStr = "color, colored, shaded, gradients, watermarks, text, signature, photograph, blurry, low quality, cropped, gray background, colored background, filled areas, " + s.n;
+
+  var tipMap = {
+    "cute": "--stylize 200 is perfect for cute aesthetics.",
+    "detailed": "Use --q 2 for max detail.",
+    "mandala": "Add --tile to make a repeating pattern.",
+    "storybook": "Add --style raw for expressive lines."
+  };
+  var finalTip = tipMap[s.v] || "Copy the positive prompt, type /imagine, and paste it. Then add --no and paste the negative prompt.";
+
+  var uniqueId = new Date().getTime() + Math.floor(Math.random() * 1000);
+
+  var genObj = {
+    id: uniqueId,
+    num: genCount,
+    icons: a.e + " " + e.e + " " + s.e,
+    title: a.l + " · " + e.l + " · " + s.l,
+    meta: "Complexity: " + compLabels[sliderVal] + " · " + finalExtras.length + " extras",
+    pos: promptStr,
+    neg: negStr,
+    tip: finalTip
+  };
+
+  historyData.unshift(genObj);
+  renderHistory();
+
+  // Show clear button
+  document.getElementById('btn-clear').style.display = 'flex';
+}
+
+window.doCopy = function(btn, id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var text = el.innerText || el.textContent;
+
+  navigator.clipboard.writeText(text).then(function() {
+    var orig = btn.innerHTML;
+    btn.innerHTML = '✅ Copied!';
+    btn.classList.add('copy-success');
+    setTimeout(function() {
+      btn.innerHTML = orig;
+      btn.classList.remove('copy-success');
+    }, 2000);
+  }).catch(function() { alert("Error copying text"); });
+};
+
+window.deletePrompt = function(idToRemove) {
+  historyData = historyData.filter(function(g) {
+    return g.id !== idToRemove;
+  });
+  renderHistory();
+};
+
+window.clearHistory = function() {
+  if(confirm("Are you sure you want to clear all generated prompts?")) {
+    historyData = [];
+    renderHistory();
+  }
+};
+
+function renderHistory() {
+  var container = document.getElementById('gens-container');
+
+  if (historyData.length === 0) {
+    document.getElementById('empty-state').style.display = 'flex';
+    document.getElementById('btn-clear').style.display = 'none';
+    container.innerHTML = "";
+    return;
+  }
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('btn-clear').style.display = 'flex';
+
+  var html = "";
+  for (var i = 0; i < historyData.length; i++) {
+    var g = historyData[i];
+    html += '<div class="prompt-card">';
+    html += '  <div class="pc-head">';
+    html += '    <div class="pc-head-left">';
+    html += '      <div class="pc-number">#' + g.num + '</div>';
+    html += '      <div class="pc-icons">' + g.icons + '</div>';
+    html += '      <div><div class="pc-title">' + g.title + '</div><div class="pc-meta">' + g.meta + '</div></div>';
+    html += '    </div>';
+    html += '    <button class="btn-del" onclick="deletePrompt(' + g.id + ')" title="Delete this prompt">🗑️</button>';
+    html += '  </div>';
+    html += '  <div class="pc-body">';
+    html += '    <div class="p-section-title">📋 Positive Prompt</div>';
+    html += '    <div class="p-box" id="pos-' + g.id + '">' + g.pos + '</div>';
+    html += '    <div class="p-section-title" style="color:#F87171">🚫 Negative Prompt (put after --no)</div>';
+    html += '    <div class="p-box neg" id="neg-' + g.id + '">' + g.neg + '</div>';
+    html += '    <div class="p-actions">';
+    html += '      <button class="btn-copy btn-copy-pos" onclick="doCopy(this, \'pos-' + g.id + '\')">📋 Copy Positive</button>';
+    html += '      <button class="btn-copy btn-copy-neg" onclick="doCopy(this, \'neg-' + g.id + '\')">🚫 Copy Negative</button>';
+    html += '    </div>';
+    html += '    <div class="p-tip">💡 <strong>Tip:</strong> ' + g.tip + '</div>';
+    html += '  </div>';
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+  // Solo se abbiamo appena generato (e quindi scrollato giù prima), torniamo su
+  document.getElementById('main-area').scrollTop = 0;
+}
+</script>
+
+</body>
+</html>
