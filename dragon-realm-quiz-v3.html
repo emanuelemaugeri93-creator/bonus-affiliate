@@ -1,0 +1,528 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Realm Destiny Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+/* Reset & Base - ARCANE VOID THEME */
+:root {
+  --bg-deep: #05050A;
+  --bg-card: rgba(18, 19, 31, 0.6);
+  --bg-card-hover: rgba(28, 30, 49, 0.8);
+  --primary: #00f0ff;
+  --secondary: #b026ff;
+  --text-main: #e2e8f0;
+  --text-muted: #8b949e;
+  --border-subtle: rgba(0, 240, 255, 0.15);
+  --glow: 0 0 20px rgba(0, 240, 255, 0.3);
+  --glow-purple: 0 0 20px rgba(176, 38, 255, 0.4);
+}
+
+#drq-app {
+  all: initial; display: block; font-family: 'Outfit', sans-serif;
+  width: 100vw; min-height: 100vh; position: relative; left: 50%; right: 50%;
+  margin-left: -50vw; margin-right: -50vw;
+  background: var(--bg-deep);
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(176, 38, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
+    linear-gradient(rgba(5, 5, 10, 0.9), rgba(5, 5, 10, 0.9)),
+    url('data:image/svg+xml;utf8,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><path d="M30 0 L60 30 L30 60 L0 30 Z" fill="none" stroke="rgba(255,255,255,0.01)" stroke-width="1"/></svg>');
+  box-sizing: border-box; color: var(--text-main); overflow-x: hidden;
+  display: flex; flex-direction: column;
+}
+#drq-app * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Crystal Header */
+#drq-app .drq-header {
+  text-align: center; padding: 50px 20px 40px; 
+  position: relative; width: 100%;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, rgba(10, 10, 20, 0.8) 0%, transparent 100%);
+}
+#drq-app .drq-badge {
+  display: inline-block; background: transparent;
+  color: var(--primary); font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 900;
+  letter-spacing: 4px; padding: 6px 20px; border-radius: 30px; margin-bottom: 20px;
+  border: 1px solid var(--primary); box-shadow: var(--glow); text-transform: uppercase;
+}
+#drq-app .drq-htitle {
+  font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 900;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, #fff 0%, var(--primary) 50%, var(--secondary) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  line-height: 1.1; margin: 0; padding: 0;
+}
+#drq-app .drq-hsub {
+  font-size: 1.1rem; color: var(--text-muted); margin-top: 15px; font-weight: 300; letter-spacing: 1px;
+}
+
+/* Main Container */
+#drq-app .drq-main {
+  max-width: 1080px; margin: 0 auto; padding: 50px 20px 80px; width: 100%;
+}
+
+/* Original Style Numbered Steps (Adapted to Arcane Theme) */
+#drq-app .drq-steps {
+  display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 40px;
+}
+#drq-app .drq-step {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  color: #444; transition: color 0.3s;
+}
+#drq-app .drq-step.active { color: var(--primary); }
+#drq-app .drq-step.done { color: var(--secondary); }
+
+#drq-app .drq-step-num {
+  width: 34px; height: 34px; border-radius: 50%; border: 2px solid #333;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 900; transition: all 0.3s;
+  background: rgba(10, 10, 15, 0.8);
+}
+#drq-app .drq-step.active .drq-step-num {
+  border-color: var(--primary); color: #fff; box-shadow: var(--glow); background: rgba(0, 240, 255, 0.1);
+}
+#drq-app .drq-step.done .drq-step-num {
+  border-color: var(--secondary); background: var(--secondary); color: white; box-shadow: var(--glow-purple);
+}
+#drq-app .drq-step-line { width: 35px; height: 2px; background: #333; margin: 0 8px; }
+
+/* Quiz Box - Glassmorphism */
+#drq-app .drq-quiz {
+  background: var(--bg-card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle); border-radius: 16px; padding: 50px; position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5); margin-bottom: 30px;
+}
+/* Glowing top accent */
+#drq-app .drq-quiz::before {
+  content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
+}
+
+/* Original Layout Progress Elements inside Quiz Box */
+#drq-app .drq-q-label {
+  font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 3px;
+  color: var(--secondary); margin-bottom: 15px; font-family: 'Outfit', sans-serif;
+}
+#drq-app .drq-q-progress {
+  height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-bottom: 35px; overflow: hidden;
+}
+#drq-app .drq-q-prog-fill {
+  height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); 
+  border-radius: 2px; transition: width 0.4s ease; box-shadow: var(--glow);
+}
+
+#drq-app .drq-q-text {
+  font-family: 'Playfair Display', serif; font-size: 2.2rem; font-style: italic;
+  color: #fff; line-height: 1.3; margin-bottom: 40px; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+
+/* Options - Original 2x2 Grid Layout */
+#drq-app .drq-options { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+#drq-app .drq-opt {
+  background: rgba(10, 11, 16, 0.8); border: 1px solid rgba(255,255,255,0.05); 
+  border-radius: 8px; padding: 20px 25px; cursor: pointer; transition: all 0.3s; 
+  display: flex; align-items: flex-start; gap: 15px;
+}
+#drq-app .drq-opt:hover { 
+  background: var(--bg-card-hover); border-color: var(--primary); 
+  box-shadow: 0 5px 20px rgba(0, 240, 255, 0.1); transform: translateY(-3px);
+}
+#drq-app .drq-opt.selected { 
+  background: linear-gradient(135deg, rgba(176, 38, 255, 0.15), rgba(10, 11, 16, 0.8));
+  border: 1px solid var(--secondary); box-shadow: var(--glow-purple); transform: translateY(-3px);
+}
+
+#drq-app .drq-opt-letter {
+  width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 900; 
+  color: var(--text-muted); transition: all 0.3s;
+}
+#drq-app .drq-opt:hover .drq-opt-letter { border-color: var(--primary); color: var(--primary); }
+#drq-app .drq-opt.selected .drq-opt-letter { 
+  background: var(--secondary); border-color: var(--secondary); color: #fff; box-shadow: var(--glow-purple);
+}
+#drq-app .drq-opt-text { font-size: 1.1rem; font-weight: 400; color: #cbd5e1; line-height: 1.5; padding-top: 4px; }
+#drq-app .drq-opt.selected .drq-opt-text { color: #fff; font-weight: 700; }
+
+/* Navigation - Original Bottom Layout (Back, Counter, Next) */
+#drq-app .drq-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; }
+#drq-app .drq-btn-back {
+  background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px; padding: 12px 25px;
+  font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+#drq-app .drq-btn-back:hover { color: #fff; border-color: var(--primary); }
+
+#drq-app .drq-q-counter { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+
+#drq-app .drq-btn-next {
+  background: var(--primary); color: #000;
+  border: none; border-radius: 4px; padding: 14px 40px;
+  font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 900; letter-spacing: 2px;
+  cursor: pointer; transition: all 0.3s; text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
+}
+#drq-app .drq-btn-next:hover { box-shadow: 0 6px 25px rgba(0, 240, 255, 0.6); transform: translateY(-2px); background: #fff; }
+#drq-app .drq-btn-next:disabled { background: #1e293b; color: #475569; cursor: not-allowed; box-shadow: none; transform: none; }
+
+/* RESULTS PAGE */
+#drq-app .drq-results { display: none; }
+#drq-app .drq-results.show { display: block; animation: drqReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes drqReveal { 0% { opacity: 0; transform: scale(0.95); filter: blur(10px); } 100% { opacity: 1; transform: scale(1); filter: blur(0); } }
+
+#drq-app .drq-res-hero { text-align: center; margin-bottom: 50px; }
+#drq-app .drq-res-label { font-size: 0.9rem; font-weight: 900; text-transform: uppercase; letter-spacing: 4px; color: var(--secondary); margin-bottom: 15px; }
+#drq-app .drq-res-trope-name { 
+  font-family: 'Playfair Display', serif; font-size: 4rem; font-weight: 900; 
+  letter-spacing: 2px; color: #fff; line-height: 1.1; margin-bottom: 15px; text-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+}
+#drq-app .drq-res-sub { font-size: 1.2rem; color: var(--primary); font-family: 'Outfit', sans-serif; font-weight: 300; letter-spacing: 1px; }
+
+#drq-app .drq-res-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; margin-bottom: 40px; }
+#drq-app .drq-res-card {
+  background: rgba(15, 20, 35, 0.6); backdrop-filter: blur(10px);
+  border: 1px solid var(--border-subtle); border-radius: 12px; padding: 30px;
+}
+#drq-app .drq-res-card.full { grid-column: 1 / -1; background: linear-gradient(135deg, rgba(20,25,45,0.8), rgba(10,12,20,0.8)); }
+#drq-app .drq-res-card-title { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 900; letter-spacing: 3px; color: #fff; margin-bottom: 20px; text-transform: uppercase; }
+#drq-app .drq-res-card-body { font-size: 1rem; color: #cbd5e1; line-height: 1.7; font-weight: 300; }
+#drq-app .drq-trait-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
+#drq-app .drq-trait-tag { background: rgba(176, 38, 255, 0.1); border: 1px solid rgba(176, 38, 255, 0.3); color: #e9d5ff; border-radius: 20px; padding: 6px 16px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+#drq-app .drq-score-row { display: flex; align-items: center; gap: 15px; margin-bottom: 16px; }
+#drq-app .drq-score-lbl { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); width: 110px; flex-shrink: 0; }
+#drq-app .drq-score-bg { flex: 1; height: 4px; background: rgba(255,255,255,0.05); position: relative; }
+#drq-app .drq-score-fill { position: absolute; left: 0; top: -1px; height: 6px; background: var(--primary); width: 0; transition: width 1.2s ease; box-shadow: 0 0 10px var(--primary); border-radius: 3px; }
+#drq-app .drq-score-val { font-size: 0.9rem; font-weight: 900; width: 35px; text-align: right; color: #fff; }
+
+#drq-app .drq-actions { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 50px; }
+#drq-app .drq-btn-restart { background: transparent; color: var(--text-muted); border: 1px solid #334155; border-radius: 30px; padding: 14px 35px; font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; }
+#drq-app .drq-btn-restart:hover { color: #fff; border-color: var(--primary); }
+#drq-app .drq-btn-copy { background: var(--secondary); color: #fff; border: none; border-radius: 30px; padding: 14px 35px; font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 900; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-transform: uppercase; box-shadow: var(--glow-purple); }
+#drq-app .drq-btn-copy:hover { box-shadow: 0 0 30px rgba(176, 38, 255, 0.6); transform: translateY(-2px); background: #c04aff; }
+
+@media(max-width: 900px) {
+  #drq-app .drq-options { grid-template-columns: 1fr; }
+  #drq-app .drq-res-grid { grid-template-columns: 1fr; }
+  #drq-app .drq-step-line { width: 15px; }
+  #drq-app .drq-quiz { padding: 30px 20px; }
+  #drq-app .drq-htitle { font-size: 2.8rem; }
+  #drq-app .drq-res-trope-name { font-size: 2.6rem; }
+  #drq-app .drq-nav { flex-direction: column-reverse; gap: 20px; }
+  #drq-app .drq-btn-next, #drq-app .drq-btn-back { width: 100%; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div id="drq-app">
+  <div class="drq-header">
+    <div class="drq-badge">🔮 INFINITE ORACLE</div>
+    <h1 class="drq-htitle">Dragon Realm Fate</h1>
+    <div class="drq-hsub">Countless Visions &middot; Discover your Archetype</div>
+  </div>
+
+  <div class="drq-main">
+    <div id="drq-quiz-wrap">
+      <!-- Original Layout: Numbered Steps on Top -->
+      <div class="drq-steps" id="drq-steps-bar"></div>
+
+      <div class="drq-quiz">
+        <div class="drq-q-label">Vision <span id="drq-qnum">1</span> of 8</div>
+        <div class="drq-q-progress">
+          <div class="drq-q-prog-fill" id="drq-prog-fill" style="width: 12.5%;"></div>
+        </div>
+
+        <div class="drq-q-text" id="drq-q-text"></div>
+
+        <!-- Original Layout: 2x2 Grid -->
+        <div class="drq-options" id="drq-options"></div>
+
+        <!-- Original Layout: Back on Left, Next on Right -->
+        <div class="drq-nav">
+          <button class="drq-btn-back" id="drq-btn-back" onclick="drqBack()" style="visibility: hidden;">&#8592; BACK</button>
+          <div class="drq-q-counter" id="drq-q-counter"></div>
+          <button class="drq-btn-next" id="drq-btn-next" onclick="drqNext()" disabled>NEXT &#8594;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS INTERFACE -->
+    <div class="drq-results" id="drq-results">
+      <div class="drq-res-hero">
+        <div class="drq-res-label">The Oracle has spoken</div>
+        <div class="drq-res-trope-name" id="drq-trope-name"></div>
+        <div class="drq-res-sub" id="drq-trope-tagline"></div>
+      </div>
+
+      <div class="drq-res-grid" id="drq-res-grid"></div>
+
+      <div class="drq-actions">
+        <button class="drq-btn-restart" onclick="drqRestart()">Seek Another Vision</button>
+        <button class="drq-btn-copy" onclick="drqCopy()">Extract Lore Prompt</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- MASSIVE DRAGON REALM QUESTION POOL (Unlimited Configurations) ---
+// We have over 30 questions. Picking 8 randomly gives millions of combinations.
+const drqQuestionPool = [
+  // Previous questions
+  { q: "You find a cursed relic whispering promises of ancient power. What do you do?", opts: [ { t: "Destroy it immediately before it corrupts the innocent.", w: { paladin:3, ranger:1 } }, { t: "Study its arcane matrix safely from a distance.", w: { sorcerer:3, necromancer:2 } }, { t: "Claim the power entirely. The cost is irrelevant.", w: { warlock:3, berserker:1 } }, { t: "Use it as bait to draw out your true enemies.", w: { assassin:3, warlock:1 } } ] },
+  { q: "A void rift opens above your city. What is your reaction?", opts: [ { t: "Charge the rift head-on, screaming a war cry.", w: { berserker:3, paladin:2 } }, { t: "Slip into the chaos to eliminate specific targets.", w: { assassin:3, ranger:1 } }, { t: "Channel the surrounding death to fuel my own spells.", w: { necromancer:3, warlock:1 } }, { t: "Take to the skies and strike the rift from above.", w: { dragonrider:3, sorcerer:1 } } ] },
+  { q: "How do you view those who follow you?", opts: [ { t: "They are my family. I would die a thousand times for them.", w: { paladin:3, dragonrider:2 } }, { t: "They are temporary tools in a much larger equation.", w: { warlock:3, necromancer:1 } }, { t: "They just get in the way of the slaughter.", w: { berserker:3, assassin:1 } }, { t: "I work alone. Attachments are a fatal weakness.", w: { ranger:3, sorcerer:1 } } ] },
+  { q: "You are imprisoned in an antimagic crystal cell. Your move?", opts: [ { t: "Patiently map the guards' patrol and pick the lock.", w: { assassin:3, ranger:1 } }, { t: "Pray. Absolute faith will shatter these walls.", w: { paladin:3, dragonrider:1 } }, { t: "Recite the forbidden paradox that shatters reality.", w: { warlock:3, sorcerer:2 } }, { t: "Wait for the guard to slip, then break his neck.", w: { berserker:3, necromancer:1 } } ] },
+  { q: "To seal the abyssal gate, one sacrifice is demanded.", opts: [ { t: "My soul. I will burn in the void forever if I must.", w: { warlock:3, necromancer:2 } }, { t: "My life. Let my blood close the gate.", w: { paladin:3, berserker:1 } }, { t: "Someone else's life. The mission supersedes morality.", w: { assassin:3, sorcerer:1 } }, { t: "I will find a third option or break the gate entirely.", w: { dragonrider:3, ranger:1 } } ] },
+  { q: "An arrogant noble challenges you to a duel of honor.", opts: [ { t: "I accept openly. Let the gods decide the victor.", w: { paladin:3, dragonrider:2 } }, { t: "I break his jaw before the duel is even arranged.", w: { berserker:3, warlock:1 } }, { t: "I agree, but ensure his wine is poisoned the night prior.", w: { assassin:3, necromancer:1 } }, { t: "I calculate his fighting style and dismantle him flawlessly.", w: { sorcerer:3, ranger:2 } } ] },
+  { q: "What lies beneath your outward demeanor?", opts: [ { t: "A boiling sea of unending, violent fury.", w: { berserker:3, warlock:1 } }, { t: "A frozen landscape of calculated ambition.", w: { necromancer:3, sorcerer:2 } }, { t: "A deep reservoir of guilt from past failures.", w: { paladin:3, ranger:2 } }, { t: "A frightening appetite for absolute chaos.", w: { assassin:3, dragonrider:1 } } ] },
+  { q: "If forced into a monstrous form, what would you be?", opts: [ { t: "A skeletal lord commanding an army of the dead.", w: { necromancer:3, berserker:1 } }, { t: "A formless shadow that suffocates its victims.", w: { assassin:3, warlock:1 } }, { t: "A majestic, city-destroying primordial wyrm.", w: { dragonrider:3, paladin:1 } }, { t: "An elusive, shapeshifting apex predator.", w: { ranger:3, sorcerer:1 } } ] },
+  { q: "The war is over. The battlefield is silent. What now?", opts: [ { t: "Find the strongest alcohol to drown out the screams.", w: { berserker:3, ranger:1 } }, { t: "Absorb the lingering essence of the fallen.", w: { necromancer:3, warlock:1 } }, { t: "Kneel in the mud and deliver last rites.", w: { paladin:3, dragonrider:1 } }, { t: "Vanish before the survivors start asking questions.", w: { assassin:3, sorcerer:1 } } ] },
+  { q: "Your comrade falls during a critical mission.", opts: [ { t: "Shield their body with my own until help arrives.", w: { paladin:3, ranger:1 } }, { t: "Use dark magic to forcefully keep their heart beating.", w: { necromancer:3, warlock:2 } }, { t: "Leave them. The objective is more important.", w: { assassin:3, berserker:1 } }, { t: "Call my beast to extract them while I hold the line.", w: { dragonrider:3, sorcerer:1 } } ] },
+
+  // New Questions for massive variation
+  { q: "A plague ravages the capital. How do you intervene?", opts: [ { t: "Quarantine the infected. The healthy must survive.", w: { assassin:3, ranger:2 } }, { t: "Heal as many as possible until I collapse.", w: { paladin:3, dragonrider:1 } }, { t: "Study the pathogen to weaponize it later.", w: { necromancer:3, sorcerer:2 } }, { t: "Make a deal with a plague demon to reverse it.", w: { warlock:3, berserker:1 } } ] },
+  { q: "You discover a sleeping ancient dragon. What is your action?", opts: [ { t: "Attempt to forge a telepathic soul-bond with it.", w: { dragonrider:3, warlock:1 } }, { t: "Slit its throat and harvest its heart.", w: { assassin:3, berserker:2 } }, { t: "Leave it be. Some forces shouldn't be disturbed.", w: { ranger:3, paladin:1 } }, { t: "Extract its scales for advanced arcane research.", w: { sorcerer:3, necromancer:1 } } ] },
+  { q: "A corrupt king offers you endless wealth to betray your cause.", opts: [ { t: "I take the gold, then assassinate him anyway.", w: { assassin:3, warlock:2 } }, { t: "I burn his throne room to the ground with him in it.", w: { dragonrider:3, berserker:2 } }, { t: "I refuse and challenge him to trial by combat.", w: { paladin:3, ranger:1 } }, { t: "I accept. Loyalty is just a variable in the equation.", w: { sorcerer:3, necromancer:2 } } ] },
+  { q: "You are lost in an illusionary forest that feeds on memories.", opts: [ { t: "I rely on my primal instincts to sniff out reality.", w: { ranger:3, berserker:1 } }, { t: "I unravel the spellwork matrix to find the source.", w: { sorcerer:3, warlock:2 } }, { t: "I commune with the dead spirits trapped here for guidance.", w: { necromancer:3, assassin:1 } }, { t: "I burn the forest down. Illusions can't survive ash.", w: { dragonrider:3, paladin:1 } } ] },
+  { q: "Your weapon shatters in the middle of a duel to the death.", opts: [ { t: "I beat them to death with my bare, bloody hands.", w: { berserker:3, dragonrider:1 } }, { t: "I blind them with dirt and strike a fatal nerve.", w: { assassin:3, ranger:2 } }, { t: "I channel raw arcane energy through my own veins.", w: { sorcerer:3, warlock:2 } }, { t: "I hold my ground. My faith is my true armor.", w: { paladin:3, necromancer:1 } } ] },
+  { q: "You find a tome containing the true names of the Gods.", opts: [ { t: "Burn it. Mortals are not meant to have this power.", w: { paladin:3, ranger:2 } }, { t: "Memorize it to rewrite the laws of the universe.", w: { sorcerer:3, warlock:2 } }, { t: "Use it to blackmail the divine realm.", w: { assassin:3, necromancer:2 } }, { t: "Tear the pages out and eat them to absorb the magic.", w: { berserker:3, dragonrider:1 } } ] },
+  { q: "To cross the infinite desert, you must...", opts: [ { t: "Navigate by the stars and ration every drop of water.", w: { ranger:3, assassin:2 } }, { t: "Summon a storm to blot out the scorching sun.", w: { sorcerer:3, dragonrider:2 } }, { t: "March forward endlessly. Pain means nothing to me.", w: { berserker:3, paladin:2 } }, { t: "Reanimate dead beasts of burden to carry me across.", w: { necromancer:3, warlock:1 } } ] },
+  { q: "You discover the Gods are just parasites feeding on mortal faith.", opts: [ { t: "I will slaughter them all, one by one.", w: { berserker:3, warlock:2 } }, { t: "I keep the secret. Chaos would destroy the realm.", w: { assassin:3, paladin:1 } }, { t: "I will find a way to replace them and rule.", w: { sorcerer:3, necromancer:2 } }, { t: "I sever my connection and return to the wild.", w: { ranger:3, dragonrider:1 } } ] },
+  { q: "An ancient construct asks you for its first order in a millennia.", opts: [ { t: "Protect the innocent at all costs.", w: { paladin:3, dragonrider:1 } }, { t: "Annihilate my enemies without mercy.", w: { berserker:3, warlock:2 } }, { t: "Gather every scrap of knowledge in the continent.", w: { sorcerer:3, necromancer:1 } }, { t: "Return to sleep. The world doesn't need you.", w: { ranger:3, assassin:2 } } ] },
+  { q: "Your oldest friend is slowly turning into a void monster.", opts: [ { t: "I end their suffering swiftly and quietly.", w: { assassin:3, ranger:2 } }, { t: "I will scour the ends of the earth for a cure.", w: { paladin:3, sorcerer:1 } }, { t: "I bind the void within them to my own soul instead.", w: { warlock:3, necromancer:2 } }, { t: "If they turn, I will fight them to the death with honor.", w: { berserker:3, dragonrider:2 } } ] },
+  { q: "You are offered absolute immortality.", opts: [ { t: "I refuse. Death gives life its meaning.", w: { ranger:3, paladin:2 } }, { t: "I accept. I have eternity to master the arcane.", w: { sorcerer:3, warlock:2 } }, { t: "I am already the master of death. Immortality is redundant.", w: { necromancer:3, assassin:1 } }, { t: "I accept, so I can fight forever.", w: { berserker:3, dragonrider:1 } } ] },
+  { q: "The crown lies on the ground, the king dead. What now?", opts: [ { t: "I take it. The realm needs an iron fist.", w: { warlock:3, berserker:2 } }, { t: "I crush it under my boot. No more kings.", w: { assassin:3, ranger:2 } }, { t: "I give it to the rightful heir and stand guard.", w: { paladin:3, dragonrider:2 } }, { t: "I melt it down to study its magical properties.", w: { sorcerer:3, necromancer:1 } } ] },
+  { q: "A prophecy states you will eventually destroy the world.", opts: [ { t: "I will prove destiny wrong through righteous acts.", w: { paladin:3, sorcerer:1 } }, { t: "If the world deserves to burn, I will strike the match.", w: { warlock:3, berserker:2 } }, { t: "I will vanish into the wastes so I can hurt no one.", w: { ranger:3, assassin:2 } }, { t: "I will find the oracle who wrote it and kill them.", w: { necromancer:3, dragonrider:1 } } ] }
+];
+
+// --- ARCHETYPES DB ---
+const drqTropes = {
+  paladin: { name: "THE OATHBOUND", tagline: "Light piercing the darkest abyss.", description: "You are the unbreakable shield against the void. Bound by a sacred oath, your power comes from absolute conviction. While others succumb to corruption, you stand firm, though the heavy weight of your duty often isolates you from those you protect.", traits: ["Resolute", "Unyielding", "Self-Sacrificing", "Zealous"], strengths: ["Inspires absolute loyalty", "Immune to psychic corruption", "Devastating in frontal combat"], weaknesses: ["Refuses to compromise", "Easily exploited by deceptive foes", "Carries crippling guilt"], scores: { Vitality: 90, Strength: 85, Agility: 40, Magic: 50, Cunning: 35 } },
+  berserker: { name: "THE BLOOD-DRUNK", tagline: "Pain is merely fuel for the slaughter.", description: "You do not fight with calculated technique; you fight with pure, unadulterated rage. You are a force of nature, terrifying to both enemies and allies. The closer you are to death, the more catastrophic your power becomes.", traits: ["Relentless", "Chaotic", "Fearless", "Primal"], strengths: ["Unstoppable physical force", "Ignores grievous wounds", "Breaks enemy morale instantly"], weaknesses: ["Highly susceptible to mind magic", "Friendly fire is a constant risk", "Blind recklessness leads to traps"], scores: { Vitality: 95, Strength: 95, Agility: 50, Magic: 10, Cunning: 30 } },
+  assassin: { name: "THE MOONLIT SHADOW", tagline: "Death arrives without a whisper.", description: "You operate in the margins of reality. You understand that true power isn't displayed on battlefields, but in dimly lit rooms with a poisoned blade. You are calculating, pragmatic, and entirely lethal.", traits: ["Precise", "Unseen", "Pragmatic", "Cold"], strengths: ["Ends conflicts before they start", "Master of infiltration", "Exploits the smallest vulnerability"], weaknesses: ["Useless in heavy siege combat", "Distrusted universally", "Isolation breeds intense paranoia"], scores: { Vitality: 40, Strength: 50, Agility: 95, Magic: 30, Cunning: 90 } },
+  ranger: { name: "THE ASHEN TRACKER", tagline: "Survival is the only law left.", description: "You belong to the wild, untamed ruins of the realm. You are a survivalist perfectly adapted to a hostile, dying world. You trust your heightened instincts far more than any king, god, or magical vow.", traits: ["Independent", "Perceptive", "Adaptable", "Gruff"], strengths: ["Unmatched environmental awareness", "Lethal at extreme range", "Self-sufficient in absolute crisis"], weaknesses: ["Refuses to work in a team", "Cynical to a fault", "Vulnerable in enclosed structures"], scores: { Vitality: 60, Strength: 55, Agility: 85, Magic: 25, Cunning: 75 } },
+  sorcerer: { name: "THE ARCANE SCHOLAR", tagline: "Reality bends if you know the formula.", description: "To you, the arcane is not a chaotic force, but a complex matrix to be mastered. You possess an intellect that borders on terrifying, manipulating the very fabric of space while viewing the world as an equation to solve.", traits: ["Brilliant", "Arrogant", "Curious", "Detached"], strengths: ["Catastrophic area-of-effect power", "Unravels complex magical mysteries", "Always has a contingency plan"], weaknesses: ["Physically fragile", "Hubris leads to dangerous underestimation", "Overcomplicates simple problems"], scores: { Vitality: 30, Strength: 20, Agility: 45, Magic: 95, Cunning: 85 } },
+  warlock: { name: "THE VOID CHANNELER", tagline: "Power demands a toll. I will pay it.", description: "You bypassed years of tedious study by forging a pact with an eldritch entity. Your magic is explosive, terrifying, and demands a heavy price. You are dangerously ambitious, willing to sacrifice your own essence for control.", traits: ["Ambitious", "Charismatic", "Corrupted", "Driven"], strengths: ["Access to forbidden, reality-tearing power", "Master of manipulation", "Survives through sheer willpower"], weaknesses: ["Constantly fighting the entity's influence", "Magic physically deteriorates them", "Hunted by inquisitors"], scores: { Vitality: 50, Strength: 40, Agility: 60, Magic: 90, Cunning: 80 } },
+  necromancer: { name: "THE GRAVECALLER", tagline: "Death is merely a change in management.", description: "You look at a battlefield and see an army waiting to be awoken. You have conquered the ultimate fear—death—and bent it entirely to your will. You are morbid, deeply calculating, and possess a patience that outlasts empires.", traits: ["Morbid", "Patient", "Taboo", "Commanding"], strengths: ["Never fights alone", "Turns enemy casualties into assets", "Immune to psychological terror"], weaknesses: ["Universally despised", "Requires organic material to reach full potential", "Physically weak without thralls"], scores: { Vitality: 45, Strength: 30, Agility: 40, Magic: 85, Cunning: 85 } },
+  dragonrider: { name: "THE PRIMORDIAL RIDER", tagline: "The burning skies belong to us.", description: "You share your soul with a creature of ancient myth. You are proud, fierce, and command the atmosphere. Your absolute bond with your drake makes you a symbol of awe, bringing cinematic destruction wherever you fly.", traits: ["Proud", "Majestic", "Soul-bonded", "Fierce"], strengths: ["Unrivaled aerial superiority", "Commands deep, instinctual respect", "Beast provides secondary senses"], weaknesses: ["A massive, obvious target", "Useless in underground spaces", "If the beast dies, their soul shatters"], scores: { Vitality: 75, Strength: 70, Agility: 80, Magic: 60, Cunning: 50 } }
+};
+
+// --- ENGINE ---
+let drqSession = [];
+let drqCurrent = 0;
+let drqSelected = null;
+
+function drqShuffle(arr) {
+  let a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function drqInit() {
+  // We have a large pool. Shuffle the ENTIRE pool, then pick the first 8.
+  // This guarantees millions of unique test configurations.
+  let shuffledPool = drqShuffle(drqQuestionPool);
+  drqSession = shuffledPool.slice(0, 8).map(q => ({
+    q: q.q, 
+    opts: drqShuffle(q.opts), // Shuffle the answers too!
+    answer: null
+  }));
+  drqCurrent = 0;
+  drqSelected = null;
+
+  document.getElementById('drq-quiz-wrap').style.display = 'block';
+  document.getElementById('drq-results').classList.remove('show');
+
+  drqRenderSteps();
+  drqRenderQ();
+}
+
+function drqRenderSteps() {
+  let bar = document.getElementById('drq-steps-bar');
+  let html = '';
+  for(let i=0; i<8; i++) {
+    if(i > 0) html += `<div class="drq-step-line"></div>`;
+    let cls = 'drq-step' + (i < drqCurrent ? ' done' : (i === drqCurrent ? ' active' : ''));
+    let content = i < drqCurrent ? '&#10003;' : (i + 1);
+    html += `<div class="${cls}"><div class="drq-step-num">${content}</div></div>`;
+  }
+  bar.innerHTML = html;
+}
+
+function drqRenderQ() {
+  let q = drqSession[drqCurrent];
+  document.getElementById('drq-qnum').textContent = (drqCurrent + 1);
+  document.getElementById('drq-prog-fill').style.width = ((drqCurrent + 1) / 8 * 100) + '%';
+  document.getElementById('drq-q-text').textContent = q.q;
+  document.getElementById('drq-q-counter').textContent = (8 - drqCurrent - 1) + " Remaining";
+
+  document.getElementById('drq-btn-back').style.visibility = (drqCurrent > 0) ? 'visible' : 'hidden';
+  document.getElementById('drq-btn-next').disabled = true;
+  document.getElementById('drq-btn-next').innerHTML = (drqCurrent === 7) ? 'REVEAL &#8594;' : 'NEXT &#8594;';
+  drqSelected = null;
+
+  let letters = ['A','B','C','D'];
+  let html = '';
+  for(let i=0; i<q.opts.length; i++) {
+    let sel = (q.answer === i) ? ' selected' : '';
+    html += `<div class="drq-opt${sel}" onclick="drqSelect(this, ${i})">
+      <div class="drq-opt-letter">${letters[i]}</div>
+      <div class="drq-opt-text">${q.opts[i].t}</div>
+    </div>`;
+  }
+  document.getElementById('drq-options').innerHTML = html;
+
+  if(q.answer !== null) {
+    drqSelected = q.answer;
+    document.getElementById('drq-btn-next').disabled = false;
+  }
+}
+
+function drqSelect(el, idx) {
+  document.querySelectorAll('.drq-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  drqSelected = idx;
+  document.getElementById('drq-btn-next').disabled = false;
+}
+
+function drqNext() {
+  if(drqSelected === null) return;
+  drqSession[drqCurrent].answer = drqSelected;
+
+  if(drqCurrent < 7) {
+    drqCurrent++;
+    drqRenderSteps();
+    drqRenderQ();
+  } else {
+    drqShowResults();
+  }
+}
+
+function drqBack() {
+  if(drqCurrent > 0) {
+    drqCurrent--;
+    drqRenderSteps();
+    drqRenderQ();
+  }
+}
+
+function drqShowResults() {
+  let scores = {};
+  Object.keys(drqTropes).forEach(k => scores[k] = 0);
+
+  drqSession.forEach(q => {
+    if(q.answer === null) return;
+    let weights = q.opts[q.answer].w;
+    Object.keys(weights).forEach(k => {
+      if(scores[k] !== undefined) scores[k] += weights[k];
+    });
+  });
+
+  let top = Object.keys(scores).reduce((a,b) => scores[a] > scores[b] ? a : b);
+  let trope = drqTropes[top];
+
+  document.getElementById('drq-quiz-wrap').style.display = 'none';
+  let res = document.getElementById('drq-results');
+
+  document.getElementById('drq-trope-name').textContent = trope.name;
+  document.getElementById('drq-trope-tagline').textContent = `"${trope.tagline}"`;
+
+  let traitHtml = trope.traits.map(t => `<span class="drq-trait-tag">${t}</span>`).join('');
+  let strHtml = trope.strengths.map(s => `<div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); color:#22d3ee; font-size:0.9rem;">+ ${s}</div>`).join('');
+  let wkHtml = trope.weaknesses.map(w => `<div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); color:#c084fc; font-size:0.9rem;">- ${w}</div>`).join('');
+
+  let scHtml = Object.keys(trope.scores).map(k => `
+    <div class="drq-score-row">
+      <div class="drq-score-lbl">${k}</div>
+      <div class="drq-score-bg"><div class="drq-score-fill" data-v="${trope.scores[k]}"></div></div>
+      <div class="drq-score-val">${trope.scores[k]}</div>
+    </div>
+  `).join('');
+
+  let sorted = Object.keys(scores).sort((a,b) => scores[b] - scores[a]);
+  let secondary = sorted.slice(1,3).map(k => drqTropes[k].name.replace('THE ', '')).join(' // ');
+
+  document.getElementById('drq-res-grid').innerHTML = `
+    <div class="drq-res-card full">
+      <div class="drq-res-card-title">Arcane Codex Entry</div>
+      <div class="drq-res-card-body">
+        ${trope.description}
+        <div style="margin-top:20px; font-size:0.85rem; color:#64748b; text-transform:uppercase; letter-spacing:2px;">
+          Latent Resonance: <span style="color:var(--primary); font-weight:900;">${secondary}</span>
+        </div>
+        <div class="drq-trait-tags">${traitHtml}</div>
+      </div>
+    </div>
+
+    <div class="drq-res-card">
+      <div class="drq-res-card-title">Combat Metrics</div>
+      <div class="drq-res-card-body" style="margin-top:30px;">${scHtml}</div>
+    </div>
+
+    <div class="drq-res-card">
+      <div class="drq-res-card-title">Tactical Analysis</div>
+      <div class="drq-res-card-body">
+        <div style="font-size:0.8rem; font-weight:900; color:#06b6d4; letter-spacing:2px; margin-bottom:5px;">ADVANTAGES</div>
+        <div style="margin-bottom:20px;">${strHtml}</div>
+        <div style="font-size:0.8rem; font-weight:900; color:#a855f7; letter-spacing:2px; margin-bottom:5px;">VULNERABILITIES</div>
+        <div>${wkHtml}</div>
+      </div>
+    </div>
+  `;
+
+  res.classList.add('show');
+  res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  setTimeout(() => {
+    document.querySelectorAll('.drq-score-fill').forEach(b => {
+      b.style.width = b.getAttribute('data-v') + '%';
+    });
+  }, 400);
+
+  window.drqResult = trope;
+}
+
+function drqRestart() {
+  document.getElementById('drq-results').classList.remove('show');
+  drqInit();
+  document.getElementById('drq-app').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function drqCopy() {
+  let t = window.drqResult;
+  if(!t) return;
+  let txt = `Subject: Create a cinematic dark fantasy story concept.\n\n`;
+  txt += `Character Archetype: ${t.name} (${t.tagline})\n`;
+  txt += `Core Vibe: ${t.description}\n`;
+  txt += `Keywords: ${t.traits.join(', ')}\n`;
+  txt += `Strengths to highlight: ${t.strengths.join(', ')}\n`;
+  txt += `Fatal Flaw to exploit: ${t.weaknesses[0]}\n\n`;
+  txt += `Style: Grimdark, high magic, deeply atmospheric, narrative focus.`;
+
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(() => alert('Lore Prompt copied! Ready to paste into your AI.'));
+  } else {
+    let ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('Lore Prompt copied!');
+  }
+}
+
+// Start
+drqInit();
+</script>
+</body>
+</html>
