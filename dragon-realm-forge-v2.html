@@ -1,0 +1,719 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Realm Character Forge</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Nunito:wght@400;700;900&family=Rye&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* Reset & Base */
+#dr-app {
+  all: initial; display: block; font-family: 'Nunito', sans-serif;
+  width: 100vw; height: 100vh; position: relative; left: 50%; right: 50%;
+  margin-left: -50vw; margin-right: -50vw;
+  background: #0a0505;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(180, 20, 20, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 40%),
+    linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
+    url('data:image/svg+xml;utf8,<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h40v40H0z" fill="none"/><path d="M0 39.5h40M39.5 0v40" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></svg>');
+  box-sizing: border-box; color: #e0e0e0; overflow-x: hidden;
+  display: flex; flex-direction: column;
+}
+#dr-app * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Header with VFX */
+#dr-app .dr-header {
+  background: linear-gradient(180deg, #0f0505 0%, #050202 100%);
+  color: #d4af37; text-align: center;
+  padding: 30px 20px 40px; border-bottom: 2px solid #500000;
+  position: relative; width: 100%; flex-shrink: 0;
+  box-shadow: 0 5px 30px rgba(139, 0, 0, 0.4);
+}
+/* Glowing Ember Particles */
+#dr-app .dr-header::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    radial-gradient(circle at 50% 100%, rgba(139,0,0,0.3) 0%, transparent 60%);
+  pointer-events: none; z-index: 1;
+}
+
+#dr-app .dr-logo-wrap {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; z-index: 2;
+}
+
+#dr-app .dr-logo-svg {
+  width: 70px; height: 70px; margin-bottom: 10px;
+  filter: drop-shadow(0 0 10px rgba(212,175,55,0.6));
+  animation: floatLogo 4s ease-in-out infinite;
+}
+
+@keyframes floatLogo {
+  0% { transform: translateY(0px) scale(1); filter: drop-shadow(0 0 10px rgba(212,175,55,0.6)); }
+  50% { transform: translateY(-5px) scale(1.05); filter: drop-shadow(0 0 20px rgba(212,175,55,1)); }
+  100% { transform: translateY(0px) scale(1); filter: drop-shadow(0 0 10px rgba(212,175,55,0.6)); }
+}
+
+#dr-app .dr-htitle {
+  font-family: 'Rye', serif; font-size: 3.5rem; letter-spacing: 5px;
+  color: transparent;
+  background: linear-gradient(to bottom, #fceabb 0%, #f8b500 50%, #d4af37 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  position: relative; line-height: 1.1; text-transform: uppercase;
+  margin: 0; padding: 0;
+  text-shadow: 0px 4px 20px rgba(212,175,55,0.3);
+}
+
+#dr-app .dr-hsub {
+  font-size: 1.1rem; color: #b0b0b0; margin-top: 15px;
+  font-family: 'Cinzel', serif; letter-spacing: 3px; text-transform: uppercase;
+  position: relative; display: inline-block;
+}
+#dr-app .dr-hsub::before, #dr-app .dr-hsub::after {
+  content: '✦'; position: absolute; top: 50%; transform: translateY(-50%);
+  color: #8b0000; font-size: 0.8rem;
+}
+#dr-app .dr-hsub::before { left: -25px; }
+#dr-app .dr-hsub::after { right: -25px; }
+
+/* Main Layout: Split Screen */
+#dr-app .dr-layout {
+  display: flex; flex: 1; overflow: hidden;
+}
+
+/* Left Sidebar (Settings) */
+#dr-app .dr-sidebar {
+  width: 420px; min-width: 420px; background: rgba(10, 5, 5, 0.95);
+  border-right: 2px solid #3a1c1c; box-shadow: 5px 0 25px rgba(0,0,0,0.8);
+  overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 25px;
+  z-index: 10;
+}
+#dr-app .dr-sidebar::-webkit-scrollbar { width: 6px; }
+#dr-app .dr-sidebar::-webkit-scrollbar-track { background: #0a0505; }
+#dr-app .dr-sidebar::-webkit-scrollbar-thumb { background: #500000; border-radius: 3px; }
+
+/* Right Canvas (Result) */
+#dr-app .dr-canvas {
+  flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+  overflow-y: auto; padding: 40px;
+}
+#dr-app .dr-canvas::-webkit-scrollbar { width: 8px; }
+#dr-app .dr-canvas::-webkit-scrollbar-track { background: #050202; }
+#dr-app .dr-canvas::-webkit-scrollbar-thumb { background: #3a1c1c; border-radius: 4px; }
+
+/* Panel Styles inside Sidebar */
+#dr-app .dr-panel {
+  background: rgba(20, 10, 10, 0.6); border: 1px solid #3a1c1c; border-radius: 6px;
+  padding: 20px; position: relative;
+}
+#dr-app .dr-panel::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+  background: linear-gradient(to bottom, #8b0000, transparent);
+}
+#dr-app .dr-ptitle {
+  font-family: 'Cinzel', serif; font-size: 1.3rem; letter-spacing: 2px;
+  color: #ff4d4d; border-bottom: 1px solid rgba(255,77,77,0.2); padding-bottom: 8px;
+  margin-bottom: 16px; text-transform: uppercase; display: flex; align-items: center; gap: 10px;
+}
+
+/* Controls */
+#dr-app .dr-fg { margin-bottom: 16px; }
+#dr-app .dr-fg label {
+  display: block; font-weight: 700; font-size: 0.8rem;
+  text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px;
+  color: #a0a0a0; font-family: 'Nunito', sans-serif;
+}
+#dr-app .dr-select, #dr-app .dr-input, #dr-app .dr-textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid #3a1c1c;
+  border-radius: 4px; font-family: 'Nunito', sans-serif; font-size: 0.9rem;
+  font-weight: 700; background: #000; outline: none; color: #fff;
+  transition: all 0.3s;
+}
+#dr-app .dr-select:focus, #dr-app .dr-input:focus, #dr-app .dr-textarea:focus {
+  border-color: #d4af37; box-shadow: 0 0 10px rgba(212,175,55,0.2); background: #111;
+}
+#dr-app .dr-textarea { resize: vertical; min-height: 70px; }
+
+/* Tags */
+#dr-app .dr-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+#dr-app .dr-tag {
+  padding: 5px 12px; border: 1px solid #3a1c1c; border-radius: 20px;
+  font-size: 0.8rem; font-weight: 800; cursor: pointer; background: #050202;
+  color: #888; user-select: none; font-family: 'Nunito', sans-serif;
+  transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+}
+#dr-app .dr-tag:hover { border-color: #8b0000; color: #ccc; }
+#dr-app .dr-tag.on { 
+  background: linear-gradient(135deg, #8b0000 0%, #400000 100%);
+  color: #fff; border-color: #ff4d4d; box-shadow: 0 0 8px rgba(139,0,0,0.6); 
+}
+
+/* Generate Button */
+#dr-app .dr-btn-gen {
+  width: 100%; padding: 16px; 
+  background: linear-gradient(to right, #8b0000, #500000, #8b0000);
+  background-size: 200% auto;
+  color: white; border: 1px solid #ff4d4d; border-radius: 4px;
+  font-family: 'Cinzel', serif; font-size: 1.3rem; letter-spacing: 3px;
+  cursor: pointer; box-shadow: 0 4px 15px rgba(139,0,0,0.4);
+  transition: all 0.3s; text-transform: uppercase; font-weight: 900;
+  animation: drShine 3s linear infinite;
+  margin-top: 10px;
+}
+@keyframes drShine { to { background-position: 200% center; } }
+#dr-app .dr-btn-gen:hover { box-shadow: 0 6px 20px rgba(255,77,77,0.4); transform: translateY(-2px); border-color: #ff9999; }
+#dr-app .dr-btn-gen:active { transform: translateY(1px); box-shadow: 0 2px 5px rgba(139,0,0,0.4); }
+
+/* Initial Empty State */
+#dr-app .dr-empty-state {
+  text-align: center; color: #555; font-family: 'Cinzel', serif;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+#dr-app .dr-empty-state svg { width: 100px; height: 100px; opacity: 0.2; }
+#dr-app .dr-empty-text { font-size: 1.5rem; letter-spacing: 2px; }
+
+/* Result Card Styles */
+#dr-app .dr-result { display: none; width: 100%; max-width: 900px; margin: auto; }
+#dr-app .dr-result.show { display: block; animation: drReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes drReveal {
+  0% { opacity: 0; transform: scale(0.95) translateY(30px); filter: blur(5px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+#dr-app .dr-card {
+  display: grid; grid-template-columns: 240px 1fr; gap: 30px;
+  background: linear-gradient(135deg, rgba(15,5,5,0.95) 0%, rgba(5,2,2,0.95) 100%);
+  border: 1px solid #500000; border-radius: 8px; padding: 30px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(212,175,55,0.1);
+  position: relative; overflow: hidden;
+}
+/* Card inner glow */
+#dr-app .dr-card::before {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle at center, rgba(139,0,0,0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+#dr-app .dr-avatar-box { display: flex; flex-direction: column; align-items: center; z-index: 2; }
+#dr-app .dr-avatar {
+  background: #000; border: 2px solid #500000; border-radius: 4px;
+  width: 100%; aspect-ratio: 3/4; display: flex; align-items: center; justify-content: center;
+  font-size: 6rem; position: relative; overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 0 30px rgba(139,0,0,0.2);
+}
+
+#dr-app .dr-cname { 
+  font-family: 'Cinzel', serif; font-size: 2.8rem; letter-spacing: 3px; 
+  color: #fff; line-height: 1; text-shadow: 0 2px 10px rgba(212,175,55,0.5);
+  margin-bottom: 5px;
+}
+#dr-app .dr-arch {
+  display: inline-block; color: #d4af37; font-weight: 900; font-size: 1rem;
+  text-transform: uppercase; letter-spacing: 2px; font-family: 'Cinzel', serif;
+  margin-bottom: 20px;
+}
+
+#dr-app .dr-info { display: flex; flex-direction: column; z-index: 2; }
+#dr-app .dr-sgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+#dr-app .dr-sbox {
+  background: rgba(0,0,0,0.5); border: 1px solid #3a1c1c;
+  border-radius: 4px; padding: 12px 16px;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+}
+#dr-app .dr-slbl { 
+  font-size: 0.65rem; font-weight: 900; text-transform: uppercase; 
+  letter-spacing: 2px; color: #777; margin-bottom: 6px; font-family: 'Nunito', sans-serif; 
+}
+#dr-app .dr-sval { font-weight: 800; font-size: 1rem; color: #ddd; font-family: 'Nunito', sans-serif; }
+
+#dr-app .dr-bubble {
+  background: linear-gradient(90deg, rgba(139,0,0,0.1), transparent);
+  border-left: 4px solid #8b0000; margin-top: 20px;
+  padding: 20px 25px; font-style: italic; font-weight: 700; font-size: 1.15rem;
+  color: #f0f0f0; font-family: 'Nunito', sans-serif; position: relative;
+}
+#dr-app .dr-bubble::before { 
+  content: '"'; font-size: 4rem; color: rgba(139,0,0,0.3); 
+  font-family: 'Cinzel', serif; position: absolute; left: 10px; top: -10px; line-height: 1;
+}
+
+/* Stats Layout inside Avatar Box */
+#dr-app .dr-stats-container {
+  margin-top: 25px; width: 100%; background: rgba(0,0,0,0.4);
+  padding: 15px; border-radius: 4px; border: 1px solid #221;
+}
+#dr-app .dr-prow { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+#dr-app .dr-prow:last-child { margin-bottom: 0; }
+#dr-app .dr-plbl { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; width: 65px; flex-shrink: 0; color: #aaa; letter-spacing: 1px; }
+#dr-app .dr-pbg { flex: 1; height: 6px; background: #111; border-radius: 3px; overflow: hidden; position: relative; }
+#dr-app .dr-pfill { 
+  height: 100%; background: linear-gradient(90deg, #8b0000, #ff4d4d); 
+  border-radius: 3px; transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1); width: 0;
+  box-shadow: 0 0 10px rgba(255,77,77,0.5);
+}
+#dr-app .dr-pval { font-size: 0.75rem; font-weight: 900; width: 25px; text-align: right; color: #d4af37; }
+
+#dr-app .dr-tdisplay { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+#dr-app .dr-tdtag { 
+  background: transparent; border: 1px solid #500000; color: #ff9999; 
+  border-radius: 2px; padding: 4px 12px; font-size: 0.75rem; font-weight: 900; 
+  text-transform: uppercase; letter-spacing: 1px;
+}
+#dr-app .dr-hr { border: none; border-top: 1px solid #3a1c1c; margin: 20px 0; }
+
+/* Bottom Action Bar */
+#dr-app .dr-actions { 
+  display: flex; gap: 15px; justify-content: center; margin-top: 25px; 
+  opacity: 0; transform: translateY(10px); animation: drFadeUp 0.5s ease forwards 0.8s;
+}
+@keyframes drFadeUp { to { opacity: 1; transform: translateY(0); } }
+
+#dr-app .dr-action-btn {
+  padding: 12px 24px; color: #fff; border: 1px solid; border-radius: 4px;
+  font-family: 'Cinzel', serif; font-size: 0.95rem; letter-spacing: 2px; cursor: pointer;
+  transition: all 0.2s; text-transform: uppercase; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+#dr-app .dr-btn-copy { background: #1a1a2e; border-color: #457b9d; }
+#dr-app .dr-btn-copy:hover { background: #2a2a4e; box-shadow: 0 0 15px rgba(69,123,157,0.4); }
+#dr-app .dr-btn-dl { background: #0a1c10; border-color: #2d6a4f; }
+#dr-app .dr-btn-dl:hover { background: #102c1a; box-shadow: 0 0 15px rgba(45,106,79,0.4); }
+
+#dr-app .dr-loading { 
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px;
+}
+#dr-app .dr-spinner {
+  width: 50px; height: 50px; border: 3px solid rgba(139,0,0,0.3);
+  border-top-color: #ff4d4d; border-radius: 50%; animation: drSpin 1s linear infinite;
+}
+@keyframes drSpin { to { transform: rotate(360deg); } }
+#dr-app .dr-loading-text { font-family: 'Cinzel', serif; font-size: 1.5rem; letter-spacing: 4px; color: #d4af37; }
+
+/* Responsive */
+@media(max-width: 900px) {
+  #dr-app .dr-layout { flex-direction: column; overflow-y: auto; }
+  #dr-app .dr-sidebar { width: 100%; border-right: none; border-bottom: 2px solid #500000; overflow-y: visible; }
+  #dr-app .dr-canvas { padding: 20px; align-items: flex-start; }
+  #dr-app .dr-card { grid-template-columns: 1fr; }
+  #dr-app .dr-avatar-box { max-width: 300px; margin: 0 auto; width: 100%; }
+  #dr-app .dr-htitle { font-size: 2.2rem; }
+  #dr-app .dr-header { padding: 20px 10px; }
+}
+
+/* Print CSS */
+@media print {
+  #dr-app { background: #fff !important; height: auto; display: block; }
+  #dr-app .dr-header, #dr-app .dr-sidebar, #dr-app .dr-actions { display: none !important; }
+  #dr-app .dr-canvas { padding: 0; display: block; overflow: visible; }
+  #dr-app .dr-result { display: block !important; max-width: 100%; margin: 0; }
+  #dr-app .dr-card { 
+    background: #fff !important; border: 2px solid #000 !important; color: #000 !important; 
+    box-shadow: none !important; page-break-inside: avoid;
+  }
+  #dr-app .dr-cname { color: #000 !important; text-shadow: none !important; }
+  #dr-app .dr-arch { color: #555 !important; }
+  #dr-app .dr-sbox, #dr-app .dr-stats-container { background: #f9f9f9 !important; border-color: #ccc !important; }
+  #dr-app .dr-slbl, #dr-app .dr-plbl { color: #666 !important; }
+  #dr-app .dr-sval, #dr-app .dr-pval { color: #000 !important; }
+  #dr-app .dr-tdtag { border-color: #000 !important; color: #000 !important; }
+  #dr-app .dr-bubble { background: #f0f0f0 !important; color: #000 !important; border-left-color: #000 !important; }
+  #dr-app .dr-pfill { background: #666 !important; box-shadow: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="dr-app">
+  <!-- Header -->
+  <div class="dr-header">
+    <div class="dr-logo-wrap">
+      <!-- SVG Dragon Logo -->
+      <svg class="dr-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 5 L60 30 L90 35 L70 55 L75 85 L50 70 L25 85 L30 55 L10 35 L40 30 Z" fill="none" stroke="#d4af37" stroke-width="2"/>
+        <path d="M50 15 L55 33 L78 37 L62 52 L65 75 L50 63 L35 75 L38 52 L22 37 L45 33 Z" fill="rgba(212,175,55,0.2)" stroke="#d4af37" stroke-width="1"/>
+        <circle cx="50" cy="50" r="8" fill="#8b0000" />
+      </svg>
+      <h1 class="dr-htitle">Dragon Realm</h1>
+      <div class="dr-hsub">Character Forge</div>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="dr-layout">
+
+    <!-- LEFT SIDEBAR: Controls -->
+    <div class="dr-sidebar">
+
+      <div class="dr-panel">
+        <div class="dr-ptitle">⚔️ Hero's Identity</div>
+
+        <div class="dr-fg">
+          <label>Character Name (Leave blank for auto)</label>
+          <input type="text" id="dr-name" class="dr-input" placeholder="e.g. Kaelen, Vaelia, Goroth...">
+        </div>
+
+        <div class="dr-fg">
+          <label>Lineage / Race</label>
+          <select id="dr-race" class="dr-select">
+            <option value="human">🗡️ Human / Cursed Mortal</option>
+            <option value="elf">🏹 High Elf / Shadowkin</option>
+            <option value="dragonborn">🐉 Dragonborn / Drakenguard</option>
+            <option value="demon">🔥 Tiefling / Nether-spawn</option>
+            <option value="undead">💀 Undead / Revenant</option>
+          </select>
+        </div>
+
+        <div class="dr-fg">
+          <label>Combat Class</label>
+          <div class="dr-tags" id="dr-class-tags">
+            <div class="dr-tag on" onclick="drSelTag(this,'dr-class-tags')">Paladin</div>
+            <div class="dr-tag" onclick="drSelTag(this,'dr-class-tags')">Necromancer</div>
+            <div class="dr-tag" onclick="drSelTag(this,'dr-class-tags')">Assassin</div>
+            <div class="dr-tag" onclick="drSelTag(this,'dr-class-tags')">Berserker</div>
+            <div class="dr-tag" onclick="drSelTag(this,'dr-class-tags')">Blood Mage</div>
+            <div class="dr-tag" onclick="drSelTag(this,'dr-class-tags')">Warlock</div>
+            <div class="dr-tag" onclick="drSelTag(this,'dr-class-tags')">Ranger</div>
+          </div>
+        </div>
+
+        <div class="dr-fg" style="margin-bottom:0;">
+          <label>Origin Realm</label>
+          <select id="dr-realm" class="dr-select">
+            <option value="ashen">🌋 The Ashen Wastes</option>
+            <option value="abyssal">🌊 The Abyssal Depths</option>
+            <option value="crystal">🏰 The Crystal Citadel</option>
+            <option value="whispering">🌲 The Whispering Woods</option>
+            <option value="void">🌌 The Void Between Worlds</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="dr-panel">
+        <div class="dr-ptitle">🔮 Lore & Traits</div>
+
+        <div class="dr-fg">
+          <label>Personality (Pick up to 3)</label>
+          <div class="dr-tags" id="dr-pers-tags">
+            <div class="dr-tag on" onclick="drTogTag(this,'dr-pers-tags')">Ruthless</div>
+            <div class="dr-tag" onclick="drTogTag(this,'dr-pers-tags')">Honorable</div>
+            <div class="dr-tag" onclick="drTogTag(this,'dr-pers-tags')">Vengeful</div>
+            <div class="dr-tag" onclick="drTogTag(this,'dr-pers-tags')">Brooding</div>
+            <div class="dr-tag" onclick="drTogTag(this,'dr-pers-tags')">Cunning</div>
+            <div class="dr-tag" onclick="drTogTag(this,'dr-pers-tags')">Zealous</div>
+            <div class="dr-tag" onclick="drTogTag(this,'dr-pers-tags')">Mad</div>
+          </div>
+        </div>
+
+        <div class="dr-fg">
+          <label>Signature Relic</label>
+          <select id="dr-weapon" class="dr-select">
+            <option value="sword">🗡️ Cursed Greatsword</option>
+            <option value="magic">📖 Grimoire of the Ancients</option>
+            <option value="daggers">🔪 Twin Soul-Stealing Daggers</option>
+            <option value="scythe">🪓 Reaper's Blood Scythe</option>
+            <option value="bow">🏹 Whisperwind Bow</option>
+          </select>
+        </div>
+
+        <div class="dr-fg" style="margin-bottom:0;">
+          <label>Tragic Backstory Hook (Optional)</label>
+          <textarea id="dr-backstory" class="dr-textarea" placeholder="e.g. Betrayed by their king, forced to make a pact..."></textarea>
+        </div>
+      </div>
+
+      <button class="dr-btn-gen" onclick="drGenerate()">🔥 Forge Character</button>
+
+    </div>
+
+    <!-- RIGHT CANVAS: Result Display -->
+    <div class="dr-canvas" id="dr-canvas">
+
+      <!-- Initial Empty State -->
+      <div class="dr-empty-state" id="dr-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <div class="dr-empty-text">Awaiting the Forge...</div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="dr-loading" id="dr-loading" style="display:none;">
+        <div class="dr-spinner"></div>
+        <div class="dr-loading-text">Summoning from the Abyss</div>
+      </div>
+
+      <!-- Generated Codex -->
+      <div class="dr-result" id="dr-result">
+        <div id="dr-content"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// --- DATABASES ---
+const drNames = {
+  prefixes: ["Kael", "Vael", "Gor", "Thal", "Mor", "Dra", "Zeph", "Nyx", "Aza", "Ery", "Vor", "Mal", "Syl", "Ily", "Fen"],
+  suffixes: ["en", "ia", "oth", "ion", "gath", "thos", "riel", "xis", "zar", "dor", "vok", "wyn", "mar", "tris", "rin"]
+};
+
+const drArcDb = {
+  human: ["The Fallen Knight", "The Cursed Wanderer", "The Last King", "The Sellsword"],
+  elf: ["The Shadow Weaver", "The Exiled Noble", "The Moonlit Assassin", "The Ancient Oracle"],
+  dragonborn: ["The Scale-Breaker", "The Inferno Vanguard", "The Last Flight", "The Ember Lord"],
+  demon: ["The Blood-Bound Pactmaker", "The Nether Prince", "The Flame-Touched Exile"],
+  undead: ["The Revenant Commander", "The Soul-Starved Lich", "The Deathless Vanguard"]
+};
+
+const drWkDb = {
+  human: ["Mortality limits their ambition, aging faster when using magic.", "Haunted by the ghosts of those they failed to save.", "Easily corrupted by promises of immense power."],
+  elf: ["Bound to an ancient oath that restricts their freedom.", "Arrogance leads them to underestimate 'lesser' foes.", "Their magic fades if cut off from moonlight."],
+  dragonborn: ["Prone to draconic rage, losing tactical control.", "Hunted by poachers seeking their magical scales.", "Require massive amounts of thermal energy to survive."],
+  demon: ["Must consume souls/blood to maintain their physical form.", "Burned by holy artifacts and consecrated ground.", "Constantly fighting the whispers of their demonic sire."],
+  undead: ["Slowly losing their human memories as time passes.", "Sunlight physically deteriorates their corporeal form.", "Bound to the site of their horrific death."]
+};
+
+const drRvlDb = {
+  human: "A corrupted tyrant who sold the kingdom to dark forces.",
+  elf: "A fanatic inquisitor dedicated to eradicating all ancient magic.",
+  dragonborn: "An Ancient Wyrm who views humanoid dragons as abominations.",
+  demon: "A zealot paladin wielding a weapon forged from angel tears.",
+  undead: "The necromancer who denied them the peace of the afterlife."
+};
+
+const drQtDb = {
+  ruthless: ["Mercy is a luxury for the weak. I am out of coin.", "I will pave my road to the throne with their bones."],
+  honorable: ["My blade may break, but my oath remains eternal.", "Even in the abyss, we must hold the line."],
+  vengeful: ["Every scar they gave me will be returned tenfold.", "The flames of my wrath will outlast the stars."],
+  brooding: ["The shadows are quiet... unlike the voices in my head.", "Do not stand too close. My darkness is contagious."],
+  cunning: ["A sword ends one life. A whisper can end an empire.", "They play checkers, while I play gods."],
+  zealous: ["PURGE THE UNCLEAN IN HOLY FIRE!", "My path is righteous, therefore my sins are absolved."],
+  mad: ["HAHAHA! DO YOU HEAR THE BLOOD SINGING?!", "Sanity is a prison! Let it burn!"]
+};
+
+const drAvDb = {
+  human: ["⚔️", "🛡️"], elf: ["🧝", "🌙"], dragonborn: ["🐉", "🔥"], demon: ["👿", "🩸"], undead: ["💀", "🦴"]
+};
+
+const drStStats = {
+  human: { Vitality: [60,20], Strength: [70,20], Agility: [65,20], Arcane: [40,25], Lore: [60,20] },
+  elf: { Vitality: [45,20], Strength: [50,20], Agility: [90,10], Arcane: [85,15], Lore: [80,20] },
+  dragonborn: { Vitality: [85,15], Strength: [90,10], Agility: [40,20], Arcane: [60,25], Lore: [50,20] },
+  demon: { Vitality: [75,20], Strength: [80,20], Agility: [70,20], Arcane: [80,20], Lore: [55,25] },
+  undead: { Vitality: [95,5], Strength: [65,25], Agility: [30,20], Arcane: [75,20], Lore: [70,20] }
+};
+
+// --- UTILS ---
+function drRnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function drStat(b, v) { return Math.min(100, Math.max(10, b + Math.floor((Math.random() - 0.5) * v))); }
+function drEsc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+
+function drSelTag(el, grp) {
+  document.querySelectorAll('#' + grp + ' .dr-tag').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+}
+function drTogTag(el, grp) {
+  const active = document.querySelectorAll('#' + grp + ' .dr-tag.on');
+  if (el.classList.contains('on')) { el.classList.remove('on'); }
+  else {
+    if (active.length >= 3) { active[0].classList.remove('on'); }
+    el.classList.add('on');
+  }
+}
+
+// --- GENERATE CORE ---
+function drGenerate() {
+  document.getElementById('dr-empty').style.display = 'none';
+  const rp = document.getElementById('dr-result');
+  const rc = document.getElementById('dr-content');
+  const loader = document.getElementById('dr-loading');
+
+  rp.classList.remove('show');
+  rc.innerHTML = '';
+  loader.style.display = 'flex';
+
+  setTimeout(() => {
+    // Collect Inputs
+    const nm = document.getElementById('dr-name').value.trim();
+    const race = document.getElementById('dr-race').value;
+    const realmLabel = document.getElementById('dr-realm').selectedOptions[0].text;
+    const wpLabel = document.getElementById('dr-weapon').selectedOptions[0].text;
+    const bs = document.getElementById('dr-backstory').value.trim();
+
+    const clEl = document.querySelector('#dr-class-tags .dr-tag.on');
+    const cl = clEl ? clEl.textContent.trim() : 'Warrior';
+
+    const psEls = document.querySelectorAll('#dr-pers-tags .dr-tag.on');
+    const ps = Array.from(psEls).map(e => e.textContent.trim());
+
+    // Generate Data
+    const charName = nm || (drRnd(drNames.prefixes) + drRnd(drNames.suffixes));
+    const arc = drRnd(drArcDb[race]);
+    const wk = drRnd(drWkDb[race]);
+    const rv = drRvlDb[race];
+    const av = drRnd(drAvDb[race]);
+
+    const psKey = ps.length > 0 ? ps[0].toLowerCase() : 'brooding';
+    const qt = drRnd(drQtDb[psKey] || drQtDb['brooding']);
+
+    // Stats
+    const baseStats = drStStats[race];
+    const stats = {};
+    Object.keys(baseStats).forEach(k => { stats[k] = drStat(baseStats[k][0], baseStats[k][1]); });
+
+    // Formatting HTML
+    const raceLabel = document.getElementById('dr-race').selectedOptions[0].text.replace(/^.*? /, ''); 
+    const psBadges = ps.map(p => `<span class="dr-tdtag">${drEsc(p)}</span>`).join('');
+    const bsHtml = bs ? `<div class="dr-sbox" style="grid-column: 1 / -1;"><div class="dr-slbl">📜 Origin Lore</div><div class="dr-sval">${drEsc(bs)}</div></div>` : '';
+
+    const bars = Object.keys(stats).map(k => `
+      <div class="dr-prow">
+        <div class="dr-plbl">${k}</div>
+        <div class="dr-pbg"><div class="dr-pfill" data-v="${stats[k]}"></div></div>
+        <div class="dr-pval">${stats[k]}</div>
+      </div>
+    `).join('');
+
+    // Output Build
+    rc.innerHTML = `
+      <div class="dr-card" id="dr-card-export">
+
+        <!-- Left: Visual & Stats -->
+        <div class="dr-avatar-box">
+          <div class="dr-avatar">${av}</div>
+          <div class="dr-stats-container">
+            <div class="dr-slbl" style="text-align:center; margin-bottom:12px; color:#d4af37;">Combat Attributes</div>
+            ${bars}
+          </div>
+        </div>
+
+        <!-- Right: Lore & Details -->
+        <div class="dr-info">
+          <div style="border-bottom: 1px solid #3a1c1c; padding-bottom: 15px; margin-bottom: 15px;">
+            <div class="dr-cname">${drEsc(charName.toUpperCase())}</div>
+            <div class="dr-arch">${drEsc(arc)}</div>
+          </div>
+
+          <div class="dr-sgrid">
+            <div class="dr-sbox">
+              <div class="dr-slbl">🧬 Lineage</div>
+              <div class="dr-sval">${drEsc(raceLabel)}</div>
+            </div>
+            <div class="dr-sbox">
+              <div class="dr-slbl">⚔️ Class</div>
+              <div class="dr-sval">${drEsc(cl)}</div>
+            </div>
+            <div class="dr-sbox">
+              <div class="dr-slbl">🌌 Realm</div>
+              <div class="dr-sval">${drEsc(realmLabel)}</div>
+            </div>
+            <div class="dr-sbox">
+              <div class="dr-slbl">🩸 Relic</div>
+              <div class="dr-sval">${drEsc(wpLabel)}</div>
+            </div>
+            ${bsHtml}
+          </div>
+
+          <div style="margin-top: 15px;">
+            <div class="dr-slbl">🎭 Alignment & Traits</div>
+            <div class="dr-tdisplay">${psBadges}</div>
+          </div>
+
+          <hr class="dr-hr">
+
+          <div class="dr-sgrid">
+            <div class="dr-sbox" style="border-left-color: #ff4d4d;">
+              <div class="dr-slbl" style="color: #ff4d4d;">⛓️ Fatal Curse</div>
+              <div class="dr-sval" style="font-size:0.9rem;">${drEsc(wk)}</div>
+            </div>
+            <div class="dr-sbox">
+              <div class="dr-slbl">👁️ Arch Nemesis</div>
+              <div class="dr-sval" style="font-size:0.9rem;">${drEsc(rv)}</div>
+            </div>
+          </div>
+
+          <div class="dr-bubble">${drEsc(qt)}</div>
+        </div>
+      </div>
+
+      <div class="dr-actions">
+        <button class="dr-action-btn dr-btn-copy" onclick="drCopy()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+          Copy Prompt
+        </button>
+        <button class="dr-action-btn dr-btn-dl" onclick="drDownload()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Save Image
+        </button>
+      </div>
+    `;
+
+    loader.style.display = 'none';
+    rp.classList.add('show');
+
+    // Animate bars
+    setTimeout(() => {
+      document.querySelectorAll('.dr-pfill').forEach(b => {
+        b.style.width = b.dataset.v + '%';
+      });
+    }, 100);
+
+    // Scroll mobile to result
+    if(window.innerWidth <= 900) {
+      document.getElementById('dr-canvas').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Save for copying
+    window._drLast = {
+      name: charName, arc: arc, race: raceLabel, cl: cl, realm: realmLabel,
+      wp: wpLabel, ps: ps, wk: wk, rv: rv, qt: qt, bs: bs
+    };
+
+  }, 1200); // Fake loading time for dramatic effect
+}
+
+// --- ACTIONS ---
+function drCopy() {
+  const d = window._drLast || {};
+  let txt = `Subject: Create a dark fantasy character concept art.\n\n`;
+  txt += `Character Name: ${d.name}, ${d.arc}\n`;
+  txt += `Appearance: A ${d.race} ${d.cl} from ${d.realm}, wielding a ${d.wp}.\n`;
+  txt += `Vibe/Personality: ${(d.ps||[]).join(', ')}.\n`;
+  txt += `Context/Flaw: ${d.wk}\n`;
+  if(d.bs) txt += `Backstory: ${d.bs}\n`;
+  txt += `\nStyle: Cinematic dark fantasy, intricate armor details, atmospheric lighting, moody, high resolution, Unreal Engine 5 render style.`;
+
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(() => alert('AI Image Prompt copied to clipboard! Paste it into Midjourney/DALL-E.'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('AI Image Prompt copied to clipboard!');
+  }
+}
+
+function drDownload() {
+  const el = document.getElementById('dr-card-export');
+  if(!el) return;
+  if(typeof html2canvas === 'undefined') { alert('Loading script, try again.'); return; }
+
+  // Hide actions temporarily if needed
+  html2canvas(el, { 
+    backgroundColor: '#0a0505', 
+    scale: 2, 
+    useCORS: true,
+    logging: false
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'dragon-realm-hero.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+</script>
+</body>
+</html>
