@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midlife Crossroads — Choice Map Puzzle</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Playfair+Display:ital,wght@0,900;1,700&display=swap');
+
+:root{--bg-body:#1a1a2e;--stroke:#1a1a2e;--paper:#fff;--sb:#0f766e}
+[data-theme="teal"]   {--c1:#0d9488;--c2:#0891b2;--c3:#7c3aed;--c4:#db2777;--l1:#f0fdfa;--l2:#ecfeff;--l3:#faf5ff;--l4:#fdf2f8}
+[data-theme="fire"]   {--c1:#dc2626;--c2:#ea580c;--c3:#d97706;--c4:#16a34a;--l1:#fef2f2;--l2:#fff7ed;--l3:#fffbeb;--l4:#f0fdf4}
+[data-theme="violet"] {--c1:#7c3aed;--c2:#be185d;--c3:#0369a1;--c4:#b45309;--l1:#faf5ff;--l2:#fdf2f8;--l3:#f0f9ff;--l4:#fffbeb}
+[data-theme="ocean"]  {--c1:#0369a1;--c2:#0f766e;--c3:#6d28d9;--c4:#b45309;--l1:#f0f9ff;--l2:#f0fdfa;--l3:#ede9fe;--l4:#fffbeb}
+[data-theme="candy"]  {--c1:#ff6b9d;--c2:#ffd93d;--c3:#6bcb77;--c4:#4d96ff;--l1:#fff0f5;--l2:#fffbea;--l3:#f0fff2;--l4:#f0f5ff}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100vh;overflow:hidden;font-family:'Nunito',sans-serif}
+body{display:flex;background:var(--bg-body);-webkit-font-smoothing:antialiased}
+
+/* SIDEBAR */
+#sidebar{
+  width:340px;min-width:340px;background:var(--sb);
+  padding:18px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:11px;
+  border-right:5px solid var(--stroke);z-index:10;scrollbar-width:none;
+}
+#sidebar::-webkit-scrollbar{display:none}
+.app-title{font-size:24px;font-weight:900;text-align:center;color:#fff;text-shadow:3px 3px 0 var(--stroke);letter-spacing:.5px;line-height:1.15}
+.app-title span{display:block;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-top:3px;text-shadow:none}
+.app-tag{background:var(--stroke);color:#fff;font-size:11px;font-weight:800;text-align:center;padding:5px 10px;border-radius:8px}
+.cg{background:rgba(255,255,255,.18);padding:12px;border-radius:12px;border:3px solid var(--stroke);box-shadow:4px 4px 0 var(--stroke)}
+.cl{display:block;font-size:11px;font-weight:900;text-transform:uppercase;color:var(--stroke);margin-bottom:7px;letter-spacing:.05em}
+select{width:100%;padding:9px 11px;border-radius:8px;border:3px solid var(--stroke);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;background:#fff;color:var(--stroke);cursor:pointer;outline:none;appearance:none;box-shadow:3px 3px 0 var(--stroke);margin-bottom:8px}
+select:last-child{margin-bottom:0}
+select:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--stroke)}
+.swatch-row{display:flex;gap:7px}
+.sw{flex:1;height:30px;border-radius:9px;cursor:pointer;border:3px solid var(--stroke);box-shadow:3px 3px 0 var(--stroke);transition:.1s;position:relative}
+.sw:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--stroke)}
+.sw.on::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;text-shadow:1px 1px 0 rgba(0,0,0,.5)}
+.sw[data-t="teal"]  {background:linear-gradient(135deg,#0d9488,#0891b2,#7c3aed,#db2777)}
+.sw[data-t="fire"]  {background:linear-gradient(135deg,#dc2626,#ea580c,#d97706,#16a34a)}
+.sw[data-t="violet"]{background:linear-gradient(135deg,#7c3aed,#be185d,#0369a1,#b45309)}
+.sw[data-t="ocean"] {background:linear-gradient(135deg,#0369a1,#0f766e,#6d28d9,#b45309)}
+.sw[data-t="candy"] {background:linear-gradient(135deg,#ff6b9d,#ffd93d,#6bcb77,#4d96ff)}
+.btn{width:100%;padding:11px;border-radius:9px;border:3px solid var(--stroke);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;transition:.1s;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:4px 4px 0 var(--stroke);margin-bottom:8px}
+.btn:last-child{margin-bottom:0}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--stroke)}
+.btn-gen{background:#ffd93d;color:var(--stroke)}
+.btn-reveal{background:#6bcb77;color:var(--stroke)}
+.btn-png{background:#ff9ff3;color:var(--stroke)}
+.btn-print{background:#fff;color:var(--stroke)}
+.hint{font-size:10px;color:rgba(255,255,255,.7);text-align:center;font-weight:700;line-height:1.5}
+
+/* PREVIEW */
+#preview-area{
+  flex:1;padding:20px;overflow-y:auto;
+  display:flex;justify-content:center;align-items:flex-start;
+  background-image:radial-gradient(#576574 2px,transparent 2px);background-size:30px 30px;background-color:#1a1a2e;
+  scrollbar-width:none;
+}
+#preview-area::-webkit-scrollbar{display:none}
+
+/* A4 */
+.ws{
+  width:210mm;height:297mm;min-height:297mm;max-height:297mm;
+  background:var(--paper);border:5px solid var(--stroke);border-radius:16px;
+  box-shadow:15px 15px 0 rgba(0,0,0,.35);
+  position:relative;padding:9mm 11mm;
+  display:flex;flex-direction:column;
+  color:var(--stroke);overflow:hidden;font-family:'Nunito',sans-serif;
+}
+
+/* HEADER */
+.ws-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:5px solid var(--stroke);padding-bottom:8px;margin-bottom:9px;flex-shrink:0}
+.ws-title{font-size:32px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:-1px;text-shadow:3px 3px 0 var(--c1)}
+.ws-subtitle{display:inline-block;margin-top:5px;background:var(--stroke);color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:6px;letter-spacing:.05em}
+.ws-info{display:flex;flex-direction:column;gap:7px;width:190px}
+.irow{display:flex;align-items:flex-end;font-size:13px;font-weight:800}
+.ilbl{margin-right:6px;white-space:nowrap}
+.iline{flex:1;border-bottom:3px dashed var(--stroke);height:14px}
+
+/* INSTRUCTION */
+.ws-inst{background:var(--stroke);color:#fff;border-radius:10px;padding:6px 12px;font-size:10px;font-weight:800;line-height:1.5;margin-bottom:9px;flex-shrink:0;display:flex;align-items:center;gap:8px}
+.ws-inst-ico{font-size:18px;flex-shrink:0}
+
+/* GRID */
+.ws-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:9px}
+
+/* CHOICE CARD */
+.cc{border:4px solid var(--stroke);border-radius:14px;display:flex;flex-direction:column;box-shadow:5px 5px 0 var(--stroke);overflow:hidden;position:relative}
+.cc:nth-child(1){background:var(--l1)}
+.cc:nth-child(2){background:var(--l2)}
+.cc:nth-child(3){background:var(--l3)}
+.cc:nth-child(4){background:var(--l4)}
+.cc-bar{height:7px;flex-shrink:0}
+.cc:nth-child(1) .cc-bar{background:var(--c1)}
+.cc:nth-child(2) .cc-bar{background:var(--c2)}
+.cc:nth-child(3) .cc-bar{background:var(--c3)}
+.cc:nth-child(4) .cc-bar{background:var(--c4)}
+
+.cc-body{padding:7px 9px;display:flex;flex-direction:column;gap:5px;flex:1}
+
+/* Dilemma question */
+.cc-question{
+  background:#fff;border:2.5px solid var(--stroke);border-radius:9px;
+  padding:5px 8px;box-shadow:2px 2px 0 var(--stroke);flex-shrink:0;
+}
+.cc-q-label{font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;opacity:.5;margin-bottom:2px}
+.cc-q-text{font-size:10px;font-weight:800;line-height:1.4;color:var(--stroke)}
+
+/* VS row */
+.cc-vs-row{display:flex;align-items:stretch;gap:5px;flex:1;min-height:0}
+
+/* Option side */
+.cc-option{
+  flex:1;border-radius:9px;border:3px solid var(--stroke);
+  padding:5px 7px;box-shadow:2px 2px 0 var(--stroke);
+  display:flex;flex-direction:column;gap:3px;background:#fff;
+  position:relative;overflow:hidden;cursor:pointer;transition:.1s;
+}
+.cc-option:active{transform:scale(.98)}
+.cc-opt-letter{
+  font-size:20px;font-weight:900;line-height:1;
+  opacity:.15;position:absolute;bottom:3px;right:7px;
+}
+.cc-opt-ico{font-size:20px;line-height:1;margin-bottom:1px}
+.cc-opt-title{font-size:10px;font-weight:900;color:var(--stroke);line-height:1.2}
+.cc-opt-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+.cc-tag{font-size:7.5px;font-weight:800;padding:1px 5px;border-radius:999px;border:2px solid var(--stroke);background:transparent;color:var(--stroke)}
+
+/* VS badge */
+.cc-vs{
+  width:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:900;color:var(--stroke);opacity:.4;
+}
+
+/* Choice boxes row */
+.cc-choice-row{display:flex;gap:5px;flex-shrink:0}
+.cc-choice-btn{
+  flex:1;padding:5px 4px;border-radius:8px;border:3px solid var(--stroke);
+  font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;
+  cursor:pointer;box-shadow:2px 2px 0 var(--stroke);background:#fff;
+  color:var(--stroke);transition:.1s;text-align:center;
+}
+.cc-choice-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--stroke)}
+.cc-choice-btn.selected-a{color:#fff}
+.cc-choice-btn.selected-b{color:#fff}
+
+/* INSIGHT panel */
+.cc-insight{flex-shrink:0}
+.cc-insight-inner{
+  border-radius:8px;border:3px solid var(--stroke);padding:5px 8px;
+  background:#fff;box-shadow:2px 2px 0 var(--stroke);
+}
+.cc-ins-lbl{font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;opacity:.5;margin-bottom:2px}
+.cc-ins-choice{font-size:9px;font-weight:900;color:var(--stroke);margin-bottom:2px}
+.cc-ins-text{font-size:8.5px;font-weight:700;line-height:1.35;opacity:.7}
+
+/* Reveal state */
+.ws.revealed .cc-insight-inner{opacity:1}
+.cc-insight-inner{opacity:0;transition:.3s}
+
+@page{size:A4 portrait;margin:0}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{background:none;margin:0;padding:0;display:block;overflow:hidden}
+  #sidebar,.hint{display:none!important}
+  #preview-area{padding:0;display:block;background:none}
+  .ws{margin:0;width:100%;height:100vh;max-height:100vh;box-shadow:none!important;border-radius:0!important;page-break-inside:avoid}
+  [contenteditable="true"]{border:none!important;background:none!important}
+  .cc-insight-inner{opacity:1!important}
+}
+</style>
+</head>
+<body data-theme="teal">
+
+<div id="sidebar">
+  <div>
+    <div class="app-title">MIDLIFE CROSSROADS<span>Choice Map Puzzle</span></div>
+    <div class="app-tag">🛤️ Choose your path. Reveal what it means.</div>
+  </div>
+
+  <div class="cg">
+    <span class="cl">🎯 Life Area</span>
+    <select id="cfg-area" onchange="generate()">
+      <option value="mixed">🎲 Mixed — All Areas</option>
+      <option value="career">💼 Career & Work</option>
+      <option value="love">💛 Love & Relationships</option>
+      <option value="health">🌿 Health & Body</option>
+      <option value="purpose">🧭 Purpose & Meaning</option>
+      <option value="freedom">🦋 Freedom & Lifestyle</option>
+      <option value="identity">🪞 Identity & Self</option>
+    </select>
+    <span class="cl" style="margin-top:6px">⚙️ Reveal Mode</span>
+    <select id="cfg-mode">
+      <option value="hidden">🔒 Hidden — Student fills choices</option>
+      <option value="shown">✦ Revealed — Shows insights</option>
+    </select>
+  </div>
+
+  <div class="cg">
+    <span class="cl">🎨 Color Theme</span>
+    <div class="swatch-row">
+      <div class="sw on" data-t="teal"   onclick="setTheme(this)"></div>
+      <div class="sw"    data-t="fire"   onclick="setTheme(this)"></div>
+      <div class="sw"    data-t="violet" onclick="setTheme(this)"></div>
+      <div class="sw"    data-t="ocean"  onclick="setTheme(this)"></div>
+      <div class="sw"    data-t="candy"  onclick="setTheme(this)"></div>
+    </div>
+  </div>
+
+  <div class="cg" style="background:transparent;border:none;box-shadow:none;padding:0">
+    <button class="btn btn-gen" onclick="generate()">🎲 SCRAMBLE NEW PUZZLE</button>
+    <button class="btn btn-reveal" id="btn-reveal" onclick="toggleReveal()">👁 REVEAL INSIGHTS</button>
+    <button class="btn btn-png" onclick="savePNG()">💾 SAVE AS PNG</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ PRINT WORKSHEET</button>
+  </div>
+
+  <div class="hint">✏️ Tap A or B on the worksheet to mark your choice, then reveal insights!</div>
+</div>
+
+<div id="preview-area">
+  <div class="ws" id="worksheet"></div>
+</div>
+
+<script>
+const DILEMMAS = {
+  career:[
+    {
+      q:"A major opportunity appears — but it requires leaving everything familiar behind.",
+      a:{ico:'🔥',title:'Take the leap',tags:['Bold','Risky','Alive'],insightTitle:'You chose Growth over Safety',insight:'This choice reveals a hunger for aliveness that security alone can no longer satisfy. The fear you feel is proportional to the meaning this move holds for you.'},
+      b:{ico:'🏠',title:'Stay & refine',tags:['Stable','Strategic','Patient'],insightTitle:'You chose Depth over Speed',insight:'Staying is not fear — it can be wisdom. But ask honestly: is this patience or avoidance? The answer lives in your gut, not your logic.'},
+    },
+    {
+      q:"You can earn more doing work that bores you, or earn less doing work you love.",
+      a:{ico:'💰',title:'More money, less meaning',tags:['Secure','Practical','Hollow'],insightTitle:'You chose Security over Soul',insight:'Money as a goal is valid — but notice if this choice numbs something important in you. What would you do with the money that the meaning would have given you directly?'},
+      b:{ico:'🎨',title:'Less money, more meaning',tags:['Alive','Risky','True'],insightTitle:'You chose Soul over Security',insight:'This is the harder path financially, and the easier path psychologically. The real risk here is not poverty — it\'s fully becoming who you were meant to be.'},
+    },
+    {
+      q:"Lead a team of people or do deep solo work you love?",
+      a:{ico:'👥',title:'Lead the team',tags:['Influence','Impact','Demanding'],insightTitle:'You chose Influence over Depth',insight:'Leadership at midlife is often a call toward legacy. Notice if you\'re leading from strength — or from the need to be needed.'},
+      b:{ico:'🎯',title:'Deep solo work',tags:['Flow','Mastery','Quiet'],insightTitle:'You chose Mastery over Management',insight:'The desire for deep, uninterrupted work is one of midlife\'s clearest signals. What you create alone often outlasts what you manage collectively.'},
+    },
+    {
+      q:"Build something of your own or reach the top of someone else's structure?",
+      a:{ico:'🏗️',title:'Build your own thing',tags:['Free','Uncertain','Legacy'],insightTitle:'You chose Creation over Climbing',insight:'Building your own thing in midlife is rarely about money. It\'s about finally writing your own chapter rather than appearing in someone else\'s.'},
+      b:{ico:'🏆',title:'Climb the ladder',tags:['Recognized','Structured','Safe'],insightTitle:'You chose Recognition over Autonomy',insight:'There is real power in mastering an existing structure. The question is whether the top of that ladder looks like home — or like a beautiful cage.'},
+    },
+    {
+      q:"A career that changes the world but exhausts you, or a smaller role that sustains you?",
+      a:{ico:'🌍',title:'Change the world',tags:['Meaningful','Draining','Heroic'],insightTitle:'You chose Mission over Sustainability',insight:'Big purpose is seductive — but burning out in service of others ultimately serves no one. The most lasting impact is built from a place of genuine replenishment.'},
+      b:{ico:'🌱',title:'Sustain yourself first',tags:['Grounded','Quiet','Wise'],insightTitle:'You chose Sustainability over Heroism',insight:'Choosing your own sustainability is not selfishness — it is strategy. A life built on genuine capacity lasts far longer than one built on sacrifice.'},
+    },
+  ],
+  love:[
+    {
+      q:"Stay in a comfortable but passionless relationship, or leave for an uncertain but authentic life?",
+      a:{ico:'🤝',title:'Stay & work on it',tags:['Loyal','Hopeful','Safe'],insightTitle:'You chose Commitment over Clarity',insight:'Staying to build something better is one of love\'s greatest acts. But make sure you\'re choosing the relationship — not just choosing against the fear of being alone.'},
+      b:{ico:'🦋',title:'Leave for truth',tags:['Brave','Honest','Lonely'],insightTitle:'You chose Authenticity over Comfort',insight:'This is one of the hardest choices a midlife person can make. The loneliness that follows honest endings is temporary. The cost of permanent pretending is not.'},
+    },
+    {
+      q:"Express a hard truth to someone you love, or protect the peace at the cost of honesty?",
+      a:{ico:'💬',title:'Tell the truth',tags:['Honest','Brave','Risky'],insightTitle:'You chose Depth over Harmony',insight:'True intimacy can only survive truth. The conversation you\'re afraid to have is usually the one the relationship needs most urgently.'},
+      b:{ico:'🕊️',title:'Keep the peace',tags:['Gentle','Avoidant','Kind'],insightTitle:'You chose Harmony over Honesty',insight:'Sometimes timing matters more than truth. But if this is a pattern, what you\'re protecting isn\'t peace — it\'s distance dressed up as kindness.'},
+    },
+    {
+      q:"Love that feels safe and predictable, or love that feels alive and unpredictable?",
+      a:{ico:'🏡',title:'Safe & predictable',tags:['Secure','Warm','Steady'],insightTitle:'You chose Security over Aliveness',insight:'Safety in love is not a consolation prize — it is a foundation. The question is whether it is the foundation for something or the substitute for it.'},
+      b:{ico:'⚡',title:'Alive & unpredictable',tags:['Exciting','Risky','Intense'],insightTitle:'You chose Intensity over Stability',insight:'Craving aliveness in love is deeply human. Notice whether the unpredictability excites you — or whether it keeps you from ever fully arriving.'},
+    },
+    {
+      q:"Prioritize your own needs, or continue putting your partner's needs first?",
+      a:{ico:'💎',title:'Honor your needs',tags:['Honest','Selfish?','Necessary'],insightTitle:'You chose Self-Honoring over Self-Sacrifice',insight:'Continuously placing others first depletes you and ultimately teaches people to take without giving. Prioritizing your needs is the beginning of equal love.'},
+      b:{ico:'🤗',title:'Keep giving first',tags:['Generous','Devoted','Depleted?'],insightTitle:'You chose Devotion over Self-Care',insight:'Giving is beautiful — until it becomes a way of avoiding asking for what you need. Ask honestly: does your giving come from fullness or from fear of disappointing?'},
+    },
+    {
+      q:"Reconnect with an old love, or fully invest in building something new?",
+      a:{ico:'🌹',title:'Reconnect with the past',tags:['Nostalgic','Familiar','Hopeful'],insightTitle:'You chose Familiarity over Forward Motion',insight:'Old love is seductive because it feels like coming home. Make sure the door you\'re opening leads somewhere new — not just back to who you both were before.'},
+      b:{ico:'🌱',title:'Build something new',tags:['Brave','Unknown','Fresh'],insightTitle:'You chose Future over Past',insight:'Choosing forward is an act of profound self-trust. It says you believe the best of your love story is still ahead, even if you can\'t see its shape yet.'},
+    },
+  ],
+  health:[
+    {
+      q:"Push through the exhaustion to maintain your schedule, or stop and truly rest?",
+      a:{ico:'💪',title:'Push through',tags:['Disciplined','Driven','Depleted'],insightTitle:'You chose Discipline over Wisdom',insight:'Discipline is a virtue — but at midlife, the body\'s signals are not weakness. They are data. Pushing through chronic exhaustion is not strength; it\'s borrowed time.'},
+      b:{ico:'😴',title:'Rest fully',tags:['Wise','Restorative','Brave'],insightTitle:'You chose Wisdom over Willpower',insight:'Choosing rest in a culture that glorifies busyness takes real courage. Your body has been keeping score. Giving it what it needs now is the most productive thing you can do.'},
+    },
+    {
+      q:"Chase the dramatic transformation, or commit to small, sustainable daily habits?",
+      a:{ico:'🚀',title:'Big dramatic change',tags:['Intense','Fast','Unsustainable?'],insightTitle:'You chose Intensity over Sustainability',insight:'Dramatic changes feel powerful — and sometimes they are necessary catalysts. But lasting health is almost always built in the boring, consistent, daily inches.'},
+      b:{ico:'🌱',title:'Small daily habits',tags:['Slow','Sustainable','Unglamorous'],insightTitle:'You chose Consistency over Intensity',insight:'The unsexy truth: five minutes of movement daily for five years outperforms five months of intense training. You already know this. The question is whether you\'ll honor it.'},
+    },
+    {
+      q:"Treat a symptom quickly to get back to life, or stop and investigate its deeper cause?",
+      a:{ico:'💊',title:'Treat the symptom',tags:['Fast','Convenient','Superficial'],insightTitle:'You chose Speed over Understanding',insight:'Quick fixes work — until they don\'t. Your body rarely sends the same symptom twice without escalating. The symptom is the message; the pill is the mute button.'},
+      b:{ico:'🔍',title:'Find the root cause',tags:['Slow','Wise','Committed'],insightTitle:'You chose Understanding over Speed',insight:'Investigating root causes takes courage, time and a willingness to hear difficult truths. It is also the only path to resolution that doesn\'t require managing the same problem forever.'},
+    },
+    {
+      q:"Exercise to look better, or move to feel genuinely alive?",
+      a:{ico:'🪞',title:'Train for appearance',tags:['External','Motivated','Conditional'],insightTitle:'You chose Appearance over Aliveness',insight:'External motivation works — until the mirror stops being enough. At midlife, the most powerful shift is moving your body because it makes you feel powerful, not presentable.'},
+      b:{ico:'🕺',title:'Move for aliveness',tags:['Internal','Joyful','Sustainable'],insightTitle:'You chose Aliveness over Appearance',insight:'When movement becomes about how you feel rather than how you look, it stops feeling like a chore and starts feeling like a gift. This is sustainable health in its purest form.'},
+    },
+    {
+      q:"Numb the stress with your usual coping habit, or sit with the discomfort?",
+      a:{ico:'📱',title:'Numb & escape',tags:['Easy','Temporary','Avoidant'],insightTitle:'You chose Escape over Presence',insight:'Every numbing habit makes sense in the short term. Notice whether yours is giving you rest or just postponing a conversation your body and mind need to have.'},
+      b:{ico:'🧘',title:'Sit with it',tags:['Hard','Honest','Healing'],insightTitle:'You chose Presence over Escape',insight:'Sitting with discomfort without numbing it is one of the most powerful health practices available to you. The feeling beneath the stress is usually trying to tell you something important.'},
+    },
+  ],
+  purpose:[
+    {
+      q:"A life of visible, recognized impact — or quiet, invisible but deeply meaningful work?",
+      a:{ico:'🎤',title:'Visible impact',tags:['Recognized','Public','Driven'],insightTitle:'You chose Visibility over Quiet Meaning',insight:'There is nothing wrong with wanting to be known for your contribution. But check: are you drawn to the impact — or to the recognition that validates whether the impact was real?'},
+      b:{ico:'🕯️',title:'Quiet, deep meaning',tags:['Invisible','True','Profound'],insightTitle:'You chose Depth over Recognition',insight:'The most profound impact in most lives happens quietly, in rooms with small audiences. Your contribution doesn\'t need a stage to be significant.'},
+    },
+    {
+      q:"Pursue one singular purpose with total commitment, or live multiple meaningful roles simultaneously?",
+      a:{ico:'🎯',title:'One singular purpose',tags:['Focused','Deep','All-in'],insightTitle:'You chose Depth over Breadth',insight:'Single-pointed purpose is extraordinarily powerful — and rare. If you choose this, know that the path requires saying no to almost everything, including things that matter.'},
+      b:{ico:'🌀',title:'Multiple meaningful roles',tags:['Rich','Complex','Layered'],insightTitle:'You chose Breadth over Focus',insight:'A life of multiple meaningful contributions is not distraction — it can be the fullest expression of a complex person. The question is whether the multiplicity energizes or fragments you.'},
+    },
+    {
+      q:"Live fully for the present moment, or sacrifice now for a legacy that outlasts you?",
+      a:{ico:'☀️',title:'Live fully now',tags:['Present','Free','Alive'],insightTitle:'You chose Now over Later',insight:'Full presence is one of the rarest gifts available to a human being. But make sure your presence isn\'t an unconscious retreat from the responsibility of building something that lasts.'},
+      b:{ico:'🌿',title:'Build for legacy',tags:['Patient','Visionary','Delayed'],insightTitle:'You chose Later over Now',insight:'Legacy-building requires a willingness to delay gratification in service of something larger. The cost is presence. Make sure what you\'re building is worth what you\'re paying.'},
+    },
+    {
+      q:"Follow the path that makes logical sense, or the one that makes no sense but feels deeply right?",
+      a:{ico:'📊',title:'The logical path',tags:['Safe','Rational','Credible'],insightTitle:'You chose Logic over Instinct',insight:'Logic is a useful map — but maps are not the territory. At midlife, your logical case for a choice and your visceral sense of rightness are rarely pointing in the same direction.'},
+      b:{ico:'🧭',title:'The felt-right path',tags:['Irrational','True','Risky'],insightTitle:'You chose Instinct over Logic',insight:'Following what feels right despite the absence of a logical case is the definition of faith in yourself. It has led to most of the meaningful turning points in human lives.'},
+    },
+    {
+      q:"Serve others at the cost of your own needs, or fill yourself first before giving?",
+      a:{ico:'🤲',title:'Serve others first',tags:['Generous','Depleting','Noble'],insightTitle:'You chose Service over Self',insight:'Service is sacred — but sustainable service requires a full vessel. Many people who serve from emptiness are unconsciously using generosity to avoid their own unmet needs.'},
+      b:{ico:'💎',title:'Fill yourself first',tags:['Self-caring','Wise','Sustainable'],insightTitle:'You chose Self first, then Service',insight:'This is not selfishness — it is strategy. A life that begins with genuine self-care and then flows outward into service is the most sustainable form of meaningful living.'},
+    },
+  ],
+  freedom:[
+    {
+      q:"Total security with no real freedom, or total freedom with no real security?",
+      a:{ico:'🔒',title:'Full security',tags:['Safe','Constrained','Predictable'],insightTitle:'You chose Certainty over Aliveness',insight:'Security is deeply human — and deeply seductive. Notice whether the security you\'re choosing is giving you peace or simply removing the need to confront what you actually want.'},
+      b:{ico:'🌊',title:'Full freedom',tags:['Alive','Unmoored','Brave'],insightTitle:'You chose Aliveness over Certainty',insight:'Full freedom requires tolerating uncertainty as a permanent condition. The question is not whether you can handle the risk — but whether you can handle the internal responsibility it requires.'},
+    },
+    {
+      q:"Stay rooted in one place and go deep, or keep moving and collect a wide life?",
+      a:{ico:'🌳',title:'Root deeply',tags:['Community','Depth','Belonging'],insightTitle:'You chose Roots over Range',insight:'Depth of place — knowing a community, a landscape, a set of relationships over decades — creates a kind of richness that moving cannot. The question is whether you\'re rooting from love or from fear.'},
+      b:{ico:'🌍',title:'Keep moving',tags:['Wide','Free','Rootless'],insightTitle:'You chose Range over Roots',insight:'A wide life collects extraordinary experience. It also requires making peace with the impermanence of connection. Both the richness and the cost are real. Neither cancels the other.'},
+    },
+    {
+      q:"Freedom to do whatever you want, or freedom from whatever drains you?",
+      a:{ico:'✨',title:'Freedom TO do',tags:['Active','Expansive','Hungry'],insightTitle:'You chose Expansion over Subtraction',insight:'Freedom-toward is additive: more experiences, more possibilities, more aliveness. It is also exhausting if pursued without first removing what contracts you. Both freedoms need each other.'},
+      b:{ico:'🧹',title:'Freedom FROM drain',tags:['Subtractive','Quiet','Relieving'],insightTitle:'You chose Subtraction over Expansion',insight:'Freedom-from is often underrated. Removing one obligation that drains you creates more genuine freedom than adding ten new exciting possibilities. Subtraction is the underused superpower.'},
+    },
+    {
+      q:"Design a simpler, smaller life you can afford fully — or stretch for a bigger life that costs more?",
+      a:{ico:'🌿',title:'Simple & fully owned',tags:['Free','Minimal','Grounded'],insightTitle:'You chose Simplicity over Ambition',insight:'A smaller life fully owned is an extraordinary act of clarity. It says you\'ve decided what matters — and everything else can go. That is not settling. That is wisdom with a spine.'},
+      b:{ico:'🏙️',title:'Bigger life, more cost',tags:['Ambitious','Stretching','Complex'],insightTitle:'You chose Ambition over Simplicity',insight:'Stretching toward a bigger life is valid — if the life you\'re building genuinely reflects your values rather than the values you were handed. Ask: who is this life for?'},
+    },
+    {
+      q:"Freedom that looks impressive from the outside, or freedom that feels genuine from the inside?",
+      a:{ico:'📸',title:'Impressive freedom',tags:['Visible','Performed','Validated'],insightTitle:'You chose Performance over Experience',insight:'Freedom that looks good is still seductive — especially when we\'ve spent decades performing for others. Notice whose eyes you\'re still living for, even in your most \'free\' moments.'},
+      b:{ico:'🤍',title:'Genuine inner freedom',tags:['Invisible','True','Quiet'],insightTitle:'You chose Experience over Performance',insight:'Inner freedom is unglamorous and invisible. Nobody applauds it. But it is the only kind that actually feels like what you\'ve been searching for all along.'},
+    },
+  ],
+  identity:[
+    {
+      q:"Keep the version of yourself that others recognize, or become who you actually are now?",
+      a:{ico:'🎭',title:'Keep the familiar self',tags:['Recognizable','Safe','Performing'],insightTitle:'You chose Familiarity over Truth',insight:'The self others recognize is often the one you built for survival. It served you then. The question at midlife is whether it still fits — or whether you\'ve simply stopped noticing the tightness.'},
+      b:{ico:'🪞',title:'Become who you are now',tags:['True','Disruptive','Courageous'],insightTitle:'You chose Truth over Familiarity',insight:'Choosing to become who you actually are now may require grieving the person you\'ve been performing. That grief is real. And on the other side of it is something far more spacious.'},
+    },
+    {
+      q:"Accept yourself fully as you are — or commit to becoming a fundamentally different person?",
+      a:{ico:'🤍',title:'Accept fully now',tags:['At peace','Compassionate','Present'],insightTitle:'You chose Acceptance over Striving',insight:'Full self-acceptance is not complacency — it is the most radical act available to most people. It is also, paradoxically, the most powerful foundation for genuine change.'},
+      b:{ico:'🔥',title:'Commit to becoming',tags:['Driven','Dissatisfied','Becoming'],insightTitle:'You chose Becoming over Acceptance',insight:'The drive to become more fully yourself is sacred — if it comes from love rather than self-rejection. Ask: am I running toward something or away from something?'},
+    },
+    {
+      q:"Live by the values you were given — or spend the next chapter discovering your own?",
+      a:{ico:'🏛️',title:'Inherited values',tags:['Stable','Familiar','Borrowed?'],insightTitle:'You chose Inheritance over Discovery',insight:'Not all inherited values are wrong for you — some are genuinely yours too. But at midlife, the only values worth living by are the ones you\'ve consciously chosen, not just accepted.'},
+      b:{ico:'🔍',title:'Discover your own',tags:['Uncertain','Honest','Alive'],insightTitle:'You chose Discovery over Inheritance',insight:'Discovering your own values at midlife often means a period of genuine confusion and some uncomfortable honesty with people you love. It is also one of the most liberating things a person can do.'},
+    },
+    {
+      q:"Be fully known and risk rejection, or stay partially hidden and stay safe?",
+      a:{ico:'🔓',title:'Be fully known',tags:['Vulnerable','Brave','True'],insightTitle:'You chose Vulnerability over Safety',insight:'The terror of being fully known is matched only by the relief of it. The people who stay when they see all of you are the only ones whose presence actually nourishes you.'},
+      b:{ico:'🛡️',title:'Stay partially hidden',tags:['Protected','Lonely','Safe'],insightTitle:'You chose Safety over Vulnerability',insight:'Partial hiddenness is rational — it has protected you from real harm. Notice whether the protection is still necessary or whether it has become the very thing keeping you most alone.'},
+    },
+    {
+      q:"Live for the approval of others — or build a life that only you need to approve of?",
+      a:{ico:'👥',title:'Others\' approval',tags:['Validated','Dependent','External'],insightTitle:'You chose External Validation',insight:'The hunger for approval is deeply human — and deeply expensive. Every choice made for external validation costs a small piece of your self-authorship. The bill eventually comes due.'},
+      b:{ico:'✍️',title:'Only your approval',tags:['Free','Lonely?','Authoring'],insightTitle:'You chose Self-Authorship',insight:'Living for your own approval requires building an inner authority you can actually trust. That authority is not arrogance — it is the quiet, hard-won voice that knows what is true for you.'},
+    },
+  ],
+};
+
+// Build mixed pool
+DILEMMAS.mixed = [];
+Object.keys(DILEMMAS).forEach(k=>{ if(k!=='mixed') DILEMMAS.mixed.push(...DILEMMAS[k]); });
+
+const AREA_LABELS = {
+  mixed:'Midlife Crossroads', career:'Career Crossroads', love:'Love Crossroads',
+  health:'Health Crossroads', purpose:'Purpose Crossroads', freedom:'Freedom Crossroads', identity:'Identity Crossroads'
+};
+const AREA_SUBS = {
+  mixed:'4 real dilemmas. No right answers. Choose your path — then discover what it reveals.',
+  career:'4 pivotal career dilemmas. Choose honestly — then reveal the psychological insight beneath your choice.',
+  love:'4 relationship dilemmas. Your honest choice reveals more about you than the outcome ever will.',
+  health:'4 health crossroads. There are no wrong answers — only more honest ones.',
+  purpose:'4 purpose dilemmas. What you choose when no one is watching tells you who you are.',
+  freedom:'4 freedom dilemmas. Choose what resonates most deeply — not what sounds most admirable.',
+  identity:'4 identity dilemmas. The choice that scares you slightly is usually the one worth examining.',
+};
+
+let wsN=1, revealed=false;
+
+function setTheme(el){
+  document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+  document.body.setAttribute('data-theme',el.dataset.t);
+}
+
+function shuffle(a){ let b=a.slice(); for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+function toggleReveal(){
+  revealed=!revealed;
+  const ws=document.getElementById('worksheet');
+  const btn=document.getElementById('btn-reveal');
+  if(revealed){ ws.classList.add('revealed'); btn.textContent='🔒 HIDE INSIGHTS'; btn.style.background='#ff6b9d'; }
+  else { ws.classList.remove('revealed'); btn.textContent='👁 REVEAL INSIGHTS'; btn.style.background='#6bcb77'; }
+}
+
+function selectChoice(cardIdx, choice){
+  const btnA=document.getElementById(`btn-a-${cardIdx}`);
+  const btnB=document.getElementById(`btn-b-${cardIdx}`);
+  const ccA=document.getElementById(`opt-a-${cardIdx}`);
+  const ccB=document.getElementById(`opt-b-${cardIdx}`);
+  const colors=['var(--c1)','var(--c2)','var(--c3)','var(--c4)'];
+  const c=colors[cardIdx];
+
+  btnA.classList.remove('selected-a','selected-b');
+  btnB.classList.remove('selected-a','selected-b');
+  ccA.style.background='#fff';
+  ccB.style.background='#fff';
+  btnA.style.background='#fff';
+  btnA.style.color='var(--stroke)';
+  btnB.style.background='#fff';
+  btnB.style.color='var(--stroke)';
+
+  if(choice==='a'){
+    btnA.classList.add('selected-a');
+    btnA.style.background=c;
+    btnA.style.color='#fff';
+    ccA.style.background=c+'22';
+  } else {
+    btnB.classList.add('selected-b');
+    btnB.style.background=c;
+    btnB.style.color='#fff';
+    ccB.style.background=c+'22';
+  }
+}
+
+function generate(){
+  if(revealed) toggleReveal();
+  const area=document.getElementById('cfg-area').value;
+  const mode=document.getElementById('cfg-mode').value;
+  const pool=shuffle(DILEMMAS[area]).slice(0,4);
+  const ws=document.getElementById('worksheet');
+  ws.className='ws'+(mode==='shown'?' revealed':'');
+
+  const cardsHTML=pool.map((d,ci)=>`
+    <div class="cc">
+      <div class="cc-bar"></div>
+      <div class="cc-body">
+        <div class="cc-question">
+          <div class="cc-q-label">Crossroads #${ci+1}</div>
+          <div class="cc-q-text" contenteditable="true" spellcheck="false">${d.q}</div>
+        </div>
+        <div class="cc-vs-row">
+          <div class="cc-option" id="opt-a-${ci}">
+            <div class="cc-opt-ico">${d.a.ico}</div>
+            <div class="cc-opt-title" contenteditable="true" spellcheck="false">${d.a.title}</div>
+            <div class="cc-opt-tags">${d.a.tags.map(t=>`<span class="cc-tag">${t}</span>`).join('')}</div>
+            <div class="cc-opt-letter">A</div>
+          </div>
+          <div class="cc-vs">VS</div>
+          <div class="cc-option" id="opt-b-${ci}">
+            <div class="cc-opt-ico">${d.b.ico}</div>
+            <div class="cc-opt-title" contenteditable="true" spellcheck="false">${d.b.title}</div>
+            <div class="cc-opt-tags">${d.b.tags.map(t=>`<span class="cc-tag">${t}</span>`).join('')}</div>
+            <div class="cc-opt-letter">B</div>
+          </div>
+        </div>
+        <div class="cc-choice-row">
+          <button class="cc-choice-btn" id="btn-a-${ci}" onclick="selectChoice(${ci},'a')">✓ Choose A</button>
+          <button class="cc-choice-btn" id="btn-b-${ci}" onclick="selectChoice(${ci},'b')">✓ Choose B</button>
+        </div>
+        <div class="cc-insight">
+          <div class="cc-insight-inner">
+            <div class="cc-ins-lbl">Psychological Insight</div>
+            <div class="cc-ins-choice" contenteditable="true" spellcheck="false">A → ${d.a.insightTitle} &nbsp;|&nbsp; B → ${d.b.insightTitle}</div>
+            <div class="cc-ins-text" contenteditable="true" spellcheck="false">A: ${d.a.insight}</div>
+            <div class="cc-ins-text" style="margin-top:2px" contenteditable="true" spellcheck="false">B: ${d.b.insight}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  ws.innerHTML=`
+    <div class="ws-header">
+      <div>
+        <div class="ws-title" contenteditable="true" spellcheck="false">${AREA_LABELS[area].toUpperCase()}</div>
+        <div class="ws-subtitle" contenteditable="true" spellcheck="false">🛤️ Choose your path — there are no wrong answers, only honest ones</div>
+      </div>
+      <div class="ws-info">
+        <div class="irow"><span class="ilbl" contenteditable="true" spellcheck="false">Name:</span><div class="iline"></div></div>
+        <div class="irow"><span class="ilbl" contenteditable="true" spellcheck="false">Date:</span><div class="iline"></div></div>
+      </div>
+    </div>
+    <div class="ws-inst">
+      <div class="ws-inst-ico">🛤️</div>
+      <div contenteditable="true" spellcheck="false">${AREA_SUBS[area]} Mark A or B for each crossroads — then hit Reveal Insights to see what your choices say about you.</div>
+    </div>
+    <div class="ws-grid">${cardsHTML}</div>
+    <div class="ws-footer">
+      <div class="ws-footer-l">From <strong>314 Prompts for Profound Midlife Self-Help Books</strong> · Crossroads Map #${wsN}</div>
+      <div class="ws-pgnum">${wsN}</div>
+    </div>
+  `;
+  wsN++;
+}
+
+function savePNG(){
+  const ws=document.getElementById('worksheet');
+  const ed=ws.querySelectorAll('[contenteditable="true"]');
+  ed.forEach(el=>el.style.border='none');
+  htmlToImage.toPng(ws,{pixelRatio:2,backgroundColor:'#fff'})
+    .then(function(d){
+      let a=document.createElement('a');
+      a.download=`Crossroads_${revealed?'Revealed':'Student'}_${wsN-1}.png`;
+      a.href=d; a.click();
+      ed.forEach(el=>el.style.border='');
+    })
+    .catch(function(){ ed.forEach(el=>el.style.border=''); alert('Use Print instead.'); });
+}
+
+generate();
+</script>
+</body>
+</html>
