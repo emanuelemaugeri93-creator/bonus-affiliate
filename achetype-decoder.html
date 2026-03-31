@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midlife Archetype Decoder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Playfair+Display:ital,wght@0,900;1,700&display=swap');
+
+:root{--bg-body:#1a1a2e;--stroke:#1a1a2e;--paper:#fff;--sb:#7c3aed}
+[data-theme="mystic"] {--c1:#a855f7;--c2:#ec4899;--c3:#f59e0b;--c4:#10b981;--l1:#faf5ff;--l2:#fdf2f8;--l3:#fffbeb;--l4:#ecfdf5}
+[data-theme="fire"]   {--c1:#ef4444;--c2:#f97316;--c3:#eab308;--c4:#22c55e;--l1:#fef2f2;--l2:#fff7ed;--l3:#fefce8;--l4:#f0fdf4}
+[data-theme="ocean"]  {--c1:#0ea5e9;--c2:#6366f1;--c3:#14b8a6;--c4:#f43f5e;--l1:#f0f9ff;--l2:#eef2ff;--l3:#f0fdfa;--l4:#fff1f2}
+[data-theme="forest"] {--c1:#16a34a;--c2:#ca8a04;--c3:#0891b2;--c4:#9333ea;--l1:#f0fdf4;--l2:#fefce8;--l3:#ecfeff;--l4:#faf5ff}
+[data-theme="candy"]  {--c1:#ff6b9d;--c2:#ffd93d;--c3:#6bcb77;--c4:#4d96ff;--l1:#fff0f5;--l2:#fffbea;--l3:#f0fff2;--l4:#f0f5ff}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100vh;overflow:hidden;font-family:'Nunito',sans-serif}
+body{display:flex;background:var(--bg-body);-webkit-font-smoothing:antialiased}
+
+/* SIDEBAR */
+#sidebar{
+  width:340px;min-width:340px;background:var(--sb);
+  padding:18px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:11px;
+  border-right:5px solid var(--stroke);z-index:10;scrollbar-width:none;
+}
+#sidebar::-webkit-scrollbar{display:none}
+
+.app-title{font-size:24px;font-weight:900;text-align:center;color:#fff;text-shadow:3px 3px 0 var(--stroke);letter-spacing:.5px;line-height:1.15}
+.app-title span{display:block;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-top:3px;text-shadow:none}
+.app-tag{background:var(--stroke);color:#fff;font-size:11px;font-weight:800;text-align:center;padding:5px 10px;border-radius:8px}
+
+.cg{background:rgba(255,255,255,.18);padding:12px;border-radius:12px;border:3px solid var(--stroke);box-shadow:4px 4px 0 var(--stroke)}
+.cl{display:block;font-size:11px;font-weight:900;text-transform:uppercase;color:var(--stroke);margin-bottom:7px;letter-spacing:.05em}
+
+select{width:100%;padding:9px 11px;border-radius:8px;border:3px solid var(--stroke);font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;background:#fff;color:var(--stroke);cursor:pointer;outline:none;appearance:none;box-shadow:3px 3px 0 var(--stroke)}
+select:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--stroke)}
+
+/* ARCHETYPE SELECTOR */
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.arch-btn{
+  padding:8px 7px;border-radius:10px;border:3px solid var(--stroke);
+  font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;
+  cursor:pointer;transition:.1s;background:#fff;color:var(--stroke);
+  box-shadow:3px 3px 0 var(--stroke);text-align:center;line-height:1.3;
+}
+.arch-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--stroke)}
+.arch-btn.on{color:#fff;box-shadow:3px 3px 0 var(--stroke)}
+.arch-btn[data-a="warrior"].on {background:#ef4444}
+.arch-btn[data-a="sage"].on    {background:#6366f1}
+.arch-btn[data-a="creator"].on {background:#f59e0b}
+.arch-btn[data-a="healer"].on  {background:#10b981}
+.arch-btn[data-a="explorer"].on{background:#0ea5e9}
+.arch-btn[data-a="rebel"].on   {background:#ec4899}
+.arch-btn[data-a="ruler"].on   {background:#7c3aed}
+.arch-btn[data-a="jester"].on  {background:#f97316}
+
+/* Swatch row */
+.swatch-row{display:flex;gap:7px}
+.sw{flex:1;height:30px;border-radius:9px;cursor:pointer;border:3px solid var(--stroke);box-shadow:3px 3px 0 var(--stroke);transition:.1s;position:relative}
+.sw:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--stroke)}
+.sw.on::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;text-shadow:1px 1px 0 rgba(0,0,0,.5)}
+.sw[data-t="mystic"]{background:linear-gradient(135deg,#a855f7,#ec4899,#f59e0b,#10b981)}
+.sw[data-t="fire"]  {background:linear-gradient(135deg,#ef4444,#f97316,#eab308,#22c55e)}
+.sw[data-t="ocean"] {background:linear-gradient(135deg,#0ea5e9,#6366f1,#14b8a6,#f43f5e)}
+.sw[data-t="forest"]{background:linear-gradient(135deg,#16a34a,#ca8a04,#0891b2,#9333ea)}
+.sw[data-t="candy"] {background:linear-gradient(135deg,#ff6b9d,#ffd93d,#6bcb77,#4d96ff)}
+
+.btn{width:100%;padding:11px;border-radius:9px;border:3px solid var(--stroke);font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;transition:.1s;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:4px 4px 0 var(--stroke);margin-bottom:8px}
+.btn:last-child{margin-bottom:0}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--stroke)}
+.btn-gen{background:#ffd93d;color:var(--stroke)}
+.btn-reveal{background:#6bcb77;color:var(--stroke)}
+.btn-png{background:#ff9ff3;color:var(--stroke)}
+.btn-print{background:#fff;color:var(--stroke)}
+
+.hint{font-size:10px;color:rgba(255,255,255,.7);text-align:center;font-weight:700;line-height:1.5}
+
+/* PREVIEW */
+#preview-area{
+  flex:1;padding:20px;overflow-y:auto;
+  display:flex;justify-content:center;align-items:flex-start;
+  background-image:radial-gradient(#576574 2px,transparent 2px);background-size:30px 30px;background-color:#1a1a2e;
+  scrollbar-width:none;
+}
+#preview-area::-webkit-scrollbar{display:none}
+
+/* A4 */
+.ws{
+  width:210mm;height:297mm;min-height:297mm;max-height:297mm;
+  background:var(--paper);border:5px solid var(--stroke);border-radius:16px;
+  box-shadow:15px 15px 0 rgba(0,0,0,.35);
+  position:relative;padding:9mm 11mm;
+  display:flex;flex-direction:column;
+  color:var(--stroke);overflow:hidden;font-family:'Nunito',sans-serif;
+}
+
+/* HEADER */
+.ws-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:5px solid var(--stroke);padding-bottom:8px;margin-bottom:9px;flex-shrink:0;
+}
+.ws-title{font-size:32px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:-1px;text-shadow:3px 3px 0 var(--c1)}
+.ws-subtitle{display:inline-block;margin-top:5px;background:var(--stroke);color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:6px;letter-spacing:.05em}
+.ws-info{display:flex;flex-direction:column;gap:7px;width:190px}
+.irow{display:flex;align-items:flex-end;font-size:13px;font-weight:800}
+.ilbl{margin-right:6px;white-space:nowrap}
+.iline{flex:1;border-bottom:3px dashed var(--stroke);height:14px}
+
+/* INSTRUCTION STRIP */
+.ws-inst{
+  background:var(--stroke);color:#fff;border-radius:10px;padding:6px 12px;
+  font-size:10px;font-weight:800;line-height:1.5;margin-bottom:9px;flex-shrink:0;
+  display:flex;align-items:center;gap:8px;
+}
+.ws-inst-ico{font-size:18px;flex-shrink:0}
+
+/* ARCHETYPE KEY STRIP */
+.ws-key{
+  display:flex;gap:5px;margin-bottom:9px;flex-shrink:0;flex-wrap:nowrap;
+}
+.key-pill{
+  flex:1;border-radius:8px;border:3px solid var(--stroke);
+  padding:4px 5px;text-align:center;
+  box-shadow:2px 2px 0 var(--stroke);
+}
+.key-pill-ico{font-size:18px;display:block;line-height:1}
+.key-pill-name{font-size:8px;font-weight:900;color:var(--stroke);display:block;margin-top:1px;letter-spacing:.02em}
+
+/* PUZZLE GRID */
+.ws-grid{
+  flex:1;min-height:0;
+  display:grid;grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:9px;
+}
+
+/* PUZZLE CARD */
+.pc{
+  border:4px solid var(--stroke);border-radius:14px;
+  display:flex;flex-direction:column;
+  box-shadow:5px 5px 0 var(--stroke);overflow:hidden;
+}
+.pc:nth-child(1){background:var(--l1)}
+.pc:nth-child(2){background:var(--l2)}
+.pc:nth-child(3){background:var(--l3)}
+.pc:nth-child(4){background:var(--l4)}
+
+.pc-bar{height:7px;flex-shrink:0}
+.pc:nth-child(1) .pc-bar{background:var(--c1)}
+.pc:nth-child(2) .pc-bar{background:var(--c2)}
+.pc:nth-child(3) .pc-bar{background:var(--c3)}
+.pc:nth-child(4) .pc-bar{background:var(--c4)}
+
+.pc-body{padding:7px 9px;display:flex;flex-direction:column;gap:5px;flex:1}
+
+/* EQUATION ROW */
+.eq-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;border-radius:8px;border:2.5px solid var(--stroke);
+  padding:4px 7px;box-shadow:2px 2px 0 var(--stroke);flex-shrink:0;
+}
+.eq-sym{font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;width:28px}
+.eq-op{font-size:16px;font-weight:900;color:var(--stroke);width:14px;text-align:center}
+.eq-eq{font-size:16px;font-weight:900;color:var(--stroke)}
+.eq-val{
+  font-size:16px;font-weight:900;color:var(--stroke);
+  background:var(--paper);border:2.5px solid var(--stroke);
+  border-radius:6px;padding:1px 6px;min-width:34px;text-align:center;
+  box-shadow:2px 2px 0 var(--stroke);
+}
+
+/* FINAL ROW */
+.final-row{
+  border-top:3px dashed var(--stroke);padding-top:5px;margin-top:2px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(0,0,0,.04);border-radius:8px;padding:5px 7px;
+}
+.ans-box{
+  width:44px;height:38px;border-radius:8px;
+  border:3px solid var(--stroke);background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:900;
+  box-shadow:3px 3px 0 var(--stroke);transition:.3s;
+  flex-shrink:0;
+}
+
+/* RESULT PANEL (hidden until reveal) */
+.pc-result{
+  border-top:3px dashed var(--stroke);padding-top:5px;margin-top:2px;flex-shrink:0;
+}
+.pc-result-inner{
+  border-radius:8px;border:3px solid var(--stroke);padding:5px 8px;
+  background:#fff;box-shadow:2px 2px 0 var(--stroke);
+}
+.pc-result-lbl{font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--stroke);opacity:.5;margin-bottom:2px}
+.pc-result-name{font-size:12px;font-weight:900;color:var(--stroke);display:flex;align-items:center;gap:5px}
+.pc-result-desc{font-size:8.5px;font-weight:700;color:var(--stroke);opacity:.65;line-height:1.35;margin-top:2px}
+
+/* REVEAL STATE */
+.ws.revealed .ans-box{transform:scale(1.08)}
+.ws.revealed .pc:nth-child(1) .ans-box{background:var(--c1);border-color:var(--stroke)}
+.ws.revealed .pc:nth-child(2) .ans-box{background:var(--c2);border-color:var(--stroke)}
+.ws.revealed .pc:nth-child(3) .ans-box{background:var(--c3);border-color:var(--stroke)}
+.ws.revealed .pc:nth-child(4) .ans-box{background:var(--c4);border-color:var(--stroke)}
+
+/* FOOTER */
+.ws-footer{margin-top:7px;padding-top:7px;border-top:4px solid var(--stroke);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.ws-footer-l{font-size:9px;font-weight:800;color:var(--stroke);opacity:.6}
+.ws-footer-l strong{font-family:'Playfair Display',serif;font-style:italic;opacity:1}
+.ws-pgnum{width:26px;height:26px;border-radius:8px;background:var(--stroke);color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 rgba(0,0,0,.3)}
+
+[contenteditable="true"]{outline:none;border-radius:4px;border:2px dashed transparent;transition:.15s;cursor:text}
+[contenteditable="true"]:hover,[contenteditable="true"]:focus{background:rgba(0,0,0,.05);border-color:var(--stroke)}
+
+@page{size:A4 portrait;margin:0}
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{background:none;margin:0;padding:0;display:block;overflow:hidden}
+  #sidebar,.hint{display:none!important}
+  #preview-area{padding:0;display:block;background:none}
+  .ws{margin:0;width:100%;height:100vh;max-height:100vh;box-shadow:none!important;border-radius:0!important;page-break-inside:avoid}
+  [contenteditable="true"]{border:none!important;background:none!important}
+}
+</style>
+</head>
+<body data-theme="mystic">
+
+<div id="sidebar">
+  <div>
+    <div class="app-title">ARCHETYPE DECODER<span>Midlife Symbol Logic Puzzle</span></div>
+    <div class="app-tag">🔮 Solve the equations. Discover your archetype.</div>
+  </div>
+
+  <div class="cg">
+    <span class="cl">🔮 Active Archetypes (pick 4)</span>
+    <div class="arch-grid" id="arch-grid">
+      <button class="arch-btn on" data-a="warrior"  onclick="toggleArch(this)">🦁 Warrior</button>
+      <button class="arch-btn on" data-a="sage"     onclick="toggleArch(this)">🦉 Sage</button>
+      <button class="arch-btn on" data-a="creator"  onclick="toggleArch(this)">🌊 Creator</button>
+      <button class="arch-btn on" data-a="healer"   onclick="toggleArch(this)">🌿 Healer</button>
+      <button class="arch-btn"   data-a="explorer"  onclick="toggleArch(this)">🧭 Explorer</button>
+      <button class="arch-btn"   data-a="rebel"     onclick="toggleArch(this)">⚡ Rebel</button>
+      <button class="arch-btn"   data-a="ruler"     onclick="toggleArch(this)">👑 Ruler</button>
+      <button class="arch-btn"   data-a="jester"    onclick="toggleArch(this)">🃏 Jester</button>
+    </div>
+  </div>
+
+  <div class="cg">
+    <span class="cl">⚙️ Difficulty</span>
+    <select id="cfg-diff" onchange="generate()">
+      <option value="easy">Easy — Small numbers (1–5)</option>
+      <option value="normal" selected>Normal — Medium (3–10)</option>
+      <option value="hard">Hard — Large (8–20)</option>
+    </select>
+  </div>
+
+  <div class="cg">
+    <span class="cl">🎨 Color Theme</span>
+    <div class="swatch-row">
+      <div class="sw on" data-t="mystic" onclick="setTheme(this)"></div>
+      <div class="sw"    data-t="fire"   onclick="setTheme(this)"></div>
+      <div class="sw"    data-t="ocean"  onclick="setTheme(this)"></div>
+      <div class="sw"    data-t="forest" onclick="setTheme(this)"></div>
+      <div class="sw"    data-t="candy"  onclick="setTheme(this)"></div>
+    </div>
+  </div>
+
+  <div class="cg" style="background:transparent;border:none;box-shadow:none;padding:0">
+    <button class="btn btn-gen" onclick="generate()">🎲 SCRAMBLE PUZZLE</button>
+    <button class="btn btn-reveal" id="btn-reveal" onclick="toggleReveal()">👁 REVEAL ANSWERS</button>
+    <button class="btn btn-png" onclick="savePNG()">💾 SAVE AS PNG</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ PRINT WORKSHEET</button>
+  </div>
+
+  <div class="hint">✏️ Click any text on the worksheet to edit it!</div>
+</div>
+
+<div id="preview-area">
+  <div class="ws" id="worksheet"></div>
+</div>
+
+<script>
+const ARCHETYPES = {
+  warrior:  { ico:'🦁', name:'The Warrior',  color:'#ef4444', desc:'You fight for what you believe in. Courage, discipline and resilience define your midlife mission.', traits:'Courageous · Disciplined · Protective · Determined' },
+  sage:     { ico:'🦉', name:'The Sage',     color:'#6366f1', desc:'You seek truth and wisdom above all. Your midlife chapter is one of deep knowing and purposeful guidance.', traits:'Wise · Thoughtful · Discerning · Trustworthy' },
+  creator:  { ico:'🌊', name:'The Creator',  color:'#f59e0b', desc:'You are driven to make something from nothing. Expression, originality and beauty are your life force.', traits:'Imaginative · Expressive · Visionary · Original' },
+  healer:   { ico:'🌿', name:'The Healer',   color:'#10b981', desc:'You hold space for others with deep compassion. Your midlife gift is restoration, care and genuine presence.', traits:'Compassionate · Empathic · Nurturing · Generous' },
+  explorer: { ico:'🧭', name:'The Explorer', color:'#0ea5e9', desc:'You live to discover — new places, new ideas, new versions of yourself. Midlife is your greatest adventure yet.', traits:'Curious · Adventurous · Open · Restless' },
+  rebel:    { ico:'⚡', name:'The Rebel',    color:'#ec4899', desc:'You challenge the rules that no longer serve. Your midlife power lies in disrupting what holds you back.', traits:'Bold · Unconventional · Disruptive · Authentic' },
+  ruler:    { ico:'👑', name:'The Ruler',    color:'#7c3aed', desc:'You are built to lead and create order. Midlife calls you to build legacy through influence and vision.', traits:'Commanding · Responsible · Strategic · Confident' },
+  jester:   { ico:'🃏', name:'The Jester',   color:'#f97316', desc:'You bring joy, lightness and laughter wherever you go. Midlife is your invitation to play more boldly than ever.', traits:'Playful · Witty · Spontaneous · Joyful' },
+};
+
+let wsN=1, revealed=false, activeArchs=['warrior','sage','creator','healer'];
+
+function toggleArch(el){
+  const a=el.dataset.a;
+  const idx=activeArchs.indexOf(a);
+  if(idx>-1){
+    if(activeArchs.length<=2) return; // minimum 2
+    activeArchs.splice(idx,1);
+    el.classList.remove('on');
+  } else {
+    if(activeArchs.length>=4){ // max 4 — deselect first
+      const oldest=activeArchs.shift();
+      document.querySelector(`.arch-btn[data-a="${oldest}"]`).classList.remove('on');
+    }
+    activeArchs.push(a);
+    el.classList.add('on');
+  }
+  generate();
+}
+
+function setTheme(el){
+  document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+  document.body.setAttribute('data-theme',el.dataset.t);
+}
+
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function shuffle(a){ let b=a.slice(); for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+function toggleReveal(){
+  revealed=!revealed;
+  const ws=document.getElementById('worksheet');
+  const btn=document.getElementById('btn-reveal');
+  if(revealed){ ws.classList.add('revealed'); btn.textContent='🔒 HIDE ANSWERS'; btn.style.background='#ff6b9d'; }
+  else { ws.classList.remove('revealed'); btn.textContent='👁 REVEAL ANSWERS'; btn.style.background='#6bcb77'; }
+}
+
+function makePuzzle(archKeys, diff){
+  // Each card: assign values to 4 archetypes, build 3 known equations + 1 mystery
+  const [A,B,C,D] = archKeys;
+  let min=1,max=5;
+  if(diff==='normal'){min=3;max=10;}
+  if(diff==='hard'){min=8;max=20;}
+
+  const vals={};
+  archKeys.forEach(k=>{ vals[k]=randInt(min,max); });
+
+  // Card uses 3 of the 4 archetypes, puzzle structure varies per card index
+  return archKeys.map((focus,ci)=>{
+    // 3 hint equations + 1 final
+    const others = archKeys.filter(k=>k!==focus);
+    const [X,Y,Z] = shuffle(others);
+    // Equations: X+X=2X, Y+Z=?, focus+X=?
+    const eq1v = vals[X]+vals[X];
+    const eq2v = vals[Y]+vals[Z];
+    const eq3v = vals[focus]+vals[X];
+    const finalV = vals[focus]+vals[Y]+vals[Z];
+    return {
+      focus, X, Y, Z,
+      eq1:{l:X, op:'+', r:X, v:eq1v},
+      eq2:{l:Y, op:'+', r:Z, v:eq2v},
+      eq3:{l:focus, op:'+', r:X, v:eq3v},
+      final:{l:focus, op1:'+', m:Y, op2:'+', r:Z, v:finalV},
+    };
+  });
+}
+
+function generate(){
+  if(revealed) toggleReveal();
+  if(activeArchs.length<4) return;
+
+  const diff=document.getElementById('cfg-diff').value;
+  const puzzles=makePuzzle(activeArchs,diff);
+  const ws=document.getElementById('worksheet');
+  ws.className='ws';
+
+  // Key strip
+  const keyHTML = activeArchs.map(k=>`
+    <div class="key-pill" style="background:${ARCHETYPES[k].color}22;border-color:${ARCHETYPES[k].color}">
+      <span class="key-pill-ico">${ARCHETYPES[k].ico}</span>
+      <span class="key-pill-name" style="color:${ARCHETYPES[k].color}">${ARCHETYPES[k].name.replace('The ','')}</span>
+    </div>
+  `).join('');
+
+  const cardsHTML = puzzles.map((p,ci)=>{
+    const fa=ARCHETYPES[p.focus];
+    const cardColors=['var(--c1)','var(--c2)','var(--c3)','var(--c4)'];
+    return `
+    <div class="pc">
+      <div class="pc-bar"></div>
+      <div class="pc-body">
+        <div class="eq-row">
+          <div class="eq-sym">${ARCHETYPES[p.eq1.l].ico}</div>
+          <div class="eq-op">${p.eq1.op}</div>
+          <div class="eq-sym">${ARCHETYPES[p.eq1.r].ico}</div>
+          <div class="eq-eq">=</div>
+          <div class="eq-val">${p.eq1.v}</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-sym">${ARCHETYPES[p.eq2.l].ico}</div>
+          <div class="eq-op">${p.eq2.op}</div>
+          <div class="eq-sym">${ARCHETYPES[p.eq2.r].ico}</div>
+          <div class="eq-eq">=</div>
+          <div class="eq-val">${p.eq2.v}</div>
+        </div>
+        <div class="eq-row">
+          <div class="eq-sym">${ARCHETYPES[p.eq3.l].ico}</div>
+          <div class="eq-op">${p.eq3.op}</div>
+          <div class="eq-sym">${ARCHETYPES[p.eq3.r].ico}</div>
+          <div class="eq-eq">=</div>
+          <div class="eq-val">${p.eq3.v}</div>
+        </div>
+        <div class="final-row">
+          <div style="display:flex;align-items:center;gap:3px">
+            <div class="eq-sym">${ARCHETYPES[p.final.l].ico}</div>
+            <div class="eq-op">${p.final.op1}</div>
+            <div class="eq-sym">${ARCHETYPES[p.final.m].ico}</div>
+            <div class="eq-op">${p.final.op2}</div>
+            <div class="eq-sym">${ARCHETYPES[p.final.r].ico}</div>
+            <div class="eq-eq">=</div>
+          </div>
+          <div class="ans-box" id="ans-${ci}">${revealed?p.final.v:'?'}</div>
+        </div>
+        <div class="pc-result">
+          <div class="pc-result-inner">
+            <div class="pc-result-lbl">Your Dominant Archetype</div>
+            <div class="pc-result-name" contenteditable="true" spellcheck="false">${fa.ico} ${fa.name}</div>
+            <div class="pc-result-desc" contenteditable="true" spellcheck="false">${fa.traits}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  ws.innerHTML=`
+    <div class="ws-header">
+      <div>
+        <div class="ws-title" contenteditable="true" spellcheck="false">ARCHETYPE DECODER</div>
+        <div class="ws-subtitle" contenteditable="true" spellcheck="false">🔮 Midlife Symbol Logic Puzzle — Solve & Discover Your Archetype</div>
+      </div>
+      <div class="ws-info">
+        <div class="irow"><span class="ilbl" contenteditable="true" spellcheck="false">Name:</span><div class="iline"></div></div>
+        <div class="irow"><span class="ilbl" contenteditable="true" spellcheck="false">Date:</span><div class="iline"></div></div>
+      </div>
+    </div>
+    <div class="ws-inst">
+      <div class="ws-inst-ico">🔮</div>
+      <div contenteditable="true" spellcheck="false">Each symbol represents an archetype with a hidden value. Use the 3 clue equations to solve the final mystery equation in each card. The archetype that appears most in your answers is your dominant midlife type.</div>
+    </div>
+    <div class="ws-key">${keyHTML}</div>
+    <div class="ws-grid">${cardsHTML}</div>
+    <div class="ws-footer">
+      <div class="ws-footer-l">From <strong>314 Prompts for Profound Midlife Self-Help Books</strong> · Decoder #${wsN}</div>
+      <div class="ws-pgnum">${wsN}</div>
+    </div>
+  `;
+
+  // Inject answer values into ans-boxes (always stored, shown only when revealed)
+  puzzles.forEach((p,ci)=>{
+    const box=document.getElementById(`ans-${ci}`);
+    if(box) box.setAttribute('data-ans',p.final.v);
+  });
+
+  wsN++;
+}
+
+function savePNG(){
+  const ws=document.getElementById('worksheet');
+  const ed=ws.querySelectorAll('[contenteditable="true"]');
+  ed.forEach(el=>el.style.border='none');
+  htmlToImage.toPng(ws,{pixelRatio:2,backgroundColor:'#fff'})
+    .then(function(d){
+      let a=document.createElement('a');
+      a.download=`ArchetypeDecoder_${revealed?'Key':'Student'}_${wsN-1}.png`;
+      a.href=d; a.click();
+      ed.forEach(el=>el.style.border='');
+    })
+    .catch(function(){ ed.forEach(el=>el.style.border=''); alert('Use Print instead.'); });
+}
+
+// Sync reveal state with live ans-boxes
+const origToggle=toggleReveal;
+window.toggleReveal=function(){
+  origToggle();
+  document.querySelectorAll('.ans-box').forEach(box=>{
+    box.textContent = revealed ? (box.getAttribute('data-ans')||'?') : '?';
+  });
+};
+
+generate();
+</script>
+</body>
+</html>
