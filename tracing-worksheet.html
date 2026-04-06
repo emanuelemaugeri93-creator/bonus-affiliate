@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids Worksheet Theme Card Generator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&family=Comic+Neue:wght@400;700&family=Noto+Emoji:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c-main:   #7C3AED;
+  --c-alt:    #06B6D4;
+  --c-pop:    #F59E0B;
+  --c-hot:    #EF4444;
+  --c-green:  #10B981;
+  --bg-body:  #0F0A1E;
+  --bg-sidebar:#1A1033;
+  --bg-card:  #251848;
+  --border-thick: 3px solid #7C3AED;
+  --shadow-pop: 5px 5px 0px #7C3AED;
+  --text-light:#E2D9F3;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg-body); font-family: 'Baloo 2', sans-serif; color: var(--text-light); overflow-x: hidden; }
+
+/* SIDEBAR */
+.sidebar { background: var(--bg-sidebar); border-right: 3px solid #7C3AED; }
+.sidebar-header {
+  background: linear-gradient(135deg, #4C1D95 0%, #7C3AED 60%, #A855F7 100%);
+  border-bottom: 3px solid #7C3AED;
+  padding: 20px 16px;
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;
+}
+.logo-wrap { filter: drop-shadow(0 0 12px rgba(168,85,247,.7)); }
+
+.fun-btn {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:11px 14px; border-radius:10px; border: 2px solid #7C3AED;
+  font-weight:800; font-size:12.5px; text-transform:uppercase;
+  box-shadow:4px 4px 0px #4C1D95; transition:all .1s;
+  background: var(--bg-card); color: var(--text-light); cursor:pointer;
+}
+.fun-btn:hover { transform:translate(2px,2px); box-shadow:2px 2px 0px #4C1D95; background:#312060; }
+.fun-btn.active { background: linear-gradient(135deg,#7C3AED,#A855F7); color:#fff; transform:translate(3px,3px); box-shadow:none; border-color:#A855F7; }
+
+.fun-select {
+  appearance:none; border-radius:10px; border: 2px solid #7C3AED;
+  background: var(--bg-card); padding:10px 14px;
+  font-family:'Baloo 2',sans-serif; font-weight:700; font-size:13px;
+  box-shadow:4px 4px 0px #4C1D95; cursor:pointer; width:100%;
+  color: var(--text-light);
+}
+.fun-select option { background: #251848; color: #E2D9F3; }
+
+.section-label { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.1em; color:#A78BFA; margin-bottom:6px; display:block; }
+
+/* COLOR SWATCHES */
+.swatch { width:36px; height:36px; border-radius:10px; border:3px solid transparent; cursor:pointer; transition:.15s; }
+.swatch:hover { transform:scale(1.15); }
+.swatch.on { border-color:#fff; box-shadow:0 0 0 2px #7C3AED; }
+
+/* BOTTOM BUTTONS */
+.btn-gen {
+  width:100%; padding:12px; background:linear-gradient(135deg,#7C3AED,#A855F7);
+  border:2px solid #A855F7; border-radius:12px; font-family:'Baloo 2',sans-serif;
+  font-size:14px; font-weight:900; color:#fff; cursor:pointer; text-transform:uppercase;
+  box-shadow:0 4px 20px rgba(124,58,237,.5); transition:.15s; letter-spacing:.04em;
+}
+.btn-gen:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(124,58,237,.7); }
+.btn-gen:active { transform:translateY(0); }
+.btn-sm {
+  flex:1; padding:9px 6px; background:var(--bg-card); border:2px solid #7C3AED;
+  border-radius:10px; font-family:'Baloo 2',sans-serif; font-size:11px; font-weight:900;
+  color:var(--text-light); cursor:pointer; text-transform:uppercase;
+  box-shadow:3px 3px 0 #4C1D95; transition:.1s;
+}
+.btn-sm:hover { background:#312060; transform:translate(1px,1px); box-shadow:2px 2px 0 #4C1D95; }
+
+/* CANVAS */
+.a4-paper {
+  width:210mm; min-height:297mm;
+  background:#fff; margin:auto;
+  border: 4px solid #1A1A24; border-radius:20px;
+  box-shadow: 0 0 60px rgba(124,58,237,.4), 12px 12px 0px #1A1A24;
+  display:flex; flex-direction:column;
+  position:relative; overflow:hidden; padding:14mm 12mm;
+  color:#1A1A24;
+}
+.bg-dots {
+  position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.15;
+  background-image:radial-gradient(#1A1A24 2px, transparent 2px);
+  background-size:28px 28px;
+}
+.trace-box {
+  border:3px dashed #1A1A24; border-radius:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:#fff; position:relative; box-shadow:4px 4px 0 #1A1A24;
+  padding:10px 8px; min-height:120px; gap:6px;
+}
+.trace-word {
+  font-size:26px; font-weight:900; letter-spacing:5px; color:#1A1A24;
+  border-bottom:3px dashed #ccc; padding-bottom:4px; width:100%; text-align:center;
+  text-transform:uppercase; font-family:'Baloo 2',sans-serif;
+}
+.trace-lines { width:100%; display:flex; flex-direction:column; gap:7px; padding:4px 0; }
+.trace-line { width:100%; border-bottom:3px dashed #ccc; height:28px; }
+
+/* ICONE COLORABILI (COLORING BOOK STYLE) */
+.trace-emoji { 
+  font-size:42px; 
+  line-height:1; 
+  font-family: 'Noto Emoji', sans-serif !important; 
+  color: #FFFFFF; /* Riempimento bianco */
+  -webkit-text-stroke: 2px #1A1A24; /* Linea nera */
+  text-shadow: none;
+}
+
+.trace-label { font-size:9.5px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; color:#999; }
+.diff-badge {
+  position:absolute; top:-10px; right:-10px;
+  width:26px; height:26px; border-radius:50%;
+  border:2.5px solid #1A1A24; font-size:8.5px; font-weight:900;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:2px 2px 0 #1A1A24; color:#fff;
+}
+
+/* PROMPT BOX */
+.prompt-box {
+  background:#0F0A1E; border:2px solid #7C3AED; border-radius:12px;
+  padding:11px 13px 11px 13px; font-size:11px; font-weight:700; line-height:1.65;
+  color:#C4B5FD; cursor:pointer; transition:.15s; user-select:all; position:relative;
+  box-shadow: inset 0 0 20px rgba(124,58,237,.15);
+}
+.prompt-box:hover { border-color:#A855F7; }
+.copy-badge {
+  position:absolute; top:8px; right:8px;
+  background:#F59E0B; color:#1A1A24;
+  border:2px solid #1A1A24; border-radius:7px;
+  font-size:8.5px; font-weight:900; padding:2px 7px;
+  box-shadow:2px 2px 0 #1A1A24;
+}
+
+[contenteditable] { outline:none; transition:.2s; border-radius:4px; }
+[contenteditable]:hover,[contenteditable]:focus { background:rgba(255,255,255,.12); outline:2px dashed rgba(124,58,237,.5); }
+
+.scrollbar-hide::-webkit-scrollbar { display:none; }
+.scrollbar-hide { scrollbar-width: none; }
+
+@media print {
+  aside { display:none !important; }
+  body,html,main { background:white !important; height:auto !important; overflow:visible !important; display:block !important; padding:0 !important; margin:0 !important; }
+  .a4-paper { box-shadow:none !important; border:4px solid #1A1A24 !important; margin:0 !important; border-radius:0 !important; }
+}
+</style>
+</head>
+<body class="flex h-screen w-full">
+
+<!-- SIDEBAR -->
+<aside class="w-[340px] flex flex-col h-full flex-shrink-0 sidebar overflow-hidden">
+  <div class="flex flex-col h-full">
+
+    <!-- HEADER + LOGO -->
+    <div class="sidebar-header">
+      <div class="logo-wrap">
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Book body -->
+          <rect x="8" y="18" width="26" height="38" rx="4" fill="#C4B5FD" stroke="#1A1A24" stroke-width="3"/>
+          <rect x="38" y="18" width="26" height="38" rx="4" fill="#DDD6FE" stroke="#1A1A24" stroke-width="3"/>
+          <!-- Spine -->
+          <rect x="33" y="16" width="6" height="42" rx="3" fill="#7C3AED" stroke="#1A1A24" stroke-width="2.5"/>
+          <!-- Lines on left page -->
+          <line x1="14" y1="28" x2="30" y2="28" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="14" y1="34" x2="30" y2="34" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="14" y1="40" x2="30" y2="40" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Pencil on right page -->
+          <rect x="44" y="25" width="8" height="22" rx="2" transform="rotate(-20 44 25)" fill="#F59E0B" stroke="#1A1A24" stroke-width="2"/>
+          <polygon points="52,44 56,52 48,50" fill="#FBBF24" stroke="#1A1A24" stroke-width="1.8"/>
+          <polygon points="52,48 55,52 49,52" fill="#1A1A24"/>
+          <!-- Star sparkle top right -->
+          <path d="M58 10 L59.5 14 L63 14 L60.2 16.5 L61.3 20 L58 18 L54.7 20 L55.8 16.5 L53 14 L56.5 14 Z" fill="#F59E0B" stroke="#1A1A24" stroke-width="1.5"/>
+          <!-- ABC letters top left -->
+          <text x="10" y="16" font-family="'Baloo 2',sans-serif" font-weight="900" font-size="10" fill="#10B981" stroke="#1A1A24" stroke-width=".8">ABC</text>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:17px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:.04em;line-height:1.1;text-shadow:2px 2px 0 rgba(0,0,0,.3)">Theme Card Generator</div>
+        <div style="margin-top:5px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);padding:3px 12px;border-radius:99px;display:inline-block;font-size:10px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.07em">✏️ Kids Tracing Worksheet</div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="p-5 overflow-y-auto flex flex-col gap-5 flex-grow scrollbar-hide">
+
+      <div>
+        <span class="section-label">📚 Book Theme</span>
+        <select id="sel-theme" onchange="generate()" class="fun-select">
+          <option value="halloween">🎃 Halloween</option>
+          <option value="christmas">🎄 Christmas</option>
+          <option value="farm">🐄 Farm Animals</option>
+          <option value="ocean">🌊 Ocean</option>
+          <option value="space" selected>🚀 Space</option>
+          <option value="jungle">🌿 Jungle</option>
+          <option value="dinosaurs">🦕 Dinosaurs</option>
+          <option value="food">🍎 Healthy Food</option>
+          <option value="vehicles">🚗 Vehicles</option>
+          <option value="sports">⚽ Sports</option>
+          <option value="flowers">🌸 Flowers</option>
+          <option value="weather">⛅ Weather</option>
+        </select>
+      </div>
+
+      <div>
+        <span class="section-label">🎂 Age Target</span>
+        <select id="sel-age" onchange="generate()" class="fun-select">
+          <option value="toddler">Toddler (2–3)</option>
+          <option value="prek" selected>Pre-K (3–4)</option>
+          <option value="kinder">Kindergarten (5–6)</option>
+          <option value="grade1">Grade 1–2 (6–8)</option>
+        </select>
+      </div>
+
+      <div>
+        <span class="section-label">🎨 Visual Style</span>
+        <div class="flex flex-col gap-2">
+          <button onclick="setStyle('cute')"     id="sty-cute"     class="fun-btn active">🌈 Cute & Kawaii</button>
+          <button onclick="setStyle('bold')"     id="sty-bold"     class="fun-btn">💥 Bold & Bright</button>
+          <button onclick="setStyle('minimal')"  id="sty-minimal"  class="fun-btn">⬜ Minimal Clean</button>
+          <button onclick="setStyle('seasonal')" id="sty-seasonal" class="fun-btn">🍂 Seasonal Mood</button>
+        </div>
+      </div>
+
+      <div>
+        <span class="section-label">🔢 Words per Page: <span id="wc-label">6</span></span>
+        <input type="range" id="sel-count" min="4" max="9" value="6"
+          oninput="document.getElementById('wc-label').textContent=this.value; generate()"
+          style="width:100%;accent-color:#A855F7;height:5px;">
+      </div>
+
+      <div>
+        <span class="section-label">🖍️ Accent Color</span>
+        <div class="flex gap-2">
+          <div class="swatch on" data-i="0" style="background:#7C3AED" onclick="setColor(0,this)"></div>
+          <div class="swatch"    data-i="1" style="background:#EF4444" onclick="setColor(1,this)"></div>
+          <div class="swatch"    data-i="2" style="background:#10B981" onclick="setColor(2,this)"></div>
+          <div class="swatch"    data-i="3" style="background:#F59E0B" onclick="setColor(3,this)"></div>
+          <div class="swatch"    data-i="4" style="background:#06B6D4" onclick="setColor(4,this)"></div>
+          <div class="swatch"    data-i="5" style="background:#EC4899" onclick="setColor(5,this)"></div>
+        </div>
+      </div>
+
+      <div>
+        <span class="section-label">🤖 AI Prompt — tap to copy</span>
+        <div class="prompt-box" id="prompt-output" onclick="copyPrompt()">
+          <div class="copy-badge">📋 COPY</div>
+          <span id="prompt-text">Hit Generate to get your prompt...</span>
+        </div>
+        <div id="copy-confirm" style="display:none;font-size:11px;font-weight:900;color:#10B981;text-align:center;margin-top:5px">✅ Copied to clipboard!</div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM BUTTONS -->
+    <div style="padding:16px;background:rgba(0,0,0,.25);border-top:3px solid #7C3AED;display:flex;flex-direction:column;gap:10px;">
+      <button class="btn-gen" onclick="generate()">🎲 GENERATE NEW CARD</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="window.print()">🖨️ Print</button>
+        <button class="btn-sm" onclick="saveImage()">💾 PNG</button>
+      </div>
+    </div>
+
+  </div>
+</aside>
+
+<!-- MAIN CANVAS AREA -->
+<main class="flex-1 overflow-auto p-10 flex justify-center items-start"
+  style="background-image:radial-gradient(rgba(124,58,237,.4) 1.5px,transparent 1.5px);background-size:28px 28px;background-color:#0F0A1E">
+  <div id="canvas" class="a4-paper"></div>
+</main>
+
+<script>
+const THEMES = {
+  halloween:{emoji:'🎃',label:'Halloween',words:[{w:'GHOST',e:'👻',d:'easy'},{w:'WITCH',e:'🧙',d:'easy'},{w:'PUMPKIN',e:'🎃',d:'medium'},{w:'SPIDER',e:'🕷️',d:'medium'},{w:'MONSTER',e:'👾',d:'medium'},{w:'SKELETON',e:'💀',d:'hard'},{w:'VAMPIRE',e:'🧛',d:'hard'},{w:'CAULDRON',e:'🪄',d:'hard'},{w:'BAT',e:'🦇',d:'easy'}]},
+  christmas:{emoji:'🎄',label:'Christmas',words:[{w:'STAR',e:'⭐',d:'easy'},{w:'BELL',e:'🔔',d:'easy'},{w:'GIFT',e:'🎁',d:'easy'},{w:'CANDY',e:'🍬',d:'easy'},{w:'SANTA',e:'🎅',d:'medium'},{w:'REINDEER',e:'🦌',d:'hard'},{w:'SNOWMAN',e:'⛄',d:'medium'},{w:'WREATH',e:'💚',d:'medium'},{w:'STOCKING',e:'🧦',d:'hard'}]},
+  farm:{emoji:'🐄',label:'Farm Animals',words:[{w:'COW',e:'🐄',d:'easy'},{w:'PIG',e:'🐷',d:'easy'},{w:'HEN',e:'🐓',d:'easy'},{w:'DUCK',e:'🦆',d:'easy'},{w:'HORSE',e:'🐴',d:'medium'},{w:'SHEEP',e:'🐑',d:'medium'},{w:'RABBIT',e:'🐰',d:'medium'},{w:'GOAT',e:'🐐',d:'medium'},{w:'ROOSTER',e:'🐓',d:'hard'}]},
+  ocean:{emoji:'🌊',label:'Ocean',words:[{w:'FISH',e:'🐟',d:'easy'},{w:'CRAB',e:'🦀',d:'easy'},{w:'WAVE',e:'🌊',d:'easy'},{w:'SHARK',e:'🦈',d:'medium'},{w:'WHALE',e:'🐋',d:'medium'},{w:'TURTLE',e:'🐢',d:'medium'},{w:'OCTOPUS',e:'🐙',d:'hard'},{w:'SEAHORSE',e:'🌀',d:'hard'},{w:'DOLPHIN',e:'🐬',d:'hard'}]},
+  space:{emoji:'🚀',label:'Space',words:[{w:'STAR',e:'⭐',d:'easy'},{w:'MOON',e:'🌙',d:'easy'},{w:'SUN',e:'☀️',d:'easy'},{w:'PLANET',e:'🪐',d:'medium'},{w:'ROCKET',e:'🚀',d:'medium'},{w:'COMET',e:'☄️',d:'medium'},{w:'GALAXY',e:'🌌',d:'hard'},{w:'ASTEROID',e:'🪨',d:'hard'},{w:'ASTRONAUT',e:'👨‍🚀',d:'hard'}]},
+  jungle:{emoji:'🌿',label:'Jungle',words:[{w:'LION',e:'🦁',d:'easy'},{w:'FROG',e:'🐸',d:'easy'},{w:'BIRD',e:'🦜',d:'easy'},{w:'SNAKE',e:'🐍',d:'medium'},{w:'MONKEY',e:'🐒',d:'medium'},{w:'TIGER',e:'🐯',d:'medium'},{w:'PARROT',e:'🦜',d:'medium'},{w:'ELEPHANT',e:'🐘',d:'hard'},{w:'CROCODILE',e:'🐊',d:'hard'}]},
+  dinosaurs:{emoji:'🦕',label:'Dinosaurs',words:[{w:'REX',e:'🦖',d:'easy'},{w:'EGG',e:'🥚',d:'easy'},{w:'FOSSIL',e:'🦴',d:'medium'},{w:'RAPTOR',e:'🦕',d:'medium'},{w:'TRICERATOPS',e:'🦏',d:'hard'},{w:'PTERODACTYL',e:'🦅',d:'hard'},{w:'STEGOSAURUS',e:'🦎',d:'hard'},{w:'BRACHIOSAURUS',e:'🌿',d:'hard'},{w:'DIPLODOCUS',e:'🐊',d:'hard'}]},
+  food:{emoji:'🍎',label:'Healthy Food',words:[{w:'APPLE',e:'🍎',d:'easy'},{w:'MILK',e:'🥛',d:'easy'},{w:'EGG',e:'🥚',d:'easy'},{w:'CARROT',e:'🥕',d:'medium'},{w:'BANANA',e:'🍌',d:'medium'},{w:'BREAD',e:'🍞',d:'medium'},{w:'BROCCOLI',e:'🥦',d:'hard'},{w:'STRAWBERRY',e:'🍓',d:'hard'},{w:'WATERMELON',e:'🍉',d:'hard'}]},
+  vehicles:{emoji:'🚗',label:'Vehicles',words:[{w:'CAR',e:'🚗',d:'easy'},{w:'BUS',e:'🚌',d:'easy'},{w:'BOAT',e:'⛵',d:'easy'},{w:'TRAIN',e:'🚂',d:'medium'},{w:'PLANE',e:'✈️',d:'medium'},{w:'TRUCK',e:'🚛',d:'medium'},{w:'HELICOPTER',e:'🚁',d:'hard'},{w:'SUBMARINE',e:'🤿',d:'hard'},{w:'MOTORCYCLE',e:'🏍️',d:'hard'}]},
+  sports:{emoji:'⚽',label:'Sports',words:[{w:'BALL',e:'⚽',d:'easy'},{w:'RUN',e:'🏃',d:'easy'},{w:'SWIM',e:'🏊',d:'easy'},{w:'JUMP',e:'🤸',d:'easy'},{w:'TENNIS',e:'🎾',d:'medium'},{w:'SOCCER',e:'⚽',d:'medium'},{w:'BASKETBALL',e:'🏀',d:'hard'},{w:'VOLLEYBALL',e:'🏐',d:'hard'},{w:'GYMNASTICS',e:'🤸',d:'hard'}]},
+  flowers:{emoji:'🌸',label:'Flowers',words:[{w:'ROSE',e:'🌹',d:'easy'},{w:'LILY',e:'🌷',d:'easy'},{w:'DAISY',e:'🌼',d:'medium'},{w:'TULIP',e:'🌷',d:'medium'},{w:'ORCHID',e:'🌸',d:'medium'},{w:'VIOLET',e:'💜',d:'medium'},{w:'JASMINE',e:'🤍',d:'hard'},{w:'LAVENDER',e:'💜',d:'hard'},{w:'SUNFLOWER',e:'🌻',d:'hard'}]},
+  weather:{emoji:'⛅',label:'Weather',words:[{w:'SUN',e:'☀️',d:'easy'},{w:'RAIN',e:'🌧️',d:'easy'},{w:'SNOW',e:'❄️',d:'easy'},{w:'WIND',e:'💨',d:'medium'},{w:'CLOUD',e:'☁️',d:'medium'},{w:'STORM',e:'⛈️',d:'medium'},{w:'RAINBOW',e:'🌈',d:'hard'},{w:'THUNDER',e:'⚡',d:'hard'},{w:'BLIZZARD',e:'🌨️',d:'hard'}]}
+};
+
+const AGE_CONFIG = {
+  toddler:{lines:1,desc:'2–3 yrs · Toddler',maxDiff:'easy',traceCount:1},
+  prek:   {lines:2,desc:'3–4 yrs · Pre-K',maxDiff:'easy',traceCount:2},
+  kinder: {lines:3,desc:'5–6 yrs · Kinder',maxDiff:'medium',traceCount:3},
+  grade1: {lines:4,desc:'6–8 yrs · Grade 1–2',maxDiff:'hard',traceCount:4},
+};
+
+const STYLE_CONFIG = {
+  cute:    {bg:'#FFF0F7',accent:'#EC4899',border:'#FBCFE8',label:'Cute & Kawaii 🌈'},
+  bold:    {bg:'#FFFBEB',accent:'#D97706',border:'#FDE68A',label:'Bold & Bright 💥'},
+  minimal: {bg:'#F9FAFB',accent:'#374151',border:'#E5E7EB',label:'Minimal Clean ⬜'},
+  seasonal:{bg:'#FFF7ED',accent:'#C2410C',border:'#FED7AA',label:'Seasonal Mood 🍂'},
+};
+
+const COLORS = ['#7C3AED','#EF4444','#10B981','#F59E0B','#06B6D4','#EC4899'];
+let currentColor = '#7C3AED';
+let currentStyle = 'cute';
+let pageNum = 1;
+
+function setStyle(s){
+  currentStyle=s;
+  ['cute','bold','minimal','seasonal'].forEach(k=>{
+    document.getElementById('sty-'+k).classList.toggle('active',k===s);
+  });
+  generate();
+}
+
+function setColor(i, el){
+  currentColor = COLORS[i];
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+  generate();
+}
+
+function shuffle(arr){ return arr.slice().sort(()=>Math.random()-.5); }
+
+function filterByAge(words, age){
+  const ord={easy:1,medium:2,hard:3};
+  const max={toddler:1,prek:1,kinder:2,grade1:3};
+  return words.filter(w=>ord[w.d]<=max[age]);
+}
+
+function buildPrompt(theme,age,style,words){
+  const t=THEMES[theme].label, a=AGE_CONFIG[age].desc, s=STYLE_CONFIG[style].label;
+  const wList=words.map(w=>w.w).join(', ');
+  return `Create a kids tracing worksheet illustration. Theme: "${t}". Age: ${a}. Style: ${s}. Words to trace: ${wList}. Each word needs a large cute icon above it and dotted tracing lines below. Black and white coloring book style, no color fill, thick clean outlines, child-friendly, educational, A4 layout, KDP-ready. --ar 3:4 --style raw --v 6`;
+}
+
+function generate(){
+  const theme=document.getElementById('sel-theme').value;
+  const age=document.getElementById('sel-age').value;
+  const count=parseInt(document.getElementById('sel-count').value);
+  const td=THEMES[theme], ac=AGE_CONFIG[age], sc=STYLE_CONFIG[currentStyle];
+
+  let pool=filterByAge(td.words,age);
+  if(pool.length<count) pool=td.words;
+  const selected=shuffle(pool).slice(0,count);
+
+  document.getElementById('prompt-text').textContent=buildPrompt(theme,age,currentStyle,selected);
+
+  const cols=count<=4?count:count<=6?3:4;
+  const diffColor={easy:'#10B981',medium:'#F59E0B',hard:'#EF4444'};
+
+  const cardsHTML=selected.map(word=>{
+    const fs=word.w.length>8?'16px':word.w.length>6?'19px':word.w.length>4?'22px':'26px';
+    const ls=word.w.length>6?'3px':'5px';
+    const lines=Array(ac.lines).fill('<div class="trace-line"></div>').join('');
+    return `<div class="trace-box" style="background:${sc.bg};border-color:${sc.border}">
+      <div class="diff-badge" style="background:${diffColor[word.d]}">${word.d[0].toUpperCase()}</div>
+      <div class="trace-emoji">${word.e}</div>
+      <div class="trace-word" style="color:${sc.accent};font-size:${fs};letter-spacing:${ls}">${word.w}</div>
+      <div class="trace-lines">${lines}</div>
+      <div class="trace-label">trace it!</div>
+    </div>`;
+  }).join('');
+
+  const legendHTML=`<div style="display:flex;gap:10px;align-items:center;z-index:10;position:relative;margin-top:8px;flex-shrink:0">
+    <span style="font-size:9.5px;font-weight:900;text-transform:uppercase;color:#999">Difficulty:</span>
+    <span style="background:#10B981;color:#fff;border-radius:6px;padding:2px 9px;font-size:9px;font-weight:900;border:2px solid #1A1A24">E · Easy</span>
+    <span style="background:#F59E0B;color:#1A1A24;border-radius:6px;padding:2px 9px;font-size:9px;font-weight:900;border:2px solid #1A1A24">M · Medium</span>
+    <span style="background:#EF4444;color:#fff;border-radius:6px;padding:2px 9px;font-size:9px;font-weight:900;border:2px solid #1A1A24">H · Hard</span>
+  </div>`;
+
+  document.getElementById('canvas').innerHTML=`
+    <div class="bg-dots"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #1A1A24;padding-bottom:10px;margin-bottom:12px;flex-shrink:0;z-index:10;position:relative">
+      <div>
+        <div contenteditable="true" spellcheck="false" style="font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;font-family:'Baloo 2',sans-serif;text-shadow:3px 3px 0 ${currentColor}"><span style="font-family:'Noto Emoji', sans-serif; color:#fff; -webkit-text-stroke: 2px #1A1A24; text-shadow:none;">${td.emoji}</span> ${td.label} Tracing</div>
+        <div style="margin-top:5px;background:#1A1A24;color:#fff;display:inline-block;padding:3px 11px;border-radius:7px;font-size:9.5px;font-weight:900;text-transform:uppercase">${STYLE_CONFIG[currentStyle].label} · ${ac.desc}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;min-width:145px">
+        <div style="display:flex;align-items:flex-end;font-size:11px;font-weight:800;color:#1A1A24">
+          <span contenteditable="true" style="margin-right:5px;white-space:nowrap">Name:</span>
+          <div style="flex:1;border-bottom:3px dashed #1A1A24;height:12px"></div>
+        </div>
+        <div style="display:flex;align-items:flex-end;font-size:11px;font-weight:800;color:#1A1A24">
+          <span contenteditable="true" style="margin-right:5px;white-space:nowrap">Date:</span>
+          <div style="flex:1;border-bottom:3px dashed #1A1A24;height:12px"></div>
+        </div>
+      </div>
+    </div>
+    <div contenteditable="true" spellcheck="false" style="background:#1A1A24;color:#fff;border-radius:10px;padding:7px 13px;font-size:10px;font-weight:800;margin-bottom:12px;flex-shrink:0;z-index:10;position:relative;display:flex;align-items:center;gap:8px">
+      <span style="font-size:18px;flex-shrink:0;font-family:'Noto Emoji', sans-serif; color:#fff; -webkit-text-stroke: 1.5px #1A1A24;">✏️</span>
+      Trace each word carefully! Say it out loud as you write. Then colour the picture!
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:10px;z-index:10;position:relative;flex:1;align-content:start;">
+      ${cardsHTML}
+    </div>
+    ${legendHTML}
+    <div style="margin-top:10px;padding-top:8px;border-top:4px solid #1A1A24;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;z-index:10;position:relative">
+      <div contenteditable="true" spellcheck="false" style="font-size:9.5px;font-weight:800;opacity:.55;color:#1A1A24">From <strong style="font-style:italic">Trace the Word Prompt Pack PLR</strong> · Theme Card</div>
+      <div contenteditable="true" style="width:26px;height:26px;border-radius:8px;background:#1A1A24;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 rgba(0,0,0,.3)">${pageNum++}</div>
+    </div>`;
+}
+
+function copyPrompt(){
+  const txt=document.getElementById('prompt-text').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const c=document.getElementById('copy-confirm');
+    c.style.display='block';
+    setTimeout(()=>c.style.display='none',2200);
+  });
+}
+
+function saveImage(){
+  const canvas=document.getElementById('canvas');
+  const ed=canvas.querySelectorAll('[contenteditable]');
+  ed.forEach(el=>el.style.outline='none');
+  htmlToImage.toPng(canvas,{pixelRatio:2,backgroundColor:'#fff'}).then(d=>{
+    const a=document.createElement('a');
+    a.download=`TracingCard_${document.getElementById('sel-theme').value}_${Date.now()}.png`;
+    a.href=d; a.click();
+    ed.forEach(el=>el.style.outline='');
+  }).catch(()=>{
+    ed.forEach(el=>el.style.outline='');
+    alert('Use the Print button instead.');
+  });
+}
+
+generate();
+</script>
+</body>
+</html>
