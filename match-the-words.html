@@ -1,0 +1,611 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word-to-Icon Drag & Match</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D1117;--sb:#111827;--card:#1F2937;
+  --orange:#F97316;--amber:#FBBF24;--green:#10B981;--red:#EF4444;--blue:#3B82F6;
+  --text:#F9FAFB;--muted:#9CA3AF;
+  /* card colors — overridable */
+  --wcard-bg:#1F2937;--wcard-border:#F97316;--wcard-shadow:#7C2D12;--wcard-text:#F9FAFB;
+  --icard-bg:#1F2937;--icard-border:#F97316;--icard-shadow:#7C2D12;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100vh;overflow:hidden;font-family:'Baloo 2',sans-serif;color:var(--text);background:var(--bg)}
+body{display:flex}
+
+.sidebar{width:300px;min-width:300px;background:var(--sb);border-right:3px solid var(--orange);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.sb-head{background:linear-gradient(135deg,#7C2D12,#EA580C,#F97316);border-bottom:3px solid var(--orange);padding:14px 16px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+.sb-body{padding:13px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:12px;scrollbar-width:none}
+.sb-body::-webkit-scrollbar{display:none}
+.sb-foot{padding:13px;background:rgba(0,0,0,.3);border-top:3px solid var(--orange);display:flex;flex-direction:column;gap:8px}
+.s-label{font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#FB923C;display:block;margin-bottom:5px}
+.fun-select{appearance:none;border-radius:10px;border:2px solid var(--orange);background:var(--card);padding:8px 12px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:var(--text);width:100%;cursor:pointer}
+.fun-select option{background:#1F2937}
+.pill-row{display:flex;flex-wrap:wrap;gap:5px}
+.pill{padding:5px 11px;border-radius:99px;border:2px solid var(--orange);background:var(--card);font-size:10.5px;font-weight:800;cursor:pointer;transition:.12s;color:var(--text)}
+.pill:hover{background:#374151}
+.pill.on{background:linear-gradient(135deg,#EA580C,#F97316);color:#fff;border-color:#FB923C;box-shadow:0 0 10px rgba(249,115,22,.35)}
+.btn-main{width:100%;padding:11px;background:linear-gradient(135deg,#EA580C,#F97316);border:2px solid #FB923C;border-radius:10px;font-family:'Baloo 2',sans-serif;font-size:13px;font-weight:900;color:#fff;cursor:pointer;text-transform:uppercase;box-shadow:0 4px 18px rgba(249,115,22,.4);transition:.15s}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(249,115,22,.6)}
+.btn-sm{flex:1;padding:8px 5px;background:var(--card);border:2px solid var(--orange);border-radius:9px;font-family:'Baloo 2',sans-serif;font-size:10.5px;font-weight:900;color:var(--text);cursor:pointer;text-transform:uppercase;transition:.1s}
+.btn-sm:hover{background:#374151}
+
+/* CARD COLOR PRESETS */
+.cpreset-row{display:flex;gap:5px;flex-wrap:wrap}
+.cpreset{width:28px;height:28px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:.12s;flex-shrink:0}
+.cpreset:hover{transform:scale(1.15)}
+.cpreset.on{border-color:#fff;box-shadow:0 0 0 2px var(--orange)}
+
+/* CUSTOM COLOR INPUTS */
+.color-input-row{display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--orange);border-radius:9px;padding:6px 10px}
+.color-input-row label{font-size:10px;font-weight:800;color:var(--muted);flex:1}
+.color-swatch-btn{width:26px;height:26px;border-radius:6px;border:2px solid rgba(255,255,255,.2);cursor:pointer;position:relative;overflow:hidden;flex-shrink:0}
+.color-swatch-btn input[type=color]{position:absolute;inset:-4px;width:calc(100%+8px);height:calc(100%+8px);opacity:0;cursor:pointer;border:none;padding:0}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.stat-box{background:var(--card);border:2px solid var(--orange);border-radius:10px;padding:9px;text-align:center;box-shadow:3px 3px 0 #7C2D12}
+.stat-val{font-size:20px;font-weight:900;line-height:1}
+.stat-lbl{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:2px}
+.streak-row{display:flex;gap:4px;justify-content:center}
+.streak-dot{width:19px;height:19px;border-radius:50%;border:2px solid var(--orange);background:var(--card);transition:.3s;display:flex;align-items:center;justify-content:center;font-size:9px}
+.streak-dot.lit{background:var(--orange);border-color:#FB923C;box-shadow:0 0 8px rgba(249,115,22,.5)}
+
+/* PROMPT BOX */
+.prompt-box{background:#0D1117;border:2px solid var(--orange);border-radius:10px;padding:10px 12px;font-size:9.5px;font-weight:700;line-height:1.65;color:#FED7AA;cursor:pointer;position:relative}
+.copy-tag{position:absolute;top:7px;right:7px;background:var(--amber);color:#1A1A24;border:2px solid #1A1A24;border-radius:5px;font-size:7.5px;font-weight:900;padding:2px 6px}
+
+/* GAME AREA */
+.game-area{flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:18px;scrollbar-width:none;background-image:radial-gradient(rgba(249,115,22,.22) 1.5px,transparent 1.5px);background-size:28px 28px;background-color:#0D1117}
+.game-area::-webkit-scrollbar{display:none}
+.topbar{display:flex;justify-content:space-between;align-items:center;background:var(--sb);border:2px solid var(--orange);border-radius:13px;padding:9px 16px;box-shadow:0 0 18px rgba(249,115,22,.12)}
+.topbar-title{font-size:17px;font-weight:900;text-transform:uppercase;text-shadow:2px 2px 0 var(--orange)}
+.timer-display{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--amber)}
+.timer-display.warn{color:var(--red);animation:pulse .6s infinite alternate}
+@keyframes pulse{from{opacity:1}to{opacity:.4}}
+.prog-outer{height:9px;background:var(--card);border-radius:99px;border:2px solid var(--orange);overflow:hidden}
+.prog-inner{height:100%;background:linear-gradient(90deg,#EA580C,#F97316,#FBBF24);border-radius:99px;transition:.4s}
+.game-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1}
+.col-head{font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#FB923C;text-align:center;padding:5px;background:rgba(249,115,22,.08);border-radius:7px;border:2px solid rgba(249,115,22,.25);margin-bottom:7px}
+
+/* WORD CARD — uses CSS vars */
+.word-card{
+  background:var(--wcard-bg);border:3px solid var(--wcard-border);border-radius:13px;
+  padding:13px 10px;text-align:center;font-size:16px;font-weight:900;text-transform:uppercase;
+  cursor:pointer;box-shadow:4px 4px 0 var(--wcard-shadow);transition:.15s;user-select:none;
+  letter-spacing:2px;color:var(--wcard-text);position:relative;
+}
+.word-card:hover{transform:translateY(-2px);filter:brightness(1.1)}
+.word-card.selected{border-color:#FB923C;box-shadow:0 0 16px rgba(249,115,22,.5);transform:scale(1.04);filter:brightness(1.15)}
+.word-card.matched{background:linear-gradient(135deg,#065F46,#10B981)!important;border-color:#34D399!important;color:#fff!important;cursor:default;box-shadow:4px 4px 0 #064E3B!important;animation:pop .35s ease}
+.word-card.wrong{animation:shake .4s ease;border-color:var(--red)!important}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+
+/* ICON CARD — uses CSS vars */
+.icon-card{
+  background:var(--icard-bg);border:3px solid var(--icard-border);border-radius:13px;
+  padding:13px 10px;text-align:center;cursor:pointer;
+  box-shadow:4px 4px 0 var(--icard-shadow);transition:.15s;user-select:none;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.icon-card:hover{transform:translateY(-2px);filter:brightness(1.1)}
+.icon-card.selected{border-color:#FB923C;box-shadow:0 0 16px rgba(249,115,22,.5);transform:scale(1.04)}
+.icon-card.matched{background:linear-gradient(135deg,#065F46,#10B981)!important;border-color:#34D399!important;cursor:default;box-shadow:4px 4px 0 #064E3B!important;animation:pop .35s ease}
+.icon-card.wrong{animation:shake .4s ease;border-color:var(--red)!important}
+.icon-emoji{font-size:34px;line-height:1}
+.icon-hint{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+
+/* WIN SCREEN */
+.win-screen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:.3s}
+.win-screen.show{opacity:1;pointer-events:all}
+.win-panel{background:var(--sb);border:4px solid var(--orange);border-radius:20px;padding:28px 32px;text-align:center;box-shadow:0 0 50px rgba(249,115,22,.5),12px 12px 0 #7C2D12;max-width:400px;width:90vw;transform:scale(.85);transition:.3s cubic-bezier(.175,.885,.32,1.275)}
+.win-screen.show .win-panel{transform:scale(1)}
+.win-ico{font-size:48px;line-height:1;margin-bottom:7px}
+.win-title{font-size:28px;font-weight:900;text-transform:uppercase;text-shadow:3px 3px 0 var(--orange);margin-bottom:5px}
+.win-sub{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:16px;line-height:1.5}
+.win-stats{display:flex;gap:12px;justify-content:center;margin-bottom:18px}
+.win-stat{background:var(--card);border:2px solid var(--orange);border-radius:11px;padding:9px 14px;min-width:75px}
+.win-stat-val{font-size:20px;font-weight:900;color:var(--amber)}
+.win-stat-lbl{font-size:8.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.prompt-unlock{background:rgba(249,115,22,.08);border:2px solid var(--orange);border-radius:11px;padding:11px 13px;font-size:9.5px;font-weight:700;line-height:1.65;color:#FED7AA;margin-top:9px;position:relative;cursor:pointer;text-align:left;max-height:120px;overflow-y:auto}
+
+/* CONFETTI */
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:300;overflow:hidden}
+.cf{position:absolute;width:10px;height:10px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- WIN SCREEN -->
+<div class="win-screen" id="win-screen">
+  <div class="win-panel">
+    <div class="win-ico" id="win-ico">🎉</div>
+    <div class="win-title" id="win-title">PERFECT!</div>
+    <div class="win-sub" id="win-sub">All words matched!</div>
+    <div class="win-stats">
+      <div class="win-stat"><div class="win-stat-val" id="ws-score">0</div><div class="win-stat-lbl">Score</div></div>
+      <div class="win-stat"><div class="win-stat-val" id="ws-time">0s</div><div class="win-stat-lbl">Time</div></div>
+      <div class="win-stat"><div class="win-stat-val" id="ws-acc">0%</div><div class="win-stat-lbl">Accuracy</div></div>
+    </div>
+    <div class="prompt-unlock" id="win-prompt" onclick="copyWinPrompt()">
+      <div class="copy-tag">📋 COPY</div>
+      <span id="win-prompt-text"></span>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn-main" style="flex:1" onclick="newGame()">🎲 NEW GAME</button>
+      <button class="btn-sm" style="flex:1;font-size:12px" onclick="closeWin()">✕ Close</button>
+    </div>
+  </div>
+</div>
+<div class="confetti" id="confetti"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-head">
+    <div style="filter:drop-shadow(0 0 12px rgba(249,115,22,.8))">
+      <svg width="58" height="58" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 20 L22 20 L22 26 Q25 23 28 26 Q25 29 22 26 L22 44 L6 44 Z" fill="#FB923C" stroke="#1A1A24" stroke-width="2.5"/>
+        <path d="M58 20 L42 20 L42 26 Q39 23 36 26 Q39 29 42 26 L42 44 L58 44 Z" fill="#FBBF24" stroke="#1A1A24" stroke-width="2.5"/>
+        <line x1="10" y1="28" x2="19" y2="28" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10" y1="33" x2="19" y2="33" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10" y1="38" x2="19" y2="38" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <path d="M26 32 L37 32" stroke="#10B981" stroke-width="3" stroke-linecap="round" marker-end="url(#a)"/>
+        <defs><marker id="a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#10B981"/></marker></defs>
+        <text x="41" y="37" font-size="15" text-anchor="middle">🐱</text>
+        <path d="M54 8 L55 11 L58 11 L55.8 12.8 L56.6 15.5 L54 14 L51.4 15.5 L52.2 12.8 L50 11 L53 11 Z" fill="#F97316" stroke="#1A1A24" stroke-width="1"/>
+        <text x="8" y="14" font-family="'Baloo 2',sans-serif" font-weight="900" font-size="9" fill="#10B981" stroke="#1A1A24" stroke-width=".5">ABC</text>
+      </svg>
+    </div>
+    <div>
+      <div style="font-size:14px;font-weight:900;color:#fff;text-transform:uppercase;text-shadow:2px 2px 0 rgba(0,0,0,.3)">Word-to-Icon Match</div>
+      <div style="margin-top:3px;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.3);padding:2px 10px;border-radius:99px;font-size:8.5px;font-weight:800;color:#fff;text-transform:uppercase;display:inline-block">🧩 Drag · Tap · Match</div>
+    </div>
+  </div>
+
+  <div class="sb-body">
+
+    <!-- THEME -->
+    <div>
+      <span class="s-label">📚 Theme</span>
+      <select id="sel-theme" class="fun-select">
+        <option value="halloween">🎃 Halloween</option>
+        <option value="christmas">🎄 Christmas</option>
+        <option value="farm">🐄 Farm</option>
+        <option value="ocean" selected>🌊 Ocean</option>
+        <option value="space">🚀 Space</option>
+        <option value="jungle">🌿 Jungle</option>
+        <option value="dinosaurs">🦕 Dinosaurs</option>
+        <option value="food">🍎 Food</option>
+        <option value="vehicles">🚗 Vehicles</option>
+        <option value="sports">⚽ Sports</option>
+        <option value="flowers">🌸 Flowers</option>
+        <option value="weather">⛅ Weather</option>
+      </select>
+    </div>
+
+    <!-- DIFFICULTY -->
+    <div>
+      <span class="s-label">🎯 Difficulty</span>
+      <div class="pill-row">
+        <div class="pill on" data-d="easy"   onclick="setDiff(this)">🟢 Easy (4)</div>
+        <div class="pill"    data-d="medium" onclick="setDiff(this)">🟡 Medium (6)</div>
+        <div class="pill"    data-d="hard"   onclick="setDiff(this)">🔴 Hard (8)</div>
+      </div>
+    </div>
+
+    <!-- TIMER -->
+    <div>
+      <span class="s-label">⏱️ Timer</span>
+      <div class="pill-row">
+        <div class="pill"    data-t="off" onclick="setTimer(this)">⛔ Off</div>
+        <div class="pill on" data-t="60"  onclick="setTimer(this)">60s</div>
+        <div class="pill"    data-t="45"  onclick="setTimer(this)">45s</div>
+        <div class="pill"    data-t="30"  onclick="setTimer(this)">30s</div>
+      </div>
+    </div>
+
+    <!-- ★ CARD COLOR PRESETS ★ -->
+    <div>
+      <span class="s-label">🎨 Card Color Presets</span>
+      <div class="cpreset-row" id="cpreset-row">
+        <!-- generated by JS -->
+      </div>
+    </div>
+
+    <!-- CUSTOM COLOR PICKERS -->
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span class="s-label" style="margin-bottom:0">🖌️ Custom Colors</span>
+      <div class="color-input-row">
+        <label>Word BG</label>
+        <div class="color-swatch-btn" id="sw-wbg" style="background:#1F2937">
+          <input type="color" value="#1F2937" oninput="setCustomColor('--wcard-bg',this.value,'sw-wbg')">
+        </div>
+      </div>
+      <div class="color-input-row">
+        <label>Word Border</label>
+        <div class="color-swatch-btn" id="sw-wborder" style="background:#F97316">
+          <input type="color" value="#F97316" oninput="setCustomColor('--wcard-border',this.value,'sw-wborder')">
+        </div>
+      </div>
+      <div class="color-input-row">
+        <label>Word Text</label>
+        <div class="color-swatch-btn" id="sw-wtext" style="background:#F9FAFB">
+          <input type="color" value="#F9FAFB" oninput="setCustomColor('--wcard-text',this.value,'sw-wtext')">
+        </div>
+      </div>
+      <div class="color-input-row">
+        <label>Icon BG</label>
+        <div class="color-swatch-btn" id="sw-ibg" style="background:#1F2937">
+          <input type="color" value="#1F2937" oninput="setCustomColor('--icard-bg',this.value,'sw-ibg')">
+        </div>
+      </div>
+      <div class="color-input-row">
+        <label>Icon Border</label>
+        <div class="color-swatch-btn" id="sw-iborder" style="background:#F97316">
+          <input type="color" value="#F97316" oninput="setCustomColor('--icard-border',this.value,'sw-iborder')">
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE STATS -->
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-val" id="st-score" style="color:var(--amber)">0</div><div class="stat-lbl">Score</div></div>
+      <div class="stat-box"><div class="stat-val" id="st-matched" style="color:var(--green)">0</div><div class="stat-lbl">Matched</div></div>
+      <div class="stat-box"><div class="stat-val" id="st-wrong" style="color:var(--red)">0</div><div class="stat-lbl">Wrong</div></div>
+      <div class="stat-box"><div class="stat-val" id="st-acc" style="color:var(--blue)">—</div><div class="stat-lbl">Accuracy</div></div>
+    </div>
+
+    <!-- STREAK -->
+    <div>
+      <span class="s-label">🔥 Streak</span>
+      <div class="streak-row" id="streak-row"></div>
+    </div>
+
+    <!-- PROMPTS -->
+    <div>
+      <span class="s-label">🤖 Unlocked Prompts (<span id="prompt-count">0</span>)</span>
+      <div class="prompt-box" id="prompt-box" onclick="copyPrompts()">
+        <div class="copy-tag">📋 COPY</div>
+        <span id="prompt-box-text" style="color:var(--muted)">Match words to unlock AI prompts...</span>
+      </div>
+      <div id="copy-ok" style="display:none;font-size:10px;font-weight:900;color:var(--green);text-align:center;margin-top:4px">✅ Copied!</div>
+    </div>
+
+  </div>
+
+  <div class="sb-foot">
+    <button class="btn-main" onclick="newGame()">🎲 NEW GAME</button>
+    <div style="display:flex;gap:7px">
+      <button class="btn-sm" onclick="shuffleCards()">🔀 Shuffle</button>
+      <button class="btn-sm" onclick="showHint()">💡 Hint</button>
+    </div>
+  </div>
+</aside>
+
+<!-- GAME -->
+<main class="game-area">
+  <div class="topbar">
+    <div class="topbar-title">🧩 Match the Words</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="text-align:center">
+        <div class="timer-display" id="timer-display">—</div>
+        <div style="font-size:8px;font-weight:900;text-transform:uppercase;color:var(--muted)">Time Left</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+      <span style="font-size:9.5px;font-weight:800;color:var(--muted);text-transform:uppercase">Progress</span>
+      <span id="prog-label" style="font-size:9.5px;font-weight:900;color:var(--amber)">0 / 0</span>
+    </div>
+    <div class="prog-outer"><div class="prog-inner" id="prog-inner" style="width:0%"></div></div>
+  </div>
+
+  <div class="game-grid">
+    <div>
+      <div class="col-head">📝 Words — tap to select</div>
+      <div id="words-col" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <div>
+      <div class="col-head">🖼️ Icons — tap to match</div>
+      <div id="icons-col" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ─── COLOR PRESETS ─────────────────────────────────────────────
+const PRESETS = [
+  {name:'Dark Orange',  wbg:'#1F2937',wborder:'#F97316',wtext:'#F9FAFB',ibg:'#1F2937',iborder:'#F97316',wshadow:'#7C2D12',ishadow:'#7C2D12'},
+  {name:'Midnight Blue',wbg:'#1E3A5F',wborder:'#3B82F6',wtext:'#DBEAFE',ibg:'#1E3A5F',iborder:'#60A5FA',wshadow:'#1E3A5F',ishadow:'#1E3A5F'},
+  {name:'Emerald Dark', wbg:'#064E3B',wborder:'#10B981',wtext:'#D1FAE5',ibg:'#064E3B',iborder:'#34D399',wshadow:'#022C22',ishadow:'#022C22'},
+  {name:'Purple Night',  wbg:'#2E1065',wborder:'#8B5CF6',wtext:'#EDE9FE',ibg:'#2E1065',iborder:'#A78BFA',wshadow:'#1C0050',ishadow:'#1C0050'},
+  {name:'Rose Dark',     wbg:'#4C0519',wborder:'#F43F5E',wtext:'#FFE4E6',ibg:'#4C0519',iborder:'#FB7185',wshadow:'#3B0012',ishadow:'#3B0012'},
+  {name:'Candy Light',   wbg:'#FFF0FB',wborder:'#EC4899',wtext:'#1A1A24',ibg:'#FFF0FB',iborder:'#EC4899',wshadow:'#BE185D',ishadow:'#BE185D'},
+  {name:'Cream Bold',    wbg:'#FFFBEB',wborder:'#D97706',wtext:'#1A1A24',ibg:'#FFFBEB',iborder:'#F59E0B',wshadow:'#92400E',ishadow:'#92400E'},
+  {name:'Slate Clean',   wbg:'#F8FAFC',wborder:'#334155',wtext:'#0F172A',ibg:'#F8FAFC',iborder:'#475569',wshadow:'#1E293B',ishadow:'#1E293B'},
+];
+
+function buildPresets(){
+  const row=document.getElementById('cpreset-row');
+  row.innerHTML='';
+  PRESETS.forEach((p,i)=>{
+    const el=document.createElement('div');
+    el.className='cpreset'+(i===0?' on':'');
+    el.title=p.name;
+    el.style.background=`linear-gradient(135deg,${p.wbg},${p.wborder})`;
+    el.onclick=()=>applyPreset(i,el);
+    row.appendChild(el);
+  });
+}
+
+function applyPreset(i,el){
+  const p=PRESETS[i];
+  const root=document.documentElement;
+  root.style.setProperty('--wcard-bg',    p.wbg);
+  root.style.setProperty('--wcard-border',p.wborder);
+  root.style.setProperty('--wcard-shadow',p.wshadow);
+  root.style.setProperty('--wcard-text',  p.wtext);
+  root.style.setProperty('--icard-bg',    p.ibg);
+  root.style.setProperty('--icard-border',p.iborder);
+  root.style.setProperty('--icard-shadow',p.ishadow);
+  // Sync color pickers
+  syncPicker('sw-wbg',   p.wbg);
+  syncPicker('sw-wborder',p.wborder);
+  syncPicker('sw-wtext', p.wtext);
+  syncPicker('sw-ibg',   p.ibg);
+  syncPicker('sw-iborder',p.iborder);
+  document.querySelectorAll('.cpreset').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function syncPicker(id, hex){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.style.background=hex;
+  const input=el.querySelector('input[type=color]');
+  if(input) input.value=hex;
+}
+
+function setCustomColor(cssVar, val, swId){
+  document.documentElement.style.setProperty(cssVar, val);
+  document.getElementById(swId).style.background=val;
+  // Also update shadow to darker version of bg for bg changes
+  if(cssVar==='--wcard-bg') document.documentElement.style.setProperty('--wcard-shadow', darken(val));
+  if(cssVar==='--icard-bg') document.documentElement.style.setProperty('--icard-shadow', darken(val));
+  document.querySelectorAll('.cpreset').forEach(s=>s.classList.remove('on'));
+}
+
+function darken(hex){
+  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  r=Math.max(0,r-40);g=Math.max(0,g-40);b=Math.max(0,b-40);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+// ─── GAME DATA ─────────────────────────────────────────────────
+const THEMES={
+  halloween:{label:'Halloween',words:[{w:'GHOST',e:'👻',p:'ghost silhouette cute kawaii coloring page thick black outline no fill'},{w:'WITCH',e:'🧙',p:'witch with hat cute kawaii coloring page thick outline no fill'},{w:'PUMPKIN',e:'🎃',p:'smiling pumpkin cute kawaii coloring page thick outline no fill'},{w:'SPIDER',e:'🕷️',p:'cartoon spider kawaii coloring page thick outline no fill'},{w:'BAT',e:'🦇',p:'cute bat flying kawaii coloring page thick outline no fill'},{w:'MONSTER',e:'👾',p:'friendly monster kawaii coloring page thick outline no fill'},{w:'SKELETON',e:'💀',p:'cartoon skeleton kawaii coloring page thick outline no fill'},{w:'VAMPIRE',e:'🧛',p:'cute vampire kawaii coloring page thick outline no fill'}]},
+  christmas:{label:'Christmas',words:[{w:'STAR',e:'⭐',p:'christmas star kawaii coloring page thick outline no fill'},{w:'BELL',e:'🔔',p:'christmas bell kawaii coloring page thick outline no fill'},{w:'GIFT',e:'🎁',p:'wrapped gift bow kawaii coloring page thick outline no fill'},{w:'SANTA',e:'🎅',p:'santa claus cute cartoon coloring page thick outline no fill'},{w:'SNOWMAN',e:'⛄',p:'snowman kawaii coloring page thick outline no fill'},{w:'REINDEER',e:'🦌',p:'reindeer kawaii coloring page thick outline no fill'},{w:'CANDY',e:'🍬',p:'candy cane kawaii coloring page thick outline no fill'},{w:'WREATH',e:'🌿',p:'christmas wreath kawaii coloring page thick outline no fill'}]},
+  farm:{label:'Farm',words:[{w:'COW',e:'🐄',p:'cute cow cartoon farm coloring page thick outline no fill'},{w:'PIG',e:'🐷',p:'cute pig farm kawaii coloring page thick outline no fill'},{w:'HEN',e:'🐓',p:'cute hen farm kawaii coloring page thick outline no fill'},{w:'DUCK',e:'🦆',p:'cute duck farm kawaii coloring page thick outline no fill'},{w:'HORSE',e:'🐴',p:'cute horse farm kawaii coloring page thick outline no fill'},{w:'SHEEP',e:'🐑',p:'cute sheep farm kawaii coloring page thick outline no fill'},{w:'RABBIT',e:'🐰',p:'cute rabbit farm kawaii coloring page thick outline no fill'},{w:'GOAT',e:'🐐',p:'cute goat farm kawaii coloring page thick outline no fill'}]},
+  ocean:{label:'Ocean',words:[{w:'FISH',e:'🐟',p:'cute fish ocean kawaii coloring page thick outline no fill'},{w:'CRAB',e:'🦀',p:'cute crab ocean kawaii coloring page thick outline no fill'},{w:'SHARK',e:'🦈',p:'cute shark ocean kawaii coloring page thick outline no fill'},{w:'WHALE',e:'🐋',p:'cute whale ocean kawaii coloring page thick outline no fill'},{w:'TURTLE',e:'🐢',p:'cute turtle ocean kawaii coloring page thick outline no fill'},{w:'OCTOPUS',e:'🐙',p:'cute octopus ocean kawaii coloring page thick outline no fill'},{w:'DOLPHIN',e:'🐬',p:'cute dolphin ocean kawaii coloring page thick outline no fill'},{w:'SEAHORSE',e:'🦑',p:'cute seahorse ocean kawaii coloring page thick outline no fill'}]},
+  space:{label:'Space',words:[{w:'STAR',e:'⭐',p:'cute star space kawaii coloring page thick outline no fill'},{w:'MOON',e:'🌙',p:'cute moon crescent kawaii coloring page thick outline no fill'},{w:'ROCKET',e:'🚀',p:'cute rocket space kawaii coloring page thick outline no fill'},{w:'PLANET',e:'🪐',p:'cute planet rings kawaii coloring page thick outline no fill'},{w:'COMET',e:'☄️',p:'cute comet space kawaii coloring page thick outline no fill'},{w:'ALIEN',e:'👽',p:'cute alien space kawaii coloring page thick outline no fill'},{w:'GALAXY',e:'🌌',p:'cute galaxy swirl kawaii coloring page thick outline no fill'},{w:'ASTRONAUT',e:'👨‍🚀',p:'cute astronaut floating kawaii coloring page thick outline no fill'}]},
+  jungle:{label:'Jungle',words:[{w:'LION',e:'🦁',p:'cute lion jungle kawaii coloring page thick outline no fill'},{w:'FROG',e:'🐸',p:'cute frog jungle kawaii coloring page thick outline no fill'},{w:'MONKEY',e:'🐒',p:'cute monkey jungle kawaii coloring page thick outline no fill'},{w:'SNAKE',e:'🐍',p:'cute snake jungle kawaii coloring page thick outline no fill'},{w:'TIGER',e:'🐯',p:'cute tiger jungle kawaii coloring page thick outline no fill'},{w:'PARROT',e:'🦜',p:'cute parrot jungle kawaii coloring page thick outline no fill'},{w:'ELEPHANT',e:'🐘',p:'cute elephant jungle kawaii coloring page thick outline no fill'},{w:'CROCODILE',e:'🐊',p:'cute crocodile jungle kawaii coloring page thick outline no fill'}]},
+  dinosaurs:{label:'Dinosaurs',words:[{w:'T-REX',e:'🦖',p:'cute T-Rex dinosaur kawaii coloring page thick outline no fill'},{w:'EGG',e:'🥚',p:'cute dino egg kawaii coloring page thick outline no fill'},{w:'RAPTOR',e:'🦕',p:'cute raptor dinosaur kawaii coloring page thick outline no fill'},{w:'FOSSIL',e:'🦴',p:'cute fossil bone kawaii coloring page thick outline no fill'},{w:'VOLCANO',e:'🌋',p:'cute volcano prehistoric kawaii coloring page thick outline no fill'},{w:'FERN',e:'🌿',p:'cute prehistoric fern kawaii coloring page thick outline no fill'},{w:'STEGOSAUR',e:'🦎',p:'cute stegosaurus kawaii coloring page thick outline no fill'},{w:'PTERODACTYL',e:'🦅',p:'cute pterodactyl kawaii coloring page thick outline no fill'}]},
+  food:{label:'Food',words:[{w:'APPLE',e:'🍎',p:'cute apple kawaii coloring page thick outline no fill'},{w:'CARROT',e:'🥕',p:'cute carrot kawaii coloring page thick outline no fill'},{w:'BANANA',e:'🍌',p:'cute banana kawaii coloring page thick outline no fill'},{w:'BROCCOLI',e:'🥦',p:'cute broccoli kawaii coloring page thick outline no fill'},{w:'STRAWBERRY',e:'🍓',p:'cute strawberry kawaii coloring page thick outline no fill'},{w:'BREAD',e:'🍞',p:'cute bread loaf kawaii coloring page thick outline no fill'},{w:'WATERMELON',e:'🍉',p:'cute watermelon kawaii coloring page thick outline no fill'},{w:'MILK',e:'🥛',p:'cute milk glass kawaii coloring page thick outline no fill'}]},
+  vehicles:{label:'Vehicles',words:[{w:'CAR',e:'🚗',p:'cute car kawaii coloring page thick outline no fill'},{w:'BUS',e:'🚌',p:'cute bus kawaii coloring page thick outline no fill'},{w:'TRAIN',e:'🚂',p:'cute train kawaii coloring page thick outline no fill'},{w:'PLANE',e:'✈️',p:'cute airplane kawaii coloring page thick outline no fill'},{w:'BOAT',e:'⛵',p:'cute sailboat kawaii coloring page thick outline no fill'},{w:'TRUCK',e:'🚛',p:'cute truck kawaii coloring page thick outline no fill'},{w:'HELICOPTER',e:'🚁',p:'cute helicopter kawaii coloring page thick outline no fill'},{w:'ROCKET',e:'🚀',p:'cute rocket kawaii coloring page thick outline no fill'}]},
+  sports:{label:'Sports',words:[{w:'BALL',e:'⚽',p:'cute soccer ball kawaii coloring page thick outline no fill'},{w:'SWIM',e:'🏊',p:'cute swimming kawaii coloring page thick outline no fill'},{w:'RUN',e:'🏃',p:'cute running figure kawaii coloring page thick outline no fill'},{w:'JUMP',e:'🤸',p:'cute jumping gymnast kawaii coloring page thick outline no fill'},{w:'TENNIS',e:'🎾',p:'cute tennis racket kawaii coloring page thick outline no fill'},{w:'BASKET',e:'🏀',p:'cute basketball hoop kawaii coloring page thick outline no fill'},{w:'BICYCLE',e:'🚴',p:'cute bicycle kawaii coloring page thick outline no fill'},{w:'TROPHY',e:'🏆',p:'cute trophy kawaii coloring page thick outline no fill'}]},
+  flowers:{label:'Flowers',words:[{w:'ROSE',e:'🌹',p:'cute rose kawaii coloring page thick outline no fill'},{w:'DAISY',e:'🌼',p:'cute daisy kawaii coloring page thick outline no fill'},{w:'TULIP',e:'🌷',p:'cute tulip kawaii coloring page thick outline no fill'},{w:'SUNFLOWER',e:'🌻',p:'cute sunflower kawaii coloring page thick outline no fill'},{w:'ORCHID',e:'🌸',p:'cute orchid kawaii coloring page thick outline no fill'},{w:'LAVENDER',e:'💜',p:'cute lavender plant kawaii coloring page thick outline no fill'},{w:'LILY',e:'🌺',p:'cute lily flower kawaii coloring page thick outline no fill'},{w:'BUD',e:'🌱',p:'cute flower bud sprout kawaii coloring page thick outline no fill'}]},
+  weather:{label:'Weather',words:[{w:'SUN',e:'☀️',p:'cute sun smiling kawaii coloring page thick outline no fill'},{w:'CLOUD',e:'☁️',p:'cute cloud kawaii coloring page thick outline no fill'},{w:'RAIN',e:'🌧️',p:'cute rain cloud kawaii coloring page thick outline no fill'},{w:'SNOW',e:'❄️',p:'cute snowflake kawaii coloring page thick outline no fill'},{w:'RAINBOW',e:'🌈',p:'cute rainbow kawaii coloring page thick outline no fill'},{w:'STORM',e:'⛈️',p:'cute storm cloud kawaii coloring page thick outline no fill'},{w:'WIND',e:'💨',p:'cute wind swirl kawaii coloring page thick outline no fill'},{w:'THUNDER',e:'⚡',p:'cute thunder bolt kawaii coloring page thick outline no fill'}]},
+};
+
+const DIFF_COUNT={easy:4,medium:6,hard:8};
+const STREAK_MAX=5;
+let diff='easy',timerMode=60;
+let cards=[],selectedWord=null,selectedIcon=null;
+let score=0,matched=0,wrong=0,streak=0;
+let timerLeft=0,timerInterval=null,gameActive=false;
+let unlockedPrompts=[],startTime=0,totalAttempts=0;
+
+function setDiff(el){diff=el.dataset.d;document.querySelectorAll('[data-d]').forEach(p=>p.classList.toggle('on',p===el));}
+function setTimer(el){timerMode=el.dataset.t==='off'?0:parseInt(el.dataset.t);document.querySelectorAll('[data-t]').forEach(p=>p.classList.toggle('on',p===el));}
+function shuffle(arr){return arr.slice().sort(()=>Math.random()-.5);}
+
+function newGame(){
+  clearInterval(timerInterval);
+  const theme=document.getElementById('sel-theme').value;
+  const count=DIFF_COUNT[diff];
+  const pool=shuffle(THEMES[theme].words).slice(0,count);
+  cards=pool.map((c,i)=>({...c,id:i,matched:false}));
+  selectedWord=null;selectedIcon=null;
+  score=0;matched=0;wrong=0;streak=0;
+  unlockedPrompts=[];totalAttempts=0;startTime=Date.now();
+  gameActive=true;
+  updateStats();renderStreak();updatePromptBox();renderCards();startTimer();closeWin();
+}
+
+function renderCards(){
+  const wo=shuffle(cards.map(c=>c.id));
+  const io=shuffle(cards.map(c=>c.id));
+  const wCol=document.getElementById('words-col');
+  const iCol=document.getElementById('icons-col');
+  wCol.innerHTML='';iCol.innerHTML='';
+  wo.forEach(id=>{
+    const c=cards[id];
+    const el=document.createElement('div');
+    el.className='word-card';el.id=`word-${id}`;el.textContent=c.w;
+    el.onclick=()=>selectWord(id);
+    el.draggable=true;
+    el.ondragstart=e=>{e.dataTransfer.setData('wordId',id);el.classList.add('dragging')};
+    el.ondragend=()=>el.classList.remove('dragging');
+    wCol.appendChild(el);
+  });
+  io.forEach(id=>{
+    const c=cards[id];
+    const el=document.createElement('div');
+    el.className='icon-card';el.id=`icon-${id}`;
+    el.innerHTML=`<div class="icon-emoji">${c.e}</div><div class="icon-hint">???</div>`;
+    el.onclick=()=>selectIcon(id);
+    el.ondragover=e=>e.preventDefault();
+    el.ondrop=e=>{e.preventDefault();const wId=parseInt(e.dataTransfer.getData('wordId'));attemptMatch(wId,id);};
+    iCol.appendChild(el);
+  });
+}
+
+function selectWord(id){
+  if(!gameActive||cards[id].matched) return;
+  if(selectedWord!==null){const p=document.getElementById(`word-${selectedWord}`);if(p)p.classList.remove('selected');}
+  if(selectedWord===id){selectedWord=null;return;}
+  selectedWord=id;
+  document.getElementById(`word-${id}`).classList.add('selected');
+  if(selectedIcon!==null) attemptMatch(selectedWord,selectedIcon);
+}
+
+function selectIcon(id){
+  if(!gameActive||cards[id].matched) return;
+  if(selectedIcon!==null){const p=document.getElementById(`icon-${selectedIcon}`);if(p)p.classList.remove('selected');}
+  if(selectedIcon===id){selectedIcon=null;return;}
+  selectedIcon=id;
+  document.getElementById(`icon-${id}`).classList.add('selected');
+  if(selectedWord!==null) attemptMatch(selectedWord,selectedIcon);
+}
+
+function attemptMatch(wId,iId){
+  if(!gameActive) return;
+  totalAttempts++;
+  const wEl=document.getElementById(`word-${wId}`);
+  const iEl=document.getElementById(`icon-${iId}`);
+  if(wId===iId){
+    cards[wId].matched=true;matched++;streak++;
+    const bonus=streak>=3?streak*10:10;score+=bonus;
+    wEl.classList.remove('selected');iEl.classList.remove('selected');
+    wEl.classList.add('matched');iEl.classList.add('matched');
+    wEl.textContent=`✓ ${cards[wId].w}`;
+    iEl.querySelector('.icon-hint').textContent='matched!';
+    unlockedPrompts.push(`[${cards[wId].w}] ${cards[wId].p}`);
+    selectedWord=null;selectedIcon=null;
+    updateStats();renderStreak();updateProgress();updatePromptBox();
+    if(matched===cards.length) setTimeout(showWin,400);
+  } else {
+    wrong++;streak=0;score=Math.max(0,score-5);
+    wEl.classList.add('wrong');iEl.classList.add('wrong');
+    setTimeout(()=>{wEl.classList.remove('wrong','selected');iEl.classList.remove('wrong','selected');},600);
+    selectedWord=null;selectedIcon=null;
+    updateStats();renderStreak();
+  }
+}
+
+function updatePromptBox(){
+  const box=document.getElementById('prompt-box-text');
+  document.getElementById('prompt-count').textContent=unlockedPrompts.length;
+  if(!unlockedPrompts.length){box.style.color='var(--muted)';box.textContent='Match words to unlock AI prompts...';}
+  else{box.style.color='#FED7AA';box.textContent=unlockedPrompts.join('\n\n');}
+}
+
+function copyPrompts(){
+  if(!unlockedPrompts.length) return;
+  navigator.clipboard.writeText(unlockedPrompts.join('\n\n')).then(()=>{
+    const c=document.getElementById('copy-ok');c.style.display='block';setTimeout(()=>c.style.display='none',2000);
+  });
+}
+
+function updateStats(){
+  document.getElementById('st-score').textContent=score;
+  document.getElementById('st-matched').textContent=matched;
+  document.getElementById('st-wrong').textContent=wrong;
+  document.getElementById('st-acc').textContent=totalAttempts>0?Math.round((matched/totalAttempts)*100)+'%':'—';
+}
+
+function updateProgress(){
+  const pct=cards.length>0?(matched/cards.length)*100:0;
+  document.getElementById('prog-inner').style.width=pct+'%';
+  document.getElementById('prog-label').textContent=`${matched} / ${cards.length}`;
+}
+
+function renderStreak(){
+  const row=document.getElementById('streak-row');row.innerHTML='';
+  for(let i=0;i<STREAK_MAX;i++){
+    const d=document.createElement('div');
+    d.className='streak-dot'+(i<streak?' lit':'');
+    d.textContent=i<streak?'🔥':'';
+    row.appendChild(d);
+  }
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  const disp=document.getElementById('timer-display');
+  if(!timerMode){disp.textContent='∞';disp.classList.remove('warn');return;}
+  timerLeft=timerMode;disp.textContent=timerLeft+'s';disp.classList.remove('warn');
+  timerInterval=setInterval(()=>{
+    timerLeft--;disp.textContent=timerLeft+'s';
+    if(timerLeft<=10)disp.classList.add('warn');else disp.classList.remove('warn');
+    if(timerLeft<=0){clearInterval(timerInterval);gameActive=false;showWin(true);}
+  },1000);
+}
+
+function showWin(timeUp=false){
+  clearInterval(timerInterval);gameActive=false;
+  const elapsed=Math.round((Date.now()-startTime)/1000);
+  const acc=totalAttempts>0?Math.round((matched/totalAttempts)*100):0;
+  const all=matched===cards.length;
+  document.getElementById('win-ico').textContent=all?'🏆':timeUp?'⏰':'🎉';
+  document.getElementById('win-title').textContent=all?'PERFECT!':timeUp?'TIME UP!':'WELL DONE!';
+  document.getElementById('win-sub').textContent=all?'All matched! Prompts ready.':timeUp?`${matched}/${cards.length} matched before time!`:`${matched} of ${cards.length} matched!`;
+  document.getElementById('ws-score').textContent=score;
+  document.getElementById('ws-time').textContent=elapsed+'s';
+  document.getElementById('ws-acc').textContent=acc+'%';
+  document.getElementById('win-prompt-text').textContent=unlockedPrompts.length?unlockedPrompts.join('\n\n'):'No prompts unlocked.';
+  document.getElementById('win-screen').classList.add('show');
+  if(all) spawnConfetti();
+}
+
+function closeWin(){document.getElementById('win-screen').classList.remove('show');}
+function copyWinPrompt(){navigator.clipboard.writeText(document.getElementById('win-prompt-text').textContent).catch(()=>{});}
+
+function shuffleCards(){
+  if(!gameActive) return;
+  const iCol=document.getElementById('icons-col');
+  const unmatched=Array.from(iCol.children).filter(el=>!cards[parseInt(el.id.replace('icon-',''))].matched);
+  shuffle(unmatched).forEach(el=>iCol.appendChild(el));
+}
+
+function showHint(){
+  if(!gameActive||selectedWord===null) return;
+  const el=document.getElementById(`icon-${selectedWord}`);
+  if(!el) return;
+  el.style.boxShadow='0 0 22px rgba(249,115,22,.9)';
+  el.style.transform='scale(1.12)';
+  score=Math.max(0,score-3);updateStats();
+  setTimeout(()=>{el.style.boxShadow='';el.style.transform='';},1200);
+}
+
+function spawnConfetti(){
+  const c=document.getElementById('confetti');c.innerHTML='';
+  const cols=['#F97316','#FBBF24','#10B981','#EF4444','#3B82F6','#EC4899','#fff'];
+  for(let i=0;i<90;i++){
+    const el=document.createElement('div');el.className='cf';
+    el.style.left=Math.random()*100+'vw';
+    el.style.background=cols[Math.floor(Math.random()*cols.length)];
+    el.style.width=el.style.height=(6+Math.random()*10)+'px';
+    el.style.animationDuration=(1.5+Math.random()*2)+'s';
+    el.style.animationDelay=(Math.random()*.8)+'s';
+    c.appendChild(el);
+  }
+  setTimeout(()=>c.innerHTML='',4000);
+}
+
+buildPresets();
+newGame();
+</script>
+</body>
+</html>
