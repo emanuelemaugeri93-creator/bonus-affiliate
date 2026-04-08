@@ -1,0 +1,522 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trend Infinite Prompt Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#F5F3FF;--su:#EDE9FE;--su2:#DDD6FE;--brd:#A78BFA;
+--txt:#1E1333;--tm:#5B21B6;--tf:#7C3AED;
+--pr:#7C3AED;--prh:#6D28D9;--prhi:#EDE9FE;
+--ac:#F59E0B;--gd:#10B981;
+--sh1:0 2px 10px rgba(124,58,237,0.10);
+--sh2:0 6px 28px rgba(124,58,237,0.18);
+--sh3:0 20px 60px rgba(124,58,237,0.25);
+}
+[data-theme="dark"]{
+--bg:#0D0520;--su:#160830;--su2:#1E0C40;--brd:#4C1D95;
+--txt:#EDE9FE;--tm:#C4B5FD;--tf:#A78BFA;
+--pr:#A78BFA;--prh:#C4B5FD;--prhi:#1E0C40;
+--sh1:0 2px 10px rgba(0,0,0,0.4);--sh2:0 6px 28px rgba(0,0,0,0.5);--sh3:0 20px 60px rgba(0,0,0,0.6);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{min-height:100dvh;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);transition:background .3s,color .3s}
+button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
+input,select{font:inherit;color:inherit}
+.shell{display:flex;height:100dvh;overflow:hidden}
+
+/* SIDEBAR */
+.sb{width:300px;flex-shrink:0;background:linear-gradient(170deg,#2E1065 0%,#1E0845 60%,#0D0520 100%);display:flex;flex-direction:column;overflow:hidden;box-shadow:4px 0 40px rgba(0,0,0,0.35)}
+.sb-hd{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.brand-title{font-family:'Space Grotesk',sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,#A78BFA,#F59E0B,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.25}
+.brand-sub{font-size:9px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-top:2px}
+.sb-body{flex:1;overflow-y:auto;padding:18px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.08) transparent}
+.sb-foot{padding:10px 18px 16px;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+.slbl{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,0.38);margin-bottom:8px;display:block}
+.cg{margin-bottom:12px}
+.cg label{display:block;font-size:9px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:5px}
+.cg input,.cg select{width:100%;padding:9px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:8px;color:#fff;font-size:0.875rem;outline:none;transition:border .2s}
+.cg input::placeholder{color:rgba(255,255,255,0.3)}
+.cg input:focus,.cg select:focus{border-color:rgba(167,139,250,0.7)}
+.cg select option{background:#1E0845;color:#fff}
+.tone-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px}
+.tone-btn,.len-btn{border-radius:8px;border:1.5px solid rgba(255,255,255,0.13);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.65);font-size:11px;font-weight:600;font-family:'Space Grotesk',sans-serif;text-align:center;transition:all .18s;padding:7px 6px}
+.tone-btn:hover,.len-btn:hover{border-color:rgba(167,139,250,0.5);color:#fff}
+.tone-btn.on,.len-btn.on{background:rgba(167,139,250,0.2);border-color:#A78BFA;color:#A78BFA}
+.len-grid{display:flex;gap:6px;margin-top:2px}
+.len-btn{flex:1}
+.btn-gen{width:100%;padding:12px;background:linear-gradient(135deg,#7C3AED,#A78BFA);border-radius:24px;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 4px 18px rgba(124,58,237,0.4);margin-bottom:8px}
+.btn-gen:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,0.55)}
+.btn-clear{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(239,68,68,0.4);border-radius:24px;padding:9px;color:rgba(255,255,255,0.8);font-size:0.83rem;font-weight:600;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s}
+.btn-clear:hover{background:rgba(239,68,68,0.15);color:#F87171;border-color:#F87171}
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:4px}
+.sbox{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:9px;padding:8px 6px;text-align:center}
+.sbox .sv{font-family:'Space Grotesk',sans-serif;font-size:1.3rem;font-weight:700;color:#A78BFA;line-height:1}
+.sbox .sl{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-top:2px}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;background:var(--bg);scrollbar-width:thin;scrollbar-color:var(--brd) transparent}
+.tnav{position:sticky;top:0;z-index:100;background:rgba(245,243,255,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:10px 28px;min-height:48px}
+[data-theme="dark"] .tnav{background:rgba(13,5,32,0.9)}
+.tnav-l{font-family:'Space Grotesk',sans-serif;font-size:0.88rem;font-weight:600;color:var(--tm)}
+.tnav-r{display:flex;align-items:center;gap:8px}
+.ico-btn{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--tm);transition:all .2s}
+.ico-btn:hover{background:var(--su2);color:var(--pr)}
+.tnav-count{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--prhi);color:var(--pr);border-radius:20px;padding:3px 10px}
+.mc{max-width:860px;margin:0 auto;padding:28px 28px 60px}
+.empty{text-align:center;padding:70px 20px;border:2px dashed var(--brd);border-radius:20px;background:var(--su);margin-top:8px}
+.empty-ico{font-size:3rem;margin-bottom:14px;opacity:.4}
+.empty h3{font-family:'Space Grotesk',sans-serif;font-size:1.2rem;font-weight:700;color:var(--tm);margin-bottom:7px}
+.empty p{font-size:0.85rem;color:var(--tf);max-width:380px;margin:0 auto;line-height:1.6}
+
+/* PROMPT CARD */
+.prompt-card{background:#fff;border:1.5px solid var(--brd);border-radius:18px;overflow:hidden;box-shadow:var(--sh2);margin-bottom:20px;animation:slideIn .3s ease}
+[data-theme="dark"] .prompt-card{background:var(--su)}
+@keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.pc-head{background:linear-gradient(135deg,#7C3AED,#A78BFA);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.pc-head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pc-badge{background:rgba(255,255,255,0.18);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:20px;padding:3px 10px}
+.pc-meta{font-size:11px;color:rgba(255,255,255,0.75);font-family:'Space Grotesk',sans-serif}
+.pc-head-right{display:flex;gap:7px;flex-wrap:wrap}
+.pc-btn{padding:6px 13px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Space Grotesk',sans-serif;transition:all .18s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.pc-btn.copy-btn{background:#fff;color:#7C3AED;border:none}
+.pc-btn.copy-btn:hover{background:#EDE9FE}
+.pc-btn.regen-btn{background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3)}
+.pc-btn.regen-btn:hover{background:rgba(255,255,255,0.25)}
+.pc-body{padding:20px 22px}
+.prompt-text{font-family:'JetBrains Mono',monospace;font-size:0.78rem;line-height:1.8;color:var(--txt);white-space:pre-wrap;word-break:break-word;background:var(--su);border:1px solid var(--brd);border-radius:10px;padding:16px}
+[data-theme="dark"] .prompt-text{background:var(--su2)}
+.pc-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 22px 14px;border-top:1px solid var(--brd);flex-wrap:wrap;gap:6px}
+.pc-tags{display:flex;gap:6px;flex-wrap:wrap}
+.ptag{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;border:1px solid var(--brd);color:var(--tf)}
+.char-count{font-family:'Space Grotesk',sans-serif;font-size:10px;color:var(--tf)}
+
+/* HISTORY */
+.history-section{margin-top:28px}
+.history-title{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tf);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.history-title::after{content:'';flex:1;height:1px;background:var(--brd)}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.hist-item{background:#fff;border:1.5px solid var(--brd);border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;transition:all .18s}
+[data-theme="dark"] .hist-item{background:var(--su)}
+.hist-item:hover{border-color:var(--pr);box-shadow:var(--sh1)}
+.hist-left{flex:1;min-width:0}
+.hist-meta{display:flex;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+.hist-badge{font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:20px}
+.hb-k{background:#ede9ff;color:#6d28d9}[data-theme="dark"] .hb-k{background:#2d1b69;color:#a78bfa}
+.hb-y{background:#fee2e2;color:#dc2626}[data-theme="dark"] .hb-y{background:#3d1515;color:#f87171}
+.hb-b{background:#d1fae5;color:#059669}[data-theme="dark"] .hb-b{background:#1a2d1a;color:#6ee7b7}
+.hb-p{background:#fef3c7;color:#d97706}[data-theme="dark"] .hb-p{background:#2d2415;color:#fbbf24}
+.hb-s{background:#dbeafe;color:#2563eb}[data-theme="dark"] .hb-s{background:#1a2040;color:#60a5fa}
+.hb-e{background:#fce7f3;color:#be185d}[data-theme="dark"] .hb-e{background:#2d1a2d;color:#e879f9}
+.hb-c{background:#ffedd5;color:#ea580c}[data-theme="dark"] .hb-c{background:#2d2020;color:#fb923c}
+.hist-preview{font-size:0.72rem;color:var(--txt);line-height:1.4;font-family:'JetBrains Mono',monospace;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hist-right{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.hist-cp{padding:5px 10px;border-radius:20px;font-size:10px;font-weight:700;font-family:'Space Grotesk',sans-serif;background:var(--prhi);color:var(--pr);border:none;white-space:nowrap;transition:all .18s}
+.hist-cp:hover{background:var(--pr);color:#fff}
+.hist-time{font-size:9px;color:var(--tf);text-align:right;font-family:'Space Grotesk',sans-serif}
+
+.toast{position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--pr);color:#fff;padding:9px 16px;border-radius:10px;font-size:0.83rem;font-weight:600;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:7px;box-shadow:var(--sh3);opacity:0;transform:translateY(6px);transition:opacity .22s,transform .22s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){.shell{flex-direction:column;height:auto;overflow:auto}.sb{width:100%}.mc{padding:18px 14px 48px}}
+@media print{.sb,.tnav{display:none!important}.shell{display:block;height:auto}.main{overflow:visible}.mc{max-width:100%;padding:.3in .45in .5in}body{background:#fff!important}.prompt-card{box-shadow:none;border:1px solid #ccc}.pc-head{background:#7C3AED!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sb">
+  <div class="sb-hd">
+    <div class="logo-row">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="10" fill="rgba(167,139,250,0.18)"/>
+        <circle cx="20" cy="20" r="10" stroke="#A78BFA" stroke-width="1.6" fill="none" stroke-dasharray="3 2"/>
+        <circle cx="20" cy="20" r="5" fill="#A78BFA" opacity=".3"/>
+        <circle cx="20" cy="20" r="2" fill="#A78BFA"/>
+        <line x1="20" y1="10" x2="20" y2="7" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+        <line x1="28.7" y1="14.5" x2="31" y2="12.7" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+        <line x1="28.7" y1="25.5" x2="31" y2="27.3" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+        <line x1="20" y1="30" x2="20" y2="33" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+        <line x1="11.3" y1="25.5" x2="9" y2="27.3" stroke="#A78BFA" stroke-width="2" stroke-linecap="round"/>
+        <line x1="11.3" y1="14.5" x2="9" y2="12.7" stroke="#A78BFA" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="brand-title">Trend Infinite<br>Prompt Engine</div>
+        <div class="brand-sub">Unlimited AI Prompts · PLR Ready</div>
+      </div>
+    </div>
+  </div>
+  <div class="sb-body">
+    <span class="slbl">Configure Your Prompt</span>
+    <div class="cg">
+      <label>Your Trend</label>
+      <input type="text" id="inp-trend" placeholder="e.g. Midlife journaling, AI fitness...">
+    </div>
+    <div class="cg">
+      <label>Product Type</label>
+      <select id="inp-product">
+        <option value="kindle">📚 Kindle Book</option>
+        <option value="youtube">▶️ YouTube Video</option>
+        <option value="blog">✍️ Blog Post</option>
+        <option value="plr">📦 PLR Product</option>
+        <option value="social">📱 Social Media</option>
+        <option value="email">✉️ Email Campaign</option>
+        <option value="course">🎓 Online Course</option>
+      </select>
+    </div>
+    <div class="cg">
+      <label>Tone</label>
+      <div class="tone-grid">
+        <button class="tone-btn on" data-tone="Educational" onclick="selTone(this)">📘 Educational</button>
+        <button class="tone-btn" data-tone="Inspirational" onclick="selTone(this)">✨ Inspirational</button>
+        <button class="tone-btn" data-tone="Entertaining" onclick="selTone(this)">😄 Entertaining</button>
+        <button class="tone-btn" data-tone="Authority" onclick="selTone(this)">🎯 Authority</button>
+      </div>
+    </div>
+    <div class="cg">
+      <label>Prompt Length</label>
+      <div class="len-grid">
+        <button class="len-btn" data-len="short" onclick="selLen(this)">Short</button>
+        <button class="len-btn on" data-len="detailed" onclick="selLen(this)">Detailed</button>
+        <button class="len-btn" data-len="ultra" onclick="selLen(this)">Ultra</button>
+      </div>
+    </div>
+    <button class="btn-gen" onclick="generatePrompt()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Generate Prompt
+    </button>
+    <div id="stats" style="display:none">
+      <div class="stat-row">
+        <div class="sbox"><div class="sv" id="st-gen">0</div><div class="sl">Generated</div></div>
+        <div class="sbox"><div class="sv" id="st-cp">0</div><div class="sl">Copied</div></div>
+        <div class="sbox"><div class="sv" id="st-hist">0</div><div class="sl">History</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sb-foot">
+    <button class="btn-clear" onclick="clearAll()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+      Reset Everything
+    </button>
+  </div>
+</aside>
+
+<main class="main">
+  <nav class="tnav">
+    <div class="tnav-l" id="tnav-l">Trend Infinite Prompt Engine</div>
+    <div class="tnav-r">
+      <span class="tnav-count" id="tnav-count" style="display:none">0 prompts</span>
+      <button class="ico-btn" onclick="toggleTheme()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </nav>
+  <div class="mc" id="mc">
+    <div class="empty" id="empty-state">
+      <div class="empty-ico">∞</div>
+      <h3>Infinite Prompts. Zero Repetitions.</h3>
+      <p>Every prompt is dynamically built from hundreds of combinations — tone, length, angle, structure. It never repeats. Ever.</p>
+    </div>
+    <div id="prompt-output"></div>
+    <div id="history-wrap"></div>
+  </div>
+</main>
+</div>
+
+<div class="toast" id="toast">
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg">Done</span>
+</div>
+
+<script>
+var genCount=0,cpCount=0,histArr=[];
+var currentTone='Educational',currentLen='detailed';
+
+var PRODUCTS={
+  kindle:{l:'Kindle Book',hc:'hb-k',icon:'📚'},
+  youtube:{l:'YouTube Video',hc:'hb-y',icon:'▶️'},
+  blog:{l:'Blog Post',hc:'hb-b',icon:'✍️'},
+  plr:{l:'PLR Product',hc:'hb-p',icon:'📦'},
+  social:{l:'Social Media',hc:'hb-s',icon:'📱'},
+  email:{l:'Email Campaign',hc:'hb-e',icon:'✉️'},
+  course:{l:'Online Course',hc:'hb-c',icon:'🎓'}
+};
+
+var ANGLES=['first-principles breakdown','step-by-step transformation','myth-busting expose','before-and-after contrast','insider secret reveal','urgency-driven opportunity','curiosity-gap hook','authority positioning','emotional story arc','data-driven authority','underdog success story','contrarian take'];
+var HOOKS=['You are about to discover','Most people get this completely wrong about','Here is what top creators never tell you about','The real reason people fail at','What if you could master','Stop struggling with','The hidden truth about','In the next {N} minutes you will understand'];
+var AVATARS=['a complete beginner with zero experience','a side-hustler looking to scale','a 9-to-5 employee wanting financial freedom','a stay-at-home parent building passive income','a retired professional reinventing themselves','a content creator wanting to monetize','a coach or consultant expanding their reach','a digital nomad building location-independent income'];
+var STRUCTURES_SHORT=['3-step framework','5-point checklist','quick-win blueprint','one-page action plan','rapid-result system'];
+var STRUCTURES_DETAILED=['7-step transformation roadmap','complete A-to-Z guide with examples','framework with case studies and exercises','pillar content with subtopics and CTAs','multi-angle strategy with objection handling'];
+var STRUCTURES_ULTRA=['comprehensive 10-module deep dive with scripts, worksheets, and swipe files','full launch-ready system including copy, content, funnel, and email sequence','end-to-end monetization blueprint with traffic, conversion, and scaling phases','authority-building ecosystem: flagship content + supporting assets + distribution plan'];
+
+var DELIVERABLES_SHORT={
+  kindle:['title, subtitle, 5-chapter outline, back cover copy','hook paragraph, chapter list, one-page synopsis'],
+  youtube:['title, thumbnail concept, 5-point script outline, CTA','hook script (30 sec), 6-section breakdown, end screen strategy'],
+  blog:['SEO title, meta description, 5 H2 headings, conclusion CTA','intro hook, subheadings, bullet points, internal link suggestions'],
+  plr:['product title, 5-article titles, email subject lines, sales bullets','eBook outline, checklist, social post pack titles'],
+  social:['5 post captions, 3 hashtag sets, 2 story concepts','carousel outline, reel hook, comment-bait question'],
+  email:['subject line (3 variants), preview text, 3-paragraph body, CTA','welcome email, value email, pitch email — all subject lines + body outlines'],
+  course:['course name, 4-module titles, learning objectives, sales headline','module breakdown, lesson titles, quick-win exercise, price point rationale']
+};
+var DELIVERABLES_DETAILED={
+  kindle:['complete chapter outlines (3 subheadings each), first chapter fully written, Amazon description, 7 SEO keywords','full manuscript blueprint: reader avatar, unique angle, all chapter content guides, back matter, launch strategy'],
+  youtube:['full video script for hook + first 3 sections, SEO title variants, description, timestamps, pinned comment','complete production guide: script, B-roll list, thumbnail brief, community post, end screen, analytics targets'],
+  blog:['complete post architecture: intro, 6 H2 sections with H3s, examples, FAQ, CTA, meta data, social share copy','full SEO content brief: primary + LSI keywords, SERP intent analysis, featured snippet target, link-building anchors'],
+  plr:['complete product pack: 10-article outlines, email sequence (7 days), social kit, sales page copy, affiliate pitch','full PLR ecosystem: main report outline, workbook, cheat sheet, video script outline, JV page copy'],
+  social:['30-day campaign architecture: 4 weekly themes with 7 posts each (first post per week written in full), hashtag strategy','complete brand voice guide + 15 fully written posts across carousel, reel, story, and static formats'],
+  email:['5-email launch sequence fully outlined (subject, preview, body, CTA per email), A/B test variants, P.S. hooks','complete email funnel: welcome series (3 emails full), nurture (5 outlines), sales sequence (7-day pitch campaign)'],
+  course:['6-module course: each module has 4 lesson titles, full lesson #1 written, action exercise, community prompt','complete course bible: transformation map, module scripts for Module 1, quiz questions, student workbook outline, pricing strategy']
+};
+var DELIVERABLES_ULTRA={
+  kindle:['complete book written in full draft format: all chapters, introduction, conclusion, author bio, A+ content, launch email sequence, and 3 ad creative headlines','total publishing package: manuscript outline with word-count targets per chapter, ghostwriter brief, cover brief, pre-launch waitlist page copy, review strategy, series roadmap for 3 books'],
+  youtube:['full production package: complete video script (every word), shot list, B-roll script, thumbnail A/B brief, chapter timestamps, pinned comment, community posts (5), shorts repurpose plan, and 90-day content calendar branching from this video','channel authority package: this video script in full + 5 related video ideas with outlines, playlist structure, channel trailer script, about page copy, banner tagline, and monetization roadmap'],
+  blog:['complete content cluster: pillar post fully written (2000+ words) + 5 supporting posts outlined + internal linking map + featured snippet targets + backlink outreach email templates + social repurpose plan for each piece','full SEO domination package: pillar article written, topic cluster map, keyword difficulty analysis notes, content calendar for 90 days, email newsletter version, LinkedIn article adaptation'],
+  plr:['complete done-for-you PLR business: main eBook written in full, 10 articles written in full, 7-day email sequence written, 30 social posts written, sales page written, thank you page copy, affiliate swipe file, and upsell product concept','full white-label package: flagship product (written), workbook (designed as fill-in outline), video course script, webinar slide outline, membership drip content plan (4 weeks), and reseller license page copy'],
+  social:['complete 90-day social media system: content pillars defined, 90 posts written across all formats (carousel, reel, story, static, live idea), hashtag research by tier, engagement pod strategy, pinned post, bio optimization, and analytics tracking sheet','full influencer-level content strategy: brand voice document, 3-month editorial calendar with every post written, paid ad creative for top 3 posts, UGC prompt strategy, collaboration outreach script'],
+  email:['complete email marketing machine: welcome sequence (5 emails written in full), weekly newsletter template, 10-email nurture sequence (written), 7-day launch sequence (written), re-engagement campaign (3 emails), and segmentation strategy','full list monetization system: lead magnet copy, opt-in page copy, all welcome and nurture emails written, affiliate promo email templates (3), broadcast calendar for 90 days, subject line swipe file (50 lines)'],
+  course:['complete course creation package: full curriculum for 8 modules, every lesson script written, student workbook (all exercises), quiz bank (20 questions), sales page written in full, checkout page copy, email launch sequence (10 emails written), and affiliate recruitment page','total course launch system: course outline + Module 1 fully scripted + sales funnel copy (VSL script, sales page, order bump, OTO) + webinar script + 5-day challenge framework + Facebook group welcome post']
+};
+
+function rnd(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function rndN(){return [3,5,7,10,15][Math.floor(Math.random()*5)];}
+
+function buildPrompt(trend,product,tone,len){
+  var angle=rnd(ANGLES);
+  var avatar=rnd(AVATARS);
+  var hookTpl=rnd(HOOKS).replace('{N}',rndN());
+  var delivArr=len==='short'?DELIVERABLES_SHORT[product]:len==='detailed'?DELIVERABLES_DETAILED[product]:DELIVERABLES_ULTRA[product];
+  var deliv=rnd(delivArr);
+  var strArr=len==='short'?STRUCTURES_SHORT:len==='detailed'?STRUCTURES_DETAILED:STRUCTURES_ULTRA;
+  var structure=rnd(strArr);
+  var toneGuides={
+    Educational:'Clear, step-by-step, evidence-based, practical and actionable. Use numbered lists, definitions, and examples. Avoid fluff — every sentence must teach something.',
+    Inspirational:'Warm, emotionally resonant, story-driven. Open loops with transformation. Speak to the reader\'s deepest desire for change. Use vivid language and personal-feeling copy.',
+    Entertaining:'Conversational, witty, slightly irreverent. Use analogies, humor, and unexpected comparisons. Keep energy high. Reader should feel entertained while learning.',
+    Authority:'Direct, data-led, confident. Position as the definitive resource. Use statistics, expert framing, and bold claims backed by logic. No hedging — state facts with conviction.'
+  };
+
+  var lenLabel=len==='short'?'SHORT (concise, punchy, fast-to-read output)':len==='detailed'?'DETAILED (comprehensive, well-structured, thorough output)':'ULTRA-DETAILED (exhaustive, publish-ready, complete system output)';
+
+  var p = '';
+
+  if(len==='short'){
+    p = `You are an expert ${PRODUCTS[product].l} creator specializing in trend-based content.
+
+TREND: "${trend}"
+ANGLE: ${angle}
+TARGET READER: ${avatar}
+TONE: ${tone} — ${toneGuides[tone]}
+OUTPUT LENGTH: ${lenLabel}
+
+TASK:
+${hookTpl} "${trend}" — create the following ${structure}:
+
+${deliv}.
+
+Make every word earn its place. No padding. Output must be ready to use immediately.`;
+
+  } else if(len==='detailed'){
+    p = `You are a world-class ${PRODUCTS[product].l} strategist and content creator.
+
+━━━ MISSION BRIEF ━━━
+TREND: "${trend}"
+CONTENT ANGLE: ${angle}
+TARGET AUDIENCE: ${avatar}
+TONE FRAMEWORK: ${tone}
+→ ${toneGuides[tone]}
+OUTPUT FORMAT: ${lenLabel}
+CONTENT STRUCTURE: ${structure}
+
+━━━ OPENING DIRECTIVE ━━━
+${hookTpl} "${trend}".
+
+━━━ DELIVERABLES REQUIRED ━━━
+${deliv}.
+
+━━━ QUALITY STANDARDS ━━━
+- Every section must be actionable and immediately usable
+- Avoid generic advice — be specific to "${trend}" at every step
+- Apply ${tone.toLowerCase()} tone consistently throughout
+- Include real-world examples, hooks, and conversion elements
+- Output should require zero editing before use
+
+Begin immediately. No preamble.`;
+
+  } else {
+    p = `You are a senior ${PRODUCTS[product].l} expert, conversion strategist, and trend monetization specialist.
+
+══════════════════════════════════
+ ULTRA-DETAILED CONTENT BRIEF
+══════════════════════════════════
+
+🎯 TREND: "${trend}"
+🔦 STRATEGIC ANGLE: ${angle}
+👤 AUDIENCE AVATAR: ${avatar}
+🎭 TONE SYSTEM: ${tone}
+    → ${toneGuides[tone]}
+📐 CONTENT ARCHITECTURE: ${structure}
+📏 OUTPUT STANDARD: ${lenLabel}
+
+══════════════════════════════════
+ CONTEXT & FRAMING
+══════════════════════════════════
+${hookTpl} "${trend}".
+The market is hungry. The timing is now. Your task is to produce a complete, publish-ready asset that outperforms 95% of existing content on this topic.
+
+══════════════════════════════════
+ FULL DELIVERABLE SPECIFICATION
+══════════════════════════════════
+${deliv}.
+
+══════════════════════════════════
+ NON-NEGOTIABLE QUALITY RULES
+══════════════════════════════════
+✓ Every sentence must serve the reader or serve conversion — no filler
+✓ Apply ${tone.toLowerCase()} tone with surgical precision across ALL sections
+✓ Specificity is mandatory — generic output is unacceptable
+✓ Assume the audience knows nothing about "${trend}" — teach from zero, lead to mastery
+✓ Include psychological triggers: curiosity, urgency, social proof, transformation
+✓ Every output section must be copy-paste ready into a live ${PRODUCTS[product].l}
+✓ Length: Do NOT cut corners. This is an ULTRA output — go deep, go wide, go complete.
+
+Start generating now. No introduction. No "Sure, here is...". Dive straight into the content.`;
+  }
+  return p;
+}
+
+function generatePrompt(){
+  var trend=document.getElementById('inp-trend').value.trim();
+  if(!trend){showToast('Enter a trend first! ⚡');return;}
+  var product=document.getElementById('inp-product').value;
+  var promptText=buildPrompt(trend,product,currentTone,currentLen);
+  var now=new Date();
+  var timeStr=now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+
+  genCount++;
+  document.getElementById('stats').style.display='block';
+  document.getElementById('st-gen').textContent=genCount;
+  document.getElementById('tnav-count').style.display='inline-flex';
+  document.getElementById('tnav-count').textContent=genCount+' prompt'+(genCount!==1?'s':'');
+  document.getElementById('empty-state').style.display='none';
+  document.getElementById('tnav-l').textContent='"'+trend+'" — Infinite Prompts';
+
+  var po=document.getElementById('prompt-output');
+  po.innerHTML=renderCard(promptText,product,timeStr,true);
+
+  histArr.unshift({text:promptText,trend:trend,product:product,time:timeStr,tone:currentTone,len:currentLen});
+  if(histArr.length>25) histArr.pop();
+  document.getElementById('st-hist').textContent=histArr.length;
+  renderHistory();
+  po.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderCard(text,product,timeStr,isMain){
+  var pd=PRODUCTS[product];
+  var chars=text.length;
+  var tokens=Math.round(chars/4);
+  var uid='pt'+Date.now()+Math.random().toString(36).substr(2,5);
+  return '<div class="prompt-card">'+
+    '<div class="pc-head">'+
+      '<div class="pc-head-left">'+
+        '<span class="pc-badge">'+pd.icon+' '+pd.l+'</span>'+
+        '<span class="pc-meta">'+currentTone+' · '+currentLen+' · '+timeStr+'</span>'+
+      '</div>'+
+      '<div class="pc-head-right">'+
+        (isMain?'<button class="pc-btn regen-btn" onclick="generatePrompt()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Generate Another</button>':'')+
+        '<button class="pc-btn copy-btn" onclick="cpCard(this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="pc-body"><div class="prompt-text" id="'+uid+'">'+escHtml(text)+'</div></div>'+
+    '<div class="pc-footer">'+
+      '<div class="pc-tags"><span class="ptag">'+currentTone+'</span><span class="ptag">'+currentLen+'</span><span class="ptag">~'+tokens+' tokens</span></div>'+
+      '<span class="char-count">'+chars+' chars</span>'+
+    '</div>'+
+  '</div>';
+}
+
+function renderHistory(){
+  var hw=document.getElementById('history-wrap');
+  if(histArr.length<=1){hw.innerHTML='';return;}
+  var html='<div class="history-section"><div class="history-title">Session History — '+histArr.length+' Prompts</div><div class="history-list">';
+  for(var i=1;i<histArr.length;i++){
+    var h=histArr[i];var pd=PRODUCTS[h.product];
+    html+='<div class="hist-item">'+
+      '<div class="hist-left">'+
+        '<div class="hist-meta">'+
+          '<span class="hist-badge '+pd.hc+'">'+pd.icon+' '+pd.l+'</span>'+
+          '<span class="hist-badge" style="background:var(--su);color:var(--tf)">'+h.trend+'</span>'+
+          '<span class="hist-badge" style="background:var(--su);color:var(--tf)">'+h.tone+' · '+h.len+'</span>'+
+        '</div>'+
+        '<div class="hist-preview">'+escHtml(h.text.substring(0,200))+'...</div>'+
+      '</div>'+
+      '<div class="hist-right">'+
+        '<button class="hist-cp" onclick="cpHist('+i+')">Copy</button>'+
+        '<span class="hist-time">'+h.time+'</span>'+
+      '</div>'+
+    '</div>';
+  }
+  html+='</div></div>';
+  hw.innerHTML=html;
+}
+
+function cpCard(btn){
+  var card=btn.closest('.prompt-card');
+  var text=card.querySelector('.prompt-text').innerText;
+  navigator.clipboard.writeText(text).then(function(){
+    cpCount++;document.getElementById('st-cp').textContent=cpCount;
+    showToast('Prompt copied! ✓');
+    var orig=btn.innerHTML;
+    btn.innerHTML='✓ Copied!';
+    setTimeout(function(){btn.innerHTML=orig;},2000);
+  });
+}
+function cpHist(i){
+  navigator.clipboard.writeText(histArr[i].text).then(function(){
+    cpCount++;document.getElementById('st-cp').textContent=cpCount;
+    showToast('Prompt copied! ✓');
+  });
+}
+function clearAll(){
+  // 1. Clear logic arrays & counters
+  histArr=[];genCount=0;cpCount=0;
+
+  // 2. Clear inputs
+  document.getElementById('inp-trend').value = '';
+  document.getElementById('inp-product').value = 'kindle';
+
+  // 3. Reset Tone to Educational
+  document.querySelectorAll('.tone-btn').forEach(function(b){b.classList.remove('on')});
+  document.querySelector('.tone-btn[data-tone="Educational"]').classList.add('on');
+  currentTone = 'Educational';
+
+  // 4. Reset Length to Detailed
+  document.querySelectorAll('.len-btn').forEach(function(b){b.classList.remove('on')});
+  document.querySelector('.len-btn[data-len="detailed"]').classList.add('on');
+  currentLen = 'detailed';
+
+  // 5. Hide stats and output blocks
+  document.getElementById('stats').style.display='none';
+  document.getElementById('prompt-output').innerHTML='';
+  document.getElementById('history-wrap').innerHTML='';
+
+  // 6. Restore empty state & top bar
+  document.getElementById('empty-state').style.display='block';
+  document.getElementById('tnav-count').style.display='none';
+  document.getElementById('tnav-l').textContent='Trend Infinite Prompt Engine';
+
+  // 7. Success toast
+  showToast('Everything reset! 🧹');
+}
+
+function selTone(btn){document.querySelectorAll('.tone-btn').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');currentTone=btn.getAttribute('data-tone');}
+function selLen(btn){document.querySelectorAll('.len-btn').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');currentLen=btn.getAttribute('data-len');}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showToast(msg){var t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;t.classList.add('show');clearTimeout(window._tt);window._tt=setTimeout(function(){t.classList.remove('show');},2400);}
+function toggleTheme(){var r=document.documentElement;r.setAttribute('data-theme',r.getAttribute('data-theme')==='dark'?'light':'dark');}
+</script>
+</body>
+</html>
