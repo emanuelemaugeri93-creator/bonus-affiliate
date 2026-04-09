@@ -1,0 +1,581 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trend War Room — Trend Radar Bonus</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;}
+:root{
+  --bg:#07080F; --s1:#0C0E1A; --s2:#111426; --s3:#161930;
+  --acc:#6366F1; --acc2:#818CF8; --acc3:#A5B4FC;
+  --gold:#F59E0B; --grn:#10B981; --red:#EF4444; --cyn:#06B6D4; --pur:#8B5CF6;
+  --txt:#EEF2FF; --txt2:#A5B4FC; --txt3:#3730A3;
+  --brd:rgba(99,102,241,0.15); --brd2:rgba(255,255,255,0.06);
+  --shadow:0 0 40px rgba(99,102,241,0.12);
+  --glow-acc:0 0 30px rgba(99,102,241,0.25);
+}
+body{min-height:100dvh;font-family:"Inter",sans-serif;background:var(--bg);color:var(--txt);overflow-x:hidden;}
+button{cursor:pointer;background:none;border:none;font:inherit;color:inherit;outline:none;}
+input,select,textarea{font:inherit;color:inherit;outline:none;background:none;}
+
+body::after{content:"";position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.02) 2px,rgba(0,0,0,0.02) 4px);pointer-events:none;z-index:9999;}
+
+/* TOPBAR */
+.topbar{height:70px;background:var(--s1);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);}
+.tb-left{display:flex;align-items:center;gap:14px;}
+.tb-logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--pur));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(99,102,241,0.5);}
+.tb-name{font-family:"Outfit",sans-serif;font-weight:900;font-size:1.15rem;letter-spacing:-.02em;}
+.tb-name span{color:var(--acc2);}
+.tb-sub{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:var(--txt3);}
+.tb-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(99,102,241,0.1);border:1px solid var(--brd);border-radius:20px;font-size:10px;font-weight:800;color:var(--acc2);letter-spacing:.08em;text-transform:uppercase;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--grn);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,0.6);}50%{opacity:.7;box-shadow:0 0 0 5px rgba(16,185,129,0);}}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-clock{font-family:"Space Mono",monospace;font-size:12px;color:var(--txt2);opacity:.6;margin-right:4px;}
+.tb-btn{height:36px;padding:0 14px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--brd2);font-size:11px;font-weight:700;color:var(--txt2);display:flex;align-items:center;gap:6px;transition:all .2s;letter-spacing:.04em;}
+.tb-btn:hover{background:var(--acc);border-color:var(--acc2);color:#fff;}
+.tb-btn.danger:hover{background:var(--red);border-color:var(--red);}
+.tb-btn svg{width:13px;height:13px;}
+
+/* LAYOUT */
+.wrap{display:grid;grid-template-columns:320px 1fr;min-height:calc(100dvh - 70px);}
+
+/* INPUT PANEL */
+.inp-panel{background:var(--s1);border-right:1px solid var(--brd);padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--brd) transparent;}
+.panel-title{font-family:"Outfit",sans-serif;font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:8px;color:var(--txt);}
+.panel-ico{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--acc),var(--pur));display:flex;align-items:center;justify-content:center;font-size:13px;}
+.sec-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:var(--txt3);}
+
+/* TREND SLOTS */
+.trend-slot{background:var(--s2);border:1px solid var(--brd2);border-radius:13px;overflow:hidden;transition:border-color .2s;}
+.trend-slot:focus-within{border-color:var(--brd);}
+.slot-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--brd2);cursor:pointer;user-select:none;}
+.slot-hd-left{display:flex;align-items:center;gap:8px;}
+.slot-pill{width:26px;height:26px;border-radius:7px;font-family:"Outfit",sans-serif;font-weight:900;font-size:.8rem;color:#fff;display:flex;align-items:center;justify-content:center;}
+.slot-hd-name{font-size:12px;font-weight:700;color:var(--txt);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.slot-hd-right{display:flex;align-items:center;gap:6px;}
+.slot-toggle{font-size:13px;color:var(--txt3);transition:transform .2s;}
+.slot-toggle.open{transform:rotate(90deg);}
+.slot-del{width:22px;height:22px;border-radius:5px;background:rgba(239,68,68,0.08);color:rgba(239,68,68,0.6);display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;}
+.slot-del:hover{background:rgba(239,68,68,0.2);color:var(--red);}
+.slot-body{padding:12px 14px;display:flex;flex-direction:column;gap:9px;}
+.slot-body.hidden{display:none;}
+
+/* FORM FIELDS */
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--txt3);}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--brd2);border-radius:7px;color:var(--txt);font-size:.82rem;transition:all .2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);box-shadow:0 0 0 2px rgba(99,102,241,0.15);}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--txt3);opacity:.7;}
+.fg textarea{resize:vertical;min-height:52px;line-height:1.5;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.range-wrap{display:flex;align-items:center;gap:8px;}
+.range-wrap input[type=range]{flex:1;accent-color:var(--acc);height:4px;}
+.range-val{font-family:"Space Mono",monospace;font-size:11px;font-weight:700;color:var(--acc2);min-width:28px;text-align:right;}
+.stars-row{display:flex;gap:4px;}
+.star{font-size:18px;cursor:pointer;opacity:.25;transition:opacity .15s;line-height:1;}
+.star.on{opacity:1;}
+
+/* DATALIST combo */
+.fg select option{background:var(--s2);color:var(--txt);}
+
+/* RUN BUTTON */
+.run-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--acc),var(--pur));border-radius:11px;color:#fff;font-family:"Outfit",sans-serif;font-weight:900;font-size:.95rem;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .3s;box-shadow:0 6px 22px rgba(99,102,241,0.45);letter-spacing:.02em;}
+.run-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(99,102,241,0.6);}
+.run-btn svg{width:18px;height:18px;}
+
+/* DASHBOARD */
+.dashboard{padding:24px 28px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--brd) transparent;}
+
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;min-height:500px;text-align:center;gap:14px;}
+.empty-ring{width:110px;height:110px;border-radius:50%;border:2px solid var(--brd);display:flex;align-items:center;justify-content:center;font-size:44px;animation:spin-slow 10s linear infinite;}
+@keyframes spin-slow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.empty h2{font-family:"Outfit",sans-serif;font-weight:900;font-size:1.7rem;}
+.empty p{font-size:.9rem;color:var(--txt2);max-width:360px;line-height:1.7;opacity:.7;}
+
+/* SECTION TITLE */
+.sec-title{font-family:"Outfit",sans-serif;font-weight:800;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;color:var(--txt2);display:flex;align-items:center;gap:8px;margin-bottom:0;}
+.sec-title::after{content:"";flex:1;height:1px;background:var(--brd2);}
+
+/* WINNER */
+.winner-banner{background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(139,92,246,0.08));border:1px solid rgba(99,102,241,0.3);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:16px;box-shadow:var(--glow-acc);}
+.wb-crown{font-size:34px;}
+.wb-info{flex:1;}
+.wb-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.16em;color:var(--acc2);margin-bottom:4px;}
+.wb-name{font-family:"Outfit",sans-serif;font-weight:900;font-size:1.5rem;color:var(--acc3);}
+.wb-meta{font-size:.82rem;color:var(--txt2);margin-top:4px;opacity:.8;}
+.wb-score{font-family:"Outfit",sans-serif;font-weight:900;font-size:2.6rem;color:var(--acc2);line-height:1;}
+.wb-score-sub{font-size:10px;color:var(--txt3);text-align:right;}
+
+/* KPI */
+.kpi-row{display:grid;gap:12px;}
+.kpi{background:var(--s2);border:1px solid var(--brd2);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:all .2s;}
+.kpi:hover{border-color:var(--brd);box-shadow:var(--shadow);}
+.kpi-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.kpi-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);}
+.kpi-val{font-family:"Outfit",sans-serif;font-weight:900;font-size:1.35rem;color:var(--txt);line-height:1.2;}
+.kpi-sub{font-size:10px;color:var(--txt2);margin-top:1px;opacity:.7;}
+
+/* RADAR GRID */
+.radar-grid{display:grid;gap:12px;}
+.rcard{background:var(--s2);border:1px solid var(--brd2);border-radius:13px;padding:14px;text-align:center;transition:all .2s;}
+.rcard:hover{border-color:var(--brd);}
+.rcard.win-r{border-color:rgba(99,102,241,0.4);box-shadow:0 0 20px rgba(99,102,241,0.1);}
+.rcard-name{font-family:"Outfit",sans-serif;font-weight:800;font-size:.82rem;color:var(--txt);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rcard-score{font-family:"Space Mono",monospace;font-size:1rem;font-weight:700;margin-top:6px;}
+
+/* DETAIL CARDS */
+.trend-cards{display:flex;flex-direction:column;gap:12px;}
+.tcard{background:var(--s2);border:1px solid var(--brd2);border-radius:14px;overflow:hidden;transition:all .2s;}
+.tcard:hover{border-color:var(--brd);}
+.tcard.winner{border-color:rgba(99,102,241,0.4);box-shadow:0 0 24px rgba(99,102,241,0.1);}
+.tcard.eliminated{opacity:.4;filter:grayscale(.5);}
+.tc-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--brd2);}
+.tc-hl{display:flex;align-items:center;gap:11px;}
+.tc-bar-side{width:10px;height:36px;border-radius:3px;}
+.tc-name{font-family:"Outfit",sans-serif;font-weight:800;font-size:.95rem;color:var(--txt);}
+.tc-niche{font-size:10px;color:var(--txt2);margin-top:2px;opacity:.7;}
+.tc-badge{font-family:"Space Mono",monospace;font-size:1.2rem;font-weight:700;padding:4px 11px;border-radius:7px;background:rgba(255,255,255,0.04);}
+.tc-body{padding:14px 17px;display:flex;flex-direction:column;gap:10px;}
+.tc-meta-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.metric{text-align:center;}
+.metric-lbl{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--txt3);margin-bottom:3px;}
+.metric-val{font-family:"Outfit",sans-serif;font-weight:800;font-size:1rem;}
+.tc-extra{background:rgba(255,255,255,0.02);border:1px solid var(--brd2);border-radius:8px;padding:10px 12px;font-size:.8rem;color:var(--txt2);line-height:1.6;}
+.tc-extra strong{color:var(--acc2);font-weight:700;}
+.bar-row{display:flex;flex-direction:column;gap:6px;}
+.brow{display:flex;align-items:center;gap:10px;}
+.brow-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--txt3);min-width:90px;}
+.brow-track{flex:1;height:7px;background:rgba(255,255,255,0.04);border-radius:4px;border:1px solid var(--brd2);overflow:hidden;}
+.brow-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.brow-num{font-family:"Space Mono",monospace;font-size:10px;font-weight:700;min-width:32px;text-align:right;}
+.status-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:.04em;margin-top:4px;}
+
+/* BRACKET */
+.bracket-grid{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding-bottom:4px;}
+.b-round{display:flex;flex-direction:column;gap:10px;min-width:150px;}
+.b-round-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--txt3);text-align:center;margin-bottom:6px;padding:0 8px;}
+.b-match{background:rgba(255,255,255,0.03);border:1px solid var(--brd2);border-radius:8px;overflow:hidden;}
+.b-entry{padding:7px 11px;font-size:11px;font-weight:700;display:flex;justify-content:space-between;gap:6px;border-bottom:1px solid var(--brd2);}
+.b-entry:last-child{border-bottom:none;}
+.b-entry.win{background:rgba(99,102,241,0.15);color:var(--acc3);}
+.b-entry.loss{opacity:.35;}
+.b-score{font-family:"Space Mono",monospace;font-size:10px;}
+.b-conn{width:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:16px;}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp .45s ease both;}
+.d1{animation-delay:.08s;}.d2{animation-delay:.16s;}.d3{animation-delay:.24s;}.d4{animation-delay:.32s;}.d5{animation-delay:.4s;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    <div>
+      <div class="tb-name">Trend <span>War Room</span></div>
+      <div class="tb-sub">Trend Radar — Bonus App</div>
+    </div>
+    <div class="tb-badge"><div class="live-dot"></div>Live Analysis</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-clock" id="clock">--:--:--</div>
+    <button class="tb-btn" onclick="exportPNG()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Export PNG
+    </button>
+    <button class="tb-btn danger" onclick="resetAll()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+      Reset
+    </button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="inp-panel">
+    <div class="panel-title"><div class="panel-ico">&#x1F4E1;</div> Configure Trends</div>
+    <div id="slots-wrap"></div>
+    <button class="run-btn" onclick="runAnalysis()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Launch War Room
+    </button>
+  </div>
+  <div class="dashboard" id="dashboard">
+    <div class="empty">
+      <div class="empty-ring">&#x1F4E1;</div>
+      <h2>War Room Ready</h2>
+      <p>Configure your trends on the left panel with detailed insights, then hit Launch War Room to start the battle.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+var COLORS = ["#6366F1","#F59E0B","#10B981","#EF4444","#8B5CF6"];
+var LIGHTS  = ["#A5B4FC","#FCD34D","#6EE7B7","#FCA5A5","#C4B5FD"];
+var STAGES  = ["Emerging","Growing","Viral","Peak","Declining"];
+var INTENTS = ["Very High","High","Medium","Low"];
+var NICHES_LIST = [
+  "Digital Marketing","Make Money Online","Affiliate Marketing","KDP Publishing",
+  "AI Tools","Social Media","E-Commerce","Crypto / Web3","Health and Wellness",
+  "Self-Help","Print on Demand","Dropshipping","Freelancing","SaaS","Gaming","Finance"
+];
+
+var DEFAULTS = [
+  {name:"AI Prompt Mastery",niche:"AI Tools",stage:"Viral",intent:"Very High",price:"$27",monthly:"80",competitors:"3",usp:"First-mover on GPT-5 wave",audience:"Online marketers wanting to save time",pain:"Spending hours crafting prompts manually",notes:"Strong JV pipeline, 12 affiliates confirmed"},
+  {name:"KDP Low Content",niche:"KDP Publishing",stage:"Growing",intent:"High",price:"$17",monthly:"55",competitors:"8",usp:"Niche-specific templates nobody else has",audience:"Side-hustlers wanting passive income",pain:"Blank page syndrome and low-quality journals",notes:"Evergreen niche, growing Amazon searches"},
+  {name:"Faceless YouTube",niche:"Make Money Online",stage:"Peak",intent:"High",price:"$37",monthly:"40",competitors:"15",usp:"Automation angle with free AI tools only",audience:"Beginners wanting content income without showing face",pain:"Fear of camera, no tech skills",notes:"Saturating fast — 3-week window max"},
+  {name:"Micro SaaS Flipping",niche:"Digital Marketing",stage:"Emerging",intent:"Medium",price:"$47",monthly:"20",competitors:"2",usp:"Zero-code approach with free tools",audience:"Non-technical entrepreneurs wanting SaaS revenue",pain:"Thinking SaaS requires coding",notes:"Huge whitespace, few offers exist yet"},
+  {name:"Print on Demand 2.0",niche:"Print on Demand",stage:"Growing",intent:"High",price:"$27",monthly:"45",competitors:"6",usp:"AI-generated designs that actually convert",audience:"Etsy and Merch sellers wanting more sales",pain:"Generic designs with zero differentiation",notes:"AI design angle is genuinely new in this space"}
+];
+
+function buildSlots(){
+  var wrap = document.getElementById("slots-wrap");
+  wrap.innerHTML = "";
+  for(var i=0;i<5;i++){
+    var d = DEFAULTS[i];
+    var nopt = NICHES_LIST.map(function(n){
+      return "<option value='"+n+"'"+(n===d.niche?" selected":"")+">"+n+"</option>";
+    }).join("");
+    var sopt = STAGES.map(function(s){
+      return "<option"+(s===d.stage?" selected":"")+">"+s+"</option>";
+    }).join("");
+    var iopt = INTENTS.map(function(s){
+      return "<option"+(s===d.intent?" selected":"")+">"+s+"</option>";
+    }).join("");
+
+    var el = document.createElement("div");
+    el.className = "trend-slot";
+    el.id = "slot"+i;
+    el.innerHTML =
+      "<div class='slot-hd' onclick='toggleSlot("+i+")'>"+
+        "<div class='slot-hd-left'>"+
+          "<div class='slot-pill' style='background:"+COLORS[i]+"'>T"+(i+1)+"</div>"+
+          "<div class='slot-hd-name' id='shd"+i+"'>"+d.name+"</div>"+
+        "</div>"+
+        "<div class='slot-hd-right'>"+
+          "<span class='slot-toggle open' id='stog"+i+"'>&#x276F;</span>"+
+          "<button class='slot-del' onclick='event.stopPropagation();clearSlot("+i+")'>&#x2715;</button>"+
+        "</div>"+
+      "</div>"+
+      "<div class='slot-body' id='sbody"+i+"'>"+
+
+        "<div class='fg'><label>Trend Name</label>"+
+        "<input type='text' id='t"+i+"_name' placeholder='e.g. AI Prompt Mastery...' value='"+d.name+"' oninput='syncHeader("+i+")'>"+
+        "</div>"+
+
+        "<div class='fg2'>"+
+          "<div class='fg'><label>Niche</label>"+
+          "<input type='text' id='t"+i+"_niche' list='niche-list-"+i+"' placeholder='Type or pick...' value='"+d.niche+"'>"+
+          "<datalist id='niche-list-"+i+"'>"+nopt+"</datalist>"+
+          "</div>"+
+          "<div class='fg'><label>Stage</label><select id='t"+i+"_stage'>"+sopt+"</select></div>"+
+        "</div>"+
+
+        "<div class='fg2'>"+
+          "<div class='fg'><label>Buying Intent</label><select id='t"+i+"_intent'>"+iopt+"</select></div>"+
+          "<div class='fg'><label>Price Point</label><input type='text' id='t"+i+"_price' placeholder='$27' value='"+d.price+"'></div>"+
+        "</div>"+
+
+        "<div class='fg2'>"+
+          "<div class='fg'><label>Est. Sales/Month</label><input type='number' id='t"+i+"_monthly' placeholder='50' value='"+d.monthly+"'></div>"+
+          "<div class='fg'><label>Competitors (#)</label><input type='number' id='t"+i+"_competitors' placeholder='5' value='"+d.competitors+"'></div>"+
+        "</div>"+
+
+        "<div class='fg'><label>Unique Angle / USP</label>"+
+        "<input type='text' id='t"+i+"_usp' placeholder='What makes this different?' value='"+d.usp+"'></div>"+
+
+        "<div class='fg'><label>Target Audience</label>"+
+        "<input type='text' id='t"+i+"_audience' placeholder='Who is this for?' value='"+d.audience+"'></div>"+
+
+        "<div class='fg'><label>Biggest Pain Point</label>"+
+        "<input type='text' id='t"+i+"_pain' placeholder='What problem does it solve?' value='"+d.pain+"'></div>"+
+
+        "<div class='fg'><label>Research Notes / Intel</label>"+
+        "<textarea id='t"+i+"_notes' placeholder='JV contacts, market intel, observations...'>"+d.notes+"</textarea></div>"+
+
+        "<div class='fg'><label>Personal Confidence (1-5)</label>"+
+        "<div class='stars-row' id='stars"+i+"'>"+
+          "<span class='star on' onclick='setStar("+i+",1)'>&#x2605;</span>"+
+          "<span class='star on' onclick='setStar("+i+",2)'>&#x2605;</span>"+
+          "<span class='star on' onclick='setStar("+i+",3)'>&#x2605;</span>"+
+          "<span class='star' onclick='setStar("+i+",4)'>&#x2605;</span>"+
+          "<span class='star' onclick='setStar("+i+",5)'>&#x2605;</span>"+
+        "</div></div>"+
+
+      "</div>";
+    wrap.appendChild(el);
+  }
+  window._stars = [3,3,3,3,3];
+}
+
+function toggleSlot(i){
+  var b = document.getElementById("sbody"+i);
+  var t = document.getElementById("stog"+i);
+  var hidden = b.classList.toggle("hidden");
+  t.classList.toggle("open",!hidden);
+}
+
+function syncHeader(i){
+  var v = document.getElementById("t"+i+"_name").value||("Trend "+(i+1));
+  document.getElementById("shd"+i).textContent = v;
+}
+
+function clearSlot(i){
+  document.getElementById("t"+i+"_name").value="";
+  document.getElementById("shd"+i).textContent="Trend "+(i+1);
+}
+
+function setStar(slotIdx, val){
+  window._stars[slotIdx] = val;
+  var stars = document.querySelectorAll("#stars"+slotIdx+" .star");
+  stars.forEach(function(s,i){ s.classList.toggle("on", i<val); });
+}
+
+function gv(id){ var el=document.getElementById(id); return el?(el.value||"").trim():""; }
+function gi(id){ return parseInt(gv(id))||0; }
+
+function calcScore(stage,intent,competitors,stars,monthly){
+  var sM = {Emerging:75,Growing:88,Viral:92,Peak:58,Declining:22};
+  var iM = {"Very High":95,High:80,Medium:60,Low:35};
+  var compPenalty = Math.min(30,competitors*2);
+  var monthlyBonus = Math.min(15,Math.round(monthly/10));
+  var base = (sM[stage]||60)*0.35 + (iM[intent]||60)*0.35 + (stars/5)*15 + monthlyBonus - compPenalty*0.3;
+  return Math.max(10,Math.min(99,Math.round(base + Math.random()*4)));
+}
+function calcSat(stage,competitors){
+  var sM = {Emerging:15,Growing:38,Viral:70,Peak:87,Declining:94};
+  return Math.min(99,Math.max(5,(sM[stage]||50)+competitors*2+Math.floor(Math.random()*6)));
+}
+function calcGrowth(stage){ return {Emerging:"+340%",Growing:"+125%",Viral:"+52%",Peak:"+9%",Declining:"-18%"}[stage]||"+40%"; }
+function calcWindow(stage){ return {Emerging:"10-16 weeks",Growing:"5-9 weeks",Viral:"2-3 weeks",Peak:"Days left",Declining:"Closed"}[stage]||"Unknown"; }
+function calcRevenue(price,monthly){
+  var p = parseFloat((price||"27").replace(/[^0-9.]/g,""))||27;
+  return "$"+(Math.round(p*monthly/100)*100).toLocaleString();
+}
+function statusInfo(score){
+  if(score>=85) return {txt:"FIRE",bg:"rgba(99,102,241,0.2)",col:"#A5B4FC",ico:"&#x1F525;"};
+  if(score>=72) return {txt:"STRONG",bg:"rgba(16,185,129,0.15)",col:"#6EE7B7",ico:"&#x26A1;"};
+  if(score>=55) return {txt:"WATCH",bg:"rgba(245,158,11,0.15)",col:"#FCD34D",ico:"&#x1F440;"};
+  if(score>=35) return {txt:"WEAK",bg:"rgba(239,68,68,0.12)",col:"#FCA5A5",ico:"&#x26A0;"};
+  return {txt:"PASS",bg:"rgba(100,100,100,0.08)",col:"#9CA3AF",ico:"&#x274C;"};
+}
+
+function runAnalysis(){
+  var trends = [];
+  for(var i=0;i<5;i++){
+    var name = gv("t"+i+"_name");
+    if(!name) continue;
+    var stage    = gv("t"+i+"_stage")||"Growing";
+    var intent   = gv("t"+i+"_intent")||"High";
+    var niche    = gv("t"+i+"_niche")||"Digital Marketing";
+    var price    = gv("t"+i+"_price")||"$27";
+    var monthly  = gi("t"+i+"_monthly")||30;
+    var comps    = gi("t"+i+"_competitors")||5;
+    var usp      = gv("t"+i+"_usp");
+    var audience = gv("t"+i+"_audience");
+    var pain     = gv("t"+i+"_pain");
+    var notes    = gv("t"+i+"_notes");
+    var stars    = (window._stars&&window._stars[i])||3;
+    var score    = calcScore(stage,intent,comps,stars,monthly);
+    var sat      = calcSat(stage,comps);
+    var growth   = calcGrowth(stage);
+    var window_  = calcWindow(stage);
+    var revenue  = calcRevenue(price,monthly);
+    var profit_s = Math.round(score*0.92+Math.random()*8);
+    var aud_s    = Math.round(score*0.88+Math.random()*12);
+    var timing_s = Math.round(score*0.85+Math.random()*15);
+    trends.push({name:name,niche:niche,stage:stage,intent:intent,price:price,monthly:monthly,comps:comps,usp:usp,audience:audience,pain:pain,notes:notes,stars:stars,score:score,sat:sat,growth:growth,window:window_,revenue:revenue,profit_s:profit_s,aud_s:aud_s,timing_s:timing_s,color:COLORS[i],light:LIGHTS[i],idx:i});
+  }
+  if(!trends.length){alert("Add at least one trend name to launch the War Room!");return;}
+  trends.sort(function(a,b){return b.score-a.score;});
+  renderDash(trends);
+}
+
+function renderDash(trends){
+  var dash = document.getElementById("dashboard");
+  dash.innerHTML = "";
+  var W = trends[0];
+
+  // WINNER
+  var wb = document.createElement("div");
+  wb.className = "winner-banner anim";
+  wb.innerHTML =
+    "<div class='wb-crown'>&#x1F3C6;</div>"+
+    "<div class='wb-info'>"+
+      "<div class='wb-label'>War Room Winner — Highest Opportunity Score</div>"+
+      "<div class='wb-name'>"+W.name+"</div>"+
+      "<div class='wb-meta'>"+W.niche+" &middot; "+W.stage+" &middot; Window: "+W.window+(W.usp?" &middot; "+W.usp:"")+"</div>"+
+    "</div>"+
+    "<div style='text-align:right'><div class='wb-score'>"+W.score+"</div><div class='wb-score-sub'>/ 99 pts</div></div>";
+  dash.appendChild(wb);
+
+  // KPI
+  var kpiRow = document.createElement("div");
+  kpiRow.className = "kpi-row anim d1";
+  kpiRow.style.gridTemplateColumns = "repeat(4,1fr)";
+  var estTotal = trends.reduce(function(s,t){return s+(parseFloat((t.price||"27").replace(/[^0-9.]/g,""))||27)*t.monthly;},0);
+  [
+    {ico:"&#x1F4CA;",bg:"rgba(99,102,241,0.12)",lbl:"Trends Analyzed",val:trends.length+" active",sub:"In War Room"},
+    {ico:"&#x1F525;",bg:"rgba(16,185,129,0.12)",lbl:"Top Score",val:W.score+"/99",sub:W.name},
+    {ico:"&#x1F4B0;",bg:"rgba(245,158,11,0.12)",lbl:"Combined Est. Rev.",val:"$"+Math.round(estTotal).toLocaleString()+"/mo",sub:"Across all trends"},
+    {ico:"&#x26A1;",bg:"rgba(139,92,246,0.12)",lbl:"Best Entry Window",val:W.window,sub:W.stage+" stage"}
+  ].forEach(function(k){
+    var d=document.createElement("div");
+    d.className="kpi";
+    d.innerHTML="<div class='kpi-ico' style='background:"+k.bg+"'>"+k.ico+"</div><div><div class='kpi-label'>"+k.lbl+"</div><div class='kpi-val'>"+k.val+"</div><div class='kpi-sub'>"+k.sub+"</div></div>";
+    kpiRow.appendChild(d);
+  });
+  dash.appendChild(kpiRow);
+
+  // RADAR
+  var radSec = document.createElement("div");
+  radSec.className = "anim d2";
+  radSec.innerHTML = "<div class='sec-title' style='margin-bottom:12px'>&#x1F4E1; Score Radar — All Trends</div>";
+  var rg = document.createElement("div");
+  rg.className = "radar-grid";
+  rg.style.gridTemplateColumns = "repeat("+trends.length+",1fr)";
+  trends.forEach(function(t){
+    var axes=[{l:"Profit",v:t.profit_s},{l:"Audience",v:t.aud_s},{l:"Timing",v:t.timing_s},{l:"Growth",v:Math.min(99,t.score+5)},{l:"Score",v:t.score}];
+    var sz=120,cx=60,cy=60,r=44,n=5;
+    var pts=axes.map(function(a,i){var angle=(Math.PI*2/n)*i-Math.PI/2;var f=a.v/100;return {x:cx+r*f*Math.cos(angle),y:cy+r*f*Math.sin(angle)};});
+    var rings="";[.25,.5,.75,1].forEach(function(f){var rp=[];for(var i=0;i<n;i++){var angle=(Math.PI*2/n)*i-Math.PI/2;rp.push((cx+r*f*Math.cos(angle))+","+(cy+r*f*Math.sin(angle)));}rings+="<polygon points='"+rp.join(" ")+"' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1'/>";});
+    var axHtml="";axes.forEach(function(a,i){var angle=(Math.PI*2/n)*i-Math.PI/2;axHtml+="<line x1='"+cx+"' y1='"+cy+"' x2='"+(cx+r*Math.cos(angle))+"' y2='"+(cy+r*Math.sin(angle))+"' stroke='rgba(255,255,255,0.05)' stroke-width='1'/>";var lx=cx+(r+12)*Math.cos(angle),ly=cy+(r+12)*Math.sin(angle);axHtml+="<text x='"+lx+"' y='"+(ly+4)+"' text-anchor='middle' font-size='6.5' fill='rgba(255,255,255,0.3)' font-family='Inter' font-weight='700'>"+a.l+"</text>";});
+    var poly=pts.map(function(p){return p.x+","+p.y;}).join(" ");
+    var rc=document.createElement("div");
+    rc.className="rcard"+(t===trends[0]?" win-r":"");
+    rc.innerHTML="<div class='rcard-name'>"+t.name+"</div><svg width='"+sz+"' height='"+sz+"' viewBox='0 0 "+sz+" "+sz+"'>"+rings+axHtml+"<polygon points='"+poly+"' fill='"+t.color+"' fill-opacity='0.22' stroke='"+t.color+"' stroke-width='1.5'/></svg><div class='rcard-score' style='color:"+t.light+"'>"+t.score+"<span style='font-size:10px;opacity:.5'>/99</span></div>";
+    rg.appendChild(rc);
+  });
+  radSec.appendChild(rg);
+  dash.appendChild(radSec);
+
+  // DETAIL CARDS
+  var detSec=document.createElement("div");
+  detSec.className="anim d3";
+  detSec.innerHTML="<div class='sec-title' style='margin-bottom:12px'>&#x26A1; Detailed Breakdown — Ranked by Score</div>";
+  var tcWrap=document.createElement("div");
+  tcWrap.className="trend-cards";
+  trends.forEach(function(t,rank){
+    var st=statusInfo(t.score);
+    var bars=[
+      {lbl:"Profit Score",val:t.profit_s,col:t.color},
+      {lbl:"Audience Fit",val:t.aud_s,col:t.color},
+      {lbl:"Entry Timing",val:t.timing_s,col:t.color},
+      {lbl:"Saturation",val:t.sat,col:t.sat>65?"#EF4444":t.color}
+    ];
+    var bHtml=bars.map(function(b){return "<div class='brow'><div class='brow-lbl'>"+b.lbl+"</div><div class='brow-track'><div class='brow-fill' data-w='"+b.val+"' style='width:0%;background:"+b.col+"'></div></div><div class='brow-num' style='color:"+b.col+"'>"+b.val+"%</div></div>";}).join("");
+    var extraHtml="";
+    if(t.usp||t.audience||t.pain||t.notes){
+      extraHtml="<div class='tc-extra'>";
+      if(t.usp) extraHtml+="<strong>&#x1F3AF; USP:</strong> "+t.usp+"<br>";
+      if(t.audience) extraHtml+="<strong>&#x1F465; Audience:</strong> "+t.audience+"<br>";
+      if(t.pain) extraHtml+="<strong>&#x1F614; Pain:</strong> "+t.pain+"<br>";
+      if(t.notes) extraHtml+="<strong>&#x1F4DD; Intel:</strong> "+t.notes;
+      extraHtml+="</div>";
+    }
+    var starsHtml="";
+    for(var s=0;s<5;s++) starsHtml+="<span style='opacity:"+(s<t.stars?1:.15)+"'>&#x2605;</span>";
+    var tc=document.createElement("div");
+    tc.className="tcard"+(t===trends[0]?" winner":"")+(t.score<35?" eliminated":"");
+    tc.innerHTML=
+      "<div class='tc-hd'>"+
+        "<div class='tc-hl'>"+
+          "<div class='tc-bar-side' style='background:"+t.color+"'></div>"+
+          "<div>"+
+            "<div class='tc-name'>"+(rank===0?"&#x1F947; ":"#"+(rank+1)+" ")+t.name+"</div>"+
+            "<div class='tc-niche'>"+t.niche+" &middot; "+t.stage+" &middot; "+starsHtml+"</div>"+
+          "</div>"+
+        "</div>"+
+        "<div class='tc-badge' style='color:"+t.light+"'>"+t.score+"</div>"+
+      "</div>"+
+      "<div class='tc-body'>"+
+        "<div class='tc-meta-grid'>"+
+          "<div class='metric'><div class='metric-lbl'>Growth</div><div class='metric-val' style='color:"+t.light+"'>"+t.growth+"</div></div>"+
+          "<div class='metric'><div class='metric-lbl'>Window</div><div class='metric-val' style='font-size:.78rem;color:"+t.light+"'>"+t.window+"</div></div>"+
+          "<div class='metric'><div class='metric-lbl'>Revenue</div><div class='metric-val' style='font-size:.85rem;color:"+t.light+"'>"+t.revenue+"</div></div>"+
+          "<div class='metric'><div class='metric-lbl'>Competitors</div><div class='metric-val' style='color:"+(t.comps>10?"#FCA5A5":t.light)+"'>"+t.comps+"</div></div>"+
+          "<div class='metric'><div class='metric-lbl'>Price</div><div class='metric-val' style='font-size:.85rem;color:"+t.light+"'>"+t.price+"</div></div>"+
+        "</div>"+
+        "<div class='bar-row'>"+bHtml+"</div>"+
+        extraHtml+
+        "<div><div class='status-chip' style='background:"+st.bg+";color:"+st.col+"'>"+st.ico+" "+st.txt+"</div></div>"+
+      "</div>";
+    tcWrap.appendChild(tc);
+  });
+  detSec.appendChild(tcWrap);
+  dash.appendChild(detSec);
+
+  // BRACKET
+  if(trends.length>=2){
+    var brSec=document.createElement("div");
+    brSec.className="anim d4";
+    brSec.innerHTML="<div class='sec-title' style='margin-bottom:12px'>&#x1F3C6; Elimination Bracket</div>";
+    var brWrap=document.createElement("div");
+    brWrap.style.cssText="background:var(--s2);border:1px solid var(--brd2);border-radius:14px;padding:18px 20px;overflow-x:auto;";
+    var bg=document.createElement("div");
+    bg.className="bracket-grid";
+    var r1=document.createElement("div");
+    r1.className="b-round";
+    r1.innerHTML="<div class='b-round-lbl'>Round 1</div>";
+    for(var i=0;i<trends.length-1;i+=2){
+      var a=trends[i],b=trends[i+1];
+      var m=document.createElement("div");
+      m.className="b-match";
+      m.innerHTML=
+        "<div class='b-entry "+(a.score>=b.score?"win":"loss")+"'><span>"+a.name.substring(0,14)+"</span><span class='b-score'>"+a.score+"</span></div>"+
+        "<div class='b-entry "+(b.score>a.score?"win":"loss")+"'><span>"+b.name.substring(0,14)+"</span><span class='b-score'>"+b.score+"</span></div>";
+      r1.appendChild(m);
+    }
+    bg.appendChild(r1);
+    bg.innerHTML+="<div class='b-conn'>&#x276F;</div>";
+    var fin=document.createElement("div");
+    fin.className="b-round";
+    fin.innerHTML="<div class='b-round-lbl'>&#x1F3C6; Champion</div><div class='b-match'><div class='b-entry win' style='background:rgba(99,102,241,0.2);border-left:3px solid "+trends[0].color+"'><span>"+trends[0].name.substring(0,16)+"</span><span class='b-score' style='color:"+trends[0].light+"'>"+trends[0].score+"</span></div></div>";
+    bg.appendChild(fin);
+    brWrap.appendChild(bg);
+    brSec.appendChild(brWrap);
+    dash.appendChild(brSec);
+  }
+
+  setTimeout(function(){
+    document.querySelectorAll(".brow-fill[data-w]").forEach(function(el){
+      el.style.width=el.getAttribute("data-w")+"%";
+    });
+  },200);
+}
+
+function resetAll(){
+  document.getElementById("dashboard").innerHTML="<div class='empty'><div class='empty-ring'>&#x1F4E1;</div><h2>War Room Ready</h2><p>Configure your trends on the left panel with detailed insights, then hit Launch War Room to start the battle.</p></div>";
+  buildSlots();
+}
+
+function exportPNG(){
+  var el=document.getElementById("dashboard");
+  if(!window.htmlToImage){alert("Export not available.");return;}
+  htmlToImage.toPng(el,{pixelRatio:2,backgroundColor:"#07080F",useCORS:true})
+    .then(function(d){var a=document.createElement("a");a.download="war-room-"+Date.now()+".png";a.href=d;a.click();})
+    .catch(function(){alert("Export failed. Use a screenshot instead.");});
+}
+
+function updateClock(){
+  var n=new Date(),h=n.getHours().toString().padStart(2,"0"),m=n.getMinutes().toString().padStart(2,"0"),s=n.getSeconds().toString().padStart(2,"0");
+  document.getElementById("clock").textContent=h+":"+m+":"+s;
+}
+
+buildSlots();
+setInterval(updateClock,1000);
+updateClock();
+</script>
+</body>
+</html>
