@@ -1,0 +1,493 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Phonics Treasure Hunt PRO - ESL Audio Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0F0518;
+    --panel-bg: #220F33;
+    --neon-pink: #FF007F;
+    --neon-cyan: #00FFFF;
+    --neon-green: #39FF14;
+    --neon-yellow: #FFE600;
+    --neon-purple: #B200FF;
+    --text-light: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: manipulation; }
+
+  body {
+    background-color: var(--bg-dark);
+    font-family: 'Fredoka', sans-serif;
+    color: var(--text-light);
+    display: flex; height: 100vh; overflow: hidden;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(255, 0, 127, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(57, 255, 20, 0.05) 0%, transparent 60%);
+  }
+
+  /* --- SIDEBAR --- */
+  .sidebar {
+    width: 360px; min-width: 360px; background: rgba(34, 15, 51, 0.85); backdrop-filter: blur(15px);
+    border-right: 2px solid var(--neon-purple);
+    box-shadow: 5px 0 30px rgba(178, 0, 255, 0.2);
+    display: flex; flex-direction: column; z-index: 100;
+  }
+
+  .brand {
+    padding: 25px 20px; text-align: center; border-bottom: 2px solid rgba(178,0,255,0.3);
+  }
+  .brand-logo { font-size: 55px; text-shadow: 0 0 20px var(--neon-pink); animation: float 3s ease-in-out infinite; }
+  .brand-title { font-size: 34px; font-weight: 900; color: var(--neon-cyan); text-transform: uppercase; line-height: 1; margin-top: 10px; text-shadow: 0 0 10px rgba(0,255,255,0.5); }
+  .brand-sub { font-size: 14px; color: var(--neon-yellow); font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; }
+
+  .controls { padding: 25px 20px; flex: 1; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;}
+
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-label { font-size: 13px; color: var(--neon-cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+  select, input[type="text"] {
+    font-family: 'Fredoka', sans-serif; font-size: 16px; font-weight: 700;
+    padding: 14px; border-radius: 12px; border: 2px solid var(--neon-purple);
+    background: rgba(0,0,0,0.4); color: white; outline: none; cursor: pointer;
+    box-shadow: inset 0 0 10px rgba(178,0,255,0.2); transition: 0.3s; width: 100%;
+  }
+  select:focus, input[type="text"]:focus { border-color: var(--neon-pink); box-shadow: 0 0 15px var(--neon-pink); }
+  option { background: var(--panel-bg); color: white; }
+  input[type="text"]::placeholder { color: rgba(255,255,255,0.3); }
+
+  .btn {
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 900; text-transform: uppercase;
+    padding: 16px 20px; border-radius: 15px; cursor: pointer; transition: 0.2s; border: none;
+    display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+  }
+  .btn-generate {
+    background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple)); color: white;
+    box-shadow: 0 5px 20px rgba(255, 0, 127, 0.4), inset 0 -4px 0 rgba(0,0,0,0.3); margin-top: 10px;
+  }
+  .btn-generate:active { transform: translateY(4px); box-shadow: 0 0 10px rgba(255,0,127,0.4); }
+
+  .btn-cert {
+    background: linear-gradient(45deg, var(--neon-green), #00C9A7); color: #000;
+    box-shadow: 0 5px 20px rgba(57, 255, 20, 0.4), inset 0 -4px 0 rgba(0,0,0,0.3);
+    opacity: 0.5; pointer-events: none; margin-top: auto;
+  }
+  .btn-cert.unlocked { opacity: 1; pointer-events: auto; animation: pulse-green 1.5s infinite; }
+
+  /* --- MAIN STAGE --- */
+  .stage { flex: 1; display: flex; flex-direction: column; padding: 30px; position: relative; align-items: center;}
+
+  .instruction-box {
+    background: rgba(0, 255, 255, 0.05); border: 2px solid var(--neon-cyan);
+    border-radius: 24px; padding: 20px 40px; display: flex; align-items: center; gap: 30px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.1); margin-bottom: 30px;
+    max-width: 900px; width: 100%; backdrop-filter: blur(5px);
+  }
+
+  .btn-speak {
+    width: 80px; height: 80px; border-radius: 50%; background: var(--neon-cyan);
+    border: none; cursor: pointer; font-size: 36px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 5px 20px rgba(0,255,255,0.5), inset 0 -5px 0 rgba(0,0,0,0.2);
+    transition: 0.2s; flex-shrink: 0;
+  }
+  .btn-speak:active { transform: translateY(5px); box-shadow: 0 0 10px rgba(0,255,255,0.4); }
+  .btn-speak.playing { animation: pulse-cyan 1s infinite; }
+
+  .instruction-text { font-size: 32px; font-weight: 700; line-height: 1.3; }
+  .target-highlight { color: var(--neon-yellow); font-size: 44px; font-weight: 900; text-shadow: 0 0 15px var(--neon-yellow); }
+
+  /* GRID */
+  .grid-container {
+    display: grid; gap: 15px; max-width: 900px; width: 100%; flex: 1; align-content: center; justify-content: center;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.03); border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative; overflow: hidden; backdrop-filter: blur(5px); aspect-ratio: 1 / 1;
+  }
+  .card:hover { transform: translateY(-5px) scale(1.05); background: rgba(255,255,255,0.1); border-color: var(--neon-pink); box-shadow: 0 10px 25px rgba(255,0,127,0.3); }
+
+  .card-emoji { font-size: clamp(40px, 6vw, 80px); filter: drop-shadow(0 5px 10px rgba(0,0,0,0.6)); transition: 0.3s; }
+
+  /* STATES */
+  .card.correct {
+    background: rgba(57, 255, 20, 0.15); border-color: var(--neon-green);
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.4); pointer-events: none;
+  }
+  .card.correct .card-emoji { transform: scale(1.2); }
+  .card.correct::after { content: '⭐'; position: absolute; top: 10px; right: 10px; font-size: 28px; animation: pop 0.5s ease-out forwards; }
+
+  .card.wrong {
+    background: rgba(255, 0, 127, 0.15); border-color: var(--neon-pink);
+    box-shadow: 0 0 20px rgba(255, 0, 127, 0.4); animation: shake 0.4s;
+    opacity: 0.4; pointer-events: none;
+  }
+  .card.wrong::after { content: '❌'; position: absolute; top: 10px; right: 10px; font-size: 24px; }
+
+  /* PROGRESS */
+  .progress-container {
+    text-align: center; margin-top: 20px; font-size: 24px; font-weight: 900; color: var(--neon-cyan);
+    background: rgba(0,0,0,0.5); padding: 15px 40px; border-radius: 50px; border: 1px solid rgba(0,255,255,0.2);
+  }
+  .stars { display: flex; justify-content: center; gap: 10px; margin-top: 10px; font-size: 35px; }
+  .star { filter: grayscale(1) opacity(0.2); transition: 0.4s; }
+  .star.earned { filter: grayscale(0) opacity(1); text-shadow: 0 0 20px var(--neon-yellow); transform: scale(1.3); }
+
+  /* ANIMATIONS */
+  @keyframes float { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-15px) rotate(5deg); } }
+  @keyframes pulse-cyan { 0% { box-shadow: 0 0 0 0 rgba(0,255,255,0.7); } 70% { box-shadow: 0 0 0 25px rgba(0,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(0,255,255,0); } }
+  @keyframes pulse-green { 0% { box-shadow: 0 5px 20px rgba(57,255,20,0.4), 0 0 0 0 rgba(57,255,20,0.7); } 70% { box-shadow: 0 5px 20px rgba(57,255,20,0.4), 0 0 0 25px rgba(57,255,20,0); } 100% { box-shadow: 0 5px 20px rgba(57,255,20,0.4), 0 0 0 0 rgba(57,255,20,0); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-12px) rotate(-5deg); } 75% { transform: translateX(12px) rotate(5deg); } }
+  @keyframes pop { 0% { transform: scale(0) rotate(-45deg); } 80% { transform: scale(1.4) rotate(10deg); } 100% { transform: scale(1) rotate(0); } }
+
+  .confetti { position: absolute; width: 18px; height: 18px; border-radius: 50%; animation: fall 3s linear forwards; z-index: 1000; pointer-events: none; }
+  @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+  /* --- CERTIFICATE MODAL --- */
+  #certificate-overlay {
+    position: fixed; inset: 0; background: rgba(15, 5, 24, 0.95); z-index: 200;
+    display: none; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(10px);
+  }
+  .cert-card {
+    background: #ffffff; border-radius: 30px; width: 100%; max-width: 900px;
+    padding: 60px; text-align: center; color: #111; border: 15px solid var(--neon-cyan);
+    position: relative; background-image: radial-gradient(#e0e0e0 2px, transparent 2px); background-size: 30px 30px;
+    box-shadow: 0 0 50px rgba(0,255,255,0.5);
+  }
+  .cert-title { font-size: 60px; color: var(--neon-pink); text-transform: uppercase; margin-bottom: 20px; text-shadow: 3px 3px 0px #000;}
+  .cert-text { font-size: 28px; color: #333; margin-bottom: 30px; font-weight: 500; }
+  .cert-name { font-size: 70px; color: var(--neon-purple); border-bottom: 6px dashed var(--neon-cyan); display: inline-block; padding: 0 50px; margin-bottom: 40px; font-weight: 900;}
+  .cert-badge { font-size: 100px; position: absolute; bottom: -30px; right: -30px; filter: drop-shadow(5px 5px 10px rgba(0,0,0,0.3)); animation: pop 1s ease-out; }
+
+  .btn-print-real {
+    background: var(--neon-purple); color: white; border: none; padding: 20px 50px;
+    font-size: 28px; font-family: 'Fredoka'; font-weight: 900; border-radius: 50px;
+    cursor: pointer; box-shadow: 0 10px 30px rgba(178,0,255,0.4); margin-top: 20px; transition: 0.2s;
+  }
+  .btn-print-real:hover { transform: scale(1.05); }
+
+  @media print {
+    body * { visibility: hidden; }
+    #certificate-overlay, #certificate-overlay * { visibility: visible; }
+    #certificate-overlay { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: none; display: flex !important; }
+    .cert-card { border-color: #000; box-shadow: none; border-width: 8px; }
+    .cert-title { text-shadow: none; color: #000; }
+    .btn-print-real, .btn-close-cert { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo">🎮</div>
+    <div class="brand-title">Phonics PRO</div>
+    <div class="brand-sub">Advanced ESL Audio Game</div>
+  </div>
+
+  <div class="controls">
+    <div class="form-group">
+      <label class="form-label">Player Name (For Certificate)</label>
+      <input type="text" id="cfg-name" placeholder="Enter kid's name..." autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Game Mode</label>
+      <select id="cfg-mode">
+        <option value="listen">👂 Listen & Find (Easy)</option>
+        <option value="phonics">🔤 First Letter Phonics (Hard)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Difficulty (Grid Size)</label>
+      <select id="cfg-diff">
+        <option value="9">🌱 Easy (3x3)</option>
+        <option value="16" selected>⭐ Normal (4x4)</option>
+        <option value="20">🔥 Hard (5x4)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Vocabulary Category</label>
+      <select id="cfg-cat">
+        <option value="mixed">🎲 All Mixed (Mega Random)</option>
+        <option value="animals">🦁 Animals</option>
+        <option value="food">🍎 Food & Drinks</option>
+        <option value="vehicles">🚗 Vehicles</option>
+        <option value="nature">🌳 Nature</option>
+        <option value="clothing">👕 Clothing</option>
+      </select>
+    </div>
+
+    <button class="btn btn-generate" onclick="initGame()">✨ Start New Mission</button>
+
+    <button class="btn btn-cert" id="btn-cert" onclick="showCertificate()">
+      🎓 Get Certificate
+    </button>
+  </div>
+</aside>
+
+<main class="stage">
+  <div class="instruction-box">
+    <button class="btn-speak" id="btn-speak" onclick="playInstruction()">🔊</button>
+    <div class="instruction-text" id="instruction-ui">
+      <!-- Injected by JS -->
+      Click Start New Mission!
+    </div>
+  </div>
+
+  <div class="grid-container" id="game-grid">
+    <!-- Cards generated via JS -->
+  </div>
+
+  <div class="progress-container">
+    <div>Targets Found: <span id="lbl-found" style="color:var(--neon-yellow);">0</span> / <span id="lbl-total">0</span></div>
+    <div class="stars" id="stars-container">
+      <!-- Stars generated via JS -->
+    </div>
+  </div>
+</main>
+
+<div id="certificate-overlay">
+  <div class="cert-card">
+    <div style="position:absolute; top:20px; right:30px; cursor:pointer; font-size:40px; border:none; background:none;" onclick="closeCertificate()" class="btn-close-cert">❌</div>
+    <h1 class="cert-title">Certificate of Mastery</h1>
+    <p class="cert-text">This certificate is proudly awarded to our super learner!</p>
+    <div class="cert-name" id="cert-player-name">Awesome Student</div>
+    <p class="cert-text" style="margin-top:30px; font-weight:700;">For completing the advanced Phonics PRO Audio Mission.</p>
+    <div class="cert-badge">🏆</div>
+    <button class="btn-print-real" onclick="window.print()">🖨️ Print Certificate</button>
+  </div>
+</div>
+
+<script>
+// --- MASSIVE DATABASE ---
+const DB = {
+  animals: [
+    {e:'🐱', w:'Cat'}, {e:'🐮', w:'Cow'}, {e:'🐶', w:'Dog'}, {e:'🐘', w:'Elephant'}, {e:'🦊', w:'Fox'}, {e:'🦒', w:'Giraffe'},
+    {e:'🐴', w:'Horse'}, {e:'🦎', w:'Iguana'}, {e:'🦘', w:'Kangaroo'}, {e:'🦁', w:'Lion'}, {e:'🐵', w:'Monkey'}, {e:'🦉', w:'Owl'},
+    {e:'🐧', w:'Penguin'}, {e:'🐰', w:'Rabbit'}, {e:'🐍', w:'Snake'}, {e:'🐯', w:'Tiger'}, {e:'🦓', w:'Zebra'}, {e:'🐻', w:'Bear'},
+    {e:'🐼', w:'Panda'}, {e:'🐸', w:'Frog'}, {e:'🐢', w:'Turtle'}, {e:'🦈', w:'Shark'}, {e:'🐬', w:'Dolphin'}, {e:'🦇', w:'Bat'},
+    {e:'🐊', w:'Crocodile'}, {e:'🦛', w:'Hippo'}, {e:'🦏', w:'Rhino'}, {e:'🦆', w:'Duck'}, {e:'🦅', w:'Eagle'}, {e:'🦋', w:'Butterfly'}
+  ],
+  food: [
+    {e:'🍎', w:'Apple'}, {e:'🍌', w:'Banana'}, {e:'🥕', w:'Carrot'}, {e:'🍩', w:'Donut'}, {e:'🥚', w:'Egg'}, {e:'🐟', w:'Fish'},
+    {e:'🍇', w:'Grapes'}, {e:'🍔', w:'Hamburger'}, {e:'🍦', w:'Ice cream'}, {e:'🧃', w:'Juice'}, {e:'🥝', w:'Kiwi'}, {e:'🍋', w:'Lemon'},
+    {e:'🍈', w:'Melon'}, {e:'🥜', w:'Nut'}, {e:'🍊', w:'Orange'}, {e:'🍕', w:'Pizza'}, {e:'🍓', w:'Strawberry'}, {e:'🍅', w:'Tomato'},
+    {e:'🍉', w:'Watermelon'}, {e:'🧀', w:'Cheese'}, {e:'🍒', w:'Cherry'}, {e:'🥨', w:'Pretzel'}, {e:'🥪', w:'Sandwich'}, {e:'🌮', w:'Taco'},
+    {e:'🥞', w:'Pancake'}, {e:'🥐', w:'Croissant'}, {e:'🥑', w:'Avocado'}, {e:'🥦', w:'Broccoli'}, {e:'🍞', w:'Bread'}, {e:'🧅', w:'Onion'}
+  ],
+  vehicles: [
+    {e:'🚗', w:'Car'}, {e:'🚌', w:'Bus'}, {e:'🚲', w:'Bicycle'}, {e:'✈️', w:'Airplane'}, {e:'🚁', w:'Helicopter'}, {e:'🚀', w:'Rocket'},
+    {e:'⛵', w:'Boat'}, {e:'🚢', w:'Ship'}, {e:'🛴', w:'Scooter'}, {e:'🚂', w:'Train'}, {e:'🚜', w:'Tractor'}, {e:'🚑', w:'Ambulance'},
+    {e:'🚒', w:'Firetruck'}, {e:'🚓', w:'Police car'}, {e:'🚕', w:'Taxi'}, {e:'🚚', w:'Truck'}, {e:'🏍️', w:'Motorcycle'}, {e:'🛶', w:'Canoe'},
+    {e:'🛸', w:'UFO'}, {e:'🚡', w:'Cable car'}, {e:'🛻', w:'Pickup'}, {e:'🦽', w:'Wheelchair'}, {e:'🚤', w:'Speedboat'}, {e:'🛰️', w:'Satellite'}
+  ],
+  nature: [
+    {e:'🌳', w:'Tree'}, {e:'🌺', w:'Flower'}, {e:'☀️', w:'Sun'}, {e:'🌙', w:'Moon'}, {e:'⭐', w:'Star'}, {e:'☁️', w:'Cloud'},
+    {e:'🌧️', w:'Rain'}, {e:'❄️', w:'Snow'}, {e:'🔥', w:'Fire'}, {e:'💧', w:'Water'}, {e:'⚡', w:'Lightning'}, {e:'⛰️', w:'Mountain'},
+    {e:'🌋', w:'Volcano'}, {e:'🌍', w:'Earth'}, {e:'🍃', w:'Leaf'}, {e:'🍄', w:'Mushroom'}, {e:'🌵', w:'Cactus'}, {e:'🌈', w:'Rainbow'},
+    {e:'🌪️', w:'Tornado'}, {e:'🌊', w:'Ocean'}, {e:'🪴', w:'Plant'}, {e:'🌴', w:'Palm'}, {e:'☄️', w:'Comet'}, {e:'🐚', w:'Shell'}
+  ],
+  clothing: [
+    {e:'👕', w:'Shirt'}, {e:'👖', w:'Pants'}, {e:'👗', w:'Dress'}, {e:'🧦', w:'Socks'}, {e:'👟', w:'Shoes'}, {e:'👒', w:'Hat'},
+    {e:'🧣', w:'Scarf'}, {e:'🧤', w:'Gloves'}, {e:'🧥', w:'Coat'}, {e:'👓', w:'Glasses'}, {e:'👑', w:'Crown'}, {e:'💍', w:'Ring'},
+    {e:'👜', w:'Purse'}, {e:'🎒', w:'Backpack'}, {e:'☂️', w:'Umbrella'}, {e:'👢', w:'Boot'}, {e:'👡', w:'Sandal'}, {e:'👔', w:'Tie'},
+    {e:'⛑️', w:'Helmet'}, {e:'⌚', w:'Watch'}, {e:'👙', w:'Bikini'}, {e:'🥼', w:'Lab coat'}, {e:'🥾', w:'Hiking boot'}, {e:'🩳', w:'Shorts'}
+  ]
+};
+
+// --- GLOBALS ---
+let currentGrid = [];
+let gameMode = ''; // 'listen' or 'phonics'
+let targetLetter = '';
+let targetWord = '';
+let targetCount = 0;
+let foundCount = 0;
+let isSpeaking = false;
+
+// Audio Synthesis Setup
+let voices = [];
+window.speechSynthesis.onvoiceschanged = () => { voices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en')); };
+function getVoice() {
+  if (voices.length === 0) voices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+  let preferred = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha') || v.name.includes('Karen') || v.name.includes('Female'));
+  return preferred || voices[0];
+}
+
+function speakText(text, callback) {
+  if (isSpeaking) window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = getVoice();
+  utterance.lang = 'en-US';
+  utterance.rate = 0.85; 
+  utterance.pitch = 1.1; 
+  utterance.onstart = () => { isSpeaking = true; };
+  utterance.onend = () => { isSpeaking = false; if(callback) callback(); };
+  utterance.onerror = () => { isSpeaking = false; if(callback) callback(); };
+  window.speechSynthesis.speak(utterance);
+}
+
+// --- GAME LOGIC ---
+function shuffle(array) {
+  let currentIndex = array.length, randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex); currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+}
+
+function initGame() {
+  window.speechSynthesis.cancel();
+
+  const diffStr = document.getElementById('cfg-diff').value;
+  const gridSize = parseInt(diffStr); // 9, 16, or 20
+
+  const cat = document.getElementById('cfg-cat').value;
+  let itemsPool = [];
+  if (cat === 'mixed') {
+    Object.values(DB).forEach(arr => itemsPool = itemsPool.concat(arr));
+  } else {
+    itemsPool = [...DB[cat]];
+  }
+
+  currentGrid = shuffle(itemsPool).slice(0, gridSize);
+  gameMode = document.getElementById('cfg-mode').value;
+
+  if (gameMode === 'phonics') {
+    const letterMap = {};
+    currentGrid.forEach(item => {
+      const l = item.w.charAt(0).toUpperCase();
+      letterMap[l] = (letterMap[l] || 0) + 1;
+    });
+    const validLetters = Object.keys(letterMap).filter(l => letterMap[l] >= 2 && letterMap[l] <= 4);
+    targetLetter = validLetters.length > 0 ? validLetters[Math.floor(Math.random() * validLetters.length)] : currentGrid[0].w.charAt(0).toUpperCase();
+    targetCount = currentGrid.filter(i => i.w.charAt(0).toUpperCase() === targetLetter).length;
+
+    document.getElementById('instruction-ui').innerHTML = `Find all words starting with the letter <br><span class="target-highlight">"${targetLetter}"</span>`;
+
+  } else if (gameMode === 'listen') {
+    // Pick exactly one target from the grid
+    const targetObj = currentGrid[Math.floor(Math.random() * currentGrid.length)];
+    targetWord = targetObj.w;
+    targetCount = 1;
+
+    document.getElementById('instruction-ui').innerHTML = `Can you find the... <br><span class="target-highlight">${targetWord}</span>?`;
+  }
+
+  foundCount = 0;
+  updateUI(gridSize);
+
+  // Set custom name
+  const pName = document.getElementById('cfg-name').value.trim() || "Awesome Student";
+  document.getElementById('cert-player-name').innerText = pName;
+
+  setTimeout(playInstruction, 400);
+}
+
+function updateUI(gridSize) {
+  document.getElementById('lbl-found').innerText = foundCount;
+  document.getElementById('lbl-total').innerText = targetCount;
+  document.getElementById('btn-cert').classList.remove('unlocked');
+
+  // Stars
+  const starsContainer = document.getElementById('stars-container');
+  starsContainer.innerHTML = '';
+  for(let i=0; i<targetCount; i++) {
+    const star = document.createElement('div'); star.className = 'star'; star.innerText = '⭐';
+    starsContainer.appendChild(star);
+  }
+
+  // Grid layout adjustments
+  const grid = document.getElementById('game-grid');
+  grid.innerHTML = '';
+  if (gridSize === 9) { grid.style.gridTemplateColumns = 'repeat(3, 1fr)'; grid.style.maxWidth = '600px'; }
+  else if (gridSize === 16) { grid.style.gridTemplateColumns = 'repeat(4, 1fr)'; grid.style.maxWidth = '800px'; }
+  else if (gridSize === 20) { grid.style.gridTemplateColumns = 'repeat(5, 1fr)'; grid.style.maxWidth = '950px'; }
+
+  // Cards
+  currentGrid.forEach((item, index) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    let isTarget = false;
+    if (gameMode === 'phonics') isTarget = (item.w.charAt(0).toUpperCase() === targetLetter);
+    else if (gameMode === 'listen') isTarget = (item.w === targetWord);
+
+    card.onclick = () => handleCardClick(card, item.w, isTarget);
+
+    const emoji = document.createElement('div');
+    emoji.className = 'card-emoji'; emoji.innerText = item.e;
+
+    card.appendChild(emoji);
+    grid.appendChild(card);
+  });
+}
+
+function playInstruction() {
+  const btn = document.getElementById('btn-speak');
+  btn.classList.add('playing');
+  let text = '';
+  if (gameMode === 'phonics') text = `Find all words starting with the letter ${targetLetter}!`;
+  else if (gameMode === 'listen') text = `Can you find the ${targetWord}?`;
+
+  speakText(text, () => { btn.classList.remove('playing'); });
+}
+
+function handleCardClick(cardElement, word, isTarget) {
+  if (cardElement.classList.contains('correct') || cardElement.classList.contains('wrong')) return;
+
+  speakText(word);
+
+  if (isTarget) {
+    cardElement.classList.add('correct');
+    foundCount++;
+    document.getElementById('lbl-found').innerText = foundCount;
+
+    const stars = document.querySelectorAll('.star');
+    if(stars[foundCount-1]) stars[foundCount-1].classList.add('earned');
+
+    if (foundCount >= targetCount) setTimeout(triggerWin, 1000);
+  } else {
+    cardElement.classList.add('wrong');
+  }
+}
+
+function triggerWin() {
+  speakText("Amazing! You did a great job!");
+  document.getElementById('btn-cert').classList.add('unlocked');
+  spawnConfetti();
+}
+
+function spawnConfetti() {
+  const colors = ['#FF007F', '#00FFFF', '#39FF14', '#FFE600', '#B200FF'];
+  for (let i = 0; i < 100; i++) {
+    let conf = document.createElement('div');
+    conf.className = 'confetti';
+    conf.style.left = Math.random() * 100 + 'vw';
+    conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    conf.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    conf.style.animationDelay = (Math.random() * 0.5) + 's';
+    document.body.appendChild(conf);
+    setTimeout(() => conf.remove(), 4500);
+  }
+}
+
+function showCertificate() {
+  if (!document.getElementById('btn-cert').classList.contains('unlocked')) return;
+  speakText("Congratulations! Here is your certificate.");
+  document.getElementById('certificate-overlay').style.display = 'flex';
+}
+function closeCertificate() { document.getElementById('certificate-overlay').style.display = 'none'; }
+</script>
+</body>
+</html>
