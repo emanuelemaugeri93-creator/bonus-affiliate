@@ -1,0 +1,564 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SmartMaze Studio - EdTech Worksheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-main: #F4F7FE;
+    --surface: #FFFFFF;
+    --primary: #4318FF;
+    --primary-hover: #3311DB;
+    --secondary: #05CD99;
+    --danger: #EE5D50;
+    --warning: #FFCE20;
+    --text-main: #2B3674;
+    --text-muted: #A3AED0;
+    --border: #E0E5F2;
+  }
+
+  * { box-sizing: border-box; touch-action: none; margin: 0; padding: 0; }
+
+  body, html {
+    background-color: var(--bg-main);
+    font-family: 'Nunito', sans-serif;
+    display: flex; height: 100vh; overflow: hidden;
+    color: var(--text-main);
+  }
+
+  /* --- SIDEBAR --- */
+  .sidebar {
+    width: 340px; min-width: 340px; background: var(--surface);
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    box-shadow: 4px 0 20px rgba(112, 144, 176, 0.08);
+    z-index: 100;
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 12px; padding: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-logo { width: 40px; height: 40px; }
+  .brand-text { font-size: 24px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px; }
+
+  .settings-panel { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+  .setting-group { display: flex; flex-direction: column; gap: 8px; }
+  .setting-label { font-size: 14px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  select, input, button {
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px; border-radius: 12px; outline: none; transition: 0.2s;
+  }
+  select {
+    padding: 12px 16px; border: 2px solid var(--border); background: var(--bg-main);
+    color: var(--text-main); font-weight: 700; cursor: pointer;
+    appearance: none;
+  }
+  select:focus { border-color: var(--primary); }
+
+  .btn {
+    padding: 14px 20px; font-weight: 800; cursor: pointer; border: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3); }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary { background: var(--secondary); color: white; box-shadow: 0 4px 15px rgba(5, 205, 153, 0.3); }
+  .btn-secondary:hover { transform: translateY(-2px); }
+
+  .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
+  .btn-outline:hover { background: var(--bg-main); }
+
+  .sidebar-footer { padding: 24px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+
+  /* --- MAIN WORKSPACE --- */
+  .workspace { flex: 1; display: flex; flex-direction: column; position: relative; }
+
+  .toolbar {
+    height: 80px; background: var(--surface); display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; border-bottom: 1px solid var(--border);
+  }
+  .stat-badge {
+    display: flex; align-items: center; gap: 10px; background: var(--bg-main);
+    padding: 10px 20px; border-radius: 999px; font-weight: 800; font-size: 18px; color: var(--primary);
+  }
+  .toolbar-actions { display: flex; gap: 12px; }
+  .icon-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border);
+    background: white; color: var(--text-main); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: 0.2s;
+  }
+  .icon-btn:hover { background: var(--bg-main); border-color: var(--text-muted); }
+
+  .stage {
+    flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background-image: radial-gradient(var(--border) 2px, transparent 2px); background-size: 30px 30px;
+    overflow: hidden;
+  }
+
+  .canvas-wrapper {
+    position: relative; background: var(--surface); padding: 20px;
+    border-radius: 24px; box-shadow: 0 20px 50px rgba(112, 144, 176, 0.15);
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  .worksheet-header { text-align: center; margin-bottom: 20px; width: 100%; }
+  .ws-title { font-size: 32px; font-weight: 900; color: var(--text-main); margin-bottom: 5px; }
+  .ws-subtitle { font-size: 18px; color: var(--text-muted); font-weight: 700; }
+  .ws-target { color: var(--primary); font-weight: 900; background: rgba(67, 24, 255, 0.1); padding: 4px 12px; border-radius: 8px; }
+
+  canvas {
+    border-radius: 12px; border: 3px dashed var(--border); cursor: crosshair;
+    max-width: 100%; max-height: 55vh; object-fit: contain; background: #FAFCFF;
+  }
+
+  .marker {
+    position: absolute; background: var(--text-main); color: white; padding: 6px 16px;
+    font-weight: 900; font-size: 14px; border-radius: 12px; letter-spacing: 1px; z-index: 10;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+  #marker-start { top: 90px; left: 0px; transform: translateX(-40%); background: var(--secondary); }
+  #marker-finish { bottom: 10px; right: 0px; transform: translateX(40%); background: var(--danger); }
+
+  /* ANIMATIONS */
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+  .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; border-color: var(--danger) !important; }
+  @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.03); box-shadow: 0 0 40px rgba(5, 205, 153, 0.4); border-color: var(--secondary); } 100% { transform: scale(1); } }
+  .win-anim { animation: pop 1s ease-out; border-color: var(--secondary) !important; }
+  .confetti { position: absolute; width: 12px; height: 12px; border-radius: 3px; animation: fall 3s linear forwards; z-index: 1000; pointer-events: none; }
+  @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+  /* PRINT STYLES */
+  @media print {
+    .sidebar, .toolbar { display: none !important; }
+    .workspace { background: white; }
+    .stage { background: none; padding: 0; }
+    .canvas-wrapper { box-shadow: none; padding: 0; border-radius: 0; }
+    canvas { border: 2px solid #000; max-height: none; }
+    .worksheet-header { display: block; margin-bottom: 40px; }
+    .ws-target { background: none; border: 2px solid #000; color: #000; }
+    .marker { background: #000 !important; color: #fff !important; box-shadow: none; border: 2px solid #000; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <svg class="brand-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="10" width="80" height="80" rx="24" fill="#4318FF"/>
+      <path d="M30 35 h40 v40 h-15 v-15 h-10 v15 h-15 z" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="70" cy="70" r="10" fill="#FFCE20"/>
+    </svg>
+    <div class="brand-text">SmartMaze</div>
+  </div>
+
+  <div class="settings-panel">
+    <div class="setting-group">
+      <label class="setting-label">Difficulty (Grid Size)</label>
+      <select id="cfg-size" onchange="initGame()">
+        <option value="4">Toddler (4x4)</option>
+        <option value="6" selected>Kids (6x6)</option>
+        <option value="8">Genius (8x8)</option>
+      </select>
+    </div>
+
+    <div class="setting-group">
+      <label class="setting-label">Target Theme</label>
+      <select id="cfg-cat" onchange="initGame()">
+        <option value="0" selected>🍎 Food & Drinks</option>
+        <option value="1">🦁 Cute Animals</option>
+        <option value="2">🚀 Fast Vehicles</option>
+        <option value="3">🌸 Nature & Magic</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" onclick="initGame()">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      Generate New Maze
+    </button>
+
+    <button class="btn btn-outline" onclick="autoSolve()">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Show Answer Key
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="btn btn-secondary" onclick="exportPNG()">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Download PNG
+    </button>
+    <button class="btn btn-outline" onclick="window.print()">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      Print Worksheet
+    </button>
+  </div>
+</aside>
+
+<main class="workspace">
+  <header class="toolbar">
+    <div class="stat-badge">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span id="timer">00:00</span>
+    </div>
+
+    <div class="toolbar-actions">
+      <button class="icon-btn" onclick="toggleMute()" id="btn-mute" title="Mute/Unmute">🔊</button>
+      <button class="icon-btn" onclick="clearPath()" title="Erase Path">🧹</button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="canvas-wrapper" id="canvas-container">
+      <div class="worksheet-header">
+        <h1 class="ws-title">Pathfinder Challenge</h1>
+        <p class="ws-subtitle">Trace from START to FINISH by following the <span class="ws-target" id="lbl-target">FOOD</span>!</p>
+      </div>
+
+      <div class="marker" id="marker-start">START &rarr;</div>
+      <canvas id="gameCanvas" width="800" height="800"></canvas>
+      <div class="marker" id="marker-finish">&rarr; FINISH</div>
+    </div>
+  </div>
+</main>
+
+<script>
+// --- DATABASE ---
+const DB = [
+  ["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍒","🍑","🍍","🥥","🥝","🍅","🥑","🥦","🥕","🥐","🧀","🥚","🍔","🍟","🍕","🌭","🌮","🍿","🍩","🍪"],
+  ["🐱","🐈","🦁","🐯","🐅","🐆","🐴","🐎","🦓","🦌","🐮","🐄","🐑","🐐","🐫","🐘","🦏","🐭","🐰","🐿️","🐻","🐨","🐼","🦘","🐧","🦆","🦉","🐸","🐢","🐍"],
+  ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🛴","🚲","🛵","🏍️","🚨","✈️","🚁","🚀","🛸","🛶","⛵","🚤","🛳️","⛴️","🚢","⚓"],
+  ["🌲","🌳","🌴","🪵","🌱","🌿","☘️","🍀","🍄","💐","🌷","🌹","🌺","🌸","🌼","🌻","🌞","🌝","🌛","⭐","🌟","✨","☁️","⛅","🌧️","❄️","💧","🌊","📱","💻"]
+];
+const CAT_NAMES = ["YUMMY FOOD", "CUTE ANIMALS", "FAST VEHICLES", "NATURE & MAGIC"];
+
+// --- GLOBALS ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let gridSize = 6;
+let cellSize = 100;
+
+let gridData = [];
+let correctPath = []; // The actual generated answer
+let tracedPath = [];  // User's drawing
+let isDrawing = false;
+let gameWon = false;
+let currentCatIdx = 0;
+
+// Timer
+let timerInterval = null;
+let secondsElapsed = 0;
+
+// Audio
+let isMuted = false;
+let actx;
+function playSound(type, freq, duration, vol=0.1) {
+  if (isMuted) return;
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === 'suspended') actx.resume();
+  try {
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, actx.currentTime);
+    gain.gain.setValueAtTime(vol, actx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + duration);
+    osc.connect(gain); gain.connect(actx.destination);
+    osc.start(); osc.stop(actx.currentTime + duration);
+  } catch(e) {}
+}
+
+const sfx = {
+  click: () => playSound('sine', 600, 0.05, 0.05),
+  pop: () => playSound('sine', 800, 0.1, 0.1),
+  error: () => { playSound('sawtooth', 150, 0.3, 0.05); playSound('square', 100, 0.3, 0.05); },
+  win: () => { [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(()=>playSound('sine', f, 0.2, 0.1), i*100)); }
+};
+
+function toggleMute() {
+  isMuted = !isMuted;
+  document.getElementById('btn-mute').innerText = isMuted ? '🔇' : '🔊';
+}
+
+// --- CORE LOGIC ---
+function initGame() {
+  gridSize = parseInt(document.getElementById('cfg-size').value);
+  currentCatIdx = parseInt(document.getElementById('cfg-cat').value);
+  document.getElementById('lbl-target').innerText = CAT_NAMES[currentCatIdx];
+
+  const container = document.getElementById('canvas-container');
+  container.classList.remove('win-anim', 'shake');
+
+  tracedPath = [];
+  correctPath = [];
+  gameWon = false;
+  isDrawing = false;
+
+  resetTimer();
+  generateGrid();
+  render();
+  sfx.click();
+}
+
+function clearPath() {
+  tracedPath = [];
+  gameWon = false;
+  document.getElementById('canvas-container').classList.remove('win-anim');
+  render();
+  sfx.click();
+}
+
+function autoSolve() {
+  clearPath();
+  let i = 0;
+  const drawInterval = setInterval(() => {
+    if (i < correctPath.length) {
+      tracedPath.push(correctPath[i]);
+      sfx.pop();
+      render();
+      i++;
+    } else {
+      clearInterval(drawInterval);
+      triggerWin(true);
+    }
+  }, 100);
+}
+
+// Timer Logic
+function resetTimer() {
+  clearInterval(timerInterval);
+  secondsElapsed = 0;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    if(!gameWon && tracedPath.length > 0) { // Only count if started playing
+      secondsElapsed++;
+      updateTimerUI();
+    }
+  }, 1000);
+}
+function updateTimerUI() {
+  let m = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+  let s = (secondsElapsed % 60).toString().padStart(2, '0');
+  document.getElementById('timer').innerText = `${m}:${s}`;
+}
+
+function generateGrid() {
+  gridData = [];
+  correctPath = [];
+  const targetEmojis = DB[currentCatIdx];
+  let distractorEmojis = [];
+  for(let i=0; i<4; i++) {
+    if(i !== currentCatIdx) distractorEmojis = distractorEmojis.concat(DB[i]);
+  }
+
+  // Generate Random Path (Right/Down random walk from 0,0 to N-1,N-1)
+  let pathSet = new Set();
+  let c = 0, r = 0;
+  pathSet.add(`${c},${r}`);
+  correctPath.push({col: c, row: r});
+
+  while (c < gridSize - 1 || r < gridSize - 1) {
+    if (c === gridSize - 1) r++;
+    else if (r === gridSize - 1) c++;
+    else { if (Math.random() < 0.5) c++; else r++; }
+    pathSet.add(`${c},${r}`);
+    correctPath.push({col: c, row: r}); // Store exact sequence for auto-solve
+  }
+
+  // Populate Grid
+  for (let row = 0; row < gridSize; row++) {
+    gridData[row] = [];
+    for (let col = 0; col < gridSize; col++) {
+      let isTarget = pathSet.has(`${col},${row}`);
+      // Decoys
+      if (!isTarget && Math.random() < 0.15) isTarget = true; 
+
+      let emoji = isTarget 
+        ? targetEmojis[Math.floor(Math.random() * targetEmojis.length)]
+        : distractorEmojis[Math.floor(Math.random() * distractorEmojis.length)];
+
+      gridData[row][col] = { emoji, isTarget, col, row };
+    }
+  }
+}
+
+// --- RENDER LOGIC ---
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  cellSize = canvas.width / gridSize;
+
+  // 1. Grid Background
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      let x = c * cellSize;
+      let y = r * cellSize;
+
+      ctx.fillStyle = ((r+c)%2===0) ? '#FFFFFF' : '#FAFCFF';
+      ctx.fillRect(x, y, cellSize, cellSize);
+
+      ctx.strokeStyle = '#E0E5F2';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, cellSize, cellSize);
+    }
+  }
+
+  // 2. Trace Path
+  if (tracedPath.length > 0) {
+    ctx.beginPath();
+    ctx.moveTo(tracedPath[0].col * cellSize + cellSize/2, tracedPath[0].row * cellSize + cellSize/2);
+    for (let i = 1; i < tracedPath.length; i++) {
+      ctx.lineTo(tracedPath[i].col * cellSize + cellSize/2, tracedPath[i].row * cellSize + cellSize/2);
+    }
+
+    ctx.strokeStyle = gameWon ? 'rgba(5, 205, 153, 0.8)' : 'rgba(67, 24, 255, 0.8)';
+    ctx.lineWidth = cellSize * 0.4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  // 3. Emojis
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${cellSize * 0.5}px sans-serif`;
+
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      let cell = gridData[r][c];
+      let x = c * cellSize + cellSize/2;
+      let y = r * cellSize + cellSize/2 + (cellSize*0.05);
+
+      // Highlight cell if in path
+      let inPath = tracedPath.some(p => p.col === c && p.row === r);
+      if (inPath) {
+        ctx.fillStyle = gameWon ? 'rgba(5, 205, 153, 0.2)' : 'rgba(67, 24, 255, 0.15)';
+        ctx.fillRect(c*cellSize + 4, r*cellSize + 4, cellSize-8, cellSize-8);
+      }
+
+      ctx.fillText(cell.emoji, x, y);
+    }
+  }
+}
+
+// --- INPUT HANDLING ---
+function getCellFromEvent(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  let clientX = e.clientX, clientY = e.clientY;
+  if(e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top) * scaleY;
+
+  const col = Math.floor(x / cellSize);
+  const row = Math.floor(y / cellSize);
+
+  if (col >= 0 && col < gridSize && row >= 0 && row < gridSize) return gridData[row][col];
+  return null;
+}
+
+function handleStart(e) {
+  if (gameWon) return;
+  e.preventDefault();
+  const cell = getCellFromEvent(e);
+  if (!cell) return;
+
+  if (tracedPath.length === 0) {
+    if (cell.col === 0 && cell.row === 0) {
+      if (cell.isTarget) {
+        isDrawing = true; tracedPath.push(cell); sfx.pop(); render();
+      } else triggerError();
+    }
+  } else {
+    let lastCell = tracedPath[tracedPath.length-1];
+    if (cell.col === lastCell.col && cell.row === lastCell.row) isDrawing = true;
+  }
+}
+
+function handleMove(e) {
+  if (!isDrawing || gameWon) return;
+  e.preventDefault(); 
+  const cell = getCellFromEvent(e);
+  if (!cell) return;
+
+  const lastCell = tracedPath[tracedPath.length - 1];
+  if (cell.col === lastCell.col && cell.row === lastCell.row) return;
+
+  if (tracedPath.length > 1) {
+    const prevCell = tracedPath[tracedPath.length - 2];
+    if (cell.col === prevCell.col && cell.row === prevCell.row) {
+      tracedPath.pop(); sfx.pop(); render(); return;
+    }
+  }
+
+  const isAdjacent = Math.abs(cell.col - lastCell.col) <= 1 && Math.abs(cell.row - lastCell.row) <= 1;
+  if (isAdjacent) {
+    if (!cell.isTarget) { triggerError(); return; }
+    if (!tracedPath.includes(cell)) {
+      tracedPath.push(cell); sfx.pop(); render();
+      if (cell.col === gridSize - 1 && cell.row === gridSize - 1) triggerWin(false);
+    }
+  }
+}
+
+function handleEnd() { isDrawing = false; }
+
+function triggerError() {
+  isDrawing = false; tracedPath = []; sfx.error();
+  const container = document.getElementById('canvas-container');
+  container.classList.remove('shake'); void container.offsetWidth; container.classList.add('shake');
+  render();
+}
+
+function triggerWin(isAuto) {
+  isDrawing = false; gameWon = true; clearInterval(timerInterval);
+  if(!isAuto) sfx.win();
+  const container = document.getElementById('canvas-container');
+  container.classList.add('win-anim');
+  if(!isAuto) spawnConfetti();
+  render();
+}
+
+function spawnConfetti() {
+  const colors = ['#4318FF', '#05CD99', '#EE5D50', '#FFCE20'];
+  for (let i = 0; i < 60; i++) {
+    let conf = document.createElement('div');
+    conf.className = 'confetti';
+    conf.style.left = Math.random() * 100 + 'vw';
+    conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    conf.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+    document.body.appendChild(conf);
+    setTimeout(() => conf.remove(), 4000);
+  }
+}
+
+// --- EXPORT ---
+function exportPNG() {
+  const dataURL = canvas.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.download = `SmartMaze_${gridSize}x${gridSize}.png`;
+  link.href = dataURL;
+  link.click();
+}
+
+// Listeners
+canvas.addEventListener('mousedown', handleStart);
+canvas.addEventListener('mousemove', handleMove);
+window.addEventListener('mouseup', handleEnd);
+canvas.addEventListener('touchstart', handleStart, {passive: false});
+canvas.addEventListener('touchmove', handleMove, {passive: false});
+window.addEventListener('touchend', handleEnd);
+
+window.onload = initGame;
+</script>
+</body>
+</html>
