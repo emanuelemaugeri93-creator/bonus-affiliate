@@ -1,0 +1,506 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduCraft Studio - Printable Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-main: #F4F1EE;
+    --surface: #FFFFFF;
+    --c-dark: #111111;
+    --c-pink: #FF6B6B;
+    --c-blue: #4ECDC4;
+    --c-yellow: #FFE66D;
+    --c-green: #A8E6CF;
+    --c-purple: #C3AED6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg-main);
+    font-family: 'Outfit', sans-serif;
+    display: flex; height: 100vh; overflow: hidden;
+    color: var(--c-dark);
+  }
+
+  /* NEOBRUTALISM UI SCROLLBAR */
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--surface); border-left: 3px solid var(--c-dark); }
+  ::-webkit-scrollbar-thumb { background: var(--c-pink); border-left: 3px solid var(--c-dark); border-bottom: 3px solid var(--c-dark); }
+
+  /* --- SIDEBAR --- */
+  .sidebar {
+    width: 380px; min-width: 380px; background: var(--surface);
+    display: flex; flex-direction: column;
+    border-right: 4px solid var(--c-dark);
+    z-index: 100;
+  }
+
+  .brand {
+    padding: 24px; border-bottom: 4px solid var(--c-dark);
+    background: var(--c-yellow);
+    display: flex; align-items: center; gap: 15px;
+  }
+  .brand-icon { 
+    font-size: 32px; background: #fff; width: 50px; height: 50px; 
+    display: flex; align-items: center; justify-content: center; 
+    border: 3px solid var(--c-dark); border-radius: 12px; box-shadow: 3px 3px 0 var(--c-dark);
+  }
+  .brand-text { font-size: 28px; font-weight: 900; color: var(--c-dark); letter-spacing: -1px; line-height: 1; text-transform: uppercase;}
+  .brand-sub { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;}
+
+  .settings-panel { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 24px; }
+
+  /* TOOL TABS */
+  .tabs-container { display: flex; flex-direction: column; gap: 10px; }
+  .tool-tab {
+    background: var(--surface); border: 3px solid var(--c-dark); padding: 12px 16px;
+    font-size: 16px; font-weight: 800; font-family: 'Outfit', sans-serif; text-transform: uppercase;
+    cursor: pointer; border-radius: 8px; box-shadow: 4px 4px 0 var(--c-dark); transition: 0.1s;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .tool-tab:hover { background: #f8f8f8; }
+  .tool-tab.active { background: var(--c-blue); color: white; transform: translate(4px, 4px); box-shadow: 0 0 0 var(--c-dark); }
+  .tool-tab.active::after { content: '✓'; }
+
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-label { font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+
+  select, input[type="text"], textarea {
+    font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700;
+    padding: 12px 16px; border-radius: 8px; border: 3px solid var(--c-dark);
+    background: var(--surface); color: var(--c-dark); outline: none; transition: 0.1s;
+    box-shadow: 3px 3px 0 var(--c-dark); width: 100%;
+  }
+  select:focus, input:focus, textarea:focus { background: #FFFDE7; transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--c-dark); }
+  textarea { resize: vertical; min-height: 120px; }
+
+  .btn {
+    padding: 14px 20px; font-weight: 900; font-size: 16px; font-family: 'Outfit', sans-serif;
+    cursor: pointer; border: 3px solid var(--c-dark); border-radius: 8px; transition: 0.1s; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase;
+    box-shadow: 4px 4px 0 var(--c-dark);
+  }
+  .btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--c-dark); }
+
+  .btn-pink { background: var(--c-pink); color: white; }
+  .btn-green { background: var(--c-green); color: var(--c-dark); }
+  .btn-purple { background: var(--c-purple); color: var(--c-dark); }
+  .btn-white { background: var(--surface); color: var(--c-dark); }
+
+  /* TOOL PANELS */
+  .tool-panel { display: none; flex-direction: column; gap: 20px; padding: 20px; background: #f9f9f9; border: 3px solid var(--c-dark); border-radius: 12px; }
+  .tool-panel.active { display: flex; animation: slideIn 0.3s; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* PIXEL ART PALETTE */
+  .palette { display: flex; gap: 10px; flex-wrap: wrap; }
+  .color-swatch { 
+    width: 44px; height: 44px; border-radius: 8px; cursor: pointer; 
+    border: 3px solid var(--c-dark); box-shadow: 3px 3px 0 var(--c-dark);
+    display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; transition: 0.1s;
+  }
+  .color-swatch.active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--c-dark); border-width: 4px; }
+
+  .sidebar-footer { padding: 24px; border-top: 4px solid var(--c-dark); display: flex; flex-direction: column; gap: 15px; background: #fff; }
+
+  /* --- MAIN WORKSPACE --- */
+  .workspace { flex: 1; display: flex; flex-direction: column; position: relative; overflow-y: auto; align-items: center; padding: 40px; background-image: radial-gradient(circle, #ccc 2px, transparent 2px); background-size: 30px 30px;}
+
+  .canvas-wrapper {
+    background: var(--surface); padding: 0;
+    box-shadow: 15px 15px 0 rgba(0,0,0,0.1); overflow: hidden;
+    border: 4px solid var(--c-dark);
+    width: 800px; height: 1000px; min-width: 800px; min-height: 1000px;
+    position: relative;
+  }
+
+  canvas { width: 100%; height: 100%; display: block; }
+
+  input[type="file"] { display: none; }
+
+  /* PRINT STYLES */
+  @media print {
+    body * { visibility: hidden; }
+    .sidebar { display: none !important; }
+    .workspace { padding: 0; margin: 0; overflow: visible; display: block; background: none;}
+    .canvas-wrapper, .canvas-wrapper * { visibility: visible; }
+    .canvas-wrapper { position: absolute; left: 0; top: 0; box-shadow: none; border: none; width: 100%; height: auto; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-icon">🎨</div>
+    <div>
+      <div class="brand-text">EduCraft</div>
+      <div class="brand-sub">Creator Studio</div>
+    </div>
+  </div>
+
+  <div class="settings-panel">
+    <!-- TABS SELECTOR -->
+    <div class="tabs-container">
+      <button class="tool-tab active" onclick="switchTool('wordsearch', this)">🔡 Word Search</button>
+      <button class="tool-tab" onclick="switchTool('dot2dot', this)">🔢 Connect the Dots</button>
+      <button class="tool-tab" onclick="switchTool('pixelart', this)">🕹️ Pixel Art (Color by N.)</button>
+    </div>
+
+    <!-- PANEL 1: WORD SEARCH -->
+    <div id="panel-wordsearch" class="tool-panel active">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input type="text" id="ws-title" value="FIND THE WORDS!" oninput="render()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Word List</label>
+        <textarea id="ws-words">APPLE
+BANANA
+CHERRY
+ORANGE
+GRAPES
+MELON
+PEACH</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grid Size</label>
+        <select id="ws-size">
+          <option value="10">Easy (10x10)</option>
+          <option value="12" selected>Medium (12x12)</option>
+          <option value="15">Hard (15x15)</option>
+        </select>
+      </div>
+      <button class="btn btn-pink" onclick="generateWordSearch()">✨ Generate Grid</button>
+    </div>
+
+    <!-- PANEL 2: CONNECT THE DOTS -->
+    <div id="panel-dot2dot" class="tool-panel">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input type="text" id="d2d-title" value="CONNECT THE DOTS" oninput="render()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Template Image</label>
+        <label for="d2d-upload" class="btn btn-white" style="margin-bottom: 0;">📸 Upload Image</label>
+        <input type="file" id="d2d-upload" accept="image/*" onchange="handleImageUpload(event)">
+      </div>
+      <div class="form-group" style="margin-top: 10px;">
+        <button class="btn btn-white" onclick="toggleD2DBackground()" id="btn-d2d-bg">👁️ Hide Template</button>
+      </div>
+      <div style="display:flex; gap: 10px; margin-top: 10px;">
+        <button class="btn btn-white" onclick="undoDot()">↩️ Undo</button>
+        <button class="btn btn-white" onclick="clearDots()">🗑️ Clear</button>
+      </div>
+      <p style="font-size: 13px; font-weight: 700; text-align: center; margin-top: 5px;">Tap on the canvas to add numbers!</p>
+    </div>
+
+    <!-- PANEL 3: PIXEL ART -->
+    <div id="panel-pixelart" class="tool-panel">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input type="text" id="pa-title" value="COLOR BY NUMBER" oninput="render()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grid Size</label>
+        <select id="pa-size" onchange="initPixelArt()">
+          <option value="10">Small (10x10)</option>
+          <option value="15" selected>Normal (15x15)</option>
+          <option value="20">Large (20x20)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paints</label>
+        <div class="palette" id="pa-palette">
+          <div class="color-swatch active" style="background: #FFFFFF; color:#000; text-shadow:none;" onclick="setPAColor(0, this)">X</div>
+          <div class="color-swatch" style="background: #FF6B6B;" onclick="setPAColor(1, this)">1</div>
+          <div class="color-swatch" style="background: #4ECDC4;" onclick="setPAColor(2, this)">2</div>
+          <div class="color-swatch" style="background: #FFE66D; color:#000; text-shadow:none;" onclick="setPAColor(3, this)">3</div>
+          <div class="color-swatch" style="background: #A8E6CF; color:#000; text-shadow:none;" onclick="setPAColor(4, this)">4</div>
+          <div class="color-swatch" style="background: #C3AED6;" onclick="setPAColor(5, this)">5</div>
+          <div class="color-swatch" style="background: #111111;" onclick="setPAColor(6, this)">6</div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top: 10px;">
+        <button class="btn btn-purple" onclick="togglePAView()" id="btn-pa-view">👀 Switch to Student View</button>
+      </div>
+      <button class="btn btn-white" onclick="initPixelArt()">🗑️ Reset Canvas</button>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="btn btn-green" onclick="exportPNG()">📥 Download PNG</button>
+    <button class="btn btn-white" onclick="window.print()">🖨️ Print Worksheet</button>
+  </div>
+</aside>
+
+<main class="workspace">
+  <div class="canvas-wrapper">
+    <canvas id="wsCanvas" width="800" height="1000"></canvas>
+  </div>
+</main>
+
+<script>
+// --- GLOBALS ---
+const canvas = document.getElementById('wsCanvas');
+const ctx = canvas.getContext('2d');
+let currentTool = 'wordsearch';
+
+// State: Word Search
+let ws_grid = [];
+let ws_size = 12;
+let ws_words_placed = [];
+
+// State: Dot to Dot
+let d2d_image = null;
+let d2d_dots = [];
+let d2d_showBg = true;
+
+// State: Pixel Art
+let pa_grid = [];
+let pa_size = 15;
+let pa_activeColor = 0;
+let pa_view = 'teacher';
+const pa_colors = ['#FFFFFF', '#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF', '#C3AED6', '#111111'];
+let pa_isPainting = false;
+
+// --- INIT ---
+function switchTool(tool, btnElement) {
+  currentTool = tool;
+
+  document.querySelectorAll('.tool-tab').forEach(b => b.classList.remove('active'));
+  btnElement.classList.add('active');
+
+  document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`panel-${currentTool}`).classList.add('active');
+
+  if (currentTool === 'wordsearch' && ws_grid.length === 0) generateWordSearch();
+  if (currentTool === 'pixelart' && pa_grid.length === 0) initPixelArt();
+  render();
+}
+
+// ==========================================
+// RENDERING ENGINE
+// ==========================================
+function render() {
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 20px Outfit, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText("Name: ______________________", 50, 60);
+  ctx.textAlign = 'right';
+  ctx.fillText("Date: ____________", 750, 60);
+
+  ctx.textAlign = 'center';
+  ctx.font = '900 48px Outfit, sans-serif';
+  let title = '';
+  if (currentTool === 'wordsearch') title = document.getElementById('ws-title').value;
+  if (currentTool === 'dot2dot') title = document.getElementById('d2d-title').value;
+  if (currentTool === 'pixelart') title = document.getElementById('pa-title').value;
+  ctx.fillText(title.toUpperCase(), 400, 140);
+
+  if (currentTool === 'wordsearch') renderWordSearch();
+  if (currentTool === 'dot2dot') renderDot2Dot();
+  if (currentTool === 'pixelart') renderPixelArt();
+}
+
+// ==========================================
+// MODULE 1: WORD SEARCH
+// ==========================================
+function generateWordSearch() {
+  const wordsRaw = document.getElementById('ws-words').value.toUpperCase().split('\n');
+  const words = wordsRaw.map(w => w.trim().replace(/[^A-Z]/g, '')).filter(w => w.length > 0);
+  ws_size = parseInt(document.getElementById('ws-size').value);
+
+  ws_grid = Array(ws_size).fill(null).map(() => Array(ws_size).fill(''));
+  ws_words_placed = [];
+
+  const dirs = [[1,0], [0,1], [1,1], [1,-1], [0,-1], [-1,0], [-1,-1], [-1,1]];
+
+  words.forEach(word => {
+    let placed = false;
+    let tries = 0;
+    while (!placed && tries < 200) {
+      let dir = dirs[Math.floor(Math.random() * dirs.length)];
+      let r = Math.floor(Math.random() * ws_size);
+      let c = Math.floor(Math.random() * ws_size);
+
+      let canPlace = true;
+      for (let i = 0; i < word.length; i++) {
+        let nr = r + dir[1] * i;
+        let nc = c + dir[0] * i;
+        if (nr < 0 || nr >= ws_size || nc < 0 || nc >= ws_size) { canPlace = false; break; }
+        if (ws_grid[nr][nc] !== '' && ws_grid[nr][nc] !== word[i]) { canPlace = false; break; }
+      }
+
+      if (canPlace) {
+        for (let i = 0; i < word.length; i++) { ws_grid[r + dir[1]*i][c + dir[0]*i] = word[i]; }
+        placed = true; ws_words_placed.push(word);
+      }
+      tries++;
+    }
+  });
+
+  for (let r = 0; r < ws_size; r++) {
+    for (let c = 0; c < ws_size; c++) {
+      if (ws_grid[r][c] === '') ws_grid[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    }
+  }
+  render();
+}
+
+function renderWordSearch() {
+  if (ws_grid.length === 0) return;
+  const gridWidth = 600; const cellSize = gridWidth / ws_size; const startX = 100; const startY = 200;
+
+  ctx.lineWidth = 3; ctx.strokeStyle = '#000000'; ctx.strokeRect(startX, startY, gridWidth, gridWidth);
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `bold ${cellSize * 0.6}px monospace`; ctx.fillStyle = '#000000';
+
+  for (let r = 0; r < ws_size; r++) {
+    for (let c = 0; c < ws_size; c++) {
+      let x = startX + c * cellSize; let y = startY + r * cellSize;
+      ctx.strokeRect(x, y, cellSize, cellSize);
+      ctx.fillText(ws_grid[r][c], x + cellSize/2, y + cellSize/2 + 2);
+    }
+  }
+
+  ctx.font = '900 24px Outfit, sans-serif'; const listY = startY + gridWidth + 60;
+  ctx.fillText("WORDS TO FIND:", 400, listY);
+
+  ctx.font = 'bold 20px Outfit, sans-serif'; const cols = 3;
+  ws_words_placed.forEach((word, idx) => {
+    let col = idx % cols; let row = Math.floor(idx / cols);
+    let wx = 150 + col * 250; let wy = listY + 40 + row * 35;
+    ctx.fillText(word, wx, wy);
+  });
+}
+
+// ==========================================
+// MODULE 2: CONNECT THE DOTS
+// ==========================================
+function handleImageUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const img = new Image();
+    img.onload = function() { d2d_image = img; d2d_dots = []; render(); }
+    img.src = event.target.result;
+  }
+  reader.readAsDataURL(file);
+}
+
+function toggleD2DBackground() { d2d_showBg = !d2d_showBg; document.getElementById('btn-d2d-bg').innerText = d2d_showBg ? '👁️ Hide Template' : '👁️ Show Template'; render(); }
+function undoDot() { d2d_dots.pop(); render(); }
+function clearDots() { d2d_dots = []; render(); }
+
+function renderDot2Dot() {
+  const areaY = 180; const areaH = 750;
+  if (d2d_image && d2d_showBg) {
+    ctx.globalAlpha = 0.2;
+    let scale = Math.min(700 / d2d_image.width, areaH / d2d_image.height);
+    let w = d2d_image.width * scale; let h = d2d_image.height * scale;
+    let x = (800 - w) / 2; let y = areaY + (areaH - h) / 2;
+    ctx.drawImage(d2d_image, x, y, w, h);
+    ctx.globalAlpha = 1.0;
+  }
+  ctx.fillStyle = '#000000'; ctx.font = 'bold 18px Outfit, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  d2d_dots.forEach((dot, idx) => {
+    ctx.beginPath(); ctx.arc(dot.x, dot.y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillText(idx + 1, dot.x + 10, dot.y);
+  });
+}
+
+canvas.addEventListener('click', function(e) {
+  if (currentTool !== 'dot2dot') return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  if (y > 180) { d2d_dots.push({x, y}); render(); }
+});
+
+// ==========================================
+// MODULE 3: PIXEL ART
+// ==========================================
+function initPixelArt() {
+  pa_size = parseInt(document.getElementById('pa-size').value);
+  pa_grid = Array(pa_size).fill(null).map(() => Array(pa_size).fill(0));
+  render();
+}
+
+function setPAColor(idx, el) {
+  pa_activeColor = idx;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function togglePAView() {
+  pa_view = pa_view === 'teacher' ? 'student' : 'teacher';
+  document.getElementById('btn-pa-view').innerText = pa_view === 'teacher' ? '👀 Switch to Student View' : '👀 Switch to Editor View';
+  render();
+}
+
+function renderPixelArt() {
+  if (pa_grid.length === 0) return;
+  const gridWidth = 600; const cellSize = gridWidth / pa_size; const startX = 100; const startY = 180;
+  ctx.lineWidth = 2; ctx.strokeStyle = '#000000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `bold ${cellSize * 0.5}px Outfit`;
+
+  for (let r = 0; r < pa_size; r++) {
+    for (let c = 0; c < pa_size; c++) {
+      let colorIdx = pa_grid[r][c];
+      let x = startX + c * cellSize; let y = startY + r * cellSize;
+      if (pa_view === 'teacher') {
+        ctx.fillStyle = pa_colors[colorIdx]; ctx.fillRect(x, y, cellSize, cellSize); ctx.strokeRect(x, y, cellSize, cellSize);
+      } else {
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x, y, cellSize, cellSize); ctx.strokeRect(x, y, cellSize, cellSize);
+        if (colorIdx > 0) { ctx.fillStyle = '#000000'; ctx.fillText(colorIdx, x + cellSize/2, y + cellSize/2 + 2); }
+      }
+    }
+  }
+
+  const legendY = startY + gridWidth + 60;
+  ctx.fillStyle = '#000000'; ctx.font = '900 28px Outfit, sans-serif'; ctx.fillText("COLOR KEY", 400, legendY);
+
+  let numColors = pa_colors.length - 1; let swatchW = 55; let spacing = 30;
+  let totalW = (numColors * swatchW) + ((numColors - 1) * spacing); let lx = 400 - totalW / 2 + swatchW/2;
+  ctx.font = '900 24px Outfit, sans-serif'; ctx.lineWidth = 3;
+
+  for (let i = 1; i <= numColors; i++) {
+    let x = lx + (i - 1) * (swatchW + spacing) - swatchW/2; let y = legendY + 30;
+    ctx.fillStyle = pa_colors[i]; ctx.fillRect(x, y, swatchW, swatchW); ctx.strokeRect(x, y, swatchW, swatchW);
+    ctx.fillStyle = (i === 6) ? '#FFFFFF' : '#000000';
+    ctx.fillText(i, x + swatchW/2, y + swatchW/2 + 2);
+  }
+}
+
+function getPACoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const gridWidth = 600; const cellSize = gridWidth / pa_size; const startX = 100; const startY = 180;
+  if (x >= startX && x <= startX + gridWidth && y >= startY && y <= startY + gridWidth) {
+    return { r: Math.floor((y - startY) / cellSize), c: Math.floor((x - startX) / cellSize) };
+  }
+  return null;
+}
+
+canvas.addEventListener('mousedown', function(e) { if (currentTool !== 'pixelart') return; pa_isPainting = true; let c = getPACoords(e); if (c) { pa_grid[c.r][c.c] = pa_activeColor; render(); }});
+canvas.addEventListener('mousemove', function(e) { if (currentTool !== 'pixelart' || !pa_isPainting) return; let c = getPACoords(e); if (c) { pa_grid[c.r][c.c] = pa_activeColor; render(); }});
+window.addEventListener('mouseup', () => { pa_isPainting = false; });
+
+// --- EXPORT ---
+function exportPNG() {
+  const link = document.createElement('a'); link.download = `EduCraft_${currentTool}.png`; link.href = canvas.toDataURL('image/png'); link.click();
+}
+window.onload = () => { switchTool('wordsearch', document.querySelector('.tool-tab')); };
+</script>
+</body>
+</html>
