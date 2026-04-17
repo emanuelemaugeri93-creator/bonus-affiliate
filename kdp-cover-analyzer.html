@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KDP Cover Score Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07070d;
+  --surface:#0f1020;
+  --card:#15172b;
+  --card2:#111325;
+  --text:#eef2ff;
+  --muted:#98a2b3;
+  --line:rgba(255,255,255,.08);
+
+  --pink:#ff3b7a;
+  --cyan:#00d9ff;
+  --purple:#8b5cf6;
+  --lime:#8dff38;
+  --amber:#ffb703;
+
+  --red:#ff4d4f;
+  --yellow:#f5c518;
+  --green:#22c55e;
+}
+body{
+  font-family:Inter,sans-serif;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,59,122,.12), transparent 28%),
+    radial-gradient(circle at 84% 14%, rgba(0,217,255,.10), transparent 26%),
+    radial-gradient(circle at 50% 100%, rgba(139,92,246,.10), transparent 30%),
+    var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+header{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 26px;
+  backdrop-filter:blur(18px);
+  background:rgba(7,7,13,.72);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{
+  width:48px;height:48px;border-radius:14px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--pink),var(--purple),var(--cyan));
+  box-shadow:0 0 30px rgba(139,92,246,.35);
+}
+.logo svg{width:28px;height:28px}
+h1{
+  font-family:"Space Grotesk",sans-serif;
+  font-size:24px;font-weight:900;letter-spacing:.2px;
+}
+h1 span{
+  background:linear-gradient(90deg,var(--pink),var(--amber),var(--cyan));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sub{font-size:12px;color:var(--muted);margin-top:3px}
+.head-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  color:var(--text);
+  padding:11px 16px;border-radius:12px;
+  font-weight:700;font-size:13px;cursor:pointer;
+  transition:.2s;
+}
+.btn:hover{transform:translateY(-1px);border-color:rgba(0,217,255,.35);color:var(--cyan)}
+.btn.primary{
+  border:none;
+  background:linear-gradient(135deg,var(--pink),var(--purple));
+  box-shadow:0 10px 24px rgba(139,92,246,.28);
+}
+.layout{
+  max-width:1600px;
+  margin:0 auto;
+  padding:22px;
+  display:grid;
+  grid-template-columns: 1.2fr .9fr;
+  gap:22px;
+}
+@media (max-width:1180px){
+  .layout{grid-template-columns:1fr}
+}
+
+.panel{
+  background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.015));
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:0 20px 60px rgba(0,0,0,.28);
+}
+
+.left{
+  padding:22px;
+  display:flex;flex-direction:column;gap:18px;
+}
+.meta-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+@media (max-width:760px){
+  .meta-grid{grid-template-columns:1fr}
+}
+.meta-card{
+  background:var(--card2);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+}
+.meta-title{
+  font-size:11px;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--muted);font-weight:800;margin-bottom:12px;
+}
+.field{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+label{font-size:12px;color:var(--muted);font-weight:700}
+input, textarea, select{
+  width:100%;
+  background:#0a0d1a;
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--text);
+  border-radius:12px;
+  padding:12px 14px;
+  font:inherit;
+  outline:none;
+}
+textarea{min-height:96px;resize:vertical}
+input:focus, textarea:focus, select:focus{
+  border-color:rgba(0,217,255,.45);
+  box-shadow:0 0 0 4px rgba(0,217,255,.08);
+}
+
+.section{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:20px;
+  overflow:hidden;
+}
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;
+  padding:18px 18px 16px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg, rgba(255,255,255,.025), transparent);
+}
+.section-left{display:flex;align-items:center;gap:14px}
+.icon-badge{
+  width:42px;height:42px;border-radius:14px;
+  display:grid;place-items:center;
+  font-size:18px;font-weight:900;color:#081018;
+}
+.section-title{
+  font-family:"Space Grotesk",sans-serif;
+  font-size:18px;font-weight:800;
+}
+.section-desc{
+  font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45;
+}
+.cat-score{
+  font-family:"Space Grotesk",sans-serif;
+  font-size:26px;font-weight:900;
+}
+.q-list{padding:8px 18px 12px}
+.q-item{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:18px;
+  padding:16px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.q-item:last-child{border-bottom:none}
+.q-title{font-size:14px;font-weight:700;line-height:1.45}
+.q-sub{font-size:12px;color:var(--muted);line-height:1.55;margin-top:6px}
+.q-actions{
+  display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;
+}
+.choice{
+  border:none;cursor:pointer;
+  padding:10px 14px;border-radius:12px;
+  font-weight:800;font-size:12px;
+  min-width:78px;
+  transition:.18s;
+  background:rgba(255,255,255,.04);
+  color:var(--muted);
+  border:1px solid rgba(255,255,255,.06);
+}
+.choice:hover{transform:translateY(-1px);color:var(--text)}
+.choice.active.no{background:rgba(255,77,79,.14);color:var(--red);border-color:rgba(255,77,79,.32)}
+.choice.active.partial{background:rgba(245,197,24,.14);color:var(--yellow);border-color:rgba(245,197,24,.32)}
+.choice.active.yes{background:rgba(34,197,94,.14);color:var(--green);border-color:rgba(34,197,94,.32)}
+
+.right{
+  padding:22px;
+  display:flex;flex-direction:column;gap:18px;
+  position:sticky;top:88px;height:max-content;
+}
+@media (max-width:1180px){
+  .right{position:static}
+}
+.score-card{
+  padding:24px;border-radius:22px;
+  background:var(--card);border:1px solid var(--line);
+  position:relative;overflow:hidden;
+}
+.score-card::before{
+  content:"";position:absolute;inset:0 0 auto 0;height:3px;
+  background:linear-gradient(90deg,var(--pink),var(--purple),var(--cyan),var(--amber));
+}
+.kicker{
+  font-size:11px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1.8px;font-weight:800;
+}
+.score-wrap{
+  display:flex;gap:18px;align-items:center;justify-content:space-between;
+  margin-top:16px;flex-wrap:wrap;
+}
+.score-ring{
+  --p:0;
+  --ring: var(--red);
+  width:164px;height:164px;border-radius:50%;
+  background:
+    radial-gradient(closest-side, #121521 73%, transparent 74% 100%),
+    conic-gradient(var(--ring) calc(var(--p)*1%), rgba(255,255,255,.07) 0);
+  display:grid;place-items:center;
+  box-shadow:0 0 0 1px rgba(255,255,255,.05), 0 0 40px rgba(255,255,255,.03) inset;
+}
+.score-value{
+  text-align:center;
+  font-family:"Space Grotesk",sans-serif;
+}
+.score-value b{font-size:58px;line-height:1}
+.score-value span{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 16px;border-radius:999px;
+  font-size:12px;font-weight:900;letter-spacing:1px;
+  text-transform:uppercase;
+}
+.badge.red{background:rgba(255,77,79,.12);color:var(--red);border:1px solid rgba(255,77,79,.28)}
+.badge.yellow{background:rgba(245,197,24,.12);color:var(--yellow);border:1px solid rgba(245,197,24,.28)}
+.badge.green{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.28)}
+.score-copy{max-width:320px;font-size:13px;color:var(--muted);line-height:1.65}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:20px;
+}
+.card-title{
+  font-family:"Space Grotesk",sans-serif;
+  font-size:18px;font-weight:800;margin-bottom:14px;
+}
+.radar-box{display:grid;place-items:center;padding:8px}
+#radarSvg{width:100%;max-width:360px;height:auto}
+.legend{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px
+}
+.legend-item{
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:12px;padding:10px 12px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);
+}
+.legend-item b{font-weight:800}
+.fixes, .strengths{
+  display:flex;flex-direction:column;gap:10px;max-height:260px;overflow:auto;padding-right:4px;
+}
+.fix, .strength{
+  border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.55;
+  border:1px solid rgba(255,255,255,.05);
+}
+.fix.high{background:rgba(255,77,79,.08);border-left:4px solid var(--red)}
+.fix.med{background:rgba(245,197,24,.08);border-left:4px solid var(--yellow)}
+.strength{background:rgba(34,197,94,.08);border-left:4px solid var(--green)}
+.fix b, .strength b{
+  display:block;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px
+}
+.muted-center{color:var(--muted);font-size:13px;text-align:center;padding:24px 8px;line-height:1.6}
+
+.export{
+  width:100%;border:none;cursor:pointer;
+  padding:15px 18px;border-radius:14px;
+  background:linear-gradient(135deg,var(--pink),var(--purple));
+  color:#fff;font-family:"Space Grotesk",sans-serif;font-weight:800;font-size:15px;
+  box-shadow:0 14px 28px rgba(139,92,246,.24);
+}
+.export:hover{transform:translateY(-1px)}
+.small-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px
+}
+@media (max-width:700px){
+  .small-row{grid-template-columns:1fr}
+  .q-item{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <!-- SVG logo -->
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#ffffff"/>
+            <stop offset="1" stop-color="#dff7ff"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 10l17 8v12c0 10.2-6.7 19.2-17 22-10.3-2.8-17-11.8-17-22V18l17-8z" fill="url(#g1)" opacity=".95"/>
+        <path d="M22 33.5l6.2 6.2L42.8 25" stroke="#7c3aed" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <h1>KDP Cover <span>Score Analyzer</span></h1>
+      <div class="sub">Interactive checklist + radar score + downloadable designer brief</div>
+    </div>
+  </div>
+  <div class="head-actions">
+    <button class="btn" id="resetBtn" type="button">Reset</button>
+    <button class="btn primary" id="exportTopBtn" type="button">Download Brief</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="panel left">
+    <div class="meta-grid">
+      <div class="meta-card">
+        <div class="meta-title">Project Inputs</div>
+        <div class="field">
+          <label for="bookTitle">Book title</label>
+          <input id="bookTitle" type="text" placeholder="e.g. Addition Workbook for Kids">
+        </div>
+        <div class="field">
+          <label for="niche">Niche / topic</label>
+          <input id="niche" type="text" placeholder="e.g. Kindergarten math, fractions, sudoku">
+        </div>
+        <div class="field">
+          <label for="audience">Target audience</label>
+          <input id="audience" type="text" placeholder="e.g. Ages 5–8, Grade 2, adults">
+        </div>
+      </div>
+
+      <div class="meta-card">
+        <div class="meta-title">Creative Direction</div>
+        <div class="field">
+          <label for="emotion">Desired emotion</label>
+          <input id="emotion" type="text" placeholder="e.g. fun, premium, serious, playful">
+        </div>
+        <div class="field">
+          <label for="promise">Main promise / hook</label>
+          <input id="promise" type="text" placeholder="e.g. 100 days of practice, easy learning">
+        </div>
+        <div class="field">
+          <label for="notes">Extra notes for designer / AI</label>
+          <textarea id="notes" placeholder="Colors to use, elements to avoid, competitor references, mandatory text, etc."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div id="checklistWrap"></div>
+  </section>
+
+  <aside class="right">
+    <div class="score-card">
+      <div class="kicker">Overall cover strength</div>
+      <div class="score-wrap">
+        <div class="score-ring" id="scoreRing">
+          <div class="score-value">
+            <b id="totalScore">0</b>
+            <span>/100 score</span>
+          </div>
+        </div>
+        <div>
+          <div class="badge red" id="statusBadge">🔴 Needs Work</div>
+          <div class="score-copy" id="statusText" style="margin-top:12px">
+            Your cover needs substantial work before publishing. Answer the checklist and use the action plan below.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">5-Axis Radar</div>
+      <div class="radar-box">
+        <svg id="radarSvg" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="legend" id="legendBox"></div>
+    </div>
+
+    <div class="small-row">
+      <div class="card">
+        <div class="card-title">What to fix</div>
+        <div class="fixes" id="fixesBox">
+          <div class="muted-center">Complete the checklist to generate correction notes.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">What already works</div>
+        <div class="strengths" id="strengthsBox">
+          <div class="muted-center">Strong points will appear here as you answer “Yes”.</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="export" id="exportBtn" type="button">Download Cover Brief</button>
+  </aside>
+</main>
+
+<script>
+const categories = [
+  {
+    id:"clarity",
+    name:"Thumbnail Clarity",
+    icon:"👁️",
+    color:"#ff3b7a",
+    desc:"How readable and clean the cover looks in Amazon thumbnail view.",
+    questions:[
+      {id:"q1", text:"Is the main title clearly readable at thumbnail size?", sub:"Zoom out aggressively. The biggest words must remain readable.", fix:"Increase title size and improve contrast so the core words remain readable on mobile thumbnails."},
+      {id:"q2", text:"Does the design avoid clutter and tiny details?", sub:"Small decorative elements often become noise.", fix:"Remove minor decorative items and simplify the composition around one strong focal image."},
+      {id:"q3", text:"Is there strong contrast between text and background?", sub:"Text must pop instantly.", fix:"Add contrast with darker overlays, glow, shadow, or a cleaner background zone behind the text."},
+      {id:"q4", text:"Do the margins give the layout breathing room?", sub:"Crowded covers feel amateur.", fix:"Pull text and graphics inward and keep consistent safe margins on all sides."},
+      {id:"q5", text:"Is any subtitle readable enough to matter?", sub:"If the subtitle carries a key keyword, it must still be usable.", fix:"Shorten the subtitle or boost weight, spacing, and contrast so it supports the title instead of disappearing."}
+    ]
+  },
+  {
+    id:"title",
+    name:"Title Power",
+    icon:"🔤",
+    color:"#00d9ff",
+    desc:"Typography, hierarchy, font choice, and wording strength.",
+    questions:[
+      {id:"q6", text:"Is the most important keyword the largest text element?", sub:"The keyword should dominate the hierarchy.", fix:"Make the primary keyword the visual hero and demote the rest of the wording."},
+      {id:"q7", text:"Are you using only 1–2 font families?", sub:"Too many fonts instantly reduce trust.", fix:"Reduce the typography system to one display font and one clean support font."},
+      {id:"q8", text:"Does the font style match the niche and buyer?", sub:"Cute for kids, sleek for adult logic books, etc.", fix:"Swap the title font to one that matches the intended audience and emotional tone."},
+      {id:"q9", text:"Are line breaks and spacing visually logical?", sub:"Awkward text grouping makes the title feel weak.", fix:"Rebuild the line breaks so word groups read naturally and emphasize the strongest phrase."},
+      {id:"q10", text:"Is the title concise instead of overloaded?", sub:"Long main titles dilute impact.", fix:"Shorten the main title and move extra explanation into a subtitle or badge."}
+    ]
+  },
+  {
+    id:"niche",
+    name:"Niche Signal",
+    icon:"🎯",
+    color:"#8b5cf6",
+    desc:"How instantly the cover communicates the exact market and user.",
+    questions:[
+      {id:"q11", text:"Does the imagery immediately signal the exact topic?", sub:"The buyer should understand the subject in one second.", fix:"Replace generic art with niche-specific imagery that clearly reflects the workbook topic."},
+      {id:"q12", text:"Do the colors match the market expectations?", sub:"Kids, teen, adult, premium, fun: each has a visual language.", fix:"Adjust the palette to align with what buyers already trust in this niche."},
+      {id:"q13", text:"Is the age range or grade visible on the cover?", sub:"Parents and buyers need immediate fit.", fix:"Add a bold age or grade badge in a high-contrast placement."},
+      {id:"q14", text:"Does the illustration style fit the audience?", sub:"A mismatch kills conversion.", fix:"Use a more appropriate visual style for the buyer: playful, academic, modern, premium, etc."},
+      {id:"q15", text:"Is it obvious this is a workbook/activity book?", sub:"It should not look like a dense textbook unless that is the product.", fix:"Add workbook cues like practice language, checkmarks, pencils, problem pages, or action-oriented wording."}
+    ]
+  },
+  {
+    id:"trust",
+    name:"Trust Factors",
+    icon:"🛡️",
+    color:"#8dff38",
+    desc:"Professional polish, technical quality, and publishing credibility.",
+    questions:[
+      {id:"q16", text:"Are all graphics sharp and high resolution?", sub:"No blur, pixelation, or dirty edges.", fix:"Replace low-resolution assets with crisp vector elements or higher quality renders."},
+      {id:"q17", text:"Is the author/brand placement professional?", sub:"Branding should feel deliberate, not random.", fix:"Align the author or brand consistently and use a clean support font."},
+      {id:"q18", text:"Is the cover free of spelling or grammar issues?", sub:"A single typo destroys trust.", fix:"Proofread every visible word and verify capitalization, punctuation, and spelling."},
+      {id:"q19", text:"Does it look competitive against top KDP covers?", sub:"The buyer compares unconsciously.", fix:"Upgrade alignment, spacing, polish, and image quality until it feels comparable to leading covers."},
+      {id:"q20", text:"Are elements aligned and balanced properly?", sub:"Misalignment makes a design feel cheap.", fix:"Use a clear grid and align text blocks, icons, and edges consistently across the composition."}
+    ]
+  },
+  {
+    id:"hook",
+    name:"Emotional Hook",
+    icon:"⚡",
+    color:"#ffb703",
+    desc:"The click-driving energy, uniqueness, and persuasive punch.",
+    questions:[
+      {id:"q21", text:"Is there one clear focal point?", sub:"The eye should know where to land first.", fix:"Strengthen one hero element and reduce competition from secondary elements."},
+      {id:"q22", text:"Does the cover trigger the right emotion?", sub:"Fun, confidence, curiosity, premium quality, calm, etc.", fix:"Shift colors, expressions, lighting, or typography to evoke a stronger intended emotion."},
+      {id:"q23", text:"Is there a strong benefit or callout badge?", sub:"A visible proof point can boost click-through.", fix:"Add a benefit badge such as “100 Pages”, “Ages 5–8”, or “Bonus Included” where appropriate."},
+      {id:"q24", text:"Does it stand out from obvious competitors?", sub:"Blending in is dangerous on Amazon.", fix:"Change the dominant color, composition, or central image so it breaks pattern on the search page."},
+      {id:"q25", text:"Does the layout have energy or depth?", sub:"Flat layouts often feel generic.", fix:"Create visual depth with layering, shadow, perspective, or overlap instead of a flat static arrangement."}
+    ]
+  }
+];
+
+const answers = {};
+categories.forEach(cat => cat.questions.forEach(q => answers[q.id] = null));
+
+const checklistWrap = document.getElementById("checklistWrap");
+const totalScoreEl = document.getElementById("totalScore");
+const scoreRing = document.getElementById("scoreRing");
+const statusBadge = document.getElementById("statusBadge");
+const statusText = document.getElementById("statusText");
+const fixesBox = document.getElementById("fixesBox");
+const strengthsBox = document.getElementById("strengthsBox");
+const legendBox = document.getElementById("legendBox");
+
+function renderChecklist(){
+  checklistWrap.innerHTML = categories.map(cat => `
+    <section class="section">
+      <div class="section-head">
+        <div class="section-left">
+          <div class="icon-badge" style="background:${cat.color}">${cat.icon}</div>
+          <div>
+            <div class="section-title" style="color:${cat.color}">${cat.name}</div>
+            <div class="section-desc">${cat.desc}</div>
+          </div>
+        </div>
+        <div class="cat-score" id="score-${cat.id}" style="color:${cat.color}">0%</div>
+      </div>
+      <div class="q-list">
+        ${cat.questions.map(q => `
+          <div class="q-item">
+            <div>
+              <div class="q-title">${q.text}</div>
+              <div class="q-sub">${q.sub}</div>
+            </div>
+            <div class="q-actions" data-q="${q.id}">
+              <button type="button" class="choice no" data-q="${q.id}" data-v="0">No</button>
+              <button type="button" class="choice partial" data-q="${q.id}" data-v="5">Partial</button>
+              <button type="button" class="choice yes" data-q="${q.id}" data-v="10">Yes</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `).join("");
+}
+
+checklistWrap.addEventListener("click", (e) => {
+  const btn = e.target.closest(".choice");
+  if(!btn) return;
+  const q = btn.dataset.q;
+  const v = Number(btn.dataset.v);
+  answers[q] = v;
+
+  const group = btn.parentElement;
+  group.querySelectorAll(".choice").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  updateAll();
+});
+
+function computeCategoryScore(cat){
+  const vals = cat.questions.map(q => answers[q.id]).filter(v => v !== null);
+  if(!vals.length) return 0;
+  const sum = vals.reduce((a,b) => a+b, 0);
+  return Math.round((sum / (vals.length * 10)) * 100);
+}
+
+function updateAll(){
+  const catScores = {};
+  categories.forEach(cat => {
+    const s = computeCategoryScore(cat);
+    catScores[cat.id] = s;
+    document.getElementById(`score-${cat.id}`).textContent = `${s}%`;
+  });
+
+  const answered = Object.values(answers).filter(v => v !== null);
+  const total = answered.length
+    ? Math.round((answered.reduce((a,b)=>a+b,0) / (answered.length * 10)) * 100)
+    : 0;
+
+  totalScoreEl.textContent = total;
+  scoreRing.style.setProperty("--p", total);
+
+  let badgeClass = "red";
+  let badgeText = "🔴 Needs Work";
+  let summary = "Your cover needs substantial work before publishing.";
+  let ringColor = "var(--red)";
+
+  if(total >= 80){
+    badgeClass = "green";
+    badgeText = "🟢 Ready to Publish";
+    summary = "Strong cover. It communicates well and only needs small refinements.";
+    ringColor = "var(--green)";
+  } else if(total >= 50){
+    badgeClass = "yellow";
+    badgeText = "🟡 Getting There";
+    summary = "The cover has potential, but several details still reduce click-through power.";
+    ringColor = "var(--yellow)";
+  }
+
+  statusBadge.className = `badge ${badgeClass}`;
+  statusBadge.textContent = badgeText;
+  statusText.textContent = answered.length
+    ? summary
+    : "Start answering the checklist. The score, radar chart, strengths, fixes, and brief will populate automatically.";
+  scoreRing.style.setProperty("--ring", ringColor);
+
+  renderFixesAndStrengths();
+  renderRadar([
+    catScores.clarity || 0,
+    catScores.title || 0,
+    catScores.niche || 0,
+    catScores.trust || 0,
+    catScores.hook || 0
+  ]);
+  renderLegend(catScores);
+}
+
+function renderLegend(catScores){
+  const items = [
+    {key:"clarity", label:"Thumbnail Clarity", color:"#ff3b7a"},
+    {key:"title", label:"Title Power", color:"#00d9ff"},
+    {key:"niche", label:"Niche Signal", color:"#8b5cf6"},
+    {key:"trust", label:"Trust Factors", color:"#8dff38"},
+    {key:"hook", label:"Emotional Hook", color:"#ffb703"}
+  ];
+  legendBox.innerHTML = items.map(i => `
+    <div class="legend-item">
+      <span style="color:${i.color};font-weight:800">${i.label}</span>
+      <b>${catScores[i.key] || 0}%</b>
+    </div>
+  `).join("");
+}
+
+function renderFixesAndStrengths(){
+  const fixes = [];
+  const strengths = [];
+
+  categories.forEach(cat => {
+    cat.questions.forEach(q => {
+      const v = answers[q.id];
+      if(v === 0){
+        fixes.push({
+          priority:"HIGH",
+          cls:"high",
+          cat:cat.name,
+          text:q.fix
+        });
+      } else if(v === 5){
+        fixes.push({
+          priority:"MEDIUM",
+          cls:"med",
+          cat:cat.name,
+          text:q.fix
+        });
+      } else if(v === 10){
+        strengths.push({
+          cat:cat.name,
+          text:q.text
+        });
+      }
+    });
+  });
+
+  if(!fixes.length){
+    fixesBox.innerHTML = `<div class="muted-center">No critical issues detected yet. Partial and failed answers will appear here.</div>`;
+  } else {
+    fixesBox.innerHTML = fixes.map(f => `
+      <div class="fix ${f.cls}">
+        <b>${f.priority} · ${f.cat}</b>
+        ${f.text}
+      </div>
+    `).join("");
+  }
+
+  if(!strengths.length){
+    strengthsBox.innerHTML = `<div class="muted-center">Strong points will appear here as you mark criteria as “Yes”.</div>`;
+  } else {
+    strengthsBox.innerHTML = strengths.slice(0,12).map(s => `
+      <div class="strength">
+        <b>${s.cat}</b>
+        ${s.text}
+      </div>
+    `).join("");
+  }
+}
+
+function polar(cx, cy, r, angleDeg){
+  const rad = (Math.PI / 180) * angleDeg;
+  return {
+    x: cx + r * Math.cos(rad),
+    y: cy + r * Math.sin(rad)
+  };
+}
+
+function renderRadar(values){
+  const svg = document.getElementById("radarSvg");
+  const cx = 180, cy = 180, maxR = 108;
+  const labels = [
+    {text:"Clarity", color:"#ff3b7a"},
+    {text:"Title", color:"#00d9ff"},
+    {text:"Niche", color:"#8b5cf6"},
+    {text:"Trust", color:"#8dff38"},
+    {text:"Hook", color:"#ffb703"}
+  ];
+  const start = -90;
+  let html = "";
+
+  for(let layer=1; layer<=4; layer++){
+    const r = maxR * (layer/4);
+    const pts = [];
+    for(let i=0;i<5;i++){
+      const a = start + i * 72;
+      const p = polar(cx, cy, r, a);
+      pts.push(`${p.x},${p.y}`);
+    }
+    html += `<polygon points="${pts.join(" ")}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>`;
+  }
+
+  for(let i=0;i<5;i++){
+    const a = start + i * 72;
+    const p = polar(cx, cy, maxR, a);
+    html += `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="rgba(255,255,255,.08)" stroke-width="1"/>`;
+  }
+
+  const dataPts = [];
+  for(let i=0;i<5;i++){
+    const score = (values[i] || 0) / 100;
+    const a = start + i * 72;
+    const p = polar(cx, cy, maxR * score, a);
+    dataPts.push(`${p.x},${p.y}`);
+  }
+
+  html += `
+    <polygon points="${dataPts.join(" ")}"
+      fill="rgba(0,217,255,.20)"
+      stroke="#00d9ff"
+      stroke-width="3"/>
+  `;
+
+  for(let i=0;i<5;i++){
+    const score = (values[i] || 0) / 100;
+    const a = start + i * 72;
+    const p = polar(cx, cy, maxR * score, a);
+    html += `<circle cx="${p.x}" cy="${p.y}" r="5.5" fill="#ff3b7a" stroke="#fff" stroke-width="2"/>`;
+  }
+
+  for(let i=0;i<5;i++){
+    const a = start + i * 72;
+    const p = polar(cx, cy, maxR + 24, a);
+    html += `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="middle"
+      fill="${labels[i].color}" font-size="13" font-weight="800" font-family="Inter">${labels[i].text}</text>`;
+  }
+
+  svg.innerHTML = html;
+}
+
+function getStatus(score){
+  if(score >= 80) return "Ready to Publish";
+  if(score >= 50) return "Getting There";
+  return "Needs Work";
+}
+
+function exportBrief(){
+  const answered = Object.values(answers).filter(v => v !== null);
+  if(!answered.length){
+    alert("Please answer at least a few checklist items first.");
+    return;
+  }
+
+  const title = document.getElementById("bookTitle").value.trim() || "Untitled Project";
+  const niche = document.getElementById("niche").value.trim() || "Not specified";
+  const audience = document.getElementById("audience").value.trim() || "Not specified";
+  const emotion = document.getElementById("emotion").value.trim() || "Not specified";
+  const promise = document.getElementById("promise").value.trim() || "Not specified";
+  const notes = document.getElementById("notes").value.trim() || "None";
+
+  const total = Number(totalScoreEl.textContent || 0);
+  let txt = "";
+  txt += "KDP COVER BRIEF\n";
+  txt += "==============================\n\n";
+  txt += `Project Title: ${title}\n`;
+  txt += `Niche: ${niche}\n`;
+  txt += `Target Audience: ${audience}\n`;
+  txt += `Desired Emotion: ${emotion}\n`;
+  txt += `Main Promise / Hook: ${promise}\n`;
+  txt += `Extra Notes: ${notes}\n\n`;
+
+  txt += `Overall Score: ${total}/100\n`;
+  txt += `Status: ${getStatus(total)}\n\n`;
+
+  txt += "CATEGORY SCORES\n";
+  txt += "------------------------------\n";
+  categories.forEach(cat => {
+    txt += `${cat.name}: ${computeCategoryScore(cat)}%\n`;
+  });
+
+  txt += "\nTOP FIXES REQUIRED\n";
+  txt += "------------------------------\n";
+  let foundFix = false;
+  categories.forEach(cat => {
+    cat.questions.forEach(q => {
+      const v = answers[q.id];
+      if(v === 0 || v === 5){
+        foundFix = true;
+        txt += `[${cat.name}] ${q.fix} | Priority: ${v === 0 ? "HIGH" : "MEDIUM"}\n`;
+      }
+    });
+  });
+  if(!foundFix) txt += "No major fixes currently flagged.\n";
+
+  txt += "\nCURRENT STRENGTHS\n";
+  txt += "------------------------------\n";
+  let foundStrength = false;
+  categories.forEach(cat => {
+    cat.questions.forEach(q => {
+      if(answers[q.id] === 10){
+        foundStrength = true;
+        txt += `[${cat.name}] ${q.text}\n`;
+      }
+    });
+  });
+  if(!foundStrength) txt += "No strong validated areas yet.\n";
+
+  txt += "\nDESIGN DIRECTION SUMMARY\n";
+  txt += "------------------------------\n";
+  txt += `Build a cover for "${title}" in the "${niche}" niche, aimed at "${audience}". `;
+  txt += `The visual emotion should feel "${emotion}". `;
+  txt += `The cover must communicate this promise: "${promise}". `;
+  txt += `Use the fixes above as mandatory revision instructions.\n`;
+
+  const blob = new Blob([txt], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "KDP_Cover_Brief.txt";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function resetAll(){
+  Object.keys(answers).forEach(k => answers[k] = null);
+  document.querySelectorAll(".choice").forEach(b => b.classList.remove("active"));
+  ["bookTitle","niche","audience","emotion","promise","notes"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  updateAll();
+}
+
+document.getElementById("exportBtn").addEventListener("click", exportBrief);
+document.getElementById("exportTopBtn").addEventListener("click", exportBrief);
+document.getElementById("resetBtn").addEventListener("click", resetAll);
+
+renderChecklist();
+updateAll();
+</script>
+</body>
+</html>
