@@ -1,0 +1,451 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magic Square Generator — Worksheet Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --stroke:#1e272e; --paper:#ffffff;
+  --sb-bg:#e84393; --sb-text:#ffffff;
+  --c1:#fff0f6; --c2:#e8f4fd; --c3:#f0fff4; --c4:#fffbea;
+  --h1:#e84393; --h2:#3498db; --h3:#27ae60; --h4:#f39c12;
+}
+[data-theme="candy"]  { --c1:#ffe0f0; --c2:#fff3cd; --c3:#d0f5e8; --c4:#e0f0ff; --h1:#e84393; --h2:#f39c12; --h3:#27ae60; --h4:#3498db; }
+[data-theme="mint"]   { --c1:#e8faf5; --c2:#d1f5eb; --c3:#b8f0e0; --c4:#a0ead4; --h1:#00b894; --h2:#00cec9; --h3:#55efc4; --h4:#00b894; }
+[data-theme="ocean"]  { --c1:#eaf4fb; --c2:#d6eaf8; --c3:#c2dcf0; --c4:#aecde8; --h1:#2980b9; --h2:#3498db; --h3:#1abc9c; --h4:#16a085; }
+[data-theme="sunset"] { --c1:#fef9e7; --c2:#fdebd0; --c3:#fad7a0; --c4:#f9c784; --h1:#e67e22; --h2:#e74c3c; --h3:#f39c12; --h4:#d35400; }
+[data-theme="mono"]   { --c1:#f8f9fa; --c2:#e9ecef; --c3:#dee2e6; --c4:#ced4da; --h1:#343a40; --h2:#495057; --h3:#6c757d; --h4:#adb5bd; }
+
+*{box-sizing:border-box;}
+body,html{margin:0;padding:0;font-family:'Nunito',sans-serif;display:flex;height:100vh;overflow:hidden;}
+body{background-color:#1e272e;background-image:radial-gradient(#576574 2px,transparent 2px);background-size:30px 30px;}
+
+/* SIDEBAR */
+#sidebar{
+  width:320px;min-width:320px;background:var(--sb-bg);color:#fff;
+  padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  border-right:5px solid var(--stroke);z-index:100;scrollbar-width:none;
+}
+#sidebar::-webkit-scrollbar{display:none;}
+.app-title{font-size:22px;font-weight:900;text-align:center;color:#fff;text-shadow:3px 3px 0 var(--stroke);margin:0;}
+.app-desc{font-size:11px;text-align:center;font-weight:700;background:var(--stroke);color:#fff;padding:4px 8px;border-radius:6px;}
+.ctrl-group{background:rgba(255,255,255,0.18);padding:11px;border-radius:12px;border:3px solid var(--stroke);box-shadow:4px 4px 0 var(--stroke);}
+.ctrl-label{display:block;font-weight:900;margin-bottom:5px;font-size:11px;text-transform:uppercase;color:var(--stroke);}
+select,button{width:100%;padding:8px 10px;border-radius:8px;border:3px solid var(--stroke);font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer;outline:none;transition:0.1s;margin-bottom:6px;}
+select:last-child,button:last-child{margin-bottom:0;}
+select{background:#fff;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);appearance:none;}
+select:active,button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--stroke);}
+.btn-scramble{background:#feca57;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);font-size:13px;padding:10px;}
+.btn-answer{background:#48dbfb;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);}
+.btn-print{background:#fff;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);}
+.btn-png{background:#ff9ff3;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);}
+.hint-text{font-size:10px;text-align:center;color:rgba(255,255,255,0.7);font-weight:700;}
+
+/* INFO BOX */
+.info-box{background:rgba(0,0,0,0.15);border-radius:10px;padding:10px;font-size:11px;font-weight:800;line-height:1.6;color:rgba(255,255,255,0.95);}
+.info-box b{color:#feca57;}
+
+/* PREVIEW */
+#preview-area{
+  flex:1;padding:20px 12px;overflow-y:auto;
+  display:flex;justify-content:center;align-items:flex-start;
+  background:transparent;
+  scrollbar-width:none;
+}
+#preview-area::-webkit-scrollbar{display:none;}
+
+/* A4 WORKSHEET */
+.worksheet-page{
+  width:210mm;height:297mm;min-height:297mm;max-height:297mm;
+  background:var(--paper);border:5px solid var(--stroke);border-radius:15px;
+  box-shadow:15px 15px 0 rgba(0,0,0,0.3);
+  position:relative;padding:9mm 10mm 7mm;
+  display:flex;flex-direction:column;color:var(--stroke);overflow:hidden;
+  transform:scale(0.76);transform-origin:top center;
+  margin:0 auto calc((297mm * 0.76) - 297mm);
+}
+
+/* WS HEADER */
+.ws-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:5px solid var(--stroke);padding-bottom:7px;margin-bottom:9px;flex-shrink:0;}
+.ws-title{font-size:32px;font-weight:900;text-transform:uppercase;letter-spacing:-1px;line-height:1;text-shadow:3px 3px 0 #feca57;}
+.ws-subtitle{font-size:11px;background:var(--stroke);color:#fff;display:inline-block;padding:3px 8px;border-radius:5px;font-weight:900;margin-top:5px;}
+.ws-info{display:flex;flex-direction:column;gap:5px;width:190px;}
+.info-row{display:flex;align-items:flex-end;font-size:12px;font-weight:900;}
+.info-label{margin-right:5px;white-space:nowrap;}
+.info-line{flex:1;border-bottom:3px dashed var(--stroke);height:13px;}
+
+/* RULE BANNER */
+.rule-banner{
+  display:flex;align-items:center;gap:12px;
+  background:var(--stroke);color:#fff;border-radius:10px;
+  padding:7px 14px;margin-bottom:10px;flex-shrink:0;
+}
+.rb-icon{font-size:20px;}
+.rb-text{font-size:11px;font-weight:800;line-height:1.45;flex:1;}
+.rb-magic{font-size:18px;font-weight:900;color:#feca57;white-space:nowrap;}
+
+/* 4 SQUARES GRID */
+.squares-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  flex:1;
+  min-height:0;
+}
+.sq-card{
+  border:4px solid var(--stroke);border-radius:14px;
+  display:flex;flex-direction:column;
+  box-shadow:5px 5px 0 var(--stroke);
+  overflow:hidden;
+}
+.sq-card:nth-child(1){background:var(--c1);}
+.sq-card:nth-child(2){background:var(--c2);}
+.sq-card:nth-child(3){background:var(--c3);}
+.sq-card:nth-child(4){background:var(--c4);}
+.sq-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 10px;border-bottom:3px solid var(--stroke);
+}
+.sq-title{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.5px;}
+.sq-card:nth-child(1) .sq-title{color:var(--h1);}
+.sq-card:nth-child(2) .sq-title{color:var(--h2);}
+.sq-card:nth-child(3) .sq-title{color:var(--h3);}
+.sq-card:nth-child(4) .sq-title{color:var(--h4);}
+.sq-sum{font-size:11px;font-weight:900;background:var(--stroke);color:#fff;padding:2px 8px;border-radius:5px;}
+
+.sq-body{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:8px;
+}
+.sq-table{border-collapse:collapse;}
+.sq-cell{
+  width:52px;height:52px;
+  border:3px solid var(--stroke);
+  text-align:center;vertical-align:middle;
+  font-size:22px;font-weight:900;
+  background:#fff;
+  position:relative;
+}
+.sq-cell.hidden{background:#fff;}
+.sq-cell.filled{background:rgba(0,0,0,0.04);}
+.sq-cell .blank-box{
+  width:32px;height:32px;
+  border:3px solid var(--stroke);border-radius:6px;
+  background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  margin:auto;
+  box-shadow:2px 2px 0 var(--stroke);
+  font-size:22px;font-weight:900;color:transparent;
+  transition:0.3s;
+}
+.show-answers .sq-cell .blank-box{color:#e84393;}
+
+/* FOOTER */
+.ws-footer{display:flex;justify-content:space-between;align-items:center;border-top:3px solid var(--stroke);padding-top:5px;margin-top:6px;flex-shrink:0;}
+.ws-footer-note{font-size:9px;font-weight:800;color:#aaa;}
+.score-box{display:flex;gap:10px;}
+.score-item{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:900;}
+.score-line{width:44px;border-bottom:2px dashed var(--stroke);height:11px;}
+
+[contenteditable="true"]{outline:none;border-radius:4px;border:2px dashed transparent;transition:0.2s;}
+[contenteditable="true"]:hover,[contenteditable="true"]:focus{background:rgba(0,0,0,0.05);border-color:var(--stroke);}
+
+@page{size:A4 portrait;margin:0;}
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  html,body{background:none;margin:0;padding:0;width:100%;height:100%;display:block;overflow:hidden;}
+  #sidebar,.hint-text{display:none !important;}
+  #preview-area{padding:0;margin:0;display:block;width:100%;height:100%;overflow:hidden;background:none;}
+  .worksheet-page{
+    margin:0;width:100%;height:100%;max-height:100vh;padding:9mm 10mm 7mm;
+    page-break-after:avoid;page-break-before:avoid;page-break-inside:avoid;
+    box-shadow:none !important;border:5px solid var(--stroke) !important;
+    border-radius:15px !important;transform:none !important;
+  }
+  .sq-cell .blank-box{color:transparent !important;}
+  [contenteditable="true"]{border:none !important;background:none !important;}
+}
+</style>
+</head>
+<body data-theme="mono">
+
+<div id="sidebar">
+  <h1 class="app-title">🔢 MAGIC SQUARE</h1>
+  <p class="app-desc">Magic Square Generator — A4 Locked</p>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Color Theme</span>
+    <select id="cfg-theme" onchange="applyTheme()">
+      <option value="mono" selected>Grayscale (Print Safe)</option>
+      <option value="candy">Cotton Candy</option>
+      <option value="mint">Fresh Mint</option>
+      <option value="ocean">Ocean Blue</option>
+      <option value="sunset">Warm Sunset</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Square Size</span>
+    <select id="cfg-size" onchange="generate()">
+      <option value="3" selected>3 × 3 (Grade 3–4)</option>
+      <option value="4">4 × 4 (Grade 5–6)</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Difficulty (Hidden Cells)</span>
+    <select id="cfg-diff" onchange="generate()">
+      <option value="easy">Easy — 2 blanks</option>
+      <option value="normal" selected>Normal — 4 blanks</option>
+      <option value="hard">Hard — 6 blanks</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Number Range</span>
+    <select id="cfg-range" onchange="generate()">
+      <option value="small" selected>Small (1–9)</option>
+      <option value="medium">Medium (1–20)</option>
+      <option value="large">Large (10–50)</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group" style="background:transparent;border:none;box-shadow:none;padding:0;">
+    <button class="btn-scramble" onclick="generate()">🎲 SCRAMBLE NEW SQUARES</button>
+    <button class="btn-answer" id="btn-ans" onclick="toggleAnswers()">👁️ SHOW ANSWER KEY</button>
+    <button class="btn-print" onclick="window.print()">🖨️ PRINT WORKSHEET</button>
+    <button class="btn-png" onclick="savePNG()">💾 SAVE AS PNG</button>
+  </div>
+
+  <div class="info-box">
+    <b>How Magic Squares Work:</b><br>
+    Every row → same sum ✓<br>
+    Every column → same sum ✓<br>
+    Both diagonals → same sum ✓<br><br>
+    Fill in the blank boxes using the <b>Magic Sum</b> shown on each card!
+  </div>
+  <p class="hint-text">★ Click any text on the worksheet to edit it directly!</p>
+</div>
+
+<div id="preview-area">
+  <div class="worksheet-page" id="worksheet">
+
+    <div class="ws-header">
+      <div>
+        <div class="ws-title" id="txt-title" contenteditable="true" spellcheck="false">MAGIC SQUARES</div>
+        <div class="ws-subtitle" id="txt-sub" contenteditable="true" spellcheck="false">Fill in the blanks so every row, column & diagonal adds up to the Magic Sum!</div>
+      </div>
+      <div class="ws-info">
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Name:</span><div class="info-line"></div></div>
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Date:</span><div class="info-line"></div></div>
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Grade:</span><div class="info-line"></div></div>
+      </div>
+    </div>
+
+    <div class="rule-banner">
+      <div class="rb-icon">✨</div>
+      <div class="rb-text" id="rb-rule">In a Magic Square, every row, column, and diagonal must add up to the same number — the <strong style="color:#feca57">Magic Sum</strong>. Find the missing numbers!</div>
+    </div>
+
+    <div class="squares-grid" id="squares-grid">
+      <!-- injected via JS -->
+    </div>
+
+    <div class="ws-footer">
+      <span class="ws-footer-note" id="txt-footer" contenteditable="true" spellcheck="false">© Magic Square Worksheet — Created with Worksheet Studio</span>
+      <div class="score-box">
+        <div class="score-item">Time: <div class="score-line"></div></div>
+        <div class="score-item">Score: <div class="score-line"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let puzzles = [];
+let isAnswerShown = false;
+
+// ── THEME ──
+function applyTheme() {
+  document.body.setAttribute('data-theme', document.getElementById('cfg-theme').value);
+}
+
+// ── MAGIC SQUARE GENERATORS ──
+
+// 3x3: classic Lo Shu rotation with random offset
+function generate3x3(offset) {
+  // Base Lo Shu
+  const base = [[2,7,6],[9,5,1],[4,3,8]];
+  return base.map(row => row.map(v => v + offset));
+}
+
+// 4x4: classic Dürer-style with offset
+function generate4x4(offset) {
+  const base = [
+    [16,3,2,13],
+    [5,10,11,8],
+    [9,6,7,12],
+    [4,15,14,1]
+  ];
+  return base.map(row => row.map(v => v + offset));
+}
+
+// Shuffle a 4x4 magic square by swapping rows/cols within their groups
+// (preserves magic property for this specific base)
+function shuffle4x4(sq) {
+  // Randomly reflect/rotate
+  const ops = [
+    m => m,
+    m => m.map(r => [...r].reverse()),
+    m => {let n=m.map(r=>[...r]); n.reverse(); return n;},
+    m => {let t=m[0].map((_,c)=>m.map(r=>r[c])); return t;},
+    m => {let t=m[0].map((_,c)=>m.map(r=>r[c])); t.reverse(); return t;},
+    m => {let t=m[0].map((_,c)=>m.map(r=>r[c])); return t.map(r=>[...r].reverse());},
+  ];
+  return ops[Math.floor(Math.random()*ops.length)](sq);
+}
+
+function shuffle3x3(sq) {
+  // Can swap rows 0↔2 or cols 0↔2 and it stays magic
+  const ops = [
+    m => m,
+    m => { let n=m.map(r=>[...r]); [n[0],n[2]]=[n[2],n[0]]; return n; },
+    m => m.map(r => { let nr=[...r]; [nr[0],nr[2]]=[nr[2],nr[0]]; return nr; }),
+    m => m.map(r=>[...r].reverse()),
+    m => { let n=m.map(r=>[...r]); n.reverse(); return n; },
+    m => m[0].map((_,c)=>m.map(r=>r[c])),
+  ];
+  return ops[Math.floor(Math.random()*ops.length)](sq);
+}
+
+function getMagicSum(sq) { return sq[0].reduce((a,b)=>a+b,0); }
+
+function getOffsetForRange(range, size) {
+  if(range === 'small')  return 0;
+  if(range === 'medium') return Math.floor(Math.random()*8)*2; // 0–14, step 2
+  return Math.floor(Math.random()*8)*5 + 10; // 10–45, step 5
+}
+
+function buildPuzzle() {
+  const size  = parseInt(document.getElementById('cfg-size').value);
+  const diff  = document.getElementById('cfg-diff').value;
+  const range = document.getElementById('cfg-range').value;
+  const numBlanks = diff==='easy'?2:diff==='normal'?4:6;
+  const offset = getOffsetForRange(range, size);
+
+  let sq;
+  if(size===3) {
+    sq = shuffle3x3(generate3x3(offset));
+  } else {
+    sq = shuffle4x4(generate4x4(offset));
+  }
+
+  const magicSum = getMagicSum(sq);
+
+  // Pick random cells to hide
+  const cells = [];
+  for(let r=0;r<size;r++) for(let c=0;c<size;c++) cells.push([r,c]);
+  // Shuffle cells
+  for(let i=cells.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [cells[i],cells[j]]=[cells[j],cells[i]];
+  }
+  const hiddenSet = new Set(cells.slice(0,numBlanks).map(([r,c])=>r+','+c));
+
+  return { sq, size, magicSum, hiddenSet };
+}
+
+// ── RENDER ──
+const LABELS = ['Puzzle 1','Puzzle 2','Puzzle 3','Puzzle 4'];
+
+function generate() {
+  if(isAnswerShown) toggleAnswers(true);
+  puzzles = [buildPuzzle(), buildPuzzle(), buildPuzzle(), buildPuzzle()];
+  render();
+}
+
+function render() {
+  const grid = document.getElementById('squares-grid');
+  grid.innerHTML = '';
+
+  puzzles.forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = 'sq-card';
+
+    // Header
+    const hdr = document.createElement('div');
+    hdr.className = 'sq-header';
+    hdr.innerHTML = `
+      <span class="sq-title">${LABELS[idx]}</span>
+      <span class="sq-sum">✨ Magic Sum = ${p.magicSum}</span>
+    `;
+    card.appendChild(hdr);
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'sq-body';
+
+    const table = document.createElement('table');
+    table.className = 'sq-table';
+
+    for(let r=0;r<p.size;r++) {
+      const tr = document.createElement('tr');
+      for(let c=0;c<p.size;c++) {
+        const td = document.createElement('td');
+        td.className = 'sq-cell';
+        const key = r+','+c;
+        if(p.hiddenSet.has(key)) {
+          td.classList.add('hidden');
+          td.innerHTML = `<div class="blank-box">${p.sq[r][c]}</div>`;
+        } else {
+          td.classList.add('filled');
+          td.textContent = p.sq[r][c];
+        }
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+    body.appendChild(table);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+}
+
+// ── TOGGLE ANSWERS ──
+function toggleAnswers(forceHide) {
+  isAnswerShown = forceHide === true ? false : !isAnswerShown;
+  const btn = document.getElementById('btn-ans');
+  const ws  = document.getElementById('worksheet');
+
+  if(isAnswerShown) {
+    btn.textContent = '👁️ HIDE ANSWER KEY';
+    btn.style.background = '#ff4757'; btn.style.color = '#fff';
+    ws.classList.add('show-answers');
+  } else {
+    btn.textContent = '👁️ SHOW ANSWER KEY';
+    btn.style.background = '#48dbfb'; btn.style.color = 'var(--stroke)';
+    ws.classList.remove('show-answers');
+  }
+}
+
+// ── SAVE PNG ──
+function savePNG() {
+  const ws = document.getElementById('worksheet');
+  const editables = ws.querySelectorAll('[contenteditable]');
+  editables.forEach(el => el.style.border='none');
+  htmlToImage.toPng(ws, { pixelRatio:2, backgroundColor:'#fff' })
+    .then(dataUrl => {
+      const a = document.createElement('a');
+      a.download = `MagicSquare_${isAnswerShown?'Answers':'Student'}.png`;
+      a.href = dataUrl; a.click();
+    })
+    .catch(err => { console.error(err); alert('PNG export failed.'); })
+    .finally(() => { editables.forEach(el => el.style.border=''); });
+}
+
+// ── INIT ──
+generate();
+</script>
+</body>
+</html>
