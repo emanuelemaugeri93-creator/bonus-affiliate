@@ -1,0 +1,585 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Treasure Map — Worksheet Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Pirata+One&display=swap" rel="stylesheet">
+<style>
+:root {
+  --stroke:#2c1810; --paper:#fdf6e3; --sb-bg:#8b4513;
+  --path:#c8a96e; --node-bg:#f4e4bc; --node-border:#8b4513;
+  --correct:#2ecc71; --wrong:#e74c3c; --neutral:#3498db;
+  --parchment:#fdf6e3; --ink:#2c1810;
+  --c1:#ffeaa7; --c2:#fab1a0; --c3:#a29bfe; --c4:#55efc4;
+}
+[data-theme="pirate"]  {--paper:#f5e6c8;--path:#a0724a;--node-bg:#f0d9a8;--c1:#ff9f43;--c2:#ee5a24;--c3:#c44569;--c4:#40407a;}
+[data-theme="jungle"]  {--paper:#f0f7ee;--path:#6ab04c;--node-bg:#dff9fb;--c1:#badc58;--c2:#f9ca24;--c3:#6ab04c;--c4:#22a6b3;}
+[data-theme="ocean"]   {--paper:#eaf6ff;--path:#4a90d9;--node-bg:#d6eaf8;--c1:#74b9ff;--c2:#0984e3;--c3:#81ecec;--c4:#00cec9;}
+[data-theme="candy"]   {--paper:#fff0f6;--path:#e84393;--node-bg:#ffe0ef;--c1:#fd79a8;--c2:#e84393;--c3:#a29bfe;--c4:#fdcb6e;}
+[data-theme="mono"]    {--paper:#fff;--path:#888;--node-bg:#f5f5f5;--c1:#fff;--c2:#eee;--c3:#ddd;--c4:#ccc;}
+
+*{box-sizing:border-box;}
+body,html{
+  margin:0;padding:0;font-family:'Nunito',sans-serif;
+  display:flex;height:100vh;overflow:hidden;
+  background-color:#1e272e;
+  background-image:radial-gradient(#576574 2px,transparent 2px);
+  background-size:30px 30px;
+}
+
+/* SIDEBAR */
+#sidebar{
+  width:300px;min-width:300px;background:var(--sb-bg);color:#fff;
+  padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  border-right:5px solid var(--stroke);z-index:100;scrollbar-width:none;
+}
+#sidebar::-webkit-scrollbar{display:none;}
+.app-title{font-size:22px;font-weight:900;text-align:center;color:#feca57;text-shadow:3px 3px 0 var(--stroke);margin:0;}
+.app-desc{font-size:11px;text-align:center;font-weight:700;background:var(--stroke);color:#feca57;padding:4px 8px;border-radius:6px;}
+.ctrl-group{background:rgba(255,255,255,0.15);padding:11px;border-radius:12px;border:3px solid rgba(255,255,255,0.3);box-shadow:4px 4px 0 rgba(0,0,0,0.3);}
+.ctrl-label{display:block;font-weight:900;margin-bottom:5px;font-size:11px;text-transform:uppercase;color:rgba(255,255,255,0.8);}
+select,button{
+  width:100%;padding:8px 10px;border-radius:8px;border:3px solid var(--stroke);
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;
+  cursor:pointer;outline:none;transition:0.1s;margin-bottom:6px;
+}
+select:last-child,button:last-child{margin-bottom:0;}
+select{background:#fff;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);appearance:none;}
+select:active,button:active{transform:translate(3px,3px);box-shadow:0 0 0;}
+.btn-scramble{background:#feca57;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);font-size:13px;padding:10px;}
+.btn-answer{background:#48dbfb;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);}
+.btn-print{background:#fff;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);}
+.btn-png{background:#ff9ff3;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);}
+.info-box{background:rgba(0,0,0,0.2);border-radius:10px;padding:10px;font-size:11px;font-weight:800;line-height:1.6;color:rgba(255,255,255,0.95);}
+.info-box b{color:#feca57;}
+.hint-text{font-size:10px;text-align:center;color:rgba(255,255,255,0.6);font-weight:700;}
+
+/* PREVIEW */
+#preview-area{
+  flex:1;padding:16px 12px;overflow-y:auto;
+  display:flex;justify-content:center;align-items:flex-start;
+  background:transparent;scrollbar-width:none;
+}
+#preview-area::-webkit-scrollbar{display:none;}
+
+/* A4 */
+.worksheet-page{
+  width:210mm;height:297mm;min-height:297mm;max-height:297mm;
+  background:var(--parchment);border:5px solid var(--stroke);border-radius:15px;
+  box-shadow:15px 15px 0 rgba(0,0,0,0.3);
+  position:relative;padding:8mm 9mm 6mm;
+  display:flex;flex-direction:column;color:var(--ink);overflow:hidden;
+  transform:scale(0.76);transform-origin:top center;
+  margin:0 auto calc((297mm * 0.76) - 297mm);
+}
+
+/* Parchment texture overlay */
+.worksheet-page::before{
+  content:"";position:absolute;inset:0;border-radius:10px;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:0.5;z-index:0;
+}
+.ws-content{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;}
+
+/* HEADER */
+.ws-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid var(--stroke);padding-bottom:6px;margin-bottom:6px;flex-shrink:0;}
+.ws-title-wrap{flex:1;}
+.ws-title{font-family:'Pirata One',cursive;font-size:34px;color:var(--stroke);line-height:1;letter-spacing:1px;}
+.ws-subtitle{font-size:10px;background:var(--stroke);color:#feca57;display:inline-block;padding:2px 8px;border-radius:5px;font-weight:900;margin-top:4px;}
+.ws-info{display:flex;flex-direction:column;gap:4px;width:180px;}
+.info-row{display:flex;align-items:flex-end;font-size:11px;font-weight:900;}
+.info-label{margin-right:5px;white-space:nowrap;}
+.info-line{flex:1;border-bottom:2px dashed var(--stroke);height:12px;}
+
+/* RULE BANNER */
+.rule-banner{
+  display:flex;align-items:center;gap:8px;
+  background:var(--stroke);color:#feca57;border-radius:8px;
+  padding:5px 12px;margin-bottom:6px;flex-shrink:0;
+}
+.rb-text{font-size:10px;font-weight:800;line-height:1.4;flex:1;color:#fff;}
+.rb-text b{color:#feca57;}
+
+/* MAP + LEGEND LAYOUT */
+.map-layout{flex:1;display:flex;gap:8px;min-height:0;}
+.map-area{flex:1;position:relative;min-height:0;}
+#map-svg{width:100%;height:100%;}
+.map-legend{width:105px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+
+/* LEGEND CARD */
+.leg-card{
+  background:var(--node-bg);border:3px solid var(--stroke);border-radius:10px;
+  padding:7px;box-shadow:3px 3px 0 var(--stroke);
+}
+.leg-title{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--stroke);margin-bottom:5px;border-bottom:2px solid var(--stroke);padding-bottom:3px;}
+.leg-row{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;margin-bottom:4px;line-height:1.2;}
+.leg-row:last-child{margin-bottom:0;}
+.leg-dot{width:14px;height:14px;border-radius:3px;border:2px solid var(--stroke);flex-shrink:0;}
+
+/* ANSWER KEY OVERLAY */
+.ans-key-box{
+  display:none;
+  background:var(--node-bg);border:3px solid var(--stroke);border-radius:10px;
+  padding:7px;box-shadow:3px 3px 0 var(--stroke);
+}
+.ans-key-box.visible{display:block;}
+.ak-title{font-size:9px;font-weight:900;text-transform:uppercase;color:var(--correct);margin-bottom:4px;}
+.ak-list{display:flex;flex-direction:column;gap:2px;}
+.ak-item{font-size:10px;font-weight:800;color:var(--stroke);}
+
+/* FOOTER */
+.ws-footer{display:flex;justify-content:space-between;align-items:center;border-top:2px solid var(--stroke);padding-top:4px;margin-top:4px;flex-shrink:0;}
+.ws-footer-note{font-size:9px;font-weight:800;color:#aaa;}
+.score-box{display:flex;gap:8px;}
+.score-item{display:flex;align-items:center;gap:3px;font-size:9px;font-weight:900;}
+.score-line{width:36px;border-bottom:2px dashed var(--stroke);height:10px;}
+
+[contenteditable="true"]{outline:none;border-radius:4px;border:2px dashed transparent;transition:0.2s;}
+[contenteditable="true"]:hover,[contenteditable="true"]:focus{background:rgba(0,0,0,0.05);border-color:var(--stroke);}
+
+@page{size:A4 portrait;margin:0;}
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  html,body{background:none;margin:0;padding:0;width:100%;height:100%;display:block;overflow:hidden;}
+  #sidebar,.hint-text{display:none !important;}
+  #preview-area{padding:0;margin:0;display:block;width:100%;height:100%;overflow:hidden;background:none;}
+  .worksheet-page{
+    margin:0;width:100%;height:100%;max-height:100vh;
+    box-shadow:none !important;border:5px solid var(--stroke) !important;
+    border-radius:15px !important;transform:none !important;
+  }
+  .ans-key-box{display:none !important;}
+  [contenteditable="true"]{border:none !important;background:none !important;}
+}
+</style>
+</head>
+<body data-theme="pirate">
+
+<div id="sidebar">
+  <h1 class="app-title">🗺️ TREASURE MAP</h1>
+  <p class="app-desc">Math Treasure Map Studio — A4 Locked</p>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Map Theme</span>
+    <select id="cfg-theme" onchange="applyTheme()">
+      <option value="pirate" selected>🏴‍☠️ Pirate Adventure</option>
+      <option value="jungle">🌿 Jungle Quest</option>
+      <option value="ocean">🌊 Deep Ocean</option>
+      <option value="candy">🍬 Candy Land</option>
+      <option value="mono">⬜ Grayscale Print</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Math Operation</span>
+    <select id="cfg-op" onchange="generate()">
+      <option value="add">Addition (+)</option>
+      <option value="sub">Subtraction (−)</option>
+      <option value="mul">Multiplication (×)</option>
+      <option value="mixed" selected>Mixed Operations</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Difficulty</span>
+    <select id="cfg-diff" onchange="generate()">
+      <option value="easy">Easy (Grade 1–2)</option>
+      <option value="normal" selected>Normal (Grade 3–4)</option>
+      <option value="hard">Hard (Grade 5–6)</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Number of Stations</span>
+    <select id="cfg-stations" onchange="generate()">
+      <option value="8">8 Stations</option>
+      <option value="10" selected>10 Stations</option>
+      <option value="12">12 Stations</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Number of Choices</span>
+    <select id="cfg-choices" onchange="generate()">
+      <option value="2">2 Choices (Easy)</option>
+      <option value="3" selected>3 Choices (Normal)</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group" style="background:transparent;border:none;box-shadow:none;padding:0;">
+    <button class="btn-scramble" onclick="generate()">🎲 SCRAMBLE NEW MAP</button>
+    <button class="btn-answer" id="btn-ans" onclick="toggleAnswers()">🗝️ SHOW ANSWER KEY</button>
+    <button class="btn-print" onclick="window.print()">🖨️ PRINT WORKSHEET</button>
+    <button class="btn-png" onclick="savePNG()">💾 SAVE AS PNG</button>
+  </div>
+
+  <div class="info-box">
+    <b>How to Play:</b><br>
+    Start at the 🏁 START station.<br>
+    Solve the math problem at each stop.<br>
+    Your answer tells you which path to follow — only the <b>correct answer</b> leads you to the treasure! Wrong paths lead to dead ends ☠️<br><br>
+    <b>Goal:</b> Reach the 💰 TREASURE at the end!
+  </div>
+  <p class="hint-text">★ Click worksheet text to edit directly!</p>
+</div>
+
+<div id="preview-area">
+  <div class="worksheet-page" id="worksheet">
+    <div class="ws-content">
+
+      <div class="ws-header">
+        <div class="ws-title-wrap">
+          <div class="ws-title" id="txt-title" contenteditable="true" spellcheck="false">⚓ Math Treasure Hunt</div>
+          <div class="ws-subtitle" id="txt-sub" contenteditable="true" spellcheck="false">Solve each problem — only the correct answer leads to the treasure!</div>
+        </div>
+        <div class="ws-info">
+          <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Name:</span><div class="info-line"></div></div>
+          <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Date:</span><div class="info-line"></div></div>
+          <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Grade:</span><div class="info-line"></div></div>
+        </div>
+      </div>
+
+      <div class="rule-banner">
+        <span style="font-size:18px;">🗺️</span>
+        <div class="rb-text">Solve the problem at each station. <b>Circle the correct answer</b> and follow that path. Only ONE path leads to the 💰 treasure — wrong answers lead to dead ends!</div>
+      </div>
+
+      <div class="map-layout">
+        <div class="map-area">
+          <svg id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="map-legend">
+          <div class="leg-card">
+            <div class="leg-title">Legend</div>
+            <div class="leg-row"><div class="leg-dot" style="background:#feca57;"></div>START</div>
+            <div class="leg-row"><div class="leg-dot" style="background:#2ecc71;"></div>Correct Path</div>
+            <div class="leg-row"><div class="leg-dot" style="background:#e74c3c;"></div>Dead End ☠️</div>
+            <div class="leg-row"><div class="leg-dot" style="background:#f4e4bc;"></div>Station</div>
+            <div class="leg-row"><div class="leg-dot" style="background:#f5a623;border:2px solid #8b4513;"></div>TREASURE 💰</div>
+          </div>
+          <div class="ans-key-box" id="ans-key-box">
+            <div class="ak-title">✅ Answer Key</div>
+            <div class="ak-list" id="ak-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-footer">
+        <span class="ws-footer-note" id="txt-footer" contenteditable="true" spellcheck="false">© Math Treasure Map — Worksheet Studio</span>
+        <div class="score-box">
+          <div class="score-item">Time: <div class="score-line"></div></div>
+          <div class="score-item">Score: <div class="score-line"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let mapData = null;
+let isAnswerShown = false;
+
+function rng(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+function applyTheme(){
+  document.body.setAttribute('data-theme', document.getElementById('cfg-theme').value);
+  if(mapData) drawMap();
+}
+
+// ── MATH PROBLEM GENERATOR ──
+function genProblem(op, diff) {
+  let a,b,ans,str,choices,opSym;
+  const ops = op==='mixed' ? ['add','sub','mul'] : [op];
+  const chosenOp = pick(ops);
+
+  if(diff==='easy'){
+    if(chosenOp==='add'){a=rng(1,9);b=rng(1,9);ans=a+b;opSym='+';}
+    else if(chosenOp==='sub'){a=rng(5,15);b=rng(1,a);ans=a-b;opSym='−';}
+    else{a=rng(1,5);b=rng(1,5);ans=a*b;opSym='×';}
+  } else if(diff==='normal'){
+    if(chosenOp==='add'){a=rng(5,25);b=rng(5,25);ans=a+b;opSym='+';}
+    else if(chosenOp==='sub'){a=rng(15,40);b=rng(5,a);ans=a-b;opSym='−';}
+    else{a=rng(2,9);b=rng(2,9);ans=a*b;opSym='×';}
+  } else {
+    if(chosenOp==='add'){a=rng(20,80);b=rng(20,80);ans=a+b;opSym='+';}
+    else if(chosenOp==='sub'){a=rng(40,100);b=rng(10,a);ans=a-b;opSym='−';}
+    else{a=rng(3,12);b=rng(3,12);ans=a*b;opSym='×';}
+  }
+  str=`${a} ${opSym} ${b}`;
+
+  // Generate wrong choices (different from correct)
+  const wrongSet = new Set();
+  while(wrongSet.size < 2){
+    let w = ans + pick([-3,-2,-1,1,2,3,4,5,-4,-5]);
+    if(w!==ans && w>0) wrongSet.add(w);
+  }
+  const wrongs = [...wrongSet];
+  return {str, ans, wrongs};
+}
+
+// ── MAP LAYOUT ──
+// Stations laid out as a winding path with branches at each node
+function buildMapData(){
+  const nStations = parseInt(document.getElementById('cfg-stations').value);
+  const nChoices  = parseInt(document.getElementById('cfg-choices').value);
+  const op        = document.getElementById('cfg-op').value;
+  const diff      = document.getElementById('cfg-diff').value;
+
+  // Build a chain of stations. Each station has: position, problem, correct branch (index), choices
+  const stations = [];
+  for(let i=0;i<nStations;i++){
+    const prob = genProblem(op, diff);
+    const correctIdx = rng(0, nChoices-1);
+
+    // Build choices array: put correct at correctIdx
+    const allChoices = [...prob.wrongs.slice(0, nChoices-1)];
+    allChoices.splice(correctIdx, 0, prob.ans);
+
+    stations.push({
+      id: i,
+      problem: prob.str,
+      correctAnswer: prob.ans,
+      correctIdx,
+      choices: allChoices
+    });
+  }
+
+  return { stations, nStations, nChoices };
+}
+
+// ── SVG MAP RENDERER ──
+function drawMap(){
+  const svg = document.getElementById('map-svg');
+  const { stations, nStations, nChoices } = mapData;
+
+  // Get container size
+  const container = document.querySelector('.map-area');
+  const W = container.clientWidth  || 480;
+  const H = container.clientHeight || 380;
+
+  svg.setAttribute('width',  W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const style = getComputedStyle(document.body);
+  const pathCol    = style.getPropertyValue('--path').trim() || '#c8a96e';
+  const nodeBg     = style.getPropertyValue('--node-bg').trim() || '#f4e4bc';
+  const nodeBorder = style.getPropertyValue('--node-border').trim() || '#8b4513';
+  const correctCol = '#27ae60';
+  const deadCol    = '#e74c3c';
+  const strokeCol  = '#2c1810';
+
+  // Layout: snake/winding path
+  const cols = 3;
+  const rows = Math.ceil((nStations + 2) / cols); // +2 for start+end
+  const padX = 28, padY = 22;
+  const cellW = (W - padX*2) / cols;
+  const cellH = (H - padY*2) / rows;
+
+  // Generate node positions (snake pattern)
+  const positions = [];
+  for(let i=0; i<nStations+2; i++){
+    const row = Math.floor(i / cols);
+    const col = (row % 2 === 0) ? (i % cols) : (cols - 1 - (i % cols));
+    positions.push({
+      x: padX + col * cellW + cellW/2,
+      y: padY + row * cellH + cellH/2
+    });
+  }
+
+  const nodeR = Math.min(cellW, cellH) * 0.28;
+  const fontSize = Math.max(7, Math.min(10, nodeR * 0.42));
+  const eqFontSize = Math.max(7, Math.min(9, nodeR * 0.38));
+
+  let svg_content = `<defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="${pathCol}" opacity="0.7"/>
+    </marker>
+    <marker id="arrow-dead" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="${deadCol}" opacity="0.6"/>
+    </marker>
+    <filter id="nshadow">
+      <feDropShadow dx="2" dy="2" stdDeviation="1.5" flood-color="rgba(0,0,0,0.2)"/>
+    </filter>
+  </defs>`;
+
+  // Draw connections
+  for(let i=0; i<nStations; i++){
+    const from = positions[i+1]; // station 0 = start, 1..n = stations, n+1 = treasure
+    const next = positions[i+2];
+    const st   = stations[i];
+
+    if(nChoices === 2) {
+      // Two paths: correct goes forward, wrong goes slightly sideways then dead-end
+      // Correct path: straight to next
+      svg_content += `<line x1="${from.x}" y1="${from.y}" x2="${next.x}" y2="${next.y}"
+        stroke="${correctCol}" stroke-width="3" stroke-dasharray="6 3" opacity="0.8"
+        marker-end="url(#arrow)"/>`;
+
+      // Dead end path: branch off
+      const deadX = from.x + (rng(-1,1)*cellW*0.55 || cellW*0.4);
+      const deadY = from.y + cellH*0.5;
+      svg_content += `<line x1="${from.x}" y1="${from.y}" x2="${deadX}" y2="${deadY}"
+        stroke="${deadCol}" stroke-width="2" stroke-dasharray="4 3" opacity="0.5"
+        marker-end="url(#arrow-dead)"/>`;
+      // Dead end skull
+      svg_content += `<text x="${deadX}" y="${deadY}" text-anchor="middle" dominant-baseline="central"
+        font-size="${fontSize+2}" opacity="0.7">☠️</text>`;
+
+      // Path labels
+      const mx = (from.x + next.x)/2 - 8;
+      const my = (from.y + next.y)/2;
+      svg_content += `<rect x="${mx-10}" y="${my-8}" width="20" height="14" rx="4"
+        fill="${correctCol}" opacity="0.15"/>`;
+      svg_content += `<text x="${mx}" y="${my+1}" text-anchor="middle" dominant-baseline="central"
+        font-family="Nunito,sans-serif" font-size="${fontSize-1}" font-weight="900"
+        fill="${correctCol}">${st.choices[st.correctIdx]}</text>`;
+
+      const wx = (from.x + deadX)/2 + 6;
+      const wy = (from.y + deadY)/2;
+      svg_content += `<text x="${wx}" y="${wy+1}" text-anchor="middle" dominant-baseline="central"
+        font-family="Nunito,sans-serif" font-size="${fontSize-1}" font-weight="900"
+        fill="${deadCol}">${st.choices[1-st.correctIdx]}</text>`;
+
+    } else {
+      // 3 choices: one correct (straight), two dead ends
+      const angles = [-0.55, 0, 0.55];
+      const dist = Math.sqrt((next.x-from.x)**2+(next.y-from.y)**2);
+      const baseAngle = Math.atan2(next.y-from.y, next.x-from.x);
+
+      // sort choices: correctIdx goes straight
+      for(let c=0; c<3; c++){
+        const angle = baseAngle + angles[c];
+        const dx = Math.cos(angle)*dist*0.75;
+        const dy = Math.sin(angle)*dist*0.75;
+        const tx = from.x + dx, ty = from.y + dy;
+
+        if(c === st.correctIdx){
+          svg_content += `<line x1="${from.x}" y1="${from.y}" x2="${next.x}" y2="${next.y}"
+            stroke="${correctCol}" stroke-width="3" stroke-dasharray="6 3" opacity="0.8"
+            marker-end="url(#arrow)"/>`;
+          const lx = (from.x+next.x)/2, ly=(from.y+next.y)/2;
+          svg_content += `<rect x="${lx-11}" y="${ly-8}" width="22" height="14" rx="4"
+            fill="${correctCol}" opacity="0.15"/>`;
+          svg_content += `<text x="${lx}" y="${ly+1}" text-anchor="middle" dominant-baseline="central"
+            font-family="Nunito,sans-serif" font-size="${fontSize-1}" font-weight="900"
+            fill="${correctCol}">${st.choices[c]}</text>`;
+        } else {
+          svg_content += `<line x1="${from.x}" y1="${from.y}" x2="${tx}" y2="${ty}"
+            stroke="${deadCol}" stroke-width="2" stroke-dasharray="4 3" opacity="0.45"
+            marker-end="url(#arrow-dead)"/>`;
+          svg_content += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central"
+            font-size="${fontSize+1}" opacity="0.6">☠️</text>`;
+          const lx=(from.x+tx)/2+4, ly=(from.y+ty)/2;
+          svg_content += `<text x="${lx}" y="${ly+1}" text-anchor="middle" dominant-baseline="central"
+            font-family="Nunito,sans-serif" font-size="${fontSize-1}" font-weight="900"
+            fill="${deadCol}">${st.choices[c]}</text>`;
+        }
+      }
+    }
+  }
+
+  // Draw START node
+  const start = positions[0];
+  svg_content += `<circle cx="${start.x}" cy="${start.y}" r="${nodeR}" fill="#feca57"
+    stroke="${strokeCol}" stroke-width="2.5" filter="url(#nshadow)"/>`;
+  svg_content += `<text x="${start.x}" y="${start.y-4}" text-anchor="middle" dominant-baseline="central"
+    font-family="Nunito,sans-serif" font-size="${fontSize+1}" font-weight="900" fill="${strokeCol}">🏁</text>`;
+  svg_content += `<text x="${start.x}" y="${start.y+7}" text-anchor="middle" dominant-baseline="central"
+    font-family="Nunito,sans-serif" font-size="${fontSize-1}" font-weight="900" fill="${strokeCol}">START</text>`;
+
+  // Draw TREASURE node
+  const treasure = positions[nStations+1];
+  svg_content += `<circle cx="${treasure.x}" cy="${treasure.y}" r="${nodeR+2}" fill="#f5a623"
+    stroke="${strokeCol}" stroke-width="3" filter="url(#nshadow)"/>`;
+  svg_content += `<text x="${treasure.x}" y="${treasure.y-4}" text-anchor="middle" dominant-baseline="central"
+    font-family="Nunito,sans-serif" font-size="${fontSize+3}" font-weight="900">💰</text>`;
+  svg_content += `<text x="${treasure.x}" y="${treasure.y+8}" text-anchor="middle" dominant-baseline="central"
+    font-family="Nunito,sans-serif" font-size="${fontSize-1}" font-weight="900" fill="${strokeCol}">TREASURE</text>`;
+
+  // Draw STATION nodes
+  const cardColors = [
+    style.getPropertyValue('--c1').trim()||'#fff',
+    style.getPropertyValue('--c2').trim()||'#eee',
+    style.getPropertyValue('--c3').trim()||'#ddd',
+    style.getPropertyValue('--c4').trim()||'#ccc',
+  ];
+
+  stations.forEach((st, i) => {
+    const pos = positions[i+1];
+    const fillCol = cardColors[i % 4];
+
+    // Node background
+    svg_content += `<circle cx="${pos.x}" cy="${pos.y}" r="${nodeR}" fill="${fillCol}"
+      stroke="${strokeCol}" stroke-width="2.5" filter="url(#nshadow)"/>`;
+
+    // Station number
+    svg_content += `<text x="${pos.x}" y="${pos.y - nodeR*0.3}" text-anchor="middle" dominant-baseline="central"
+      font-family="Nunito,sans-serif" font-size="${fontSize-1}" font-weight="900" fill="${nodeBorder}" opacity="0.6">#${i+1}</text>`;
+
+    // Problem text — split into parts
+    const parts = st.problem.split(' ');
+    if(parts.length === 3){
+      // e.g. "7 + 8"
+      svg_content += `<text x="${pos.x}" y="${pos.y + nodeR*0.15}" text-anchor="middle" dominant-baseline="central"
+        font-family="Nunito,sans-serif" font-size="${eqFontSize+1}" font-weight="900" fill="${strokeCol}">${st.problem}</text>`;
+      svg_content += `<text x="${pos.x}" y="${pos.y + nodeR*0.5}" text-anchor="middle" dominant-baseline="central"
+        font-family="Nunito,sans-serif" font-size="${eqFontSize}" font-weight="900" fill="${strokeCol}">= ?</text>`;
+    } else {
+      svg_content += `<text x="${pos.x}" y="${pos.y + nodeR*0.25}" text-anchor="middle" dominant-baseline="central"
+        font-family="Nunito,sans-serif" font-size="${eqFontSize}" font-weight="900" fill="${strokeCol}">${st.problem} = ?</text>`;
+    }
+  });
+
+  svg.innerHTML = svg_content;
+}
+
+function generate(){
+  if(isAnswerShown) toggleAnswers(true);
+  mapData = buildMapData();
+  drawMap();
+  buildAnsKey();
+}
+
+function buildAnsKey(){
+  const list = document.getElementById('ak-list');
+  list.innerHTML = '';
+  mapData.stations.forEach((st,i)=>{
+    const div = document.createElement('div');
+    div.className = 'ak-item';
+    div.textContent = `#${i+1}: ${st.problem} = ${st.correctAnswer}`;
+    list.appendChild(div);
+  });
+}
+
+function toggleAnswers(forceHide){
+  isAnswerShown = forceHide===true ? false : !isAnswerShown;
+  const btn = document.getElementById('btn-ans');
+  document.getElementById('ans-key-box').classList.toggle('visible', isAnswerShown);
+  if(isAnswerShown){
+    btn.textContent = '🗝️ HIDE ANSWER KEY';
+    btn.style.background = '#ff4757'; btn.style.color = '#fff';
+  } else {
+    btn.textContent = '🗝️ SHOW ANSWER KEY';
+    btn.style.background = '#48dbfb'; btn.style.color = '#2c1810';
+  }
+}
+
+function savePNG(){
+  const ws = document.getElementById('worksheet');
+  const editables = ws.querySelectorAll('[contenteditable]');
+  editables.forEach(el=>el.style.border='none');
+  htmlToImage.toPng(ws,{pixelRatio:2,backgroundColor:'#fdf6e3'})
+    .then(dataUrl=>{
+      const a=document.createElement('a');
+      a.download=`TreasureMap_${isAnswerShown?'Answer':'Student'}.png`;
+      a.href=dataUrl;a.click();
+    })
+    .catch(err=>{console.error(err);alert('PNG export failed.');})
+    .finally(()=>{editables.forEach(el=>el.style.border='');});
+}
+
+window.addEventListener('resize',()=>{ if(mapData) drawMap(); });
+generate();
+</script>
+</body>
+</html>
