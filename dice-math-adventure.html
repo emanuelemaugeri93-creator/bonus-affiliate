@@ -1,0 +1,532 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dice Math Adventure — Worksheet Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --stroke:#1e272e; --paper:#ffffff; --sb-bg:#e67e22;
+  --dice-bg:#ffffff; --dice-dot:#1e272e;
+  --c1:#ffeaa7; --c2:#fab1a0; --c3:#a29bfe; --c4:#74b9ff;
+  --h1:#f39c12; --h2:#c0392b; --h3:#6c3483; --h4:#1565c0;
+  --ans-color:#e74c3c;
+}
+[data-theme="brights"] {--c1:#ff9ff3;--c2:#feca57;--c3:#48dbfb;--c4:#1dd1a1;--dice-bg:#fff;--dice-dot:#2c3e50;}
+[data-theme="pastel"]  {--c1:#dfe6e9;--c2:#b2bec3;--c3:#fdcb6e;--c4:#a29bfe;--dice-bg:#fff;--dice-dot:#2d3436;}
+[data-theme="bold"]    {--c1:#e74c3c;--c2:#3498db;--c3:#2ecc71;--c4:#f39c12;--dice-bg:#fff;--dice-dot:#1e272e;}
+[data-theme="sky"]     {--c1:#d6eaf8;--c2:#aed6f1;--c3:#85c1e9;--c4:#5dade2;--dice-bg:#fff;--dice-dot:#154360;}
+[data-theme="mono"]    {--c1:#fff;--c2:#f1f2f6;--c3:#dfe4ea;--c4:#ced6e0;--dice-bg:#fff;--dice-dot:#2c3e50;}
+
+*{box-sizing:border-box;}
+body,html{
+  margin:0;padding:0;font-family:'Nunito',sans-serif;
+  display:flex;height:100vh;overflow:hidden;
+  background-color:#1e272e;
+  background-image:radial-gradient(#576574 2px,transparent 2px);
+  background-size:30px 30px;
+}
+
+/* SIDEBAR */
+#sidebar{
+  width:300px;min-width:300px;background:var(--sb-bg);color:#fff;
+  padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  border-right:5px solid var(--stroke);z-index:100;scrollbar-width:none;
+}
+#sidebar::-webkit-scrollbar{display:none;}
+.app-title{font-size:22px;font-weight:900;text-align:center;color:#fff;text-shadow:3px 3px 0 var(--stroke);margin:0;}
+.app-desc{font-size:11px;text-align:center;font-weight:700;background:var(--stroke);color:#feca57;padding:4px 8px;border-radius:6px;}
+.ctrl-group{background:rgba(255,255,255,0.18);padding:11px;border-radius:12px;border:3px solid rgba(255,255,255,0.25);box-shadow:4px 4px 0 rgba(0,0,0,0.25);}
+.ctrl-label{display:block;font-weight:900;margin-bottom:5px;font-size:11px;text-transform:uppercase;color:rgba(255,255,255,0.85);}
+select,button{
+  width:100%;padding:8px 10px;border-radius:8px;border:3px solid var(--stroke);
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;
+  cursor:pointer;outline:none;transition:0.1s;margin-bottom:6px;
+}
+select:last-child,button:last-child{margin-bottom:0;}
+select{background:#fff;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.25);appearance:none;}
+select:active,button:active{transform:translate(3px,3px);box-shadow:0 0 0;}
+.btn-scramble{background:#feca57;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);font-size:13px;padding:10px;}
+.btn-answer {background:#48dbfb;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);}
+.btn-print  {background:#fff;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);}
+.btn-png    {background:#ff9ff3;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);}
+.info-box{background:rgba(0,0,0,0.18);border-radius:10px;padding:10px;font-size:11px;font-weight:800;line-height:1.6;color:rgba(255,255,255,0.95);}
+.info-box b{color:#feca57;}
+.hint-text{font-size:10px;text-align:center;color:rgba(255,255,255,0.6);font-weight:700;}
+
+/* PREVIEW */
+#preview-area{
+  flex:1;padding:16px 12px;overflow-y:auto;
+  display:flex;justify-content:center;align-items:flex-start;
+  background:transparent;scrollbar-width:none;
+}
+#preview-area::-webkit-scrollbar{display:none;}
+
+/* A4 */
+.worksheet-page{
+  width:210mm;height:297mm;min-height:297mm;max-height:297mm;
+  background:var(--paper);border:5px solid var(--stroke);border-radius:15px;
+  box-shadow:15px 15px 0 rgba(0,0,0,0.3);
+  padding:8mm 10mm 6mm;
+  display:flex;flex-direction:column;color:var(--stroke);overflow:hidden;
+  transform:scale(0.76);transform-origin:top center;
+  margin:0 auto calc((297mm * 0.76) - 297mm);
+}
+
+/* HEADER */
+.ws-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:5px solid var(--stroke);padding-bottom:7px;margin-bottom:8px;flex-shrink:0;}
+.ws-title{font-size:32px;font-weight:900;text-transform:uppercase;letter-spacing:-1px;line-height:1;text-shadow:3px 3px 0 #feca57;}
+.ws-subtitle{font-size:11px;background:var(--stroke);color:#fff;display:inline-block;padding:3px 8px;border-radius:5px;font-weight:900;margin-top:5px;}
+.ws-info{display:flex;flex-direction:column;gap:5px;width:185px;}
+.info-row{display:flex;align-items:flex-end;font-size:12px;font-weight:900;}
+.info-label{margin-right:5px;white-space:nowrap;}
+.info-line{flex:1;border-bottom:3px dashed var(--stroke);height:13px;}
+
+/* RULE BANNER */
+.rule-banner{
+  display:flex;align-items:center;gap:10px;
+  background:var(--stroke);color:#fff;border-radius:10px;
+  padding:7px 14px;margin-bottom:8px;flex-shrink:0;
+}
+.rb-text{font-size:11px;font-weight:800;line-height:1.45;flex:1;}
+.rb-text b{color:#feca57;}
+
+/* EQUATIONS GRID — 2×4 */
+.eq-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;flex:1;min-height:0;
+}
+.eq-card{
+  border:4px solid var(--stroke);border-radius:12px;
+  display:flex;flex-direction:column;
+  box-shadow:5px 5px 0 var(--stroke);overflow:hidden;
+}
+.eq-card:nth-child(1){background:var(--c1);}
+.eq-card:nth-child(2){background:var(--c2);}
+.eq-card:nth-child(3){background:var(--c3);}
+.eq-card:nth-child(4){background:var(--c4);}
+.eq-card:nth-child(5){background:var(--c2);}
+.eq-card:nth-child(6){background:var(--c1);}
+.eq-card:nth-child(7){background:var(--c4);}
+.eq-card:nth-child(8){background:var(--c3);}
+
+.eq-card-header{
+  padding:4px 10px;border-bottom:3px solid var(--stroke);
+  font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.eq-card:nth-child(odd)  .eq-card-header{background:var(--h1);color:#fff;}
+.eq-card:nth-child(even) .eq-card-header{background:var(--h2);color:#fff;}
+.eq-card:nth-child(3) .eq-card-header,.eq-card:nth-child(7) .eq-card-header{background:var(--h3);color:#fff;}
+.eq-card:nth-child(4) .eq-card-header,.eq-card:nth-child(8) .eq-card-header{background:var(--h4);color:#fff;}
+
+.eq-body{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:8px 6px;gap:4px;flex-wrap:wrap;
+}
+/* op symbol between dice */
+.op-sym{font-size:22px;font-weight:900;color:var(--stroke);padding:0 4px;}
+.eq-sign{font-size:22px;font-weight:900;color:var(--stroke);padding:0 4px;}
+
+/* ANSWER BOX */
+.ans-box{
+  display:flex;align-items:center;justify-content:center;
+  width:46px;height:46px;
+  border:3px solid var(--stroke);border-radius:10px;
+  background:#fff;box-shadow:3px 3px 0 var(--stroke);
+  font-size:20px;font-weight:900;color:transparent;
+  transition:color 0.3s;flex-shrink:0;
+}
+.show-answers .ans-box{color:var(--ans-color);}
+
+/* ROLL YOUR OWN SECTION */
+.roll-section{
+  border:4px solid var(--stroke);border-radius:12px;
+  box-shadow:5px 5px 0 var(--stroke);
+  overflow:hidden;flex-shrink:0;margin-top:8px;
+}
+.roll-header{
+  background:var(--stroke);color:#feca57;
+  padding:5px 14px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1px;
+  display:flex;align-items:center;gap:8px;
+}
+.roll-body{
+  display:flex;align-items:center;justify-content:space-around;
+  padding:10px 14px;gap:12px;background:var(--c1);flex-wrap:wrap;
+}
+.roll-slot{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.roll-dice-empty{
+  width:46px;height:46px;
+  border:3px dashed var(--stroke);border-radius:10px;
+  background:#fff;
+}
+.roll-label{font-size:10px;font-weight:900;color:var(--stroke);}
+.roll-op{font-size:22px;font-weight:900;color:var(--stroke);padding-top:16px;}
+.roll-result{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.roll-eq-sign{font-size:22px;font-weight:900;color:var(--stroke);padding-top:16px;}
+.roll-ans-box{
+  width:52px;height:52px;
+  border:3px solid var(--stroke);border-radius:10px;
+  background:#fff;box-shadow:3px 3px 0 var(--stroke);
+}
+
+/* FOOTER */
+.ws-footer{display:flex;justify-content:space-between;align-items:center;border-top:3px solid var(--stroke);padding-top:5px;margin-top:6px;flex-shrink:0;}
+.ws-footer-note{font-size:9px;font-weight:800;color:#aaa;}
+.score-box{display:flex;gap:8px;}
+.score-item{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900;}
+.score-line{width:40px;border-bottom:2px dashed var(--stroke);height:10px;}
+
+[contenteditable="true"]{outline:none;border-radius:4px;border:2px dashed transparent;transition:0.2s;}
+[contenteditable="true"]:hover,[contenteditable="true"]:focus{background:rgba(0,0,0,0.05);border-color:var(--stroke);}
+
+@page{size:A4 portrait;margin:0;}
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  html,body{background:none;margin:0;padding:0;width:100%;height:100%;display:block;overflow:hidden;}
+  #sidebar,.hint-text{display:none !important;}
+  #preview-area{padding:0;margin:0;display:block;width:100%;height:100%;overflow:hidden;background:none;}
+  .worksheet-page{
+    margin:0;width:100%;height:100%;max-height:100vh;
+    box-shadow:none !important;border:5px solid var(--stroke) !important;
+    border-radius:15px !important;transform:none !important;
+  }
+  .show-answers .ans-box{color:transparent !important;}
+  [contenteditable="true"]{border:none !important;background:none !important;}
+}
+</style>
+</head>
+<body data-theme="mono">
+
+<div id="sidebar">
+  <h1 class="app-title">🎲 DICE MATH</h1>
+  <p class="app-desc">Dice Math Adventure Studio — A4 Locked</p>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Color Theme</span>
+    <select id="cfg-theme" onchange="applyTheme()">
+      <option value="mono" selected>Grayscale (Print Safe)</option>
+      <option value="brights">🌈 Bright Colors</option>
+      <option value="pastel">🌸 Soft Pastel</option>
+      <option value="bold">🔴 Bold Primary</option>
+      <option value="sky">🌊 Sky Blue</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Operation</span>
+    <select id="cfg-op" onchange="generate()">
+      <option value="add" selected>Addition (+)</option>
+      <option value="mul">Multiplication (×)</option>
+      <option value="mixed">Mixed (+/×)</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Number of Dice</span>
+    <select id="cfg-dice" onchange="generate()">
+      <option value="2" selected>2 Dice</option>
+      <option value="3">3 Dice</option>
+      <option value="4">4 Dice</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Dice Type</span>
+    <select id="cfg-sides" onchange="generate()">
+      <option value="6" selected>Standard D6 (1–6)</option>
+      <option value="8">D8 (1–8)</option>
+      <option value="10">D10 (1–10)</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Equations per Page</span>
+    <select id="cfg-count" onchange="generate()">
+      <option value="4">4 equations (large)</option>
+      <option value="6">6 equations</option>
+      <option value="8" selected>8 equations (standard)</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Roll Your Own Section</span>
+    <select id="cfg-roll" onchange="generate()">
+      <option value="yes" selected>✅ Include</option>
+      <option value="no">❌ Exclude</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group" style="background:transparent;border:none;box-shadow:none;padding:0;">
+    <button class="btn-scramble" onclick="generate()">🎲 ROLL NEW DICE!</button>
+    <button class="btn-answer" id="btn-ans" onclick="toggleAnswers()">👁️ SHOW ANSWERS</button>
+    <button class="btn-print" onclick="window.print()">🖨️ PRINT WORKSHEET</button>
+    <button class="btn-png" onclick="savePNG()">💾 SAVE AS PNG</button>
+  </div>
+
+  <div class="info-box">
+    <b>How to Play:</b><br>
+    Count the dots on each die 🎲<br>
+    Use the <b>+</b> or <b>×</b> sign to combine them.<br>
+    Write your answer in the box!<br><br>
+    <b>Roll Your Own:</b> Roll real dice at home, draw the dots, and write the answer 🎉
+  </div>
+  <p class="hint-text">★ Click any text on the worksheet to edit it!</p>
+</div>
+
+<div id="preview-area">
+  <div class="worksheet-page" id="worksheet">
+
+    <div class="ws-header">
+      <div>
+        <div class="ws-title" id="txt-title" contenteditable="true" spellcheck="false">🎲 DICE MATH!</div>
+        <div class="ws-subtitle" id="txt-sub" contenteditable="true" spellcheck="false">Count the dots on each die, then solve the equation!</div>
+      </div>
+      <div class="ws-info">
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Name:</span><div class="info-line"></div></div>
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Date:</span><div class="info-line"></div></div>
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Grade:</span><div class="info-line"></div></div>
+      </div>
+    </div>
+
+    <div class="rule-banner">
+      <span style="font-size:20px;">🎲</span>
+      <div class="rb-text" id="rb-text">Look at the dots on each die. <b>Count them carefully</b>, then add the numbers together. Write your answer in the box!</div>
+    </div>
+
+    <div class="eq-grid" id="eq-grid"></div>
+
+    <div class="roll-section" id="roll-section">
+      <div class="roll-header">
+        🎲 Roll Your Own! — Roll real dice and fill in the dots yourself
+      </div>
+      <div class="roll-body" id="roll-body"></div>
+    </div>
+
+    <div class="ws-footer">
+      <span class="ws-footer-note" id="txt-footer" contenteditable="true" spellcheck="false">© Dice Math Adventure — Worksheet Studio</span>
+      <div class="score-box">
+        <div class="score-item">Time: <div class="score-line"></div></div>
+        <div class="score-item">Score: <div class="score-line"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let puzzles = [];
+let isAnswerShown = false;
+
+function applyTheme(){
+  document.body.setAttribute('data-theme', document.getElementById('cfg-theme').value);
+  render();
+}
+
+function rng(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+// ── DICE SVG ──
+// dot positions for standard D6 faces
+const DOT_POSITIONS = {
+  1: [[50,50]],
+  2: [[25,25],[75,75]],
+  3: [[25,25],[50,50],[75,75]],
+  4: [[25,25],[75,25],[25,75],[75,75]],
+  5: [[25,25],[75,25],[50,50],[25,75],[75,75]],
+  6: [[25,25],[75,25],[25,50],[75,50],[25,75],[75,75]]
+};
+
+function diceSVG(val, size, dotColor, bgColor, borderColor) {
+  size = size || 46;
+  dotColor   = dotColor   || '#1e272e';
+  bgColor    = bgColor    || '#ffffff';
+  borderColor= borderColor|| '#1e272e';
+  const r    = size * 0.13; // dot radius
+  const rx   = size * 0.16; // rounded rect
+
+  let dots = '';
+  const positions = DOT_POSITIONS[Math.min(val, 6)] || DOT_POSITIONS[6];
+  positions.forEach(([px,py]) => {
+    const x = (px/100)*size;
+    const y = (py/100)*size;
+    dots += `<circle cx="${x}" cy="${y}" r="${r}" fill="${dotColor}"/>`;
+  });
+
+  // For D8/D10 values > 6, show number instead of dots
+  const showNum = val > 6;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <defs><filter id="ds${val}"><feDropShadow dx="2" dy="2" stdDeviation="1.5" flood-color="rgba(0,0,0,0.2)"/></filter></defs>
+    <rect x="2" y="2" width="${size-4}" height="${size-4}" rx="${rx}" ry="${rx}"
+      fill="${bgColor}" stroke="${borderColor}" stroke-width="2.5" filter="url(#ds${val})"/>
+    ${showNum
+      ? `<text x="${size/2}" y="${size/2}" text-anchor="middle" dominant-baseline="central"
+          font-family="Nunito,sans-serif" font-size="${size*0.38}" font-weight="900" fill="${dotColor}">${val}</text>`
+      : dots}
+  </svg>`;
+}
+
+function buildPuzzle(nDice, sides, op) {
+  const vals = Array.from({length:nDice}, () => rng(1, sides));
+  const chosenOp = op==='mixed' ? (Math.random()<0.5?'add':'mul') : op;
+  let ans;
+  if(chosenOp==='add') ans = vals.reduce((a,b)=>a+b,0);
+  else ans = vals.reduce((a,b)=>a*b,1);
+  const opSym = chosenOp==='add' ? '+' : '×';
+  return {vals, ans, opSym};
+}
+
+function render() {
+  const grid   = document.getElementById('eq-grid');
+  const ws     = document.getElementById('worksheet');
+  const nCount = parseInt(document.getElementById('cfg-count').value);
+  const showRoll = document.getElementById('cfg-roll').value === 'yes';
+  const nDice  = parseInt(document.getElementById('cfg-dice').value);
+
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = nCount <= 4 ? '1fr 1fr' : '1fr 1fr';
+
+  const style = getComputedStyle(document.body);
+  const dotColor = style.getPropertyValue('--dice-dot').trim() || '#1e272e';
+  const bgColor  = style.getPropertyValue('--dice-bg').trim()  || '#ffffff';
+
+  puzzles.slice(0, nCount).forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = 'eq-card';
+
+    // Header
+    card.innerHTML = `<div class="eq-card-header">
+      <span>Equation ${idx+1}</span>
+      <span style="font-size:9px;opacity:0.8">${p.vals.join(' ${p.opSym} ')} = ?</span>
+    </div>`;
+    card.querySelector('.eq-card-header span:last-child').textContent =
+      p.vals.join(` ${p.opSym} `) + ' = ?';
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'eq-body';
+
+    p.vals.forEach((v, vi) => {
+      if(vi > 0) {
+        const opEl = document.createElement('div');
+        opEl.className = 'op-sym';
+        opEl.textContent = p.opSym;
+        body.appendChild(opEl);
+      }
+      const diceWrap = document.createElement('div');
+      diceWrap.innerHTML = diceSVG(v, 46, dotColor, bgColor, '#1e272e');
+      body.appendChild(diceWrap);
+    });
+
+    // = sign
+    const eqSign = document.createElement('div');
+    eqSign.className = 'eq-sign';
+    eqSign.textContent = '=';
+    body.appendChild(eqSign);
+
+    // Answer box
+    const ansBox = document.createElement('div');
+    ansBox.className = 'ans-box';
+    ansBox.textContent = p.ans;
+    body.appendChild(ansBox);
+
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+
+  // Show answers state
+  if(isAnswerShown) ws.classList.add('show-answers');
+  else ws.classList.remove('show-answers');
+
+  // Roll Your Own section
+  const rollSection = document.getElementById('roll-section');
+  const rollBody    = document.getElementById('roll-body');
+  rollSection.style.display = showRoll ? 'block' : 'none';
+
+  if(showRoll) {
+    rollBody.innerHTML = '';
+    const rollOp = document.getElementById('cfg-op').value === 'mul' ? '×' : '+';
+    // 3 "roll your own" slots
+    for(let r=0; r<3; r++) {
+      if(r>0) {
+        const sep = document.createElement('div');
+        sep.style.cssText = 'width:2px;height:60px;background:#1e272e;opacity:0.15;border-radius:2px;';
+        rollBody.appendChild(sep);
+      }
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;align-items:center;gap:8px;';
+
+      for(let d=0; d<nDice; d++) {
+        if(d>0) {
+          const op = document.createElement('div');
+          op.className='roll-op';
+          op.textContent = rollOp;
+          wrap.appendChild(op);
+        }
+        const slot = document.createElement('div');
+        slot.className='roll-slot';
+        slot.innerHTML=`<div class="roll-dice-empty"></div><div class="roll-label">Die ${d+1}</div>`;
+        wrap.appendChild(slot);
+      }
+      const eqS = document.createElement('div');
+      eqS.className='roll-eq-sign';
+      eqS.textContent='=';
+      wrap.appendChild(eqS);
+
+      const ansS = document.createElement('div');
+      ansS.innerHTML=`<div class="roll-slot"><div class="roll-ans-box"></div><div class="roll-label">Answer</div></div>`;
+      wrap.appendChild(ansS);
+
+      rollBody.appendChild(wrap);
+    }
+  }
+}
+
+function generate() {
+  if(isAnswerShown) toggleAnswers(true);
+  const nDice = parseInt(document.getElementById('cfg-dice').value);
+  const sides = parseInt(document.getElementById('cfg-sides').value);
+  const op    = document.getElementById('cfg-op').value;
+  const nCount= parseInt(document.getElementById('cfg-count').value);
+
+  const opLabels={add:'Add the dots!',mul:'Multiply the dots!',mixed:'Add or Multiply!'};
+  document.getElementById('rb-text').innerHTML =
+    `Look at the dots on each die. <b>Count them carefully</b>, then <b>${opLabels[op]}</b> Write your answer in the box.`;
+
+  puzzles = Array.from({length:nCount}, () => buildPuzzle(nDice, sides, op));
+  render();
+}
+
+function toggleAnswers(forceHide) {
+  isAnswerShown = forceHide===true ? false : !isAnswerShown;
+  const ws  = document.getElementById('worksheet');
+  const btn = document.getElementById('btn-ans');
+  if(isAnswerShown){
+    ws.classList.add('show-answers');
+    btn.textContent='👁️ HIDE ANSWERS';
+    btn.style.background='#ff4757'; btn.style.color='#fff';
+  } else {
+    ws.classList.remove('show-answers');
+    btn.textContent='👁️ SHOW ANSWERS';
+    btn.style.background='#48dbfb'; btn.style.color='#1e272e';
+  }
+}
+
+function savePNG(){
+  const wasShown = isAnswerShown;
+  if(isAnswerShown) toggleAnswers(true);
+  const ws=document.getElementById('worksheet');
+  const editables=ws.querySelectorAll('[contenteditable]');
+  editables.forEach(el=>el.style.border='none');
+  htmlToImage.toPng(ws,{pixelRatio:2,backgroundColor:'#fff'})
+    .then(dataUrl=>{
+      const a=document.createElement('a');
+      a.download='DiceMathAdventure.png'; a.href=dataUrl; a.click();
+    })
+    .catch(err=>{console.error(err);alert('PNG export failed.');})
+    .finally(()=>{editables.forEach(el=>el.style.border='');});
+}
+
+generate();
+</script>
+</body>
+</html>
