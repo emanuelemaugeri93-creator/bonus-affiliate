@@ -1,0 +1,475 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Target Bullseye — Worksheet Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --stroke:#1e272e;
+  --paper:#ffffff;
+  --sb-bg:#e74c3c;
+
+  /* Theme: mono */
+  --ring1:#f8f9fa; --ring2:#dee2e6; --ring3:#adb5bd; --ring4:#6c757d; --bull:#343a40;
+  --r1txt:#343a40;  --r2txt:#343a40; --r3txt:#fff; --r4txt:#fff; --btxt:#fff;
+  --accA:#e74c3c; --accB:#c0392b;
+}
+[data-theme="fire"]   { --ring1:#fff3cd; --ring2:#ffc107; --ring3:#fd7e14; --ring4:#dc3545; --bull:#6f1a2c; --r1txt:#333; --r2txt:#333; --r3txt:#fff; --r4txt:#fff; --btxt:#fff; --accA:#e74c3c; --accB:#c0392b; }
+[data-theme="ocean"]  { --ring1:#e0f7fa; --ring2:#4dd0e1; --ring3:#0097a7; --ring4:#006064; --bull:#003333; --r1txt:#003333; --r2txt:#003333; --r3txt:#fff; --r4txt:#fff; --btxt:#fff; --accA:#00bcd4; --accB:#006064; }
+[data-theme="forest"] { --ring1:#f1f8e9; --ring2:#aed581; --ring3:#558b2f; --ring4:#1b5e20; --bull:#0a2e0a; --r1txt:#1b5e20; --r2txt:#1b5e20; --r3txt:#fff; --r4txt:#fff; --btxt:#fff; --accA:#66bb6a; --accB:#1b5e20; }
+[data-theme="candy"]  { --ring1:#fce4ec; --ring2:#f48fb1; --ring3:#ad1457; --ring4:#880e4f; --bull:#2d0017; --r1txt:#880e4f; --r2txt:#880e4f; --r3txt:#fff; --r4txt:#fff; --btxt:#fff; --accA:#e91e63; --accB:#880e4f; }
+[data-theme="mono"]   { --ring1:#f8f9fa; --ring2:#dee2e6; --ring3:#868e96; --ring4:#343a40; --bull:#1e272e; --r1txt:#1e272e; --r2txt:#1e272e; --r3txt:#fff; --r4txt:#fff; --btxt:#fff; --accA:#495057; --accB:#1e272e; }
+
+*{box-sizing:border-box;}
+body,html{
+  margin:0;padding:0;font-family:'Nunito',sans-serif;
+  display:flex;height:100vh;overflow:hidden;
+  background-color:#1e272e;
+  background-image:radial-gradient(#576574 2px,transparent 2px);
+  background-size:30px 30px;
+}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:300px;min-width:300px;background:var(--sb-bg);color:#fff;
+  padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  border-right:5px solid var(--stroke);z-index:100;scrollbar-width:none;
+}
+#sidebar::-webkit-scrollbar{display:none;}
+.app-title{font-size:22px;font-weight:900;text-align:center;color:#fff;text-shadow:3px 3px 0 var(--stroke);margin:0;}
+.app-desc{font-size:11px;text-align:center;font-weight:700;background:var(--stroke);color:#fff;padding:4px 8px;border-radius:6px;}
+.ctrl-group{background:rgba(255,255,255,0.18);padding:11px;border-radius:12px;border:3px solid var(--stroke);box-shadow:4px 4px 0 var(--stroke);}
+.ctrl-label{display:block;font-weight:900;margin-bottom:5px;font-size:11px;text-transform:uppercase;color:var(--stroke);}
+select,button{
+  width:100%;padding:8px 10px;border-radius:8px;border:3px solid var(--stroke);
+  font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;
+  cursor:pointer;outline:none;transition:0.1s;margin-bottom:6px;
+}
+select:last-child,button:last-child{margin-bottom:0;}
+select{background:#fff;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);appearance:none;}
+select:active,button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--stroke);}
+.btn-scramble{background:#feca57;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);font-size:13px;padding:10px;}
+.btn-answer {background:#48dbfb;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);}
+.btn-print  {background:#fff;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);}
+.btn-png    {background:#ff9ff3;color:var(--stroke);box-shadow:3px 3px 0 var(--stroke);}
+.info-box{background:rgba(0,0,0,0.15);border-radius:10px;padding:10px;font-size:11px;font-weight:800;line-height:1.6;color:rgba(255,255,255,0.95);}
+.info-box b{color:#feca57;}
+.hint-text{font-size:10px;text-align:center;color:rgba(255,255,255,0.7);font-weight:700;}
+
+/* ── PREVIEW ── */
+#preview-area{
+  flex:1;padding:16px 12px;overflow-y:auto;
+  display:flex;justify-content:center;align-items:flex-start;
+  background:transparent;scrollbar-width:none;
+}
+#preview-area::-webkit-scrollbar{display:none;}
+
+/* ── A4 ── */
+.worksheet-page{
+  width:210mm;height:297mm;min-height:297mm;max-height:297mm;
+  background:var(--paper);border:5px solid var(--stroke);border-radius:15px;
+  box-shadow:15px 15px 0 rgba(0,0,0,0.3);
+  position:relative;padding:9mm 10mm 7mm;
+  display:flex;flex-direction:column;color:var(--stroke);overflow:hidden;
+  transform:scale(0.76);transform-origin:top center;
+  margin:0 auto calc((297mm * 0.76) - 297mm);
+}
+
+/* HEADER */
+.ws-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:5px solid var(--stroke);padding-bottom:7px;margin-bottom:8px;flex-shrink:0;}
+.ws-title{font-size:32px;font-weight:900;text-transform:uppercase;letter-spacing:-1px;line-height:1;text-shadow:3px 3px 0 #feca57;}
+.ws-subtitle{font-size:11px;background:var(--stroke);color:#fff;display:inline-block;padding:3px 8px;border-radius:5px;font-weight:900;margin-top:5px;}
+.ws-info{display:flex;flex-direction:column;gap:5px;width:190px;}
+.info-row{display:flex;align-items:flex-end;font-size:12px;font-weight:900;}
+.info-label{margin-right:5px;white-space:nowrap;}
+.info-line{flex:1;border-bottom:3px dashed var(--stroke);height:13px;}
+
+/* RULE BANNER */
+.rule-banner{
+  display:flex;align-items:center;gap:10px;
+  background:var(--stroke);color:#fff;border-radius:10px;
+  padding:7px 14px;margin-bottom:8px;flex-shrink:0;
+}
+.rb-text{font-size:11px;font-weight:800;line-height:1.45;flex:1;}
+
+/* BULLSEYE GRID — 2×2 */
+.bullseye-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  flex:1;min-height:0;
+}
+.bullseye-card{
+  display:flex;flex-direction:column;
+  border:4px solid var(--stroke);border-radius:14px;
+  box-shadow:5px 5px 0 var(--stroke);overflow:hidden;
+  background:#fafafa;
+}
+.bc-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 10px;border-bottom:3px solid var(--stroke);
+  background:var(--accB);color:#fff;
+}
+.bc-num{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;}
+.bc-op{font-size:11px;font-weight:900;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:5px;}
+.bc-body{
+  flex:1;display:flex;align-items:center;justify-content:center;padding:6px;
+}
+/* answer section */
+.bc-footer{
+  border-top:3px solid var(--stroke);padding:6px 10px 4px;
+  display:flex;flex-direction:column;gap:5px;
+  background:rgba(0,0,0,0.03);
+}
+.bc-answer-row{display:flex;align-items:center;gap:8px;}
+.bc-prompt{font-size:11px;font-weight:900;color:var(--stroke);white-space:nowrap;}
+.bc-answer-line{
+  flex:1;border-bottom:3px solid var(--stroke);height:16px;
+}
+.bc-solution{
+  display:none;
+  align-items:center;gap:6px;
+  background:rgba(231,76,60,0.08);border:2px dashed var(--accA);
+  border-radius:7px;padding:4px 8px;
+}
+.bc-solution.visible{display:flex;}
+.bc-sol-label{font-size:10px;font-weight:900;color:var(--accA);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+.bc-sol-val{font-size:13px;font-weight:900;color:var(--accA);}
+
+/* FOOTER */
+.ws-footer{display:flex;justify-content:space-between;align-items:center;border-top:3px solid var(--stroke);padding-top:5px;margin-top:5px;flex-shrink:0;}
+.ws-footer-note{font-size:9px;font-weight:800;color:#aaa;}
+.score-box{display:flex;gap:10px;}
+.score-item{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:900;}
+.score-line{width:44px;border-bottom:2px dashed var(--stroke);height:11px;}
+
+[contenteditable="true"]{outline:none;border-radius:4px;border:2px dashed transparent;transition:0.2s;}
+[contenteditable="true"]:hover,[contenteditable="true"]:focus{background:rgba(0,0,0,0.05);border-color:var(--stroke);}
+
+@page{size:A4 portrait;margin:0;}
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  html,body{background:none;margin:0;padding:0;width:100%;height:100%;display:block;overflow:hidden;}
+  #sidebar,.hint-text{display:none !important;}
+  #preview-area{padding:0;margin:0;display:block;width:100%;height:100%;overflow:hidden;background:none;}
+  .worksheet-page{
+    margin:0;width:100%;height:100%;max-height:100vh;padding:9mm 10mm 7mm;
+    box-shadow:none !important;border:5px solid var(--stroke) !important;
+    border-radius:15px !important;transform:none !important;
+  }
+  .bc-solution{display:none !important;}
+  [contenteditable="true"]{border:none !important;background:none !important;}
+}
+</style>
+</head>
+<body data-theme="mono">
+
+<div id="sidebar">
+  <h1 class="app-title">🎯 BULLSEYE MATH</h1>
+  <p class="app-desc">Target Number Worksheet Studio — A4 Locked</p>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Color Theme</span>
+    <select id="cfg-theme" onchange="applyTheme()">
+      <option value="mono" selected>Grayscale (Print Safe)</option>
+      <option value="fire">🔥 Fire Target</option>
+      <option value="ocean">🌊 Ocean Depth</option>
+      <option value="forest">🌿 Forest Green</option>
+      <option value="candy">🍬 Cotton Candy</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Math Operation</span>
+    <select id="cfg-op" onchange="generate()">
+      <option value="add">Addition (+)</option>
+      <option value="mul">Multiplication (×)</option>
+      <option value="mixed" selected>Mixed (+/×)</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Difficulty</span>
+    <select id="cfg-diff" onchange="generate()">
+      <option value="easy">Easy (Grade 2–3)</option>
+      <option value="normal" selected>Normal (Grade 3–5)</option>
+      <option value="hard">Hard (Grade 5–6)</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Number of Rings</span>
+    <select id="cfg-rings" onchange="generate()">
+      <option value="3">3 Rings</option>
+      <option value="4" selected>4 Rings</option>
+      <option value="5">5 Rings</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Numbers per Ring</span>
+    <select id="cfg-perring" onchange="generate()">
+      <option value="4">4 numbers</option>
+      <option value="6" selected>6 numbers</option>
+      <option value="8">8 numbers</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group" style="background:transparent;border:none;box-shadow:none;padding:0;">
+    <button class="btn-scramble" onclick="generate()">🎲 SCRAMBLE NEW TARGETS</button>
+    <button class="btn-answer" id="btn-ans" onclick="toggleAnswers()">👁️ SHOW ANSWER KEY</button>
+    <button class="btn-print" onclick="window.print()">🖨️ PRINT WORKSHEET</button>
+    <button class="btn-png" onclick="savePNG()">💾 SAVE AS PNG</button>
+  </div>
+
+  <div class="info-box">
+    <b>How to Play:</b><br>
+    Pick ONE number from each ring.<br>
+    Combine them using the operation shown.<br>
+    Your result must hit the <b>Bullseye target</b> in the center!<br><br>
+    <b>Example (Add):</b> Ring 3=2, Ring 2=7, Ring 1=5 → 2+7+5 = <b>14 🎯</b>
+  </div>
+  <p class="hint-text">★ Click worksheet text to edit it directly!</p>
+</div>
+
+<div id="preview-area">
+  <div class="worksheet-page" id="worksheet">
+
+    <div class="ws-header">
+      <div>
+        <div class="ws-title" id="txt-title" contenteditable="true" spellcheck="false">BULLSEYE MATH</div>
+        <div class="ws-subtitle" id="txt-sub" contenteditable="true" spellcheck="false">Pick one number from each ring — hit the Target in the center!</div>
+      </div>
+      <div class="ws-info">
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Name:</span><div class="info-line"></div></div>
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Date:</span><div class="info-line"></div></div>
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Grade:</span><div class="info-line"></div></div>
+      </div>
+    </div>
+
+    <div class="rule-banner">
+      <span style="font-size:20px;">🎯</span>
+      <div class="rb-text" id="rb-rule">Select ONE number from each ring and combine them. Your answer must equal the <strong style="color:#feca57">Bullseye number</strong> in the center. Write your chosen combination in the answer box below each target.</div>
+    </div>
+
+    <div class="bullseye-grid" id="bullseye-grid">
+      <!-- injected via JS -->
+    </div>
+
+    <div class="ws-footer">
+      <span class="ws-footer-note" id="txt-footer" contenteditable="true" spellcheck="false">© Target Bullseye Worksheet — Created with Worksheet Studio</span>
+      <div class="score-box">
+        <div class="score-item">Time: <div class="score-line"></div></div>
+        <div class="score-item">Score: <div class="score-line"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let puzzles = [];
+let isAnswerShown = false;
+
+function applyTheme() {
+  document.body.setAttribute('data-theme', document.getElementById('cfg-theme').value);
+  generate();
+}
+
+function rng(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function getRanges() {
+  const diff = document.getElementById('cfg-diff').value;
+  if(diff==='easy')   return [[1,5],[2,8],[3,10],[4,12],[5,15]];
+  if(diff==='normal') return [[1,9],[3,12],[5,15],[7,18],[9,20]];
+  return [[2,12],[5,18],[8,22],[10,28],[12,35]];
+}
+
+function buildPuzzle(rings, perRing) {
+  const op  = document.getElementById('cfg-op').value;
+  const ranges = getRanges();
+
+  // Generate ring numbers (outermost ring = index 0, innermost before bull = rings-1)
+  const ringNums = [];
+  for(let r=0; r<rings; r++) {
+    const [lo,hi] = ranges[Math.min(r, ranges.length-1)];
+    const nums = [];
+    for(let i=0; i<perRing; i++) nums.push(rng(lo,hi));
+    ringNums.push(nums);
+  }
+
+  // Pick one from each ring to form a valid solution
+  const solutionPick = ringNums.map(nums => nums[Math.floor(Math.random()*nums.length)]);
+
+  // Compute bullseye
+  let target;
+  let opSymbol;
+  if(op==='add') {
+    target = solutionPick.reduce((a,b)=>a+b,0);
+    opSymbol = '+';
+  } else if(op==='mul') {
+    target = solutionPick.reduce((a,b)=>a*b,1);
+    opSymbol = '×';
+  } else {
+    // mixed: alternate + ×
+    target = solutionPick.reduce((acc,v,i) => i===0 ? v : i%2===0 ? acc*v : acc+v, 0);
+    opSymbol = '+/×';
+  }
+
+  // Build solution string
+  const solStr = solutionPick.join(` ${opSymbol} `) + ` = ${target}`;
+
+  return { ringNums, target, solutionPick, solStr, opSymbol };
+}
+
+// ── SVG BULLSEYE RENDERER ──
+function buildBullseyeSVG(puzzle, idx) {
+  const rings  = parseInt(document.getElementById('cfg-rings').value);
+  const perRing= parseInt(document.getElementById('cfg-perring').value);
+  const { ringNums, target } = puzzle;
+
+  // Theme colors for rings (outermost to innermost)
+  const style = getComputedStyle(document.body);
+  const ringFills  = ['--ring1','--ring2','--ring3','--ring4','--ring4'].map(v=>style.getPropertyValue(v).trim());
+  const ringTexts  = ['--r1txt','--r2txt','--r3txt','--r4txt','--r4txt'].map(v=>style.getPropertyValue(v).trim());
+  const bullFill   = style.getPropertyValue('--bull').trim() || '#1e272e';
+  const bullTxt    = style.getPropertyValue('--btxt').trim() || '#fff';
+  const stroke     = '#1e272e';
+
+  const svgSize  = 220;
+  const cx = svgSize/2, cy = svgSize/2;
+  const bullR    = svgSize * 0.10;
+  const outerR   = svgSize * 0.46;
+  const ringStep = (outerR - bullR) / rings;
+
+  let svgParts = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
+  svgParts += `<defs><filter id="sh${idx}"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.18)"/></filter></defs>`;
+
+  // Draw rings from outside in
+  for(let r=rings-1; r>=0; r--) {
+    const rOuter = bullR + ringStep*(r+1);
+    const rInner = bullR + ringStep*r;
+    const fill   = ringFills[rings-1-r] || '#ccc';
+    const txtCol = ringTexts[rings-1-r] || '#000';
+    const nums   = ringNums[r];
+
+    // Draw ring as circle (filled) — inner circle will cover it
+    svgParts += `<circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="${fill}" stroke="${stroke}" stroke-width="2.5" filter="url(#sh${idx})"/>`;
+
+    // Place numbers around the ring
+    const angleStep = (2*Math.PI) / perRing;
+    const labelR = (rOuter + rInner) / 2;
+    const fontSize = Math.max(9, Math.min(14, Math.floor(ringStep*0.35)));
+
+    for(let i=0; i<nums.length && i<perRing; i++) {
+      const angle = angleStep*i - Math.PI/2;
+      const tx = cx + labelR*Math.cos(angle);
+      const ty = cy + labelR*Math.sin(angle);
+
+      // Small number badge
+      const bR = Math.max(9, fontSize*0.85);
+      svgParts += `<circle cx="${tx}" cy="${ty}" r="${bR}" fill="rgba(255,255,255,0.35)" stroke="${stroke}" stroke-width="1.5"/>`;
+      svgParts += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central"
+        font-family="Nunito,sans-serif" font-size="${fontSize}" font-weight="900" fill="${txtCol}">${nums[i]}</text>`;
+    }
+
+    // Ring separator label (ring number from outside)
+    const ringLabel = `Ring ${rings-r}`;
+    const lblAngle = Math.PI*0.5;
+    const lblX = cx + (rOuter - ringStep/2)*Math.cos(lblAngle);
+    const lblY = cy + (rOuter - ringStep/2)*Math.sin(lblAngle) + ringStep*0.5;
+  }
+
+  // Draw bullseye center
+  svgParts += `<circle cx="${cx}" cy="${cy}" r="${bullR}" fill="${bullFill}" stroke="${stroke}" stroke-width="3" filter="url(#sh${idx})"/>`;
+  const bullFontSize = bullR > 20 ? 13 : 10;
+  svgParts += `<text x="${cx}" y="${cy-5}" text-anchor="middle" dominant-baseline="central"
+    font-family="Nunito,sans-serif" font-size="9" font-weight="900" fill="${bullTxt}" opacity="0.8">TARGET</text>`;
+  svgParts += `<text x="${cx}" y="${cy+8}" text-anchor="middle" dominant-baseline="central"
+    font-family="Nunito,sans-serif" font-size="${bullFontSize}" font-weight="900" fill="${bullTxt}">${target}</text>`;
+
+  // Crosshair lines
+  svgParts += `<line x1="${cx}" y1="${cy-outerR+2}" x2="${cx}" y2="${cy-bullR-2}" stroke="${stroke}" stroke-width="1.5" opacity="0.25" stroke-dasharray="3 3"/>`;
+  svgParts += `<line x1="${cx}" y1="${cy+bullR+2}" x2="${cx}" y2="${cy+outerR-2}" stroke="${stroke}" stroke-width="1.5" opacity="0.25" stroke-dasharray="3 3"/>`;
+  svgParts += `<line x1="${cx-outerR+2}" y1="${cy}" x2="${cx-bullR-2}" y2="${cy}" stroke="${stroke}" stroke-width="1.5" opacity="0.25" stroke-dasharray="3 3"/>`;
+  svgParts += `<line x1="${cx+bullR+2}" y1="${cy}" x2="${cx+outerR-2}" y2="${cy}" stroke="${stroke}" stroke-width="1.5" opacity="0.25" stroke-dasharray="3 3"/>`;
+
+  svgParts += `</svg>`;
+  return svgParts;
+}
+
+function generate() {
+  if(isAnswerShown) toggleAnswers(true);
+
+  const rings   = parseInt(document.getElementById('cfg-rings').value);
+  const perRing = parseInt(document.getElementById('cfg-perring').value);
+  const op      = document.getElementById('cfg-op').value;
+  const opLabel = op==='add' ? 'Addition (+)' : op==='mul' ? 'Multiplication (×)' : 'Mixed (+/×)';
+
+  puzzles = [buildPuzzle(rings,perRing), buildPuzzle(rings,perRing), buildPuzzle(rings,perRing), buildPuzzle(rings,perRing)];
+
+  // Update rule
+  const ruleMap = {
+    add:   'Pick ONE number from each ring and ADD them. Your total must equal the Bullseye target in the center.',
+    mul:   'Pick ONE number from each ring and MULTIPLY them. Your product must equal the Bullseye target.',
+    mixed: 'Pick ONE number per ring. Alternate + and × as you move inward. Your result must hit the Bullseye!'
+  };
+  document.getElementById('rb-rule').innerHTML = ruleMap[op] + ' Write your answer combination below each target.';
+
+  const grid = document.getElementById('bullseye-grid');
+  grid.innerHTML = '';
+
+  puzzles.forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = 'bullseye-card';
+
+    card.innerHTML = `
+      <div class="bc-header">
+        <span class="bc-num">Target ${idx+1}</span>
+        <span class="bc-op">${opLabel}</span>
+      </div>
+      <div class="bc-body">${buildBullseyeSVG(p, idx)}</div>
+      <div class="bc-footer">
+        <div class="bc-answer-row">
+          <span class="bc-prompt">My answer:</span>
+          <div class="bc-answer-line"></div>
+        </div>
+        <div class="bc-solution" id="sol-${idx}">
+          <span class="bc-sol-label">✅ Solution:</span>
+          <span class="bc-sol-val">${p.solStr}</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function toggleAnswers(forceHide) {
+  isAnswerShown = forceHide===true ? false : !isAnswerShown;
+  const btn = document.getElementById('btn-ans');
+  document.querySelectorAll('.bc-solution').forEach(el => {
+    el.classList.toggle('visible', isAnswerShown);
+  });
+  if(isAnswerShown) {
+    btn.textContent = '👁️ HIDE ANSWER KEY';
+    btn.style.background = '#ff4757'; btn.style.color = '#fff';
+  } else {
+    btn.textContent = '👁️ SHOW ANSWER KEY';
+    btn.style.background = '#48dbfb'; btn.style.color = '#1e272e';
+  }
+}
+
+function savePNG() {
+  const ws = document.getElementById('worksheet');
+  const editables = ws.querySelectorAll('[contenteditable]');
+  editables.forEach(el => el.style.border='none');
+  htmlToImage.toPng(ws, { pixelRatio:2, backgroundColor:'#fff' })
+    .then(dataUrl => {
+      const a=document.createElement('a');
+      a.download=`BullseyeMath_${isAnswerShown?'Answer':'Student'}.png`;
+      a.href=dataUrl; a.click();
+    })
+    .catch(err=>{console.error(err);alert('PNG export failed.');})
+    .finally(()=>{editables.forEach(el=>el.style.border='');});
+}
+
+generate();
+</script>
+</body>
+</html>
