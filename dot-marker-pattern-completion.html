@@ -1,0 +1,603 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dot Marker Pattern Completion — Worksheet Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://api.fontshare.com/v2/css?f[]=nunito@700,800,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ── */
+:root {
+  --stroke: #1e272e;
+  --paper:  #ffffff;
+  --sb-bg:  #7b2d8b;
+
+  /* Dot colors per theme */
+  --dot-1: #e74c3c; --dot-2: #3498db; --dot-3: #f1c40f;
+  --dot-4: #2ecc71; --dot-5: #e67e22; --dot-6: #9b59b6;
+  --dot-blank: #ffffff;
+
+  /* Card accent bands */
+  --c1: #fff0f6; --c2: #f0f7ff; --c3: #f0fff4; --c4: #fffbea;
+  --h1: #c0392b; --h2: #2471a3; --h3: #1a7a4a; --h4: #b7770d;
+
+  --font-display: 'Fredoka One', cursive;
+  --font-body: 'Nunito', sans-serif;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-xl: 18px;
+  --shadow-card: 5px 5px 0 var(--stroke);
+}
+[data-theme="rainbow"] { --dot-1:#e74c3c;--dot-2:#e67e22;--dot-3:#f1c40f;--dot-4:#2ecc71;--dot-5:#3498db;--dot-6:#9b59b6; }
+[data-theme="pastel"]  { --dot-1:#ff9aa2;--dot-2:#ffb7b2;--dot-3:#ffdac1;--dot-4:#b5ead7;--dot-5:#c7ceea;--dot-6:#e2b4bd; }
+[data-theme="bold"]    { --dot-1:#ff2d55;--dot-2:#007aff;--dot-3:#ffcc00;--dot-4:#34c759;--dot-5:#ff9500;--dot-6:#af52de; }
+[data-theme="earth"]   { --dot-1:#c0392b;--dot-2:#2980b9;--dot-3:#d4ac0d;--dot-4:#27ae60;--dot-5:#e67e22;--dot-6:#8e44ad; }
+[data-theme="mono"]    { --dot-1:#2c3e50;--dot-2:#555;--dot-3:#888;--dot-4:#aaa;--dot-5:#ccc;--dot-6:#eee;--dot-blank:#fff; }
+
+*{ box-sizing:border-box; }
+body,html{
+  margin:0;padding:0;
+  font-family: var(--font-body);
+  display:flex;height:100vh;overflow:hidden;
+  background-color:#1e272e;
+  background-image:radial-gradient(#576574 2px,transparent 2px);
+  background-size:30px 30px;
+}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:300px;min-width:300px;background:var(--sb-bg);color:#fff;
+  padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  border-right:5px solid var(--stroke);z-index:100;scrollbar-width:none;
+}
+#sidebar::-webkit-scrollbar{display:none;}
+.app-title{ font-family:var(--font-display);font-size:22px;text-align:center;color:#feca57;text-shadow:3px 3px 0 var(--stroke);margin:0; }
+.app-desc{ font-size:11px;text-align:center;font-weight:700;background:var(--stroke);color:#feca57;padding:4px 8px;border-radius:6px; }
+.ctrl-group{ background:rgba(255,255,255,0.16);padding:11px;border-radius:12px;border:3px solid rgba(255,255,255,0.25);box-shadow:4px 4px 0 rgba(0,0,0,0.25); }
+.ctrl-label{ display:block;font-weight:900;margin-bottom:5px;font-size:11px;text-transform:uppercase;color:rgba(255,255,255,0.85); }
+select,button{
+  width:100%;padding:8px 10px;border-radius:8px;border:3px solid var(--stroke);
+  font-family:var(--font-body);font-size:12px;font-weight:900;
+  cursor:pointer;outline:none;transition:0.1s;margin-bottom:6px;
+}
+select:last-child,button:last-child{margin-bottom:0;}
+select{ background:#fff;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.25);appearance:none; }
+select:active,button:active{ transform:translate(3px,3px);box-shadow:0 0 0; }
+.btn-scramble{ background:#feca57;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3);font-size:13px;padding:10px; }
+.btn-answer { background:#48dbfb;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3); }
+.btn-print  { background:#fff;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3); }
+.btn-png    { background:#ff9ff3;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,0.3); }
+.info-box{ background:rgba(0,0,0,0.18);border-radius:10px;padding:10px;font-size:11px;font-weight:800;line-height:1.6;color:rgba(255,255,255,0.95); }
+.info-box b{ color:#feca57; }
+.hint-text{ font-size:10px;text-align:center;color:rgba(255,255,255,0.6);font-weight:700; }
+
+/* ── LEGEND PREVIEW ── */
+.color-legend{ display:flex;flex-wrap:wrap;gap:6px; }
+.legend-dot{ width:22px;height:22px;border-radius:50%;border:3px solid var(--stroke);flex-shrink:0;box-shadow:2px 2px 0 rgba(0,0,0,0.2); }
+
+/* ── PREVIEW ── */
+#preview-area{
+  flex:1;padding:16px 12px;overflow-y:auto;
+  display:flex;justify-content:center;align-items:flex-start;
+  background:transparent;scrollbar-width:none;
+}
+#preview-area::-webkit-scrollbar{display:none;}
+
+/* ── A4 ── */
+.worksheet-page{
+  width:210mm;height:297mm;min-height:297mm;max-height:297mm;
+  background:var(--paper);border:5px solid var(--stroke);border-radius:15px;
+  box-shadow:15px 15px 0 rgba(0,0,0,0.3);
+  padding:8mm 10mm 6mm;
+  display:flex;flex-direction:column;color:var(--stroke);overflow:hidden;
+  transform:scale(0.76);transform-origin:top center;
+  margin:0 auto calc((297mm * 0.76) - 297mm);
+}
+
+/* HEADER */
+.ws-header{ display:flex;justify-content:space-between;align-items:flex-start;border-bottom:5px solid var(--stroke);padding-bottom:7px;margin-bottom:8px;flex-shrink:0; }
+.ws-title{ font-family:var(--font-display);font-size:34px;color:var(--stroke);line-height:1;text-shadow:3px 3px 0 #feca57; }
+.ws-subtitle{ font-size:11px;background:var(--stroke);color:#fff;display:inline-block;padding:3px 8px;border-radius:5px;font-weight:900;margin-top:5px; }
+.ws-info{ display:flex;flex-direction:column;gap:5px;width:185px; }
+.info-row{ display:flex;align-items:flex-end;font-size:12px;font-weight:900; }
+.info-label{ margin-right:5px;white-space:nowrap; }
+.info-line{ flex:1;border-bottom:3px dashed var(--stroke);height:13px; }
+
+/* RULE BANNER */
+.rule-banner{
+  display:flex;align-items:center;gap:10px;
+  background:var(--stroke);color:#fff;border-radius:10px;
+  padding:7px 14px;margin-bottom:8px;flex-shrink:0;
+}
+.rb-text{ font-size:11px;font-weight:800;line-height:1.45;flex:1; }
+.rb-text b{ color:#feca57; }
+
+/* COLOR KEY */
+.color-key-bar{
+  display:flex;align-items:center;gap:10px;
+  flex-wrap:wrap;margin-bottom:8px;flex-shrink:0;
+  background:#f8f9fa;border:3px solid var(--stroke);border-radius:10px;
+  padding:6px 12px;box-shadow:3px 3px 0 var(--stroke);
+}
+.ck-label{ font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--stroke); }
+.ck-item{ display:flex;align-items:center;gap:5px;font-size:11px;font-weight:900; }
+.ck-dot{ width:18px;height:18px;border-radius:50%;border:2px solid var(--stroke);flex-shrink:0; }
+
+/* 4 PATTERN CARDS */
+.patterns-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;flex:1;min-height:0;
+}
+.pat-card{
+  border:4px solid var(--stroke);border-radius:var(--radius-lg);
+  display:flex;flex-direction:column;
+  box-shadow:var(--shadow-card);overflow:hidden;
+}
+.pat-card:nth-child(1){ background:var(--c1); }
+.pat-card:nth-child(2){ background:var(--c2); }
+.pat-card:nth-child(3){ background:var(--c3); }
+.pat-card:nth-child(4){ background:var(--c4); }
+.pat-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 10px;border-bottom:3px solid var(--stroke);
+  color:#fff;
+}
+.pat-card:nth-child(1) .pat-header{ background:var(--h1); }
+.pat-card:nth-child(2) .pat-header{ background:var(--h2); }
+.pat-card:nth-child(3) .pat-header{ background:var(--h3); }
+.pat-card:nth-child(4) .pat-header{ background:var(--h4); }
+.pat-title{ font-family:var(--font-display);font-size:13px; }
+.pat-type{ font-size:10px;font-weight:900;background:rgba(255,255,255,0.25);padding:2px 8px;border-radius:5px; }
+.pat-body{ flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px;gap:10px; }
+
+/* DOT ROW */
+.dot-row{ display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center; }
+.dot-circle{
+  border-radius:50%;border:3px solid var(--stroke);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:3px 3px 0 rgba(0,0,0,0.2);
+  flex-shrink:0;transition:transform 0.2s;
+}
+/* Blank "?" dot */
+.dot-blank{
+  background:#fff !important;
+  position:relative;
+}
+.dot-blank::before{
+  content:"?";
+  font-family:var(--font-display);
+  font-size:1.3em;
+  color:var(--stroke);
+  opacity:0.4;
+}
+.dot-revealed{
+  position:relative;
+}
+
+/* Pattern repeat label */
+.pat-rule-label{
+  font-size:10px;font-weight:900;color:var(--stroke);
+  background:rgba(255,255,255,0.6);border:2px solid var(--stroke);
+  border-radius:6px;padding:2px 8px;
+}
+
+/* Write your pattern section */
+.write-section{
+  border:4px solid var(--stroke);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);overflow:hidden;flex-shrink:0;margin-top:8px;
+}
+.write-header{
+  background:var(--stroke);color:#feca57;
+  padding:5px 14px;font-family:var(--font-display);font-size:13px;
+  display:flex;align-items:center;gap:8px;
+}
+.write-body{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:10px 14px;background:var(--c1);
+  justify-content:space-around;
+}
+.write-slot{ display:flex;flex-direction:column;align-items:center;gap:4px; }
+.write-dot-empty{
+  width:44px;height:44px;border-radius:50%;
+  border:3px dashed var(--stroke);background:#fff;
+}
+.write-label{ font-size:9px;font-weight:900;color:var(--stroke);text-transform:uppercase; }
+.write-op{ font-family:var(--font-display);font-size:22px;color:var(--stroke);padding-top:12px; }
+
+/* FOOTER */
+.ws-footer{ display:flex;justify-content:space-between;align-items:center;border-top:3px solid var(--stroke);padding-top:5px;margin-top:6px;flex-shrink:0; }
+.ws-footer-note{ font-size:9px;font-weight:800;color:#aaa; }
+.score-box{ display:flex;gap:8px; }
+.score-item{ display:flex;align-items:center;gap:3px;font-size:10px;font-weight:900; }
+.score-line{ width:40px;border-bottom:2px dashed var(--stroke);height:10px; }
+
+[contenteditable="true"]{ outline:none;border-radius:4px;border:2px dashed transparent;transition:0.2s; }
+[contenteditable="true"]:hover,[contenteditable="true"]:focus{ background:rgba(0,0,0,0.05);border-color:var(--stroke); }
+
+@page{ size:A4 portrait;margin:0; }
+@media print{
+  *{ -webkit-print-color-adjust:exact !important;print-color-adjust:exact !important; }
+  html,body{ background:none;margin:0;padding:0;width:100%;height:100%;display:block;overflow:hidden; }
+  #sidebar,.hint-text{ display:none !important; }
+  #preview-area{ padding:0;margin:0;display:block;width:100%;height:100%;overflow:hidden;background:none; }
+  .worksheet-page{
+    margin:0;width:100%;height:100%;max-height:100vh;
+    box-shadow:none !important;border:5px solid var(--stroke) !important;
+    border-radius:15px !important;transform:none !important;
+  }
+  .show-answers .dot-blank::before{ opacity:0 !important; }
+  [contenteditable="true"]{ border:none !important;background:none !important; }
+}
+</style>
+</head>
+<body data-theme="rainbow">
+
+<div id="sidebar">
+  <h1 class="app-title">🟣 PATTERN DOTS</h1>
+  <p class="app-desc">Dot Marker Pattern Worksheet Studio — A4</p>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Color Theme</span>
+    <select id="cfg-theme" onchange="applyTheme()">
+      <option value="rainbow" selected>🌈 Rainbow (Default)</option>
+      <option value="pastel">🌸 Soft Pastel</option>
+      <option value="bold">🔵 Bold Primary</option>
+      <option value="earth">🌿 Earth Tones</option>
+      <option value="mono">⬜ Grayscale Print</option>
+    </select>
+    <div class="color-legend" id="color-legend" style="margin-top:8px;"></div>
+  </div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">Pattern Types</span>
+    <select id="cfg-patterns" onchange="generate()">
+      <option value="AB" selected>AB, AB, AB… (Easy)</option>
+      <option value="ABC">ABC, ABC… (Medium)</option>
+      <option value="AABB">AABB, AABB… (Medium)</option>
+      <option value="ABBC">ABBC, ABBC… (Hard)</option>
+      <option value="mixed">Mixed (All Types)</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Dot Size</span>
+    <select id="cfg-dotsize" onchange="generate()">
+      <option value="large">Large (48px) — Toddler/Pre-K</option>
+      <option value="medium" selected>Medium (40px) — Kindergarten</option>
+      <option value="small">Small (34px) — Grade 1–2</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Blanks per Pattern</span>
+    <select id="cfg-blanks" onchange="generate()">
+      <option value="1">1 blank — Easy</option>
+      <option value="2" selected>2 blanks — Normal</option>
+      <option value="3">3 blanks — Hard</option>
+    </select>
+
+    <span class="ctrl-label" style="margin-top:8px;">Number of Colors</span>
+    <select id="cfg-colors" onchange="generate()">
+      <option value="3">3 Colors</option>
+      <option value="4" selected>4 Colors</option>
+      <option value="5">5 Colors</option>
+      <option value="6">6 Colors</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group" style="background:transparent;border:none;box-shadow:none;padding:0;">
+    <button class="btn-scramble" onclick="generate()">🎲 SCRAMBLE PATTERNS!</button>
+    <button class="btn-answer" id="btn-ans" onclick="toggleAnswers()">👁️ SHOW ANSWERS</button>
+    <button class="btn-print" onclick="window.print()">🖨️ PRINT WORKSHEET</button>
+    <button class="btn-png" onclick="savePNG()">💾 SAVE AS PNG</button>
+  </div>
+
+  <div class="info-box">
+    <b>How to Play:</b><br>
+    Look at the colored dots in each row 🔵🔴<br>
+    Find the pattern — then use your <b>dot marker</b> to fill in the blank circles with the correct color!<br><br>
+    <b>Pattern Types:</b><br>
+    • <b>AB</b>: 🔴🔵🔴🔵...<br>
+    • <b>ABC</b>: 🔴🔵🟡🔴🔵🟡...<br>
+    • <b>AABB</b>: 🔴🔴🔵🔵...<br>
+    • <b>ABBC</b>: 🔴🔵🔵🟡...
+  </div>
+  <p class="hint-text">★ Click any text on the worksheet to edit it!</p>
+</div>
+
+<div id="preview-area">
+  <div class="worksheet-page" id="worksheet">
+
+    <div class="ws-header">
+      <div>
+        <div class="ws-title" id="txt-title" contenteditable="true" spellcheck="false">🟣 Pattern Dots!</div>
+        <div class="ws-subtitle" id="txt-sub" contenteditable="true" spellcheck="false">Look at the pattern — fill in the blank circles with the right color dot marker!</div>
+      </div>
+      <div class="ws-info">
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Name:</span><div class="info-line"></div></div>
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Date:</span><div class="info-line"></div></div>
+        <div class="info-row"><span class="info-label" contenteditable="true" spellcheck="false">Grade:</span><div class="info-line"></div></div>
+      </div>
+    </div>
+
+    <div class="rule-banner">
+      <span style="font-size:20px;">🎨</span>
+      <div class="rb-text" id="rb-rule">Study the colored dots in each row. Find the repeating pattern, then <b>fill in the blank circles</b> with the correct color using your dot markers!</div>
+    </div>
+
+    <div class="color-key-bar" id="color-key-bar">
+      <span class="ck-label">Colors:</span>
+    </div>
+
+    <div class="patterns-grid" id="patterns-grid"></div>
+
+    <div class="write-section" id="write-section">
+      <div class="write-header">✏️ Create Your Own Pattern! — Choose any colors and make your own dot pattern below</div>
+      <div class="write-body" id="write-body"></div>
+    </div>
+
+    <div class="ws-footer">
+      <span class="ws-footer-note" id="txt-footer" contenteditable="true" spellcheck="false">© Dot Marker Pattern Worksheet — Worksheet Studio</span>
+      <div class="score-box">
+        <div class="score-item">Time: <div class="score-line"></div></div>
+        <div class="score-item">Score: <div class="score-line"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let puzzles = [];
+let isAnswerShown = false;
+
+/* ── DOT COLOR MAPPING ── */
+const DOT_CSS_VARS = ['--dot-1','--dot-2','--dot-3','--dot-4','--dot-5','--dot-6'];
+const COLOR_NAMES  = ['Red','Blue','Yellow','Green','Orange','Purple'];
+
+function getDotColor(idx) {
+  return getComputedStyle(document.body).getPropertyValue(DOT_CSS_VARS[idx]).trim();
+}
+
+function applyTheme() {
+  document.body.setAttribute('data-theme', document.getElementById('cfg-theme').value);
+  updateColorLegend();
+  render();
+}
+
+function updateColorLegend() {
+  const nColors = parseInt(document.getElementById('cfg-colors').value);
+  // Sidebar legend
+  const leg = document.getElementById('color-legend');
+  leg.innerHTML = '';
+  for(let i=0;i<nColors;i++){
+    const d = document.createElement('div');
+    d.className = 'legend-dot';
+    d.style.background = getDotColor(i);
+    leg.appendChild(d);
+  }
+
+  // Worksheet color key bar
+  const bar = document.getElementById('color-key-bar');
+  bar.innerHTML = '<span class="ck-label">Color Key:</span>';
+  for(let i=0;i<nColors;i++){
+    const item = document.createElement('div');
+    item.className = 'ck-item';
+    item.innerHTML = `<div class="ck-dot" style="background:${getDotColor(i)};"></div>${COLOR_NAMES[i]}`;
+    bar.appendChild(item);
+  }
+}
+
+/* ── PATTERN LOGIC ── */
+const PATTERN_DEFS = {
+  AB:   { unit: [0,1],         name: 'AB Pattern' },
+  ABC:  { unit: [0,1,2],       name: 'ABC Pattern' },
+  AABB: { unit: [0,0,1,1],     name: 'AABB Pattern' },
+  ABBC: { unit: [0,1,1,2],     name: 'ABBC Pattern' },
+};
+
+function buildPattern(type, nColors) {
+  const def = PATTERN_DEFS[type];
+  const unit = def.unit;
+
+  // Map abstract indices to actual color indices (random selection)
+  const maxIdx = Math.max(...unit);
+  const colorPool = [];
+  const usedIdxs = new Set();
+  while(colorPool.length <= maxIdx) {
+    const pick = Math.floor(Math.random() * nColors);
+    if(!usedIdxs.has(pick)) { colorPool.push(pick); usedIdxs.add(pick); }
+  }
+  const colorUnit = unit.map(i => colorPool[i]);
+
+  // Extend to fill row (show 2.5 repetitions minimum)
+  const totalDots = unit.length * 3;
+  const fullSeq = [];
+  for(let i=0;i<totalDots;i++) fullSeq.push(colorUnit[i % colorUnit.length]);
+
+  return { seq: fullSeq, colorUnit, def };
+}
+
+function pickBlankPositions(seq, nBlanks) {
+  // Pick positions from last 2 units so pattern is still deducible
+  const unitLen = Math.ceil(seq.length / 3);
+  const eligibleStart = unitLen; // don't blank the very first unit
+  const eligible = [];
+  for(let i=eligibleStart;i<seq.length;i++) eligible.push(i);
+
+  // Shuffle eligible
+  for(let i=eligible.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [eligible[i],eligible[j]]=[eligible[j],eligible[i]];
+  }
+  return new Set(eligible.slice(0, nBlanks));
+}
+
+function buildPuzzle(type, nColors, nBlanks) {
+  const pat = buildPattern(type, nColors);
+  const blanks = pickBlankPositions(pat.seq, nBlanks);
+  return { ...pat, blanks };
+}
+
+/* ── RENDER ── */
+const CARD_LABELS = ['Puzzle 1','Puzzle 2','Puzzle 3','Puzzle 4'];
+
+function getDotSize() {
+  const s = document.getElementById('cfg-dotsize').value;
+  return s==='large' ? 48 : s==='small' ? 34 : 40;
+}
+
+function generate() {
+  if(isAnswerShown) toggleAnswers(true);
+
+  const patType  = document.getElementById('cfg-patterns').value;
+  const nColors  = parseInt(document.getElementById('cfg-colors').value);
+  const nBlanks  = parseInt(document.getElementById('cfg-blanks').value);
+  const patTypes = ['AB','ABC','AABB','ABBC'];
+
+  puzzles = Array.from({length:4}, (_,i) => {
+    const t = patType === 'mixed' ? patTypes[i % patTypes.length] : patType;
+    return buildPuzzle(t, nColors, nBlanks);
+  });
+
+  updateColorLegend();
+  render();
+  buildWriteYourOwn();
+}
+
+function render() {
+  const grid    = document.getElementById('patterns-grid');
+  const dotSize = getDotSize();
+  grid.innerHTML = '';
+
+  puzzles.forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = 'pat-card';
+
+    // Header
+    card.innerHTML = `
+      <div class="pat-header">
+        <span class="pat-title">${CARD_LABELS[idx]}</span>
+        <span class="pat-type">${p.def.name}</span>
+      </div>
+    `;
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'pat-body';
+
+    // Unit indicator
+    const unitLabel = document.createElement('div');
+    unitLabel.className = 'pat-rule-label';
+    unitLabel.textContent = `🔁 Pattern unit: ${p.def.name.split(' ')[0]}`;
+    body.appendChild(unitLabel);
+
+    // Dot row
+    const row = document.createElement('div');
+    row.className = 'dot-row';
+
+    p.seq.forEach((colorIdx, pos) => {
+      const isBlank = p.blanks.has(pos);
+      const dotColor = getDotColor(colorIdx);
+
+      const dot = document.createElement('div');
+      dot.className = 'dot-circle' + (isBlank ? ' dot-blank' : '');
+      dot.style.width  = dotSize + 'px';
+      dot.style.height = dotSize + 'px';
+      dot.style.fontSize = (dotSize * 0.4) + 'px';
+
+      if(isBlank) {
+        // Store answer color for reveal
+        dot.style.setProperty('--ans-color', dotColor);
+        dot.dataset.ansColor = dotColor;
+        // Blank style — white with ? placeholder
+        dot.style.background = '#fff';
+      } else {
+        dot.style.background = dotColor;
+      }
+      row.appendChild(dot);
+    });
+
+    body.appendChild(row);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+
+  // Apply answer state
+  if(isAnswerShown) revealAnswers();
+}
+
+function revealAnswers() {
+  document.querySelectorAll('.dot-blank').forEach(dot => {
+    dot.style.background = dot.dataset.ansColor;
+    dot.classList.remove('dot-blank');
+    dot.classList.add('dot-revealed');
+  });
+  document.getElementById('worksheet').classList.add('show-answers');
+}
+
+function hideAnswers() {
+  document.querySelectorAll('.dot-revealed').forEach(dot => {
+    dot.style.background = '#fff';
+    dot.classList.remove('dot-revealed');
+    dot.classList.add('dot-blank');
+  });
+  document.getElementById('worksheet').classList.remove('show-answers');
+}
+
+function toggleAnswers(forceHide) {
+  isAnswerShown = forceHide===true ? false : !isAnswerShown;
+  const btn = document.getElementById('btn-ans');
+  if(isAnswerShown){
+    revealAnswers();
+    btn.textContent='👁️ HIDE ANSWERS';
+    btn.style.background='#ff4757'; btn.style.color='#fff';
+  } else {
+    hideAnswers();
+    btn.textContent='👁️ SHOW ANSWERS';
+    btn.style.background='#48dbfb'; btn.style.color='#1e272e';
+  }
+}
+
+function buildWriteYourOwn() {
+  const body     = document.getElementById('write-body');
+  const dotSize  = getDotSize();
+  body.innerHTML = '';
+
+  // 3 "write your own" rows of 6 empty dots each
+  for(let r=0;r<2;r++){
+    if(r>0){
+      const sep=document.createElement('div');
+      sep.style.cssText='width:2px;background:rgba(0,0,0,0.1);height:50px;border-radius:2px;';
+      body.appendChild(sep);
+    }
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;';
+    for(let d=0;d<6;d++){
+      const dot=document.createElement('div');
+      dot.className='write-dot-empty';
+      dot.style.width=dotSize+'px';
+      dot.style.height=dotSize+'px';
+      row.appendChild(dot);
+    }
+    body.appendChild(row);
+  }
+}
+
+function savePNG(){
+  const wasShown=isAnswerShown;
+  if(isAnswerShown) toggleAnswers(true);
+  const ws=document.getElementById('worksheet');
+  const editables=ws.querySelectorAll('[contenteditable]');
+  editables.forEach(el=>el.style.border='none');
+  htmlToImage.toPng(ws,{pixelRatio:2,backgroundColor:'#fff'})
+    .then(dataUrl=>{
+      const a=document.createElement('a');
+      a.download='DotMarkerPatterns.png';
+      a.href=dataUrl;a.click();
+    })
+    .catch(err=>{console.error(err);alert('PNG export failed.');})
+    .finally(()=>{ editables.forEach(el=>el.style.border=''); });
+}
+
+generate();
+</script>
+</body>
+</html>
