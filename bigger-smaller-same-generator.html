@@ -1,0 +1,480 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>📏 Bigger / Smaller / Same Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--stroke:#1e272e;--fd:'Fredoka One',cursive;--fb:'Nunito',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:var(--fb);background:#0d1117;background-image:radial-gradient(#1c2333 2px,transparent 2px);background-size:28px 28px;display:flex}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+#sb{width:290px;min-width:290px;background:#161b22;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;border-right:1px solid #30363d;scrollbar-width:none}
+#sb::-webkit-scrollbar{display:none}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-t{font-family:var(--fd);font-size:19px;color:#fff;line-height:1.1}
+.logo-t span{color:#f85149}
+.app-desc{font-size:10px;font-weight:900;background:#0d1117;color:#f85149;padding:4px 8px;border-radius:6px;text-align:center;border:1px solid #30363d}
+.cg{background:#0d1117;border:1px solid #30363d;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.lbl{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:#8b949e;display:block;margin-bottom:2px}
+select{width:100%;padding:9px 11px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#fff;font-family:var(--fb);font-size:12px;font-weight:700;outline:none;appearance:none}
+select:focus{border-color:#f85149}
+.ng{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.nb{padding:7px 4px;border-radius:8px;border:1px solid #30363d;background:#161b22;color:#8b949e;font-size:10px;font-weight:800;cursor:pointer;text-align:center;line-height:1.3}
+.nb:hover{border-color:#f85149;color:#fff}
+.nb.on{background:#da3633;border-color:#f85149;color:#fff}
+button{width:100%;padding:10px;border-radius:8px;border:none;font-family:var(--fb);font-size:12px;font-weight:900;cursor:pointer;transition:all .2s;margin-bottom:5px}
+button:last-child{margin-bottom:0}
+button:active{transform:scale(.97)}
+.btn-gen{background:#da3633;color:#fff;font-size:15px;padding:13px;box-shadow:0 4px 14px rgba(218,54,51,.3)}
+.btn-gen:hover{background:#f85149}
+.btn-sec{background:#0d1117;color:#cdd9e5;border:1px solid #30363d}
+.btn-sec:hover{background:#161b22}
+.nav-row{display:flex;align-items:center;gap:6px}
+.nav-btn{flex:1;padding:8px;border-radius:8px;background:#0d1117;border:1px solid #30363d;color:#fff;font-size:11px;font-weight:900;cursor:pointer}
+.nav-num{font-family:var(--fd);font-size:16px;color:#f85149;min-width:50px;text-align:center}
+.info{font-size:11px;color:#8b949e;line-height:1.6}
+.info b{color:#f85149}
+#main{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:24px 20px 60px;scrollbar-width:none}
+#main::-webkit-scrollbar{display:none}
+#sheetWrap{display:flex;justify-content:center;width:100%}
+
+/* ===== SHEET ===== */
+.sheet{width:794px;background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6);transform-origin:top center;display:flex;flex-direction:column;overflow:visible}
+
+/* HEADER */
+.ws-hdr{padding:14px 24px 12px;border-bottom:4px solid var(--stroke);display:flex;justify-content:space-between;align-items:flex-start}
+.ws-title{font-family:var(--fd);font-size:28px;color:var(--stroke);display:flex;align-items:center;gap:10px;line-height:1}
+.ws-sub{font-size:12px;font-weight:800;color:#666;margin-top:5px}
+.ws-fields{display:flex;flex-direction:column;gap:6px}
+.ws-field{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;color:var(--stroke);white-space:nowrap}
+.fl{flex:1;min-width:90px;height:2px;background:repeating-linear-gradient(90deg,var(--stroke) 0,var(--stroke) 5px,transparent 5px,transparent 10px)}
+
+/* INSTRUCTIONS */
+.instr{margin:10px 24px 0;padding:10px 16px;border:2.5px solid var(--stroke);border-radius:10px;background:#f8f9fa;font-size:13px;font-weight:800;color:var(--stroke);display:flex;align-items:center;gap:10px}
+
+/* LEGEND PILLS */
+.legend-wrap{margin:10px 24px 0;display:flex;gap:10px;justify-content:center}
+.legend-pill{display:flex;align-items:center;gap:8px;padding:8px 16px;border:3px solid var(--stroke);border-radius:999px;box-shadow:2px 2px 0 var(--stroke)}
+.pill-icon{font-size:22px}
+.pill-text{display:flex;flex-direction:column;gap:1px}
+.pill-name{font-family:var(--fd);font-size:13px;color:var(--stroke);line-height:1}
+.pill-hint{font-size:10px;font-weight:900;color:#888;line-height:1}
+.pill-action{padding:3px 10px;border-radius:6px;font-family:var(--fd);font-size:11px;color:#fff;white-space:nowrap}
+
+/* COLUMNS ZONE */
+.cols-zone{padding:12px 24px 10px;display:grid;grid-template-columns:1fr 4px 1fr 4px 1fr;gap:0}
+.col-divider{background:#e0e0e0;margin:0 4px;border-radius:2px}
+.col-wrap{display:flex;flex-direction:column;gap:0}
+.col-header{padding:10px 8px;border:3px solid var(--stroke);border-radius:12px 12px 0 0;text-align:center;margin-bottom:-1px;position:relative;z-index:1}
+.col-header-emoji{font-size:28px;line-height:1;display:block;margin-bottom:4px}
+.col-header-title{font-family:var(--fd);font-size:16px;color:#fff;line-height:1}
+.col-header-sub{font-size:10px;font-weight:900;color:rgba(255,255,255,.8);line-height:1;margin-top:2px}
+.col-body{border:3px solid var(--stroke);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;display:flex;flex-direction:column}
+
+/* Each row inside a column */
+.row-item{display:flex;align-items:center;padding:8px 12px;gap:10px;border-bottom:2px solid #e8e8e8;position:relative}
+.row-item:last-child{border-bottom:none}
+.row-item.alt{background:#fafafa}
+.row-num{font-family:var(--fd);font-size:13px;color:#ccc;width:20px;flex-shrink:0}
+.item-visual{width:56px;height:56px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.item-emoji{line-height:1;display:block;text-align:center}
+/* Size variants */
+.sz-big .item-emoji{font-size:48px}
+.sz-med .item-emoji{font-size:36px}
+.sz-small .item-emoji{font-size:24px}
+.sz-same1 .item-emoji{font-size:34px}
+.sz-same2 .item-emoji{font-size:34px}
+.answer-zone{flex:1;display:flex;flex-direction:column;gap:4px}
+.circle-prompt{display:flex;align-items:center;gap:6px}
+.circle-o{width:22px;height:22px;border-radius:50%;border:2.5px solid;display:inline-block;flex-shrink:0}
+.circle-label{font-size:11px;font-weight:900;color:#666;line-height:1.2}
+.item-name{font-family:var(--fd);font-size:12px;color:var(--stroke)}
+
+/* ANSWER KEY */
+.answer-key-wrap{margin:8px 24px;background:#f8f9fa;border:2px dashed #ccc;border-radius:10px;padding:8px 16px}
+.ak-title{font-size:10px;font-weight:900;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.ak-row{display:flex;gap:8px;flex-wrap:wrap}
+.ak-chip{font-size:11px;font-weight:900;color:#555;background:#fff;border:1.5px solid #ccc;padding:3px 10px;border-radius:999px;display:flex;align-items:center;gap:4px}
+
+/* BONUS */
+.bonus-row{margin:0 24px 10px;display:flex;gap:10px}
+.bonus-box{flex:1;border:3px solid var(--stroke);border-radius:12px;padding:10px 12px;box-shadow:2px 2px 0 var(--stroke);background:#fffdf0}
+.bonus-title{font-family:var(--fd);font-size:13px;color:var(--stroke);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.draw-area{height:60px;border:2px dashed #d0d0d0;border-radius:8px;background:repeating-linear-gradient(0deg,transparent,transparent 21px,#eee 21px,#eee 22px)}
+.stars-row{display:flex;gap:6px;font-size:20px;opacity:.3;margin-top:6px}
+
+/* FOOTER */
+.ws-footer{padding:10px 24px;border-top:3px solid var(--stroke);display:flex;justify-content:space-between;align-items:center;background:#f8f9fa}
+.footer-l{font-size:10px;font-weight:900;color:#999}
+.footer-r{background:var(--stroke);color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:999px;font-family:var(--fd)}
+
+/* PRINT */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{display:block;background:#fff!important;overflow:visible!important;height:auto!important}
+  #sb{display:none!important}
+  #main{padding:0!important;display:block!important;overflow:visible!important}
+  #sheetWrap{display:block!important;width:100%!important;height:auto!important}
+  .sheet{transform:none!important;border-radius:0!important;box-shadow:none!important;width:100%!important;overflow:visible!important;page-break-after:always}
+  .cols-zone,.bonus-row{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div id="sb">
+  <div class="logo">
+    <svg width="36" height="36" viewBox="0 0 36 36">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f85149"/><stop offset="100%" stop-color="#da3633"/></linearGradient></defs>
+      <rect x="2" y="2" width="32" height="32" rx="8" fill="url(#lg)"/>
+      <text x="7" y="20" font-size="11" fill="white" font-family="Fredoka One,sans-serif">BIG</text>
+      <text x="20" y="28" font-size="8" fill="rgba(255,255,255,.7)" font-family="Fredoka One,sans-serif">small</text>
+      <line x1="3" y1="22" x2="33" y2="14" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+    </svg>
+    <div class="logo-t">Bigger / Smaller / <span>Same</span></div>
+  </div>
+  <p class="app-desc">📏 Size Comparison Worksheet Generator</p>
+
+  <div class="cg">
+    <span class="lbl">🎨 Niche</span>
+    <div class="ng" id="nicheGrid"></div>
+  </div>
+
+  <div class="cg">
+    <span class="lbl">📋 Rows per Column</span>
+    <select id="rows">
+      <option value="4">4 rows — Pre-K</option>
+      <option value="5" selected>5 rows — Standard</option>
+      <option value="6">6 rows — Extended</option>
+    </select>
+    <span class="lbl" style="margin-top:4px">👶 Age Group</span>
+    <select id="age">
+      <option value="prek">Pre-K (Ages 3–4)</option>
+      <option value="kinder" selected>Kindergarten (Ages 5–6)</option>
+      <option value="grade1">Grade 1–2 (Ages 6–8)</option>
+    </select>
+    <span class="lbl" style="margin-top:4px">🎯 Task Mode</span>
+    <select id="taskmode">
+      <option value="circle" selected>Circle the answer</option>
+      <option value="color">Color the answer</option>
+      <option value="tick">Tick the answer</option>
+    </select>
+    <span class="lbl" style="margin-top:4px">🌈 Color Theme</span>
+    <select id="theme">
+      <option value="red" selected>Red & Yellow</option>
+      <option value="blue">Blue & Teal</option>
+      <option value="green">Green & Orange</option>
+      <option value="purple">Purple & Pink</option>
+    </select>
+  </div>
+
+  <button class="btn-gen" onclick="generate()">✨ GENERATE WORKSHEET</button>
+  <div class="nav-row">
+    <button class="nav-btn" onclick="prev()">◀ Prev</button>
+    <span class="nav-num" id="navNum">1/10</span>
+    <button class="nav-btn" onclick="next()">Next ▶</button>
+  </div>
+  <button class="btn-sec" onclick="savePNG()">💾 Save PNG</button>
+  <button class="btn-sec" onclick="window.print()">🖨️ Print</button>
+
+  <div class="info">
+    <b>3-Column Comparison Format:</b><br>
+    Column 1 → Circle the BIGGEST<br>
+    Column 2 → Circle the SMALLEST<br>
+    Column 3 → Find the TWO that are the SAME size<br><br>
+    Each row has a different object from the chosen niche, displayed at 3 distinct sizes. The "Same" column uses two identical sizes + one different. [web:393][web:395]
+  </div>
+</div>
+
+<div id="main"><div id="sheetWrap"></div></div>
+
+<script>
+const THEMES={
+  red:{c1:'#e63946',c2:'#f4a261',c3:'#2a9d8f',text1:'#fff',text2:'#fff',text3:'#fff'},
+  blue:{c1:'#1d3557',c2:'#457b9d',c3:'#2a9d8f',text1:'#fff',text2:'#fff',text3:'#fff'},
+  green:{c1:'#386641',c2:'#f4a261',c3:'#6a994e',text1:'#fff',text2:'#fff',text3:'#fff'},
+  purple:{c1:'#7b2d8b',c2:'#c77dff',c3:'#e63946',text1:'#fff',text2:'#fff',text3:'#fff'}
+};
+
+const NICHES={
+  "🍎 Food":{icon:"🍎",items:[
+    {e:"🍎",n:"Apple"},{e:"🍌",n:"Banana"},{e:"🍕",n:"Pizza"},{e:"🍩",n:"Donut"},
+    {e:"🍦",n:"Ice Cream"},{e:"🍓",n:"Strawberry"},{e:"🍔",n:"Burger"},{e:"🧁",n:"Cupcake"},
+    {e:"🍇",n:"Grapes"},{e:"🥕",n:"Carrot"}
+  ]},
+  "🐘 Animals":{icon:"🐘",items:[
+    {e:"🐘",n:"Elephant"},{e:"🐱",n:"Kitten"},{e:"🦁",n:"Lion"},{e:"🐸",n:"Frog"},
+    {e:"🦒",n:"Giraffe"},{e:"🐢",n:"Turtle"},{e:"🐧",n:"Penguin"},{e:"🦋",n:"Butterfly"},
+    {e:"🐻",n:"Bear"},{e:"🦊",n:"Fox"}
+  ]},
+  "🚗 Vehicles":{icon:"🚗",items:[
+    {e:"🚗",n:"Car"},{e:"🚌",n:"Bus"},{e:"🚀",n:"Rocket"},{e:"✈️",n:"Airplane"},
+    {e:"🚂",n:"Train"},{e:"🚑",n:"Ambulance"},{e:"🛸",n:"UFO"},{e:"⛵",n:"Sailboat"},
+    {e:"🚲",n:"Bicycle"},{e:"🏎️",n:"Race Car"}
+  ]}
+};
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function rnd(a){return a[Math.floor(Math.random()*a.length)];}
+
+let currNiche="🍎 Food", sheets=[], idx=0;
+
+function initSidebar(){
+  const g=document.getElementById('nicheGrid');
+  Object.keys(NICHES).forEach((k,i)=>{
+    const b=document.createElement('button');
+    b.className='nb'+(i===0?' on':'');
+    b.innerHTML=NICHES[k].icon+' '+k.split(' ')[1];
+    b.onclick=()=>{document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));b.classList.add('on');currNiche=k;generate();};
+    g.appendChild(b);
+  });
+  // All-niche mix button
+  const all=document.createElement('button');
+  all.className='nb';all.style.gridColumn='1/-1';all.innerHTML='🌈 Mix All Niches';
+  all.onclick=()=>{document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));all.classList.add('on');currNiche='__mix__';generate();};
+  g.appendChild(all);
+  ['rows','age','taskmode','theme'].forEach(id=>document.getElementById(id).onchange=generate);
+}
+
+function getItems(){
+  if(currNiche==='__mix__'){
+    const all=Object.values(NICHES).flatMap(n=>n.items);
+    return shuffle(all);
+  }
+  return shuffle([...NICHES[currNiche].items]);
+}
+
+// Build a set of 3 size triplets for column BIGGER: [big,med,small] — answer=big
+// SMALLER: [big,med,small] — answer=small  
+// SAME: [same,same,other] shuffled — answer=same pair
+function shuf3(a){const b=[...a];for(let i=2;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function buildRow(item, colType){
+  if(colType==='bigger'){
+    // [big, med, small] shuffled — answer = index of 'sz-big'
+    const arr=shuf3(['sz-big','sz-med','sz-small']);
+    return {sizes:arr, answer:arr.indexOf('sz-big')};
+  }
+  if(colType==='smaller'){
+    // [big, med, small] shuffled — answer = index of 'sz-small'
+    const arr=shuf3(['sz-big','sz-med','sz-small']);
+    return {sizes:arr, answer:arr.indexOf('sz-small')};
+  }
+  // same: two 'sz-same', one 'sz-big' shuffled — answers = both sz-same indexes
+  const arr=shuf3(['sz-same1','sz-same2','sz-big']);
+  const answerIdxes=arr.reduce((acc,v,i)=>{if(v==='sz-same1'||v==='sz-same2')acc.push(i);return acc;},[]);
+  return {sizes:arr, answerIdxes};
+}
+
+function generate(){
+  const n=parseInt(document.getElementById('rows').value);
+  sheets=[];
+  for(let s=0;s<10;s++){
+    const items=getItems().slice(0,n*3);
+    sheets.push({
+      biggerItems:items.slice(0,n),
+      smallerItems:items.slice(n,n*2),
+      sameItems:items.slice(n*2,n*3)
+    });
+  }
+  idx=0; render();
+}
+
+function render(){
+  const n=parseInt(document.getElementById('rows').value);
+  const age=document.getElementById('age').value;
+  const taskmode=document.getElementById('taskmode').value;
+  const tm=THEMES[document.getElementById('theme').value];
+  const nd=currNiche==='__mix__'?{icon:'🌈'}:NICHES[currNiche];
+  const ageLabel={prek:'Pre-K (Ages 3–4)',kinder:'Kindergarten (Ages 5–6)',grade1:'Grade 1–2 (Ages 6–8)'}[age];
+  const taskLabel={circle:'Circle it!',color:'Color it!',tick:'Tick it!'}[taskmode];
+  const taskVerb={circle:'⭕ Circle',color:'🖍️ Color',tick:'✅ Tick'}[taskmode];
+  const {biggerItems,smallerItems,sameItems}=sheets[idx];
+
+  function buildColRows(items, colType){
+    return items.map((item,i)=>{
+      const row=buildRow(item, colType);
+      const triplet=row.sizes;
+      const posLabel=['Left','Middle','Right'];
+      let akEntry='';
+      if(colType==='bigger') akEntry=`<div class="ak-chip"><span>B${i+1}</span> 🔴 ${item.n} → Pos. ${row.answer+1} (${posLabel[row.answer]})</div>`;
+      else if(colType==='smaller') akEntry=`<div class="ak-chip"><span>S${i+1}</span> 🔵 ${item.n} → Pos. ${row.answer+1} (${posLabel[row.answer]})</div>`;
+      else akEntry=`<div class="ak-chip"><span>E${i+1}</span> 🟢 ${item.n} → Pos. ${row.answerIdxes.map(x=>x+1).join(' & ')}</div>`;
+      if(!window._akRows) window._akRows=[];
+      window._akRows.push(akEntry);
+
+      const circles=triplet.map((sz)=>`
+        <div class="item-visual ${sz}">
+          <span class="item-emoji">${item.e}</span>
+        </div>`).join('');
+
+      return `<div class="row-item ${i%2===1?'alt':''}">
+        <div class="row-num">${i+1}.</div>
+        <div style="display:flex;gap:4px;align-items:center;flex:1;justify-content:space-between">
+          ${circles}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window._akRows=[];
+  // will be populated during buildColRows calls below
+  const answerKey='__AK__'; // placeholder, replaced after columns render
+
+  const sheet=`<div class="sheet" id="curSheet">
+
+    <!-- HEADER -->
+    <div class="ws-hdr">
+      <div>
+        <div class="ws-title">📏 Bigger / Smaller / Same</div>
+        <div class="ws-sub">${nd.icon} Size Comparison · ${ageLabel}</div>
+      </div>
+      <div class="ws-fields">
+        <div class="ws-field"><span>Name:</span><div class="fl"></div></div>
+        <div class="ws-field"><span>Date:</span><div class="fl"></div></div>
+        <div class="ws-field"><span>Score:</span><div class="fl"></div><span>/ ${n*3}</span></div>
+      </div>
+    </div>
+
+    <!-- INSTRUCTIONS -->
+    <div class="instr">
+      <span style="font-size:22px">👀</span>
+      <span>Look at each row. In every row there are <b>3 different sizes</b>. Read the column title and <b>${taskLabel}</b> the correct one!</span>
+    </div>
+
+    <!-- LEGEND PILLS -->
+    <div class="legend-wrap">
+      <div class="legend-pill" style="background:${tm.c1}22;border-color:${tm.c1}">
+        <span class="pill-icon">🔴</span>
+        <div class="pill-text">
+          <span class="pill-name" style="color:${tm.c1}">BIGGEST</span>
+          <span class="pill-hint">Find the largest one</span>
+        </div>
+        <span class="pill-action" style="background:${tm.c1}">${taskVerb}</span>
+      </div>
+      <div class="legend-pill" style="background:${tm.c2}22;border-color:${tm.c2}">
+        <span class="pill-icon">🔵</span>
+        <div class="pill-text">
+          <span class="pill-name" style="color:${tm.c2}">SMALLEST</span>
+          <span class="pill-hint">Find the tiniest one</span>
+        </div>
+        <span class="pill-action" style="background:${tm.c2}">${taskVerb}</span>
+      </div>
+      <div class="legend-pill" style="background:${tm.c3}22;border-color:${tm.c3}">
+        <span class="pill-icon">🟢</span>
+        <div class="pill-text">
+          <span class="pill-name" style="color:${tm.c3}">SAME SIZE</span>
+          <span class="pill-hint">Find the two that match</span>
+        </div>
+        <span class="pill-action" style="background:${tm.c3}">${taskVerb} both</span>
+      </div>
+    </div>
+
+    <!-- 3 COLUMNS -->
+    <div class="cols-zone">
+
+      <!-- BIGGER -->
+      <div class="col-wrap">
+        <div class="col-header" style="background:${tm.c1};border-color:var(--stroke)">
+          <span class="col-header-emoji">🔴</span>
+          <div class="col-header-title">BIGGEST</div>
+          <div class="col-header-sub">${taskVerb} the largest</div>
+        </div>
+        <div class="col-body">${buildColRows(biggerItems,'bigger')}</div>
+      </div>
+
+      <div class="col-divider"></div>
+
+      <!-- SMALLER -->
+      <div class="col-wrap">
+        <div class="col-header" style="background:${tm.c2};border-color:var(--stroke)">
+          <span class="col-header-emoji">🔵</span>
+          <div class="col-header-title">SMALLEST</div>
+          <div class="col-header-sub">${taskVerb} the tiniest</div>
+        </div>
+        <div class="col-body">${buildColRows(smallerItems,'smaller')}</div>
+      </div>
+
+      <div class="col-divider"></div>
+
+      <!-- SAME -->
+      <div class="col-wrap">
+        <div class="col-header" style="background:${tm.c3};border-color:var(--stroke)">
+          <span class="col-header-emoji">🟢</span>
+          <div class="col-header-title">SAME SIZE</div>
+          <div class="col-header-sub">${taskVerb} the matching pair</div>
+        </div>
+        <div class="col-body">${buildColRows(sameItems,'same')}</div>
+      </div>
+
+    </div>
+
+    <!-- ANSWER KEY placeholder populated after columns render -->
+    <div class="answer-key-wrap" id="akWrap">
+      <div class="ak-title">✏️ Answer Key (for parent / teacher):</div>
+      <div class="ak-row" id="akRow"></div>
+    </div>
+
+    <!-- BONUS -->
+    <div class="bonus-row">
+      <div class="bonus-box">
+        <div class="bonus-title">✏️ Challenge: Draw something BIG and something SMALL</div>
+        <div style="display:flex;gap:10px">
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:900;color:#888;margin-bottom:4px">BIG:</div>
+            <div class="draw-area"></div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:900;color:#888;margin-bottom:4px">SMALL:</div>
+            <div class="draw-area"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bonus-box" style="width:120px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <div style="font-size:10px;font-weight:900;color:var(--stroke);text-align:center">⭐ Color a star<br>for each correct<br>answer!</div>
+        <div class="stars-row" style="justify-content:center;flex-wrap:wrap">
+          ${'<span>☆</span>'.repeat(n*3)}
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="ws-footer">
+      <span class="footer-l">© Bigger / Smaller / Same · Worksheet Studio</span>
+      <span class="footer-r">Card ${idx+1} of 10</span>
+    </div>
+
+  </div>`;
+
+  document.getElementById('sheetWrap').innerHTML=sheet;
+  // populate answer key AFTER innerHTML so ids exist
+  const akEl=document.getElementById('akRow');
+  if(akEl) akEl.innerHTML=window._akRows.join('');
+  requestAnimationFrame(()=>{
+    const el=document.getElementById('curSheet'); if(!el)return;
+    const avail=document.getElementById('main').clientWidth-40;
+    const scale=Math.min(1,avail/794);
+    el.style.transform=`scale(${scale})`;
+    el.style.transformOrigin='top center';
+    document.getElementById('sheetWrap').style.height=Math.ceil(el.offsetHeight*scale+40)+'px';
+  });
+  document.getElementById('navNum').textContent=`${idx+1}/10`;
+}
+
+function prev(){if(idx>0){idx--;render();}}
+function next(){if(idx<9){idx++;render();}}
+function savePNG(){
+  const el=document.getElementById('curSheet'); if(!el)return;
+  const saved=el.style.transform; el.style.transform='none';
+  htmlToImage.toPng(el,{pixelRatio:2,backgroundColor:'#fff'})
+    .then(url=>{const a=document.createElement('a');a.download=`bigger-smaller-same-${idx+1}.png`;a.href=url;a.click();})
+    .finally(()=>el.style.transform=saved);
+}
+
+initSidebar();
+generate();
+</script>
+</body>
+</html>
