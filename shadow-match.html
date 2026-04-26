@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🧩 Shadow Match Puzzle Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--stroke:#1e272e;--sb:#1a1a2e;--yellow:#feca57;--fd:'Fredoka One',cursive;--fb:'Nunito',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:var(--fb);background:#0d0d1a;background-image:radial-gradient(#1e2a3a 2px,transparent 2px);background-size:30px 30px;display:flex}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+
+#sb{width:290px;min-width:290px;background:var(--sb);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;border-right:2px solid #16213e;scrollbar-width:none}
+#sb::-webkit-scrollbar{display:none}
+
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:38px;height:38px}
+.logo-t{font-family:var(--fd);font-size:19px;color:#fff;line-height:1.1}
+.logo-t span{color:#a78bfa}
+.app-desc{font-size:10px;font-weight:900;background:#16213e;color:#a78bfa;padding:4px 8px;border-radius:6px;text-align:center;border:1px solid #a78bfa33}
+
+.cg{background:#16213e;border:1px solid #0f3460;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.lbl{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:#64748b;display:block;margin-bottom:2px}
+select,input[type=text]{width:100%;padding:9px 11px;border-radius:8px;border:1px solid #0f3460;background:#0d0d1a;color:#fff;font-family:var(--fb);font-size:12px;font-weight:700;outline:none;appearance:none}
+select:focus,input:focus{border-color:#a78bfa}
+
+.ng{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.nb{padding:8px 6px;border-radius:8px;border:1px solid #0f3460;background:#0d0d1a;color:#94a3b8;font-size:11px;font-weight:800;cursor:pointer;transition:all .2s;text-align:center}
+.nb:hover{border-color:#a78bfa;color:#fff}
+.nb.on{background:#a78bfa;border-color:#a78bfa;color:#fff}
+
+button{width:100%;padding:10px;border-radius:8px;border:none;font-family:var(--fb);font-size:12px;font-weight:900;cursor:pointer;transition:all .2s;margin-bottom:6px}
+button:last-child{margin-bottom:0}
+button:active{transform:scale(.97)}
+.btn-gen{background:#a78bfa;color:#fff;font-size:15px;padding:13px;box-shadow:0 4px 14px rgba(167,139,250,.3)}
+.btn-gen:hover{background:#9061f9}
+.btn-sec{background:#16213e;color:#fff;border:1px solid #0f3460}
+.btn-sec:hover{background:#0f3460}
+
+.nav-row{display:flex;align-items:center;gap:6px}
+.nav-btn{flex:1;padding:8px;border-radius:8px;background:#16213e;border:1px solid #0f3460;color:#fff;font-size:11px;font-weight:900;cursor:pointer;transition:all .2s}
+.nav-btn:hover{background:#0f3460}
+.nav-num{font-family:var(--fd);font-size:16px;color:#a78bfa;min-width:50px;text-align:center}
+
+.info{font-size:11px;color:#64748b;line-height:1.6;padding:0 4px}
+.info b{color:#a78bfa}
+
+/* MAIN */
+#main{flex:1;overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:24px 20px 60px;scrollbar-width:none}
+#main::-webkit-scrollbar{display:none}
+#sheetWrap{display:flex;justify-content:center;align-items:flex-start;width:100%}
+
+/* WORKSHEET */
+.sheet{width:794px;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:visible;transform-origin:top center;position:relative;display:flex;flex-direction:column}
+
+/* HEADER */
+.ws-header{padding:18px 28px 14px;border-bottom:4px solid var(--stroke)}
+.ws-header-inner{display:flex;justify-content:space-between;align-items:flex-start}
+.ws-title{font-family:var(--fd);font-size:30px;color:var(--stroke);line-height:1;display:flex;align-items:center;gap:10px}
+.ws-subtitle{font-size:13px;font-weight:800;color:#555;margin-top:4px}
+.ws-fields{display:flex;flex-direction:column;gap:6px;min-width:200px}
+.ws-field{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;color:var(--stroke)}
+.ws-field-line{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--stroke) 0,var(--stroke) 5px,transparent 5px,transparent 10px)}
+.ws-instructions{background:#f8f9fa;border:2.5px solid var(--stroke);border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;color:var(--stroke);margin:10px 0 0;display:flex;align-items:center;gap:10px}
+
+/* MATCH AREA */
+.match-area{padding:18px 24px;display:flex;gap:0;align-items:stretch}
+.side-label{font-family:var(--fd);font-size:12px;writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);color:#bbb;letter-spacing:2px;padding:0 8px;display:flex;align-items:center}
+.chars-col{display:flex;flex-direction:column;gap:10px;width:220px}
+.shadows-col{display:flex;flex-direction:column;gap:10px;width:220px}
+.center-col{flex:1;display:flex;flex-direction:column;justify-content:space-around;align-items:center;gap:10px}
+
+.char-cell{background:#fff;border:3.5px solid var(--stroke);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:3px 3px 0 var(--stroke);position:relative}
+.char-emoji{font-size:52px;line-height:1;display:block}
+.char-name{font-family:var(--fd);font-size:13px;color:var(--stroke);text-align:center}
+.char-dot{position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--stroke);z-index:2}
+
+.shadow-cell{background:#fff;border:3.5px solid var(--stroke);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:3px 3px 0 var(--stroke);position:relative}
+.shadow-dot{position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--stroke);z-index:2}
+.shadow-figure{width:64px;height:64px;display:flex;align-items:center;justify-content:center}
+.shadow-num{font-family:var(--fd);font-size:13px;color:#888;text-align:center}
+
+/* SVG silhouette */
+.sil{filter:brightness(0);width:52px;height:52px;font-size:52px;line-height:1;display:block;opacity:.85}
+
+/* ANSWER STRIP */
+.answer-strip{margin:0 24px 18px;border:3px dashed var(--stroke);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.ans-label{font-family:var(--fd);font-size:14px;color:var(--stroke)}
+.ans-boxes{display:flex;gap:8px}
+.ans-box{width:36px;height:36px;border:2.5px solid var(--stroke);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:14px;color:#ccc}
+
+/* BONUS BOX */
+.bonus-box{margin:0 24px 18px;background:var(--stroke);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+.bonus-left{font-family:var(--fd);font-size:15px;color:var(--yellow);display:flex;align-items:center;gap:8px}
+.bonus-right{display:flex;gap:8px}
+.star-o{font-size:20px;filter:grayscale(1);opacity:.4}
+
+/* FOOTER */
+.ws-footer{padding:10px 24px;border-top:3px solid var(--stroke);display:flex;justify-content:space-between;align-items:center;background:#f8f9fa}
+.footer-note{font-size:10px;font-weight:900;color:#999}
+.footer-badge{background:var(--stroke);color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:999px;font-family:var(--fd)}
+
+/* KEY */
+.answer-key{margin:0 24px;border:2px dashed #ccc;border-radius:10px;padding:10px 14px;background:#f8f9fa}
+.ak-title{font-size:10px;font-weight:900;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.ak-row{display:flex;gap:8px;flex-wrap:wrap}
+.ak-chip{font-size:11px;font-weight:900;color:#555;background:#fff;border:1.5px solid #ccc;padding:3px 10px;border-radius:999px}
+
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{display:block;background:#fff!important;overflow:visible!important;height:auto!important;font-size:100%}
+  #sb{display:none!important}
+  #main{padding:0!important;display:block!important;overflow:visible!important;background:#fff}
+  #sheetWrap{display:block!important;width:100%!important;height:auto!important}
+  .sheet{
+    transform:none!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    width:100%!important;
+    min-height:auto!important;
+    overflow:visible!important;
+    page-break-after:always;
+    margin:0!important;
+  }
+  .match-area{page-break-inside:avoid}
+  .bonus-box,.answer-strip,.answer-key,.ws-footer{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div id="sb">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs>
+      <circle cx="12" cy="12" r="10" fill="url(#lg)"/>
+      <circle cx="8.5" cy="10" r="2.5" fill="#fff" opacity=".9"/>
+      <circle cx="15.5" cy="10" r="2.5" fill="#fff" opacity=".4"/>
+      <path d="M8 15c0 0 2 2.5 4 2.5s4-2.5 4-2.5" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </svg>
+    <div class="logo-t">Shadow <span>Match</span></div>
+  </div>
+  <p class="app-desc">🧩 Puzzle Generator — Kids Worksheets</p>
+
+  <div class="cg">
+    <span class="lbl">🎨 Niche</span>
+    <div class="ng" id="nicheGrid"></div>
+    <input id="customN" type="text" placeholder="✏️ Custom niche...">
+  </div>
+
+  <div class="cg">
+    <span class="lbl">📐 Number of Pairs</span>
+    <select id="pairCount" onchange="generate()">
+      <option value="4">4 pairs (Pre-K)</option>
+      <option value="5" selected>5 pairs (Kindergarten)</option>
+      <option value="6">6 pairs (Grade 1)</option>
+    </select>
+    <span class="lbl" style="margin-top:4px">🎯 Difficulty</span>
+    <select id="diff" onchange="generate()">
+      <option value="easy" selected>Easy — obvious silhouettes</option>
+      <option value="medium">Medium — subtle differences</option>
+      <option value="hard">Hard — very similar shapes</option>
+    </select>
+    <span class="lbl" style="margin-top:4px">🌈 Style</span>
+    <select id="style" onchange="generate()">
+      <option value="cute" selected>Cute Kawaii</option>
+      <option value="bold">Bold & Chunky</option>
+      <option value="minimal">Minimal Line Art</option>
+    </select>
+  </div>
+
+  <button class="btn-gen" onclick="generate()">✨ GENERATE WORKSHEET</button>
+
+  <div class="cg" style="background:transparent;border:none;padding:0;gap:6px">
+    <div class="nav-row">
+      <button class="nav-btn" onclick="prevSheet()">◀ Prev</button>
+      <span class="nav-num" id="navNum">1/10</span>
+      <button class="nav-btn" onclick="nextSheet()">Next ▶</button>
+    </div>
+    <button class="btn-sec" onclick="savePNG()">💾 Save PNG</button>
+    <button class="btn-sec" onclick="window.print()">🖨️ Print</button>
+  </div>
+
+  <div class="info">
+    <b>About this worksheet:</b><br>
+    Shadow Match Puzzle improves visual discrimination, shape recognition and fine motor skills.<br><br>
+    5 colored characters on the left — 5 black silhouettes on the right in shuffled order. Kids draw a line to connect each pair.<br><br>
+    Perfect for <b>KDP, Etsy, TPT</b> printable packs.
+  </div>
+</div>
+
+<div id="main">
+  <div id="sheetWrap"></div>
+</div>
+
+<script>
+const NICHES = {
+  "Magical Unicorns":{
+    icon:"🦄",
+    color:"#e8d5f5",
+    hdrColor:"#9b59b6",
+    chars:[
+      {e:"🦄",n:"Unicorn",h:56},{e:"🧚",n:"Fairy",h:50},{e:"👑",n:"Crown",h:44},
+      {e:"🌟",n:"Star",h:48},{e:"🔮",n:"Crystal",h:44},{e:"🦋",n:"Butterfly",h:50},
+      {e:"🌈",n:"Rainbow",h:44},{e:"🌸",n:"Flower",h:44}
+    ]
+  },
+  "Dinosaur World":{
+    icon:"🦕",
+    color:"#d5f5e3",
+    hdrColor:"#1a7a4a",
+    chars:[
+      {e:"🦕",n:"Brontosaur",h:52},{e:"🦖",n:"T-Rex",h:54},{e:"🥚",n:"Dino Egg",h:46},
+      {e:"🌋",n:"Volcano",h:50},{e:"🦴",n:"Bone",h:44},{e:"🌿",n:"Fern",h:42},
+      {e:"🐾",n:"Footprint",h:42},{e:"🪨",n:"Rock",h:40}
+    ]
+  },
+  "Halloween Night":{
+    icon:"🎃",
+    color:"#fde8c8",
+    hdrColor:"#c0392b",
+    chars:[
+      {e:"🎃",n:"Pumpkin",h:52},{e:"👻",n:"Ghost",h:54},{e:"🦇",n:"Bat",h:48},
+      {e:"🕷️",n:"Spider",h:46},{e:"🧙‍♀️",n:"Witch",h:54},{e:"💀",n:"Skull",h:50},
+      {e:"🕯️",n:"Candle",h:46},{e:"🌙",n:"Moon",h:46}
+    ]
+  },
+  "Space Kittens":{
+    icon:"🐱",
+    color:"#d4e6f1",
+    hdrColor:"#1a5276",
+    chars:[
+      {e:"🐱",n:"Kitten",h:52},{e:"🚀",n:"Rocket",h:54},{e:"🪐",n:"Planet",h:50},
+      {e:"⭐",n:"Star",h:44},{e:"🛸",n:"UFO",h:50},{e:"☄️",n:"Comet",h:46},
+      {e:"🌙",n:"Moon",h:44},{e:"👨‍🚀",n:"Astronaut",h:52}
+    ]
+  },
+  "Pirate Island":{
+    icon:"🏴‍☠️",
+    color:"#fdf2d0",
+    hdrColor:"#b7770d",
+    chars:[
+      {e:"🏴‍☠️",n:"Pirate Flag",h:46},{e:"⚓",n:"Anchor",h:52},{e:"🦜",n:"Parrot",h:54},
+      {e:"💰",n:"Treasure",h:46},{e:"🧭",n:"Compass",h:46},{e:"🚢",n:"Ship",h:50},
+      {e:"🗺️",n:"Map",h:44},{e:"💀",n:"Skull",h:50}
+    ]
+  },
+  "Farm Animals":{
+    icon:"🐄",
+    color:"#eafaf1",
+    hdrColor:"#196f3d",
+    chars:[
+      {e:"🐄",n:"Cow",h:52},{e:"🐷",n:"Pig",h:50},{e:"🐔",n:"Chicken",h:48},
+      {e:"🐑",n:"Sheep",h:50},{e:"🐴",n:"Horse",h:54},{e:"🦆",n:"Duck",h:46},
+      {e:"🐇",n:"Rabbit",h:46},{e:"🐕",n:"Dog",h:50}
+    ]
+  },
+  "Ocean Babies":{
+    icon:"🦈",
+    color:"#d6eaf8",
+    hdrColor:"#1a5276",
+    chars:[
+      {e:"🦈",n:"Shark",h:50},{e:"🐙",n:"Octopus",h:52},{e:"🐬",n:"Dolphin",h:50},
+      {e:"🦀",n:"Crab",h:46},{e:"🐢",n:"Turtle",h:50},{e:"🪼",n:"Jellyfish",h:52},
+      {e:"🐡",n:"Puffer",h:48},{e:"🦞",n:"Lobster",h:46}
+    ]
+  },
+  "Winter Magic":{
+    icon:"❄️",
+    color:"#d4e6f1",
+    hdrColor:"#1f618d",
+    chars:[
+      {e:"⛄",n:"Snowman",h:54},{e:"❄️",n:"Snowflake",h:46},{e:"🎄",n:"Tree",h:54},
+      {e:"🦌",n:"Reindeer",h:52},{e:"🎅",n:"Santa",h:54},{e:"🧣",n:"Scarf",h:42},
+      {e:"🔔",n:"Bell",h:46},{e:"⭐",n:"Star",h:44}
+    ]
+  }
+};
+
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+let currNiche="Magical Unicorns", sheets=[], idx=0;
+
+/* SIDEBAR */
+function initSidebar(){
+  const g=document.getElementById('nicheGrid');
+  Object.keys(NICHES).forEach((k,i)=>{
+    const b=document.createElement('button');
+    b.className='nb'+(i===0?' on':'');
+    b.innerHTML=NICHES[k].icon+' '+k.split(' ')[0];
+    b.onclick=()=>{
+      document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      currNiche=k;
+      document.getElementById('customN').value='';
+      generate();
+    };
+    g.appendChild(b);
+  });
+  document.getElementById('customN').oninput=function(){
+    const v=this.value.trim();
+    if(v.length<3)return;
+    document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
+    NICHES[v]={icon:'🎨',color:'#f0f0f0',hdrColor:'#333',chars:[
+      {e:'🎯',n:v+' A',h:50},{e:'🎲',n:v+' B',h:50},{e:'🎪',n:v+' C',h:50},
+      {e:'🎨',n:v+' D',h:50},{e:'🎭',n:v+' E',h:50},{e:'🎠',n:v+' F',h:50}
+    ]};
+    currNiche=v;
+    generate();
+  };
+}
+
+/* GENERATE */
+function generate(){
+  const count=parseInt(document.getElementById('pairCount').value);
+  const nd=NICHES[currNiche];
+  sheets=[];
+  for(let s=0;s<10;s++){
+    const picked=shuffle([...nd.chars]).slice(0,count);
+    const shadowOrder=shuffle([...picked]);
+    sheets.push({picked,shadowOrder});
+  }
+  idx=0;
+  render();
+}
+
+function render(){
+  const nd=NICHES[currNiche];
+  const {picked,shadowOrder}=sheets[idx];
+  const count=picked.length;
+  const diff=document.getElementById('diff').value;
+  const styleV=document.getElementById('style').value;
+
+  // answer key
+  const answerKey=picked.map((p,i)=>{
+    const si=shadowOrder.findIndex(s=>s.e===p.e);
+    return `${i+1}→${si+1}`;
+  }).join('  ');
+
+  const headerBg = nd.hdrColor;
+  const pastelBg = nd.color;
+  const diffLabel={easy:'⭐ Easy',medium:'⭐⭐ Medium',hard:'⭐⭐⭐ Hard'}[diff];
+  const styleLabel={cute:'Kawaii',bold:'Bold',minimal:'Minimal'}[styleV];
+
+  // Build char cells
+  const charCells=picked.map((p,i)=>`
+    <div class="char-cell" style="background:${pastelBg}">
+      <span style="font-size:${p.h||52}px;line-height:1">${p.e}</span>
+      <span class="char-name">${p.n}</span>
+      <div class="char-dot" style="background:${pastelBg}"></div>
+    </div>`).join('');
+
+  // Build shadow cells — shuffled, silhouette
+  const shadowCells=shadowOrder.map((p,i)=>`
+    <div class="shadow-cell">
+      <div class="shadow-dot"></div>
+      <span style="font-size:${p.h||52}px;line-height:1;filter:brightness(0);display:block">${p.e}</span>
+      <span class="shadow-num">${i+1}</span>
+    </div>`).join('');
+
+  // Center connecting lines area — dashed guides
+  const centerGuides=picked.map((_,i)=>`
+    <div style="display:flex;align-items:center;justify-content:center;height:${(_=>{const ns=NICHES[currNiche];return 94})()}px;width:100%">
+      <div style="width:80%;border-top:2px dashed #ddd;border-radius:999px;position:relative">
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#f8f9fa;padding:0 8px;font-size:10px;font-weight:900;color:#ccc;font-family:var(--fd)">Draw a line!</div>
+      </div>
+    </div>`).join('');
+
+  const sheet=`
+<div class="sheet" id="sheet-${idx}" style="background:#fff">
+
+  <!-- HEADER -->
+  <div class="ws-header" style="background:${pastelBg}">
+    <div class="ws-header-inner">
+      <div>
+        <div class="ws-title" style="color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.3)">
+          <div style="background:${headerBg};padding:8px 16px;border-radius:10px;border:3px solid var(--stroke);box-shadow:3px 3px 0 var(--stroke)">
+            🧩 Shadow Match Puzzle
+          </div>
+        </div>
+        <div class="ws-subtitle">
+          ${nd.icon} ${currNiche} · ${diffLabel} · ${styleLabel}
+        </div>
+      </div>
+      <div class="ws-fields">
+        <div class="ws-field"><span>Name:</span><div class="ws-field-line"></div></div>
+        <div class="ws-field"><span>Date:</span><div class="ws-field-line"></div></div>
+        <div class="ws-field"><span>Score:</span><div class="ws-field-line"></div><span>/ ${count}</span></div>
+      </div>
+    </div>
+    <div class="ws-instructions">
+      <span style="font-size:22px">✏️</span>
+      <span>Draw a line from each <b>coloured character</b> on the left to its matching <b>shadow</b> on the right!</span>
+    </div>
+  </div>
+
+  <!-- MATCH AREA -->
+  <div class="match-area">
+    <div>
+      <div style="font-family:var(--fd);font-size:12px;color:${headerBg};text-align:center;margin-bottom:8px;letter-spacing:1px">🌈 CHARACTERS</div>
+      <div class="chars-col">${charCells}</div>
+    </div>
+    <div class="center-col">${centerGuides}</div>
+    <div>
+      <div style="font-family:var(--fd);font-size:12px;color:#333;text-align:center;margin-bottom:8px;letter-spacing:1px">🌑 SHADOWS</div>
+      <div class="shadows-col">${shadowCells}</div>
+    </div>
+  </div>
+
+  <!-- ANSWER STRIP -->
+  <div class="answer-strip" style="border-color:${headerBg}">
+    <span class="ans-label" style="color:${headerBg}">⭐ How many did you match?</span>
+    <div class="ans-boxes">
+      ${picked.map((_,i)=>`<div class="ans-box" style="border-color:${headerBg}">·</div>`).join('')}
+    </div>
+  </div>
+
+  <!-- BONUS -->
+  <div class="bonus-box" style="background:${headerBg}">
+    <div class="bonus-left">
+      <span>⭐ Color a star for each correct match!</span>
+    </div>
+    <div class="bonus-right">
+      ${picked.map((_,i)=>`<span class="star-o">☆</span>`).join('')}
+    </div>
+  </div>
+
+  <!-- ANSWER KEY -->
+  <div class="answer-key" style="margin-top:10px">
+    <div class="ak-title">Answer Key (for teacher/parent — upside down in print):</div>
+    <div class="ak-row">
+      ${picked.map((p,i)=>{const si=shadowOrder.findIndex(s=>s.e===p.e)+1;return`<span class="ak-chip">${i+1} ${p.n} → Shadow ${si}</span>`}).join('')}
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="ws-footer">
+    <span class="footer-note">© ${currNiche} Shadow Match · Worksheet Studio</span>
+    <span class="footer-badge">${nd.icon} Card ${idx+1} of 10</span>
+  </div>
+
+</div>`;
+
+  document.getElementById('sheetWrap').innerHTML=sheet;
+
+  // Scale to fit viewport width
+  requestAnimationFrame(()=>{
+    const el=document.getElementById(`sheet-${idx}`);
+    if(!el)return;
+    const avail=document.getElementById('main').clientWidth-40;
+    const scale=Math.min(1,avail/794);
+    el.style.transform=`scale(${scale})`;
+    el.style.transformOrigin='top center';
+    // Push the wrap height so page scrolls to full content
+    const realH=el.getBoundingClientRect().height||900;
+    const naturalH=el.offsetHeight;
+    document.getElementById('sheetWrap').style.height=Math.ceil(naturalH*scale+40)+'px';
+  });
+
+  document.getElementById('navNum').textContent=`${idx+1}/10`;
+}
+
+function prevSheet(){if(idx>0){idx--;render();}}
+function nextSheet(){if(idx<9){idx++;render();}}
+
+function savePNG(){
+  const el=document.getElementById(`sheet-${idx}`);
+  if(!el)return;
+  const savedTf=el.style.transform;
+  el.style.transform='none';
+  htmlToImage.toPng(el,{pixelRatio:2,backgroundColor:'#fff'})
+    .then(url=>{const a=document.createElement('a');a.download=`shadow-match-${currNiche.replace(/\s/g,'-').toLowerCase()}-${idx+1}.png`;a.href=url;a.click();})
+    .finally(()=>el.style.transform=savedTf);
+}
+
+initSidebar();
+generate();
+</script>
+</body>
+</html>
