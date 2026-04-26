@@ -1,0 +1,290 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🖍️ Alphabet Coloring Card Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --stroke:#1e272e;--sb:#0f4c75;--paper:#fff;--yellow:#feca57;
+  --font-d:'Fredoka One',cursive;--font-b:'Nunito',sans-serif;
+  --shadow:5px 5px 0 var(--stroke);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:var(--font-b);background:#1e272e;background-image:radial-gradient(#576574 2px,transparent 2px);background-size:30px 30px;display:flex}
+#sidebar{width:300px;min-width:300px;background:var(--sb);color:#fff;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;border-right:5px solid var(--stroke);scrollbar-width:none}
+#sidebar::-webkit-scrollbar{display:none}
+.app-title{font-family:var(--font-d);font-size:20px;text-align:center;color:var(--yellow);text-shadow:3px 3px 0 var(--stroke);line-height:1.15}
+.app-desc{font-size:10px;text-align:center;font-weight:900;background:var(--stroke);color:var(--yellow);padding:4px 8px;border-radius:6px}
+.group{background:rgba(255,255,255,.14);padding:11px;border-radius:12px;border:3px solid rgba(255,255,255,.22);box-shadow:4px 4px 0 rgba(0,0,0,.25)}
+.label{display:block;font-weight:900;margin-bottom:6px;font-size:11px;text-transform:uppercase;color:rgba(255,255,255,.86)}
+select,button,input[type=text]{width:100%;padding:8px 10px;border-radius:8px;border:3px solid var(--stroke);font-family:var(--font-b);font-size:12px;font-weight:900;outline:none;margin-bottom:6px}
+select:last-child,button:last-child,input:last-child{margin-bottom:0}
+select,input[type=text]{background:#fff;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,.2)}
+button{cursor:pointer;transition:.1s}
+button:active,select:active{transform:translate(3px,3px);box-shadow:none!important}
+.btn-gen{background:var(--yellow);color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,.3);font-size:14px;padding:12px}
+.btn-print{background:#fff;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,.3)}
+.btn-png{background:#ff9ff3;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,.3)}
+.btn-rand{background:#48dbfb;color:var(--stroke);box-shadow:3px 3px 0 rgba(0,0,0,.3)}
+.niche-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.nbtn{padding:7px 5px;border-radius:8px;border:3px solid var(--stroke);background:#fff;color:var(--stroke);font-size:10px;font-weight:900;box-shadow:2px 2px 0 var(--stroke);margin:0;line-height:1.25}
+.nbtn.active{transform:translate(2px,2px);box-shadow:none;background:var(--yellow)}
+.info{background:rgba(0,0,0,.2);border-radius:10px;padding:10px;font-size:10px;font-weight:800;line-height:1.75;color:rgba(255,255,255,.92)}
+.info b{color:var(--yellow)}
+#preview{flex:1;padding:16px 12px;overflow:auto;display:flex;justify-content:center;align-items:flex-start;scrollbar-width:none}
+#preview::-webkit-scrollbar{display:none}
+.sheet{width:210mm;min-height:297mm;background:#fff;border:5px solid var(--stroke);border-radius:15px;box-shadow:15px 15px 0 rgba(0,0,0,.3);padding:7mm 8mm 6mm;color:var(--stroke);transform:scale(.78);transform-origin:top center;margin:0 auto calc((297mm * .78) - 297mm)}
+.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:5px solid var(--stroke);padding-bottom:6px;margin-bottom:7px}
+.h-title{font-family:var(--font-d);font-size:29px;line-height:1;text-shadow:3px 3px 0 var(--yellow)}
+.h-sub{font-size:11px;background:var(--stroke);color:#fff;display:inline-block;padding:3px 8px;border-radius:5px;font-weight:900;margin-top:4px}
+.h-info{display:flex;flex-direction:column;gap:5px;width:170px}
+.row{display:flex;align-items:flex-end;font-size:12px;font-weight:900}.row span{margin-right:5px;white-space:nowrap}.line{flex:1;border-bottom:3px dashed var(--stroke);height:13px}
+.banner{display:flex;align-items:center;gap:10px;background:var(--stroke);color:#fff;border-radius:10px;padding:7px 12px;margin-bottom:8px}
+.banner-text{font-size:11px;font-weight:800;line-height:1.5;flex:1}.banner-text b{color:var(--yellow)}
+.card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.card{border:4px solid var(--stroke);border-radius:13px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;background:#fff}
+.card:nth-child(4n+1){background:#fff0f6}.card:nth-child(4n+2){background:#f0f7ff}.card:nth-child(4n+3){background:#f0fff4}.card:nth-child(4n+4){background:#fffbea}
+.card-h{padding:4px 8px;border-bottom:3px solid var(--stroke);display:flex;align-items:center;justify-content:space-between;color:#fff}
+.card:nth-child(4n+1) .card-h{background:#c0392b}.card:nth-child(4n+2) .card-h{background:#2471a3}.card:nth-child(4n+3) .card-h{background:#1a7a4a}.card:nth-child(4n+4) .card-h{background:#b7770d}
+.card-title{font-family:var(--font-d);font-size:13px;letter-spacing:.3px}
+.badge{font-size:9px;font-weight:900;background:rgba(255,255,255,.2);padding:2px 6px;border-radius:5px}
+.card-b{padding:7px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:127px}
+.letter-box{width:62px;height:62px;border:3px dashed var(--stroke);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 var(--stroke)}
+.trace-letter{font-family:var(--font-d);font-size:38px;line-height:1;color:transparent;-webkit-text-stroke:2.2px #b8b8b8;text-stroke:2.2px #b8b8b8;letter-spacing:1px}
+.illustration{width:56px;height:56px;border:3px solid var(--stroke);border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 var(--stroke);font-size:28px}
+.word{font-family:var(--font-d);font-size:13px;line-height:1;text-align:center}
+.write-line{width:86%;border-bottom:2px dashed var(--stroke);height:10px}
+.cut-hint{font-size:8px;font-weight:900;color:#777;text-transform:uppercase;letter-spacing:.4px}
+.cut-grid{position:relative}
+.cut-grid::before{content:"";position:absolute;inset:-3px;border:2px dashed #b9c3cc;border-radius:10px;pointer-events:none}
+.footer{display:flex;justify-content:space-between;align-items:center;border-top:3px solid var(--stroke);padding-top:5px;margin-top:7px}.f-note{font-size:9px;font-weight:800;color:#888}
+.mini-legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.legend-chip{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:900;background:#f5f5f5;border:2px solid var(--stroke);padding:3px 7px;border-radius:999px}
+[contenteditable="true"]{outline:none;border-radius:4px;border:2px dashed transparent}.sheet [contenteditable="true"]:hover,.sheet [contenteditable="true"]:focus{background:rgba(0,0,0,.05);border-color:var(--stroke)}
+@page{size:A4 portrait;margin:0}
+@media print{
+*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+html,body{display:block;background:none;overflow:hidden}
+#sidebar{display:none!important}
+#preview{padding:0;display:block;overflow:hidden}
+.sheet{transform:none!important;margin:0;width:100%;min-height:100vh;box-shadow:none!important;border-radius:0}
+}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <h1 class="app-title">🖍️ Alphabet Coloring<br>Card Generator</h1>
+  <p class="app-desc">26 Mini Flashcards — Print, Cut & Color</p>
+
+  <div class="group">
+    <span class="label">🗂️ Select Niche</span>
+    <div class="niche-grid" id="nicheGrid"></div>
+    <input id="customNiche" type="text" placeholder="✏️ Or type your own niche..." oninput="handleCustomNiche()">
+  </div>
+
+  <div class="group">
+    <span class="label">🎨 Card Style</span>
+    <select id="cardStyle" onchange="generateCards()">
+      <option value="outline" selected>Outline Letter + Emoji Icon</option>
+      <option value="bubble">Bubble Letter + Emoji Icon</option>
+      <option value="double">Big Letter + Small Letter</option>
+    </select>
+    <span class="label" style="margin-top:8px">📐 Layout</span>
+    <select id="layout" onchange="generateCards()">
+      <option value="4" selected>4 columns — larger cards</option>
+      <option value="5">5 columns — medium cards</option>
+      <option value="6">6 columns — compact cards</option>
+    </select>
+    <span class="label" style="margin-top:8px">🔤 Set</span>
+    <select id="setType" onchange="generateCards()">
+      <option value="az" selected>A to Z</option>
+      <option value="first13">A to M</option>
+      <option value="last13">N to Z</option>
+      <option value="vowels">Vowels Only</option>
+    </select>
+  </div>
+
+  <div class="group" style="background:transparent;border:none;box-shadow:none;padding:0">
+    <button class="btn-gen" onclick="generateCards()">✨ GENERATE CARDS</button>
+    <button class="btn-rand" onclick="randomizeTheme()">🎲 RANDOMIZE NICHE</button>
+    <button class="btn-print" onclick="window.print()">🖨️ PRINT</button>
+    <button class="btn-png" onclick="savePNG()">💾 SAVE PNG</button>
+  </div>
+
+  <div class="info">
+    <b>How it works:</b><br>
+    Generates mini alphabet coloring cards in a worksheet-style sheet. Each card includes:<br>
+    - one big trace/color letter<br>
+    - one themed icon/illustration<br>
+    - one simple word label<br><br>
+    Perfect for <b>flashcards, cut-and-color packs, alphabet centers, morning work</b> and printable bundles.
+  </div>
+</div>
+
+<div id="preview">
+  <div class="sheet" id="sheet">
+    <div class="header">
+      <div>
+        <div class="h-title" id="sheetTitle" contenteditable="true" spellcheck="false">🖍️ Alphabet Coloring Cards</div>
+        <div class="h-sub" id="sheetSub" contenteditable="true" spellcheck="false">Print, cut and color each mini card!</div>
+      </div>
+      <div class="h-info">
+        <div class="row"><span contenteditable="true">Name:</span><div class="line"></div></div>
+        <div class="row"><span contenteditable="true">Date:</span><div class="line"></div></div>
+        <div class="row"><span contenteditable="true">Class:</span><div class="line"></div></div>
+      </div>
+    </div>
+
+    <div class="banner">
+      <span style="font-size:22px" id="bannerIcon">🦄</span>
+      <div class="banner-text" id="bannerText">Color the big letter, say the word, then cut out each card to make your own <b>alphabet flashcard set</b>.</div>
+    </div>
+
+    <div class="mini-legend" style="margin-bottom:8px">
+      <div class="legend-chip">✂️ Cut on the card borders</div>
+      <div class="legend-chip">🖍️ Color the letter and picture</div>
+      <div class="legend-chip">🔤 Say the beginning sound</div>
+    </div>
+
+    <div class="cut-grid card-grid" id="cardGrid"></div>
+
+    <div class="footer">
+      <div class="f-note" id="footerNote" contenteditable="true" spellcheck="false">© Alphabet Coloring Card Generator — Worksheet Studio</div>
+      <div class="f-note">26 mini-cards ready to print & cut</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const NICHE_LIST = [
+  {key:'unicorn',name:'Magical Unicorn Kingdom',icon:'🦄',words:{
+    A:[['Alicorn','🦄'],['Archway','🌈'],['Aurora','✨']],B:[['Bridge','🌈'],['Bow','🎀'],['Bells','🔔']],C:[['Castle','🏰'],['Crown','👑'],['Crystal','💎']],D:[['Dust','✨'],['Dream','💭'],['Diamond','💠']],E:[['Elf','🧝'],['Enchant','🪄'],['Ember','🔥']],F:[['Fairy','🧚'],['Flutter','🦋'],['Frost','❄️']],G:[['Gem','💎'],['Glow','🌟'],['Gate','🚪']],H:[['Heart','💖'],['Halo','😇'],['Horn','🦄']],I:[['Ice Star','❄️'],['Iris','🌸'],['Ivy','🌿']],J:[['Jewel','💍'],['Journey','🗺️'],['Jade','💚']],K:[['Kingdom','👑'],['Key','🔑'],['Kindness','💗']],L:[['Lamp','🏮'],['Lace','🎀'],['Lily','🌷']],M:[['Moon','🌙'],['Magic','🪄'],['Mist','🌫️']],N:[['Nest','🪺'],['Nova','✨'],['Night','🌙']],O:[['Orb','🔮'],['Oak','🌳'],['Opal','💠']],P:[['Pegasus','🪽'],['Pearl','🤍'],['Petals','🌸']],Q:[['Queen','👸'],['Quest','🗺️'],['Quartz','🔮']],R:[['Rainbow','🌈'],['Rose','🌹'],['Ribbon','🎀']],S:[['Star','⭐'],['Shimmer','✨'],['Spell','📜']],T:[['Tower','🗼'],['Tiara','👑'],['Trail','🌟']],U:[['Unicorn','🦄'],['Umber','🟤'],['Unity','🤝']],V:[['Velvet','🪄'],['Veil','🌫️'],['Vine','🌿']],W:[['Wand','🪄'],['Wing','🪽'],['Wish','⭐']],X:[['X-star','✨'],['Xtra Glow','🌟'],['Xenon','💡']],Y:[['Yarn Cloud','☁️'],['Yellow Star','⭐'],['Yonder','🌈']],Z:[['Zap','⚡'],['Zenith','🌟'],['Zeal','💫']]
+  }},
+  {key:'dino',name:'Tiny Dinosaur Babies',icon:'🥚',words:{
+    A:[['Amber','🪨'],['Ankylosaur','🦕'],['Ancient','⏳']],B:[['Bone','🦴'],['Baby Rex','🦖'],['Burrow','🕳️']],C:[['Cave','⛰️'],['Claw','🐾'],['Crater','🌑']],D:[['Dino','🦕'],['Diplodocus','🦕'],['Den','🏕️']],E:[['Egg','🥚'],['Explore','🧭'],['Earth','🌍']],F:[['Fern','🌿'],['Fossil','🪨'],['Flock','🦕']],G:[['Grass','🌱'],['Giant','🦕'],['Growl','😤']],H:[['Hatch','🐣'],['Herd','🦕'],['Horn','🦏']],I:[['Island','🏝️'],['Ice Age','🧊'],['Iguana','🦎']],J:[['Jungle','🌴'],['Jump','🦘'],['Jaw','🦷']],K:[['King Rex','👑'],['Keen Eye','👁️'],['Kelp','🌿']],L:[['Leaf','🍃'],['Lava','🌋'],['Lizard','🦎']],M:[['Mud','🟤'],['Meteor','☄️'],['Marsh','🌿']],N:[['Nest','🪺'],['Night Dino','🌙'],['Nibble','🍃']],O:[['Oasis','💧'],['Old Bones','🦴'],['Oviraptor','🥚']],P:[['Ptero','🦖'],['Pack','🦕'],['Print','🐾']],Q:[['Quick Foot','🐾'],['Quake','💥'],['Quest','🧭']],R:[['Rex','🦖'],['Roar','📣'],['Run','🏃']],S:[['Spike','🦕'],['Stomp','🦶'],['Swamp','🌿']],T:[['Tail','🦕'],['Triceratops','🦕'],['Track','🐾']],U:[['Under Rock','🪨'],['Uproar','📣'],['Unearthed','⛏️']],V:[['Volcano','🌋'],['Valley','🏔️'],['Vine','🌿']],W:[['Water','💧'],['Wander','🧭'],['Wings','🪽']],X:[['X-bone','🦴'],['X-fossil','🪨'],['X-marks','❌']],Y:[['Yawn','😴'],['Young Rex','🦖'],['Yard','🌿']],Z:[['Zzz','💤'],['Zero G','🌀'],['Zap','⚡']]
+  }},
+  {key:'pirate',name:'Pirate Treasure Island',icon:'🏴‍☠️',words:{
+    A:[['Anchor','⚓'],['Adventure','🗺️'],['Ahoy','🚢']],B:[['Booty','💰'],['Barrel','🛢️'],['Bomb','💣']],C:[['Chest','🧰'],['Compass','🧭'],['Crew','👥']],D:[['Dolphin','🐬'],['Dock','⚓'],['Dagger','🗡️']],E:[['Eye Patch','🩹'],['Explorer','🧭'],['Escape','🚤']],F:[['Flag','🏴‍☠️'],['Fish','🐟'],['Fort','🏰']],G:[['Gold','🪙'],['Galleon','⛵'],['Grotto','🌊']],H:[['Hat','🎩'],['Harbor','⚓'],['Hook','🪝']],I:[['Island','🏝️'],['Ink Map','🗺️'],['Ivory','🦷']],J:[['Jewel','💎'],['Journey','⛵'],['Jolly Roger','💀']],K:[['Key','🔑'],['Knot','🪢'],['Kraken','🐙']],L:[['Map Line','🗺️'],['Lantern','🏮'],['Loot','💰']],M:[['Map','🗺️'],['Mast','⚓'],['Mermaid','🧜']],N:[['Nest','🪺'],['Net','🎣'],['North Star','⭐']],O:[['Ocean','🌊'],['Oar','🚣'],['Outpost','🏴‍☠️']],P:[['Pirate','🏴‍☠️'],['Parrot','🦜'],['Plank','🪵']],Q:[['Quest','🧭'],['Quill','🖋️'],['Quick Ship','🚢']],R:[['Rope','🪢'],['Reef','🪸'],['Rum Jug','🫙']],S:[['Ship','🚢'],['Skull','💀'],['Saber','⚔️']],T:[['Treasure','💎'],['Tide','🌊'],['Torch','🔦']],U:[['Under Sea','🌊'],['Unknown Bay','🏝️'],['Unfurl','⛵']],V:[['Voyage','⛵'],['Vow','🤝'],['Vault','🧰']],W:[['Wheel','🛞'],['Wind','💨'],['Waves','🌊']],X:[['X Marks','❌'],['X-map','🗺️'],['X-treasure','💰']],Y:[['Yo-Ho','⭐'],['Yarr','🏴‍☠️'],['Yellow Flag','🚩']],Z:[['Zoom','💨'],['Zephyr','💨'],['Zero Map','🗺️']]
+  }},
+  {key:'space',name:'Galactic Space Kittens',icon:'🐱',words:{
+    A:[['Asteroid','☄️'],['Astronaut','👨‍🚀'],['Aurora','🌌']],B:[['Boots','🥾'],['Black Hole','🌀'],['Boost','🚀']],C:[['Cat','🐱'],['Comet','☄️'],['Crater','🌑']],D:[['Dock','🛰️'],['Dark Star','🌑'],['Drift','🌀']],E:[['Earth','🌍'],['Eclipse','🌑'],['Engine','🔧']],F:[['Fuel','⛽'],['Float','🌌'],['Fur Suit','🐱']],G:[['Galaxy','🌌'],['Gravity','🌀'],['Glitter Star','✨']],H:[['Helmet','🪖'],['Hyperspace','💫'],['Halo','⭐']],I:[['Ice Moon','🧊'],['Ion Drive','⚡'],['Infrared','📡']],J:[['Jet','🚀'],['Jupiter','🪐'],['Jump','💨']],K:[['Kitten','🐱'],['Kuiper','☄️'],['Kite Star','✨']],L:[['Laser','🔦'],['Launch','🚀'],['Light Year','💡']],M:[['Moon','🌙'],['Mars','🔴'],['Meteor','☄️']],N:[['Nova','✨'],['Nebula','🌌'],['Night Sky','🌃']],O:[['Orbit','🪐'],['Oxygen','💨'],['Observatory','🔭']],P:[['Planet','🪐'],['Pulsar','⭐'],['Pod','🛸']],Q:[['Quest','⭐'],['Quantum','💫'],['Quick Paw','🐱']],R:[['Rocket','🚀'],['Ring','💫'],['Ray','⚡']],S:[['Star','⭐'],['Saturn','🪐'],['Satellite','🛰️']],T:[['Tail','🐈'],['Telescope','🔭'],['Thrust','🚀']],U:[['UFO','🛸'],['Universe','🌌'],['Uranus','🪐']],V:[['Venus','🪐'],['Void','🌑'],['Visor','🪖']],W:[['Warp','💫'],['Wormhole','🌀'],['Watch Star','⭐']],X:[['X-ray','📡'],['X-planet','🪐'],['Xenon','💡']],Y:[['Yarn Star','🧶'],['Yellow Dwarf','⭐'],['Yonder','🌌']],Z:[['Zap','⚡'],['Zero G','🌀'],['Zenith','🌟']]
+  }},
+  {key:'ocean',name:'Baby Sharks & Deep Sea Babies',icon:'🦈',words:{
+    A:[['Anemone','🪸'],['Abyssal','🌊'],['Anchor','⚓']],B:[['Baby Shark','🦈'],['Barnacle','🐚'],['Bubble','🫧']],C:[['Coral','🪸'],['Crab','🦀'],['Current','🌊']],D:[['Dolphin','🐬'],['Deep Sea','🌊'],['Drift','💧']],E:[['Eel','🐍'],['Echo','🔊'],['Explorer','🧭']],F:[['Fish','🐟'],['Fin','🦈'],['Foam','🫧']],G:[['Guppy','🐠'],['Glowing Fish','💡'],['Gulf','🌊']],H:[['Hook','🪝'],['Hermit','🐚'],['Hydro','💧']],I:[['Ink','🖋️'],['Isla','🏝️'],['Iridescent','🌈']],J:[['Jellyfish','🪼'],['Jump Wave','🌊'],['Jaw','🦈']],K:[['Kelp','🌿'],['Krill','🦐'],['Kraken Baby','🐙']],L:[['Lagoon','💧'],['Lobster','🦞'],['Light Fish','💡']],M:[['Merbaby','🧜'],['Manatee','🐋'],['Murk','🌊']],N:[['Narwhal','🐋'],['Net','🎣'],['Neon Fish','💡']],O:[['Octopus','🐙'],['Otter','🦦'],['Ocean','🌊']],P:[['Pearl','⚪'],['Pufferfish','🐡'],['Pod','🐬']],Q:[['Queen Fish','👑'],['Quiet Deep','🌊'],['Quest','🧭']],R:[['Reef','🪸'],['Ray','🐟'],['Ripple','💧']],S:[['Shell','🐚'],['Shark','🦈'],['Seahorse','🐴']],T:[['Turtle','🐢'],['Tide','🌊'],['Tentacle','🐙']],U:[['Urchin','🟣'],['Undertow','🌊'],['Up Bubble','🫧']],V:[['Voyage Fish','🐟'],['Vortex','🌀'],['Velvet Fish','🐠']],W:[['Whale','🐋'],['Wave','🌊'],['Whisker','🦈']],X:[['X-fin','🦈'],['X-coral','🪸'],['X-bubble','🫧']],Y:[['Yacht','⛵'],['Yellow Tang','🐠'],['Yonder Sea','🌊']],Z:[['Zip Fish','🐟'],['Zooplankton','🔬'],['Zen Wave','🌊']]
+  }},
+  {key:'witch',name:"Cozy Witch's Potion Academy",icon:'🧙‍♀️',words:{
+    A:[['Apple Potion','🍎'],['Amulet','📿'],['Abyss','🌑']],B:[['Broom','🧹'],['Bat','🦇'],['Brew','🫕']],C:[['Cauldron','🫕'],['Cat','🐱'],['Crystal','🔮']],D:[['Dragon','🐉'],['Dark Moon','🌑'],['Dust','✨']],E:[['Elixir','🧪'],['Ember','🔥'],['Enchant','🪄']],F:[['Frog','🐸'],['Flask','🧪'],['Familiar','🐱']],G:[['Ghost','👻'],['Grimoire','📘'],['Glow','✨']],H:[['Hat','🎩'],['Hex','✨'],['Hollow','🕳️']],I:[['Ink','🖋️'],['Illusion','🌀'],['Ivy','🌿']],J:[['Jar','🫙'],['Jewel','💎'],['Jack Bat','🦇']],K:[['Key','🔑'],['Knot','🪢'],['Kindling','🔥']],L:[['Lantern','🏮'],['Lunar','🌙'],['Lure','🎣']],M:[['Moon','🌙'],['Mist','🌫️'],['Magic','🪄']],N:[['Night','🌌'],['Nectar','🍯'],['Nova','✨']],O:[['Owl','🦉'],['Orb','🔮'],['Obsidian','🟤']],P:[['Potion','🧪'],['Pentacle','⭐'],['Pumpkin','🎃']],Q:[['Quartz','🔮'],['Quill','🖋️'],['Quest','🧭']],R:[['Raven','🐦'],['Ritual','🕯️'],['Root','🌿']],S:[['Spellbook','📘'],['Skull','💀'],['Smoke','💨']],T:[['Toad','🐸'],['Tome','📘'],['Talon','🦅']],U:[['Unicorn Dust','✨'],['Umbra','🌑'],['Urn','🫙']],V:[['Vial','🧪'],['Vortex','🌀'],['Venom','🧪']],W:[['Wand','🪄'],['Web','🕸️'],['Witch','🧙‍♀️']],X:[['X-magic','✨'],['Xtra Brew','🫕'],['Xenon Vial','🧪']],Y:[['Yarn Bat','🧶'],['Yew Branch','🌿'],['Yellow Moon','🌕']],Z:[['Zap','⚡'],['Zombie Dust','💀'],['Zenith Moon','🌙']]
+  }},
+  {key:'baking',name:'Tiny Chefs & Baking School',icon:'👨‍🍳',words:{
+    A:[['Apron','🧤'],['Apple Pie','🥧'],['Ache Cake','🎂']],B:[['Bread','🍞'],['Brownie','🍫'],['Butter','🧈']],C:[['Cookie','🍪'],['Cupcake','🧁'],['Cream','🥛']],D:[['Donut','🍩'],['Dough','🥟'],['Drizzle','🍯']],E:[['Egg','🥚'],['Éclair','🍰'],['Enamel Bowl','🥣']],F:[['Flour','🌾'],['Frosting','🧁'],['Fizz','🫧']],G:[['Glaze','🍯'],['Ganache','🍫'],['Ginger','🧡']],H:[['Hat','👨‍🍳'],['Honey','🍯'],['Heat','🔥']],I:[['Icing','🧁'],['Ingredient','🥚'],['Iron Pan','🍳']],J:[['Jam','🫙'],['Julienne','🔪'],['Jello','🍮']],K:[['Kitchen','🍽️'],['Knead','🥖'],['Knife','🔪']],L:[['Loaf','🍞'],['Lemon','🍋'],['Layer Cake','🎂']],M:[['Mixer','🥣'],['Muffin','🧁'],['Maple','🍁']],N:[['Noodles','🍜'],['Nutmeg','🟤'],['Nozzle','🪣']],O:[['Oven','🔥'],['Oat Cookie','🍪'],['Oil','🫙']],P:[['Pie','🥧'],['Pastry','🥐'],['Parchment','📄']],Q:[['Quick Cake','🎂'],['Quiche','🥧'],['Quiet Dough','🥟']],R:[['Roll','🥐'],['Recipe','📋'],['Raisin','🍇']],S:[['Spatula','🥄'],['Sift','🌾'],['Sprinkles','🌈']],T:[['Tray','🍽️'],['Timer','⏱️'],['Tart','🥧']],U:[['Utensil','🥄'],['Upside Cake','🎂'],['Unmold','🍰']],V:[['Vanilla','🌼'],['Velvet Cake','🎂'],['Vessel','🫙']],W:[['Whisk','🍴'],['Waffle','🧇'],['Warm Oven','🔥']],X:[['X-cookie','🍪'],['X-layer','🎂'],['X-tra Sugar','🍬']],Y:[['Yummy','😋'],['Yeast','🍞'],['Yellow Cake','🎂']],Z:[['Zest','🍋'],['Zero Waste','♻️'],['Zucchini','🥒']]
+  }}
+];
+let currentNiche = NICHE_LIST[0];
+
+function renderNiches(){
+  const grid = document.getElementById('nicheGrid');
+  grid.innerHTML = '';
+  NICHE_LIST.forEach((n,i)=>{
+    const b = document.createElement('button');
+    b.className = 'nbtn' + (i===0 ? ' active':'');
+    b.innerHTML = `${n.icon} ${n.name.split(' ')[0]} ${n.name.split(' ')[1]||''}`;
+    b.onclick = ()=>{
+      document.querySelectorAll('.nbtn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      currentNiche = n;
+      document.getElementById('customNiche').value='';
+      generateCards();
+    };
+    grid.appendChild(b);
+  });
+}
+function handleCustomNiche(){
+  const val = document.getElementById('customNiche').value.trim();
+  if(val.length < 3) return;
+  document.querySelectorAll('.nbtn').forEach(x=>x.classList.remove('active'));
+  currentNiche = buildCustomNiche(val);
+  generateCards();
+}
+function buildCustomNiche(name){
+  const icon = '🎨';
+  const generic = {};
+  LETTERS.forEach(l=>{generic[l]=[l + ' ' + name.split(' ')[0], icon]});
+  return {key:'custom',name,icon,words:generic};
+}
+function randomizeTheme(){
+  const idx = Math.floor(Math.random()*NICHE_LIST.length);
+  currentNiche = NICHE_LIST[idx];
+  document.querySelectorAll('.nbtn').forEach((x,i)=>x.classList.toggle('active', i===idx));
+  document.getElementById('customNiche').value='';
+  generateCards();
+}
+function getLetters(){
+  const setType = document.getElementById('setType').value;
+  if(setType==='first13') return LETTERS.slice(0,13);
+  if(setType==='last13') return LETTERS.slice(13);
+  if(setType==='vowels') return ['A','E','I','O','U'];
+  return LETTERS;
+}
+function letterMarkup(letter){
+  const style = document.getElementById('cardStyle').value;
+  if(style==='bubble') return `<span class="trace-letter" style="-webkit-text-stroke:3px #b8b8b8;letter-spacing:2px">${letter}</span>`;
+  if(style==='double') return `<div style="display:flex;align-items:flex-end;gap:3px"><span class="trace-letter">${letter}</span><span style="font-family:var(--font-d);font-size:18px;color:#c8c8c8">${letter.toLowerCase()}</span></div>`;
+  return `<span class="trace-letter">${letter}</span>`;
+}
+function getCardWord(letter){
+  const opts = currentNiche.words[letter];
+  if(!opts) return [letter + ' Word', currentNiche.icon || '⭐'];
+  // Each letter now has multiple options — pick one randomly each generation
+  const pick = opts[Math.floor(Math.random()*opts.length)];
+  return pick;
+}
+function generateCards(){
+  const letters = getLetters();
+  const cols = document.getElementById('layout').value;
+  const grid = document.getElementById('cardGrid');
+  grid.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+  grid.innerHTML='';
+
+  document.getElementById('sheetTitle').textContent = `${currentNiche.icon} ${currentNiche.name} Alphabet Cards`;
+  document.getElementById('sheetSub').textContent = `Color, trace and cut your ${letters.length}-card mini set!`;
+  document.getElementById('bannerIcon').textContent = currentNiche.icon;
+  document.getElementById('bannerText').innerHTML = `Color the big letter, say the word, then cut out each card to make your own <b>${currentNiche.name.toLowerCase()}</b> alphabet flashcard set.`;
+  document.getElementById('footerNote').textContent = `© ${currentNiche.name} Alphabet Cards — Worksheet Studio`;
+
+  letters.forEach((letter,idx)=>{
+    const [word, emoji] = getCardWord(letter);
+    const card = document.createElement('div');
+    card.className='card';
+    card.innerHTML = `
+      <div class="card-h">
+        <div class="card-title">${letter} Card</div>
+        <div class="badge">${emoji}</div>
+      </div>
+      <div class="card-b">
+        <div class="letter-box">${letterMarkup(letter)}</div>
+        <div class="illustration">${emoji}</div>
+        <div class="word">${word}</div>
+        <div class="write-line"></div>
+        <div class="cut-hint">Color • Say • Cut</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+function savePNG(){
+  const node = document.getElementById('sheet');
+  const editable = node.querySelectorAll('[contenteditable]');
+  editable.forEach(el=>el.style.border='none');
+  htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:'#fff'})
+    .then(dataUrl=>{const a=document.createElement('a');a.download='alphabet-coloring-cards.png';a.href=dataUrl;a.click();})
+    .catch(()=>alert('PNG export failed'))
+    .finally(()=>editable.forEach(el=>el.style.border=''));
+}
+renderNiches();
+generateCards();
+</script>
+</body>
+</html>
