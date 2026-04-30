@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Floating Steampunk Cities - Prompt Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: #0d1117; color: #e6edf3; display: flex; flex-direction: column; min-height: 100vh; }
+#hdr { background: #161b22; border-bottom: 2px solid #30363d; padding: 13px 20px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+#hdr-icon { font-size: 26px; }
+#hdr-title { font-family: 'Fredoka One', cursive; font-size: 20px; color: #c9a84c; }
+#hdr-sub { font-size: 10px; font-weight: 800; color: #8b949e; text-transform: uppercase; margin-top: 2px; }
+#hdr-badge { margin-left: auto; background: #3d2800; border: 1px solid #c9a84c; border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 900; color: #c9a84c; }
+#app { display: flex; flex: 1; min-height: calc(100vh - 60px); }
+#sidebar { width: 280px; min-width: 280px; background: #161b22; border-right: 2px solid #30363d; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.s-card { background: #1c2128; border: 1px solid #30363d; border-radius: 10px; padding: 10px; }
+.s-label { font-size: 11px; font-weight: 900; color: #c9a84c; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+.s-hint { font-size: 10px; color: #8b949e; font-weight: 700; margin-top: 5px; line-height: 1.5; }
+select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; outline: none; }
+select:focus { border-color: #c9a84c; }
+#bg-preview { width: 100%; height: 44px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); margin-top: 7px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.25s; }
+#bg-preview .lines-demo { display: flex; flex-direction: column; gap: 3px; }
+#bg-preview .lines-demo span { display: block; height: 2px; background: white; border-radius: 2px; }
+#bg-preview .lines-demo span:nth-child(1) { width: 22px; }
+#bg-preview .lines-demo span:nth-child(2) { width: 16px; }
+#bg-preview .lines-demo span:nth-child(3) { width: 20px; }
+#bg-preview-label { font-size: 11px; font-weight: 900; color: white; }
+#cnt-row { display: flex; gap: 5px; }
+.cnt-btn { flex: 1; padding: 8px 2px; border-radius: 8px; background: #1c2128; border: 1px solid #30363d; color: #8b949e; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; cursor: pointer; }
+.cnt-btn:hover { border-color: #c9a84c; color: #e6edf3; }
+.cnt-btn.on { background: #3d2800; border-color: #c9a84c; color: #c9a84c; }
+#gen-btn { width: 100%; padding: 14px; border-radius: 10px; border: none; background: linear-gradient(135deg, #5a3a00, #c9a84c); color: #fff; font-family: 'Fredoka One', cursive; font-size: 18px; letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 16px rgba(201,168,76,0.3); }
+#gen-btn:hover { box-shadow: 0 6px 22px rgba(201,168,76,0.5); }
+#gen-btn:active { transform: scale(0.97); }
+#clr-btn { width: 100%; padding: 9px; border-radius: 8px; background: #1c2128; border: 1px solid #30363d; color: #8b949e; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; cursor: pointer; }
+#clr-btn:hover { border-color: #f85149; color: #f85149; }
+#output { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+#empty-msg { margin: auto; text-align: center; opacity: 0.4; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+#empty-msg .ico { font-size: 54px; }
+#empty-msg .txt { font-weight: 900; font-size: 14px; color: #8b949e; line-height: 1.6; }
+#topbar { display: none; align-items: center; gap: 8px; margin-bottom: 4px; flex-shrink: 0; }
+#tot-badge { background: #3d2800; border: 1px solid #c9a84c; border-radius: 20px; padding: 4px 14px; font-size: 11px; font-weight: 900; color: #c9a84c; }
+#exp-btn { margin-left: auto; padding: 6px 14px; border-radius: 8px; border: 1px solid #30363d; background: #1c2128; color: #8b949e; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; cursor: pointer; }
+#exp-btn:hover { border-color: #c9a84c; color: #c9a84c; }
+.p-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px; flex-shrink: 0; }
+.p-card:hover { border-color: #c9a84c; }
+.p-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 10px; }
+.p-meta { display: flex; flex-direction: column; gap: 3px; }
+.p-num { font-size: 10px; font-weight: 900; color: #8b949e; }
+.p-title { font-size: 14px; font-weight: 900; color: #c9a84c; }
+.p-bg-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 900; padding: 3px 9px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); color: #e6edf3; margin-top: 2px; width: fit-content; }
+.p-bg-swatch { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+.p-copy { padding: 6px 14px; border-radius: 6px; border: 1px solid #30363d; background: #1c2128; color: #8b949e; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+.p-copy:hover { border-color: #3fb950; color: #3fb950; }
+.p-copy.ok { border-color: #3fb950; color: #3fb950; }
+.p-text { font-size: 13px; font-weight: 700; line-height: 1.8; color: #cdd9e5; background: #0d1117; border-radius: 8px; padding: 12px 14px; border: 1px solid #21262d; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div id="hdr">
+  <div id="hdr-icon">&#9881;</div>
+  <div>
+    <div id="hdr-title">Floating Steampunk Cities &mdash; Prompt Engine</div>
+    <div id="hdr-sub">Unlimited KDP Coloring Book Prompts &bull; White Lines Only &bull; Square 1:1</div>
+  </div>
+  <div id="hdr-badge">Bonus Tool #1</div>
+</div>
+<div id="app">
+  <div id="sidebar">
+    <div class="s-card">
+      <div class="s-label">Scene / City Type</div>
+      <select id="sel-scene"><option value="-1">Random every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Sky &amp; Atmosphere</div>
+      <select id="sel-sky"><option value="-1">Random every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Island Edge Style</div>
+      <select id="sel-edge"><option value="-1">Random every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Main Structure</div>
+      <select id="sel-main"><option value="-1">Random every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Background Color</div>
+      <select id="sel-bg"><option value="-1">Random every time</option></select>
+      <div id="bg-preview">
+        <div class="lines-demo"><span></span><span></span><span></span></div>
+        <span id="bg-preview-label">Select a background</span>
+      </div>
+      <div class="s-hint">Only the background color changes. All illustration elements remain white outlines only — zero color fills.</div>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Number of Prompts</div>
+      <div id="cnt-row">
+        <button class="cnt-btn on" data-n="1">x1</button>
+        <button class="cnt-btn" data-n="5">x5</button>
+        <button class="cnt-btn" data-n="10">x10</button>
+        <button class="cnt-btn" data-n="20">x20</button>
+        <button class="cnt-btn" data-n="50">x50</button>
+      </div>
+    </div>
+    <button id="gen-btn">&#9881; GENERATE PROMPTS</button>
+    <button id="clr-btn">Clear All</button>
+  </div>
+  <div id="output">
+    <div id="topbar">
+      <span id="tot-badge">0 prompts</span>
+      <button id="exp-btn">Export .txt</button>
+    </div>
+    <div id="empty-msg">
+      <div class="ico">&#9881;</div>
+      <div class="txt">Select options and press Generate<br><br>White lines only &bull; Coloring book style<br>Custom background color &bull; Square 1:1</div>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  var SCENES  = [["The Clockwork Factory", "small steampunk clockwork factory district", "copper and iron"], ["The Inventor's Workshop", "aerial inventor's laboratory complex", "brass and scorched wood"], ["The Airship Docking Station", "steam-powered airship docking bay", "riveted iron and rope"], ["The Brass Foundry", "brass gear foundry and smelting works", "hot metal and coal"], ["The Gear Cathedral", "towering clockwork cathedral district", "stone and ornate brass"], ["The Sky Harbor", "busy sky harbor with loading cranes", "weathered iron and timber"], ["The Observatory Tower", "mechanical observatory and star-mapping station", "copper and glass"], ["The Steam Engine Works", "steam engine manufacturing yard", "black iron and smoke"], ["The Alchemist's Platform", "floating alchemist's experimental platform", "glass, copper, and stone"], ["The Ammunition Forge", "military steampunk arms and cannon foundry", "dark iron and gunpowder"], ["The Telegraph Hub", "sky telegraph relay station and signal tower", "copper wire and brass"], ["The Automaton Workshop", "clockwork automaton construction workshop", "polished brass and steel"], ["The Coal Station", "aerial coal refueling and boiler station", "blackened iron and coal"], ["The Cartographer's Balloon Post", "steampunk map-making and balloon postal station", "aged parchment and brass"], ["The Steam Academy", "floating academy of engineering and invention", "stone and ornate gearwork"], ["The Gear Market", "open-air mechanical parts market and trading post", "rough iron and timber"], ["The Boiler District", "industrial boiler and pressure valve district", "scorched iron and steam"], ["The Clockmaker's Quarter", "precision clockmaker's workshop island", "fine brass and polished wood"], ["The Gunpowder Mill", "aerial gunpowder production and testing mill", "stone and heavy iron"], ["The Sky Greenhouse", "mechanical sky greenhouse with steam-heated domes", "iron frames and glass"]];
+  var SKIES   = ["dark night sky with only a few glowing gas lanterns", "stormy twilight sky with crackling lightning and steam clouds", "amber-tinted industrial sky filled with smoke and embers", "foggy Victorian dawn sky with faint copper-colored light", "deep night sky with a full moon behind drifting smoke", "dark sky lit by the orange glow of distant furnaces", "overcast sky with shafts of mechanical searchlight beams", "dim starless sky thick with industrial smog and steam"];
+  var EDGES   = ["copper-riveted striated rock", "gear-embedded jagged stone", "rust-streaked iron-plated rock", "soot-blackened rough stone", "brass-bolted fractured rock", "steam-vented crumbling stone"];
+  var HANGS   = ["dangling rusted anchor chains and loose copper pipes", "hanging gears and broken exhaust vents", "trailing steam pipes and fraying rope cables", "rusted chains, dripping pipes, and exposed iron bolts", "hanging engine parts and coils of copper wire"];
+  var MAINS   = ["a towering clockwork factory building with spinning gear walls and a wide smokestack", "a massive brass observatory dome with a rotating mechanical telescope", "a large steam engine hall with a glass ceiling and pressure release vents", "a multi-story inventor's workshop with open shutters showing shelves of devices", "an imposing iron clock tower with visible interlocking gear mechanisms", "a grand steam-powered airship hangar with open bay doors", "a fortified copper-plated command tower with signal flags on top", "a wide open foundry floor with a blazing furnace and casting molds", "a tall transmission tower with spinning antenna dishes and cable lines", "a large automaton assembly hall with mechanical arms visible through the windows"];
+  var DETAILS = ["a row of pressure gauge panels mounted on a brick wall", "copper steam pipes snaking across the cobblestone ground", "hot air balloons tethered to iron anchor posts", "a mechanical water tower with a rotating pump arm", "rows of bronze gas lanterns lining a narrow path", "a steam-powered crane with a pulley and chain hook", "stacks of iron gear components outside a supply shed", "a small coal cart on rails leading to the furnace", "a mechanical clockwork gate with spinning lock gears", "wooden barrels stamped with brass fittings near the entrance", "a workbench covered in blueprints and precision instruments", "an airship propeller mounted on a display stand", "a small steam-powered printing press in an open shed", "a rack of brass tools and wrenches on the outer wall", "a glass-domed boiler unit with visible steam bubbles inside", "iron staircases with riveted railings connecting two levels", "a pigeon loft with mechanical messenger capsules attached", "large coils of copper wire stacked near the entrance", "a flagpole with a brass cogwheel emblem banner", "a mechanical automaton standing guard at the doorway", "a navigation map table with a large compass rose etched in bronze", "exhaust chimneys with spinning copper wind vanes on top", "a display of gears and flywheels of various sizes on a wall mount", "a brass telescope on a tripod pointed at the horizon"];
+  var BGS     = [["Classic Black", "pure black"], ["Deep Navy Blue", "deep navy blue"], ["Deep Emerald", "deep emerald green"], ["Deep Crimson", "deep crimson red"], ["Deep Violet", "deep violet-purple"], ["Deep Teal", "deep teal"], ["Deep Prussian Blue", "deep Prussian blue"], ["Midnight Indigo", "midnight indigo"], ["Dark Slate Grey", "dark slate grey"]];
+  var BG_COLORS = {"Classic Black": "#000000", "Deep Navy Blue": "#0a0e2a", "Deep Emerald": "#0a1f0e", "Deep Crimson": "#1a0509", "Deep Violet": "#130a24", "Deep Teal": "#051a19", "Deep Prussian Blue": "#051828", "Midnight Indigo": "#080818", "Dark Slate Grey": "#121418"};
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function getSelVal(id, arr) {
+    var el = document.getElementById(id);
+    if (!el) return pick(arr);
+    var v = el.value;
+    return (v === "-1") ? pick(arr) : arr[parseInt(v, 10)];
+  }
+  function sample(arr, n) {
+    return arr.slice().sort(function() { return Math.random() - 0.5; }).slice(0, n);
+  }
+
+  function buildPrompt() {
+    var scene = getSelVal("sel-scene", SCENES);
+    var sky   = getSelVal("sel-sky",   SKIES);
+    var edge  = getSelVal("sel-edge",  EDGES);
+    var hang  = pick(HANGS);
+    var main  = getSelVal("sel-main",  MAINS);
+    var bg    = getSelVal("sel-bg",    BGS);
+    var dets  = sample(DETAILS, 4);
+    var bgColorName = bg[1];
+    var detStr = dets[0] + ", " + dets[1] + ", " + dets[2] + ", and " + dets[3];
+
+    var prompt =
+      "A floating island suspended in a " + sky + ", carrying a " + scene[1] + " on its surface. " +
+      "The island has jagged, " + edge + " edges with " + hang + ". " +
+      "On top sits " + main + ", " + detStr + ". " +
+      "The background of the entire image is a solid " + bgColorName + " color. " +
+      "Every single element in the scene — the floating island, all buildings, structures, rocks, objects, pipes, gears, and sky details — is rendered ONLY as white outlines and white linework. " +
+      "No grey tones. No colored fills anywhere. No shading fills. " +
+      "The only color present in the entire image is the " + bgColorName + " background. " +
+      "High-detail line art, white ink lines on " + bgColorName + " background, " +
+      "professional adult coloring book page, fine cross-hatching on " + scene[2] + " textures, " +
+      "no color fills of any kind, zero shading, strictly monochromatic linework. " +
+      "Square 1:1 format, dramatic composition, isometric-like perspective, cinematic fantasy feel.";
+
+    return { title: scene[0], bgLabel: bg[0], bgColor: BG_COLORS[bg[0]] || "#0d1117", prompt: prompt };
+  }
+
+  function populateSel(id, arr) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    for (var i = 0; i < arr.length; i++) {
+      var o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = typeof arr[i] === "object" ? arr[i][0] : arr[i];
+      sel.appendChild(o);
+    }
+  }
+  populateSel("sel-scene", SCENES);
+  populateSel("sel-sky",   SKIES);
+  populateSel("sel-edge",  EDGES);
+  populateSel("sel-main",  MAINS);
+  populateSel("sel-bg",    BGS);
+
+  var bgSel = document.getElementById("sel-bg");
+  var bgPreviewEl = document.getElementById("bg-preview");
+  var bgPreviewLabel = document.getElementById("bg-preview-label");
+  function updateBgPreview() {
+    var v = bgSel.value;
+    if (v === "-1") {
+      bgPreviewEl.style.background = "#1c2128";
+      bgPreviewLabel.textContent = "Random every time";
+      return;
+    }
+    var label = BGS[parseInt(v, 10)][0];
+    var color = BG_COLORS[label] || "#0d1117";
+    bgPreviewEl.style.background = color;
+    bgPreviewLabel.textContent = label;
+  }
+  bgSel.addEventListener("change", updateBgPreview);
+  updateBgPreview();
+
+  var genCount = 1;
+  var cntBtns = document.querySelectorAll(".cnt-btn");
+  for (var i = 0; i < cntBtns.length; i++) {
+    (function(btn) {
+      btn.addEventListener("click", function() {
+        for (var j = 0; j < cntBtns.length; j++) cntBtns[j].classList.remove("on");
+        btn.classList.add("on");
+        genCount = parseInt(btn.getAttribute("data-n"), 10);
+      });
+    })(cntBtns[i]);
+  }
+
+  var allPrompts = [];
+
+  document.getElementById("gen-btn").addEventListener("click", function() {
+    var emptyMsg = document.getElementById("empty-msg");
+    if (emptyMsg) emptyMsg.style.display = "none";
+    document.getElementById("topbar").style.display = "flex";
+    var output = document.getElementById("output");
+
+    for (var i = 0; i < genCount; i++) {
+      var result = buildPrompt();
+      allPrompts.push(result.prompt);
+
+      var card = document.createElement("div");
+      card.className = "p-card";
+
+      var head = document.createElement("div");
+      head.className = "p-head";
+
+      var meta = document.createElement("div");
+      meta.className = "p-meta";
+      var numEl = document.createElement("div");
+      numEl.className = "p-num";
+      numEl.textContent = "PROMPT #" + allPrompts.length;
+      var titleEl = document.createElement("div");
+      titleEl.className = "p-title";
+      titleEl.textContent = result.title;
+      var bgTag = document.createElement("div");
+      bgTag.className = "p-bg-tag";
+      bgTag.style.background = result.bgColor;
+      var swatch = document.createElement("div");
+      swatch.className = "p-bg-swatch";
+      swatch.style.background = result.bgColor;
+      swatch.style.border = "1px solid rgba(255,255,255,0.4)";
+      var tagLabel = document.createElement("span");
+      tagLabel.textContent = result.bgLabel;
+      bgTag.appendChild(swatch);
+      bgTag.appendChild(tagLabel);
+      meta.appendChild(numEl);
+      meta.appendChild(titleEl);
+      meta.appendChild(bgTag);
+
+      var copyBtn = document.createElement("button");
+      copyBtn.className = "p-copy";
+      copyBtn.textContent = "Copy";
+      (function(p, btn) {
+        btn.addEventListener("click", function() {
+          var done = function() {
+            btn.textContent = "Copied!"; btn.classList.add("ok");
+            setTimeout(function() { btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1500);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(p).then(done);
+          } else {
+            var ta = document.createElement("textarea");
+            ta.value = p; ta.style.position = "fixed"; ta.style.opacity = "0";
+            document.body.appendChild(ta); ta.select();
+            document.execCommand("copy"); document.body.removeChild(ta); done();
+          }
+        });
+      })(result.prompt, copyBtn);
+
+      head.appendChild(meta);
+      head.appendChild(copyBtn);
+
+      var txt = document.createElement("div");
+      txt.className = "p-text";
+      txt.textContent = result.prompt;
+
+      card.appendChild(head);
+      card.appendChild(txt);
+      output.appendChild(card);
+    }
+
+    document.getElementById("tot-badge").textContent = allPrompts.length + " prompts generated";
+    output.scrollTop = output.scrollHeight;
+  });
+
+  document.getElementById("clr-btn").addEventListener("click", function() {
+    allPrompts = [];
+    var output = document.getElementById("output");
+    var cards = output.querySelectorAll(".p-card");
+    for (var i = 0; i < cards.length; i++) output.removeChild(cards[i]);
+    document.getElementById("topbar").style.display = "none";
+    var em = document.getElementById("empty-msg");
+    if (em) em.style.display = "flex";
+  });
+
+  document.getElementById("exp-btn").addEventListener("click", function() {
+    if (!allPrompts.length) return;
+    var lines = [];
+    for (var i = 0; i < allPrompts.length; i++) {
+      lines.push("[Prompt #" + (i+1) + "]\n" + allPrompts[i]);
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([lines.join("\n\n---\n\n")], {type: "text/plain"}));
+    a.download = "steampunk-city-prompts.txt";
+    a.click();
+  });
+})();
+</script>
+</body>
+</html>
