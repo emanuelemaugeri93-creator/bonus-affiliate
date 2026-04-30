@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Floating Candy Worlds - Prompt Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:#0e0018;color:#fce7f3;display:flex;flex-direction:column;min-height:100vh}
+#hdr{background:#140020;border-bottom:2px solid #3d0060;padding:13px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+#hdr-icon{font-size:26px}
+#hdr-title{font-family:'Fredoka One',cursive;font-size:20px;color:#f472b6}
+#hdr-sub{font-size:10px;font-weight:800;color:#a855f7;text-transform:uppercase;margin-top:2px}
+#hdr-badge{margin-left:auto;background:#1e0030;border:1px solid #f472b6;border-radius:20px;padding:4px 14px;font-size:11px;font-weight:900;color:#f472b6}
+#app{display:flex;flex:1;min-height:calc(100vh - 60px)}
+#sidebar{width:280px;min-width:280px;background:#140020;border-right:2px solid #3d0060;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.s-card{background:#1a0028;border:1px solid #3d0060;border-radius:10px;padding:10px}
+.s-label{font-size:11px;font-weight:900;color:#f472b6;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.s-hint{font-size:10px;color:#a855f7;font-weight:700;margin-top:6px;line-height:1.5}
+select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #3d0060;background:#0e0018;color:#fce7f3;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;outline:none}
+select:focus{border-color:#f472b6}
+.preset-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
+.swatch{width:100%;aspect-ratio:1;border-radius:7px;border:2px solid rgba(255,255,255,0.28);cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;transition:border-color .15s,transform .12s,box-shadow .15s}
+.swatch:hover{border-color:rgba(255,255,255,0.85);transform:scale(1.13);box-shadow:0 0 10px rgba(244,114,182,0.3)}
+.swatch.on{border-color:#fff;box-shadow:0 0 0 2px rgba(244,114,182,0.6),0 0 12px rgba(255,255,255,0.3);transform:scale(1.1)}
+.sw-ck{display:none;font-size:13px;color:#fff;font-weight:900;text-shadow:0 1px 4px #000;pointer-events:none}
+.swatch.on .sw-ck{display:block}
+.div-row{display:flex;align-items:center;gap:8px;margin:6px 0}
+.div-line{flex:1;height:1px;background:#3d0060}
+.div-txt{font-size:10px;font-weight:900;color:#a855f7;white-space:nowrap}
+.pick-row{display:flex;align-items:center;gap:8px}
+.pick-row label{font-size:11px;font-weight:900;color:#f472b6;white-space:nowrap}
+input[type=color]{width:44px;height:32px;border-radius:6px;border:2px solid rgba(255,255,255,0.28);background:transparent;cursor:pointer;padding:2px}
+#chex{flex:1;font-size:11px;font-weight:700;color:#a855f7}
+#bgprev{width:100%;height:42px;border-radius:8px;border:2px solid rgba(255,255,255,0.2);margin-top:7px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
+.ld{display:flex;flex-direction:column;gap:3px}
+.ld span{display:block;height:2px;background:#fff;border-radius:2px}
+.ld span:nth-child(1){width:20px}.ld span:nth-child(2){width:14px}.ld span:nth-child(3){width:18px}
+#bglbl{font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 5px #000}
+#cnt-row{display:flex;gap:5px}
+.cnt{flex:1;padding:8px 2px;border-radius:8px;background:#1a0028;border:1px solid #3d0060;color:#a855f7;font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer}
+.cnt:hover{border-color:#f472b6;color:#fce7f3}
+.cnt.on{background:#1e0030;border-color:#f472b6;color:#f472b6}
+#gen{width:100%;padding:14px;border-radius:10px;border:none;background:linear-gradient(135deg,#5b0090,#f472b6);color:#fff;font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;box-shadow:0 4px 16px rgba(244,114,182,.3)}
+#gen:hover{box-shadow:0 6px 24px rgba(244,114,182,.55)}
+#gen:active{transform:scale(.97)}
+#clr{width:100%;padding:9px;border-radius:8px;background:#1a0028;border:1px solid #3d0060;color:#a855f7;font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer}
+#clr:hover{border-color:#f85149;color:#f85149}
+#out{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+#empty{margin:auto;text-align:center;opacity:.5;display:flex;flex-direction:column;align-items:center;gap:12px}
+#empty .ico{font-size:54px}
+#empty .txt{font-weight:900;font-size:13px;color:#a855f7;line-height:1.8}
+#topbar{display:none;align-items:center;gap:8px;margin-bottom:4px;flex-shrink:0}
+#tot{background:#1e0030;border:1px solid #f472b6;border-radius:20px;padding:4px 14px;font-size:11px;font-weight:900;color:#f472b6}
+#exp{margin-left:auto;padding:6px 14px;border-radius:8px;border:1px solid #3d0060;background:#1a0028;color:#a855f7;font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer}
+#exp:hover{border-color:#f472b6;color:#f472b6}
+.card{background:#140020;border:1px solid #3d0060;border-radius:12px;padding:16px;flex-shrink:0}
+.card:hover{border-color:#f472b6}
+.phead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
+.pmeta{display:flex;flex-direction:column;gap:3px}
+.pnum{font-size:10px;font-weight:900;color:#a855f7}
+.ptitle{font-size:14px;font-weight:900;color:#f472b6}
+.pbtag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:900;padding:3px 9px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.2);color:#fce7f3;margin-top:2px;width:fit-content}
+.pbsw{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.5);flex-shrink:0}
+.cpybtn{padding:6px 14px;border-radius:6px;border:1px solid #3d0060;background:#1a0028;color:#a855f7;font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.cpybtn:hover{border-color:#3fb950;color:#3fb950}
+.cpybtn.ok{border-color:#3fb950;color:#3fb950}
+.ptxt{font-size:12.5px;font-weight:700;line-height:1.85;color:#e9d5ff;background:#0e0018;border-radius:8px;padding:12px 14px;border:1px solid #3d0060;margin-top:10px;cursor:text;user-select:text}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <div id="hdr-icon">&#127852;</div>
+  <div>
+    <div id="hdr-title">Floating Candy Worlds &mdash; Prompt Engine</div>
+    <div id="hdr-sub">Coloring Book B&amp;W Art &bull; Solid Background Only &bull; Unlimited Unique Prompts &bull; 1:1</div>
+  </div>
+  <div id="hdr-badge">Bonus Tool #3</div>
+</div>
+<div id="app">
+  <div id="sidebar">
+    <div class="s-card">
+      <div class="s-label">Candy World / Scene</div>
+      <select id="sel-scene"><option value="-1">&#127852; Random every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Sky &amp; Atmosphere</div>
+      <select id="sel-sky"><option value="-1">&#127852; Random every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Island Edge Style</div>
+      <select id="sel-edge"><option value="-1">Random every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Main Sweet Structure</div>
+      <select id="sel-main"><option value="-1">Random every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Background Color</div>
+      <div class="preset-grid" id="pgrid"></div>
+      <div class="div-row"><div class="div-line"></div><span class="div-txt">OR CUSTOM</span><div class="div-line"></div></div>
+      <div class="pick-row">
+        <label>Pick:</label>
+        <input type="color" id="cpick" value="#000000"/>
+        <span id="chex">Classic Black</span>
+      </div>
+      <div id="bgprev">
+        <div class="ld"><span></span><span></span><span></span></div>
+        <span id="bglbl">Classic Black</span>
+      </div>
+      <div class="s-hint">15 dark presets + any custom color. Lines always white. Only the background fill changes.</div>
+    </div>
+    <div class="s-card">
+      <div class="s-label">Number of Prompts</div>
+      <div id="cnt-row">
+        <button class="cnt on" data-n="1">x1</button>
+        <button class="cnt" data-n="5">x5</button>
+        <button class="cnt" data-n="10">x10</button>
+        <button class="cnt" data-n="20">x20</button>
+        <button class="cnt" data-n="50">x50</button>
+      </div>
+    </div>
+    <button id="gen">&#127852; GENERATE PROMPTS</button>
+    <button id="clr">Clear All</button>
+  </div>
+  <div id="out">
+    <div id="topbar"><span id="tot">0 prompts</span><button id="exp">&#8659; Export .txt</button></div>
+    <div id="empty">
+      <div class="ico">&#127852;</div>
+      <div class="txt">
+        Gingerbread Castles &bull; Candy Cane Cathedrals<br>
+        Chocolate Factories &bull; Marshmallow Keeps<br>
+        Rock Candy Caves &bull; Lollipop Forest Cities<br>
+        Cotton Candy Palaces &bull; Honeycomb Districts<br>
+        Ice Cream Palaces &bull; Bubblegum Dome Cities<br><br>
+        White lines &bull; Solid background &bull; Square 1:1
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+var SCENES=[["The Gingerbread Castle", "a towering gingerbread castle with walls built from giant royal-iced gingerbread slabs showing icing crackle texture, battlements of stacked oversized macarons, a drawbridge of braided black and red licorice ropes suspended over a moat of solidified caramel, gumdrop gargoyles on every turret corner, a portcullis of giant pretzel rods, stained-glass windows of melted hard candy, and an iced gingerbread coat-of-arms above the gate", "iced gingerbread slab, sugar crystal drip, and royal icing crackle"], ["The Cotton Candy Cloud Palace", "an airy palace built from enormous compressed cotton candy formations the size of buildings, with fluffy pink and blue cotton candy towers showing fine spun fiber texture, balconies of delicate spun sugar lattice, a throne room with a continuous canopy of pastel cotton candy clouds overhead, candy cane columns flanking the arched entrance, and rows of cotton candy topiary animals lining the garden path", "spun cotton candy fiber, delicate sugar lattice, and candy cane stripe"], ["The Chocolate Lava Factory", "an enormous dark chocolate factory with thick walls of molded chocolate brick showing the rectangular mold pattern, open rivers of flowing hot chocolate running through carved stone gutters along every street, a central waterfall of chocolate pouring from a giant cocoa vat into a collection pool with splash ripples, chocolate truffle workers rolling product on trolleys, fondue fountain street lamps on iron posts, and a clock tower built from stacked chocolate bars", "molded chocolate brick, cocoa drip texture, and glossy chocolate pour"], ["The Lollipop Forest City", "a city grown within a dense forest of enormous lollipops on thick candy sticks as tall as towers, with houses built directly into the lollipop heads showing swirl pattern detail, spiral ramp staircases wrapping around each candy stick, a market square colonnade formed by lollipop trunks, swirled lollipop street lamps, candy stick rope bridges connecting the lollipop tops, and bunting strings of smaller lollipops hanging between the trees", "swirled hard candy surface, candy stick stripe, and sugar crystal glaze"], ["The Candy Cane Cathedral", "a soaring Gothic cathedral built entirely from giant candy canes of every size, with ribbed vaulted arches formed from paired bent candy canes, a rose window made from a radial arrangement of candy canes filled with melted rainbow candy, flying buttresses of diagonal candy cane crosses, a nave floor of hexagonal peppermint tiles, a pipe organ of hundreds of candy canes of varying lengths, and peppermint pinwheel medallions covering every wall surface", "red and white candy cane stripe, peppermint tile, and melted stained candy"], ["The Marshmallow Mountain Keep", "a fortress built into a colossal marshmallow mountain with pillowy toasted walls showing soft organic surface texture and browning at the peaks, towers of stacked giant toasted marshmallows with golden-brown tips, a great hall inside with fireplaces built from graham cracker stones, red licorice rope suspension bridges connecting the marshmallow peaks, and a moat of warm marshmallow fluff with ripple texture surrounding the entire base", "soft toasted marshmallow texture, graham cracker stone, and licorice twist"], ["The Rock Candy Crystal Caves", "a spectacular city crystallized inside a colossal geode cavity, with towers of naturally grown rock candy crystals forty meters tall serving as spires showing faceted geometric surface patterns, corridors carved through translucent amber and violet rock candy, a floor of crushed multicolored sugar crystal gravel, crystal golem guards of solid faceted rock candy at every entrance, and cave stalactites of giant sugar crystals refracting light into pattern lines on the walls", "faceted rock candy crystal surface, sugar crystal geode, and translucent mineral"], ["The Honeycomb Hive District", "a golden district built on strict hexagonal honeycomb geometry, with every building following the six-sided cell structure of the comb showing cell wall detail and honey bubble texture inside, walls of solid set honeycomb with golden honey pockets visible in cross-section, honey rivers flowing along hexagonal channel streets, beeswax candle towers at every corner dripping wax, a giant honey jar as the district hall with a screw lid cap detail, and honeycomb staircase terraces", "hexagonal honeycomb cell wall, set beeswax texture, and honey drip"], ["The Bubblegum Dome City", "a cheerful city of enormous inflated bubblegum bubble domes in pink and blue showing the smooth taut surface of stretched gum, bubblegum brick walls in pastel hues with gumball fossil-like inclusions, a central bubblegum blowing tower, a giant gumball machine building at the central square with a coin slot detail and gumball chute, gumball garland street decorations looping between lampposts, and bubblegum sidewalks in every flavor color", "smooth inflated bubblegum surface, gumball sphere cluster, and pastel brick"], ["The Ice Cream Sundae Palace", "a spectacular palace built from enormous scoops of ice cream of every flavor stacked architecturally, wafer cone spires on every corner turret showing the waffle grid pattern, hot fudge and caramel sauce rivers running as moats around the buildings, a sprinkle-covered parade ground, maraschino cherry beacon lights on every rooftop, a whipped cream great hall wall showing swirl piping texture, and a banana split drawbridge over a strawberry sauce canal", "ice cream scoop texture, waffle cone grid, and whipped cream piping"], ["The Fudge Quarter", "a rich dense neighborhood built from blocks of walnut-studded chocolate fudge showing the matte grain texture of set fudge and embedded walnut cross-sections in the walls, a central fudge factory with open production vats visible through arched windows, fudge conveyor belt streets, a fudge sculpture garden with carved fudge statues on pedestals, peanut butter fudge sidewalk tiles showing swirl marble texture, and vanilla fudge columns at the market entrance", "dense fudge grain texture, walnut cross-section embed, and sugar drip"], ["The Caramel Drip Towers", "a district of tall elegant towers completely coated in thick solidified caramel drip stalactites hanging from every ledge and overhang, toffee-tiled rooftops with crackle glaze texture, caramel apple trees in the courtyard each apple on a candy stick with visible caramel coat drips, a caramel waterfall from the tallest tower into a toffee pool, salted caramel cobblestone streets with visible salt crystal embeds, and praline clusters mounted decoratively on every wall face", "thick caramel drip stalactite, toffee crackle glaze, and salt crystal embed"], ["The Licorice Labyrinth", "a dense twisting quarter built from braided and woven licorice ropes and planks in black, red, and rainbow colors showing the rope twist and braid detail, walls of tightly woven licorice creating narrow labyrinthine alleys, licorice rope suspension bridges between towers, a central licorice weaving factory with enormous looms visible through the windows, licorice allsort decorative tiles on every building face showing their layered cross-section, and a licorice rope chandelier in the main square", "braided licorice rope twist, allsort tile cross-section, and woven candy plank"], ["The Jawbreaker Gem Citadel", "a grand citadel built from colossal jawbreakers stacked and mortared with royal icing, each jawbreaker showing its concentric color layer rings in cross-section where walls are cut, a fortress tower of a single giant jawbreaker as tall as a building, jawbreaker cobblestone streets with each stone showing a different layer pattern, and a jawbreaker boulder catapult siege machine in the outer courtyard", "concentric jawbreaker layer cross-section, sugar crystal mortar, and glossy sphere"], ["The Waffle Cone Spire City", "an elegant city of towering waffle cone spires in every size showing the pressed waffle diamond grid pattern, buildings made of giant flat waffle panels, ice cream scoop domes on every rooftop, a waffle grid cobblestone square with maple syrup running along the gutters, a grand waffle iron tower at the center still pressing building panels with steam rising, sugar pearl embeds in every waffle surface, and a maple syrup waterfall from the highest spire", "pressed waffle diamond grid, sugar pearl embed, and maple syrup glaze"], ["The Sprinkle Parade Grounds", "a festive civic center where every surface is dense with millions of rainbow sprinkle jimmies and nonpareil pearls set in royal icing, sprinkle-coated guard towers, a massive sprinkle production factory with machines visible through the windows, a sprinkle cannon on a tripod for celebrations, multi-tier birthday cake buildings with lit candle towers on their roofs and frosting dripping down the tiers, and a confetti and sprinkle fountain in the central square", "dense sprinkle jimmy surface, royal icing base, and nonpareil pearl cluster"], ["The Peppermint Fortress", "a bold fortress built from giant peppermint disc bricks showing the classic red and white swirl pattern on every face, a moat with surface ripple texture surrounding the base, mint leaf topiary animals in the outer garden, a peppermint stick cannon battery on the outer wall battlements, vent grills in the stone floor releasing mint vapor, a great hall with a peppermint tile floor mosaic depicting the candy kingdom history, and peppermint stick flagpoles at every tower", "peppermint swirl disc surface, mint crystal, and hard candy fortress brick"], ["The Mochi Moon Village", "a soft rounded village of giant mochi dumplings of every flavor used as houses, showing the soft dusted glutinous rice surface texture on every building with doorways cut into the mochi walls, a central mochi market square where giant mochi are being rolled and filled by tiny workers, bamboo stick fences between the mochi buildings, cherry blossom sugar trees lining the paths with petal detail, a mochi-making press tower at the village center with a giant mechanical roller", "soft mochi rice cake texture, rice flour dust surface, and bamboo stick"], ["The Rainbow Sherbet Citadel", "a vibrant citadel of layered rainbow sherbet frozen into architectural forms showing the distinct orange, raspberry, and lime sherbet stripe layers in every wall cross-section, sherbet powder moat with fine crystal texture surrounding the walls, fizzing sherbet crystal spires, a sherbet ice road of packed orange sherbet leading to the main gate, and four rainbow fizzy sherbet fountains at the courtyard corners shooting colored powder", "layered sherbet stripe cross-section, fine sherbet powder crystal, and sugar fizz"], ["The Giant Candy Box Kingdom", "an entire kingdom arranged inside an enormous open gift box lid, with the box walls printed with candy pattern wrapping paper showing the printed repeat design, tissue paper towers rising crinkled from the corners, giant assorted chocolates and truffles in candy cup foils arranged as civic buildings with foil crimp detail, a giant satin ribbon bow as the central palace tower, gold foil roads between candy compartments, and a cascade of chocolate truffles overflowing the box edge", "printed candy wrapping paper pattern, foil crimp texture, and tissue paper ruffle"]];
+var SKIES=["a dreamy pastel sky of soft pink, lavender, and mint with cotton candy cloud formations drifting slowly", "a magical sherbet sunset sky of deep raspberry and orange where the horizon glows like melting fruit sorbet", "a sparkling night sky where every star is a tiny sugar crystal and the moon is a perfect white chocolate disc", "a rainbow-striped candy sky where bands of color arc from horizon to horizon like a giant hard candy cross-section", "a soft bubblegum pink sky dotted with white marshmallow cloud puffs in every shape", "a deep violet and midnight sky filled with slowly drifting giant candy star clusters glowing with sugar light", "a golden caramel-toned afternoon sky glowing warm like amber hard candy backlit by sunlight", "a fizzy sherbet sky of electric orange and teal that crackles with popping candy energy"];
+var EDGES=["jagged broken chocolate bar edges with exposed nougat and caramel layer cross-sections visible", "rough crumbled gingerbread and royal icing edges with sugar crystal formations growing from the break line", "smooth rounded solidified caramel and toffee edges with slow frozen drip cascades along the face", "crumbling sugar cookie and icing edges with candy cane fragment protrusions jutting from the rock", "layered hard candy edges with visible color band strata like geological rock layers in cross-section", "sharp broken waffle cone edges with honeycomb wafer layers exposed and syrup drip lines along the face"];
+var HANGS=["trailing strings of gummy bears threaded on licorice rope, dangling candy cane hooks, and dripping caramel icicles below", "hanging gummy worm garlands, loops of red licorice cable, and clusters of rock candy stalactites", "trailing cotton candy wisps, dangling sugar crystal spikes, and rainbow sprinkle curtains", "hanging solidified chocolate fondue drip stalactites and multi-color candy ribbon streamers", "dangling rainbow gummy rings on twisted licorice string and frozen hard candy drip formations", "long strands of pulled taffy in pastel colors hanging below like a sugar curtain in the breeze"];
+var MAINS=["a grand gingerbread castle keep with thick royal-iced walls showing icing crackle texture, macaron battlements, a licorice portcullis, gumdrop gargoyles on every corner, and an iced coat-of-arms plaque above the main gate arch", "an enormous working chocolate factory building with open vats of flowing chocolate visible through arched windows, conveyor belt streets between production towers, a great chocolate waterfall pouring from the roof, and cocoa bean silo towers flanking the entrance", "a towering lollipop forest city-tree with houses built inside the lollipop heads showing swirl detail, spiral ramp staircases wrapping each candy stick trunk, a market square canopied by lollipop crowns, and candy stick rope bridges at every level", "a magnificent ice cream palace with architectural scoops of every flavor stacked into castle towers, waffle cone spires on every turret showing the grid pattern, a hot fudge moat, a whipped cream great hall with swirl ceiling, and a cherry-topped central dome", "a Gothic candy cane cathedral with soaring paired candy cane arches, a stained-glass rose window of melted rainbow candy, a pipe organ of hundreds of candy canes, a peppermint tile nave floor, and a tall red-and-white striped spire", "a marshmallow mountain stronghold with toasted pillowy walls showing organic soft texture, stacked toasted marshmallow towers with browning tips, graham cracker fireplaces inside, licorice rope bridges spanning the peaks, and a marshmallow fluff moat with surface ripple", "a rock candy crystal citadel grown in a colossal geode, with faceted crystal spire towers, translucent crystal corridor walls, a crushed sugar crystal gravel floor, and solid faceted rock candy golem guards at every gate", "a honeycomb hive palace on strict hexagonal geometry, with honeycomb cell-wall buildings showing honey pocket cross-sections, honey channel rivers between structures, beeswax drip candle towers, and a giant honey jar district hall with screw cap detail", "a bubblegum bubble dome palace with enormous inflated dome structures showing taut smooth gum surface, a bubblegum blowing tower, a giant gumball machine civic center with coin slot and chute detail, and gumball cobblestone squares", "a caramel drip tower complex where every surface is coated in thick solidified caramel stalactite curtains, toffee crackle-glaze rooftops, a caramel waterfall into a toffee pool, salted caramel cobblestone with salt crystal embeds, and praline sculptures in the courtyard"];
+var DETAILS=["a long parade of tiny gingerbread man citizens in formation down the main street carrying candy cane flag poles", "giant gummy bears the size of statues flanking the main entrance as sweet sentinels with their arms raised", "a cotton candy floss machine the size of a building with workers harvesting fresh cotton candy towers on sticks", "a chocolate fountain as tall as a house in the town square with citizens dipping fruit on long sticks", "rows of candy cane street lamp posts glowing with interior peppermint light lining every major boulevard", "a cultivated garden of enormous gummy worm rows growing from sugar soil beds tended by candy workers", "a rock candy crystal mine with workers chipping at a raw sugar crystal face with candy pick-axes", "a jawbreaker bowling alley where giant jawbreakers roll down a toffee lane toward sugar crystal pins", "a caramel apple orchard with each tree growing caramel-dipped apples on candy stick trunks in rows", "a five-tier birthday cake building with lit candle towers on the roof and thick frosting dripping down each tier", "a candy floss arch at the market entrance made from cotton candy stretched between two lollipop posts", "a honeycomb observation tower with hexagonal railing motif and a honey drip clock face", "a lollipop merry-go-round carousel with gummy animal mounts and a candy cane center pole", "a gummy bear hot air balloon tethered to the main tower by a red licorice rope, floating above the island", "a marshmallow roasting station with open fire pits and citizens roasting giant marshmallows on candy cane skewers", "a royal icing decorating workshop with candy artists piping intricate sugar sculptures on outdoor worktables", "a peppermint reflecting pool in the courtyard with mint leaf lily pads floating on the surface", "a sugar crystal chandelier hanging from a candy arch casting star-burst shadow patterns below", "a chocolate truffle vault door sealed with a giant bonbon as the lock, entirely covered in gold foil", "a waffle grid cobblestone plaza with maple syrup rivers running in the gutters between the waffle tiles", "a mochi dumpling display market with giant mochi in every pastel color on bamboo stick stands", "candy corn obelisks arranged in a ceremonial circle at the civic square, each one five meters tall", "a taffy pulling machine as large as a building stretching ropes of pastel taffy between two great iron arms", "a bubblegum perimeter wall covered in millions of pressed gumballs of every color embedded in the soft pink surface", "a sherbet fizz fountain at the main crossroads shooting colored sherbet powder into the air in bursts", "tiny candy chef workers in tall white hats carrying trays of fresh bonbons between the production buildings", "a gumdrop mosaic pathway to the palace gate with thousands of multicolored gumdrops set in royal icing", "a licorice rope chandelier hanging in the main plaza with rainbow licorice strands woven into its frame", "a sprinkle cannon on a candy cane tripod loaded and ready to fire rainbow jimmies over the parade ground", "a giant jar of rainbow sprinkles tipped on its side used as an observatory dome, sprinkles scattered below it"];
+var PRESETS=[["Classic Black", "#000000"], ["Deep Berry Purple", "#1a0728"], ["Dark Raspberry", "#280a12"], ["Dark Chocolate", "#1a0a00"], ["Deep Bubblegum", "#28001e"], ["Dark Cotton Candy", "#1e0828"], ["Midnight Candy", "#0a0018"], ["Dark Caramel", "#1e0e00"], ["Deep Violet", "#0e0028"], ["Dark Cherry", "#1e0008"], ["Deep Strawberry", "#280010"], ["Dark Blueberry", "#080028"], ["Dark Mint", "#001e14"], ["Deep Grape", "#140028"], ["Obsidian Sweet", "#0e080e"]];
+var PERSPS=["dramatic birds-eye isometric view", "low wide-angle ground-level view looking up at the towers", "three-quarter isometric aerial view", "tight close-up cinematic angle on the main structure", "wide establishing panoramic shot showing the full island", "dramatic side-profile view showing the island edge and hanging details", "dynamic diagonal overhead angle", "intimate street-level view from inside the main entrance"];
+var DENSITY=["ultra-dense fine linework with every surface covered in intricate cross-hatching and micro-detail", "clean elegant linework with bold outlines and precise fine interior detail", "rich layered linework alternating thick bold outlines with ultra-fine interior detailing", "highly detailed technical linework with architectural precision on every surface", "expressive organic linework with flowing curves and dense stippling on all textured surfaces"];
+var FOCUS=["The composition centers tightly on the main entrance gate and surrounding details.", "The composition emphasizes the tallest tower as the dominant focal point.", "The composition uses a central courtyard as the visual anchor.", "The foreground is rich with street-level detail while towers recede dramatically.", "The composition highlights the dramatic rooftops and spires against the sky.", "The eye is drawn first to the flowing rivers and moat surrounding the structures."];
+
+var bgColor=PRESETS[0][1], bgLabel=PRESETS[0][0];
+
+function clp(txt,btn){
+  var ok=function(){btn.textContent="Copied!";btn.classList.add("ok");setTimeout(function(){btn.textContent="Copy";btn.classList.remove("ok");},1800);};
+  var ng=function(){btn.textContent="Select manually";setTimeout(function(){btn.textContent="Copy";},2500);};
+  if(window.isSecureContext&&navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(ok).catch(function(){fb(txt,btn,ok,ng);});
+  }else{fb(txt,btn,ok,ng);}
+}
+function fb(txt,btn,ok,ng){
+  var t=document.createElement("textarea");
+  t.value=txt;t.setAttribute("readonly","");
+  t.style.cssText="position:fixed;top:0;left:0;width:2px;height:2px;padding:0;border:0;outline:0;box-shadow:none;background:transparent";
+  document.body.appendChild(t);t.focus();t.select();t.setSelectionRange(0,99999);
+  var r=false;try{r=document.execCommand("copy");}catch(e){}
+  document.body.removeChild(t);r?ok():ng();
+}
+
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function getv(id,arr){
+  var el=document.getElementById(id);if(!el)return pick(arr);
+  var v=el.value;return v==="-1"?pick(arr):arr[parseInt(v,10)];
+}
+function samp(arr,n){return arr.slice().sort(function(){return Math.random()-.5;}).slice(0,n);}
+
+function build(){
+  var sc=getv("sel-scene",SCENES);
+  var sk=getv("sel-sky",SKIES);
+  var ed=getv("sel-edge",EDGES);
+  var hg=pick(HANGS);
+  var mn=getv("sel-main",MAINS);
+  var dt=samp(DETAILS,4);
+  var pv=pick(PERSPS);
+  var dn=pick(DENSITY);
+  var fc=pick(FOCUS);
+  var hex=bgColor, nm=bgLabel.toLowerCase();
+  var det=dt[0]+", "+dt[1]+", "+dt[2]+", and "+dt[3];
+  var p=
+    "COLORING BOOK LINE ART. Black and white illustration. "+
+    "Pure white ink outlines on a flat solid "+nm+" ("+hex+") background. "+
+    "The "+nm+" background ("+hex+") is the ONLY color in this image. "+
+    "No color fills on any element. No grey tones. No shading. No gradients. White linework only. -- "+
+    "SCENE ("+pv+"): A floating candy island suspended in "+sk+", "+
+    "carrying a "+sc[1]+" on its surface. "+
+    "The island has "+ed+" edges with "+hg+". "+
+    "On top sits "+mn+", "+det+". "+fc+" -- "+
+    "LINEWORK: "+dn+". Fine cross-hatching on "+sc[2]+" surfaces. "+
+    "All outlines and details in pure white only. No fills. No color. No shading. "+
+    "Solid "+nm+" ("+hex+") background fill. White lines on "+nm+" background. Square 1:1 format.";
+  return{title:sc[0],bl:bgLabel,bc:hex,p:p};
+}
+
+function popsel(id,arr){
+  var el=document.getElementById(id);if(!el)return;
+  for(var i=0;i<arr.length;i++){
+    var o=document.createElement("option");o.value=String(i);
+    o.textContent=typeof arr[i]==="object"?arr[i][0]:arr[i];
+    el.appendChild(o);
+  }
+}
+popsel("sel-scene",SCENES);popsel("sel-sky",SKIES);
+popsel("sel-edge",EDGES);popsel("sel-main",MAINS);
+
+function updprev(c,l){
+  document.getElementById("bgprev").style.background=c;
+  document.getElementById("bglbl").textContent=l;
+}
+
+var sws=[];
+var grid=document.getElementById("pgrid");
+for(var i=0;i<PRESETS.length;i++){
+  (function(p,ix){
+    var sw=document.createElement("div");sw.className="swatch";
+    sw.style.background=p[1];sw.title=p[0];
+    var ck=document.createElement("span");ck.className="sw-ck";ck.textContent="\u2713";
+    sw.appendChild(ck);
+    sw.addEventListener("click",function(){
+      sws.forEach(function(s){s.classList.remove("on");});
+      sw.classList.add("on");
+      bgColor=p[1];bgLabel=p[0];
+      document.getElementById("cpick").value=p[1];
+      document.getElementById("chex").textContent=p[0];
+      updprev(p[1],p[0]);
+    });
+    grid.appendChild(sw);sws.push(sw);
+    if(ix===0){sw.classList.add("on");updprev(p[1],p[0]);}
+  })(PRESETS[i],i);
+}
+
+document.getElementById("cpick").addEventListener("input",function(){
+  sws.forEach(function(s){s.classList.remove("on");});
+  var v=this.value;
+  bgColor=v;bgLabel=v;
+  document.getElementById("chex").textContent=v;
+  updprev(v,v);
+});
+
+var gn=1;
+document.querySelectorAll(".cnt").forEach(function(b){
+  b.addEventListener("click",function(){
+    document.querySelectorAll(".cnt").forEach(function(x){x.classList.remove("on");});
+    b.classList.add("on");gn=parseInt(b.getAttribute("data-n"),10);
+  });
+});
+
+var all=[];
+
+document.getElementById("gen").addEventListener("click",function(){
+  var em=document.getElementById("empty");if(em)em.style.display="none";
+  document.getElementById("topbar").style.display="flex";
+  var out=document.getElementById("out");
+  for(var i=0;i<gn;i++){
+    var r=build();all.push(r.p);
+    var card=document.createElement("div");card.className="card";
+    var ph=document.createElement("div");ph.className="phead";
+    var pm=document.createElement("div");pm.className="pmeta";
+    var pn=document.createElement("div");pn.className="pnum";pn.textContent="PROMPT #"+all.length;
+    var pt=document.createElement("div");pt.className="ptitle";pt.textContent=r.title;
+    var bt=document.createElement("div");bt.className="pbtag";bt.style.background=r.bc;
+    var bs=document.createElement("div");bs.className="pbsw";bs.style.background=r.bc;
+    var bl=document.createElement("span");bl.textContent=r.bl;
+    bt.appendChild(bs);bt.appendChild(bl);
+    pm.appendChild(pn);pm.appendChild(pt);pm.appendChild(bt);
+    var cb=document.createElement("button");cb.className="cpybtn";cb.textContent="Copy";
+    (function(txt,btn){btn.addEventListener("click",function(){clp(txt,btn);});})(r.p,cb);
+    ph.appendChild(pm);ph.appendChild(cb);
+    var tx=document.createElement("div");tx.className="ptxt";tx.textContent=r.p;
+    card.appendChild(ph);card.appendChild(tx);out.appendChild(card);
+  }
+  document.getElementById("tot").textContent=all.length+" prompts generated";
+  out.scrollTop=out.scrollHeight;
+});
+
+document.getElementById("clr").addEventListener("click",function(){
+  all=[];
+  var out=document.getElementById("out");
+  out.querySelectorAll(".card").forEach(function(c){out.removeChild(c);});
+  document.getElementById("topbar").style.display="none";
+  var em=document.getElementById("empty");if(em)em.style.display="flex";
+});
+
+document.getElementById("exp").addEventListener("click",function(){
+  if(!all.length)return;
+  var lines=[];
+  for(var i=0;i<all.length;i++)lines.push("[Prompt #"+(i+1)+"]\n"+all[i]);
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([lines.join("\n\n---\n\n")],{type:"text/plain"}));
+  a.download="floating-candy-worlds-prompts.txt";a.click();
+});
+
+})();
+</script>
+</body>
+</html>
