@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sticker Alchemy Engine | 25 Niche Sticker Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Cinzel:wght@700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-deep: #040308; --bg-panel: #0c0910; --bg-card: #14101a; --border: #221e2a;
+      --accent-gold: #f59e0b; --accent-gold-light: #fcd34d; --accent-teal: #2dd4bf;
+      --accent-rose: #fb7185; --accent-purple: #a78bfa; --text: #eee9f5; --text-dim: #8a8098;
+      --success: #34d399; --danger: #f87171;
+    }
+    body {
+      font-family: 'Nunito', sans-serif; background: var(--bg-deep);
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.06) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(45,212,191,0.04) 0%, transparent 50%);
+      color: var(--text); display: flex; flex-direction: column; min-height: 100vh; line-height: 1.5;
+    }
+    #hdr {
+      background: linear-gradient(180deg, var(--bg-panel) 0%, rgba(12,9,16,0.97) 100%);
+      border-bottom: 2px solid var(--border); padding: 15px 24px; display: flex; align-items: center;
+      gap: 14px; flex-shrink: 0; position: relative; z-index: 1; box-shadow: 0 4px 40px rgba(0,0,0,0.7); flex-wrap: wrap;
+    }
+    #hdr::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent-gold), var(--accent-teal), var(--accent-rose), var(--accent-purple), transparent); opacity: 0.6; }
+    #hdr-icon { font-size: 38px; filter: drop-shadow(0 0 20px rgba(245,158,11,0.6)); animation: floatIcon 3s ease-in-out infinite; }
+    @keyframes floatIcon { 0%,100%{transform:translateY(0) rotate(0deg)} 25%{transform:translateY(-5px) rotate(-2deg)} 50%{transform:translateY(-2px) rotate(0deg)} 75%{transform:translateY(-7px) rotate(2deg)} }
+    #hdr-title-group { display: flex; flex-direction: column; }
+    #hdr-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: 22px;
+      background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 30%, #2dd4bf 60%, #fb7185 100%);
+      background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: 1px; animation: shimmer 5s ease-in-out infinite; font-weight: 800;
+    }
+    @keyframes shimmer { 0%,100%{background-position:0% center} 50%{background-position:200% center} }
+    #hdr-sub { font-size: 10px; font-weight: 800; color: var(--text-dim); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
+    #hdr-badge { margin-left: auto; background: linear-gradient(135deg, #1a0a00, #2a1a00); border: 1.5px solid var(--accent-gold); border-radius: 30px; padding: 6px 20px; font-family: 'Cinzel', serif; font-size: 11px; font-weight: 800; color: var(--accent-gold-light); letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+    #app { display: flex; flex: 1; min-height: calc(100vh - 85px); position: relative; z-index: 1; }
+    #sidebar { width: 350px; min-width: 350px; background: linear-gradient(180deg, var(--bg-panel) 0%, rgba(12,9,16,0.98) 100%); border-right: 2px solid var(--border); padding: 16px 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 11px; scrollbar-width: thin; scrollbar-color: var(--accent-gold) var(--bg-card); }
+    #sidebar::-webkit-scrollbar { width: 6px; } #sidebar::-webkit-scrollbar-track { background: var(--bg-card); } #sidebar::-webkit-scrollbar-thumb { background: var(--accent-gold); border-radius: 3px; }
+    .s-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; transition: all 0.3s; position: relative; }
+    .s-card::before { content: ''; position: absolute; top: -1px; left: 20px; right: 20px; height: 1px; background: linear-gradient(90deg, transparent, rgba(245,158,11,0.3), transparent); transition: all 0.3s; }
+    .s-label { font-size: 10px; font-weight: 900; color: var(--accent-gold-light); margin-bottom: 9px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 7px; }
+    select { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg-deep); color: var(--text); font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; outline: none; transition: all 0.2s; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'); background-repeat: no-repeat; background-position: right 12px center; }
+    select:hover { border-color: var(--accent-gold); }
+    .component-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+    .comp-btn { padding: 9px 6px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg-deep); color: var(--text-dim); font-family: 'Nunito', sans-serif; font-size: 10px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .comp-btn:hover { border-color: var(--accent-teal); color: var(--text); }
+    .comp-btn.on { border-color: var(--accent-teal); background: #0a1a18; color: var(--accent-teal); box-shadow: 0 0 12px rgba(45,212,191,0.25); }
+    .preset-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 9px; }
+    .preset-swatch { width: 100%; aspect-ratio: 1; border-radius: 7px; border: 2px solid rgba(255,255,255,0.14); cursor: pointer; transition: all 0.2s; position: relative; display: flex; align-items: center; justify-content: center; }
+    .preset-swatch:hover { border-color: rgba(255,255,255,0.6); transform: scale(1.1); }
+    .preset-swatch.active { border-color: #fff; box-shadow: 0 0 0 3px var(--accent-gold), 0 0 18px rgba(255,255,255,0.3); transform: scale(1.08); }
+    .sw-check { display: none; font-size: 13px; color: #fff; font-weight: 900; text-shadow: 0 0 5px #000; pointer-events: none; }
+    .preset-swatch.active .sw-check { display: block; }
+    .divider-row { display: flex; align-items: center; gap: 7px; margin: 7px 0; } .divider-line { flex: 1; height: 1px; background: var(--border); } .divider-txt { font-size: 8px; font-weight: 900; color: var(--text-dim); white-space: nowrap; text-transform: uppercase; letter-spacing: 0.6px; }
+    .custom-row { display: flex; align-items: center; gap: 8px; } .custom-row label { font-size: 10px; font-weight: 900; color: var(--accent-gold-light); white-space: nowrap; }
+    input[type="color"] { width: 40px; height: 32px; border-radius: 6px; border: 2px solid rgba(255,255,255,0.2); background: transparent; cursor: pointer; padding: 2px; }
+    #color-hex { flex: 1; font-size: 10px; font-weight: 700; color: var(--text-dim); }
+    #bg-preview { width: 100%; height: 48px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.1); margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.3s; background: #000000; }
+    #bg-preview .lines { display: flex; flex-direction: column; gap: 3px; } #bg-preview .lines span { display: block; height: 1.5px; background: #fff; border-radius: 1px; }
+    #bg-preview .lines span:nth-child(1) { width: 28px; } #bg-preview .lines span:nth-child(2) { width: 18px; } #bg-preview .lines span:nth-child(3) { width: 24px; }
+    #bg-preview-label { font-size: 10px; font-weight: 900; color: #fff; text-shadow: 0 0 8px #000; }
+    #cnt-row { display: flex; gap: 5px; }
+    .cnt-btn { flex: 1; padding: 9px 3px; border-radius: 9px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim); font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; cursor: pointer; transition: all 0.2s; }
+    .cnt-btn:hover { border-color: var(--accent-gold); color: var(--text); }
+    .cnt-btn.on { background: #1a0a00; border-color: var(--accent-gold); color: var(--accent-gold-light); box-shadow: 0 0 14px rgba(245,158,11,0.3); }
+    #gen-btn { width: 100%; padding: 15px; border-radius: 13px; border: none; background: linear-gradient(135deg, #78350f 0%, #b45309 25%, #f59e0b 50%, #2dd4bf 80%, #f59e0b 100%); background-size: 200% auto; color: #1a0a00; font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; box-shadow: 0 7px 30px rgba(245,158,11,0.35); transition: all 0.3s; }
+    #gen-btn:hover { box-shadow: 0 11px 40px rgba(245,158,11,0.55); transform: translateY(-2px); background-position: right center; color: #000; }
+    #clr-btn { width: 100%; padding: 11px; border-radius: 11px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 12px; font-weight: 800; letter-spacing: 0.6px; cursor: pointer; transition: all 0.2s; }
+    #clr-btn:hover { border-color: var(--danger); color: var(--danger); }
+    #output { flex: 1; padding: 22px 26px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: var(--bg-deep); }
+    #output::-webkit-scrollbar { width: 7px; } #output::-webkit-scrollbar-track { background: var(--bg-deep); } #output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #empty-msg { margin: auto; text-align: center; opacity: 0.4; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+    #empty-msg .ico { font-size: 80px; animation: floatIcon 4s ease-in-out infinite; }
+    #empty-msg .txt { font-weight: 900; font-size: 15px; color: var(--text-dim); line-height: 1.9; }
+    #topbar { display: none; align-items: center; gap: 12px; margin-bottom: 4px; flex-shrink: 0; }
+    #tot-badge { background: #1a0a00; border: 1px solid var(--accent-gold); border-radius: 30px; padding: 6px 20px; font-size: 11px; font-weight: 900; color: var(--accent-gold-light); font-family: 'Cinzel', serif; letter-spacing: 0.6px; }
+    #exp-btn { margin-left: auto; padding: 8px 18px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-dim); font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 900; cursor: pointer; transition: all 0.2s; }
+    #exp-btn:hover { border-color: var(--success); color: var(--success); }
+    .prompt-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; flex-shrink: 0; transition: all 0.3s; position: relative; overflow: hidden; }
+    .prompt-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent-gold), var(--accent-teal), var(--accent-rose), var(--accent-purple)); opacity: 0; transition: opacity 0.3s; }
+    .prompt-card:hover { border-color: var(--accent-gold); box-shadow: 0 10px 35px rgba(0,0,0,0.6); transform: translateY(-2px); }
+    .prompt-card:hover::before { opacity: 1; }
+    .prompt-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 14px; }
+    .prompt-meta { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .prompt-num { font-family: 'Cinzel', serif; font-size: 9px; font-weight: 800; color: var(--text-dim); letter-spacing: 0.8px; text-transform: uppercase; }
+    .prompt-title { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent-gold-light); letter-spacing: 0.5px; line-height: 1.3; }
+    .prompt-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+    .prompt-tag { font-size: 8px; font-weight: 800; padding: 4px 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+    .prompt-tag.niche-tag { border-color: rgba(45,212,191,0.5); color: var(--accent-teal); }
+    .prompt-tag.comp-tag { border-color: rgba(167,139,250,0.5); color: var(--accent-purple); }
+    .prompt-actions { display: flex; gap: 7px; flex-shrink: 0; }
+    .prompt-copy { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-deep); color: var(--text-dim); font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 800; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+    .prompt-copy:hover { border-color: var(--success); color: var(--success); }
+    .prompt-copy.ok { border-color: var(--success); color: var(--success); background: #0a2a1a; }
+    .prompt-text { font-size: 12px; font-weight: 700; line-height: 1.9; color: #c9c0b5; background: var(--bg-deep); border-radius: 11px; padding: 15px 17px; border: 1px solid var(--border); white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+
+<div id="hdr">
+  <div id="hdr-icon">💎</div>
+  <div id="hdr-title-group">
+    <div id="hdr-title">Sticker Alchemy Engine</div>
+    <div id="hdr-sub">25 Niche Sticker Generator • Unlimited Prompts • JournalCraft Compatible</div>
+  </div>
+  <div id="hdr-badge">✦ 25 Niches ✦</div>
+</div>
+
+<div id="app">
+  <div id="sidebar">
+    <div class="s-card">
+      <div class="s-label"><i>💎</i> Micro-Niche Theme</div>
+      <select id="sel-niche"><option value="-1">🎲 Random niche every time</option></select>
+    </div>
+    <div class="s-card">
+      <div class="s-label"><i>🧩</i> Component Type</div>
+      <div class="component-grid" id="comp-grid"></div>
+    </div>
+    <div class="s-card">
+      <div class="s-label"><i>🎨</i> Background Color</div>
+      <div class="preset-grid" id="preset-grid"></div>
+      <div class="divider-row"><div class="divider-line"></div><span class="divider-txt">or custom</span><div class="divider-line"></div></div>
+      <div class="custom-row"><label>Pick:</label><input type="color" id="color-picker" value="#000000"><span id="color-hex">Classic Black</span></div>
+      <div id="bg-preview"><div class="lines"><span></span><span></span><span></span></div><span id="bg-preview-label">Classic Black</span></div>
+    </div>
+    <div class="s-card">
+      <div class="s-label">🔢 Prompts to Generate</div>
+      <div id="cnt-row">
+        <button class="cnt-btn on" data-n="1">x1</button><button class="cnt-btn" data-n="5">x5</button><button class="cnt-btn" data-n="10">x10</button><button class="cnt-btn" data-n="20">x20</button><button class="cnt-btn" data-n="50">x50</button>
+      </div>
+    </div>
+    <button id="gen-btn">💎 Generate Sticker Prompts</button>
+    <button id="clr-btn">Clear All</button>
+  </div>
+
+  <div id="output">
+    <div id="topbar"><span id="tot-badge">0 stickers</span><button id="exp-btn">📥 Export .txt</button></div>
+    <div id="empty-msg">
+      <div class="ico">💎</div>
+      <div class="txt"><strong>✦ Sticker Alchemy Engine ✦</strong><br>Generate <strong>unlimited unique sticker prompts</strong><br>for 25 micro-niches nobody is targeting on Etsy<br><small>25 Niches × 4 Components × Infinite Variations</small></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// STICKER ALCHEMY ENGINE — COMPLETO
+// ═══════════════════════════════════════
+
+// POOL DI VARIAZIONI PER OGNI PROMPT
+var AGING = ["aged paper textures","timeworn surfaces","antique patina","yellowed vintage pages","distressed parchment","weathered sheets","softened edges from handling","century-old paper feel"];
+var QUAL = ["high detail","finely detailed","exquisitely rendered","richly textured","elaborately composed","meticulously crafted","intricately designed","masterfully detailed"];
+var LIGHT = ["soft lighting","gentle illumination","warm directional light","diffused natural glow","ambient vintage warmth","delicate chiaroscuro","muted atmospheric lighting","soft window-light feel"];
+var AESTH = ["cozy nostalgic aesthetic","warm heritage feel","timeless vintage charm","collected memories atmosphere","heirloom-quality appearance","authentic antique vibe","genuine old-world sensibility"];
+
+function r(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ═══════════════════ 25 NICHE COMPLETE ═══════════════════
+var NICHES = [
+  {n:"Antique Pharmacy & Apothecary",kw:"Apothecary",el:["mortar and pestle","medicine bottles with cork stoppers","apothecary labels with Latin names","brass scales","pill capsules","dropper bottles","herb bundle drawings","prescription pads","caduceus symbols","glass vials with liquid","old pharmacy receipts","botanical drug illustrations","pill boxes","measuring spoons","amber glass jars"],pal:"amber brown, cream, faded teal, deep navy, sepia, muted gold, charcoal, dusty sage, rust, ivory"},
+  {n:"Vintage Circus & Carnival",kw:"Circus Carnival",el:["circus tent stripes","ticket stubs with perforated edges","clown hat illustrations","carousel horse details","strongman poster elements","popcorn boxes","ferris wheel silhouettes","ringmaster top hats","trapeze artists","carnival game targets","balloon animals","vintage calliope details","fortune teller booth signs","cotton candy swirls","fire eater torch designs"],pal:"crimson red, gold, cream, navy blue, muted teal, sepia, charcoal, mustard yellow, aged white, dusty rose"},
+  {n:"Deep Sea Specimen & Marine Biology",kw:"Deep Sea",el:["octopus tentacles with suction cups","jellyfish with trailing tentacles","nautilus shell cross-sections","anglerfish with illuminated lure","seahorse illustrations","coral branch specimens","sea urchin tests","whale vertebrae drawings","plankton microscope views","deep sea fish with bioluminescent spots","barnacle clusters","starfish with detailed arms","seashell spirals","marine biology notebook pages","diving helmet elements"],pal:"deep navy, bioluminescent teal, cream, muted coral, abyssal blue, silver, sepia, dark charcoal, pale aqua, warm amber"},
+  {n:"Victorian Mourning & Memento Mori",kw:"Mourning",el:["weeping willow branches","mourning brooches with hair work","cameo silhouettes","black lace patterns","hourglass with wings","skull illustrations","funeral wreaths","obelisk gravestones","black ribbon bows","pocket watch with stopped hands","wilted roses","raven silhouettes","jet bead jewelry","mourning dress details","cemetery angel statues"],pal:"deep black, charcoal grey, muted silver, bone white, dusty lavender, sepia, blackberry purple, dark moss, cream, oxidized copper"},
+  {n:"Foraged Wild Food & Mushroom Hunting",kw:"Foraged Food",el:["chanterelle mushrooms","morel illustrations","wild berry clusters","fiddlehead ferns","dandelion root drawings","acorn caps","pine nut sketches","wild garlic bulbs","nettle leaves","mushroom spore prints","foraging basket elements","elderflower blossoms","chestnut illustrations","wild rose hips","hazelnut clusters"],pal:"forest green, mushroom cream, bark brown, ochre, dusty orange, moss, slate grey, warm amber, deep plum, oatmeal beige"},
+  {n:"1920s Speakeasy & Prohibition",kw:"Speakeasy",el:["cocktail glasses","art deco cocktail shakers","jazz age sheet music","feather boas","pearl strand necklaces","vintage liquor labels","speakeasy door signs","cigarette holders","gramophone illustrations","beaded flapper dress details","jazz trumpet silhouettes","cocktail recipe cards","roulette wheel segments","art deco sunburst patterns","crystal decanters"],pal:"gold, black, cream, deep burgundy, silver, charcoal, muted teal, champagne, dark navy, dusty rose"},
+  {n:"Medieval Bestiary & Illuminated Manuscript",kw:"Medieval Bestiary",el:["dragon illuminations","unicorn tapestry details","griffin illustrations","phoenix rising motifs","medieval lion drawings","oak leaf borders","gold leaf initials","border decorations with ivy","coat of arms shields","fleur-de-lis patterns","knight armor details","castle turret drawings","heraldic beasts","illuminated letter designs","manuscript marginalia doodles"],pal:"gold leaf, deep crimson, ultramarine blue, cream parchment, forest green, charcoal, burgundy, burnt sienna, ivory, muted teal"},
+  {n:"Bees & Apiary Culture",kw:"Beekeeping",el:["honeybee illustrations with detailed wings","hexagonal honeycomb patterns","vintage beekeeping tools","honey dipper sticks","glass honey jars","beeswax candle bundles","wildflower clusters","queen bee markings","skep hive drawings","propolis drops","pollen baskets","honey labels","royal jelly illustrations","bee anatomy diagrams","meadow flower borders"],pal:"honey gold, beeswax cream, charcoal, warm brown, dusty yellow, sage green, lavender, soft amber, dark brown, cream"},
+  {n:"Vintage Camping & Scout Patches",kw:"Camping Scout",el:["campfire illustrations with crossed logs","merit badge circle designs","compass rose elements","tent silhouettes","pine tree clusters","backpack sketches","canteen and mess kit drawings","hiking boot prints","topographic map lines","campfire coffee pot","rope knots","lantern illustrations","s'mores elements","canoe paddles","scout neckerchief slides"],pal:"forest green, khaki tan, navy blue, cream, rust red, charcoal, mustard yellow, sky blue, leather brown, white"},
+  {n:"Vintage Astronomy & Star Charts",kw:"Star Charts",el:["constellation diagrams with connecting lines","crescent moon phases","antique telescope illustrations","zodiac wheel segments","planet orbit diagrams","star maps with celestial coordinates","astronomer's quadrant tools","comet illustrations","galaxy swirls","nebula cloud patterns","sundial drawings","astrolabe details","shooting star trails","observatory dome silhouettes","aurora borealis wave patterns"],pal:"midnight blue, cream, gold, silver, deep charcoal, muted teal, dusty lavender, warm sepia, pale yellow, dark navy"},
+  {n:"Vintage Perfumery & Fragrance",kw:"Perfumery",el:["perfume bottles with atomizer bulbs","vintage fragrance labels","rose and jasmine illustrations","lavender sprigs","bergamot fruit drawings","vanilla orchid sketches","perfume ingredient lists","crystal stopper bottles","scent strip cards","parfum concentration labels","violet flower details","sandalwood fan illustrations","eau de cologne labels","lily of the valley sprigs"],pal:"dusty rose, cream, gold, lavender, soft pink, sage, deep plum, champagne, muted coral, soft grey"},
+  {n:"Cozy Rainy Day & Cloudspotting",kw:"Rainy Day",el:["raindrop patterns","umbrella illustrations","cloud formation types","rain boots with puddle splashes","steaming tea mugs","window rain streaks","cozy blanket textures","cloudspotting guide pages","rainbow prism fragments","thundercloud formations","duck with umbrella motif","puddle reflections","raindrop on leaf","cozy reading nook elements","wellington boot details"],pal:"soft grey, sky blue, muted lavender, cream, dusty yellow, charcoal, sage green, warm tan, pale aqua, butter yellow"},
+  {n:"Vintage Tailor & Haberdashery",kw:"Tailor Shop",el:["vintage scissors illustrations","wooden spools of thread","measuring tape curled","thimble drawings","button cards with mother-of-pearl buttons","tailor's chalk pieces","sewing machine details","pattern paper with markings","needle book designs","dress form silhouettes","vintage fashion sketches","pin cushion elements","fabric swatch bundles","darning mushroom","embroidery hoop motifs"],pal:"warm cream, dusty rose, charcoal, navy blue, soft grey, muted gold, sage green, rust, ivory, warm brown"},
+  {n:"Vintage Boxing & Fight Posters",kw:"Boxing Posters",el:["boxing glove illustrations","championship belt designs","vintage fight poster typography","boxing ring with ropes","speed bag and heavy bag sketches","boxing shoe details","mouthguard illustrations","round card girls","vintage gym elements","punching bag chains","boxer silhouette in fighting stance","title card designs","ringside bell","corner stool","hand wraps"],pal:"deep red, cream, black, gold, charcoal, sepia, navy blue, warm tan, rust, ivory"},
+  {n:"Vintage Firefighting & Engine Companies",kw:"Firefighting",el:["vintage fire truck illustrations","firefighter helmet leatherhead style","crossed axes emblem","fire hydrant drawings","brass fire bell","ladder truck details","Dalmatian dog mascot","vintage fire badge designs","fire hose nozzles","fire station architecture","antique fire extinguisher","turnout coat details","fire company patches","breathing apparatus","alarm box illustrations"],pal:"deep red, brass gold, black, cream, charcoal, navy blue, warm brown, silver, ivory, muted orange"},
+  {n:"Vintage Roller Skating & Rink Culture",kw:"Roller Rink",el:["quad roller skate illustrations with colorful wheels","disco ball reflections","rink floor patterns","skate key tools","knee pad and elbow pad drawings","vintage rink tickets","skate wing motifs","rink snack bar elements","retro skate boot details","wheel and bearing diagrams","roller derby elements","arcade carpet patterns","locker key tags","painted rink lines","skate laces with pom-poms"],pal:"hot pink, teal, cream, orange, black, lavender, yellow, mint green, coral, white"},
+  {n:"Vintage Laundry & Wash Day",kw:"Vintage Laundry",el:["clothespin illustrations","vintage washboard drawings","clothesline with linens","laundry basket wicker","soap bar with bubbles","iron and ironing board","vintage detergent boxes","wooden drying rack","blueing bottle for whites","laundry cart elements","vintage apron designs","mangle clothes wringer details","fabric care symbols","linen spray bottles","laundry day schedule cards"],pal:"soft blue, cream, warm grey, linen white, sage green, charcoal, butter yellow, dusty rose, sky blue, warm tan"},
+  {n:"Vintage Barbershop & Shaving Parlor",kw:"Barbershop",el:["barber pole with spiral stripes","straight razor illustrations","shaving brush with lather","vintage scissors and comb sets","mustache wax tins","hot towel steamer","barber chair details","vintage hair tonic bottles","aftershave label designs","beard oil droppers","pomade jar illustrations","shaving soap pucks","classic men's grooming tools","barbershop quartet hats","striped barber cape"],pal:"crimson red, cream, navy blue, charcoal, brass gold, warm brown, ivory, white, muted teal, soft grey"},
+  {n:"Vintage Drive-In Movie Theater",kw:"Drive-In Movie",el:["drive-in movie screen with car silhouettes","vintage car hop trays","popcorn boxes","soda cup illustrations","neon marquee signs","speaker post designs","film reel elements","movie ticket stubs","concession stand menu","classic car details tail fins","projector beam illustrations","drive-in lot markings","vintage 3D glasses","coming attractions poster board","intermission countdown clocks"],pal:"cherry red, cream, teal, black, neon yellow, chrome silver, soft pink, warm amber, charcoal, white"},
+  {n:"Vintage Taxidermy & Cabinet of Curiosities",kw:"Cabinet Curiosities",el:["butterfly specimen displays","bird skeleton illustrations","glass dome cloche elements","insect pinning details","curiosity cabinet shelves","fossil ammonite drawings","taxidermy tools","anatomical heart sketches","Victorian specimen labels","raven and owl mounts","antler and horn displays","beetle collection layouts","shell specimen boxes","herbarium sheet designs","crystal and mineral specimens"],pal:"deep brown, cream, charcoal, muted gold, dusty rose, dark teal, warm sepia, bone white, forest green, oxblood"},
+  {n:"Vintage Surf Culture & Tiki Bars",kw:"Surf Tiki",el:["longboard surfboard illustrations","tiki idol carvings","hibiscus flower drawings","wave break patterns","pineapple fruit elements","surf wax bars","bamboo frame details","vintage surf shop logos","tiki torch illustrations","sea turtle drawings","aloha shirt patterns","surf van elements","coconut cup designs","hula dancer silhouettes","outrigger canoe sketches"],pal:"turquoise, cream, bamboo green, coral, warm brown, gold, navy blue, muted orange, sand beige, deep teal"},
+  {n:"Vintage Chess & Strategy Games",kw:"Chess Strategy",el:["chess piece illustrations king queen knight","chess board with wood grain","timer clock elements","vintage chess book covers","strategy note cards","pawn formation diagrams","Staunton pattern details","marble chess board patterns","checkmate notation scoresheets","chess club badges","knight profile silhouettes","rook and bishop details","vintage game box designs","chess piece shadows","tournament pairing cards"],pal:"dark walnut, cream, charcoal, ivory, forest green, deep red, gold, warm tan, black, muted silver"},
+  {n:"Vintage Birdwatching & Field Notes",kw:"Birdwatching",el:["binocular illustrations vintage field glasses","bird silhouette identification cards","feather collection drawings","field notebook pages with observations","bird egg sketches","nest illustrations","bird call notation diagrams","warbler and finch details","owl pellet drawings","hummingbird flight patterns","vintage field guide covers","bird banding tags","spotting scope tripod details","migration map elements","birdhouse designs"],pal:"forest green, cream, warm brown, sky blue, charcoal, muted gold, dusty rose, sage, ivory, rust"},
+  {n:"Vintage Coffee Roasting & Café Culture",kw:"Coffee Roasting",el:["coffee bean illustrations at various roast levels","vintage coffee grinder hand crank","French press elements","burlap coffee sack with emblem","espresso machine details","pour-over dripper drawings","latte art rosetta patterns","golden coffee scoop","roasting profile charts","vintage café signage","demitasse cup designs","coffee cherry botanical drawings","steaming mug illustrations","coffee bag valve details","roasting drum illustrations"],pal:"coffee brown, cream, warm tan, charcoal, muted gold, deep burgundy, ivory, soft grey, chocolate, caramel"},
+  {n:"Vintage Letterpress & Print Shop",kw:"Letterpress",el:["individual metal type letters","composing stick elements","letterpress chase and furniture details","ink brayer rollers","wood type blocks","vintage print shop posters","metal galley tray designs","printer's apron elements","ink mixing slab","vintage business card designs","copper plate engraving tools","press bed details","type drawer cabinet","end-grain wood type","linocut tool illustrations"],pal:"ink black, cream, deep red, charcoal, navy blue, warm wood brown, metallic silver, sepia, ivory, muted gold"}
+];
+
+// ═══════════════════ 4 COMPONENT TYPES ═══════════════════
+var COMPS = [
+  {n:"Mixed Sticker Sheet",ra:"1:1 Square",t:"Stickers",tp:function(ni,el,pa,ag,qu,li,ae){return "Sticker sheet with 30+ small stickers themed around "+ni+", densely arranged on square sheet, "+el+", "+pa+", varied shapes and sizes — some round, some rectangular, some die-cut following the shape contours, glossy sticker aesthetic with subtle white border for kiss-cut printing, "+ag+", "+qu+", "+li+", "+ae+", printable sticker sheet, square 1:1 aspect ratio";}},
+  {n:"Decorative Embellishments",ra:"1:1 Square",t:"Embellishments",tp:function(ni,el,pa,ag,qu,li,ae){return "Sheet of 20+ decorative paper embellishments themed around "+ni+", arranged on square sheet, flourishes, rosettes, bows, and small ornaments, "+el+" incorporated into ornamental designs, "+pa+", vintage scrapbooking style with "+ag+", some embellishments with intricate cutwork details, "+qu+", "+li+", "+ae+", printable embellishment sheet, square 1:1 aspect ratio";}},
+  {n:"Washi Tape Style Strips",ra:"1:1 Square",t:"Washi Strips",tp:function(ni,el,pa,ag,qu,li,ae){return "Sheet of 15+ washi tape style decorative strips themed around "+ni+", arranged horizontally on square sheet, "+el+" as repeating patterns, "+pa+", semi-transparent tape aesthetic with clean edges, varied widths — some narrow 5mm, some wide 15mm, subtle "+ag+" on the tape surface, "+qu+", "+li+", "+ae+", printable tape strip sheet, square 1:1 aspect ratio";}},
+  {n:"Mixed Ephemera Sticker Sheet",ra:"3:4 Portrait",t:"Ephemera Stickers",tp:function(ni,el,pa,ag,qu,li,ae){return "Printable ephemera sticker sheet themed around "+ni+", portrait layout, mixed collection of 35+ small sticker items including tickets, stamps, labels, tags, and decorative elements, "+el+", "+pa+", vintage aesthetic, each item fussy-cuttable with clear sticker borders, arranged densely on portrait sheet, "+ag+", "+qu+", "+li+", "+ae+", printable sticker sheet, portrait orientation 3:4 aspect ratio";}}
+];
+
+// ═══════════════════ BACKGROUNDS ═══════════════════
+var BGS = [
+  ["Classic Black","#000000"],["Aged Cream","#e8d5b5"],["Deep Navy","#080d20"],["Warm Parchment","#d4b896"],["Midnight Purple","#140a28"],["Dark Emerald","#061a10"],["Deep Crimson","#1a0608"],["Antique Linen","#c9b99a"],["Prussian Blue","#071a28"],["Obsidian","#0a0a0f"],["Dark Teal","#051a1a"],["Warm Sepia","#3d2b1a"],["Deep Violet","#100a24"],["Abyssal Blue","#040d1a"],["Dark Charcoal","#121418"],["Oxblood","#1a0808"],["Forest Black","#081408"],["Twilight Indigo","#0c0a20"],["Volcanic Black","#1a0a00"],["Dark Amethyst","#160a24"],["Shadow Grey","#101418"],["Deep Plum","#180818"],["Dark Moss","#0a1408"],["Ebony","#0a0a0a"]
+];
+
+var bgColor=BGS[0][1], bgLabel=BGS[0][0], gid=0, activeComp=COMPS[0], gc=1;
+
+// ═══════════════════ BUILD PROMPT ═══════════════════
+function buildOne(){
+  var sel=document.getElementById("sel-niche");
+  var ni=(!sel||sel.value==="-1")?pick(NICHES):NICHES[parseInt(sel.value)];
+  var co=activeComp; gid++;
+  // Seleziona 4-9 elementi casuali dalla niche
+  var nEl=4+Math.floor(Math.random()*8);
+  var sh=ni.el.slice().sort(function(){return Math.random()-0.5;});
+  var elStr=sh.slice(0,nEl).join(", ");
+  // Seleziona variazioni casuali
+  var ag=r(AGING), qu=r(QUAL), li=r(LIGHT), ae=r(AESTH);
+  return {t:ni.n+" — "+co.n, nk:ni.kw, cn:co.n, pr:co.tp(ni.n,elStr,ni.pal,ag,qu,li,ae)};
+}
+
+// ═══════════════════ INIT DROPDOWNS ═══════════════════
+(function(){
+  var sel=document.getElementById("sel-niche");
+  for(var i=0;i<NICHES.length;i++){var o=document.createElement("option");o.value=String(i);o.textContent=NICHES[i].kw;sel.appendChild(o);}
+})();
+
+// ═══════════════════ COMPONENT BUTTONS ═══════════════════
+(function(){
+  var cg=document.getElementById("comp-grid"), cbs=[];
+  for(var i=0;i<COMPS.length;i++){(function(co,ix){
+    var b=document.createElement("button");b.className="comp-btn";if(ix===0)b.classList.add("on");
+    b.textContent=co.n;b.addEventListener("click",function(){for(var x=0;x<cbs.length;x++)cbs[x].classList.remove("on");b.classList.add("on");activeComp=co;});
+    cg.appendChild(b);cbs.push(b);
+  })(COMPS[i],i);}
+})();
+
+// ═══════════════════ BACKGROUND PRESETS ═══════════════════
+(function(){
+  var pg=document.getElementById("preset-grid"), sw=[];
+  function up(c,l){document.getElementById("bg-preview").style.background=c;document.getElementById("bg-preview-label").textContent=l;}
+  for(var i=0;i<BGS.length;i++){(function(pr,ix){
+    var s=document.createElement("div");s.className="preset-swatch";s.style.background=pr[1];s.title=pr[0];
+    var ck=document.createElement("span");ck.className="sw-check";ck.textContent="✓";s.appendChild(ck);
+    s.addEventListener("click",function(){for(var x=0;x<sw.length;x++)sw[x].classList.remove("active");s.classList.add("active");bgColor=pr[1];bgLabel=pr[0];document.getElementById("color-picker").value=pr[1];document.getElementById("color-hex").textContent=pr[0];up(pr[1],pr[0]);});
+    pg.appendChild(s);sw.push(s);if(ix===0){s.classList.add("active");up(pr[1],pr[0]);}
+  })(BGS[i],i);}
+  document.getElementById("color-picker").addEventListener("input",function(){for(var x=0;x<sw.length;x++)sw[x].classList.remove("active");bgColor=this.value;bgLabel=this.value;document.getElementById("color-hex").textContent=this.value;up(this.value,this.value);});
+})();
+
+// ═══════════════════ COUNT BUTTONS ═══════════════════
+(function(){var cb=document.querySelectorAll(".cnt-btn");for(var i=0;i<cb.length;i++){cb[i].addEventListener("click",function(){for(var j=0;j<cb.length;j++)cb[j].classList.remove("on");this.classList.add("on");gc=parseInt(this.getAttribute("data-n"));});}})();
+
+// ═══════════════════ STATE ═══════════════════
+var ap=[];
+
+function copyText(t,b){var d=function(){b.textContent="✅ Copied!";b.classList.add("ok");setTimeout(function(){b.textContent="📋 Copy";b.classList.remove("ok");},1800);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(d).catch(function(){fc(t,d);});}else{fc(t,d);}}
+function fc(t,cb){var ta=document.createElement("textarea");ta.value=t;ta.style.cssText="position:fixed;top:0;left:0;width:2px;height:2px;opacity:0;";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);cb();}
+
+// ═══════════════════ GENERATE ═══════════════════
+document.getElementById("gen-btn").addEventListener("click",function(){
+  var em=document.getElementById("empty-msg");if(em)em.style.display="none";
+  document.getElementById("topbar").style.display="flex";var out=document.getElementById("output");
+  for(var i=0;i<gc;i++){var r=buildOne();ap.push(r.pr);
+    var c=document.createElement("div");c.className="prompt-card";
+    var h=document.createElement("div");h.className="prompt-head";
+    var m=document.createElement("div");m.className="prompt-meta";
+    var ne=document.createElement("div");ne.className="prompt-num";ne.textContent="STICKER PROMPT #"+ap.length;
+    var te=document.createElement("div");te.className="prompt-title";te.textContent=r.t;
+    var tg=document.createElement("div");tg.className="prompt-tags";
+    var tn=document.createElement("span");tn.className="prompt-tag niche-tag";tn.textContent="💎 "+r.nk;
+    var tc=document.createElement("span");tc.className="prompt-tag comp-tag";tc.textContent="🧩 "+r.cn;
+    tg.appendChild(tn);tg.appendChild(tc);m.appendChild(ne);m.appendChild(te);m.appendChild(tg);
+    var ac=document.createElement("div");ac.className="prompt-actions";
+    var btn=document.createElement("button");btn.className="prompt-copy";btn.textContent="📋 Copy";
+    (function(pt,b){b.addEventListener("click",function(){copyText(pt,b);});})(r.pr,btn);
+    ac.appendChild(btn);h.appendChild(m);h.appendChild(ac);
+    var tx=document.createElement("div");tx.className="prompt-text";tx.textContent=r.pr;
+    c.appendChild(h);c.appendChild(tx);out.appendChild(c);
+  }
+  document.getElementById("tot-badge").textContent=ap.length+" stickers";out.scrollTop=out.scrollHeight;
+});
+
+// ═══════════════════ CLEAR ═══════════════════
+document.getElementById("clr-btn").addEventListener("click",function(){ap.length=0;gid=0;var out=document.getElementById("output");var cs=out.querySelectorAll(".prompt-card");for(var i=0;i<cs.length;i++)cs[i].remove();document.getElementById("topbar").style.display="none";var em=document.getElementById("empty-msg");if(em)em.style.display="flex";});
+
+// ═══════════════════ EXPORT ═══════════════════
+document.getElementById("exp-btn").addEventListener("click",function(){if(!ap.length)return;var ls=[];for(var i=0;i<ap.length;i++)ls.push("[Sticker Prompt #"+(i+1)+"]\n"+ap[i]);var b=new Blob([ls.join("\n\n---\n\n")],{type:"text/plain"});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sticker-alchemy-prompts-"+new Date().toISOString().slice(0,10)+".txt";a.click();URL.revokeObjectURL(a.href);});
+</script>
+</body>
+</html>
