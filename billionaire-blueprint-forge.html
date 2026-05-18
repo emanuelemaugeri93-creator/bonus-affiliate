@@ -1,1613 +1,962 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Billionaire Blueprint Forge</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Lato:wght@300;400;700&family=Cinzel:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0a0906;
-    --bg2: #13120d;
-    --bg3: #1c1a13;
-    --gold: #C9A84C;
-    --gold2: #e8c96e;
-    --gold-dim: rgba(201,168,76,0.15);
-    --gold-border: rgba(201,168,76,0.3);
-    --cream: #f5f0e8;
-    --cream2: #d4c9b0;
-    --muted: rgba(212,201,176,0.45);
-    --red: #8B1A1A;
-  }
-
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--cream);
-    font-family: 'Lato', sans-serif;
-    font-weight: 300;
-    overflow-x: hidden;
-  }
-
-  /* ── NOISE TEXTURE OVERLAY ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.4;
-  }
-
-  /* ── GOLD CORNER ORNAMENTS ── */
-  body::after {
-    content: '';
-    position: fixed;
-    top: 20px; left: 20px;
-    width: 60px; height: 60px;
-    border-top: 1px solid var(--gold-border);
-    border-left: 1px solid var(--gold-border);
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  #app {
-    position: relative;
-    z-index: 2;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* ── HEADER ── */
-  header {
-    text-align: center;
-    padding: 48px 40px 32px;
-    position: relative;
-  }
-
-  header::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 50%;
-    transform: translateX(-50%);
-    width: 200px; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  }
-
-  .crown {
-    display: inline-block;
-    font-size: 22px;
-    color: var(--gold);
-    letter-spacing: 16px;
-    margin-bottom: 16px;
-  }
-
-  h1 {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(24px, 4vw, 42px);
-    font-weight: 400;
-    color: var(--gold2);
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    line-height: 1.1;
-    margin-bottom: 8px;
-  }
-
-  .subtitle {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 17px;
-    color: var(--cream2);
-    letter-spacing: 1px;
-  }
-
-  /* ── PROGRESS BAR ── */
-  .progress-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding: 32px 60px 0;
-    justify-content: center;
-  }
-
-  .step-dot {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    transition: opacity 0.3s;
-  }
-
-  .step-dot:hover { opacity: 0.85; }
-
-  .dot-circle {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--gold-border);
-    background: var(--bg2);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Cinzel', serif;
-    font-size: 11px;
-    color: var(--muted);
-    transition: all 0.4s;
-    position: relative;
-    z-index: 1;
-  }
-
-  .dot-circle.active {
-    border-color: var(--gold);
-    background: var(--gold-dim);
-    color: var(--gold);
-  }
-
-  .dot-circle.done {
-    border-color: var(--gold);
-    background: var(--gold);
-    color: var(--bg);
-  }
-
-  .dot-label {
-    font-size: 9px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--muted);
-    text-align: center;
-    white-space: nowrap;
-    transition: color 0.4s;
-  }
-
-  .step-dot.active .dot-label { color: var(--gold); }
-  .step-dot.done .dot-label { color: var(--cream2); }
-
-  .step-connector {
-    height: 1px;
-    flex: 1;
-    max-width: 60px;
-    background: var(--gold-border);
-    margin-bottom: 24px;
-    transition: background 0.4s;
-  }
-
-  .step-connector.done { background: var(--gold); }
-
-  /* ── MAIN CONTENT ── */
-  main {
-    flex: 1;
-    padding: 40px 60px 60px;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  .step-panel {
-    display: none;
-    animation: fadeIn 0.5s ease;
-  }
-
-  .step-panel.active { display: block; }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── STEP HEADING ── */
-  .step-heading {
-    margin-bottom: 36px;
-  }
-
-  .step-number {
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: var(--gold);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .step-heading h2 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(26px, 3vw, 38px);
-    font-weight: 300;
-    color: var(--cream);
-    line-height: 1.2;
-    margin-bottom: 10px;
-  }
-
-  .step-heading p {
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.7;
-    letter-spacing: 0.3px;
-  }
-
-  /* ── OPTION CARDS ── */
-  .options-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
-    margin-bottom: 32px;
-  }
-
-  .option-card {
-    border: 1px solid var(--gold-border);
-    background: var(--bg2);
-    border-radius: 4px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .option-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 3px; height: 0;
-    background: var(--gold);
-    transition: height 0.3s;
-  }
-
-  .option-card:hover {
-    border-color: rgba(201,168,76,0.5);
-    background: var(--bg3);
-  }
-
-  .option-card.selected {
-    border-color: var(--gold);
-    background: var(--gold-dim);
-  }
-
-  .option-card.selected::before { height: 100%; }
-
-  .option-icon {
-    font-size: 22px;
-    margin-bottom: 10px;
-    display: block;
-  }
-
-  .option-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 17px;
-    color: var(--cream);
-    margin-bottom: 4px;
-    font-weight: 500;
-  }
-
-  .option-desc {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-
-  .option-card.selected .option-title { color: var(--gold); }
-
-  /* ── TEXT INPUTS ── */
-  .field-group { margin-bottom: 24px; }
-
-  .field-label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 8px;
-  }
-
-  .field-input, .field-textarea {
-    width: 100%;
-    background: var(--bg2);
-    border: 1px solid var(--gold-border);
-    border-radius: 2px;
-    color: var(--cream);
-    font-family: 'Lato', sans-serif;
-    font-size: 14px;
-    font-weight: 300;
-    padding: 12px 16px;
-    outline: none;
-    transition: border-color 0.3s;
-    letter-spacing: 0.3px;
-  }
-
-  .field-input::placeholder, .field-textarea::placeholder {
-    color: rgba(212,201,176,0.25);
-    font-style: italic;
-  }
-
-  .field-input:focus, .field-textarea:focus {
-    border-color: var(--gold);
-  }
-
-  .field-textarea {
-    resize: vertical;
-    min-height: 90px;
-    line-height: 1.6;
-  }
-
-  .field-hint {
-    margin-top: 6px;
-    font-size: 11px;
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  /* ── TWO-COL FIELDS ── */
-  .fields-two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-  /* ── BUTTONS ── */
-  .btn-row {
-    display: flex;
-    gap: 14px;
-    align-items: center;
-    margin-top: 40px;
-  }
-
-  .btn-primary {
-    background: var(--gold);
-    color: var(--bg);
-    border: none;
-    padding: 14px 36px;
-    font-family: 'Cinzel', serif;
-    font-size: 12px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.3s;
-    font-weight: 400;
-  }
-
-  .btn-primary:hover { background: var(--gold2); }
-  .btn-primary:active { transform: scale(0.98); }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--cream2);
-    border: 1px solid var(--gold-border);
-    padding: 14px 28px;
-    font-family: 'Lato', sans-serif;
-    font-size: 12px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.3s;
-    font-weight: 300;
-  }
-
-  .btn-secondary:hover { border-color: var(--gold); color: var(--cream); }
-
-  /* ── RANGE SLIDER ── */
-  .slider-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .slider-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 1px;
-  }
-
-  input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 2px;
-    background: var(--gold-border);
-    outline: none;
-    border-radius: 0;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: var(--gold);
-    cursor: pointer;
-    border: 2px solid var(--bg);
-  }
-
-  .slider-value {
-    text-align: center;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px;
-    color: var(--gold);
-  }
-
-  /* ── DIVIDER ── */
-  .ornament-divider {
-    text-align: center;
-    margin: 28px 0;
-    position: relative;
-    color: var(--gold);
-    font-size: 12px;
-    letter-spacing: 6px;
-  }
-
-  .ornament-divider::before, .ornament-divider::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 30%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold-border));
-  }
-
-  .ornament-divider::before { left: 0; background: linear-gradient(90deg, transparent, var(--gold-border)); }
-  .ornament-divider::after  { right: 0; background: linear-gradient(270deg, transparent, var(--gold-border)); }
-
-  /* ── STEP 5: GENERATING ── */
-  .generating-wrap {
-    text-align: center;
-    padding: 40px 0;
-  }
-
-  .forge-animation {
-    position: relative;
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 32px;
-  }
-
-  .forge-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid var(--gold);
-    animation: expand 2s linear infinite;
-  }
-
-  .forge-ring:nth-child(1) { inset: 0; animation-delay: 0s; opacity: 0.8; }
-  .forge-ring:nth-child(2) { inset: -15px; animation-delay: 0.5s; opacity: 0.5; }
-  .forge-ring:nth-child(3) { inset: -30px; animation-delay: 1s; opacity: 0.3; }
-
-  .forge-core {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-  }
-
-  @keyframes expand {
-    0%   { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(1.6); opacity: 0; }
-  }
-
-  .generating-status {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 20px;
-    color: var(--cream2);
-    margin-bottom: 12px;
-  }
-
-  .generating-bar-wrap {
-    width: 300px;
-    margin: 20px auto 0;
-    height: 2px;
-    background: var(--bg3);
-    border-radius: 0;
-    overflow: hidden;
-  }
-
-  .generating-bar {
-    height: 100%;
-    background: var(--gold);
-    width: 0%;
-    transition: width 0.3s;
-  }
-
-  /* ── OUTPUT ── */
-  .output-wrap {
-    display: none;
-    animation: fadeIn 0.6s ease;
-  }
-
-  .output-wrap.visible { display: block; }
-
-  .output-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--gold-border);
-  }
-
-  .output-title {
-    font-family: 'Cinzel', serif;
-    font-size: 10px;
-    letter-spacing: 4px;
-    color: var(--gold);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .output-book-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 32px;
-    font-style: italic;
-    color: var(--cream);
-    font-weight: 300;
-  }
-
-  .output-actions {
-    display: flex;
-    gap: 10px;
-  }
-
-  .btn-icon {
-    background: var(--bg2);
-    border: 1px solid var(--gold-border);
-    color: var(--cream2);
-    padding: 10px 16px;
-    font-size: 12px;
-    letter-spacing: 1px;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.3s;
-    font-family: 'Lato', sans-serif;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .btn-icon:hover { border-color: var(--gold); color: var(--gold); }
-
-  /* ── OUTPUT SECTIONS ── */
-  .output-section {
-    margin-bottom: 36px;
-  }
-
-  .section-label {
-    font-size: 9px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--gold-border);
-  }
-
-  .character-card {
-    background: var(--bg2);
-    border: 1px solid var(--gold-border);
-    border-radius: 2px;
-    padding: 20px 24px;
-    margin-bottom: 16px;
-  }
-
-  .char-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    color: var(--gold2);
-    margin-bottom: 4px;
-    font-weight: 500;
-  }
-
-  .char-role {
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
-
-  .char-detail {
-    font-size: 13px;
-    color: var(--cream2);
-    line-height: 1.8;
-    margin-bottom: 6px;
-  }
-
-  .char-detail strong {
-    color: var(--gold);
-    font-weight: 400;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-right: 8px;
-  }
-
-  .arc-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-    margin-bottom: 8px;
-  }
-
-  .arc-beat {
-    background: var(--bg2);
-    border-left: 2px solid var(--gold);
-    padding: 14px 16px;
-  }
-
-  .arc-beat-label {
-    font-size: 9px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 6px;
-  }
-
-  .arc-beat-text {
-    font-size: 13px;
-    color: var(--cream2);
-    line-height: 1.6;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 15px;
-    font-style: italic;
-  }
-
-  /* ── CHAPTER LIST ── */
-  .chapter-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .chapter-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    background: var(--bg2);
-    padding: 14px 18px;
-    border: 1px solid rgba(201,168,76,0.1);
-    transition: border-color 0.2s;
-  }
-
-  .chapter-item:hover { border-color: var(--gold-border); }
-
-  .chapter-num {
-    font-family: 'Cinzel', serif;
-    font-size: 11px;
-    color: var(--gold);
-    min-width: 30px;
-    padding-top: 2px;
-  }
-
-  .chapter-content { flex: 1; }
-
-  .chapter-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px;
-    color: var(--cream);
-    margin-bottom: 3px;
-  }
-
-  .chapter-beat {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .chapter-pov {
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--gold);
-    background: var(--gold-dim);
-    padding: 3px 8px;
-    border-radius: 2px;
-    align-self: flex-start;
-    margin-top: 2px;
-    white-space: nowrap;
-  }
-
-  /* ── AMAZON DESCRIPTION ── */
-  .amazon-box {
-    background: var(--bg2);
-    border: 1px solid var(--gold-border);
-    padding: 24px;
-    border-radius: 2px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px;
-    color: var(--cream2);
-    line-height: 1.8;
-    font-style: italic;
-    white-space: pre-line;
-  }
-
-  /* ── KEYWORDS TAGS ── */
-  .keyword-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .kw-tag {
-    border: 1px solid var(--gold-border);
-    padding: 5px 12px;
-    font-size: 11px;
-    letter-spacing: 1px;
-    color: var(--cream2);
-    background: var(--bg2);
-    border-radius: 2px;
-  }
-
-  /* ── TOAST ── */
-  #toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--gold);
-    color: var(--bg);
-    padding: 12px 28px;
-    font-family: 'Cinzel', serif;
-    font-size: 11px;
-    letter-spacing: 2px;
-    border-radius: 2px;
-    opacity: 0;
-    transition: all 0.4s;
-    z-index: 100;
-    white-space: nowrap;
-  }
-
-  #toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  /* ── FOOTER DECORATION ── */
-  .corner-br {
-    position: fixed;
-    bottom: 20px; right: 20px;
-    width: 60px; height: 60px;
-    border-bottom: 1px solid var(--gold-border);
-    border-right: 1px solid var(--gold-border);
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  @media (max-width: 640px) {
-    main { padding: 32px 24px 48px; }
-    .progress-wrap { padding: 24px 20px 0; }
-    .fields-two { grid-template-columns: 1fr; }
-    .output-header { flex-direction: column; gap: 16px; }
-    h1 { letter-spacing: 2px; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Series Bible | Billionaires Empire Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07060f;
+            --card: #0e0c1c;
+            --input: #151226;
+            --gold: #C9A84C;
+            --gold-light: #e8c96e;
+            --text: #f5f0e8;
+            --text2: #d4c9b0;
+            --muted: rgba(212, 201, 176, 0.5);
+            --red: #c4405a;
+            --border: rgba(201, 168, 76, 0.2);
+            --border2: rgba(201, 168, 76, 0.4);
+            --radius: 4px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Lato', sans-serif;
+            font-weight: 300;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--card);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(201, 168, 76, 0.25);
+            border-radius: 3px;
+        }
+
+        /* TOP ACCESS BAR */
+        .top-access-bar {
+            background: linear-gradient(135deg, #1a1025 0%, #0e0c1c 100%);
+            border-bottom: 2px solid var(--border2);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .top-access-label {
+            font-family: 'Cinzel', serif;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--text2);
+            text-transform: uppercase;
+        }
+        .btn-access {
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 10px 22px;
+            border: 2px solid var(--gold);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            background: var(--gold);
+            color: var(--bg);
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
+        }
+        .btn-access:hover {
+            background: var(--gold-light);
+            border-color: var(--gold-light);
+            box-shadow: 0 0 30px rgba(201, 168, 76, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-access-outline {
+            background: transparent;
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            box-shadow: none;
+        }
+        .btn-access-outline:hover {
+            background: rgba(201, 168, 76, 0.1);
+            color: var(--gold-light);
+            box-shadow: 0 0 25px rgba(201, 168, 76, 0.25);
+        }
+
+        /* SCREENS */
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(7, 6, 15, 0.95);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .header-brand {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+        .header-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 18px;
+            color: var(--text2);
+        }
+
+        /* BUTTONS */
+        .btn {
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 10px 22px;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.25s;
+            font-weight: 500;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-gold {
+            background: var(--gold);
+            color: var(--bg);
+            font-weight: 700;
+        }
+        .btn-gold:hover {
+            background: var(--gold-light);
+            transform: translateY(-1px);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text2);
+            border: 1px solid var(--border2);
+        }
+        .btn-outline:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+        }
+        .btn-xs {
+            padding: 4px 10px;
+            font-size: 8px;
+            letter-spacing: 1px;
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--gold);
+            color: var(--bg);
+            padding: 10px 24px;
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s;
+            z-index: 9999;
+            font-weight: 700;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── LANDING ── */
+        #screen-landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 24px;
+            background: radial-gradient(ellipse at 50% 25%, rgba(201, 168, 76, 0.06), transparent 60%), var(--bg);
+        }
+        .landing-stars {
+            font-size: 14px;
+            letter-spacing: 14px;
+            color: var(--gold);
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+        .landing-title {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(36px, 6vw, 60px);
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--gold-light);
+            line-height: 1.1;
+            margin-bottom: 12px;
+            text-shadow: 0 0 60px rgba(201, 168, 76, 0.3);
+        }
+        .landing-sub {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 18px;
+            color: var(--text2);
+            max-width: 500px;
+            margin-bottom: 32px;
+        }
+        .landing-cta {
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            letter-spacing: 4px;
+            background: var(--gold);
+            color: var(--bg);
+            border: none;
+            padding: 16px 48px;
+            cursor: pointer;
+            border-radius: var(--radius);
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        .landing-cta:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+        }
+        .landing-footer {
+            margin-top: 28px;
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        /* ── PLANNER ── */
+        #screen-planner {
+            min-height: 100vh;
+        }
+        .planner-body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 36px 24px 80px;
+        }
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            color: var(--gold-light);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .section-sub {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 16px;
+            color: var(--text2);
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-label {
+            display: block;
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: 'Lato', sans-serif;
+            font-size: 14px;
+            padding: 10px 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: var(--gold);
+        }
+        .form-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23C9A84C'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+        .form-select option {
+            background: var(--input);
+            color: var(--text);
+        }
+        .form-textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .form-hint {
+            font-size: 11px;
+            color: var(--muted);
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+        .chip {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .chip:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .chip.selected {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--bg);
+            font-weight: 700;
+        }
+
+        .book-entry {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 14px;
+        }
+        .book-entry-num {
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            color: var(--gold);
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 24px 0;
+        }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+
+        /* ── RESULTS ── */
+        #screen-results {
+            min-height: 100vh;
+        }
+        .results-body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 36px 24px 80px;
+        }
+        .result-book {
+            background: var(--card);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 28px;
+        }
+        .result-book-title {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            color: var(--gold-light);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .result-book-pair {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 16px;
+            color: var(--text2);
+            margin-bottom: 4px;
+        }
+        .result-book-trope {
+            display: inline-block;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--red);
+            background: rgba(196, 64, 90, 0.1);
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+        .result-section {
+            margin-top: 16px;
+        }
+        .result-section-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .blurb-box {
+            background: rgba(201, 168, 76, 0.04);
+            border-left: 2px solid var(--gold);
+            padding: 14px 16px;
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 14px;
+            color: var(--text2);
+            line-height: 1.8;
+            white-space: pre-line;
+        }
+        .beat-item {
+            display: flex;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(201, 168, 76, 0.06);
+            font-size: 13px;
+            color: var(--text2);
+        }
+        .beat-num {
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            color: var(--gold);
+            min-width: 24px;
+        }
+        .beat-phase {
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--red);
+            min-width: 70px;
+        }
+        .kw-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            font-size: 10px;
+            color: var(--muted);
+            margin: 3px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row-2 {
+                grid-template-columns: 1fr;
+            }
+            .beat-phase {
+                display: none;
+            }
+            .planner-body,
+            .results-body {
+                padding: 24px 14px 60px;
+            }
+            .top-access-bar {
+                gap: 8px;
+                padding: 8px 12px;
+            }
+            .btn-access {
+                padding: 8px 16px;
+                font-size: 9px;
+                letter-spacing: 1px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div id="app">
-  <header>
-    <div class="crown">✦ &nbsp; ✦ &nbsp; ✦</div>
-    <h1>Billionaire Blueprint Forge</h1>
-    <p class="subtitle">Craft your complete story bible in five questions</p>
-  </header>
 
-  <!-- PROGRESS -->
-  <div class="progress-wrap" id="progressBar">
-    <div class="step-dot active" data-step="1" onclick="goToStep(1)">
-      <div class="dot-circle active" id="dot1">I</div>
-      <div class="dot-label">Setting</div>
-    </div>
-    <div class="step-connector" id="conn1"></div>
-    <div class="step-dot" data-step="2" onclick="goToStep(2)">
-      <div class="dot-circle" id="dot2">II</div>
-      <div class="dot-label">Trope</div>
-    </div>
-    <div class="step-connector" id="conn2"></div>
-    <div class="step-dot" data-step="3" onclick="goToStep(3)">
-      <div class="dot-circle" id="dot3">III</div>
-      <div class="dot-label">Characters</div>
-    </div>
-    <div class="step-connector" id="conn3"></div>
-    <div class="step-dot" data-step="4" onclick="goToStep(4)">
-      <div class="dot-circle" id="dot4">IV</div>
-      <div class="dot-label">Conflict</div>
-    </div>
-    <div class="step-connector" id="conn4"></div>
-    <div class="step-dot" data-step="5" onclick="goToStep(5)">
-      <div class="dot-circle" id="dot5">V</div>
-      <div class="dot-label">Heat & Length</div>
-    </div>
-  </div>
-
-  <main>
-
-    <!-- ══ STEP 1: SETTING ══ -->
-    <div class="step-panel active" id="step1">
-      <div class="step-heading">
-        <span class="step-number">Step I — Setting</span>
-        <h2>Where does your empire stand?</h2>
-        <p>The world your billionaire commands sets the entire emotional stage. Choose your arena.</p>
-      </div>
-
-      <div class="options-grid">
-        <div class="option-card" data-group="setting" data-value="Manhattan" onclick="selectOption(this)">
-          <span class="option-icon">🗽</span>
-          <div class="option-title">Manhattan</div>
-          <div class="option-desc">Power lunches, penthouse rooftops, boardrooms on the 60th floor</div>
-        </div>
-        <div class="option-card" data-group="setting" data-value="London" onclick="selectOption(this)">
-          <span class="option-icon">🎩</span>
-          <div class="option-title">London</div>
-          <div class="option-desc">Old money estates, dark tailored suits, Westminster whispers</div>
-        </div>
-        <div class="option-card" data-group="setting" data-value="Dubai" onclick="selectOption(this)">
-          <span class="option-icon">🏙️</span>
-          <div class="option-title">Dubai</div>
-          <div class="option-desc">Desert palaces, Lamborghinis on gold roads, absolute power</div>
-        </div>
-        <div class="option-card" data-group="setting" data-value="Monaco" onclick="selectOption(this)">
-          <span class="option-icon">⛵</span>
-          <div class="option-title">Monaco</div>
-          <div class="option-desc">Superyachts, casino royale evenings, European aristocracy</div>
-        </div>
-        <div class="option-card" data-group="setting" data-value="Silicon Valley" onclick="selectOption(this)">
-          <span class="option-icon">💻</span>
-          <div class="option-title">Silicon Valley</div>
-          <div class="option-desc">Tech billionaire, ruthless disruption, modern empire building</div>
-        </div>
-        <div class="option-card" data-group="setting" data-value="Milan" onclick="selectOption(this)">
-          <span class="option-icon">👗</span>
-          <div class="option-title">Milan</div>
-          <div class="option-desc">Fashion empire, Italian passion, couture and scandal</div>
-        </div>
-        <div class="option-card" data-group="setting" data-value="Tokyo" onclick="selectOption(this)">
-          <span class="option-icon">🌸</span>
-          <div class="option-title">Tokyo</div>
-          <div class="option-desc">Corporate dynasty, ancient honour codes, neon nights</div>
-        </div>
-        <div class="option-card" data-group="setting" data-value="Custom" onclick="selectOption(this)">
-          <span class="option-icon">✍️</span>
-          <div class="option-title">Custom City</div>
-          <div class="option-desc">Name your own world below</div>
-        </div>
-      </div>
-
-      <div id="customSettingWrap" style="display:none;" class="field-group">
-        <label class="field-label">Your Custom Setting</label>
-        <input class="field-input" id="customSetting" placeholder="e.g. Chicago, Hong Kong, Paris…" type="text">
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-primary" onclick="nextStep(1)">Continue →</button>
-      </div>
+    <!-- ═══════════════ TOP ACCESS BAR ═══════════════ -->
+    <div class="top-access-bar">
+        <span class="top-access-label">📚 Bonus Tools:</span>
+        <a href="https://emanuelemaugeri93-creator.github.io/bonus-affiliate/pen-name-builder.html" 
+           target="_blank" 
+           class="btn-access">
+            ✦ Access Web-App #2 ✦
+        </a>
+        <span class="top-access-label" style="font-size:8px;color:var(--muted);">Pen Name Empire Builder</span>
     </div>
 
-    <!-- ══ STEP 2: TROPE ══ -->
-    <div class="step-panel" id="step2">
-      <div class="step-heading">
-        <span class="step-number">Step II — Core Trope</span>
-        <h2>What is the engine of your story?</h2>
-        <p>Every billionaire romance runs on a core fantasy tension. Choose the one that fires yours.</p>
-      </div>
-
-      <div class="options-grid">
-        <div class="option-card" data-group="trope" data-value="Enemies to Lovers" onclick="selectOption(this)">
-          <span class="option-icon">⚔️</span>
-          <div class="option-title">Enemies to Lovers</div>
-          <div class="option-desc">They despise each other — until they can't stay away</div>
-        </div>
-        <div class="option-card" data-group="trope" data-value="Boss and Employee" onclick="selectOption(this)">
-          <span class="option-icon">📋</span>
-          <div class="option-title">Boss & Employee</div>
-          <div class="option-desc">The forbidden pull across a power imbalance</div>
-        </div>
-        <div class="option-card" data-group="trope" data-value="Arranged Marriage" onclick="selectOption(this)">
-          <span class="option-icon">💍</span>
-          <div class="option-title">Arranged Marriage</div>
-          <div class="option-desc">A contract. A convenience. A catastrophic attraction.</div>
-        </div>
-        <div class="option-card" data-group="trope" data-value="Second Chance" onclick="selectOption(this)">
-          <span class="option-icon">🕰️</span>
-          <div class="option-title">Second Chance</div>
-          <div class="option-desc">Old wounds, unfinished hearts, one final crossing of paths</div>
-        </div>
-        <div class="option-card" data-group="trope" data-value="Fake Relationship" onclick="selectOption(this)">
-          <span class="option-icon">🎭</span>
-          <div class="option-title">Fake Relationship</div>
-          <div class="option-desc">Play pretend. Fall for real. Nowhere to hide.</div>
-        </div>
-        <div class="option-card" data-group="trope" data-value="Forbidden Romance" onclick="selectOption(this)">
-          <span class="option-icon">🚫</span>
-          <div class="option-title">Forbidden Romance</div>
-          <div class="option-desc">Every rule says no. Every heartbeat says yes.</div>
-        </div>
-        <div class="option-card" data-group="trope" data-value="Protective Billionaire" onclick="selectOption(this)">
-          <span class="option-icon">🛡️</span>
-          <div class="option-title">Protective Billionaire</div>
-          <div class="option-desc">He didn't plan to save her. He can't stop.</div>
-        </div>
-        <div class="option-card" data-group="trope" data-value="Opposites Attract" onclick="selectOption(this)">
-          <span class="option-icon">🌗</span>
-          <div class="option-title">Opposites Attract</div>
-          <div class="option-desc">His world is everything she's against. Except him.</div>
-        </div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="prevStep(2)">← Back</button>
-        <button class="btn-primary" onclick="nextStep(2)">Continue →</button>
-      </div>
+    <!-- ═══════════════ LANDING ═══════════════ -->
+    <div id="screen-landing" class="screen active">
+        <div class="landing-stars">✦ ✦ ✦</div>
+        <h1 class="landing-title">Series Bible</h1>
+        <p class="landing-sub">Plan your entire billionaire romance series before you generate a single word. Get character profiles, story structures, Amazon blurbs, and KDP keywords — ready to feed into Billionaires Empire.</p>
+        <button class="landing-cta" onclick="showScreen('screen-planner')">Plan My Series</button>
+        <div class="landing-footer">Companion tool for <span style="color:var(--gold)">Billionaires Empire</span> by Alessandro Zamboni</div>
     </div>
 
-    <!-- ══ STEP 3: CHARACTERS ══ -->
-    <div class="step-panel" id="step3">
-      <div class="step-heading">
-        <span class="step-number">Step III — Characters</span>
-        <h2>Name your leads & choose their armour</h2>
-        <p>Names anchor your reader. The character archetypes make them fall in love.</p>
-      </div>
-
-      <div class="fields-two" style="margin-bottom:20px;">
-        <div class="field-group">
-          <label class="field-label">Hero's Name</label>
-          <input class="field-input" id="heroName" placeholder="e.g. Dominic Voss, Xavier Crane…" type="text">
+    <!-- ═══════════════ PLANNER ═══════════════ -->
+    <div id="screen-planner" class="screen">
+        <div class="header">
+            <div class="header-brand">Series Bible</div>
+            <div class="header-title">Create Your Universe</div>
+            <button class="btn btn-outline btn-sm" onclick="showScreen('screen-landing')">← Home</button>
         </div>
-        <div class="field-group">
-          <label class="field-label">Heroine's Name</label>
-          <input class="field-input" id="heroineName" placeholder="e.g. Mia Harper, Celia Ashford…" type="text">
+        <div class="planner-body">
+            <h2 class="section-title">Series Setup</h2>
+            <p class="section-sub">Define your series foundation</p>
+
+            <div class="form-group">
+                <label class="form-label">Series Name *</label>
+                <input type="text" class="form-input" id="seriesName" placeholder="e.g. The Voss Dynasty">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Pen Name</label>
+                <input type="text" class="form-input" id="penName" placeholder="e.g. Victoria Ashford">
+            </div>
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label class="form-label">Niche</label>
+                    <select class="form-select" id="niche">
+                        <option>Billionaire Romance</option>
+                        <option>Dark Romance</option>
+                        <option>Mafia Romance</option>
+                        <option>CEO Romance</option>
+                        <option>Royal Romance</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Number of Books</label>
+                    <select class="form-select" id="numBooks" onchange="buildBookForms()">
+                        <option value="3">3 Books</option>
+                        <option value="4" selected>4 Books</option>
+                        <option value="5">5 Books</option>
+                        <option value="6">6 Books</option>
+                        <option value="7">7 Books</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Setting</label>
+                <input type="text" class="form-input" id="setting" value="New York" placeholder="e.g. New York, London, Milan">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Heat Level</label>
+                <div class="chip-row" id="chipHeat">
+                    <div class="chip" data-value="Sweet" onclick="selectChip(this,'chipHeat')">Sweet</div>
+                    <div class="chip selected" data-value="Steamy" onclick="selectChip(this,'chipHeat')">Steamy</div>
+                    <div class="chip" data-value="Very Hot" onclick="selectChip(this,'chipHeat')">Very Hot</div>
+                    <div class="chip" data-value="Dark" onclick="selectChip(this,'chipHeat')">Dark</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Hero Connection</label>
+                <div class="chip-row" id="chipConn">
+                    <div class="chip selected" data-value="brothers" onclick="selectChip(this,'chipConn')">Brothers</div>
+                    <div class="chip" data-value="business partners" onclick="selectChip(this,'chipConn')">Business Partners</div>
+                    <div class="chip" data-value="rivals" onclick="selectChip(this,'chipConn')">Rivals</div>
+                    <div class="chip" data-value="best friends" onclick="selectChip(this,'chipConn')">Best Friends</div>
+                    <div class="chip" data-value="crime family" onclick="selectChip(this,'chipConn')">Crime Family</div>
+                </div>
+            </div>
+
+            <hr class="divider">
+            <h2 class="section-title">Book Details</h2>
+            <p class="section-sub">Define each book's characters and conflict</p>
+            <div id="bookForms"></div>
+
+            <div class="btn-row">
+                <button class="btn btn-outline" onclick="showScreen('screen-landing')">Cancel</button>
+                <button class="btn btn-gold" onclick="generateBible()">Generate Series Bible</button>
+            </div>
         </div>
-      </div>
-
-      <div class="ornament-divider">✦</div>
-
-      <div class="field-group" style="margin-bottom:20px;">
-        <label class="field-label">Hero's Industry / Empire</label>
-        <div class="options-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
-          <div class="option-card" data-group="industry" data-value="Finance & Private Equity" onclick="selectOption(this)">
-            <div class="option-title">Finance</div>
-            <div class="option-desc">Private equity, hedge funds, Wall Street kingdoms</div>
-          </div>
-          <div class="option-card" data-group="industry" data-value="Real Estate Empire" onclick="selectOption(this)">
-            <div class="option-title">Real Estate</div>
-            <div class="option-desc">Skyscrapers, luxury developments, global properties</div>
-          </div>
-          <div class="option-card" data-group="industry" data-value="Tech & Innovation" onclick="selectOption(this)">
-            <div class="option-title">Tech</div>
-            <div class="option-desc">Disruptive startups, AI, digital monopolies</div>
-          </div>
-          <div class="option-card" data-group="industry" data-value="Fashion & Luxury" onclick="selectOption(this)">
-            <div class="option-title">Fashion</div>
-            <div class="option-desc">Couture houses, global luxury brands</div>
-          </div>
-          <div class="option-card" data-group="industry" data-value="Media & Entertainment" onclick="selectOption(this)">
-            <div class="option-title">Media</div>
-            <div class="option-desc">Publishing empires, studios, broadcast networks</div>
-          </div>
-          <div class="option-card" data-group="industry" data-value="Old Money Inheritance" onclick="selectOption(this)">
-            <div class="option-title">Old Money</div>
-            <div class="option-desc">Centuries of wealth, family dynasties, dark secrets</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <label class="field-label">Heroine's World (what she does before he enters her life)</label>
-        <input class="field-input" id="heroineWorld" placeholder="e.g. Struggling photographer, ambitious journalist, new hire, single mother…" type="text">
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="prevStep(3)">← Back</button>
-        <button class="btn-primary" onclick="nextStep(3)">Continue →</button>
-      </div>
     </div>
 
-    <!-- ══ STEP 4: CONFLICT ══ -->
-    <div class="step-panel" id="step4">
-      <div class="step-heading">
-        <span class="step-number">Step IV — Conflict</span>
-        <h2>What keeps them apart?</h2>
-        <p>The obstacle is the story. Choose the impossible thing standing between them.</p>
-      </div>
-
-      <div class="options-grid">
-        <div class="option-card" data-group="conflict" data-value="Dark Family Secret" onclick="selectOption(this)">
-          <span class="option-icon">🔐</span>
-          <div class="option-title">Dark Family Secret</div>
-          <div class="option-desc">His family destroyed hers. Neither knows — yet.</div>
+    <!-- ═══════════════ RESULTS ═══════════════ -->
+    <div id="screen-results" class="screen">
+        <div class="header">
+            <div class="header-brand">Series Bible</div>
+            <div class="header-title" id="resultSeriesName">—</div>
+            <button class="btn btn-gold btn-sm" onclick="exportBible()">Export TXT</button>
+            <button class="btn btn-outline btn-sm" onclick="showScreen('screen-planner')">← Edit</button>
         </div>
-        <div class="option-card" data-group="conflict" data-value="Professional Rivalry" onclick="selectOption(this)">
-          <span class="option-icon">⚖️</span>
-          <div class="option-title">Professional Rivalry</div>
-          <div class="option-desc">She's the one who could take everything he's built</div>
-        </div>
-        <div class="option-card" data-group="conflict" data-value="Emotional Walls" onclick="selectOption(this)">
-          <span class="option-icon">🧱</span>
-          <div class="option-title">Emotional Armour</div>
-          <div class="option-desc">He swore never to love. She's the reason he remembers why.</div>
-        </div>
-        <div class="option-card" data-group="conflict" data-value="Class Divide" onclick="selectOption(this)">
-          <span class="option-icon">👑</span>
-          <div class="option-title">Class Divide</div>
-          <div class="option-desc">His world was never meant for someone like her</div>
-        </div>
-        <div class="option-card" data-group="conflict" data-value="Hidden Identity" onclick="selectOption(this)">
-          <span class="option-icon">🎭</span>
-          <div class="option-title">Hidden Identity</div>
-          <div class="option-desc">One of them is not who the other thinks. The truth will break them.</div>
-        </div>
-        <div class="option-card" data-group="conflict" data-value="Dangerous Obsession" onclick="selectOption(this)">
-          <span class="option-icon">🔥</span>
-          <div class="option-title">Dangerous Obsession</div>
-          <div class="option-desc">He'll burn everything to keep her safe. From himself. From others.</div>
-        </div>
-        <div class="option-card" data-group="conflict" data-value="Betrayal & Revenge" onclick="selectOption(this)">
-          <span class="option-icon">🗡️</span>
-          <div class="option-title">Betrayal & Revenge</div>
-          <div class="option-desc">He chose her to destroy. He didn't plan to fall apart first.</div>
-        </div>
-        <div class="option-card" data-group="conflict" data-value="Loyalty vs Love" onclick="selectOption(this)">
-          <span class="option-icon">🎗️</span>
-          <div class="option-title">Loyalty vs Love</div>
-          <div class="option-desc">Choosing her means losing everyone else. Can he?</div>
-        </div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="prevStep(4)">← Back</button>
-        <button class="btn-primary" onclick="nextStep(4)">Continue →</button>
-      </div>
+        <div class="results-body" id="resultsContainer"></div>
     </div>
 
-    <!-- ══ STEP 5: HEAT & LENGTH ══ -->
-    <div class="step-panel" id="step5">
-      <div class="step-heading">
-        <span class="step-number">Step V — Heat & Length</span>
-        <h2>Set the temperature of your novel</h2>
-        <p>Your final parameters before the Forge creates your complete story blueprint.</p>
-      </div>
-
-      <div class="field-group" style="margin-bottom:32px;">
-        <label class="field-label">Heat Level</label>
-        <div class="options-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 560px;">
-          <div class="option-card" data-group="heat" data-value="Clean & Sweet" onclick="selectOption(this)">
-            <span class="option-icon">🌹</span>
-            <div class="option-title">Clean & Sweet</div>
-            <div class="option-desc">Tension. Longing. A door closed at the right moment.</div>
-          </div>
-          <div class="option-card" data-group="heat" data-value="Steamy" onclick="selectOption(this)">
-            <span class="option-icon">🔥</span>
-            <div class="option-title">Steamy</div>
-            <div class="option-desc">Explicit scenes. Intense desire. No doors left closed.</div>
-          </div>
-          <div class="option-card" data-group="heat" data-value="Dark & Possessive" onclick="selectOption(this)">
-            <span class="option-icon">⛓️</span>
-            <div class="option-title">Dark & Possessive</div>
-            <div class="option-desc">Obsession. Control. A dangerous kind of love.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="field-group" style="margin-bottom:32px;">
-        <label class="field-label">Number of Chapters &nbsp;—&nbsp; <span id="chapterDisplay" style="color:var(--gold); font-family:'Cormorant Garamond',serif; font-size:20px; font-style:italic;">20 chapters</span></label>
-        <div class="slider-wrap">
-          <input type="range" id="chapterSlider" min="8" max="32" value="20" step="1" oninput="updateChapters(this.value)">
-          <div class="slider-labels">
-            <span>8 ch · ~40k words</span>
-            <span>20 ch · ~80k words</span>
-            <span>32 ch · ~130k words</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <label class="field-label">Anything else you want in the story? (Optional)</label>
-        <textarea class="field-textarea" id="extraNotes" placeholder="e.g. Include a strong female best friend, set around Christmas, hero has a daughter from past relationship…"></textarea>
-        <div class="field-hint">This is your 1% customisation. The Forge handles the rest.</div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="prevStep(5)">← Back</button>
-        <button class="btn-primary" onclick="forgeBlueprint()">⚡ Forge the Blueprint</button>
-      </div>
-    </div>
-
-    <!-- ══ GENERATING ══ -->
-    <div class="step-panel" id="stepGenerating">
-      <div class="generating-wrap">
-        <div class="forge-animation">
-          <div class="forge-ring"></div>
-          <div class="forge-ring"></div>
-          <div class="forge-ring"></div>
-          <div class="forge-core">📖</div>
-        </div>
-        <div class="generating-status" id="genStatus">Forging your empire…</div>
-        <div style="font-size:12px; color:var(--muted); letter-spacing:1px; margin-bottom:20px;" id="genSub">Building character profiles</div>
-        <div class="generating-bar-wrap">
-          <div class="generating-bar" id="genBar"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ OUTPUT ══ -->
-    <div class="step-panel" id="stepOutput">
-      <div class="output-header">
-        <div>
-          <div class="output-title">✦ Your Story Bible</div>
-          <div class="output-book-title" id="outBookTitle">Loading…</div>
-        </div>
-        <div class="output-actions">
-          <button class="btn-icon" onclick="copyAll()">📋 Copy All</button>
-          <button class="btn-icon" onclick="downloadBlueprint()">⬇ Download</button>
-          <button class="btn-icon" onclick="resetForge()">↺ New Story</button>
-        </div>
-      </div>
-
-      <!-- CHARACTERS -->
-      <div class="output-section">
-        <div class="section-label">I — Character Profiles</div>
-        <div id="outCharacters"></div>
-      </div>
-
-      <!-- STORY ARC -->
-      <div class="output-section">
-        <div class="section-label">II — Story Architecture</div>
-        <div class="arc-grid" id="outArc"></div>
-      </div>
-
-      <!-- CHAPTER BEAT SHEET -->
-      <div class="output-section">
-        <div class="section-label">III — Chapter-by-Chapter Beat Sheet</div>
-        <div class="chapter-list" id="outChapters"></div>
-      </div>
-
-      <!-- AMAZON DESCRIPTION -->
-      <div class="output-section">
-        <div class="section-label">IV — Amazon Book Description</div>
-        <div class="amazon-box" id="outAmazon"></div>
-      </div>
-
-      <!-- KEYWORDS -->
-      <div class="output-section">
-        <div class="section-label">V — Recommended KDP Keywords</div>
-        <div class="keyword-tags" id="outKeywords"></div>
-      </div>
-
-      <!-- PASTE HINT -->
-      <div style="margin-top:32px; padding:20px 24px; background:var(--bg2); border:1px solid var(--gold-border); border-radius:2px;">
-        <div class="section-label" style="margin-bottom:10px;">💡 How to Use This</div>
-        <p style="font-size:13px; color:var(--cream2); line-height:1.8;">Copy this blueprint and customise the variables inside <strong style="color:var(--gold); font-weight:400;">Billionaires Empire</strong> to match. The character backgrounds, conflict seed, and chapter beats map directly to the software's 105 customisable variables. Your book is 80% built — all that's left is one click.</p>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<div class="corner-br"></div>
-<div id="toast"></div>
-
-<script>
-const state = {
-  step: 1,
-  setting: '',
-  trope: '',
-  industry: '',
-  heroName: '',
-  heroineName: '',
-  heroineWorld: '',
-  conflict: '',
-  heat: '',
-  chapters: 20,
-  extraNotes: ''
-};
-
-function selectOption(el) {
-  const group = el.dataset.group;
-  document.querySelectorAll(`[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  state[group] = el.dataset.value;
-
-  if (group === 'setting' && state.setting === 'Custom') {
-    document.getElementById('customSettingWrap').style.display = 'block';
-  } else if (group === 'setting') {
-    document.getElementById('customSettingWrap').style.display = 'none';
-  }
-}
-
-function updateChapters(v) {
-  state.chapters = parseInt(v);
-  document.getElementById('chapterDisplay').textContent = v + ' chapters';
-}
-
-function nextStep(current) {
-  // Validation
-  if (current === 1 && !state.setting) { showToast('Please choose a setting'); return; }
-  if (current === 1 && state.setting === 'Custom') {
-    const cv = document.getElementById('customSetting').value.trim();
-    if (!cv) { showToast('Enter your custom setting'); return; }
-    state.setting = cv;
-  }
-  if (current === 2 && !state.trope) { showToast('Choose a core trope'); return; }
-  if (current === 3) {
-    state.heroName = document.getElementById('heroName').value.trim() || randomName('hero');
-    state.heroineName = document.getElementById('heroineName').value.trim() || randomName('heroine');
-    state.heroineWorld = document.getElementById('heroineWorld').value.trim() || 'freelance photographer struggling to make ends meet';
-    if (!state.industry) { showToast('Choose the hero\'s industry'); return; }
-  }
-  if (current === 4 && !state.conflict) { showToast('Choose the core conflict'); return; }
-  if (current === 5) {
-    if (!state.heat) { showToast('Choose a heat level'); return; }
-    state.extraNotes = document.getElementById('extraNotes').value.trim();
-  }
-  goToStep(current + 1);
-}
-
-function prevStep(current) { goToStep(current - 1); }
-
-function goToStep(n) {
-  if (n < 1 || n > 5) return;
-  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('step' + n).classList.add('active');
-
-  for (let i = 1; i <= 5; i++) {
-    const dot = document.getElementById('dot' + i);
-    const dot_el = dot.closest('.step-dot');
-    dot.classList.remove('active', 'done');
-    dot_el.classList.remove('active', 'done');
-    if (i < n) { dot.classList.add('done'); dot_el.classList.add('done'); }
-    if (i === n) { dot.classList.add('active'); dot_el.classList.add('active'); }
-
-    if (i < 5) {
-      const conn = document.getElementById('conn' + i);
-      conn.classList.toggle('done', i < n);
-    }
-  }
-  state.step = n;
-}
-
-function randomName(type) {
-  const heroes = ['Dominic Voss','Xavier Crane','Luca Mancini','Elias Blackwood','Caelum Ashford','Roman Steele','Maxim Duval'];
-  const heroines = ['Mia Harper','Sophia Lane','Celia Ashford','Naomi Pierce','Isla Grant','Chloe Mercer','Vivienne Cole'];
-  const arr = type === 'hero' ? heroes : heroines;
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function forgeBlueprint() {
-  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('stepGenerating').classList.add('active');
-
-  const messages = [
-    ['Forging your empire…', 'Building character profiles'],
-    ['Shaping the story arc…', 'Engineering the tension beats'],
-    ['Writing your chapter structure…', 'Mapping 30 beat-sheet moments'],
-    ['Crafting your Amazon description…', 'Optimising the hook line'],
-    ['Selecting your KDP keywords…', 'Almost ready'],
-  ];
-
-  let i = 0;
-  const bar = document.getElementById('genBar');
-  const stat = document.getElementById('genStatus');
-  const sub = document.getElementById('genSub');
-
-  const tick = setInterval(() => {
-    if (i >= messages.length) {
-      clearInterval(tick);
-      bar.style.width = '100%';
-      setTimeout(showOutput, 400);
-      return;
-    }
-    const pct = Math.round((i / messages.length) * 90);
-    bar.style.width = pct + '%';
-    stat.textContent = messages[i][0];
-    sub.textContent = messages[i][1];
-    i++;
-  }, 700);
-}
-
-function showOutput() {
-  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('stepOutput').classList.add('active');
-
-  const h = state.heroName;
-  const she = state.heroineName;
-  const setting = state.setting;
-  const trope = state.trope;
-  const industry = state.industry;
-  const conflict = state.conflict;
-  const heat = state.heat;
-  const chapters = state.chapters;
-  const extra = state.extraNotes;
-
-  // Generate book title
-  const titles = {
-    'Enemies to Lovers':    [`The ${h.split(' ')[0]} Ultimatum`, `His Calculated Enemy`, `Hating ${h.split(' ')[0]}`],
-    'Boss & Employee':      [`Under His Authority`, `The CEO's Obsession`, `His Reluctant Secretary`],
-    'Arranged Marriage':    [`Bound to the Billionaire`, `The Contract Wife`, `Married to the Enemy`],
-    'Second Chance':        [`Reclaiming Her`, `The One He Lost`, `Before She Was Gone`],
-    'Fake Relationship':    [`Pretend to Love Me`, `The Arrangement`, `Playing His`],
-    'Forbidden Romance':    [`The Forbidden Billionaire`, `No Rules Between Us`, `Beyond the Lines`],
-    'Protective Billionaire': [`His Shield`, `The Bodyguard Billionaire`, `Protected by Him`],
-    'Opposites Attract':    [`The Billionaire's Exception`, `Against His World`, `Everything He Isn't`],
-  };
-  const titleOptions = titles[trope] || [`The ${h.split(' ')[0]} Effect`];
-  const bookTitle = titleOptions[0];
-
-  document.getElementById('outBookTitle').textContent = bookTitle;
-
-  // ── CHARACTERS ──
-  const heroBackstories = {
-    'Finance & Private Equity': `Built his empire from nothing at 24. Now controls $3.2B in assets. Earned every cent — and every scar.`,
-    'Real Estate Empire':       `The son of a construction worker who became the man who owns the skyline. His buildings are his therapy.`,
-    'Tech & Innovation':        `Dropped out of MIT, sold his first company at 27 for $800M. Everyone loves his ideas. Nobody knows him.`,
-    'Fashion & Luxury':         `Inherited a dying fashion house and turned it into a $1.5B empire. Beauty is his business. Ruthlessness is his method.`,
-    'Media & Entertainment':    `His media group shapes what the world reads, watches, and believes. He is the man behind the curtain.`,
-    'Old Money Inheritance':    `His family has ruled this city for four generations. The weight of legacy makes love feel like a liability.`,
-  };
-
-  const heroFlaws = {
-    'Enemies to Lovers': 'Cannot admit vulnerability. Mistakenly assumes control equals safety.',
-    'Boss & Employee': 'Uses power as a shield. Punishes anyone who gets too close.',
-    'Arranged Marriage': 'Refuses to see the woman behind the contract.',
-    'Second Chance': 'Convinced the past cannot be undone. Refuses to believe otherwise.',
-    'Fake Relationship': 'Performs emotion so well he has forgotten what real feeling looks like.',
-    'Forbidden Romance': 'Honour-bound to a world that does not deserve his loyalty.',
-    'Protective Billionaire': 'Believes love is the fastest path to loss.',
-    'Opposites Attract': 'His world has no room for people who do not play by his rules. Until her.',
-  };
-
-  const heroineMission = {
-    'Enemies to Lovers': `Determined to prove herself in a world he controls. Will not bend. Will not break.`,
-    'Boss & Employee': `Took this job to save her family. Staying requires surviving him.`,
-    'Arranged Marriage': `Agreed to the contract to protect someone she loves. The price is her freedom.`,
-    'Second Chance': `Spent years building a life without him. Now he's back and she's not ready.`,
-    'Fake Relationship': `This was supposed to be simple. Nothing involving ${h.split(' ')[0]} ever stays simple.`,
-    'Forbidden Romance': `She knew the rules before she broke them. She just didn't expect to want to.`,
-    'Protective Billionaire': `She has been running from something. She didn't expect someone to stand in front of her.`,
-    'Opposites Attract': `She does not need his money, his world, or his approval. She is the most dangerous woman he has ever met.`,
-  };
-
-  const charsHTML = `
-    <div class="character-card">
-      <div class="char-name">${h}</div>
-      <div class="char-role">The Billionaire Hero · ${industry}</div>
-      <div class="char-detail"><strong>Backstory</strong>${heroBackstories[industry] || 'A self-made billionaire who controls everything — except what matters.'}</div>
-      <div class="char-detail"><strong>World</strong>${setting} — ${industry.toLowerCase()} empire worth over $2B</div>
-      <div class="char-detail"><strong>Emotional Armour</strong>${heroFlaws[trope] || 'Keeps everyone at a distance. Control is how he breathes.'}</div>
-      <div class="char-detail"><strong>What she'll break</strong>The one rule he's never broken: never let someone matter.</div>
-      ${extra ? `<div class="char-detail"><strong>Custom Notes</strong>${extra}</div>` : ''}
-    </div>
-    <div class="character-card">
-      <div class="char-name">${she}</div>
-      <div class="char-role">The Heroine · ${state.heroineWorld}</div>
-      <div class="char-detail"><strong>Her World</strong>${state.heroineWorld.charAt(0).toUpperCase() + state.heroineWorld.slice(1)} — competent, grounded, dangerously real to him.</div>
-      <div class="char-detail"><strong>Her Mission</strong>${heroineMission[trope] || 'She did not come here to fall in love.'}</div>
-      <div class="char-detail"><strong>Her Flaw</strong>Fierce independence that reads as wall-building. She mistakes self-reliance for invulnerability.</div>
-      <div class="char-detail"><strong>What he'll see first</strong>The one person in his entire world who does not want something from him.</div>
-    </div>`;
-  document.getElementById('outCharacters').innerHTML = charsHTML;
-
-  // ── ARC ──
-  const conflictSeeds = {
-    'Dark Family Secret':      `${h.split(' ')[0]}'s grandfather destroyed ${she.split(' ')[0]}'s family. Neither knows — until Chapter 18.`,
-    'Professional Rivalry':    `${she.split(' ')[0]} is the journalist / competitor who could end his empire. He hires her to control the story. Mistake.`,
-    'Emotional Walls':         `${h.split(' ')[0]} lost someone he loved. He locked the door. ${she.split(' ')[0]} doesn't know the door exists — until she's already inside.`,
-    'Class Divide':            `His world tolerates her as long as she performs the role. The moment she refuses, everything cracks.`,
-    'Hidden Identity':         `She is not who he thinks she is. The reveal comes too late. Trust is the casualty.`,
-    'Dangerous Obsession':     `He told himself this was business. Every decision since her has said otherwise.`,
-    'Betrayal & Revenge':      `He planned to ruin her. She planned to rebuild herself. One of them will change course.`,
-    'Loyalty vs Love':         `His loyalty is to his family. His family hates her. He must choose — and choosing love means burning everything else down.`,
-  };
-
-  const hea = {
-    'Clean & Sweet':         `Public declaration. A quiet proposal. The empire at their feet.`,
-    'Steamy':                `A final scene of surrender — his, not hers — and a future they chose over everything.`,
-    'Dark & Possessive':     `The dangerous man unmade by love. She is his reason to become something worth keeping.`,
-  };
-
-  const arcHTML = `
-    <div class="arc-beat"><div class="arc-beat-label">Inciting Collision</div><div class="arc-beat-text">They meet in ${setting}. The attraction is instant and inconvenient. One of them has something the other needs.</div></div>
-    <div class="arc-beat"><div class="arc-beat-label">Trope Engine</div><div class="arc-beat-text">${trope} — the central dynamic that pulls them together and keeps them apart.</div></div>
-    <div class="arc-beat"><div class="arc-beat-label">Conflict Seed</div><div class="arc-beat-text">${conflictSeeds[conflict] || 'The impossible truth between them — the one that makes love a risk neither can afford.'}</div></div>
-    <div class="arc-beat"><div class="arc-beat-label">Midpoint Crisis</div><div class="arc-beat-text">Something shifts. He sees her differently. Or she sees him. Or both. They can no longer pretend this is nothing.</div></div>
-    <div class="arc-beat"><div class="arc-beat-label">Third Act Break</div><div class="arc-beat-text">The conflict detonates. Everything they've built together collapses in one night. Both retreat. Both alone.</div></div>
-    <div class="arc-beat"><div class="arc-beat-label">The HEA</div><div class="arc-beat-text">${hea[heat] || 'He chooses her. Publicly. Irrevocably. The reader closes the book smiling.'}</div></div>`;
-  document.getElementById('outArc').innerHTML = arcHTML;
-
-  // ── CHAPTER BEATS ──
-  const totalChapters = chapters;
-  const beatMap = generateBeats(h, she, trope, conflict, heat, totalChapters);
-  let chaptersHTML = '';
-  for (let i = 0; i < beatMap.length; i++) {
-    const b = beatMap[i];
-    chaptersHTML += `
-      <div class="chapter-item">
-        <div class="chapter-num">${String(i+1).padStart(2,'0')}</div>
-        <div class="chapter-content">
-          <div class="chapter-title">${b.title}</div>
-          <div class="chapter-beat">${b.beat}</div>
-        </div>
-        <div class="chapter-pov">${b.pov}</div>
-      </div>`;
-  }
-  document.getElementById('outChapters').innerHTML = chaptersHTML;
-
-  // ── AMAZON DESCRIPTION ──
-  const descriptions = {
-    'Enemies to Lovers': `He's the man I despise most in the world.\nThe arrogant billionaire who owns the building, the boardroom, and apparently, my career.\nI was supposed to stay professional.\nDistant.\nReplace the hatred with indifference.\n\nI failed.\n\n${h} doesn't want my admiration. He wants my surrender.\nAnd every time I tell myself I hate him, I'm lying through my teeth.\n\nBut the secret between our families could destroy everything — including us.\n\n${bookTitle} is a ${heat.toLowerCase()} standalone romance set in ${setting}. HEA guaranteed. No cliffhangers.`,
-
-    'Boss & Employee': `Rule one: Never fall for your boss.\nRule two: Especially not ${h}.\nRule three: Don't think about his hands. His voice. The way he says your name.\n\n${she} needed this job. She didn't need him watching her like she's the only problem he's never solved.\n\nHe's the most dangerous man she's ever worked for.\nAnd she suspects the danger has nothing to do with business.\n\n${bookTitle} is a ${heat.toLowerCase()}, forbidden office romance set in ${setting}. Guaranteed HEA.`,
-
-    'Arranged Marriage': `The contract was simple: marry ${h}, save her family.\n${she} told herself it was business.\n\nShe didn't expect him to look at her like that.\nShe didn't expect to look back.\n\nThe terms were six months. A merger. Nothing more.\n\nNow it's month three, and she's terrified the only thing she wants to renegotiate is forever.\n\n${bookTitle} is a ${heat.toLowerCase()} arranged marriage romance. Standalone. HEA.`,
-
-    'default': `She came to ${setting} with a plan. ${h} was not part of it.\n\nThe most powerful man in the city wants something from ${she}.\nThe problem is, she's starting to want something back.\n\nWhen the truth between them comes out — and it will — it could destroy everything they've quietly, desperately begun to build.\n\n${bookTitle} — a ${heat.toLowerCase()} billionaire romance. Standalone. HEA guaranteed.`
-  };
-  document.getElementById('outAmazon').textContent = descriptions[trope] || descriptions['default'];
-
-  // ── KEYWORDS ──
-  const baseKws = ['billionaire romance','enemies to lovers romance','forbidden romance books','boss romance novels','office romance kindle unlimited','rich man poor woman romance','age gap romance','dark romance','steamy romance novels','contemporary romance 2025','second chance romance','fake dating romance'];
-  const settingKws = { 'Manhattan': ['new york billionaire romance','manhattan romance novels'], 'London': ['british billionaire romance','london romance books'], 'Dubai': ['sheikh romance novels','dubai romance'], 'default': [`${setting.toLowerCase()} romance`] };
-  const tropeKws = { 'Enemies to Lovers': ['enemies to lovers kindle','hate to love romance'], 'Boss & Employee': ['boss employee romance','workplace romance kindle'], 'Arranged Marriage': ['arranged marriage romance novels','contract marriage romance'], 'default': [trope.toLowerCase() + ' romance'] };
-  const heatKws = { 'Steamy': ['steamy romance kindle unlimited','explicit romance novels'], 'Dark & Possessive': ['dark possessive romance','obsessive billionaire romance'], 'Clean & Sweet': ['clean romance novels','sweet contemporary romance'] };
-
-  const allKws = [...new Set([...baseKws.slice(0,7), ...(settingKws[setting] || settingKws['default']), ...(tropeKws[trope] || tropeKws['default']), ...(heatKws[heat] || [])])].slice(0, 16);
-
-  document.getElementById('outKeywords').innerHTML = allKws.map(k => `<div class="kw-tag">${k}</div>`).join('');
-}
-
-function generateBeats(h, she, trope, conflict, heat, total) {
-  const hn = h.split(' ')[0];
-  const sn = she.split(' ')[0];
-
-  const fullArc = [
-    { title: `The Collision`, beat: `${sn} enters ${hn}'s world. He notices her the moment she walks in — and hates that he does.`, pov: `${sn}` },
-    { title: `First Friction`, beat: `Their first real clash. Words sharp. Bodies too close. Neither backs down.`, pov: `${hn}` },
-    { title: `The Assignment`, beat: `Circumstances force them together. The trope engine activates: ${trope}.`, pov: `${sn}` },
-    { title: `Learning His Edges`, beat: `${sn} sees a crack in ${hn}'s armour. Small. Unmistakable. She files it away.`, pov: `${sn}` },
-    { title: `The Rule She Breaks`, beat: `${sn} does something unexpected. ${hn} cannot categorise her and that disturbs him deeply.`, pov: `${hn}` },
-    { title: `Walls and Windows`, beat: `A rare, unguarded moment between them. Something real almost happens. Both pull back.`, pov: `${sn}` },
-    { title: `The Complication`, beat: `The conflict begins to surface: ${conflict}. Neither knows the full picture yet.`, pov: `${hn}` },
-    { title: `Closer`, beat: `Proximity becomes dangerous. The chemistry is undeniable. They manage it — barely.`, pov: `${sn}` },
-    { title: `A Concession`, beat: `${hn} does something he's never done for anyone. He doesn't understand why. She does.`, pov: `${sn}` },
-    { title: `The Midpoint Shift`, beat: `Everything changes. A moment of honesty, touch, or truth that cannot be untaken. The story's centre of gravity moves.`, pov: `${hn}` },
-    { title: `After the Shift`, beat: `The morning after the midpoint. They both know something has changed. Neither knows what to do with it.`, pov: `${sn}` },
-    { title: `Deepening`, beat: `We see more of who ${hn} really is — before the money, before the armour. ${sn} is not supposed to care. She does.`, pov: `${hn}` },
-    { title: `A Near-Miss`, beat: `They almost say it. Almost cross it. The tension is at its highest since Chapter 1. Then something interrupts.`, pov: `${sn}` },
-    { title: `The Surrender`, beat: `They stop pretending. The heat level delivers: ${heat}. This cannot be undone.`, pov: `${hn}` },
-    { title: `The Morning After`, beat: `Everything is different. Both guard themselves differently now. The stakes are personal.`, pov: `${sn}` },
-    { title: `The Truth Creeps In`, beat: `The conflict (${conflict}) begins its final approach. Someone knows something. Or finds something.`, pov: `${hn}` },
-    { title: `Beautiful and Doomed`, beat: `Their happiest moment in the story. The reader knows what's coming. So, on some level, do they.`, pov: `${sn}` },
-    { title: `The Detonation`, beat: `The conflict explodes. The secret is out, the betrayal lands, the impossible becomes real. They break.`, pov: `${hn}` },
-    { title: `Collapse`, beat: `${sn} alone. ${hn} alone. Both convinced the other is gone. The reader aches.`, pov: `${sn}` },
-    { title: `The Decision`, beat: `${hn} realises the cost of his pride. There is a window left. It is closing.`, pov: `${hn}` },
-    { title: `The Return`, beat: `He comes back. Not with money, not with power — with the one thing he's never offered anyone. Himself.`, pov: `${sn}` },
-    { title: `The HEA`, beat: `She chooses to believe him. He proves he means it. The empire is theirs. The ending is earned.`, pov: `${hn}` },
-  ];
-
-  if (total <= 8) return fullArc.filter((_, i) => [0,2,4,7,10,14,17,21].includes(i));
-  if (total <= 12) return fullArc.filter((_, i) => [0,1,2,4,6,8,10,13,14,16,18,21].includes(i));
-  if (total >= 22) {
-    const extra = [];
-    for (let i = 0; i < total - 22; i++) {
-      extra.splice(Math.floor(i * 1.5) + 5, 0, {
-        title: `Interlude ${i + 1}`,
-        beat: `A scene that deepens the world: a secondary character, a ${['flashback', 'business crisis', 'social event', 'quiet moment'][i % 4]} that reveals more of who they are separately.`,
-        pov: i % 2 === 0 ? `${sn}` : `${hn}`
-      });
-    }
-    return [...fullArc.slice(0, 12), ...extra, ...fullArc.slice(12)].slice(0, total);
-  }
-  return fullArc.slice(0, total);
-}
-
-function copyAll() {
-  const title = document.getElementById('outBookTitle').textContent;
-  const amazon = document.getElementById('outAmazon').textContent;
-  const keywords = Array.from(document.querySelectorAll('.kw-tag')).map(k => k.textContent).join(', ');
-  const chapters = Array.from(document.querySelectorAll('.chapter-item')).map(c => {
-    const num = c.querySelector('.chapter-num').textContent;
-    const t = c.querySelector('.chapter-title').textContent;
-    const b = c.querySelector('.chapter-beat').textContent;
-    const p = c.querySelector('.chapter-pov').textContent;
-    return `Chapter ${num}: ${t} [POV: ${p}]\n${b}`;
-  }).join('\n\n');
-
-  const text = `BILLIONAIRE BLUEPRINT FORGE\n${title}\n\nSETTING: ${state.setting}\nTROPE: ${state.trope}\nCONFLICT: ${state.conflict}\nHEAT: ${state.heat}\nCHAPTERS: ${state.chapters}\n\n—— AMAZON DESCRIPTION ——\n${amazon}\n\n—— KEYWORDS ——\n${keywords}\n\n—— CHAPTER BEAT SHEET ——\n${chapters}`;
-
-  navigator.clipboard.writeText(text).then(() => showToast('Blueprint copied to clipboard'));
-}
-
-function downloadBlueprint() {
-  const title = document.getElementById('outBookTitle').textContent;
-  const amazon = document.getElementById('outAmazon').textContent;
-  const keywords = Array.from(document.querySelectorAll('.kw-tag')).map(k => k.textContent).join(', ');
-  const chapters = Array.from(document.querySelectorAll('.chapter-item')).map(c => {
-    const num = c.querySelector('.chapter-num').textContent;
-    const t = c.querySelector('.chapter-title').textContent;
-    const b = c.querySelector('.chapter-beat').textContent;
-    const pov = c.querySelector('.chapter-pov').textContent;
-    return `Chapter ${num}: ${t}\nPOV: ${pov}\n${b}`;
-  }).join('\n\n');
-
-  const charCards = Array.from(document.querySelectorAll('.character-card')).map(card => {
-    return card.innerText.trim();
-  }).join('\n\n---\n\n');
-
-  const content = `BILLIONAIRE BLUEPRINT FORGE
-Generated Story Bible
-${'='.repeat(50)}
-
-BOOK TITLE: ${title}
-
-PARAMETERS
-Setting:  ${state.setting}
-Trope:    ${state.trope}
-Industry: ${state.industry}
-Conflict: ${state.conflict}
-Heat:     ${state.heat}
-Chapters: ${state.chapters}
-${state.extraNotes ? '\nExtra Notes: ' + state.extraNotes : ''}
-
-${'='.repeat(50)}
-I. CHARACTER PROFILES
-${'='.repeat(50)}
-
-${charCards}
-
-${'='.repeat(50)}
-II. AMAZON BOOK DESCRIPTION
-${'='.repeat(50)}
-
-${amazon}
-
-${'='.repeat(50)}
-III. KDP KEYWORDS
-${'='.repeat(50)}
-
-${keywords}
-
-${'='.repeat(50)}
-IV. CHAPTER BEAT SHEET (${state.chapters} chapters)
-${'='.repeat(50)}
-
-${chapters}
-
-${'='.repeat(50)}
-Generated by Billionaire Blueprint Forge
-Your bonus from Emanuele — paired with Billionaires Empire by Alessandro Zamboni
-${'='.repeat(50)}`;
-
-  const blob = new Blob([content], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = title.replace(/[^a-z0-9]/gi, '_') + '_Blueprint.txt';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('Blueprint downloaded');
-}
-
-function resetForge() {
-  Object.assign(state, { step:1, setting:'', trope:'', industry:'', heroName:'', heroineName:'', heroineWorld:'', conflict:'', heat:'', chapters:20, extraNotes:'' });
-  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('heroName').value = '';
-  document.getElementById('heroineName').value = '';
-  document.getElementById('heroineWorld').value = '';
-  document.getElementById('extraNotes').value = '';
-  document.getElementById('chapterSlider').value = 20;
-  document.getElementById('chapterDisplay').textContent = '20 chapters';
-  document.getElementById('customSettingWrap').style.display = 'none';
-  goToStep(1);
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
-}
-</script>
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ═══════════════ STATE ═══════════════
+        const DATA = {
+            seriesName: '',
+            penName: '',
+            niche: 'Billionaire Romance',
+            numBooks: 4,
+            setting: 'New York',
+            heat: 'Steamy',
+            conn: 'brothers',
+            books: [],
+            generated: []
+        };
+
+        // ═══════════════ HELPERS ═══════════════
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const screen = document.getElementById(id);
+            if (screen) screen.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function selectChip(el, groupId) {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            group.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function getChip(groupId) {
+            const group = document.getElementById(groupId);
+            if (!group) return '';
+            const sel = group.querySelector('.chip.selected');
+            return sel ? sel.dataset.value : '';
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 2400);
+        }
+
+        function esc(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // ═══════════════ BOOK FORMS ═══════════════
+        const HEROES = ['Dominic Voss', 'Elias Crane', 'Roman Ashford', 'Luca Mancini', 'Caelan Stone', 'Sebastian Darke',
+            'Rafael Montoya'
+        ];
+        const HEROINES = ['Mia Harper', 'Sophia Lane', 'Celia Reed', 'Naomi Pierce', 'Vivienne Cole', 'Isla Grant',
+            'Chloe Mercer'
+        ];
+        const TROPES = [
+            'Enemies to Lovers', 'Forced Proximity', 'Fake Dating', 'Marriage of Convenience',
+            'Secret Baby', 'Second Chance', 'Forbidden Love', 'Slow Burn', 'Protector',
+            'Dark Obsession', 'Age Gap', 'Office Romance', 'Revenge Romance'
+        ];
+
+        function buildBookForms() {
+            const num = parseInt(document.getElementById('numBooks')?.value) || 4;
+            let html = '';
+            for (let i = 0; i < num; i++) {
+                html += `
+                <div class="book-entry">
+                    <div class="book-entry-num">BOOK ${i + 1}</div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Hero Name *</label>
+                            <input type="text" class="form-input" id="hero${i}" placeholder="${HEROES[i]}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Heroine Name *</label>
+                            <input type="text" class="form-input" id="heroine${i}" placeholder="${HEROINES[i]}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Trope</label>
+                        <select class="form-select" id="trope${i}">
+                            ${TROPES.map(t => `<option value="${t}" ${(i===0&&t==='Enemies to Lovers')||(i===1&&t==='Forced Proximity')||(i===2&&t==='Marriage of Convenience')||(i===3&&t==='Second Chance')?'selected':''}>${t}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Core Conflict</label>
+                        <input type="text" class="form-input" id="conflict${i}" placeholder="e.g. She's the journalist who could destroy his empire…">
+                    </div>
+                </div>`;
+            }
+            document.getElementById('bookForms').innerHTML = html;
+        }
+
+        // ═══════════════ GENERATION ═══════════════
+        const TITLE_PATTERNS = [
+            ['The', 'Ultimatum'],
+            ['The', 'Arrangement'],
+            ['His', 'Obsession'],
+            ['The', 'Proposition'],
+            ['The', 'Deception'],
+            ['The', 'Surrender'],
+            ['The', 'Bargain']
+        ];
+
+        function makeTitle(hero, i) {
+            const p = TITLE_PATTERNS[i % TITLE_PATTERNS.length];
+            return p[1] ? `${p[0]} ${hero.split(' ')[0]} ${p[1]}` : `${p[0]} ${hero.split(' ')[0]}`;
+        }
+
+        const HERO_ARCH = [
+            'The ruthless visionary who built everything from nothing — and protects it from everyone.',
+            'The broken protector carrying a wound he refuses to name.',
+            'The cold strategist who calculates everything except the effect she has on him.',
+            'The obsessed guardian who mistakes control for love — until she teaches him otherwise.',
+            'The reformed villain trying to become someone she could actually believe in.',
+            'The haunted heir crushed by his family legacy and furious about it.',
+            'The dangerous idealist who will burn everything down for what he believes.'
+        ];
+        const HEROINE_ARCH = [
+            'The only person in his world who refuses to be impressed by him.',
+            'The woman he cannot categorise — and therefore cannot stop thinking about.',
+            'The one variable in his empire he cannot control, predict, or remove.',
+            'The unexpected complication who turns into the only thing that matters.',
+            'The woman everyone warned him to stay away from.',
+            'The one who sees the man beneath the power and is not afraid of either.',
+            'The one who got away once. She came back. He will not survive it.'
+        ];
+        const DARK_MOMENTS = [
+            'The night the truth comes out and she walks away without looking back.',
+            'The moment he chooses the empire over her — and immediately knows he chose wrong.',
+            'When his past arrives at her door and she understands exactly what she has been dealing with.',
+            'When she tries to leave and realises she is in far too deep to walk away clean.',
+            'When the choice between legacy and love becomes unavoidable — and he gets it wrong first.',
+            'When she discovers what he kept from her — and realises why.',
+            'When she finally understands the true cost of being loved by him.'
+        ];
+
+        function generateBible() {
+            // Read series data
+            DATA.seriesName = document.getElementById('seriesName')?.value.trim() || '';
+            if (!DATA.seriesName) { showToast('Please enter a series name'); return; }
+            DATA.penName = document.getElementById('penName')?.value.trim() || '';
+            DATA.niche = document.getElementById('niche')?.value || 'Billionaire Romance';
+            DATA.numBooks = parseInt(document.getElementById('numBooks')?.value) || 4;
+            DATA.setting = document.getElementById('setting')?.value.trim() || 'New York';
+            DATA.heat = getChip('chipHeat') || 'Steamy';
+            DATA.conn = getChip('chipConn') || 'brothers';
+
+            // Read books
+            const books = [];
+            for (let i = 0; i < DATA.numBooks; i++) {
+                const hero = document.getElementById('hero' + i)?.value.trim();
+                const heroine = document.getElementById('heroine' + i)?.value.trim();
+                if (!hero) { showToast('Enter hero name for Book ' + (i + 1)); return; }
+                if (!heroine) { showToast('Enter heroine name for Book ' + (i + 1)); return; }
+                books.push({
+                    hero,
+                    heroine,
+                    trope: document.getElementById('trope' + i)?.value || 'Forbidden Love',
+                    conflict: document.getElementById('conflict' + i)?.value.trim() ||
+                        'Their worlds collide and neither is willing to bend'
+                });
+            }
+            DATA.books = books;
+
+            // Generate full bible
+            DATA.generated = books.map((bk, i) => {
+                const title = makeTitle(bk.hero, i);
+                const beats = [
+                    { phase: 'Collision',
+                        text: `${bk.hero.split(' ')[0]} and ${bk.heroine.split(' ')[0]} meet in ${DATA.setting}. The attraction is immediate, undeniable, and professionally catastrophic.` },
+                    { phase: 'Friction',
+                        text: `${bk.trope} activates. They are forced together by circumstance. Both refuse to admit what is building.` },
+                    { phase: 'Opening',
+                        text: `A rare unguarded moment. ${bk.heroine.split(' ')[0]} sees a crack in his armour. She files it away.` },
+                    { phase: 'Complication',
+                        text: `${bk.conflict.charAt(0).toUpperCase() + bk.conflict.slice(1)}. The real obstacle surfaces. Neither has the full picture.` },
+                    { phase: 'Midpoint',
+                        text: `Something shifts irreversibly — one touch, one truth, one admission that cannot be taken back.` },
+                    { phase: 'Deepening',
+                        text: `We see who ${bk.hero.split(' ')[0]} really is beneath the power. ${bk.heroine.split(' ')[0]} is not supposed to care this much. She does.` },
+                    { phase: 'Dark Moment',
+                        text: `${DARK_MOMENTS[i % DARK_MOMENTS.length]}` },
+                    { phase: 'HEA',
+                        text: `He returns — not with power or money, but with the one thing he has never offered anyone: himself. She believes him.` }
+                ];
+                const blurb =
+                    `${bk.hero.split(' ')[0]} doesn't make mistakes.\nHe doesn't want things he can't have.\nAnd he absolutely does not fall.\n\nThen ${bk.heroine.split(' ')[0]} happened.\n\n${bk.conflict.charAt(0).toUpperCase() + bk.conflict.slice(1)}. The ${bk.trope.toLowerCase()} between them was supposed to stay buried.\n\nIt didn't.\n\n${title} is a ${DATA.heat.toLowerCase()} standalone in the ${DATA.seriesName} series. HEA guaranteed.`;
+                const connections = [];
+                if (i > 0)
+                    connections.push(
+                        `${bk.hero.split(' ')[0]} is ${DATA.books[i - 1].hero.split(' ')[0]}'s ${DATA.conn}`);
+                if (i < DATA.numBooks - 1)
+                    connections.push(
+                        `Sets up ${DATA.books[i + 1].hero.split(' ')[0]}'s story in the final chapter`);
+                const keywords = [
+                    DATA.niche.toLowerCase(),
+                    DATA.heat.toLowerCase() + ' romance',
+                    bk.trope.toLowerCase() + ' romance',
+                    DATA.setting.toLowerCase() + ' romance',
+                    'kindle unlimited',
+                    'standalone series',
+                    'HEA guaranteed',
+                    'alpha hero',
+                    'strong heroine',
+                    'binge-worthy series'
+                ];
+                return { title, ...bk, beats, blurb, connections, keywords, heroArch: HERO_ARCH[i %
+                        HERO_ARCH.length
+                    ], heroineArch: HEROINE_ARCH[i % HEROINE_ARCH.length], darkMoment: DARK_MOMENTS[i % DARK_MOMENTS
+                        .length
+                    ] };
+            });
+
+            renderResults();
+            showScreen('screen-results');
+            showToast('Series Bible generated! Scroll to explore.');
+        }
+
+        // ═══════════════ RENDER RESULTS ═══════════════
+        function renderResults() {
+            document.getElementById('resultSeriesName').textContent = DATA.seriesName;
+
+            let html = '';
+            DATA.generated.forEach((bk, i) => {
+                html += `
+                <div class="result-book">
+                    <div style="font-size:10px;letter-spacing:3px;color:var(--gold);margin-bottom:4px;">BOOK ${i + 1} of ${DATA.numBooks}</div>
+                    <div class="result-book-title">${esc(bk.title)}</div>
+                    <div class="result-book-pair">${esc(bk.hero)} & ${esc(bk.heroine)}</div>
+                    <div class="result-book-trope">${esc(bk.trope)}</div>
+
+                    <div class="result-section">
+                        <div class="result-section-label">Character Profiles</div>
+                        <p style="margin-bottom:6px;"><strong style="color:var(--gold);">Hero:</strong> ${esc(bk.hero)} — ${esc(bk.heroArch)}</p>
+                        <p><strong style="color:var(--gold);">Heroine:</strong> ${esc(bk.heroine)} — ${esc(bk.heroineArch)}</p>
+                    </div>
+
+                    <div class="result-section">
+                        <div class="result-section-label">Core Conflict</div>
+                        <p>${esc(bk.conflict)}</p>
+                        <p style="margin-top:4px;color:var(--muted);"><strong>Dark Moment:</strong> ${esc(bk.darkMoment)}</p>
+                    </div>
+
+                    <div class="result-section">
+                        <div class="result-section-label">8-Beat Story Structure</div>
+                        ${bk.beats.map((b, j) => `
+                            <div class="beat-item">
+                                <div class="beat-num">${String(j+1).padStart(2,'0')}</div>
+                                <div class="beat-phase">${esc(b.phase)}</div>
+                                <div>${esc(b.text)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="result-section">
+                        <div class="result-section-label">Series Connections</div>
+                        ${bk.connections.length ? bk.connections.map(c => `<p style="font-size:13px;color:var(--text2);">→ ${esc(c)}</p>`).join('') : '<p style="color:var(--muted);font-style:italic;">First book — launches the universe.</p>'}
+                    </div>
+
+                    <div class="result-section">
+                        <div class="result-section-label">Amazon Book Description</div>
+                        <div class="blurb-box">${esc(bk.blurb)}</div>
+                    </div>
+
+                    <div class="result-section">
+                        <div class="result-section-label">KDP Keywords</div>
+                        <div>${bk.keywords.map(k => `<span class="kw-tag">${esc(k)}</span>`).join('')}</div>
+                    </div>
+                </div>`;
+            });
+
+            document.getElementById('resultsContainer').innerHTML = html;
+        }
+
+        // ═══════════════ EXPORT ═══════════════
+        function exportBible() {
+            const eq = '='.repeat(50);
+            let txt = `SERIES BIBLE: ${DATA.seriesName}\n${eq}\n\n`;
+            txt += `Pen Name: ${DATA.penName || '(not set)'}\n`;
+            txt += `Niche: ${DATA.niche}\n`;
+            txt += `Setting: ${DATA.setting}\n`;
+            txt += `Heat: ${DATA.heat}\n`;
+            txt += `Books: ${DATA.numBooks}\n`;
+            txt += `Hero Connection: ${DATA.conn}\n\n`;
+
+            DATA.generated.forEach((bk, i) => {
+                txt += `${eq}\nBOOK ${i+1}: ${bk.title}\n${eq}\n`;
+                txt += `Hero: ${bk.hero}\n`;
+                txt += `Heroine: ${bk.heroine}\n`;
+                txt += `Trope: ${bk.trope}\n`;
+                txt += `Conflict: ${bk.conflict}\n`;
+                txt += `Hero Archetype: ${bk.heroArch}\n`;
+                txt += `Heroine Archetype: ${bk.heroineArch}\n`;
+                txt += `Dark Moment: ${bk.darkMoment}\n\n`;
+                txt += `8-BEAT STRUCTURE:\n`;
+                bk.beats.forEach((b, j) => {
+                    txt += `  ${j+1}. [${b.phase}] ${b.text}\n`;
+                });
+                txt += `\nSERIES CONNECTIONS:\n`;
+                bk.connections.forEach(c => txt += `  → ${c}\n`);
+                txt += `\nAMAZON BLURB:\n${bk.blurb}\n\n`;
+                txt += `KDP KEYWORDS:\n${bk.keywords.join(', ')}\n\n`;
+            });
+
+            txt += `${eq}\nGenerated by Series Bible — Companion for Billionaires Empire\nzambomax.com/billionairesempire\n${eq}`;
+
+            const blob = new Blob([txt], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (DATA.seriesName || 'series-bible').replace(/[^a-z0-9]/gi, '_') + '_Bible.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            showToast('Series Bible downloaded!');
+        }
+
+        // ═══════════════ INIT ═══════════════
+        function init() {
+            buildBookForms();
+            console.log('✅ Series Bible ready');
+            console.log('📚 Access Web-App #2: Pen Name Empire Builder at the top bar');
+        }
+        document.addEventListener('DOMContentLoaded', init);
+        if (document.readyState === 'interactive' || document.readyState === 'complete') init();
+    </script>
 </body>
 </html>
