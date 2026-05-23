@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Saga Canon Vault Builder | Custom GPT Memory System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --ink: #1a1614;
+            --parchment: #f4efe4;
+            --parchment-dark: #e8e0d0;
+            --parchment-light: #faf7f0;
+            --leather: #3d2b1f;
+            --leather-light: #5c4033;
+            --leather-dark: #2a1f17;
+            --gold: #b8963e;
+            --gold-light: #d4af37;
+            --gold-pale: #efe3c3;
+            --ink-blue: #2c3e50;
+            --ink-faded: #5a5046;
+            --border: #d4c5b2;
+            --text: #1a1614;
+            --text-dim: #5a5046;
+            --text-muted: #8a7e72;
+            --danger: #c0392b;
+            --danger-bg: #fdf0ed;
+            --warning: #e67e22;
+            --warning-bg: #fef9f3;
+            --success: #27ae60;
+            --success-bg: #edfaf3;
+            --info: #2980b9;
+            --info-bg: #edf5fb;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+            --radius-lg: 16px;
+            --transition: 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #e8e0d0;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(184, 150, 62, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(139, 115, 85, 0.06) 0%, transparent 50%);
+            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        #root {
+            width: 100%;
+            max-width: 1200px;
+            background: var(--parchment);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 90vh;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--parchment-dark);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--ink-faded);
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        .serif {
+            font-family: 'Cormorant Garamond', 'Georgia', serif;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            color: var(--ink);
+        }
+        .mono {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.82rem;
+        }
+
+        .app-header {
+            background: linear-gradient(180deg, #2a1f17 0%, #3d2b1f 100%);
+            padding: 20px 36px;
+            border-bottom: 3px solid var(--gold);
+            position: relative;
+            overflow: hidden;
+        }
+        .app-header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.008) 2px, rgba(255, 255, 255, 0.008) 4px);
+            pointer-events: none;
+        }
+        .app-header-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .app-header h1 {
+            color: var(--gold-pale);
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .app-header h1 i {
+            color: var(--gold);
+            font-size: 1.2rem;
+        }
+        .header-subtitle {
+            color: #b8a080;
+            font-size: 0.68rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 8px 16px;
+            min-width: 220px;
+        }
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: var(--gold-pale);
+            font-size: 0.82rem;
+            width: 100%;
+            outline: none;
+        }
+        .search-bar input::placeholder {
+            color: #8a7a60;
+        }
+        .search-bar i {
+            color: #8a7a60;
+        }
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--parchment);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+            min-width: 320px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+        .search-result-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0ebe0;
+            font-size: 0.8rem;
+            transition: background var(--transition);
+        }
+        .search-result-item:hover {
+            background: #fdf8ed;
+        }
+        .search-result-item strong {
+            color: var(--leather);
+        }
+        .search-result-item .result-type {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .tab-nav {
+            display: flex;
+            background: var(--leather-dark);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            overflow-x: auto;
+            padding: 0 24px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            color: #a89880;
+            padding: 14px 20px;
+            margin-bottom: -1px;
+            border-bottom: 3px solid transparent;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            color: #d4c5a0;
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .tab-btn.active {
+            color: var(--gold-pale);
+            border-bottom-color: var(--gold);
+            background: rgba(184, 150, 62, 0.08);
+        }
+        .tab-badge {
+            background: var(--gold);
+            color: var(--leather-dark);
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+        .tab-badge.warning {
+            background: var(--warning);
+            color: #fff;
+        }
+
+        .tab-content {
+            padding: 28px 32px;
+            flex: 1;
+            background: var(--parchment-light);
+            background-image: linear-gradient(rgba(212, 165, 55, 0.012) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(212, 165, 55, 0.012) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .section-card {
+            background: var(--parchment);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            margin-bottom: 18px;
+            box-shadow: var(--shadow);
+            transition: all var(--transition);
+        }
+        .section-card:hover {
+            border-color: #c4a870;
+            box-shadow: var(--shadow-lg);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e8e0d0;
+        }
+        .section-header h3 {
+            font-size: 1.2rem;
+            color: var(--leather);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-header h3 i {
+            color: var(--gold);
+            font-size: 0.95rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+        .form-row.triple {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .form-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--ink-faded);
+        }
+        input,
+        textarea,
+        select {
+            background: var(--parchment-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 9px 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.83rem;
+            color: var(--text);
+            transition: all var(--transition);
+            resize: vertical;
+            width: 100%;
+        }
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(184, 150, 62, 0.1);
+            background: #fff;
+        }
+        textarea {
+            min-height: 72px;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+        select option {
+            background: var(--parchment);
+            color: var(--text);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--leather);
+            color: var(--parchment-light);
+            border-color: var(--leather);
+        }
+        .btn-primary:hover {
+            background: var(--leather-light);
+            box-shadow: 0 4px 12px rgba(61, 43, 31, 0.25);
+        }
+        .btn-gold {
+            background: var(--gold);
+            color: #fff;
+            border-color: var(--gold);
+        }
+        .btn-gold:hover {
+            background: var(--gold-light);
+            box-shadow: 0 4px 14px rgba(184, 150, 62, 0.3);
+        }
+        .btn-outline {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--ink-faded);
+        }
+        .btn-outline:hover {
+            border-color: var(--leather);
+            color: var(--leather);
+            background: rgba(61, 43, 31, 0.04);
+        }
+        .btn-danger {
+            background: transparent;
+            border-color: #e0c0b8;
+            color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: var(--danger-bg);
+            border-color: var(--danger);
+        }
+        .btn-reset {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #b8a080;
+            font-size: 0.7rem;
+            padding: 6px 14px;
+        }
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.35);
+            color: var(--gold-pale);
+        }
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 0.7rem;
+        }
+        .btn-xs {
+            padding: 3px 8px;
+            font-size: 0.65rem;
+            border-radius: 4px;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #f0ebe0;
+            border: 1px solid #d4c5b2;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: var(--ink-faded);
+            font-weight: 500;
+        }
+        .tag i {
+            cursor: pointer;
+            color: #b8a090;
+            font-size: 0.6rem;
+        }
+        .tag i:hover {
+            color: var(--danger);
+        }
+        .tag-input {
+            background: transparent;
+            border: 1px dashed var(--border);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            width: 100px;
+            color: var(--text-dim);
+        }
+        .tag-input:focus {
+            border-style: solid;
+            border-color: var(--gold);
+            width: 140px;
+        }
+
+        .warning-banner {
+            background: var(--warning-bg);
+            border: 1px solid #f0c78e;
+            border-left: 4px solid var(--warning);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            font-size: 0.78rem;
+            color: #7a5a20;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .warning-banner i {
+            color: var(--warning);
+            margin-top: 2px;
+        }
+        .warning-banner strong {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .export-preview {
+            background: #faf7f0;
+            border: 2px solid #e0d5c0;
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 0.76rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            color: var(--ink);
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 14px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .export-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: var(--leather);
+            color: var(--parchment-light);
+            padding: 13px 22px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            z-index: 9999;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--gold);
+        }
+        @keyframes toastIn {
+            from {
+                transform: translateX(60px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .stat-item {
+            background: var(--parchment);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 18px;
+            text-align: center;
+            min-width: 70px;
+        }
+        .stat-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--leather);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--ink-faded);
+            margin-top: 3px;
+        }
+
+        .timeline-visual {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline-visual::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--gold), var(--border), var(--border));
+        }
+        .timeline-node {
+            position: relative;
+            padding: 8px 0 8px 24px;
+            margin-bottom: 4px;
+            font-size: 0.78rem;
+        }
+        .timeline-node::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 14px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--gold);
+            border: 2px solid var(--parchment);
+        }
+        .timeline-node.resolved::before {
+            background: var(--success);
+        }
+        .timeline-node .thread-title {
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .timeline-node .thread-span {
+            font-size: 0.68rem;
+            color: var(--ink-faded);
+        }
+
+        @media (max-width: 700px) {
+            .form-row,
+            .form-row.triple {
+                grid-template-columns: 1fr;
+            }
+            .tab-content {
+                padding: 18px 14px;
+            }
+            .app-header {
+                padding: 16px;
+            }
+            .app-header h1 {
+                font-size: 1.1rem;
+            }
+            .search-bar {
+                min-width: 160px;
+            }
+            .header-right {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // ─── Storage ──────────────────────────────────────────────────────────
+        const STORAGE_KEY = 'saga_canon_vault_v2';
+
+        const getDefaultState = () => ({
+            seriesTitle: 'The Thornwick Mysteries',
+            seriesGenre: 'Historical Cozy Mystery',
+            seriesEra: 'Victorian England, 1887-1890',
+            seriesTone: 'Warm, witty, puzzle-driven cozy mystery',
+            seriesArc: 'Lady Eleanor Ashford evolves from grieving widow to confident amateur sleuth, solving increasingly personal cases that ultimately reveal the truth behind her husband\'s death.',
+            worldRules: {
+                'Technology': ['No telephones in Thornwick village — all messages delivered by footman',
+                    'Gas lighting throughout the manor, no electricity until Book 5'
+                ],
+                'Social Rules': ['Village gossip network functions as informal intelligence system',
+                    'Widows cannot remarry within 3 years in this society'
+                ],
+                'Geography': ['Thornwick Manor has 47 rooms, 3 secret passages',
+                'The village is 4 miles from the nearest town'],
+                'Magic/Rules': ['No supernatural elements — all mysteries have rational explanations']
+            },
+            characters: [
+                { id: '1', name: 'Lady Eleanor Ashford', role: 'Protagonist', age: '34', appearance: 'Chestnut hair, grey-green eyes, 5\'6", always wears pearl brooch',
+                    traits: 'Observant, stubborn, kind, grieving widow', arc: 'Grows from recluse to confident detective',
+                    secret: 'Her husband\'s death was not an accident',
+                    voice: 'Precise vocabulary, dry wit, occasional vulnerability', relationships: [{ with: 'Inspector Arthur Graves',
+                        type: 'Professional respect, growing trust'
+                    }, { with: 'Mrs. Puddifoot', type: 'Close friend, confidante' }] },
+                { id: '2', name: 'Inspector Arthur Graves', role: 'Supporting', age: '42',
+                    appearance: 'Weathered face, tired blue eyes, rumpled coat',
+                    traits: 'Skeptical, methodical, secretly admiring of Eleanor', arc: 'Learns to trust amateur intuition',
+                    secret: 'Was demoted from Scotland Yard', voice: 'Short sentences, gruff but fair',
+                    relationships: [{ with: 'Lady Eleanor Ashford', type: 'Professional respect, growing trust' }] },
+                { id: '3', name: 'Raven', role: 'Antagonist', age: 'Unknown (35-45)',
+                    appearance: 'Always in shadow, wears black gloves, distinctive silver ring',
+                    traits: 'Brilliant, vengeful, theatrical', arc: 'Revealed to be connected to the Ashford family',
+                    secret: 'True identity hidden until Book 5', voice: 'Elegant, menacing, uses literary quotes',
+                    relationships: [{ with: 'Lady Eleanor Ashford', type: 'Adversary, hidden connection' }] }
+            ],
+            locations: [
+                { id: '1', name: 'Thornwick Manor', type: 'Primary Setting',
+                    description: 'Gothic Revival country house, ivy-covered east wing, extensive rose gardens, library with floor-to-ceiling shelves' },
+                { id: '2', name: 'The Silver Teapot', type: 'Tea Shop',
+                    description: 'Village tea shop run by Mrs. Puddifoot, overheard conversations key to investigations' },
+                { id: '3', name: 'Thornwood Observatory', type: 'Abandoned Building',
+                    description: 'Old astronomical observatory on the hill, discovered in Book 2, contains hidden cipher equipment' }
+            ],
+            threads: [
+                { id: '1', title: 'The Golden Feather Key', type: 'Series Arc Clue',
+                    description: 'Found in Book 1 inside the automaton. Unlocks something in the observatory (Book 2). Ultimately opens Lord Ashford\'s hidden study in Book 6.',
+                    plantedIn: 'Book 1', developedIn: 'Book 2, Book 4', revealedIn: 'Book 6', status: 'Developing' },
+                { id: '2', title: 'The Raven\'s True Identity', type: 'Character Mystery',
+                    description: 'The villain "Raven" appears in Book 2. Hints suggest connection to the Ashford family. Silver ring is a family heirloom.',
+                    plantedIn: 'Book 2', developedIn: 'Book 3, Book 4', revealedIn: 'Book 5', status: 'Developing' },
+                { id: '3', title: 'Lord Ashford\'s Death', type: 'Series Arc Clue',
+                    description: 'Initially ruled an accident. Evidence mounts that it was murder. Connected to the Golden Feather Key and Raven.',
+                    plantedIn: 'Book 1', developedIn: 'Book 2, Book 3', revealedIn: 'Book 6', status: 'Developing' }
+            ],
+            books: [
+                { id: '1', number: 1, title: 'The Clockwork Fox', status: 'Published',
+                    blurb: 'A mysterious automaton is discovered in the Thornwick Manor library, and Lady Ashford must unravel its secrets before the killer strikes again.',
+                    keyEvents: 'Discovery of the automaton, first meeting with Inspector Graves, the fox reveals a hidden message',
+                    newCharacters: 'Lady Eleanor Ashford, Inspector Graves, Mrs. Puddifoot, The Clockwork Fox',
+                    cluesPlanted: 'The Golden Feather Key, torn map in book spine, whispering gears mechanism',
+                    cluesResolved: 'Identity of the library intruder',
+                    continuityNotes: 'Establishes Eleanor\'s mourning period (2 years since husband\'s death). The automaton is stored in the conservatory.',
+                    wordCount: '72,000', characterAppearances: { '1': 'grey-green eyes, chestnut hair, pearl brooch',
+                        '2': 'tired blue eyes, rumpled coat' } },
+                { id: '2', number: 2, title: 'Shadows of Thornwood', status: 'Drafting',
+                    blurb: 'A map found in the automaton leads Lady Ashford to an abandoned observatory where a rival detective complicates the investigation.',
+                    keyEvents: 'Discovery of the observatory, introduction of Raven, the moon-phase cipher',
+                    newCharacters: 'Raven (villain), Professor Elm, Thomas the groundskeeper',
+                    cluesPlanted: 'Moon-phase cipher, the missing telescope lens, Raven\'s silver ring',
+                    cluesResolved: 'Purpose of the torn map (leads to observatory)',
+                    continuityNotes: 'Eleanor begins to suspect her husband\'s death was not accidental. The Golden Feather Key does not fit the observatory door — mystery deepens.',
+                    wordCount: '', characterAppearances: { '1': 'grey-green eyes, chestnut hair, pearl brooch (now more confident posture)',
+                        '2': 'tired blue eyes, slightly less rumpled coat' } }
+            ]
+        });
+
+        const loadState = () => {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return getDefaultState();
+        };
+
+        // ─── Helpers ──────────────────────────────────────────────────────────
+        const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2, 7);
+
+        // ─── Consistency Checker ──────────────────────────────────────────────
+        const checkConsistency = (state) => {
+            const warnings = [];
+            if (!state.threads || !state.books || !state.characters) return warnings;
+
+            state.threads.forEach(thread => {
+                if (thread.status === 'Resolved' && thread.revealedIn) {
+                    const revealedBookNum = parseInt(thread.revealedIn.replace('Book ', ''));
+                    if (!isNaN(revealedBookNum)) {
+                        state.books.forEach(book => {
+                            if (book.number > revealedBookNum) {
+                                const mentionsThread = (book.cluesPlanted || '').includes(thread
+                                    .title) ||
+                                    (book.cluesResolved || '').includes(thread.title) ||
+                                    (book.continuityNotes || '').includes(thread.title) ||
+                                    (book.keyEvents || '').includes(thread.title);
+                                if (mentionsThread) {
+                                    warnings.push({
+                                        type: 'thread',
+                                        message: `Thread "${thread.title}" was resolved in ${thread.revealedIn} but appears referenced in Book ${book.number} ("${book.title || 'Untitled'}"). Verify this is intentional.`,
+                                        book: book.number
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            state.characters.forEach(char => {
+                if (!char.appearance) return;
+                const eyeColor = char.appearance.match(/([a-z]+(?:-[a-z]+)?)\s+eyes/i);
+                const hairColor = char.appearance.match(/([a-z]+(?:-[a-z]+)?)\s+hair/i);
+
+                if (eyeColor || hairColor) {
+                    state.books.forEach(book => {
+                        const charAppearance = book.characterAppearances?.[char.id];
+                        if (charAppearance) {
+                            if (eyeColor && charAppearance.match(/eyes/i)) {
+                                const bookEyeColor = charAppearance.match(
+                                    /([a-z]+(?:-[a-z]+)?)\s+eyes/i);
+                                if (bookEyeColor && bookEyeColor[1].toLowerCase() !== eyeColor[1]
+                                    .toLowerCase()) {
+                                    warnings.push({
+                                        type: 'appearance',
+                                        message: `"${char.name}" has "${eyeColor[1]} eyes" in the vault, but "${bookEyeColor[1]} eyes" in Book ${book.number}.`,
+                                        book: book.number,
+                                        character: char.name
+                                    });
+                                }
+                            }
+                            if (hairColor && charAppearance.match(/hair/i)) {
+                                const bookHairColor = charAppearance.match(
+                                    /([a-z]+(?:-[a-z]+)?)\s+hair/i);
+                                if (bookHairColor && bookHairColor[1].toLowerCase() !== hairColor[1]
+                                    .toLowerCase()) {
+                                    warnings.push({
+                                        type: 'appearance',
+                                        message: `"${char.name}" has "${hairColor[1]} hair" in the vault, but "${bookHairColor[1]} hair" in Book ${book.number}.`,
+                                        book: book.number,
+                                        character: char.name
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+            return warnings;
+        };
+
+        // ─── Toast ────────────────────────────────────────────────────────────
+        const Toast = ({ message, onDone }) => {
+            useEffect(() => {
+                const t = setTimeout(onDone, 2600);
+                return () => clearTimeout(t);
+            }, []);
+            return (
+                <div className="toast">
+                    <i className="fas fa-check-circle" style={{ color: 'var(--gold)' }}></i> {message}
+                </div>
+            );
+        };
+
+        // ─── Global Search ────────────────────────────────────────────────────
+        const GlobalSearch = ({ state, onNavigate }) => {
+            const [query, setQuery] = useState('');
+            const [results, setResults] = useState([]);
+            const [showResults, setShowResults] = useState(false);
+            const searchRef = useRef(null);
+
+            useEffect(() => {
+                const handleClickOutside = (e) => {
+                    if (searchRef.current && !searchRef.current.contains(e.target)) {
+                        setShowResults(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
+
+            const doSearch = (q) => {
+                setQuery(q);
+                if (q.length < 2) { setResults([]);
+                    setShowResults(false); return; }
+                const lower = q.toLowerCase();
+                const res = [];
+
+                if (state.characters) {
+                    state.characters.forEach(c => {
+                        if (c.name.toLowerCase().includes(lower) || c.appearance?.toLowerCase()
+                            .includes(lower) || c.traits?.toLowerCase().includes(lower) || c.role
+                            ?.toLowerCase().includes(lower)) {
+                            res.push({ type: 'Character', title: c.name,
+                                detail: `${c.role} — ${c.appearance?.slice(0, 60) || ''}`, tab: 'vault',
+                                id: c.id });
+                        }
+                    });
+                }
+                if (state.locations) {
+                    state.locations.forEach(l => {
+                        if (l.name.toLowerCase().includes(lower) || l.description?.toLowerCase()
+                            .includes(lower)) {
+                            res.push({ type: 'Location', title: l.name, detail: l.description?.slice(0,
+                                    60) || '', tab: 'vault', id: l.id });
+                        }
+                    });
+                }
+                if (state.threads) {
+                    state.threads.forEach(t => {
+                        if (t.title.toLowerCase().includes(lower) || t.description?.toLowerCase()
+                            .includes(lower)) {
+                            res.push({ type: 'Thread', title: t.title, detail: `${t.type} — ${t.status}`,
+                                tab: 'vault', id: t.id });
+                        }
+                    });
+                }
+                if (state.worldRules) {
+                    Object.entries(state.worldRules).forEach(([category, rules]) => {
+                        rules.forEach(rule => {
+                            if (rule.toLowerCase().includes(lower)) {
+                                res.push({ type: 'World Rule', title: rule, detail: `Category: ${category}`,
+                                    tab: 'vault', id: category });
+                            }
+                        });
+                    });
+                }
+                if (state.books) {
+                    state.books.forEach(b => {
+                        if (b.title.toLowerCase().includes(lower) || b.blurb?.toLowerCase().includes(
+                                lower) || b.newCharacters?.toLowerCase().includes(lower)) {
+                            res.push({ type: 'Book', title: `Book ${b.number}: ${b.title}`,
+                                detail: b.blurb?.slice(0, 60) || '', tab: 'books', id: b.id });
+                        }
+                    });
+                }
+
+                setResults(res.slice(0, 15));
+                setShowResults(true);
+            };
+
+            const handleSelect = (result) => {
+                setShowResults(false);
+                setQuery('');
+                onNavigate(result.tab);
+            };
+
+            return (
+                <div style={{ position: 'relative' }} ref={searchRef}>
+                    <div className="search-bar">
+                        <i className="fas fa-search"></i>
+                        <input
+                            value={query}
+                            onChange={e => doSearch(e.target.value)}
+                            onFocus={() => query.length >= 2 && setShowResults(true)}
+                            placeholder="Search characters, clues, locations..."
+                        />
+                        {query && <i className="fas fa-times" onClick={() => { setQuery('');
+                                setShowResults(false); }} style={{ cursor: 'pointer' }}></i>}
+                    </div>
+                    {showResults && results.length > 0 && (
+                        <div className="search-results-dropdown">
+                            {results.map((r, i) => (
+                                <div key={i} className="search-result-item" onClick={() => handleSelect(r)}>
+                                    <div className="result-type">{r.type}</div>
+                                    <strong>{r.title}</strong>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{r.detail}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // ─── Tag Input Component ───────────────────────────────────────────────
+        const TagInput = ({ tags, onAdd, onRemove, placeholder = '+ add' }) => {
+            const [value, setValue] = useState('');
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter' && value.trim()) {
+                    e.preventDefault();
+                    onAdd(value.trim());
+                    setValue('');
+                }
+            };
+            return (
+                <div className="tag-container">
+                    {tags.map((tag, i) => (
+                        <span key={i} className="tag">
+                            {tag} <i className="fas fa-times" onClick={() => onRemove(tag)}></i>
+                        </span>
+                    ))}
+                    <input className="tag-input" placeholder={placeholder} value={value} onChange={e => setValue(e.target.value)} onKeyDown={handleKeyDown} />
+                </div>
+            );
+        };
+
+        // ─── Vault Tab ────────────────────────────────────────────────────────
+        const VaultTab = ({ state, updateState }) => {
+            const update = (key, value) => updateState({ ...state, [key]: value });
+
+            const addWorldRule = (category, rule) => {
+                if (!rule.trim()) return;
+                const updated = { ...(state.worldRules || {}) };
+                updated[category] = [...(updated[category] || []), rule.trim()];
+                update('worldRules', updated);
+            };
+            const removeWorldRule = (category, rule) => {
+                const updated = { ...(state.worldRules || {}) };
+                updated[category] = updated[category].filter(r => r !== rule);
+                if (updated[category].length === 0) delete updated[category];
+                update('worldRules', updated);
+            };
+            const addCategory = (cat) => {
+                if (!cat.trim()) return;
+                const updated = { ...(state.worldRules || {}) };
+                if (!updated[cat.trim()]) updated[cat.trim()] = [];
+                update('worldRules', updated);
+            };
+
+            const addCharacter = () => {
+                const newChar = { id: generateId(), name: '', role: 'Supporting', age: '', appearance: '',
+                    traits: '', arc: '', secret: '', voice: '', relationships: [] };
+                update('characters', [...(state.characters || []), newChar]);
+            };
+            const updateCharacter = (id, field, value) => {
+                update('characters', (state.characters || []).map(c => c.id === id ? { ...c, [field]: value } :
+                    c));
+            };
+            const removeCharacter = (id) => {
+                if (confirm('Remove this character? This will affect consistency checks.')) {
+                    update('characters', (state.characters || []).filter(c => c.id !== id));
+                }
+            };
+            const addRelationship = (charId) => {
+                const updated = (state.characters || []).map(c => {
+                    if (c.id === charId) {
+                        return { ...c, relationships: [...(c.relationships || []), { with: '', type: '' }] };
+                    }
+                    return c;
+                });
+                update('characters', updated);
+            };
+            const updateRelationship = (charId, relIndex, field, value) => {
+                const updated = (state.characters || []).map(c => {
+                    if (c.id === charId) {
+                        const rels = [...(c.relationships || [])];
+                        rels[relIndex] = { ...rels[relIndex], [field]: value };
+                        return { ...c, relationships: rels };
+                    }
+                    return c;
+                });
+                update('characters', updated);
+            };
+            const removeRelationship = (charId, relIndex) => {
+                const updated = (state.characters || []).map(c => {
+                    if (c.id === charId) {
+                        return { ...c, relationships: (c.relationships || []).filter((_, i) => i !== relIndex) };
+                    }
+                    return c;
+                });
+                update('characters', updated);
+            };
+
+            const addLocation = () => {
+                const newLoc = { id: generateId(), name: '', type: '', description: '' };
+                update('locations', [...(state.locations || []), newLoc]);
+            };
+            const updateLocation = (id, field, value) => {
+                update('locations', (state.locations || []).map(l => l.id === id ? { ...l, [field]: value } : l));
+            };
+            const removeLocation = (id) => {
+                if (confirm('Remove this location?')) {
+                    update('locations', (state.locations || []).filter(l => l.id !== id));
+                }
+            };
+
+            const addThread = () => {
+                const newThread = { id: generateId(), title: '', type: 'Series Arc Clue', description: '',
+                    plantedIn: '', developedIn: '', revealedIn: '', status: 'Planted' };
+                update('threads', [...(state.threads || []), newThread]);
+            };
+            const updateThread = (id, field, value) => {
+                update('threads', (state.threads || []).map(t => t.id === id ? { ...t, [field]: value } : t));
+            };
+            const removeThread = (id) => {
+                if (confirm('Remove this thread?')) {
+                    update('threads', (state.threads || []).filter(t => t.id !== id));
+                }
+            };
+
+            const worldCategories = state.worldRules ? Object.keys(state.worldRules) : [];
+            const [newCat, setNewCat] = useState('');
+            const chars = state.characters || [];
+            const locs = state.locations || [];
+            const thrds = state.threads || [];
+            const rules = state.worldRules || {};
+            const totalRules = Object.values(rules).reduce((sum, r) => sum + r.length, 0);
+
+            return (
+                <div>
+                    <div className="stats-bar">
+                        <div className="stat-item"><div className="stat-value">{chars.length}</div><div className="stat-label">Characters</div></div>
+                        <div className="stat-item"><div className="stat-value">{locs.length}</div><div className="stat-label">Locations</div></div>
+                        <div className="stat-item"><div className="stat-value">{thrds.length}</div><div className="stat-label">Threads</div></div>
+                        <div className="stat-item"><div className="stat-value">{totalRules}</div><div className="stat-label">World Rules</div></div>
+                        <div className="stat-item"><div className="stat-value">{(state.books || []).length}</div><div className="stat-label">Books</div></div>
+                    </div>
+
+                    {/* Series Overview */}
+                    <div className="section-card">
+                        <div className="section-header"><h3><i className="fas fa-crown"></i> Series Overview</h3></div>
+                        <div className="form-row">
+                            <div className="form-group"><label className="form-label">Series Title</label><input value={state.seriesTitle || ''} onChange={e => update('seriesTitle', e.target.value)} /></div>
+                            <div className="form-group"><label className="form-label">Genre</label><input value={state.seriesGenre || ''} onChange={e => update('seriesGenre', e.target.value)} /></div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group"><label className="form-label">Era / Time Period</label><input value={state.seriesEra || ''} onChange={e => update('seriesEra', e.target.value)} /></div>
+                            <div className="form-group"><label className="form-label">Series Tone</label><input value={state.seriesTone || ''} onChange={e => update('seriesTone', e.target.value)} /></div>
+                        </div>
+                        <div className="form-group"><label className="form-label">Overarching Series Arc</label><textarea value={state.seriesArc || ''} onChange={e => update('seriesArc', e.target.value)} rows={3} /></div>
+                    </div>
+
+                    {/* World Rules with Categories */}
+                    <div className="section-card">
+                        <div className="section-header">
+                            <h3><i className="fas fa-scroll"></i> World Rules & Canon</h3>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <input className="tag-input" placeholder="+ new category" value={newCat} onChange={e => setNewCat(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { addCategory(newCat);
+                                        setNewCat(''); } }} style={{ width: 140 }} />
+                            </div>
+                        </div>
+                        {worldCategories.map(cat => (
+                            <div key={cat} style={{ marginBottom: 14 }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--leather)', marginBottom: 6 }}>{cat}</div>
+                                <TagInput tags={rules[cat] || []} onAdd={rule => addWorldRule(cat, rule)} onRemove={rule => removeWorldRule(cat, rule)} placeholder="+ add rule" />
+                            </div>
+                        ))}
+                        {worldCategories.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic' }}>Add categories like Technology, Social Rules, Geography, Magic System...</p>}
+                    </div>
+
+                    {/* Characters with Relationships */}
+                    <div className="section-card">
+                        <div className="section-header">
+                            <h3><i className="fas fa-users"></i> Character Canon</h3>
+                            <button className="btn btn-primary btn-sm" onClick={addCharacter}><i className="fas fa-plus"></i> Add Character</button>
+                        </div>
+                        {chars.map(char => (
+                            <div key={char.id} style={{ border: '1px solid #e8e0d0', borderRadius: '8px', padding: '16px', marginBottom: '14px', background: '#fdfbf6' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                    <input value={char.name || ''} onChange={e => updateCharacter(char.id, 'name', e.target.value)} placeholder="Character Name" style={{ fontSize: '1rem', fontWeight: 600, fontFamily: 'Cormorant Garamond, serif', border: 'none', borderBottom: '2px solid #e0d5c0', borderRadius: 0, padding: '6px 0', background: 'transparent', flex: 1, marginRight: 12 }} />
+                                    <select value={char.role || 'Supporting'} onChange={e => updateCharacter(char.id, 'role', e.target.value)} style={{ width: 'auto', minWidth: 120 }}>
+                                        <option value="Protagonist">Protagonist</option><option value="Supporting">Supporting</option><option value="Antagonist">Antagonist</option><option value="Minor">Minor</option>
+                                    </select>
+                                    <button className="btn btn-danger btn-xs" onClick={() => removeCharacter(char.id)} style={{ marginLeft: 8 }}><i className="fas fa-trash"></i></button>
+                                </div>
+                                <div className="form-row triple">
+                                    <div className="form-group"><label className="form-label">Age</label><input value={char.age || ''} onChange={e => updateCharacter(char.id, 'age', e.target.value)} /></div>
+                                    <div className="form-group"><label className="form-label">Appearance (be specific)</label><input value={char.appearance || ''} onChange={e => updateCharacter(char.id, 'appearance', e.target.value)} placeholder="Hair, eyes, height, signature items" /></div>
+                                    <div className="form-group"><label className="form-label">Key Traits</label><input value={char.traits || ''} onChange={e => updateCharacter(char.id, 'traits', e.target.value)} /></div>
+                                </div>
+                                <div className="form-row">
+                                    <div className="form-group"><label className="form-label">Character Arc</label><input value={char.arc || ''} onChange={e => updateCharacter(char.id, 'arc', e.target.value)} /></div>
+                                    <div className="form-group"><label className="form-label">Secret / Hidden Info</label><input value={char.secret || ''} onChange={e => updateCharacter(char.id, 'secret', e.target.value)} /></div>
+                                </div>
+                                <div className="form-group"><label className="form-label">Voice / Dialogue Notes</label><input value={char.voice || ''} onChange={e => updateCharacter(char.id, 'voice', e.target.value)} /></div>
+
+                                {/* Relationships */}
+                                <div style={{ marginTop: 12, borderTop: '1px solid #f0ebe0', paddingTop: 10 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                        <label className="form-label" style={{ marginBottom: 0 }}>Relationships</label>
+                                        <button className="btn btn-outline btn-xs" onClick={() => addRelationship(char.id)}><i className="fas fa-plus"></i> Add</button>
+                                    </div>
+                                    {(char.relationships || []).map((rel, i) => (
+                                        <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 4, alignItems: 'center' }}>
+                                            <input value={rel.with || ''} onChange={e => updateRelationship(char.id, i, 'with', e.target.value)} placeholder="Connected to..." style={{ flex: 1, fontSize: '0.75rem', padding: '5px 10px' }} list={`char-list-${char.id}`} />
+                                            <datalist id={`char-list-${char.id}`}>{chars.filter(c => c.id !== char.id).map(c => <option key={c.id} value={c.name} />)}</datalist>
+                                            <input value={rel.type || ''} onChange={e => updateRelationship(char.id, i, 'type', e.target.value)} placeholder="Relationship type" style={{ flex: 1, fontSize: '0.75rem', padding: '5px 10px' }} />
+                                            <button className="btn btn-danger btn-xs" onClick={() => removeRelationship(char.id, i)}><i className="fas fa-times"></i></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Locations */}
+                    <div className="section-card">
+                        <div className="section-header">
+                            <h3><i className="fas fa-map-pin"></i> Locations</h3>
+                            <button className="btn btn-primary btn-sm" onClick={addLocation}><i className="fas fa-plus"></i> Add Location</button>
+                        </div>
+                        {locs.map(loc => (
+                            <div key={loc.id} style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
+                                <input value={loc.name || ''} onChange={e => updateLocation(loc.id, 'name', e.target.value)} placeholder="Name" style={{ flex: 1 }} />
+                                <input value={loc.type || ''} onChange={e => updateLocation(loc.id, 'type', e.target.value)} placeholder="Type" style={{ flex: 1 }} />
+                                <input value={loc.description || ''} onChange={e => updateLocation(loc.id, 'description', e.target.value)} placeholder="Key details" style={{ flex: 2 }} />
+                                <button className="btn btn-danger btn-xs" onClick={() => removeLocation(loc.id)}><i className="fas fa-trash"></i></button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Threads */}
+                    <div className="section-card">
+                        <div className="section-header">
+                            <h3><i className="fas fa-puzzle-piece"></i> Planted Clues & Series Threads</h3>
+                            <button className="btn btn-primary btn-sm" onClick={addThread}><i className="fas fa-plus"></i> Add Thread</button>
+                        </div>
+                        {thrds.map(thread => (
+                            <div key={thread.id} style={{ border: '1px solid #e8e0d0', borderRadius: '8px', padding: '14px', marginBottom: '10px', background: '#fdfbf6' }}>
+                                <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <input value={thread.title || ''} onChange={e => updateThread(thread.id, 'title', e.target.value)} placeholder="Thread title" style={{ flex: 1, minWidth: 150, fontWeight: 600 }} />
+                                    <select value={thread.type || 'Series Arc Clue'} onChange={e => updateThread(thread.id, 'type', e.target.value)} style={{ width: 'auto' }}>
+                                        <option value="Series Arc Clue">Series Arc Clue</option><option value="Character Mystery">Character Mystery</option><option value="Red Herring">Red Herring</option><option value="Callback">Callback</option><option value="Subplot">Subplot</option>
+                                    </select>
+                                    <select value={thread.status || 'Planted'} onChange={e => updateThread(thread.id, 'status', e.target.value)} style={{ width: 'auto' }}>
+                                        <option value="Planted">Planted</option><option value="Developing">Developing</option><option value="Resolved">Resolved</option>
+                                    </select>
+                                    <button className="btn btn-danger btn-xs" onClick={() => removeThread(thread.id)}><i className="fas fa-trash"></i></button>
+                                </div>
+                                <textarea value={thread.description || ''} onChange={e => updateThread(thread.id, 'description', e.target.value)} rows={2} placeholder="Describe this thread..." style={{ marginBottom: 8 }} />
+                                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: '0.72rem', color: 'var(--ink-faded)' }}>
+                                    <span>🌱 Planted: <input value={thread.plantedIn || ''} onChange={e => updateThread(thread.id, 'plantedIn', e.target.value)} placeholder="Book 1" style={{ width: 80, display: 'inline-block', padding: '2px 6px', fontSize: '0.7rem' }} /></span>
+                                    <span>📖 Developed: <input value={thread.developedIn || ''} onChange={e => updateThread(thread.id, 'developedIn', e.target.value)} placeholder="Book 2, Book 4" style={{ width: 120, display: 'inline-block', padding: '2px 6px', fontSize: '0.7rem' }} /></span>
+                                    <span>💡 Revealed: <input value={thread.revealedIn || ''} onChange={e => updateThread(thread.id, 'revealedIn', e.target.value)} placeholder="Book 6" style={{ width: 80, display: 'inline-block', padding: '2px 6px', fontSize: '0.7rem' }} /></span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // ─── Book Summary Tab ──────────────────────────────────────────────────
+        const BookSummaryTab = ({ state, updateState }) => {
+            const books = state.books || [];
+            const [selectedBookId, setSelectedBookId] = useState(books[0]?.id || null);
+            const selectedBook = books.find(b => b.id === selectedBookId) || books[0];
+
+            const addBook = () => {
+                if (books.length >= 10) return;
+                const newBook = {
+                    id: generateId(), number: books.length + 1, title: '', status: 'Planning',
+                    blurb: '', keyEvents: '', newCharacters: '', cluesPlanted: '', cluesResolved: '',
+                    continuityNotes: '', wordCount: '', characterAppearances: {}
+                };
+                const updatedBooks = [...books, newBook];
+                updateState({ ...state, books: updatedBooks });
+                setSelectedBookId(newBook.id);
+            };
+            const updateBook = (field, value) => {
+                const updatedBooks = books.map(b => b.id === selectedBook?.id ? { ...b, [field]: value } : b);
+                updateState({ ...state, books: updatedBooks });
+            };
+            const removeBook = () => {
+                if (books.length <= 1) return;
+                if (confirm(`Remove "${selectedBook?.title || 'Untitled Book'}"?`)) {
+                    const updatedBooks = books.filter(b => b.id !== selectedBook?.id).map((b, i) => ({ ...b,
+                        number: i + 1 }));
+                    updateState({ ...state, books: updatedBooks });
+                    setSelectedBookId(updatedBooks[0]?.id || null);
+                }
+            };
+            const updateCharAppearance = (charId, value) => {
+                const updated = { ...(selectedBook?.characterAppearances || {}), [charId]: value };
+                if (!value) delete updated[charId];
+                updateBook('characterAppearances', updated);
+            };
+
+            if (!selectedBook) {
+                return (
+                    <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+                        <i className="fas fa-book" style={{ fontSize: '3rem', marginBottom: 16, opacity: 0.3 }}></i>
+                        <p>No books yet. <button className="btn btn-primary btn-sm" onClick={addBook}>Create Book 1</button></p>
+                    </div>
+                );
+            }
+
+            const chars = state.characters || [];
+
+            return (
+                <div>
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <label className="form-label" style={{ marginBottom: 0 }}>Select Book:</label>
+                        <select value={selectedBookId || ''} onChange={e => setSelectedBookId(e.target.value)} style={{ width: 'auto', minWidth: 200 }}>
+                            {books.map(b => (<option key={b.id} value={b.id}>Book {b.number}: {b.title || 'Untitled'}</option>))}
+                        </select>
+                        <button className="btn btn-primary btn-sm" onClick={addBook} disabled={books.length >= 10}><i className="fas fa-plus"></i> New Book</button>
+                        {books.length > 1 && <button className="btn btn-danger btn-sm" onClick={removeBook}><i className="fas fa-trash"></i> Remove</button>}
+                    </div>
+
+                    <div className="section-card">
+                        <div className="section-header"><h3><i className="fas fa-book-open"></i> Book {selectedBook.number} Details</h3></div>
+                        <div className="form-row">
+                            <div className="form-group"><label className="form-label">Title</label><input value={selectedBook.title || ''} onChange={e => updateBook('title', e.target.value)} /></div>
+                            <div className="form-group"><label className="form-label">Status</label>
+                                <select value={selectedBook.status || 'Planning'} onChange={e => updateBook('status', e.target.value)}>
+                                    <option value="Planning">Planning</option><option value="Drafting">Drafting</option><option value="Complete">Complete</option><option value="Published">Published</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="form-group"><label className="form-label">Blurb / Logline</label><textarea value={selectedBook.blurb || ''} onChange={e => updateBook('blurb', e.target.value)} rows={2} /></div>
+                        <div className="form-group"><label className="form-label">Key Plot Events</label><textarea value={selectedBook.keyEvents || ''} onChange={e => updateBook('keyEvents', e.target.value)} rows={3} /></div>
+                        <div className="form-row">
+                            <div className="form-group"><label className="form-label">New Characters Introduced</label><input value={selectedBook.newCharacters || ''} onChange={e => updateBook('newCharacters', e.target.value)} /></div>
+                            <div className="form-group"><label className="form-label">Word Count</label><input value={selectedBook.wordCount || ''} onChange={e => updateBook('wordCount', e.target.value)} /></div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group"><label className="form-label">Clues / Threads Planted</label><textarea value={selectedBook.cluesPlanted || ''} onChange={e => updateBook('cluesPlanted', e.target.value)} rows={2} /></div>
+                            <div className="form-group"><label className="form-label">Clues / Threads Resolved</label><textarea value={selectedBook.cluesResolved || ''} onChange={e => updateBook('cluesResolved', e.target.value)} rows={2} /></div>
+                        </div>
+                        <div className="form-group"><label className="form-label">Continuity Notes (for next book)</label><textarea value={selectedBook.continuityNotes || ''} onChange={e => updateBook('continuityNotes', e.target.value)} rows={3} /></div>
+
+                        {/* Per-book character appearance tracking */}
+                        <div style={{ marginTop: 16, borderTop: '1px solid #f0ebe0', paddingTop: 12 }}>
+                            <label className="form-label">Character Appearance in This Book (overrides vault for continuity check)</label>
+                            <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 8 }}>Track how each character appears in this specific book. Leave blank to use vault default.</p>
+                            {chars.map(char => (
+                                <div key={char.id} style={{ display: 'flex', gap: 8, marginBottom: 4, alignItems: 'center' }}>
+                                    <span style={{ fontSize: '0.75rem', minWidth: 140, fontWeight: 500 }}>{char.name || 'Unnamed'}</span>
+                                    <input
+                                        value={(selectedBook.characterAppearances?.[char.id]) || ''}
+                                        onChange={e => updateCharAppearance(char.id, e.target.value)}
+                                        placeholder={char.appearance || 'Appearance in this book...'}
+                                        style={{ flex: 1, fontSize: '0.72rem', padding: '5px 10px' }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ─── Export Tab ────────────────────────────────────────────────────────
+        const ExportTab = ({ state }) => {
+            const [activeExport, setActiveExport] = useState('vault');
+            const [exportFormat, setExportFormat] = useState('readable');
+            const [copied, setCopied] = useState(false);
+            const [showTimeline, setShowTimeline] = useState(false);
+
+            const books = state.books || [];
+            const threads = state.threads || [];
+            const chars = state.characters || [];
+            const locs = state.locations || [];
+            const rules = state.worldRules || {};
+
+            const generateVaultExport = (format) => {
+                if (format === 'gpt') return generateGPTVaultExport();
+                let output = '';
+                output += `========================================\nSAGA CANON VAULT\nSeries: ${state.seriesTitle || 'Untitled'}\nGenre: ${state.seriesGenre || 'N/A'}\nEra: ${state.seriesEra || 'N/A'}\nTone: ${state.seriesTone || 'N/A'}\n========================================\n\n`;
+                output += `--- SERIES ARC ---\n${state.seriesArc || 'N/A'}\n\n`;
+                output += `--- WORLD RULES & CANON ---\n`;
+                if (Object.keys(rules).length > 0) {
+                    Object.entries(rules).forEach(([cat, ruleList]) => {
+                        output += `\n[${cat}]\n`;
+                        ruleList.forEach((rule, i) => { output += `  ${i + 1}. ${rule}\n`; });
+                    });
+                } else { output += `(No world rules defined)\n`; }
+                output += `\n--- CHARACTER CANON ---\n`;
+                chars.forEach(c => {
+                    output += `\n[${c.name || 'Unnamed'}]\n  Role: ${c.role || 'N/A'}\n`;
+                    if (c.age) output += `  Age: ${c.age}\n`;
+                    if (c.appearance) output += `  Appearance: ${c.appearance}\n`;
+                    if (c.traits) output += `  Key Traits: ${c.traits}\n`;
+                    if (c.arc) output += `  Arc: ${c.arc}\n`;
+                    if (c.secret) output += `  Secret: ${c.secret}\n`;
+                    if (c.voice) output += `  Voice: ${c.voice}\n`;
+                    if (c.relationships && c.relationships.length > 0) {
+                        output += `  Relationships:\n`;
+                        c.relationships.forEach(r => { if (r.with) output += `    - ${r.with}: ${r.type || 'N/A'}\n`; });
+                    }
+                });
+                output += `\n--- LOCATIONS ---\n`;
+                locs.forEach(loc => { output += `\n[${loc.name || 'Unnamed'}]\n  Type: ${loc.type || 'N/A'}\n  Description: ${loc.description || 'N/A'}\n`; });
+                output += `\n--- PLANTED CLUES & SERIES THREADS ---\n`;
+                threads.forEach(t => {
+                    output += `\n[${t.title || 'Unnamed Thread'}]\n  Type: ${t.type || 'N/A'}\n  Status: ${t.status || 'N/A'}\n`;
+                    if (t.description) output += `  Description: ${t.description}\n`;
+                    if (t.plantedIn) output += `  Planted In: ${t.plantedIn}\n`;
+                    if (t.developedIn) output += `  Developed In: ${t.developedIn}\n`;
+                    if (t.revealedIn) output += `  Revealed In: ${t.revealedIn}\n`;
+                });
+                output += `\n--- BOOKS AT A GLANCE ---\n`;
+                books.forEach(b => { output += `Book ${b.number}: ${b.title || 'Untitled'} [${b.status || 'N/A'}]\n`; });
+                output += `\n========================================\nEND OF CANON VAULT\n========================================\n`;
+                return output;
+            };
+
+            const generateGPTVaultExport = () => {
+                let output = '';
+                output += `[SERIES]\nTITLE: ${state.seriesTitle || 'Untitled'}\nGENRE: ${state.seriesGenre || 'N/A'}\nERA: ${state.seriesEra || 'N/A'}\nTONE: ${state.seriesTone || 'N/A'}\nARC: ${state.seriesArc || 'N/A'}\n[/SERIES]\n\n`;
+                Object.entries(rules).forEach(([cat, ruleList]) => {
+                    output += `[WORLD_RULES: ${cat}]\n`;
+                    ruleList.forEach(rule => { output += `- ${rule}\n`; });
+                    output += `[/WORLD_RULES: ${cat}]\n\n`;
+                });
+                chars.forEach(c => {
+                    output += `[CHARACTER: ${c.name || 'Unnamed'}]\nROLE: ${c.role || 'N/A'}\n`;
+                    if (c.age) output += `AGE: ${c.age}\n`;
+                    if (c.appearance) output += `APPEARANCE: ${c.appearance}\n`;
+                    if (c.traits) output += `TRAITS: ${c.traits}\n`;
+                    if (c.arc) output += `ARC: ${c.arc}\n`;
+                    if (c.secret) output += `SECRET: ${c.secret}\n`;
+                    if (c.voice) output += `VOICE: ${c.voice}\n`;
+                    if (c.relationships && c.relationships.length > 0) {
+                        c.relationships.forEach(r => { if (r.with) output += `RELATIONSHIP: ${r.with} — ${r.type || 'N/A'}\n`; });
+                    }
+                    output += `[/CHARACTER: ${c.name || 'Unnamed'}]\n\n`;
+                });
+                locs.forEach(loc => {
+                    output += `[LOCATION: ${loc.name || 'Unnamed'}]\nTYPE: ${loc.type || 'N/A'}\nDESCRIPTION: ${loc.description || 'N/A'}\n[/LOCATION: ${loc.name || 'Unnamed'}]\n\n`;
+                });
+                threads.forEach(t => {
+                    output += `[THREAD: ${t.title || 'Unnamed'}]\nTYPE: ${t.type || 'N/A'}\nSTATUS: ${t.status || 'N/A'}\nDESCRIPTION: ${t.description || 'N/A'}\nPLANTED_IN: ${t.plantedIn || 'N/A'}\nDEVELOPED_IN: ${t.developedIn || 'N/A'}\nREVEALED_IN: ${t.revealedIn || 'N/A'}\n[/THREAD: ${t.title || 'Unnamed'}]\n\n`;
+                });
+                return output;
+            };
+
+            const generateBookSummaryExport = (book, format) => {
+                if (format === 'gpt') return generateGPTBookExport(book);
+                let output = '';
+                output += `========================================\nBOOK ${book.number} CANON SUMMARY\nTitle: ${book.title || 'Untitled'}\nSeries: ${state.seriesTitle || 'Untitled'}\nStatus: ${book.status || 'N/A'}\n`;
+                if (book.wordCount) output += `Word Count: ${book.wordCount}\n`;
+                output += `========================================\n\n`;
+                if (book.blurb) output += `--- BLURB ---\n${book.blurb}\n\n`;
+                if (book.keyEvents) output += `--- KEY PLOT EVENTS ---\n${book.keyEvents}\n\n`;
+                if (book.newCharacters) output += `--- NEW CHARACTERS INTRODUCED ---\n${book.newCharacters}\n\n`;
+                if (book.cluesPlanted) output += `--- CLUES / THREADS PLANTED ---\n${book.cluesPlanted}\n\n`;
+                if (book.cluesResolved) output += `--- CLUES / THREADS RESOLVED ---\n${book.cluesResolved}\n\n`;
+                if (book.continuityNotes) output += `--- CONTINUITY NOTES (CARRY FORWARD) ---\n${book.continuityNotes}\n\n`;
+                output += `--- SERIES CONTEXT ---\nPrevious: ${books.find(b => b.number === book.number - 1)?.title || 'N/A (first book)'}\nNext: ${books.find(b => b.number === book.number + 1)?.title || 'N/A (latest)'}\n`;
+                output += `Active Threads: ${threads.filter(t => t.status !== 'Resolved').map(t => t.title).join(', ') || 'None'}\n`;
+                output += `\n========================================\nEND OF BOOK ${book.number} SUMMARY\n========================================\n`;
+                return output;
+            };
+
+            const generateGPTBookExport = (book) => {
+                let output = '';
+                output += `[BOOK: ${book.number}]\nTITLE: ${book.title || 'Untitled'}\nSERIES: ${state.seriesTitle || 'Untitled'}\nSTATUS: ${book.status || 'N/A'}\n`;
+                if (book.wordCount) output += `WORD_COUNT: ${book.wordCount}\n`;
+                if (book.blurb) output += `BLURB: ${book.blurb}\n`;
+                if (book.keyEvents) output += `KEY_EVENTS: ${book.keyEvents}\n`;
+                if (book.newCharacters) output += `NEW_CHARACTERS: ${book.newCharacters}\n`;
+                if (book.cluesPlanted) output += `CLUES_PLANTED: ${book.cluesPlanted}\n`;
+                if (book.cluesResolved) output += `CLUES_RESOLVED: ${book.cluesResolved}\n`;
+                if (book.continuityNotes) output += `CONTINUITY_NOTES: ${book.continuityNotes}\n`;
+                output += `PREVIOUS_BOOK: ${books.find(b => b.number === book.number - 1)?.title || 'N/A'}\n`;
+                output += `NEXT_BOOK: ${books.find(b => b.number === book.number + 1)?.title || 'N/A'}\n`;
+                output += `[/BOOK: ${book.number}]\n`;
+                return output;
+            };
+
+            const vaultExport = generateVaultExport(exportFormat);
+            const bookExports = books.map(b => ({ book: b, content: generateBookSummaryExport(b, exportFormat) }));
+
+            const copyToClipboard = (text) => {
+                navigator.clipboard.writeText(text).then(() => { setCopied(true);
+                    setTimeout(() => setCopied(false), 2000); });
+            };
+            const downloadFile = (filename, content) => {
+                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+            const downloadAll = () => {
+                const prefix = exportFormat === 'gpt' ? 'GPT_' : '';
+                downloadFile(`${prefix}Saga_Canon_Vault.txt`, vaultExport);
+                setTimeout(() => {
+                    bookExports.forEach(({ book, content }) => {
+                        const safe = (book.title || `Book_${book.number}`).replace(/[^a-z0-9]/gi, '_').substring(0, 40);
+                        downloadFile(`${prefix}Book_${book.number}_${safe}_Canon_Summary.txt`, content);
+                    });
+                }, 300);
+            };
+
+            const activeContent = activeExport === 'vault' ? { label: 'Saga_Canon_Vault.txt', content: vaultExport } :
+                (() => { const found = bookExports.find(be => be.book.id === activeExport); return found ? { label: `Book_${found.book.number}_Canon_Summary.txt`, content: found.content } : { label: '', content: '' }; })();
+
+            return (
+                <div>
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button className={`btn ${activeExport === 'vault' ? 'btn-gold' : 'btn-outline'} btn-sm`} onClick={() => setActiveExport('vault')}><i className="fas fa-vault"></i> Vault</button>
+                        {books.map(b => (
+                            <button key={b.id} className={`btn ${activeExport === b.id ? 'btn-gold' : 'btn-outline'} btn-sm`} onClick={() => setActiveExport(b.id)}><i className="fas fa-file-alt"></i> Book {b.number}</button>
+                        ))}
+                        <div style={{ flex: 1 }} />
+                        <button className={`btn btn-sm ${exportFormat === 'readable' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setExportFormat('readable')}><i className="fas fa-book"></i> Readable</button>
+                        <button className={`btn btn-sm ${exportFormat === 'gpt' ? 'btn-primary' : 'btn-outline'}`} onClick={() => setExportFormat('gpt')}><i className="fas fa-robot"></i> GPT Optimized</button>
+                        <button className={`btn btn-sm ${showTimeline ? 'btn-primary' : 'btn-outline'}`} onClick={() => setShowTimeline(!showTimeline)}><i className="fas fa-timeline"></i> Timeline</button>
+                    </div>
+
+                    {/* Timeline Visualization */}
+                    {showTimeline && (
+                        <div className="section-card" style={{ marginBottom: 16 }}>
+                            <div className="section-header"><h3><i className="fas fa-timeline"></i> Thread Timeline</h3></div>
+                            <div className="timeline-visual">
+                                {threads.map(thread => {
+                                    const plantedNum = parseInt(thread.plantedIn?.replace('Book ', ''));
+                                    const revealedNum = parseInt(thread.revealedIn?.replace('Book ', ''));
+                                    const spanBooks = !isNaN(plantedNum) && !isNaN(revealedNum) ? revealedNum - plantedNum : '?';
+                                    return (
+                                        <div key={thread.id} className={`timeline-node ${thread.status === 'Resolved' ? 'resolved' : ''}`}>
+                                            <span className="thread-title">{thread.title || 'Unnamed'}</span>
+                                            <span className="thread-span"> — {thread.plantedIn || '?'} → {thread.revealedIn || '?'} ({spanBooks} book{spanBooks !== 1 ? 's' : ''})</span>
+                                            <span style={{ marginLeft: 8, fontSize: '0.6rem', padding: '2px 8px', borderRadius: '10px', background: thread.status === 'Resolved' ? 'var(--success-bg)' : 'var(--warning-bg)', color: thread.status === 'Resolved' ? 'var(--success)' : 'var(--warning)', fontWeight: 700 }}>{thread.status || 'Planted'}</span>
+                                        </div>
+                                    );
+                                })}
+                                {threads.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>No threads to display.</p>}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="section-card">
+                        <div className="section-header">
+                            <h3><i className="fas fa-file-code"></i> {activeContent.label}</h3>
+                            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{exportFormat === 'gpt' ? 'GPT-optimized format' : 'Human-readable format'}</span>
+                        </div>
+                        <div className="export-preview">{activeContent.content || '(No content generated)'}</div>
+                        <div className="export-actions">
+                            <button className="btn btn-gold" onClick={() => copyToClipboard(activeContent.content)}><i className={`fas fa-${copied ? 'check' : 'copy'}`}></i> {copied ? 'Copied!' : 'Copy to Clipboard'}</button>
+                            <button className="btn btn-primary" onClick={() => downloadFile(activeContent.label, activeContent.content)}><i className="fas fa-download"></i> Download This File</button>
+                            <button className="btn btn-outline" onClick={downloadAll}><i className="fas fa-file-archive"></i> Download All Files</button>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: 16, padding: '14px 18px', background: '#fdf8ed', border: '1px solid #e8d5a0', borderRadius: '8px', fontSize: '0.78rem', color: 'var(--ink-faded)' }}>
+                        <strong><i className="fas fa-lightbulb" style={{ color: 'var(--gold)' }}></i> {exportFormat === 'gpt' ? 'GPT Format:' : 'Usage:'}</strong> {exportFormat === 'gpt' ? 'Structured key-value pairs optimized for Custom GPT memory. Paste directly into your GPT\'s system prompt or knowledge base for maximum recall accuracy.' : 'Copy and paste into your Custom GPT\'s system prompt. Update after completing each book. The structured sections help GPT maintain perfect continuity.'}
+                    </div>
+                </div>
+            );
+        };
+
+        // ─── Main App ─────────────────────────────────────────────────────────
+        const App = () => {
+            const [state, setState] = useState(() => loadState());
+            const [activeTab, setActiveTab] = useState('vault');
+            const [toast, setToast] = useState(null);
+
+            useEffect(() => {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            }, [state]);
+
+            const consistencyWarnings = useMemo(() => checkConsistency(state), [state]);
+
+            const handleSearchNavigate = (tab) => {
+                setActiveTab(tab);
+            };
+
+            const handleResetToDemo = () => {
+                if (confirm('Reset all data to the demo example? This will erase everything you\'ve entered and reload the pre-filled Thornwick Mysteries demo. This cannot be undone.')) {
+                    const demoState = getDefaultState();
+                    setState(demoState);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(demoState));
+                    setActiveTab('vault');
+                    setToast('Demo data restored ✦');
+                }
+            };
+
+            const tabs = [
+                { id: 'vault', icon: 'fa-vault', label: 'Canon Vault' },
+                { id: 'books', icon: 'fa-book-open', label: 'Book Summaries' },
+                { id: 'export', icon: 'fa-file-export', label: 'Export Files' }
+            ];
+
+            const books = state.books || [];
+            const chars = state.characters || [];
+            const locs = state.locations || [];
+            const threads = state.threads || [];
+
+            return (
+                <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                    <header className="app-header">
+                        <div className="app-header-content">
+                            <div className="header-left">
+                                <div>
+                                    <h1><i className="fas fa-scroll"></i> Saga Canon Vault Builder</h1>
+                                    <p className="header-subtitle">Custom GPT Memory System · Continuity That Lasts</p>
+                                </div>
+                            </div>
+                            <div className="header-right">
+                                <GlobalSearch state={state} onNavigate={handleSearchNavigate} />
+                                <button className="btn btn-reset" onClick={handleResetToDemo} title="Reset all data to the demo example">
+                                    <i className="fas fa-undo-alt"></i> Reset to Demo
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <nav className="tab-nav">
+                        {tabs.map(tab => (
+                            <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
+                                <i className={`fas ${tab.icon}`}></i> {tab.label}
+                                {tab.id === 'vault' && <span className="tab-badge">{chars.length + locs.length + threads.length}</span>}
+                                {tab.id === 'books' && <span className="tab-badge">{books.length}</span>}
+                                {tab.id === 'export' && consistencyWarnings.length > 0 && <span className="tab-badge warning">{consistencyWarnings.length}</span>}
+                            </button>
+                        ))}
+                    </nav>
+
+                    <main className="tab-content">
+                        {/* Consistency warnings */}
+                        {consistencyWarnings.length > 0 && (
+                            <div style={{ marginBottom: 18 }}>
+                                {consistencyWarnings.map((w, i) => (
+                                    <div key={i} className="warning-banner">
+                                        <i className="fas fa-exclamation-triangle"></i>
+                                        <div>
+                                            <strong>Continuity Alert</strong>
+                                            {w.message}
+                                            {w.book && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 6 }}>(Book {w.book})</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'vault' && <VaultTab state={state} updateState={setState} />}
+                        {activeTab === 'books' && <BookSummaryTab state={state} updateState={setState} />}
+                        {activeTab === 'export' && <ExportTab state={state} />}
+                    </main>
+
+                    {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</body>
+</html>
