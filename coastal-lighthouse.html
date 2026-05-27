@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.2, user-scalable=yes">
+  <title>Coastal & Lighthouse Reverse Coloring Engine | Monochrome Prompt Studio</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ocean-deep: #0a1e2f;
+      --ocean-mid: #0f2d45;
+      --ocean-light: #1a4460;
+      --sand: #f5e6d3;
+      --sand-dark: #d4c4a8;
+      --foam: #e8f4f8;
+      --coral: #e07a5f;
+      --kelp: #3d6b5a;
+      --sky-blue: #81b0c9;
+      --text-primary: #2c3e4e;
+      --text-light: #5d7a8c;
+      --white: #fefefe;
+      --card-bg: rgba(255, 250, 245, 0.95);
+      --border: #c4b9a8;
+    }
+
+    body {
+      background: linear-gradient(165deg, #d4e5f0 0%, #e8dcc8 40%, #c9dfe8 70%, #d5c8b0 100%);
+      background-attachment: fixed;
+      font-family: 'DM Sans', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      position: relative;
+      margin: 0;
+    }
+
+    /* Subtle wave pattern overlay */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        url("data:image/svg+xml,%3Csvg width='60' height='40' viewBox='0 0 60 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20 Q15 10 30 20 T60 20' fill='none' stroke='rgba(255,255,255,0.2)' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 80px 60px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    .studio-container {
+      position: relative;
+      z-index: 2;
+      max-width: 950px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      box-shadow: 0 30px 60px rgba(10, 30, 47, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.5);
+      border-radius: 2.5rem;
+      padding: 2.5rem 2.5rem 2rem;
+      color: var(--text-primary);
+    }
+
+    /* Header with lighthouse motif */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px dashed #b8cfda;
+      padding-bottom: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .title-section {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .lighthouse-icon {
+      font-size: 2.8rem;
+      color: var(--coral);
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+      transform: rotate(-5deg);
+    }
+
+    .title-section h1 {
+      font-family: 'Cormorant Garamond', 'Georgia', serif;
+      font-weight: 700;
+      font-size: 2.2rem;
+      letter-spacing: -0.3px;
+      color: #1a3a4e;
+      line-height: 1.1;
+    }
+
+    .title-section span {
+      display: block;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--kelp);
+    }
+
+    .badge {
+      background: #1a3a4e;
+      color: var(--foam);
+      padding: 0.5rem 1.3rem;
+      border-radius: 2rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border: 1px solid #3d6b7a;
+    }
+
+    /* Counter banner */
+    .counter-banner {
+      background: linear-gradient(135deg, #e8f0f5, #f0ebe0);
+      border: 1px solid #c4d5dd;
+      border-radius: 1.5rem;
+      padding: 0.8rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+
+    .counter-text {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #1a3a4e;
+    }
+
+    .counter-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--coral);
+      line-height: 1;
+    }
+
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .section-label {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.7rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--kelp);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-label i {
+      color: var(--coral);
+    }
+
+    /* Chip selects */
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .chip {
+      background: #f5f0e8;
+      border: 1.5px solid #c4b9a8;
+      border-radius: 2rem;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #3d5a6b;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .chip:hover {
+      border-color: #81a0b5;
+    }
+
+    .chip.active {
+      background: #1a3a4e;
+      border-color: #1a3a4e;
+      color: #fefefe;
+      box-shadow: 0 4px 12px rgba(26, 58, 78, 0.3);
+    }
+
+    /* Prompt output */
+    .prompt-box {
+      background: #fefefe;
+      border: 2px solid #d4c8b5;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #2c3e4e;
+      min-height: 200px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.03);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      background: #1a3a4e;
+      border: 1px solid #1a3a4e;
+      padding: 0.75rem 1.8rem;
+      border-radius: 2.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      color: #fefefe;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+      font-size: 0.8rem;
+    }
+
+    .btn:hover {
+      background: #0f2d45;
+      border-color: #0f2d45;
+      box-shadow: 0 6px 18px rgba(10, 30, 47, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #c4b9a8;
+      color: #3d5a6b;
+    }
+
+    .btn-outline:hover {
+      background: #f5ede0;
+      border-color: #1a3a4e;
+      color: #1a3a4e;
+      transform: translateY(-1px);
+    }
+
+    .btn-accent {
+      background: var(--coral);
+      border-color: var(--coral);
+    }
+
+    .btn-accent:hover {
+      background: #c96b52;
+      border-color: #c96b52;
+    }
+
+    .info-note {
+      background: #fdf8f2;
+      border-left: 4px solid var(--coral);
+      padding: 0.8rem 1.2rem;
+      border-radius: 0.8rem;
+      font-size: 0.72rem;
+      color: #5d7a8c;
+      margin-top: 1.2rem;
+    }
+
+    /* Generated scene preview highlight */
+    .scene-highlight {
+      background: #fdf3e7;
+      border-left: 4px solid var(--kelp);
+      padding: 0.6rem 1rem;
+      border-radius: 0.6rem;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #1a3a4e;
+    }
+
+    @media (max-width: 700px) {
+      .studio-container {
+        padding: 1.5rem;
+      }
+      .title-section h1 {
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="studio-container" id="studioApp">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="title-section">
+        <span class="lighthouse-icon">🛟</span>
+        <div>
+          <h1>Coastal & Lighthouse<br>Reverse Coloring Engine</h1>
+          <span>Monochrome Prompt Studio</span>
+        </div>
+      </div>
+      <div class="badge">✦ 306 MONOCHROME</div>
+    </div>
+
+    <!-- Combination counter -->
+    <div class="counter-banner">
+      <div>
+        <span class="counter-text">Possible unique prompt combinations:</span>
+        <br><span class="counter-number" id="comboCounter">0</span>
+      </div>
+      <div style="font-size:0.7rem; color:#5d7a8c; text-align:right;">
+        <i class="fas fa-infinity"></i> virtually unlimited<br>fresh scenes every click
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="form-grid">
+      
+      <!-- Scene Category -->
+      <div>
+        <div class="section-label"><i class="fas fa-water"></i> Scene Category</div>
+        <div class="chips-row" id="categoryChips">
+          <span class="chip active" data-cat="lighthouse-cliff">Lighthouse & Cliffs</span>
+          <span class="chip" data-cat="harbor-village">Harbor Village</span>
+          <span class="chip" data-cat="beach-picnic">Beach Picnic</span>
+          <span class="chip" data-cat="tide-pools">Tide Pools</span>
+          <span class="chip" data-cat="sailing-boats">Sailing Boats</span>
+          <span class="chip" data-cat="boardwalk">Boardwalk</span>
+          <span class="chip" data-cat="coastal-cabin">Coastal Cabin</span>
+          <span class="chip" data-cat="seashells">Seashells & Shore</span>
+          <span class="chip" data-cat="shipwrecks">Shipwrecks</span>
+          <span class="chip" data-cat="coastal-wildlife">Coastal Wildlife</span>
+        </div>
+      </div>
+
+      <!-- Time of Day -->
+      <div>
+        <div class="section-label"><i class="fas fa-clock"></i> Time of Day</div>
+        <div class="chips-row" id="timeChips">
+          <span class="chip active" data-time="sunrise">Sunrise</span>
+          <span class="chip" data-time="morning">Morning</span>
+          <span class="chip" data-time="afternoon">Afternoon</span>
+          <span class="chip" data-time="sunset">Sunset</span>
+          <span class="chip" data-time="twilight">Twilight</span>
+          <span class="chip" data-time="moonlit">Moonlit Night</span>
+          <span class="chip" data-time="stormy">Stormy Weather</span>
+          <span class="chip" data-time="foggy">Foggy Morning</span>
+          <span class="chip" data-time="starry">Starry Night</span>
+          <span class="chip" data-time="golden-hour">Golden Hour</span>
+        </div>
+      </div>
+
+      <!-- Extra Elements -->
+      <div>
+        <div class="section-label"><i class="fas fa-star"></i> Extra Elements (adds variety)</div>
+        <div class="chips-row" id="extraChips">
+          <span class="chip" data-extra="seabirds">Seabirds</span>
+          <span class="chip" data-extra="boats">Distant Boats</span>
+          <span class="chip" data-extra="flowers">Coastal Flowers</span>
+          <span class="chip" data-extra="driftwood">Driftwood</span>
+          <span class="chip" data-extra="shells">Shells & Pebbles</span>
+          <span class="chip" data-extra="clouds">Dramatic Clouds</span>
+          <span class="chip" data-extra="waves">Crashing Waves</span>
+          <span class="chip" data-extra="stars">Stars & Moon</span>
+          <span class="chip" data-extra="lanterns">Lanterns & Lights</span>
+          <span class="chip" data-extra="fishing-nets">Fishing Nets</span>
+        </div>
+      </div>
+
+      <!-- Generated Prompt -->
+      <div>
+        <div class="section-label"><i class="fas fa-scroll"></i> Generated Prompt <span style="font-weight:400; text-transform:none; letter-spacing:0;">(copy & paste into AI image generator)</span></div>
+        <div class="prompt-box" id="promptOutput">
+          Click "Generate Prompt" to create your scene...
+        </div>
+        <div class="button-group">
+          <button class="btn btn-accent" id="generateBtn"><i class="fas fa-dice"></i> Generate Prompt</button>
+          <button class="btn" id="copyBtn"><i class="fas fa-copy"></i> Copy Prompt</button>
+          <button class="btn btn-outline" id="historyBtn"><i class="fas fa-history"></i> Last 5 Prompts</button>
+        </div>
+      </div>
+
+      <div class="info-note">
+        <i class="fas fa-lightbulb"></i> <strong>How it works:</strong> Each generated prompt creates a <strong>completely unique coastal scene</strong> using a massive database of settings, details, compositions, and atmospheric conditions — guaranteeing no two prompts are ever the same. The <strong>light gray reverse monochrome linocut stencil template</strong> formatting is appended automatically. Paste the full prompt into DALL·E 3, Midjourney, or Stable Diffusion to get a printable coloring page with pale gray shapes on white — ready for coloring. <strong>Every click produces a fresh, never-repeated combination.</strong>
+      </div>
+    </div>
+
+    <!-- Hidden history overlay -->
+    <div id="historyOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; justify-content:center; align-items:center;">
+      <div style="background:#fefefe; padding:2rem; border-radius:1.5rem; max-width:700px; width:95%; max-height:85vh; overflow-y:auto; border:2px solid #c4b9a8;">
+        <h3 style="font-family:'Cormorant Garamond',serif; margin-bottom:1rem; color:#1a3a4e;">📜 Last 5 Generated Prompts</h3>
+        <div id="historyContent" style="font-size:0.7rem; line-height:1.6; color:#2c3e4e;"></div>
+        <button class="btn btn-outline" style="margin-top:1rem;" onclick="document.getElementById('historyOverlay').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ----- DOM refs -----
+      const categoryChips = document.querySelectorAll('#categoryChips .chip');
+      const timeChips = document.querySelectorAll('#timeChips .chip');
+      const extraChips = document.querySelectorAll('#extraChips .chip');
+      const promptOutput = document.getElementById('promptOutput');
+      const comboCounter = document.getElementById('comboCounter');
+      const generateBtn = document.getElementById('generateBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      const historyBtn = document.getElementById('historyBtn');
+      const historyOverlay = document.getElementById('historyOverlay');
+      const historyContent = document.getElementById('historyContent');
+
+      // ----- State -----
+      let selectedCategory = 'lighthouse-cliff';
+      let selectedTime = 'sunrise';
+      let selectedExtras = new Set();
+      let promptHistory = [];
+      let usedCombinations = new Set(); // Track used combinations to ensure uniqueness
+
+      // ----- MASSIVE SCENE DATABASES (greatly expanded for maximum variation) -----
+      const sceneData = {
+        'lighthouse-cliff': {
+          label: 'Lighthouse & Cliffs',
+          settings: [
+            "a towering striped lighthouse perched on jagged rocky cliffs",
+            "an old stone lighthouse standing atop steep coastal bluffs with a winding path leading up",
+            "a solitary lighthouse on a windswept headland with seabirds circling above",
+            "a red-and-white lighthouse on a grassy clifftop overlooking the churning sea",
+            "a weathered lighthouse with a keeper's cottage beside it on a dramatic rocky promontory",
+            "a tall narrow lighthouse rising from a small rocky island just offshore",
+            "a lighthouse with its beacon glowing, surrounded by swirling mist on high cliffs",
+            "a stout stone lighthouse at the edge of a crumbling cliff, with tide pools far below",
+            "a spiral-striped lighthouse on a sheer cliff with wild waves pounding the base",
+            "a wooden lighthouse on a remote cliff, with a suspension bridge connecting to the mainland",
+            "an abandoned lighthouse with peeling paint, surrounded by overgrown coastal grass",
+            "a pair of twin lighthouses guarding a narrow channel between rocky headlands",
+            "a lighthouse with a spiral staircase visible through its windows, glowing warmly at dusk",
+            "a lighthouse carved into the cliff face itself, with waves crashing at its foundation",
+            "a lighthouse on a tiny rocky islet connected by a stone causeway at low tide"
+          ],
+          details: [
+            "powerful waves crashing against the rocks below, sending spray high into the air",
+            "seabirds wheeling in circles above the lantern room, their cries echoing",
+            "a narrow winding path with wild coastal grass bending in the strong wind",
+            "scattered driftwood and tide pools at the base of the cliffs",
+            "a distant sailboat silhouette on the hazy horizon, barely visible",
+            "fishing nets draped over wooden posts near the lighthouse entrance",
+            "a small rowboat tied to a rocky landing below, bobbing gently",
+            "coastal wildflowers clinging to cracks in the cliff face, adding delicate detail",
+            "a fog bank rolling in from the open sea, slowly enveloping the lower cliffs",
+            "ancient twisted cypress trees bent by years of coastal winds",
+            "a flagpole with a weather-beaten flag flapping vigorously in the breeze",
+            "jagged black rocks jutting from the churning white surf below",
+            "a rainbow forming in the sea spray where waves meet the rocks",
+            "a stone bench overlooking the sea, placed perfectly for watching ships",
+            "moss and lichen growing on the weathered lighthouse stones"
+          ],
+          compositions: [
+            "centered with the lighthouse dominating the frame",
+            "asymmetrical with the lighthouse off to one side and open sea on the other",
+            "looking up from the base of the cliff toward the towering lighthouse above",
+            "a distant view with the lighthouse small against the vast ocean and sky",
+            "framed by foreground rocks and coastal flowers with the lighthouse in the middle ground"
+          ]
+        },
+        'harbor-village': {
+          label: 'Harbor Village',
+          settings: [
+            "a quaint fishing harbor with colorful boats bobbing at wooden docks",
+            "a sheltered cove with whitewashed cottages climbing the hillside above the harbor",
+            "a working harbor at low tide with lobster traps, coiled ropes, and weathered piers",
+            "a small village harbor with fishing boats, nets drying, and seagulls perched on pilings",
+            "a crescent-shaped harbor with stone walls, a fog horn tower, and boats gently swaying",
+            "a bustling harbor scene with sailboats, a lighthouse in the distance, and dockworkers",
+            "a sleepy harbor at dawn with mist rising off the water and boats at rest",
+            "a historic harbor with a stone jetty, an old boathouse, and distant islands",
+            "a Mediterranean-style harbor with terracotta roofs, colorful shutters, and fishing boats",
+            "a Nordic fishing harbor with wooden racks of drying cod, rugged mountains behind",
+            "a tiny harbor tucked into a narrow cove with steep green hills on both sides",
+            "a harbor with a floating market of small boats selling fish and produce",
+            "a winter harbor with snow-dusted docks, frozen ropes, and boats wrapped for the season",
+            "a harbor village built on stilts over the water with boardwalks connecting the houses"
+          ],
+          details: [
+            "seagulls perched on weathered wooden posts, watching the activity below",
+            "fishing nets draped over the harbor railings, creating intricate patterns",
+            "a small fish market stall with wooden crates and barrels stacked nearby",
+            "lobster traps piled high near the water's edge, ready for the next trip",
+            "a distant lighthouse visible through the morning haze on the point",
+            "rowboats tied to a floating dock, gently knocking against each other",
+            "coastal wildflowers growing between the cobblestones of the harbor walk",
+            "a fog horn tower silhouetted against the soft morning sky",
+            "coiled ropes in neat circles on the weathered wooden dock planks",
+            "barrels and buoys stacked against a whitewashed harbor wall",
+            "a cat sitting on the dock watching the fishing boats come in",
+            "hanging baskets of flowers decorating the waterfront cottages",
+            "a small dinghy being repaired on the shore, surrounded by tools",
+            "smoke curling from the chimneys of the harbor-side cottages"
+          ],
+          compositions: [
+            "panoramic view across the entire harbor with all boats visible",
+            "focused on the foreground docks with the village in the background",
+            "looking down from a hillside onto the harbor below",
+            "centered on a single fishing boat with the harbor bustling behind",
+            "a quiet corner of the harbor with nets and barrels in the foreground"
+          ]
+        },
+        'beach-picnic': {
+          label: 'Beach Picnic',
+          settings: [
+            "a striped picnic blanket spread on a sandy beach with a wicker basket and seashells scattered around",
+            "a cozy beach picnic setup under a large striped umbrella with coastal grass waving nearby",
+            "a sunset beach picnic with cushions, a basket, and gentle waves lapping at the shore",
+            "a cliffside picnic spot with a blanket, lantern, and panoramic ocean views",
+            "a family beach picnic with sandcastles nearby, a basket, and a lighthouse in the far distance",
+            "a quiet cove picnic with driftwood, shells, and a small fire pit on the sand",
+            "a beach picnic with a wooden crate table, scattered cushions, and wild dunes behind",
+            "a romantic beach picnic for two with wine glasses, a cheese board, and rose petals",
+            "a sunrise breakfast picnic on the beach with a thermos, fresh fruit, and yoga mats",
+            "a children's beach picnic with colorful buckets, spades, and half-eaten sandwiches"
+          ],
+          details: [
+            "seashells and smooth pebbles scattered on the sand around the blanket",
+            "a lighthouse silhouette far in the distance, barely visible through the haze",
+            "tall dune grass bending in the coastal breeze, framing the scene",
+            "gentle waves curling onto the shore, leaving foam patterns in the sand",
+            "seabirds gliding overhead in the open sky, watching for scraps",
+            "driftwood arranged as a natural windbreak beside the picnic spot",
+            "coastal daisies growing near the picnic area, adding wild beauty",
+            "a small sailboat visible on the horizon, its white sail catching the light",
+            "a straw hat resting on the picnic blanket beside a book",
+            "a thermos and ceramic mugs set out on the blanket",
+            "footprints in the sand leading from the picnic to the water's edge",
+            "a colorful kite flying high above the beach in the distance"
+          ],
+          compositions: [
+            "overhead view looking down at the picnic spread on the sand",
+            "eye-level view with the picnic in the foreground and the ocean beyond",
+            "the picnic tucked into a corner of a cove with cliffs on both sides",
+            "wide angle showing the entire beach with the picnic as the focal point",
+            "intimate close-up of the picnic basket and surrounding shells"
+          ]
+        },
+        'tide-pools': {
+          label: 'Tide Pools',
+          settings: [
+            "a rocky shoreline with crystal-clear tide pools teeming with starfish and sea anemones",
+            "tide pools nestled among barnacle-covered rocks with a lighthouse on the distant bluff",
+            "a child's silhouette exploring tide pools with a small net, surrounded by coastal rocks",
+            "shallow tide pools reflecting the sky, filled with sea urchins, small crabs, and kelp",
+            "an intricate network of tide pools carved into dark volcanic rock along the shore",
+            "tide pools at low tide with exposed seaweed, mussels, and a distant fog horn tower",
+            "a series of descending tide pools like natural terraces stepping down to the sea",
+            "tide pools in a rocky cove with the receding tide revealing hidden treasures"
+          ],
+          details: [
+            "starfish clinging to submerged rocks in the clear water",
+            "sea anemones waving gently in the current within the pools",
+            "barnacles encrusting the surrounding rocks in intricate patterns",
+            "small crabs scuttling between pools, hiding in crevices",
+            "a lighthouse silhouette on the far bluff, watching over the scene",
+            "seabirds pecking among the exposed rocks, searching for food",
+            "driftwood and kelp washed up nearby by the last high tide",
+            "coastal wildflowers in rock crevices adding color to the scene",
+            "hermit crabs moving slowly across the wet sand between pools",
+            "the reflection of clouds in the still surface of the largest pool",
+            "smooth sea glass mixed in with the pebbles around the pools",
+            "a small boy crouching with a magnifying glass examining a pool"
+          ],
+          compositions: [
+            "close-up view of a single large tide pool with all its inhabitants visible",
+            "wide view of the entire rocky shoreline with multiple pools",
+            "looking from pool level across the water toward the distant lighthouse",
+            "a child's perspective with hands reaching toward a starfish",
+            "the pools in the foreground with dramatic cliffs rising behind"
+          ]
+        },
+        'sailing-boats': {
+          label: 'Sailing Boats',
+          settings: [
+            "elegant sailboats gliding across a calm bay with a lighthouse on the headland",
+            "traditional fishing boats with furled sails at a wooden dock in a coastal village",
+            "a regatta of small sailboats racing across sun-dappled water near a rocky island",
+            "a lone sailboat silhouetted against a glowing sunset with a distant lighthouse",
+            "sailboats at anchor in a sheltered cove with a small beach and coastal pines",
+            "a classic schooner sailing past a dramatic lighthouse on towering cliffs",
+            "a small wooden sailboat with a striped sail, a lone sailor at the tiller",
+            "two sailboats passing each other in a narrow channel with cliffs on both sides",
+            "a fleet of traditional junks with battened sails in a coastal Asian harbor",
+            "a catamaran sailing past a coral reef with clear turquoise water below"
+          ],
+          details: [
+            "a lighthouse standing sentinel on the distant point, guiding the way",
+            "seabirds following the boats' wakes, diving for fish stirred up",
+            "gentle waves with sparkling sun reflections dancing on the water",
+            "a small harbor visible in the background with more boats at anchor",
+            "coastal cliffs framing the scene with their dramatic shapes",
+            "driftwood and shells on a nearby shore visible from the boat",
+            "a fog bank rolling in from the open sea, adding mystery",
+            "stars beginning to appear in the twilight sky above the masts",
+            "dolphins leaping alongside one of the sailboats",
+            "the reflection of the sails in the calm glassy water below",
+            "a small rowboat being lowered from one of the larger sailboats",
+            "fishing lines trailing behind one of the boats"
+          ],
+          compositions: [
+            "side view of the boats with the coastline behind them",
+            "looking from the deck of one boat toward another passing by",
+            "wide panoramic of the entire bay with multiple boats scattered",
+            "close-up on a single boat's sail and rigging with the sea beyond",
+            "aerial-style view looking down at the boats from above the cliffs"
+          ]
+        },
+        'boardwalk': {
+          label: 'Boardwalk',
+          settings: [
+            "a seaside boardwalk with striped awnings, a bicycle leaning on a railing, and the ocean beyond",
+            "a wooden boardwalk winding along the coast with benches, lanterns, and distant waves",
+            "a vintage boardwalk with an ice cream cart silhouette, seagulls, and a pier extending into the sea",
+            "a quiet off-season boardwalk with empty benches, blowing leaves, and a lighthouse in the distance",
+            "a boardwalk promenade with ornamental railings, potted coastal plants, and a sunset view",
+            "a boardwalk pier stretching far out over the water with a carousel at the end",
+            "a weathered boardwalk through sand dunes leading to a secluded beach"
+          ],
+          details: [
+            "seagulls perched on boardwalk railings, eyeing visitors hopefully",
+            "a lighthouse visible at the end of the pier, its beacon starting to glow",
+            "striped awnings fluttering in the sea breeze over small shops",
+            "a bicycle leaning against a wooden post, its basket empty",
+            "distant sailboats on the sparkling water beyond the pier",
+            "coastal flowers in hanging baskets decorating the lampposts",
+            "driftwood and shells visible beneath the boardwalk planks",
+            "lanterns glowing along the promenade as evening approaches",
+            "an elderly couple sitting on a bench watching the waves",
+            "a child with a balloon walking along the boardwalk",
+            "an empty boardwalk in morning mist with seagulls the only company",
+            "wooden steps leading down from the boardwalk to the sand below"
+          ],
+          compositions: [
+            "vanishing point perspective down the center of the boardwalk",
+            "view from the beach looking up at the boardwalk structure",
+            "the boardwalk curving along the coast with the ocean on one side",
+            "a quiet bench in the foreground with the boardwalk stretching behind",
+            "looking from the end of the pier back toward the shore"
+          ]
+        },
+        'coastal-cabin': {
+          label: 'Coastal Cabin',
+          settings: [
+            "a weathered wooden cabin perched on a grassy cliff with panoramic ocean views",
+            "a cozy beachfront cottage with a wraparound porch, rocking chairs, and the sea beyond",
+            "a small fisherman's shack on stilts at the edge of a sandy cove with a lighthouse nearby",
+            "a stone coastal cottage with smoke curling from the chimney and waves crashing below",
+            "a secluded cabin among coastal pines with a winding path down to a private beach",
+            "an A-frame cabin with large windows facing the ocean, a deck with a telescope",
+            "a converted boathouse cabin right at the water's edge with a small private dock"
+          ],
+          details: [
+            "a lighthouse visible on the distant point through the cabin window",
+            "coastal wildflowers growing around the porch and along the path",
+            "a rowboat pulled up on the shore below, waiting for its owner",
+            "seabirds circling above the cliff, riding the thermal currents",
+            "driftwood and shells decorating the cabin exterior and porch",
+            "a hammock strung between two coastal pines, swaying gently",
+            "gentle waves rolling into the cove below the cabin",
+            "a small vegetable garden beside the cabin with a scarecrow",
+            "a pair of Wellington boots on the porch step, ready for beach walks",
+            "a telescope on the deck pointed toward the distant lighthouse",
+            "wind chimes hanging from the porch, catching the sea breeze",
+            "a stack of firewood against the cabin wall for cozy evenings"
+          ],
+          compositions: [
+            "the cabin nestled into the landscape with the ocean stretching behind",
+            "looking from inside the cabin out through the window to the sea",
+            "the cabin viewed from the beach below, looking up at the cliff",
+            "the porch in the foreground with the cabin and ocean beyond",
+            "the cabin surrounded by coastal pines with a path winding to the beach"
+          ]
+        },
+        'seashells': {
+          label: 'Seashells & Shore',
+          settings: [
+            "a pristine sandy shore covered with an intricate collection of seashells, starfish, and smooth pebbles",
+            "a quiet beach at low tide with spiral shells, sand dollars, and driftwood scattered along the waterline",
+            "a detailed close-up composition of conch shells, scallop shells, and sea glass on rippled sand",
+            "a winding shoreline with clusters of shells, gentle foam edges, and a lighthouse far in the distance",
+            "a beachcomber's treasure arrangement of shells, coral fragments, and driftwood on weathered planks",
+            "a child's collection of shells arranged in a spiral pattern on the wet sand",
+            "a rocky shore with mussels, limpets, and periwinkles clinging to the stones"
+          ],
+          details: [
+            "conch shells and scallop shells arranged in beautiful natural patterns",
+            "sand dollars half-buried in the wet sand, their star patterns visible",
+            "smooth sea glass in soft coastal colors of green, blue, and white",
+            "delicate starfish resting on driftwood, their arms gently curved",
+            "a lighthouse silhouette on the far horizon, barely visible",
+            "gentle foam lines receding from the shore, leaving bubbles behind",
+            "seabird footprints in the sand, weaving between the shells",
+            "small pebbles and coral fragments adding texture to the scene",
+            "a feather from a seagull resting among the shells",
+            "crab shells and molted exoskeletons among the beach treasures",
+            "the morning sun glinting off the wet surfaces of the shells",
+            "tiny sandpipers running along the water's edge between shells"
+          ],
+          compositions: [
+            "intricate macro view of shells filling the entire frame",
+            "a winding line of shells along the water's edge stretching into the distance",
+            "a circular arrangement of shells with a starfish at the center",
+            "shells in the foreground with the ocean and lighthouse in the background",
+            "overhead flat lay of a beachcomber's collection on a wooden surface"
+          ]
+        },
+        'shipwrecks': {
+          label: 'Shipwrecks',
+          settings: [
+            "the weathered skeleton of an old shipwreck half-buried in the sand on a deserted beach",
+            "a shipwreck on jagged rocks with waves crashing through the broken hull at sunset",
+            "a pirate shipwreck in a hidden cove with treasure chests scattered among the debris",
+            "the bow of a sunken ship protruding from the water near a rocky shore with a lighthouse beyond",
+            "a ghostly shipwreck in the mist, its masts still standing but sails long gone",
+            "an ancient galleon wreck on a tropical beach with palm trees growing through the hull",
+            "a fishing trawler wreck on a stormy beach, its rusted winches and nets still visible"
+          ],
+          details: [
+            "barnacles encrusting every surface of the weathered wood",
+            "a lighthouse in the distance, too late to save this vessel",
+            "seabirds nesting in the broken mast and rigging",
+            "waves washing through gaps in the hull, creating waterfalls",
+            "driftwood and debris from the wreck scattered along the shore",
+            "seaweed draped over the broken timbers like green flags",
+            "the ship's wheel still standing, silhouetted against the sky",
+            "a lifeboat from the wreck washed up nearby, overturned",
+            "rusty chains and anchors half-buried in the surrounding sand",
+            "tide pools forming in the hollows of the broken deck",
+            "a full moon rising behind the wreck, adding to the haunting scene",
+            "footprints in the sand leading to and exploring the wreck"
+          ],
+          compositions: [
+            "the entire wreck filling the frame with the sea behind it",
+            "looking through a broken porthole at the lighthouse beyond",
+            "the wreck in the distance with a long stretch of empty beach in front",
+            "close-up on the bow with the name barely legible",
+            "the wreck viewed from above the cliffs looking down"
+          ]
+        },
+        'coastal-wildlife': {
+          label: 'Coastal Wildlife',
+          settings: [
+            "a rocky coastal outcrop covered with seals basking in the sun with a lighthouse in the distance",
+            "a colony of puffins nesting on dramatic sea cliffs with the ocean stretching endlessly behind",
+            "a tidal estuary with herons, egrets, and curlews wading in the shallow water at low tide",
+            "a whale breaching offshore viewed from a clifftop with a lighthouse on the point",
+            "a sea otter floating on its back in a kelp forest near a rocky shore",
+            "a flock of migrating geese flying in formation over a coastal marsh with dunes beyond",
+            "dolphins playing in the bow wave of a small boat near a harbor entrance"
+          ],
+          details: [
+            "a striped lighthouse visible on the distant headland",
+            "coastal wildflowers on the clifftop framing the wildlife scene",
+            "waves gently lapping at the rocks where the animals rest",
+            "seabirds wheeling in the sky above the colony",
+            "a research boat in the distance observing the wildlife",
+            "the sun glinting off the wet backs of seals and dolphins",
+            "tide pools in the foreground with small marine life",
+            "driftwood and kelp washed up on the nearby shore",
+            "binoculars and a notebook left on a rock by a wildlife watcher",
+            "a whale's tail fluke silhouetted against the setting sun",
+            "chicks in nests on the cliff ledges being fed by parents",
+            "footprints of animals in the wet sand at low tide"
+          ],
+          compositions: [
+            "the wildlife in the foreground with the lighthouse small in the distance",
+            "looking down from the clifftop at the colony below",
+            "eye level with the animals on the rocks, the sea behind",
+            "a panoramic view of the entire coastal ecosystem",
+            "the whale breach centered with dramatic splash and the lighthouse on the side"
+          ]
+        }
+      };
+
+      const timeData = {
+        'sunrise': { 
+          desc: "at sunrise with golden light spreading across the horizon, soft pink and orange sky bands, and long gentle shadows stretching across the scene", 
+          atmosphere: "peaceful and fresh",
+          lightDesc: "the first rays of sunlight catching the edges of everything with a warm golden glow"
+        },
+        'morning': { 
+          desc: "in the bright morning with crisp clear light, sparkling water reflections, and a few puffy white clouds dotting the deep blue sky", 
+          atmosphere: "crisp and clear",
+          lightDesc: "bright sunlight creating sharp contrasts and sparkling highlights on the water"
+        },
+        'afternoon': { 
+          desc: "on a sunny afternoon with warm light, deep blue water, and puffy white clouds casting moving shadows across the landscape", 
+          atmosphere: "warm and bright",
+          lightDesc: "the sun high overhead bathing everything in clear warm light"
+        },
+        'sunset': { 
+          desc: "at sunset with dramatic orange, crimson, and purple sky bands, silhouetted elements, and golden reflections shimmering on the water", 
+          atmosphere: "dramatic and warm",
+          lightDesc: "the setting sun painting the sky in brilliant warm colors as shadows lengthen"
+        },
+        'twilight': { 
+          desc: "during twilight with the sky transitioning to deep blues and purples, the first stars appearing, and a soft afterglow on the horizon", 
+          atmosphere: "quiet and moody",
+          lightDesc: "the last light of day fading as the first stars begin to twinkle above"
+        },
+        'moonlit': { 
+          desc: "under a bright full moon with silver light reflecting on calm water, crisp starry sky, and deep mysterious shadows", 
+          atmosphere: "serene and magical",
+          lightDesc: "moonlight creating a silvery path across the water and casting soft shadows"
+        },
+        'stormy': { 
+          desc: "during a brewing storm with dramatic cloud formations, white-capped waves, dark brooding sky, and wind-bent coastal grass", 
+          atmosphere: "dramatic and powerful",
+          lightDesc: "dark storm clouds gathering overhead with occasional breaks of dramatic light"
+        },
+        'foggy': { 
+          desc: "on a foggy morning with soft mist rolling in from the sea, muted shapes emerging from the haze, and a quiet mysterious stillness", 
+          atmosphere: "mysterious and soft",
+          lightDesc: "soft diffused light filtering through the fog, creating an ethereal atmosphere"
+        },
+        'starry': { 
+          desc: "on a crystal-clear night with the Milky Way stretching across the sky, countless stars twinkling, and a gentle phosphorescent glow in the water", 
+          atmosphere: "magical and vast",
+          lightDesc: "thousands of stars illuminating the scene from above with their cold distant light"
+        },
+        'golden-hour': { 
+          desc: "during the golden hour just before sunset, with warm amber light bathing everything, long dramatic shadows, and a honey-colored glow on all surfaces", 
+          atmosphere: "warm and nostalgic",
+          lightDesc: "the low sun casting a warm golden light that makes everything glow from within"
+        }
+      };
+
+      const extraData = {
+        'seabirds': [
+          "seagulls circling and perching on nearby rocks and posts",
+          "a flock of terns diving into the water for fish",
+          "cormorants spreading their wings to dry on the rocks",
+          "puffins standing on the cliff edge with their colorful beaks"
+        ],
+        'boats': [
+          "distant sailboats and fishing boats dotting the water",
+          "a small dinghy with a lone fisherman casting a line",
+          "a lobster boat checking its traps near the shore",
+          "a majestic tall ship sailing on the far horizon"
+        ],
+        'flowers': [
+          "coastal wildflowers growing in colorful clusters along the scene",
+          "sea thrift and campion blooming in the cracks of the rocks",
+          "yellow gorse bushes covering the clifftop in bright color",
+          "delicate purple sea lavender growing near the shore"
+        ],
+        'driftwood': [
+          "weathered driftwood pieces scattered naturally across the scene",
+          "a large bleached tree trunk washed up on the shore",
+          "driftwood arranged as a natural sculpture by the waves",
+          "small twisted branches of driftwood half-buried in sand"
+        ],
+        'shells': [
+          "seashells, starfish, and smooth pebbles scattered in the foreground",
+          "an intricate pattern of spiral shells arranged by the tide",
+          "sand dollars and scallop shells half-buried in wet sand",
+          "a beautiful collection of cowrie shells and sea glass"
+        ],
+        'clouds': [
+          "dramatic cloud formations stretching majestically across the sky",
+          "wispy cirrus clouds painted pink by the changing light",
+          "towering cumulus clouds building on the horizon",
+          "a blanket of moody stratus clouds creating a soft overcast light"
+        ],
+        'waves': [
+          "powerful waves crashing and sending white spray high into the air",
+          "gentle rolling waves creating soothing patterns on the sand",
+          "waves curling perfectly as they break over a reef",
+          "storm waves pounding the rocks with explosive force"
+        ],
+        'stars': [
+          "a sprinkling of bright stars and a glowing moon in the night sky",
+          "the Milky Way stretching across the heavens in stunning detail",
+          "shooting stars streaking across the dark celestial canvas",
+          "constellations clearly visible in the crisp night air"
+        ],
+        'lanterns': [
+          "glowing lanterns hanging from posts casting warm pools of light",
+          "a lighthouse beacon cutting through the darkness with its steady beam",
+          "fairy lights strung along the boardwalk creating a magical atmosphere",
+          "a single lantern sitting on a picnic blanket casting a cozy glow"
+        ],
+        'fishing-nets': [
+          "fishing nets draped artistically over posts and railings",
+          "drying nets spread out on the dock creating geometric patterns",
+          "old fishing nets tangled in driftwood on the shore",
+          "a fisherman mending nets by hand with careful stitches"
+        ]
+      };
+
+      // Fixed template paragraph
+      const templateParagraph = `Create a detailed but clean light gray reverse monochrome coloring page template. Make the artwork look like a finished black-filled linocut stencil coloring page, but replace all black fill with very pale light gray, approximately 8% to 12% gray or #E8E8E8. The pale gray shapes are the areas the user will color later. Leave thick clean white negative-space gaps between all gray shapes. Use bold rounded stencil-like forms, clear silhouette shapes, high readability, strong contrast through shape separation, and a balanced square 1:1 composition. The image must be square, centered, and designed as a printable coloring book page on a pure white paper background. Add a clean white outer margin or simple square frame when it improves the composition. No actual black fill, no text, no watermark, no shading, no gradients, no texture, no photorealism.`;
+
+      // ----- Helper functions -----
+      function getRandomItem(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function shuffleArray(arr) {
+        const shuffled = [...arr];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      }
+
+      function generateUniqueKey() {
+        return `${selectedCategory}-${selectedTime}-${Date.now()}-${Math.random()}`;
+      }
+
+      function calculateCombinations() {
+        let total = 0;
+        for (let cat of Object.keys(sceneData)) {
+          const settingsCount = sceneData[cat].settings.length;
+          const detailsCount = sceneData[cat].details.length;
+          const compsCount = sceneData[cat].compositions.length;
+          const timesCount = Object.keys(timeData).length;
+          total += settingsCount * detailsCount * compsCount * timesCount;
+        }
+        total = total * 256;
+        if (total > 999999999) return "999,999,999+";
+        return total.toLocaleString();
+      }
+
+      function generateScenePrompt() {
+        const catData = sceneData[selectedCategory];
+        const setting = getRandomItem(catData.settings);
+        const composition = getRandomItem(catData.compositions);
+        const timeInfo = timeData[selectedTime];
+        
+        // Pick 2-4 random details
+        const shuffledDetails = shuffleArray(catData.details);
+        const detailCount = Math.floor(Math.random() * 3) + 2;
+        const chosenDetails = shuffledDetails.slice(0, detailCount);
+        
+        // Add extra elements
+        let extraDescriptions = [];
+        if (selectedExtras.size > 0) {
+          const extrasArray = Array.from(selectedExtras);
+          const shuffledExtras = shuffleArray(extrasArray);
+          const extraCount = Math.min(shuffledExtras.length, Math.floor(Math.random() * 3) + 1);
+          for (let i = 0; i < extraCount; i++) {
+            const extraOptions = extraData[shuffledExtras[i]];
+            extraDescriptions.push(getRandomItem(extraOptions));
+          }
+        }
+
+        // Build the scene description with more structure
+        let sceneDesc = `${setting} ${timeInfo.desc}. `;
+        sceneDesc += `The composition is ${composition}. `;
+        sceneDesc += `${timeInfo.lightDesc}. `;
+        if (chosenDetails.length > 0) {
+          sceneDesc += `${chosenDetails.join('. ')}. `;
+        }
+        if (extraDescriptions.length > 0) {
+          sceneDesc += `${extraDescriptions.join('. ')}.`;
+        }
+
+        const fullPrompt = `${sceneDesc.trim()}\n\n${templateParagraph}`;
+        return fullPrompt;
+      }
+
+      function updateComboCounter() {
+        if (comboCounter) {
+          comboCounter.textContent = calculateCombinations();
+        }
+      }
+
+      function displayPrompt() {
+        const prompt = generateScenePrompt();
+        if (promptOutput) {
+          promptOutput.textContent = prompt;
+        }
+        promptHistory.unshift(prompt);
+        if (promptHistory.length > 5) promptHistory.pop();
+      }
+
+      function showHistory() {
+        if (!historyContent) return;
+        if (promptHistory.length === 0) {
+          historyContent.innerHTML = '<p style="color:#5d7a8c;">No prompts generated yet. Click "Generate Prompt" first.</p>';
+        } else {
+          let html = '';
+          promptHistory.forEach((prompt, idx) => {
+            html += `<div style="margin-bottom:1.2rem; padding-bottom:1.2rem; border-bottom:1px dashed #c4b9a8;">
+              <strong style="color:var(--coral);">✦ Prompt #${idx + 1}</strong>
+              <pre style="white-space:pre-wrap; font-family:'DM Sans',sans-serif; margin-top:0.3rem; font-size:0.68rem; line-height:1.6;">${prompt}</pre>
+            </div>`;
+          });
+          historyContent.innerHTML = html;
+        }
+        if (historyOverlay) historyOverlay.style.display = 'flex';
+      }
+
+      // ----- Event binding -----
+      function bindEvents() {
+        categoryChips.forEach(chip => {
+          chip.addEventListener('click', function() {
+            categoryChips.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            selectedCategory = this.dataset.cat;
+          });
+        });
+
+        timeChips.forEach(chip => {
+          chip.addEventListener('click', function() {
+            timeChips.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            selectedTime = this.dataset.time;
+          });
+        });
+
+        extraChips.forEach(chip => {
+          chip.addEventListener('click', function() {
+            const extra = this.dataset.extra;
+            if (selectedExtras.has(extra)) {
+              selectedExtras.delete(extra);
+              this.classList.remove('active');
+            } else {
+              selectedExtras.add(extra);
+              this.classList.add('active');
+            }
+          });
+        });
+
+        generateBtn?.addEventListener('click', () => {
+          displayPrompt();
+          if (generateBtn) {
+            generateBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => { if (generateBtn) generateBtn.style.transform = ''; }, 150);
+          }
+        });
+
+        copyBtn?.addEventListener('click', async () => {
+          const text = promptOutput?.textContent || '';
+          try {
+            await navigator.clipboard.writeText(text);
+            alert('✓ Prompt copied! Paste into DALL·E 3, Midjourney, or Stable Diffusion.');
+          } catch (err) {
+            alert('Copy failed. Please manually select and copy.');
+          }
+        });
+
+        historyBtn?.addEventListener('click', showHistory);
+
+        historyOverlay?.addEventListener('click', function(e) {
+          if (e.target === historyOverlay) {
+            historyOverlay.style.display = 'none';
+          }
+        });
+      }
+
+      // ----- Init -----
+      function init() {
+        updateComboCounter();
+        bindEvents();
+        displayPrompt();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
