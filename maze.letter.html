@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Maze Letter Studio Pro | KDP Puzzle Book Creator</title>
+  <!-- Google Fonts: Nunito + Fredoka for child-friendly design -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-app: #f0f4ef;
+      --panel-bg: #1B4332;
+      --accent: #52B788;
+      --accent-hover: #6bcf9e;
+      --gold: #FFD166;
+      --gold-dark: #e6b800;
+      --text-light: #f0f7f2;
+      --text-dark: #1a2e24;
+      --worksheet-bg: #fffef7;
+      --card-shadow: 0 12px 28px rgba(0,0,0,0.08);
+      --radius-xl: 2rem;
+      --radius-lg: 1.4rem;
+      --radius-md: 1rem;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(160deg, #e8f0e3 0%, #d5e5d2 40%, #c8ddc4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      background-attachment: fixed;
+    }
+
+    .app-container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 1520px;
+      width: 100%;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    /* ========== LEFT PANEL ========== */
+    .control-panel {
+      flex: 1 1 400px;
+      background: var(--panel-bg);
+      color: var(--text-light);
+      border-radius: var(--radius-xl);
+      padding: 2rem 1.8rem;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      position: sticky;
+      top: 2rem;
+      max-height: 92vh;
+      overflow-y: auto;
+      backdrop-filter: blur(8px);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      padding-bottom: 1.4rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .logo-icon {
+      font-size: 2.6rem;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
+    }
+
+    .panel-title {
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 1.9rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff, #b7e4c7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .control-label {
+      font-weight: 700;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #a3d9b1;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .control-label .emoji {
+      font-size: 1.1rem;
+    }
+
+    /* Letter Grid */
+    .letter-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin: 0.3rem 0;
+    }
+
+    .letter-btn {
+      aspect-ratio: 1 / 1;
+      background: #2a543e;
+      border: 2px solid #3d7055;
+      border-radius: 0.9rem;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #d4ecd8;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+      position: relative;
+    }
+
+    .letter-btn:hover {
+      background: #3d7055;
+      border-color: var(--accent);
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(82, 183, 136, 0.35);
+    }
+
+    .letter-btn.active {
+      background: var(--accent);
+      border-color: var(--gold);
+      color: #1B4332;
+      box-shadow: 0 0 22px rgba(82, 183, 136, 0.7);
+      font-weight: 900;
+      transform: scale(1.08);
+    }
+
+    .letter-btn.used {
+      opacity: 0.5;
+      background: #1e3b2a;
+      border-color: #2a4a35;
+    }
+
+    .letter-btn.used::after {
+      content: '✓';
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      font-size: 0.7rem;
+      background: var(--gold);
+      color: #1B4332;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+    }
+
+    /* Toggle buttons */
+    .toggle-row {
+      display: flex;
+      gap: 0.5rem;
+      background: #0e2b1f;
+      border-radius: 2.5rem;
+      padding: 0.35rem;
+    }
+
+    .complexity-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 0.75rem 0.3rem;
+      border-radius: 2rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #b8d9c2;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: 'Nunito', sans-serif;
+      letter-spacing: 0.3px;
+    }
+
+    .complexity-btn.active {
+      background: var(--accent);
+      color: #1B4332;
+      font-weight: 800;
+      box-shadow: 0 6px 16px rgba(82, 183, 136, 0.5);
+    }
+
+    /* Select & Input */
+    select, input[type="text"] {
+      background: #2a543e;
+      border: 1px solid #46855f;
+      border-radius: 2.5rem;
+      padding: 0.85rem 1.2rem;
+      color: white;
+      font-weight: 600;
+      font-size: 0.95rem;
+      outline: none;
+      font-family: 'Nunito', sans-serif;
+      transition: var(--transition);
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23a3d9b1" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 1.2rem center;
+    }
+
+    select:hover, input[type="text"]:hover {
+      border-color: var(--accent);
+      background: #306045;
+    }
+
+    /* Radio groups */
+    .radio-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 600;
+      color: #d4ecd8;
+      cursor: pointer;
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      transition: var(--transition);
+      background: rgba(255,255,255,0.04);
+      text-transform: none;
+      font-size: 0.9rem;
+    }
+
+    .radio-group label:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    input[type="radio"] {
+      accent-color: var(--gold);
+      width: 1rem;
+      height: 1rem;
+    }
+
+    /* Buttons */
+    .btn {
+      background: linear-gradient(135deg, var(--accent), #3d8b5f);
+      border: none;
+      color: #1B4332;
+      font-weight: 800;
+      padding: 0.95rem 1.5rem;
+      border-radius: 3rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: 0 7px 0 #2d6a49;
+      font-family: 'Nunito', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .btn:hover {
+      background: linear-gradient(135deg, #6bcf9e, #52B788);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 0 #2d6a49;
+    }
+
+    .btn.secondary {
+      background: #3a6b54;
+      box-shadow: 0 6px 0 #1e3e2e;
+      color: #f0f7f2;
+      text-transform: none;
+      font-size: 0.9rem;
+    }
+
+    .btn.secondary:hover {
+      background: #4a8265;
+    }
+
+    .btn-icon {
+      font-size: 1.2rem;
+    }
+
+    /* ========== RIGHT PANEL ========== */
+    .preview-panel {
+      flex: 2.3 1 780px;
+      background: var(--worksheet-bg);
+      border-radius: var(--radius-xl);
+      padding: 2rem 2.2rem;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+      min-height: 820px;
+      border: 1px solid #e6e0d0;
+      position: relative;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      color: #3a5a48;
+      font-weight: 700;
+    }
+
+    .page-counter {
+      background: #e8f0e3;
+      padding: 0.3rem 1.2rem;
+      border-radius: 2rem;
+      font-size: 0.85rem;
+    }
+
+    .worksheet-title {
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 2.6rem;
+      color: #1B4332;
+      text-align: center;
+      margin-bottom: 0.3rem;
+      letter-spacing: -0.5px;
+    }
+
+    .name-line {
+      text-align: right;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #4a6b56;
+      font-size: 1rem;
+    }
+
+    .maze-grid-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .maze-card {
+      background: #ffffff;
+      border-radius: 1.5rem;
+      padding: 1rem 1rem 0.8rem;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      border: 2px solid #e8f0e3;
+      transition: all 0.3s;
+    }
+
+    .maze-card:hover {
+      box-shadow: 0 16px 32px rgba(0,0,0,0.12);
+    }
+
+    .letter-label {
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 1.8rem;
+      color: #2d5a45;
+      margin-bottom: 0.5rem;
+    }
+
+    .instruction-text {
+      text-align: center;
+      font-weight: 700;
+      color: #4a6b56;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+
+    .difficulty-badge {
+      display: inline-block;
+      background: #FFD166;
+      color: #1B4332;
+      padding: 0.2rem 0.9rem;
+      border-radius: 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      margin-left: 0.5rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding-top: 100px;
+      color: #b0bca8;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .maze-card {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .control-panel, .btn, .preview-header, .page-break-indicator { display: none !important; }
+      .preview-panel {
+        box-shadow: none; border: none; padding: 0; background: white;
+        border-radius: 0; width: 100%;
+      }
+      .maze-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    }
+
+    .page-break-indicator {
+      text-align: center;
+      margin: 1.2rem 0;
+      color: #8a9e8a;
+      font-weight: 600;
+      border-top: 2px dashed #c0cfb8;
+      padding-top: 0.8rem;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <!-- LEFT PANEL -->
+  <div class="control-panel">
+    <div class="panel-header">
+      <span class="logo-icon">🔤🌀</span>
+      <span class="panel-title">Maze Letter Studio</span>
+    </div>
+
+    <div class="control-group">
+      <span class="control-label"><span class="emoji">🔡</span> Select Letter</span>
+      <div class="letter-grid" id="letterGrid"></div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn secondary" id="randomLetterBtn" style="flex:1;">🎲 Random Letter</button>
+        <button class="btn secondary" id="resetUsedBtn" style="flex:1;" title="Reset used markers">🔄 Reset</button>
+      </div>
+      <div style="font-size:0.7rem; color:#8ab89a; text-align:center;">✓ = already used in current session</div>
+    </div>
+
+    <div class="control-group">
+      <span class="control-label"><span class="emoji">🧩</span> Maze Complexity</span>
+      <div class="toggle-row" id="complexityGroup">
+        <button class="complexity-btn active" data-comp="simple">🌱 Simple (3-5)</button>
+        <button class="complexity-btn" data-comp="medium">🌿 Medium (5-7)</button>
+        <button class="complexity-btn" data-comp="complex">🌳 Complex (7-10)</button>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <span class="control-label"><span class="emoji">📐</span> Maze Size on Page</span>
+      <div class="radio-group" id="sizeGroup">
+        <label><input type="radio" name="mazeSize" value="small"> 4 per page</label>
+        <label><input type="radio" name="mazeSize" value="medium" checked> 2 per page</label>
+        <label><input type="radio" name="mazeSize" value="large"> 1 per page (full)</label>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <span class="control-label"><span class="emoji">📝</span> Tracing Guide</span>
+      <div class="radio-group" id="traceGroup">
+        <label><input type="radio" name="traceGuide" value="yes" checked> ✅ Show dotted letter</label>
+        <label><input type="radio" name="traceGuide" value="no"> ❌ Hide background</label>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <span class="control-label"><span class="emoji">🚦</span> Start/End Markers</span>
+      <div class="radio-group" id="markersGroup">
+        <label><input type="radio" name="markers" value="yes" checked> ✅ Green arrow + Gold star</label>
+        <label><input type="radio" name="markers" value="no"> ❌ No markers</label>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <span class="control-label"><span class="emoji">🎨</span> Color Theme</span>
+      <select id="themeSelect">
+        <option value="forest">🌲 Forest Green (default)</option>
+        <option value="ocean">🌊 Ocean Blue</option>
+        <option value="sunset">🌅 Sunset Warm</option>
+        <option value="grape">🍇 Grape Purple</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <span class="control-label"><span class="emoji">📋</span> Page Title</span>
+      <input type="text" id="pageTitleInput" value="Maze Letter Challenge">
+    </div>
+
+    <div class="control-group">
+      <span class="control-label"><span class="emoji">✏️</span> Child's Name (optional)</span>
+      <input type="text" id="childNameInput" placeholder="Leave blank to omit name field">
+    </div>
+
+    <button class="btn" id="generateBtn"><span class="btn-icon">✨</span> Generate Maze</button>
+    <button class="btn secondary" id="solveBtn"><span class="btn-icon">🔍</span> Show Solution (2s)</button>
+    <button class="btn secondary" id="addPageBtn"><span class="btn-icon">📄</span> Add Another Page</button>
+    <button class="btn secondary" id="printBtn"><span class="btn-icon">🖨️</span> Print / Save as PDF</button>
+    <div style="font-size:0.7rem; color:#7aaa8e; text-align:center; margin-top:0.3rem;">KDP Ready • Maze Letter Studio Pro v2.0</div>
+  </div>
+
+  <!-- RIGHT PANEL PREVIEW -->
+  <div class="preview-panel" id="previewContainer">
+    <div class="preview-header">
+      <span>📋 Live Worksheet Preview</span>
+      <span class="page-counter" id="pageCounter">Page 0</span>
+    </div>
+    <div id="worksheetContent">
+      <div class="empty-state">👆 Select a letter and click <strong>Generate Maze</strong> to begin</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ---------- ENHANCED LETTER MASKS (20x20 for better detail) ----------
+  function createLetterMask(letter) {
+    const h = 20, w = 20;
+    const mask = Array(h).fill().map(() => Array(w).fill(false));
+    const set = (r, c, v = true) => { if (r >= 0 && r < h && c >= 0 && c < w) mask[r][c] = v; };
+    const col = (c, rStart, rEnd) => { for (let r = rStart; r <= rEnd; r++) set(r, c); };
+    const row = (r, cStart, cEnd) => { for (let c = cStart; c <= cEnd; c++) set(r, c); };
+
+    const L = letter.toUpperCase();
+    const thick = 3; // thickness of letter strokes
+
+    // Define letter shapes with thicker strokes
+    if (L === 'A') {
+      for (let r = 2; r < 18; r++) { for (let t = 0; t < thick; t++) { set(r, 2 + t); set(r, 15 - t); } }
+      row(2, 2, 15);
+      row(9, 2, 15);
+    } else if (L === 'B') {
+      for (let t = 0; t < thick; t++) col(2 + t, 2, 17);
+      for (let r = 2; r <= 9; r++) for (let t = 0; t < thick; t++) set(r, 10 + t);
+      for (let r = 11; r <= 17; r++) for (let t = 0; t < thick; t++) set(r, 10 + t);
+      row(2, 2, 10 + thick - 1);
+      row(9, 2, 10 + thick - 1);
+      row(17, 2, 10 + thick - 1);
+    } else if (L === 'C') {
+      for (let t = 0; t < thick; t++) col(2 + t, 4, 16);
+      row(2, 2, 12);
+      row(17, 2, 12);
+    } else if (L === 'D') {
+      for (let t = 0; t < thick; t++) col(2 + t, 2, 17);
+      for (let r = 2; r <= 17; r++) for (let t = 0; t < thick; t++) set(r, 12 + t);
+      row(2, 2, 12 + thick - 1);
+      row(17, 2, 12 + thick - 1);
+    } else if (L === 'E') {
+      for (let t = 0; t < thick; t++) col(2 + t, 2, 17);
+      row(2, 2, 13);
+      row(9, 2, 10);
+      row(17, 2, 13);
+    } else if (L === 'F') {
+      for (let t = 0; t < thick; t++) col(2 + t, 2, 17);
+      row(2, 2, 13);
+      row(9, 2, 10);
+    } else if (L === 'G') {
+      for (let t = 0; t < thick; t++) col(2 + t, 4, 16);
+      row(2, 2, 14);
+      row(17, 2, 14);
+      for (let t = 0; t < thick; t++) col(14 + t, 10, 17);
+      row(10, 10, 14 + thick - 1);
+    } else if (L === 'H') {
+      for (let t = 0; t < thick; t++) { col(2 + t, 2, 17); col(15 - t, 2, 17); }
+      row(9, 2, 15);
+    } else if (L === 'I') {
+      col(8, 2, 17);
+      col(9, 2, 17);
+      row(2, 4, 14);
+      row(17, 4, 14);
+    } else if (L === 'J') {
+      for (let t = 0; t < thick; t++) col(14 + t, 2, 17);
+      row(17, 4, 14 + thick - 1);
+      set(1, 10);
+      set(1, 11);
+    } else if (L === 'K') {
+      for (let t = 0; t < thick; t++) col(2 + t, 2, 17);
+      for (let i = 0; i < 8; i++) { for (let t = 0; t < thick; t++) { set(2 + i, 14 - i - t); set(9 + i, 5 + i + t); } }
+    } else if (L === 'L') {
+      for (let t = 0; t < thick; t++) col(2 + t, 2, 17);
+      row(17, 2, 14);
+    } else if (L === 'M') {
+      for (let t = 0; t < thick; t++) { col(2 + t, 2, 17); col(15 - t, 2, 17); }
+      for (let t = 0; t < thick; t++) { set(5, 8 + t); set(9, 8 + t); set(7, 6 + t); set(7, 10 + t); }
+    } else if (L === 'N') {
+      for (let t = 0; t < thick; t++) { col(2 + t, 2, 17); col(15 - t, 2, 17); }
+      for (let i = 0; i < 16; i++) for (let t = 0; t < thick; t++) set(2 + i, 4 + i + t);
+    } else if (L === 'O') {
+      for (let t = 0; t < thick; t++) { col(2 + t, 3, 16); col(15 - t, 3, 16); }
+      row(2, 2, 15);
+      row(17, 2, 15);
+    } else if (L === 'P') {
+      for (let t = 0; t < thick; t++) col(2 + t, 2, 17);
+      row(2, 2, 11);
+      row(9, 2, 11);
+      for (let r = 3; r < 9; r++) for (let t = 0; t < thick; t++) set(r, 11 + t);
+    } else if (L === 'Q') {
+      for (let t = 0; t < thick; t++) { col(2 + t, 3, 15); col(14 - t, 3, 15); }
+      row(2, 2, 14);
+      row(16, 2, 14);
+      set(15, 12);
+      set(16, 14);
+    } else if (L === 'R') {
+      for (let t = 0; t < thick; t++) col(2 + t, 2, 17);
+      row(2, 2, 11);
+      row(9, 2, 11);
+      for (let r = 3; r < 9; r++) for (let t = 0; t < thick; t++) set(r, 11 + t);
+      for (let i = 0; i < 7; i++) for (let t = 0; t < thick; t++) set(10 + i, 5 + i + t);
+    } else if (L === 'S') {
+      row(2, 2, 14);
+      row(9, 2, 12);
+      row(17, 2, 14);
+      for (let t = 0; t < thick; t++) { col(2 + t, 3, 8); col(14 - t, 10, 16); }
+    } else if (L === 'T') {
+      row(2, 2, 16);
+      for (let t = 0; t < thick; t++) col(8 + t, 3, 17);
+    } else if (L === 'U') {
+      for (let t = 0; t < thick; t++) { col(2 + t, 2, 16); col(15 - t, 2, 16); }
+      row(17, 2, 15);
+    } else if (L === 'V') {
+      for (let i = 0; i < 16; i++) for (let t = 0; t < thick; t++) {
+        set(2 + i, 2 + Math.floor(i / 2) + t);
+        set(2 + i, 15 - Math.floor(i / 2) - t);
+      }
+    } else if (L === 'W') {
+      for (let t = 0; t < thick; t++) { col(2 + t, 2, 17); col(15 - t, 2, 17); }
+      for (let t = 0; t < thick; t++) { set(13, 8 + t); set(9, 6 + t); set(9, 10 + t); }
+    } else if (L === 'X') {
+      for (let i = 0; i < 16; i++) for (let t = 0; t < thick; t++) {
+        set(2 + i, 3 + i + t);
+        set(2 + i, 16 - i - t);
+      }
+    } else if (L === 'Y') {
+      for (let i = 0; i < 8; i++) for (let t = 0; t < thick; t++) {
+        set(2 + i, 3 + i + t);
+        set(2 + i, 15 - i - t);
+      }
+      for (let t = 0; t < thick; t++) col(8 + t, 9, 17);
+    } else if (L === 'Z') {
+      row(2, 2, 16);
+      row(17, 2, 16);
+      for (let i = 0; i < 15; i++) for (let t = 0; t < thick; t++) set(2 + i, 14 - i - t);
+    }
+    return mask;
+  }
+
+  // ---------- MAZE GENERATOR (Improved DFS) ----------
+  function generateMaze(mask, complexity) {
+    const h = mask.length, w = mask[0].length;
+    const grid = Array(h).fill().map(() => Array(w).fill(1));
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) if (mask[r][c]) grid[r][c] = 0;
+
+    const insideCells = [];
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) if (mask[r][c]) insideCells.push([r, c]);
+
+    if (insideCells.length < 2) return { grid, solution: [], start: null, end: null };
+
+    const start = insideCells[0];
+    const end = insideCells[insideCells.length - 1];
+    const visited = Array(h).fill().map(() => Array(w).fill(false));
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function dfs(r, c) {
+      visited[r][c] = true;
+      const dirs = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+      shuffle(dirs);
+      for (let [dr, dc] of dirs) {
+        const nr = r + dr, nc = c + dc;
+        if (nr >= 0 && nr < h && nc >= 0 && nc < w && mask[nr][nc] && !visited[nr][nc]) {
+          grid[r + dr / 2][c + dc / 2] = 0;
+          grid[nr][nc] = 0;
+          dfs(nr, nc);
+        }
+      }
+    }
+
+    dfs(start[0], start[1]);
+
+    // Add dead ends based on complexity
+    const deadEndsCount = complexity === 'simple' ? 3 : (complexity === 'medium' ? 10 : 22);
+    for (let i = 0; i < deadEndsCount; i++) {
+      const candidates = [];
+      for (let r = 1; r < h - 1; r++) for (let c = 1; c < w - 1; c++) {
+        if (mask[r][c] && grid[r][c] === 0) {
+          let walls = 0;
+          if (grid[r - 1][c] === 1) walls++;
+          if (grid[r + 1][c] === 1) walls++;
+          if (grid[r][c - 1] === 1) walls++;
+          if (grid[r][c + 1] === 1) walls++;
+          if (walls === 3) candidates.push([r, c]);
+        }
+      }
+      if (candidates.length) {
+        const [rr, cc] = candidates[Math.floor(Math.random() * candidates.length)];
+        grid[rr][cc] = 1;
+      }
+    }
+
+    // BFS solution path
+    const queue = [start];
+    const visitedBfs = new Set();
+    visitedBfs.add(`${start[0]},${start[1]}`);
+    const bfsParent = new Map();
+    while (queue.length) {
+      const [cr, cc] = queue.shift();
+      if (cr === end[0] && cc === end[1]) break;
+      for (let [dr, dc] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+        const nr = cr + dr, nc = cc + dc;
+        if (nr >= 0 && nr < h && nc >= 0 && nc < w && grid[nr][nc] === 0 && !visitedBfs.has(`${nr},${nc}`)) {
+          visitedBfs.add(`${nr},${nc}`);
+          bfsParent.set(`${nr},${nc}`, `${cr},${cc}`);
+          queue.push([nr, nc]);
+        }
+      }
+    }
+    const solution = [];
+    let cur = `${end[0]},${end[1]}`;
+    while (cur) {
+      const [rr, cc] = cur.split(',').map(Number);
+      solution.push([rr, cc]);
+      cur = bfsParent.get(cur);
+    }
+    return { grid, solution, start, end };
+  }
+
+  // ---------- SVG RENDERING WITH THEME ----------
+  function renderMazeSVG(mask, mazeData, cellSize, showTrace, showMarkers, letter, theme) {
+    const { grid, solution, start, end } = mazeData;
+    const h = mask.length, w = mask[0].length;
+    const svgW = w * cellSize, svgH = h * cellSize;
+
+    const themeColors = {
+      forest: { wall: '#2D3748', bg: '#ffffff', trace: '#e8f3e0', border: '#d0e0c8' },
+      ocean: { wall: '#1e3a5f', bg: '#ffffff', trace: '#dbeafe', border: '#bfdbfe' },
+      sunset: { wall: '#5c3d2e', bg: '#ffffff', trace: '#fef3c7', border: '#fde68a' },
+      grape: { wall: '#4a1942', bg: '#ffffff', trace: '#f3e8ff', border: '#e9d5ff' }
+    };
+    const colors = themeColors[theme] || themeColors.forest;
+
+    let svg = `<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">`;
+
+    if (showTrace) {
+      svg += `<rect width="100%" height="100%" fill="${colors.bg}"/>`;
+      for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+        if (mask[r][c]) {
+          svg += `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="${colors.trace}" stroke="${colors.border}" stroke-width="0.5" rx="1"/>`;
+        }
+      }
+    } else {
+      svg += `<rect width="100%" height="100%" fill="${colors.bg}"/>`;
+    }
+
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+      const x = c * cellSize, y = r * cellSize;
+      if (mask[r][c]) {
+        if (grid[r][c] === 1) {
+          svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${colors.wall}" rx="1.5"/>`;
+        } else {
+          svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.3" rx="1"/>`;
+        }
+      }
+    }
+
+    if (showMarkers && start && end) {
+      const sx = start[1] * cellSize + cellSize / 2, sy = start[0] * cellSize + cellSize / 2;
+      svg += `<polygon points="${sx - cellSize / 3},${sy - cellSize / 3} ${sx + cellSize / 3},${sy} ${sx - cellSize / 3},${sy + cellSize / 3}" fill="#52B788" stroke="#2d6a49" stroke-width="1"/>`;
+      const ex = end[1] * cellSize + cellSize / 2, ey = end[0] * cellSize + cellSize / 2;
+      svg += `<text x="${ex}" y="${ey}" text-anchor="middle" dy=".35em" font-size="${cellSize * 0.9}" fill="#FFD166" stroke="#e6b800" stroke-width="0.5">★</text>`;
+    }
+
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // ---------- STATE ----------
+  let currentLetter = 'A';
+  let complexity = 'simple';
+  let mazeSize = 'medium';
+  let showTrace = true;
+  let showMarkers = true;
+  let pageTitle = 'Maze Letter Challenge';
+  let childName = '';
+  let theme = 'forest';
+  let usedLetters = new Set();
+  let pagesData = [];
+
+  // DOM refs
+  const letterGrid = document.getElementById('letterGrid');
+  const previewContent = document.getElementById('worksheetContent');
+  const pageCounter = document.getElementById('pageCounter');
+  const complexityBtns = document.querySelectorAll('.complexity-btn');
+  const sizeRadios = document.getElementsByName('mazeSize');
+  const traceRadios = document.getElementsByName('traceGuide');
+  const markerRadios = document.getElementsByName('markers');
+  const themeSelect = document.getElementById('themeSelect');
+
+  function updateLetterButtons() {
+    letterGrid.querySelectorAll('.letter-btn').forEach(b => {
+      b.classList.remove('active', 'used');
+      if (b.dataset.letter === currentLetter) b.classList.add('active');
+      if (usedLetters.has(b.dataset.letter)) b.classList.add('used');
+    });
+  }
+
+  function buildLetterGrid() {
+    letterGrid.innerHTML = '';
+    for (let i = 0; i < 26; i++) {
+      const letter = String.fromCharCode(65 + i);
+      const btn = document.createElement('button');
+      btn.className = 'letter-btn';
+      btn.dataset.letter = letter;
+      btn.textContent = letter;
+      btn.addEventListener('click', () => {
+        currentLetter = letter;
+        updateLetterButtons();
+      });
+      letterGrid.appendChild(btn);
+    }
+    updateLetterButtons();
+  }
+
+  function getCellSize() {
+    if (mazeSize === 'small') return 7;
+    if (mazeSize === 'medium') return 12;
+    return 18;
+  }
+
+  function generatePageForLetter(letter) {
+    const mask = createLetterMask(letter);
+    const mazeData = generateMaze(mask, complexity);
+    usedLetters.add(letter);
+    return { letter, mask, mazeData };
+  }
+
+  function renderFullWorksheet() {
+    if (!pagesData.length) {
+      previewContent.innerHTML = '<div class="empty-state">👆 Select a letter and click <strong>Generate Maze</strong> to begin</div>';
+      pageCounter.textContent = 'Page 0';
+      return;
+    }
+
+    let html = `<div class="worksheet-title">${pageTitle}</div>`;
+    if (childName.trim()) {
+      html += `<div class="name-line">Name: ____________________</div>`;
+    }
+
+    const cardsPerRow = mazeSize === 'small' ? 2 : (mazeSize === 'medium' ? 2 : 1);
+    html += `<div class="maze-grid-container">`;
+
+    pagesData.forEach((page, idx) => {
+      const cellSize = getCellSize();
+      const svg = renderMazeSVG(page.mask, page.mazeData, cellSize, showTrace, showMarkers, page.letter, theme);
+      const widthPercent = mazeSize === 'small' ? '45%' : (mazeSize === 'medium' ? '46%' : '88%');
+      html += `<div class="maze-card" style="width:${widthPercent}; max-width:420px;">
+        <div class="letter-label">Letter ${page.letter} <span class="difficulty-badge">${complexity}</span></div>
+        ${svg}
+      </div>`;
+    });
+
+    html += `</div>`;
+    if (pagesData.length === 1) {
+      html += `<div class="instruction-text">Find your way through the maze! The path will show you the letter <strong>${pagesData[0].letter}</strong>.</div>`;
+    } else {
+      html += `<div class="instruction-text">Solve each maze to discover the hidden letters!</div>`;
+    }
+
+    previewContent.innerHTML = html;
+    pageCounter.textContent = `Page ${pagesData.length}`;
+
+    // Animate maze appearance
+    setTimeout(() => {
+      const allRects = document.querySelectorAll('.maze-card svg rect');
+      allRects.forEach((rect, i) => {
+        rect.style.opacity = '0';
+        rect.style.transition = 'opacity 0.12s ease';
+        setTimeout(() => { rect.style.opacity = '1'; }, i * 1.5);
+      });
+    }, 80);
+  }
+
+  function highlightSolution() {
+    if (!pagesData.length) return;
+    pagesData.forEach((page, idx) => {
+      const sol = page.mazeData.solution;
+      if (!sol || !sol.length) return;
+      const svg = document.querySelectorAll('.maze-card svg')[idx];
+      if (!svg) return;
+      const cellSize = getCellSize();
+      let polyPoints = sol.map(([r, c]) => `${c * cellSize + cellSize / 2},${r * cellSize + cellSize / 2}`).join(' ');
+      const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      poly.setAttribute("points", polyPoints);
+      poly.setAttribute("fill", "none");
+      poly.setAttribute("stroke", "#e63946");
+      poly.setAttribute("stroke-width", "3.5");
+      poly.setAttribute("opacity", "0.85");
+      poly.setAttribute("stroke-linecap", "round");
+      poly.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(poly);
+      setTimeout(() => poly.remove(), 2200);
+    });
+  }
+
+  // Event listeners
+  document.getElementById('randomLetterBtn').addEventListener('click', () => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const available = letters.split('').filter(l => !usedLetters.has(l));
+    if (available.length) {
+      currentLetter = available[Math.floor(Math.random() * available.length)];
+    } else {
+      currentLetter = letters[Math.floor(Math.random() * 26)];
+    }
+    updateLetterButtons();
+  });
+
+  document.getElementById('resetUsedBtn').addEventListener('click', () => {
+    usedLetters.clear();
+    updateLetterButtons();
+  });
+
+  complexityBtns.forEach(b => b.addEventListener('click', function() {
+    complexityBtns.forEach(bb => bb.classList.remove('active'));
+    this.classList.add('active');
+    complexity = this.dataset.comp;
+  }));
+
+  sizeRadios.forEach(r => r.addEventListener('change', () => { if (r.checked) mazeSize = r.value; }));
+  traceRadios.forEach(r => r.addEventListener('change', () => { if (r.checked) showTrace = r.value === 'yes'; }));
+  markerRadios.forEach(r => r.addEventListener('change', () => { if (r.checked) showMarkers = r.value === 'yes'; }));
+  themeSelect.addEventListener('change', e => theme = e.target.value);
+
+  document.getElementById('pageTitleInput').addEventListener('input', e => pageTitle = e.target.value || 'Maze Letter Challenge');
+  document.getElementById('childNameInput').addEventListener('input', e => childName = e.target.value);
+
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    pagesData = [generatePageForLetter(currentLetter)];
+    updateLetterButtons();
+    renderFullWorksheet();
+  });
+
+  document.getElementById('solveBtn').addEventListener('click', highlightSolution);
+
+  document.getElementById('addPageBtn').addEventListener('click', () => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const available = letters.split('').filter(l => !usedLetters.has(l));
+    const next = available.length ? available[Math.floor(Math.random() * available.length)] : letters[Math.floor(Math.random() * 26)];
+    pagesData.push(generatePageForLetter(next));
+    updateLetterButtons();
+    renderFullWorksheet();
+  });
+
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  // Initialize
+  buildLetterGrid();
+  pagesData = [generatePageForLetter('A')];
+  updateLetterButtons();
+  renderFullWorksheet();
+})();
+</script>
+</body>
+</html>
