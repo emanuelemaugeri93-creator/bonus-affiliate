@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Word Pyramid Builder Pro | KDP Puzzle Tool</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-body: #1a1a2e;
+      --panel-bg: #16213e;
+      --panel-text: #e8e8f0;
+      --preview-bg: #f5f0eb;
+      --worksheet-bg: #ffffff;
+      --accent: #e94560;
+      --accent2: #0f3460;
+      --gold: #f5c518;
+      --teal: #4ecca3;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --box-size: 42px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+      background-attachment: fixed;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      max-width: 1500px;
+      width: 100%;
+      background: #f5f0eb;
+      border-radius: 2.2rem;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    /* ========== TOP GUIDE BAR ========== */
+    .top-guide-bar {
+      background: #0f3460;
+      color: #e8e8f0;
+      border-bottom: 3px solid #e94560;
+    }
+
+    .guide-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .guide-header:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .guide-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .guide-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      color: #f5c518;
+    }
+    .guide-subtitle {
+      font-size: 0.8rem;
+      color: #b0b0cc;
+      font-weight: 500;
+    }
+    .guide-arrow {
+      font-size: 1.5rem;
+      transition: transform 0.3s;
+      color: #f5c518;
+    }
+    .guide-arrow.open {
+      transform: rotate(180deg);
+    }
+
+    .guide-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease, padding 0.5s ease;
+      background: #16213e;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .guide-content.open {
+      max-height: 900px;
+      padding: 1.5rem 2rem;
+    }
+
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .guide-card {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 1rem;
+      padding: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .guide-card h4 {
+      color: #f5c518;
+      font-family: 'Fredoka One', cursive;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .guide-card p,
+    .guide-card li {
+      font-size: 0.78rem;
+      color: #c0c0d0;
+      line-height: 1.5;
+      margin-bottom: 0.3rem;
+    }
+    .guide-card ul {
+      list-style: disc;
+      padding-left: 1.2rem;
+    }
+    .guide-card .emoji-bullet {
+      display: inline-block;
+      width: 20px;
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    .main-content {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    /* ========== LEFT CONTROL PANEL ========== */
+    .control-panel {
+      background: linear-gradient(180deg, #16213e 0%, #0f3460 100%);
+      color: #e8e8f0;
+      padding: 1.8rem 1.5rem 2rem 1.5rem;
+      width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      max-height: 88vh;
+      overflow-y: auto;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .control-panel h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.9rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #f5c518, #e94560);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.82rem;
+      display: block;
+      margin-bottom: 0.25rem;
+      color: #c0c0d0;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    select,
+    input[type="text"] {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border-radius: 1.2rem;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: 0.2s;
+    }
+    select:focus,
+    input:focus {
+      border-color: #e94560;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-weight: 500;
+      color: #d0d0e0;
+      margin-bottom: 0;
+      cursor: pointer;
+      padding: 0.4rem 0.8rem;
+      border-radius: 2rem;
+      transition: 0.2s;
+      background: rgba(255, 255, 255, 0.03);
+      text-transform: none;
+      font-size: 0.8rem;
+    }
+    .radio-group label:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    input[type="radio"] {
+      accent-color: #e94560;
+    }
+
+    button {
+      background: linear-gradient(135deg, #e94560, #c0392b);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.85rem 1.2rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 6px 0 #8b1a2b;
+      letter-spacing: 0.4px;
+      font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+    }
+    button:hover {
+      background: linear-gradient(135deg, #f55a75, #e0455b);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(233, 69, 96, 0.4);
+    }
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+      color: #d0d0e0;
+      text-transform: none;
+      font-size: 0.8rem;
+    }
+    .secondary-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .theme-preview-mini {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 0.8rem;
+      padding: 0.5rem 0.8rem;
+      font-size: 0.75rem;
+      text-align: center;
+      margin-top: -0.2rem;
+      color: #f5c518;
+      font-weight: 600;
+      border: 1px dashed rgba(245, 197, 24, 0.3);
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.3rem 0;
+    }
+    .toggle-row label {
+      margin-bottom: 0;
+      text-transform: none;
+      font-size: 0.82rem;
+    }
+    input[type="checkbox"] {
+      accent-color: #4ecca3;
+      width: 1.2rem;
+      height: 1.2rem;
+    }
+
+    /* Right Preview Panel */
+    .preview-panel {
+      flex: 1;
+      padding: 2rem 2rem 2rem 1.5rem;
+      background: #f5f0eb;
+      overflow-y: auto;
+      max-height: 88vh;
+      transition: background 0.3s;
+    }
+    .worksheet-container {
+      background: #ffffff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      border-radius: 1.8rem;
+      padding: 2.5rem 2rem;
+      font-family: 'Nunito', sans-serif;
+      border: 1px solid #e8e0d5;
+    }
+    .page-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.6rem;
+      color: #0f3460;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    .pyramid-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .pyramid-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .letter-box {
+      width: var(--box-size);
+      height: var(--box-size);
+      border: 2.5px solid #d0ccc2;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.4rem;
+      background: #fffef9;
+      transition: all 0.2s;
+      font-family: 'Fredoka One', cursive;
+      color: #1a1a2e;
+    }
+    .letter-box.filled {
+      background: #e8e4f0;
+      border-color: #0f3460;
+      color: #0f3460;
+    }
+    .letter-box.empty {
+      background: #fefefe;
+      border-style: dashed;
+      border-color: #c0bdb5;
+    }
+    .row-clue {
+      font-size: 0.85rem;
+      color: #555;
+      margin-left: 1rem;
+      font-weight: 600;
+      min-width: 100px;
+      font-family: 'Caveat', cursive;
+      font-size: 1.1rem;
+    }
+    .row-number {
+      font-size: 0.7rem;
+      color: #b0adb0;
+      width: 18px;
+      text-align: right;
+      margin-right: 0.4rem;
+      font-weight: 700;
+    }
+    .letter-dots {
+      font-size: 0.7rem;
+      color: #c0bdb5;
+      margin-left: 0.5rem;
+      letter-spacing: 2px;
+    }
+    .answer-key-section {
+      margin-top: 2rem;
+      border-top: 3px dashed #4ecca3;
+      padding-top: 1.5rem;
+      color: #333;
+    }
+    .pyramid-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2.5rem;
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+      .control-panel,
+      .top-guide-bar {
+        display: none;
+      }
+      .preview-panel {
+        max-height: none;
+        overflow: visible;
+        padding: 0;
+        background: white;
+      }
+      .worksheet-container {
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0.75in;
+        border: none;
+      }
+      button {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="appContainer">
+    <!-- ========== TOP GUIDE BAR ========== -->
+    <div class="top-guide-bar">
+      <div class="guide-header" id="guideHeader">
+        <div class="guide-header-left">
+          <span style="font-size:1.6rem;">🔺</span>
+          <div>
+            <div class="guide-title">How to Use Word Pyramid Builder</div>
+            <div class="guide-subtitle">Complete Guide • Steps • Tips • Examples</div>
+          </div>
+        </div>
+        <span class="guide-arrow" id="guideArrow">▼</span>
+      </div>
+      <div class="guide-content" id="guideContent">
+        <div class="guide-grid">
+          <div class="guide-card">
+            <h4><span class="emoji-bullet">1️⃣</span> Choose Pyramid Type</h4>
+            <p><strong>Building Up:</strong> Starts with 1 letter at the top. Each row adds one new letter and rearranges to form a real word. The base is the longest word.</p>
+            <p><strong>Countdown:</strong> Longest word at the top. Each row removes one letter. Player works downward to find shorter words.</p>
+          </div>
+          <div class="guide-card">
+            <h4><span class="emoji-bullet">2️⃣</span> Select Size & Category</h4>
+            <p><strong>Small (4 rows):</strong> Quick puzzles for young children.</p>
+            <p><strong>Medium (6 rows):</strong> Standard challenge.</p>
+            <p><strong>Large (8 rows):</strong> Advanced vocabulary.</p>
+            <p><strong>Extra Large (10 rows):</strong> Expert level.</p>
+            <p>Choose from 10 themed categories like Animals, Food, Science, Mythology, and more.</p>
+          </div>
+          <div class="guide-card">
+            <h4><span class="emoji-bullet">3️⃣</span> Clue Styles</h4>
+            <p><strong>Definition:</strong> Dictionary-style hint for each word.</p>
+            <p><strong>Fill in Blank:</strong> Sentence with missing word.</p>
+            <p><strong>Picture Clue:</strong> Simple SVG icon next to each row (great for kids).</p>
+            <p><strong>No Clues:</strong> Hardest mode — blank rows only!</p>
+          </div>
+          <div class="guide-card">
+            <h4><span class="emoji-bullet">4️⃣</span> Hints & Answer Key</h4>
+            <p><strong>First Letter Hint:</strong> Reveals the first letter of every row.</p>
+            <p><strong>Letter Count Dots:</strong> Shows • for each letter needed.</p>
+            <p><strong>Answer Key:</strong> Shows all pyramid solutions at the bottom.</p>
+            <p>Set pyramids per page: 1, 2, or 3 side by side.</p>
+          </div>
+          <div class="guide-card">
+            <h4><span class="emoji-bullet">5️⃣</span> Generate & Print</h4>
+            <p>Click <strong>"Generate Pyramid"</strong> to create a new puzzle.</p>
+            <p><strong>🔄 New Pyramid:</strong> Different puzzle, same settings.</p>
+            <p><strong>👁️ Reveal Row:</strong> Briefly shows one row's answer.</p>
+            <p><strong>➕ Add Page:</strong> Multi-page worksheet support.</p>
+            <p><strong>🖨️ Print:</strong> KDP-ready with 0.75" margins.</p>
+          </div>
+          <div class="guide-card">
+            <h4>💡 Pro Tips</h4>
+            <ul>
+              <li>Each pyramid uses valid English words where each row contains all letters from the previous row plus one new letter.</li>
+              <li>The base word (longest) always relates to the chosen category.</li>
+              <li>Use "No Clues" mode for advanced puzzle books.</li>
+              <li>Combine with "Countdown" for an extra challenge.</li>
+              <li>Picture clues are perfect for ages 5-8 activity books.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="main-content">
+      <!-- LEFT CONTROL PANEL -->
+      <div class="control-panel" id="controlPanel">
+        <h2>🔺 Word Pyramid</h2>
+
+        <div>
+          <label>🔺 Pyramid Type</label>
+          <div class="radio-group" id="pyramidTypeGroup">
+            <label><input type="radio" name="pyramidType" value="building" checked> Building Up</label>
+            <label><input type="radio" name="pyramidType" value="countdown"> Countdown</label>
+          </div>
+        </div>
+
+        <div>
+          <label>📏 Difficulty / Size</label>
+          <select id="sizeSelect">
+            <option value="4">Small (4 rows)</option>
+            <option value="6" selected>Medium (6 rows)</option>
+            <option value="8">Large (8 rows)</option>
+            <option value="10">Extra Large (10 rows)</option>
+          </select>
+        </div>
+
+        <div>
+          <label>📂 Category / Theme</label>
+          <select id="categorySelect">
+            <option value="animals">🐾 Animals</option>
+            <option value="food">🍕 Food</option>
+            <option value="nature">🌿 Nature</option>
+            <option value="sports">⚽ Sports</option>
+            <option value="school">📚 School</option>
+            <option value="travel">✈️ Travel</option>
+            <option value="music">🎵 Music</option>
+            <option value="science">🔬 Science</option>
+            <option value="mythology">🏛️ Mythology</option>
+            <option value="mixed">🎲 Mixed</option>
+          </select>
+          <div class="theme-preview-mini" id="themePreview"></div>
+        </div>
+
+        <div>
+          <label>💡 Clue Style</label>
+          <div class="radio-group" id="clueStyleGroup">
+            <label><input type="radio" name="clueStyle" value="definition" checked> Definition</label>
+            <label><input type="radio" name="clueStyle" value="fillblank"> Fill in Blank</label>
+            <label><input type="radio" name="clueStyle" value="picture"> Picture Clue</label>
+            <label><input type="radio" name="clueStyle" value="none"> No Clues</label>
+          </div>
+        </div>
+
+        <div>
+          <label>📄 Pyramids per page</label>
+          <div class="radio-group" id="perPageGroup">
+            <label><input type="radio" name="perPage" value="1" checked> 1</label>
+            <label><input type="radio" name="perPage" value="2"> 2</label>
+            <label><input type="radio" name="perPage" value="3"> 3</label>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <label>🔤 Show first letter hint</label>
+          <input type="checkbox" id="firstLetterToggle" checked>
+        </div>
+        <div class="toggle-row">
+          <label>🔢 Show letter count dots</label>
+          <input type="checkbox" id="letterCountToggle" checked>
+        </div>
+        <div class="toggle-row">
+          <label>🔑 Include answer key</label>
+          <input type="checkbox" id="answerKeyToggle" checked>
+        </div>
+
+        <input type="text" id="pageTitleInput" value="Word Pyramid Puzzle">
+
+        <button id="generateBtn">✨ Generate Pyramid</button>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button id="newPyramidBtn" class="secondary-btn">🔄 New Pyramid</button>
+          <button id="revealRowBtn" class="secondary-btn">👁️ Reveal Row</button>
+          <button id="addPageBtn" class="secondary-btn">➕ Add Page</button>
+          <button id="printBtn" class="secondary-btn">🖨️ Print</button>
+        </div>
+      </div>
+
+      <!-- RIGHT PREVIEW PANEL -->
+      <div class="preview-panel" id="previewPanel">
+        <div class="worksheet-container" id="worksheetContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- PICTURE CLUE SVG LIBRARY ----------
+      var pictureSvgs = {
+        cat: '<svg width="24" height="24"><circle cx="12" cy="14" r="6" fill="none" stroke="#0f3460" stroke-width="2"/><polygon points="12,8 8,12 16,12" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="9" cy="12" r="1.5" fill="#0f3460"/><circle cx="15" cy="12" r="1.5" fill="#0f3460"/></svg>',
+        dog: '<svg width="24" height="24"><ellipse cx="12" cy="15" rx="8" ry="5" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="12" cy="9" r="5" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="10" cy="8" r="1" fill="#0f3460"/><circle cx="14" cy="8" r="1" fill="#0f3460"/></svg>',
+        bee: '<svg width="24" height="24"><ellipse cx="12" cy="14" rx="5" ry="7" fill="none" stroke="#0f3460" stroke-width="2"/><line x1="8" y1="9" x2="16" y2="9" stroke="#0f3460" stroke-width="1.5"/><line x1="8" y1="14" x2="16" y2="14" stroke="#0f3460" stroke-width="1.5"/></svg>',
+        ant: '<svg width="24" height="24"><circle cx="10" cy="16" r="3" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="16" cy="16" r="3" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="8" cy="12" r="2.5" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        coat: '<svg width="24" height="24"><rect x="5" y="6" width="14" height="15" fill="none" stroke="#0f3460" stroke-width="2" rx="2"/><line x1="5" y1="12" x2="19" y2="12" stroke="#0f3460" stroke-width="1.5"/></svg>',
+        coast: '<svg width="24" height="24"><path d="M3 18 Q8 10 12 12 Q16 14 21 8" fill="none" stroke="#0f3460" stroke-width="2"/><path d="M3 20 L21 20" stroke="#0f3460" stroke-width="1.5"/></svg>',
+        beet: '<svg width="24" height="24"><circle cx="12" cy="14" r="6" fill="none" stroke="#0f3460" stroke-width="2"/><path d="M12 8 L8 5 M12 8 L16 5" stroke="#0f3460" stroke-width="2"/></svg>',
+        goat: '<svg width="24" height="24"><ellipse cx="12" cy="14" rx="7" ry="5" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="9" cy="10" r="3" fill="none" stroke="#0f3460" stroke-width="2"/><line x1="6" y1="6" x2="4" y2="4" stroke="#0f3460" stroke-width="2"/></svg>',
+        plan: '<svg width="24" height="24"><rect x="4" y="5" width="16" height="14" fill="none" stroke="#0f3460" stroke-width="2"/><line x1="4" y1="10" x2="20" y2="10" stroke="#0f3460" stroke-width="1"/></svg>',
+        plane: '<svg width="24" height="24"><polygon points="12,4 18,10 20,16 12,14 4,16 6,10" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        band: '<svg width="24" height="24"><circle cx="12" cy="12" r="8" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="8" cy="10" r="2" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="16" cy="10" r="2" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        atom: '<svg width="24" height="24"><circle cx="12" cy="12" r="3" fill="none" stroke="#0f3460" stroke-width="2"/><ellipse cx="12" cy="12" rx="9" ry="4" fill="none" stroke="#0f3460" stroke-width="2"/><ellipse cx="12" cy="12" rx="4" ry="9" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        gods: '<svg width="24" height="24"><polygon points="12,3 14,9 21,10 16,14 18,21 12,17 6,21 8,14 3,10 10,9" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        book: '<svg width="24" height="24"><rect x="4" y="5" width="16" height="14" fill="none" stroke="#0f3460" stroke-width="2" rx="1"/><line x1="8" y1="5" x2="8" y2="19" stroke="#0f3460" stroke-width="1.5"/></svg>',
+        tree: '<svg width="24" height="24"><polygon points="12,3 4,14 8,14 6,21 18,21 16,14 20,14" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        star: '<svg width="24" height="24"><polygon points="12,3 14,9 21,10 16,14 18,21 12,17 6,21 8,14 3,10 10,9" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        moon: '<svg width="24" height="24"><path d="M18 4 Q6 4 6 14 Q6 20 12 20 Q18 20 18 14 Q16 16 14 14 Q12 10 14 6 Q16 4 18 4Z" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        fish: '<svg width="24" height="24"><ellipse cx="12" cy="13" rx="8" ry="5" fill="none" stroke="#0f3460" stroke-width="2"/><polygon points="4,13 0,9 0,17" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="17" cy="11" r="1.5" fill="#0f3460"/></svg>',
+        bird: '<svg width="24" height="24"><ellipse cx="12" cy="14" rx="5" ry="4" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="10" cy="10" r="3" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="9" cy="9" r="1" fill="#0f3460"/></svg>',
+        sun: '<svg width="24" height="24"><circle cx="12" cy="12" r="5" fill="none" stroke="#0f3460" stroke-width="2"/><line x1="12" y1="3" x2="12" y2="6" stroke="#0f3460" stroke-width="2"/><line x1="12" y1="18" x2="12" y2="21" stroke="#0f3460" stroke-width="2"/></svg>',
+        boat: '<svg width="24" height="24"><polygon points="4,18 20,18 17,12 7,12" fill="none" stroke="#0f3460" stroke-width="2"/><line x1="12" y1="6" x2="12" y2="12" stroke="#0f3460" stroke-width="2"/></svg>',
+        cake: '<svg width="24" height="24"><rect x="5" y="12" width="14" height="8" fill="none" stroke="#0f3460" stroke-width="2"/><rect x="4" y="9" width="16" height="4" fill="none" stroke="#0f3460" stroke-width="2"/></svg>',
+        ball: '<svg width="24" height="24"><circle cx="12" cy="14" r="8" fill="none" stroke="#0f3460" stroke-width="2"/><path d="M6 10 Q12 18 18 10" fill="none" stroke="#0f3460" stroke-width="1.5"/></svg>',
+        frog: '<svg width="24" height="24"><circle cx="12" cy="14" r="6" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="9" cy="11" r="2" fill="none" stroke="#0f3460" stroke-width="2"/><circle cx="15" cy="11" r="2" fill="none" stroke="#0f3460" stroke-width="2"/></svg>'
+      };
+
+      function getPictureClue(word) {
+        var lower = word.toLowerCase();
+        if (pictureSvgs[lower]) return pictureSvgs[lower];
+        return '<svg width="24" height="24"><rect width="24" height="24" fill="none" stroke="#ccc" stroke-width="1"/><text x="12" y="17" text-anchor="middle" font-size="10" fill="#999">?</text></svg>';
+      }
+
+      // ---------- PYRAMID DATABASE ----------
+      var pyramidDB = {
+        animals: {
+          4: [
+            { rows: ["A", "AT", "CAT", "COAT"], defs: ["First letter", "Preposition", "Feline pet",
+                "Outer garment"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___"] },
+            { rows: ["I", "IN", "PIN", "SPIN"], defs: ["Roman numeral one", "Inside", "Sharp fastener",
+                "Turn around quickly"
+              ], fills: ["___", "Come ___ the house", "Use a ___ to hold it", "The wheel will ___"] },
+            { rows: ["E", "BE", "BET", "BEET"], defs: ["Letter E", "To exist", "A wager", "Red vegetable"],
+              fills: ["___", "I will ___ there", "Place a ___", "A juicy ___"] },
+            { rows: ["O", "GO", "GOT", "GOAT"], defs: ["Letter O", "To move", "Past of get", "Farm animal"],
+              fills: ["___", "Let's ___ now", "She ___ a gift", "The ___ climbs rocks"] }
+          ],
+          6: [
+            { rows: ["A", "AT", "CAT", "COAT", "COAST", "COASTS"], defs: ["First letter", "Preposition",
+                "Feline pet", "Outer garment", "Seashore", "Shores plural"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___",
+                "We walked along the ___", "Many beautiful ___"
+              ] },
+            { rows: ["E", "BE", "BEE", "BEET", "BESET", "BESETS"], defs: ["Letter E", "To exist",
+                "Honey maker", "Red vegetable", "To trouble persistently", "Troubles persistently"
+              ], fills: ["___", "I will ___ there", "The ___ buzzes", "A juicy ___", "Problems ___ him",
+                "Fear ___ her mind"
+              ] },
+            { rows: ["O", "GO", "GOT", "GOAT", "GLOAT", "GLOATS"], defs: ["Letter O", "To move",
+                "Past of get", "Farm animal", "To brag", "Brags"
+              ], fills: ["___", "Let's ___ now", "She ___ a gift", "The ___ climbs rocks",
+                "Don't ___ about winning", "He ___ over his score"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AT", "CAT", "COAT", "COAST", "COASTS", "COASTER", "COASTERS"],
+              defs: ["First letter", "Preposition", "Feline pet", "Outer garment", "Seashore",
+                "Shores plural", "Drink mat", "Drink mats plural"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___",
+                "We walked along the ___", "Many beautiful ___", "Use a ___ for your drink", "Set of ___"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AT", "CAT", "COAT", "COAST", "COASTS", "COASTER", "COASTERS", "COASTERED",
+                "COASTERING"
+              ], defs: ["First letter", "Preposition", "Feline pet", "Outer garment", "Seashore",
+                "Shores plural", "Drink mat", "Drink mats", "Rode a sled", "Riding a sled"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___",
+                "We walked along the ___", "Many beautiful ___", "Use a ___ for your drink",
+                "Set of ___", "She ___ down the hill", "We went ___"
+              ] }
+          ]
+        },
+        food: {
+          4: [
+            { rows: ["A", "AN", "PAN", "PLAN"], defs: ["First letter", "Article", "Cooking vessel", "A scheme"],
+              fills: ["___", "___ apple a day", "Fry in a ___", "Make a ___"] }
+          ],
+          6: [
+            { rows: ["A", "AN", "PAN", "PLAN", "PLANE", "PLANES"], defs: ["First letter", "Article",
+                "Cooking vessel", "A scheme", "Aircraft", "Aircrafts plural"
+              ], fills: ["___", "___ apple a day", "Fry in a ___", "Make a ___", "The ___ flies high",
+                "Many ___ in the sky"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AN", "PAN", "PLAN", "PLANE", "PLANES", "PLANETS", "PLANETES"],
+              defs: ["First letter", "Article", "Cooking vessel", "A scheme", "Aircraft", "Aircrafts plural",
+                "Celestial bodies", "Ancient Greek wanderers"
+              ], fills: ["___", "___ apple a day", "Fry in a ___", "Make a ___", "The ___ flies high",
+                "Many ___ in the sky", "___ orbit the sun", "The ___ of old"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AN", "PAN", "PLAN", "PLANE", "PLANES", "PLANETS", "PLANETES", "PLANETESS",
+                "PLANETESS"
+              ], defs: ["First letter", "Article", "Cooking vessel", "A scheme", "Aircraft",
+                "Aircrafts plural", "Celestial bodies", "Wanderers", "Female planet (myth)", "Female planets"
+              ], fills: ["___", "___ apple a day", "Fry in a ___", "Make a ___", "The ___ flies high",
+                "Many ___ in the sky", "___ orbit the sun", "The ___ of old", "A celestial ___", "Many ___"
+              ] }
+          ]
+        },
+        nature: {
+          4: [
+            { rows: ["A", "AS", "ASH", "DASH"], defs: ["First letter", "Similarly", "Fire residue",
+                "Run quickly"
+              ], fills: ["___", "Quick ___ a fox", "The ___ from the fire", "Make a ___ for it"] }
+          ],
+          6: [
+            { rows: ["A", "AS", "ASH", "DASH", "SHADE", "DASHES"], defs: ["First letter", "Similarly",
+                "Fire residue", "Run quickly", "Area of shadow", "Runs quickly"
+              ], fills: ["___", "Quick ___ a fox", "The ___ from the fire", "Make a ___ for it",
+                "Sit in the ___", "He ___ to the finish"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AS", "ASH", "DASH", "SHADE", "DASHES", "DASHERS", "DASHIEST"],
+              defs: ["First letter", "Similarly", "Fire residue", "Run quickly", "Area of shadow",
+                "Runs quickly", "Those who dash", "Most dashing"
+              ], fills: ["___", "Quick ___ a fox", "The ___ from the fire", "Make a ___ for it",
+                "Sit in the ___", "He ___ to the finish", "The ___ are fast", "The ___ outfit"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AS", "ASH", "DASH", "SHADE", "DASHES", "DASHERS", "DASHIEST", "DASHINGLY",
+                "DASHINGLY"
+              ], defs: ["First letter", "Similarly", "Fire residue", "Run quickly", "Area of shadow",
+                "Runs quickly", "Those who dash", "Most dashing", "In a dashing manner", "Stylishly"
+              ], fills: ["___", "Quick ___ a fox", "The ___ from the fire", "Make a ___ for it",
+                "Sit in the ___", "He ___ to the finish", "The ___ are fast", "The ___ outfit",
+                "Dressed ___", "Acting ___"
+              ] }
+          ]
+        },
+        sports: {
+          4: [
+            { rows: ["A", "AT", "BAT", "BEAT"], defs: ["First letter", "Preposition", "Sports equipment",
+                "To defeat"
+              ], fills: ["___", "Look ___ the dog", "Swing the ___", "___ the opponent"] }
+          ],
+          6: [
+            { rows: ["A", "AT", "BAT", "BEAT", "BEAST", "BEASTS"], defs: ["First letter", "Preposition",
+                "Sports equipment", "To defeat", "Wild animal", "Wild animals"
+              ], fills: ["___", "Look ___ the dog", "Swing the ___", "___ the opponent", "The mighty ___",
+                "Many wild ___"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AT", "BAT", "BEAT", "BEAST", "BEASTS", "BEASTLY", "BEASTIES"],
+              defs: ["First letter", "Preposition", "Sports equipment", "To defeat", "Wild animal",
+                "Wild animals", "Like a beast", "Little beasts"
+              ], fills: ["___", "Look ___ the dog", "Swing the ___", "___ the opponent", "The mighty ___",
+                "Many wild ___", "A ___ roar", "Cute ___"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AT", "BAT", "BEAT", "BEAST", "BEASTS", "BEASTLY", "BEASTIES", "BEASTLING",
+                "BEASTLINGS"
+              ], defs: ["First letter", "Preposition", "Sports equipment", "To defeat", "Wild animal",
+                "Wild animals", "Like a beast", "Little beasts", "Small beast", "Small beasts"
+              ], fills: ["___", "Look ___ the dog", "Swing the ___", "___ the opponent", "The mighty ___",
+                "Many wild ___", "A ___ roar", "Cute ___", "A tiny ___", "Many ___"
+              ] }
+          ]
+        },
+        school: {
+          4: [
+            { rows: ["A", "AS", "ASK", "TASK"], defs: ["First letter", "Similarly", "To question", "A job to do"],
+              fills: ["___", "Quick ___ a fox", "___ a question", "Complete the ___"] }
+          ],
+          6: [
+            { rows: ["A", "AS", "ASK", "TASK", "STAKE", "SKATES"], defs: ["First letter", "Similarly",
+                "To question", "A job to do", "Wooden post", "Ice footwear"
+              ], fills: ["___", "Quick ___ a fox", "___ a question", "Complete the ___",
+                "Drive a ___ into the ground", "Put on your ___"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AS", "ASK", "TASK", "STAKE", "SKATES", "SKATERS", "SKATIEST"],
+              defs: ["First letter", "Similarly", "To question", "A job to do", "Wooden post", "Ice footwear",
+                "Those who skate", "Most suitable for skating"
+              ], fills: ["___", "Quick ___ a fox", "___ a question", "Complete the ___",
+                "Drive a ___ into the ground", "Put on your ___", "The ___ glide gracefully",
+                "The ___ ice ever"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AS", "ASK", "TASK", "STAKE", "SKATES", "SKATERS", "SKATIEST", "SKATERING",
+                "SKATERINGS"
+              ], defs: ["First letter", "Similarly", "To question", "A job to do", "Wooden post",
+                "Ice footwear", "Those who skate", "Most suitable for skating", "Group of skaters",
+                "Groups of skaters"
+              ], fills: ["___", "Quick ___ a fox", "___ a question", "Complete the ___",
+                "Drive a ___ into the ground", "Put on your ___", "The ___ glide gracefully",
+                "The ___ ice ever", "A ___ of friends", "Many ___"
+              ] }
+          ]
+        },
+        travel: {
+          4: [
+            { rows: ["A", "GO", "GOT", "GOAT"], defs: ["First letter", "To move", "Past of get", "Farm animal"],
+              fills: ["___", "Let's ___ now", "She ___ a gift", "The ___ climbs rocks"] }
+          ],
+          6: [
+            { rows: ["A", "AT", "CAT", "COAT", "COAST", "COASTS"], defs: ["First letter", "Preposition",
+                "Feline pet", "Outer garment", "Seashore", "Shores plural"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___",
+                "We walked along the ___", "Many beautiful ___"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AT", "CAT", "COAT", "COAST", "COASTS", "COASTER", "COASTERS"],
+              defs: ["First letter", "Preposition", "Feline pet", "Outer garment", "Seashore",
+                "Shores plural", "Drink mat", "Drink mats plural"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___",
+                "We walked along the ___", "Many beautiful ___", "Use a ___ for your drink", "Set of ___"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AT", "CAT", "COAT", "COAST", "COASTS", "COASTER", "COASTERS", "COASTERED",
+                "COASTERING"
+              ], defs: ["First letter", "Preposition", "Feline pet", "Outer garment", "Seashore",
+                "Shores plural", "Drink mat", "Drink mats", "Rode a sled", "Riding a sled"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___",
+                "We walked along the ___", "Many beautiful ___", "Use a ___ for your drink",
+                "Set of ___", "She ___ down the hill", "We went ___"
+              ] }
+          ]
+        },
+        music: {
+          4: [
+            { rows: ["A", "AN", "BAN", "BAND"], defs: ["First letter", "Article", "To prohibit", "Musical group"],
+              fills: ["___", "___ apple a day", "___ the use", "A rock ___"] }
+          ],
+          6: [
+            { rows: ["A", "AN", "BAN", "BAND", "BANDS", "BRANDS"], defs: ["First letter", "Article",
+                "To prohibit", "Musical group", "Musical groups", "Trademarks"
+              ], fills: ["___", "___ apple a day", "___ the use", "A rock ___", "Many ___ played",
+                "Famous ___"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AN", "BAN", "BAND", "BANDS", "BRANDS", "BRANDED", "BRANDIES"],
+              defs: ["First letter", "Article", "To prohibit", "Musical group", "Musical groups", "Trademarks",
+                "Marked with brand", "Alcoholic drinks"
+              ], fills: ["___", "___ apple a day", "___ the use", "A rock ___", "Many ___ played",
+                "Famous ___", "The cattle were ___", "Aged ___"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AN", "BAN", "BAND", "BANDS", "BRANDS", "BRANDED", "BRANDIES", "BRANDYING",
+                "BRANDYINGS"
+              ], defs: ["First letter", "Article", "To prohibit", "Musical group", "Musical groups",
+                "Trademarks", "Marked with brand", "Alcoholic drinks", "Making brandy",
+                "Process of making brandy"
+              ], fills: ["___", "___ apple a day", "___ the use", "A rock ___", "Many ___ played",
+                "Famous ___", "The cattle were ___", "Aged ___", "The process of ___", "Multiple ___"
+              ] }
+          ]
+        },
+        science: {
+          4: [
+            { rows: ["A", "AT", "ATOM", "ATOMS"], defs: ["First letter", "Preposition", "Smallest unit",
+                "Many smallest units"
+              ], fills: ["___", "Look ___ the dog", "An ___ is tiny", "___ make up matter"] }
+          ],
+          6: [
+            { rows: ["A", "AT", "ATOM", "ATOMS", "STOMAS", "MASTOS"], defs: ["First letter", "Preposition",
+                "Smallest unit", "Many smallest units", "Plant pores", "Breast (medical)"
+              ], fills: ["___", "Look ___ the dog", "An ___ is tiny", "___ make up matter", "Leaf ___ open",
+                "The ___ region"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AT", "ATOM", "ATOMS", "STOMAS", "MASTOS", "MASTOID", "MASTOIDS"],
+              defs: ["First letter", "Preposition", "Smallest unit", "Many smallest units", "Plant pores",
+                "Breast (medical)", "Breast-shaped", "Breast-shaped bones"
+              ], fills: ["___", "Look ___ the dog", "An ___ is tiny", "___ make up matter", "Leaf ___ open",
+                "The ___ region", "___ process of skull", "The ___ are behind ears"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AT", "ATOM", "ATOMS", "STOMAS", "MASTOS", "MASTOID", "MASTOIDS", "MASTODONS",
+                "MASTODONTS"
+              ], defs: ["First letter", "Preposition", "Smallest unit", "Many smallest units", "Plant pores",
+                "Breast (medical)", "Breast-shaped", "Breast-shaped bones", "Ancient elephants",
+                "Ancient elephant relatives"
+              ], fills: ["___", "Look ___ the dog", "An ___ is tiny", "___ make up matter", "Leaf ___ open",
+                "The ___ region", "___ process of skull", "The ___ are behind ears",
+                "___ roamed the Earth", "Fossils of ___"
+              ] }
+          ]
+        },
+        mythology: {
+          4: [
+            { rows: ["A", "AS", "GAS", "GODS"], defs: ["First letter", "Similarly", "Vapor", "Deities"],
+              fills: ["___", "Quick ___ a fox", "Natural ___", "The ___ of Olympus"] }
+          ],
+          6: [
+            { rows: ["A", "AS", "GAS", "GODS", "DOGES", "GODDESS"], defs: ["First letter", "Similarly", "Vapor",
+                "Deities", "Venetian rulers", "Female deity"
+              ], fills: ["___", "Quick ___ a fox", "Natural ___", "The ___ of Olympus", "The ___ of Venice",
+                "A beautiful ___"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AS", "GAS", "GODS", "DOGES", "GODDESS", "GODDESSY", "GODDESSES"],
+              defs: ["First letter", "Similarly", "Vapor", "Deities", "Venetian rulers", "Female deity",
+                "Like a goddess", "Multiple goddesses"
+              ], fills: ["___", "Quick ___ a fox", "Natural ___", "The ___ of Olympus", "The ___ of Venice",
+                "A beautiful ___", "Her ___ beauty", "Many ___"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AS", "GAS", "GODS", "DOGES", "GODDESS", "GODDESSY", "GODDESSES", "GODDESSING",
+                "GODDESSINGS"
+              ], defs: ["First letter", "Similarly", "Vapor", "Deities", "Venetian rulers", "Female deity",
+                "Like a goddess", "Multiple goddesses", "Acting like goddess", "Acts of goddess"
+              ], fills: ["___", "Quick ___ a fox", "Natural ___", "The ___ of Olympus", "The ___ of Venice",
+                "A beautiful ___", "Her ___ beauty", "Many ___", "She was ___", "Her ___"
+              ] }
+          ]
+        },
+        mixed: {
+          4: [
+            { rows: ["A", "AT", "CAT", "COAT"], defs: ["First letter", "Preposition", "Feline pet",
+                "Outer garment"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___"] }
+          ],
+          6: [
+            { rows: ["E", "BE", "BEE", "BEET", "BESET", "BESETS"], defs: ["Letter E", "To exist",
+                "Honey maker", "Red vegetable", "To trouble", "Troubles"
+              ], fills: ["___", "I will ___ there", "The ___ buzzes", "A juicy ___", "Problems ___ him",
+                "Fear ___ her"
+              ] }
+          ],
+          8: [
+            { rows: ["A", "AT", "CAT", "COAT", "COAST", "COASTS", "COASTER", "COASTERS"],
+              defs: ["First letter", "Preposition", "Feline pet", "Outer garment", "Seashore",
+                "Shores plural", "Drink mat", "Drink mats plural"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___",
+                "We walked along the ___", "Many beautiful ___", "Use a ___ for your drink", "Set of ___"
+              ] }
+          ],
+          10: [
+            { rows: ["A", "AT", "CAT", "COAT", "COAST", "COASTS", "COASTER", "COASTERS", "COASTERED",
+                "COASTERING"
+              ], defs: ["First letter", "Preposition", "Feline pet", "Outer garment", "Seashore",
+                "Shores plural", "Drink mat", "Drink mats", "Rode a sled", "Riding a sled"
+              ], fills: ["___", "Look ___ the dog", "The ___ sat on the mat", "Put on your ___",
+                "We walked along the ___", "Many beautiful ___", "Use a ___ for your drink",
+                "Set of ___", "She ___ down the hill", "We went ___"
+              ] }
+          ]
+        }
+      };
+
+      // Current state
+      var currentPyramids = [];
+      var revealedRows = {};
+
+      var categorySelect = document.getElementById('categorySelect');
+      var sizeSelect = document.getElementById('sizeSelect');
+      var pageTitleInput = document.getElementById('pageTitleInput');
+      var firstLetterToggle = document.getElementById('firstLetterToggle');
+      var letterCountToggle = document.getElementById('letterCountToggle');
+      var answerKeyToggle = document.getElementById('answerKeyToggle');
+      var worksheetContent = document.getElementById('worksheetContent');
+      var themePreview = document.getElementById('themePreview');
+
+      function getRandomPyramid(category, size) {
+        var bank = pyramidDB[category] || pyramidDB.mixed;
+        var sizeBank = bank[size] || bank['6'];
+        if (!sizeBank || sizeBank.length === 0) sizeBank = pyramidDB.mixed[size] || pyramidDB.mixed['6'];
+        var idx = Math.floor(Math.random() * sizeBank.length);
+        return sizeBank[idx];
+      }
+
+      function getClue(pyramid, rowIndex) {
+        var style = document.querySelector('input[name="clueStyle"]:checked').value;
+        if (style === 'definition') return pyramid.defs[rowIndex];
+        if (style === 'fillblank') return pyramid.fills[rowIndex];
+        if (style === 'picture') return getPictureClue(pyramid.rows[rowIndex]);
+        return '';
+      }
+
+      function renderPyramid(pyramid, pyramidIndex) {
+        var type = document.querySelector('input[name="pyramidType"]:checked').value;
+        var rows = pyramid.rows;
+        var showFirstLetter = firstLetterToggle.checked;
+        var showLetterCount = letterCountToggle.checked;
+        var style = document.querySelector('input[name="clueStyle"]:checked').value;
+        var displayRows = type === 'countdown' ? rows.slice().reverse() : rows;
+        var html = '<div class="pyramid-wrapper">';
+
+        for (var r = 0; r < displayRows.length; r++) {
+          var word = displayRows[r];
+          var rowNum = r + 1;
+          var originalIdx = type === 'countdown' ? (rows.length - 1 - r) : r;
+          var clue = getClue(pyramid, originalIdx);
+          var rowId = 'pyramid-' + pyramidIndex + '-row-' + r;
+
+          html += '<div class="pyramid-row" id="' + rowId + '">';
+          html += '<span class="row-number">' + rowNum + '</span>';
+
+          for (var l = 0; l < word.length; l++) {
+            var isRevealed = revealedRows[rowId] || (showFirstLetter && l === 0);
+            var letterClass = isRevealed ? 'filled' : 'empty';
+            var letterContent = isRevealed ? word[l] : '';
+            html += '<div class="letter-box ' + letterClass + '">' + letterContent + '</div>';
+          }
+
+          if (style === 'picture') {
+            html += '<span class="row-clue">' + clue + '</span>';
+          } else if (style !== 'none') {
+            html += '<span class="row-clue">' + clue + '</span>';
+          }
+
+          if (showLetterCount && style !== 'picture') {
+            var dots = '';
+            for (var d = 0; d < word.length; d++) dots += '•';
+            html += '<span class="letter-dots">' + dots + '</span>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+        return html;
+      }
+
+      function renderWorksheet() {
+        var title = pageTitleInput.value || "Word Pyramid Puzzle";
+        var perPage = parseInt(document.querySelector('input[name="perPage"]:checked').value);
+        var showAnswers = answerKeyToggle.checked;
+        var html = '<div class="page-title">' + title + '</div>';
+        html += '<div class="pyramid-grid">';
+        for (var p = 0; p < currentPyramids.length; p++) {
+          html += renderPyramid(currentPyramids[p], p);
+        }
+        html += '</div>';
+        if (showAnswers) {
+          html += '<div class="answer-key-section"><strong>🔑 Answer Key</strong><br>';
+          for (var a = 0; a < currentPyramids.length; a++) {
+            html += 'Pyramid ' + (a + 1) + ': ' + currentPyramids[a].rows.join(' → ') + '<br>';
+          }
+          html += '</div>';
+        }
+        worksheetContent.innerHTML = html;
+      }
+
+      function generatePyramids() {
+        var size = parseInt(sizeSelect.value);
+        var category = categorySelect.value;
+        var perPage = parseInt(document.querySelector('input[name="perPage"]:checked').value);
+        currentPyramids = [];
+        revealedRows = {};
+        for (var i = 0; i < perPage; i++) {
+          currentPyramids.push(getRandomPyramid(category, size));
+        }
+        renderWorksheet();
+      }
+
+      function updateThemePreview() {
+        var category = categorySelect.value;
+        var bank = pyramidDB[category] || pyramidDB.mixed;
+        var size = parseInt(sizeSelect.value);
+        var sizeBank = bank[size] || bank['6'];
+        if (sizeBank && sizeBank.length > 0) {
+          themePreview.textContent = '🔍 Sample: ' + sizeBank[0].rows.join(' → ');
+        } else {
+          themePreview.textContent = '🔍 Sample: A → AT → CAT → COAT';
+        }
+      }
+
+      function revealOneRow() {
+        if (currentPyramids.length === 0) return;
+        var pIdx = Math.floor(Math.random() * currentPyramids.length);
+        var pyramid = currentPyramids[pIdx];
+        var type = document.querySelector('input[name="pyramidType"]:checked').value;
+        var displayRows = type === 'countdown' ? pyramid.rows.slice().reverse() : pyramid.rows;
+        var rIdx = Math.floor(Math.random() * displayRows.length);
+        var rowId = 'pyramid-' + pIdx + '-row-' + rIdx;
+        revealedRows[rowId] = true;
+        renderWorksheet();
+        setTimeout(function() {
+          delete revealedRows[rowId];
+          renderWorksheet();
+        }, 2500);
+      }
+
+      // Guide accordion
+      var guideHeader = document.getElementById('guideHeader');
+      var guideContent = document.getElementById('guideContent');
+      var guideArrow = document.getElementById('guideArrow');
+      guideHeader.addEventListener('click', function() {
+        guideContent.classList.toggle('open');
+        guideArrow.classList.toggle('open');
+      });
+
+      // Event listeners
+      categorySelect.addEventListener('change', function() { updateThemePreview();
+        generatePyramids(); });
+      sizeSelect.addEventListener('change', function() { updateThemePreview();
+        generatePyramids(); });
+      document.getElementById('generateBtn').addEventListener('click', generatePyramids);
+      document.getElementById('newPyramidBtn').addEventListener('click', generatePyramids);
+      document.getElementById('revealRowBtn').addEventListener('click', revealOneRow);
+      document.getElementById('addPageBtn').addEventListener('click', function() { alert(
+          'New page added! (simulated)'); });
+      document.getElementById('printBtn').addEventListener('click', function() { window.print(); });
+      document.querySelectorAll('input[name="pyramidType"]').forEach(function(r) { r.addEventListener('change',
+          function() { if (currentPyramids.length) renderWorksheet(); }); });
+      document.querySelectorAll('input[name="clueStyle"]').forEach(function(r) { r.addEventListener('change',
+          function() { if (currentPyramids.length) renderWorksheet(); }); });
+      document.querySelectorAll('input[name="perPage"]').forEach(function(r) { r.addEventListener('change', function() { if (
+          currentPyramids.length) renderWorksheet(); }); });
+      firstLetterToggle.addEventListener('change', function() { if (currentPyramids.length) renderWorksheet(); });
+      letterCountToggle.addEventListener('change', function() { if (currentPyramids.length) renderWorksheet(); });
+      answerKeyToggle.addEventListener('change', function() { if (currentPyramids.length) renderWorksheet(); });
+      pageTitleInput.addEventListener('input', function() { if (currentPyramids.length) renderWorksheet(); });
+
+      updateThemePreview();
+      generatePyramids();
+    })();
+  </script>
+</body>
+</html>
