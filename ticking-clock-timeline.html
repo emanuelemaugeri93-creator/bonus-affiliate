@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.5, user-scalable=yes">
+  <title>Ticking Clock · Timeline Worksheet Maker Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #080705;
+      --panel-bg: #11100d;
+      --gold: #C9A84C;
+      --gold-light: #e0c76e;
+      --gold-dark: #8a6d2b;
+      --phase1: #1B2B4B;
+      --phase2: #C9A84C;
+      --phase3: #F4A261;
+      --phase4: #E63946;
+      --phase5: #8B0000;
+      --parchment: #FDF6E3;
+      --page-bg: #FAFAF8;
+      --ink: #1a1812;
+      --border-subtle: #2a2820;
+      --shadow-card: 0 12px 40px rgba(0,0,0,0.8);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+      --radius-xl: 24px;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: var(--bg-deep);
+      font-family: 'Inter', sans-serif;
+      color: #d4cfc0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 1.5rem;
+      background-image:
+        radial-gradient(ellipse at 25% 15%, #1a1710 0%, transparent 60%),
+        radial-gradient(ellipse at 75% 85%, #0d0b07 0%, transparent 60%);
+    }
+    .app-frame {
+      display: flex;
+      gap: 2rem;
+      max-width: 1650px;
+      width: 100%;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    /* ========== LEFT PANEL ========== */
+    .control-panel {
+      background: var(--panel-bg);
+      border-radius: var(--radius-xl);
+      padding: 1.8rem 1.5rem;
+      flex: 1 1 360px;
+      max-width: 410px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 1.3rem;
+      height: fit-content;
+      position: sticky;
+      top: 1.5rem;
+      backdrop-filter: blur(10px);
+    }
+    .panel-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: var(--gold);
+      letter-spacing: 1px;
+      border-bottom: 2px solid var(--gold-dark);
+      padding-bottom: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .panel-title .icon { font-size: 1.6rem; }
+
+    /* GUIDE DROPDOWN */
+    .guide-container {
+      background: #1a1812;
+      border-radius: var(--radius-md);
+      border: 1px solid #2a2820;
+      overflow: hidden;
+      margin-bottom: 0.2rem;
+    }
+    .guide-header {
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      color: var(--gold-light);
+      font-size: 0.9rem;
+      transition: var(--transition);
+      user-select: none;
+      letter-spacing: 0.3px;
+    }
+    .guide-header:hover { background: #1f1d15; }
+    .guide-arrow {
+      font-size: 0.7rem;
+      transition: transform 0.35s ease;
+      color: var(--gold);
+    }
+    .guide-arrow.open { transform: rotate(180deg); }
+    .guide-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.45s ease, padding 0.45s ease;
+      padding: 0 1rem;
+      background: #0e0d09;
+      font-size: 0.76rem;
+      line-height: 1.7;
+      color: #b0a890;
+    }
+    .guide-content.open { max-height: 700px; padding: 0.9rem 1rem; }
+    .guide-content strong { color: var(--gold-light); }
+    .guide-step {
+      display: flex;
+      gap: 0.6rem;
+      margin: 0.55rem 0;
+      align-items: flex-start;
+    }
+    .step-num {
+      background: var(--gold);
+      color: #0b0a07;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .guide-tip {
+      background: #1a1810;
+      border-left: 3px solid var(--gold);
+      padding: 0.5rem 0.7rem;
+      border-radius: 0 6px 6px 0;
+      margin-top: 0.6rem;
+      font-style: italic;
+      font-size: 0.73rem;
+    }
+
+    .control-group { display:flex; flex-direction:column; gap:0.35rem; }
+    label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #a89f88;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+    select, input[type="text"] {
+      background: #1c1a14;
+      border: 1px solid #3a362a;
+      color: #e8e0cc;
+      padding: 0.65rem 1rem;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      width: 100%;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+    .radio-group, .toggle-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .radio-group label, .toggle-row label {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-weight: 500;
+      color: #c7bd9f;
+      text-transform: none;
+      font-size: 0.78rem;
+      cursor: pointer;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      background: #1a1812;
+      border: 1px solid transparent;
+      transition: var(--transition);
+    }
+    .radio-group label:has(input:checked), .toggle-row label:has(input:checked) {
+      border-color: var(--gold);
+      background: #252215;
+      color: var(--gold-light);
+      font-weight: 600;
+    }
+    input[type="radio"], input[type="checkbox"] { accent-color:var(--gold); width:15px; height:15px; }
+    .btn {
+      background: var(--gold);
+      border: none;
+      color: #0b0a07;
+      font-weight: 700;
+      padding: 0.85rem 1.2rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
+      width: 100%;
+    }
+    .btn:hover { background:var(--gold-light); transform:translateY(-2px); box-shadow:0 10px 25px rgba(201,168,76,0.35); }
+    .btn-secondary { background:transparent; border:2px solid var(--gold); color:var(--gold); }
+    .btn-secondary:hover { background:rgba(201,168,76,0.1); color:var(--gold-light); }
+    .btn-group { display:flex; gap:0.6rem; }
+    .btn-group .btn { flex:1; }
+    .event-info-card {
+      background: linear-gradient(135deg, #1f1c13, #17150e);
+      border-radius: var(--radius-md);
+      padding: 0.9rem 1rem;
+      font-size: 0.8rem;
+      color: #b0a890;
+      border-left: 3px solid var(--gold);
+      line-height: 1.5;
+    }
+    .event-info-card strong { color:#f0e6c5; font-family:'Playfair Display',serif; font-size:0.95rem; }
+    .phase-legend-mini {
+      display: flex;
+      gap: 0.25rem;
+      margin-top: 0.3rem;
+    }
+    .phase-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ========== RIGHT WORKSHEET ========== */
+    .worksheet-preview {
+      flex: 2 1 880px;
+      background: var(--page-bg);
+      border-radius: 8px;
+      box-shadow: 0 20px 55px rgba(0,0,0,0.95), 0 0 0 1px rgba(201,168,76,0.15);
+      color: var(--ink);
+      max-height: 93vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .worksheet-toolbar {
+      position: sticky;
+      top: 0;
+      background: #f7f5ef;
+      padding: 0.6rem 1.5rem;
+      border-bottom: 1px solid #e0d8c0;
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      z-index: 10;
+      border-radius: 8px 8px 0 0;
+      align-items: center;
+    }
+    .toolbar-btn {
+      background: #f0ede0;
+      border: 1px solid #c4b98a;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      transition: var(--transition);
+      color: #3a362a;
+    }
+    .toolbar-btn:hover { background:var(--gold); color:#fff; border-color:var(--gold); }
+    .toolbar-sep { width:1px; height:20px; background:#d4c99b; margin:0 0.3rem; }
+    .worksheet-inner { padding: 2rem 2.2rem; }
+
+    .page-header {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #1e1c16;
+      border-bottom: 4px double var(--gold);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .page-subtitle {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b6452;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .student-line {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      color: #5a5540;
+      text-align: right;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px dotted #c4b98a;
+      display: inline-block;
+      padding: 0 1rem 0.2rem;
+      float: right;
+    }
+
+    /* TIMELINE */
+    .timeline-container { position:relative; margin:2.2rem 0 2.5rem; }
+    .hourglass-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+      padding: 0 1%;
+    }
+    .hourglass-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: #6b6452;
+      font-family: 'Inter', sans-serif;
+    }
+    .hourglass-svg { width: 38px; height: 38px; }
+    .time-markers {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      color: #4a4535;
+      margin-bottom: 0.3rem;
+      padding: 0 1%;
+    }
+    .timeline-bar {
+      display: flex;
+      height: 32px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+      margin: 0.4rem 0 0.8rem;
+    }
+    .phase-seg {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+    }
+    .phase-seg:hover { filter:brightness(1.35); transform:scaleY(1.15); z-index:2; }
+    .phase-seg.active-phase { box-shadow: 0 0 0 4px #fff, 0 0 20px rgba(201,168,76,0.6); z-index:3; }
+    .phase-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #5a5540;
+      margin-top: 0.3rem;
+      padding: 0 1%;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* EVENT CARDS */
+    .event-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 0.8rem;
+      margin-top: 1.8rem;
+    }
+    .event-card {
+      background: #fff;
+      border: 1px solid #d4c99b;
+      border-radius: var(--radius-md);
+      padding: 0.8rem 0.8rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s;
+      border-top: 5px solid #ccc;
+      position: relative;
+    }
+    .event-card.highlight {
+      box-shadow: 0 0 0 4px var(--gold), 0 8px 24px rgba(201,168,76,0.25);
+      transform: translateY(-3px);
+      z-index: 2;
+    }
+    .event-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+    .event-card .card-num {
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      font-size: 0.7rem;
+      color: #8a7b55;
+      background: #f5f2e8;
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+    }
+    .event-card .card-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: #8a7b55;
+    }
+    .event-card .desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin: 0.4rem 0;
+      min-height: 1.5rem;
+      color: #2a2518;
+      line-height: 1.3;
+    }
+    .event-card .desc.blank {
+      color: #bbb;
+      font-style: italic;
+      font-size: 0.8rem;
+    }
+    .event-card .hook-line {
+      border-top: 1px dotted #e0d8c0;
+      margin: 0.3rem 0;
+      padding-top: 0.3rem;
+      font-size: 0.65rem;
+      color: #777;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.4;
+    }
+    .event-card .hook-line .label-icon {
+      font-weight: 700;
+      color: var(--gold-dark);
+    }
+    .connector-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+    }
+
+    .answer-page {
+      page-break-before: always;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 3px dashed var(--gold);
+    }
+    .answer-page .page-header { font-size: 1.6rem; }
+
+    /* CHAPTER OVERLAY */
+    .chapter-overlay {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 0.8rem;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .chapter-chip {
+      padding: 0.3rem 0.9rem;
+      border-radius: 14px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    @media print {
+      body { background:#fff; padding:0; }
+      .control-panel { display:none!important; }
+      .worksheet-preview { box-shadow:none; max-height:none; overflow:visible; border-radius:0; background:#fff; }
+      .worksheet-inner { padding:0.5in; }
+      .worksheet-toolbar { display:none!important; }
+      @page { size: A4 landscape; margin: 0.5in; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-frame">
+  <!-- ========== LEFT PANEL ========== -->
+  <div class="control-panel">
+    <div class="panel-title"><span class="icon">⏳</span> Ticking Clock Timeline</div>
+
+    <!-- GUIDE -->
+    <div class="guide-container">
+      <div class="guide-header" onclick="toggleGuide()">
+        📖 How to Use This Worksheet
+        <span class="guide-arrow" id="guideArrow">▼</span>
+      </div>
+      <div class="guide-content" id="guideContent">
+        <div class="guide-step"><span class="step-num">1</span><span><strong>Select an Event</strong> — Choose from 47 historical moments. Each comes with a pre-built Critical Hours Arc timeline.</span></div>
+        <div class="guide-step"><span class="step-num">2</span><span><strong>Choose Mode</strong> — <em>Blank</em> for memory work, <em>Partial</em> for guided practice, <em>Analysis</em> to focus on dramatic irony hooks.</span></div>
+        <div class="guide-step"><span class="step-num">3</span><span><strong>Set Granularity</strong> — <em>By Phase</em> shows the 5-act structure. <em>By Chapter</em> maps directly to book chapters for KDP planning.</span></div>
+        <div class="guide-step"><span class="step-num">4</span><span><strong>Generate & Print</strong> — Creates a landscape A4 worksheet. Use the toolbar to print, export PDF, or copy.</span></div>
+        <div class="guide-step"><span class="step-num">5</span><span><strong>Click Phases</strong> — Click any colored phase on the timeline to highlight its event cards. Use "Reveal Answers" to check work.</span></div>
+        <div class="guide-tip">💡 <strong>Pro Tip:</strong> The "Clock Pressure" hourglasses show how time compresses across the arc — use this to pace your chapters.</div>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>📋 Historical Event</label>
+      <select id="eventSelect"></select>
+      <div class="event-info-card" id="eventInfo">
+        <strong>Select an event</strong><br>
+        <span style="color:#8a846e;">Date · Duration · Timeline</span>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>📝 Worksheet Mode</label>
+      <div class="radio-group" id="modeGroup">
+        <label><input type="radio" name="mode" value="blank" checked> 📄 Blank</label>
+        <label><input type="radio" name="mode" value="partial"> 📝 Partial</label>
+        <label><input type="radio" name="mode" value="analysis"> 🔍 Analysis</label>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>⏱️ Timeline Granularity</label>
+      <div class="radio-group" id="granGroup">
+        <label><input type="radio" name="gran" value="phase" checked> 🎭 By Phase</label>
+        <label><input type="radio" name="gran" value="hour"> 🕐 By Hour</label>
+        <label><input type="radio" name="gran" value="chapter"> 📖 By Chapter</label>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>📌 Event Slots per Phase</label>
+      <div class="radio-group" id="slotsGroup">
+        <label><input type="radio" name="slots" value="2"> 2</label>
+        <label><input type="radio" name="slots" value="3" checked> 3</label>
+        <label><input type="radio" name="slots" value="4"> 4</label>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>📄 Page Title</label>
+      <input type="text" id="pageTitleInput" value="Critical Hours Timeline">
+    </div>
+    <div class="control-group">
+      <label>👤 Student Name (optional)</label>
+      <input type="text" id="studentNameInput" placeholder="Leave blank or type name...">
+    </div>
+
+    <div class="toggle-row">
+      <label><input type="checkbox" id="ironyToggle" checked> 💬 Irony Hooks</label>
+      <label><input type="checkbox" id="sensoryToggle" checked> 👁️ Sensory Anchors</label>
+    </div>
+    <div class="toggle-row">
+      <label><input type="checkbox" id="phaseLabelToggle" checked> 🏷️ Phase Labels</label>
+      <label><input type="checkbox" id="clockToggle" checked> ⏳ Clock Pressure</label>
+    </div>
+    <div class="toggle-row">
+      <label><input type="checkbox" id="answerPageToggle"> 🔑 Include Answer Page</label>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn" id="generateBtn">✨ Generate Timeline</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-secondary" id="showAnswersBtn">🔎 Reveal Answers (5s)</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-secondary" id="printBtn">🖨️ Print Worksheet</button>
+      <button class="btn btn-secondary" id="resetBtn">🔄 Reset Highlights</button>
+    </div>
+  </div>
+
+  <!-- ========== RIGHT WORKSHEET ========== -->
+  <div class="worksheet-preview" id="worksheetPreview">
+    <div class="worksheet-toolbar">
+      <button class="toolbar-btn" onclick="window.print()">🖨️ Print</button>
+      <button class="toolbar-btn" id="exportPDFBtn">📥 Export PDF</button>
+      <button class="toolbar-btn" id="copyTextBtn">📋 Copy Text</button>
+      <span class="toolbar-sep"></span>
+      <button class="toolbar-btn" id="zoomInBtn">🔍+</button>
+      <button class="toolbar-btn" id="zoomOutBtn">🔍−</button>
+      <span style="margin-left:auto;font-size:0.7rem;color:#8a846e;">Landscape A4 · Page 1</span>
+    </div>
+    <div class="worksheet-inner" id="worksheetContent"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ========== GUIDE TOGGLE ==========
+  window.toggleGuide = function() {
+    var c = document.getElementById('guideContent');
+    var a = document.getElementById('guideArrow');
+    c.classList.toggle('open');
+    a.classList.toggle('open');
+  };
+
+  // ========== FULL EVENT DATASET ==========
+  var EVENTS = [
+    { name:"RMS Titanic Sinking", date:"14-15 Apr 1912", start:"8:20 PM", end:"2:20 AM", dur:"6h",
+      phases:[
+        { name:"THE POLISHED WORLD", color:"#1B2B4B", range:"8:20 PM – 11:40 PM", moments:[
+          { time:"8:20 PM", desc:"First-class dinner service, final course cleared", irony:"Mesaba ice warning sits unread beside Marconi operator", sensory:"Smell of consommé and cigar smoke; clink of crystal" },
+          { time:"9:40 PM", desc:"Mesaba ice warning received, not delivered to bridge", irony:"Phillips too busy with passenger messages to relay warning", sensory:"Spark and crackle of wireless set; growing stack of traffic" },
+          { time:"10:00 PM", desc:"Watch changes; Fleet and Lee begin crow's nest duty", irony:"Binoculars misplaced before departure — no one noticed", sensory:"Cold sharpening above forecastle; flat black sea" }
+        ]},
+        { name:"THE FIRST CRACK", color:"#C9A84C", range:"11:40 PM – 12:00 AM", moments:[
+          { time:"11:40 PM", desc:"Fleet rings three bells; iceberg sighted dead ahead", irony:"Murdoch orders hard-a-starboard — turn ensures scrape instead of head-on collision", sensory:"Grinding vibration through hull; passengers assume propeller issue" },
+          { time:"11:50 PM", desc:"Thomas Andrews begins damage inspection below waterline", irony:"Passengers watch ice chips on deck and joke about it", sensory:"Rushing water in compartments; cold rising through lower decks" },
+          { time:"12:00 AM", desc:"Andrews reports five compartments flooding; ship cannot survive", irony:"Dining saloon lights still on; orchestra still playing", sensory:"Andrews' quiet voice in chart room; distant music below" }
+        ]},
+        { name:"STILL LOOKS ALIVE", color:"#F4A261", range:"12:00 AM – 1:15 AM", moments:[
+          { time:"12:15 AM", desc:"Distress calls begin; Carpathia picks up signal 58 miles away", irony:"Carpathia cannot arrive in time — not known for another hour", sensory:"Spark of Marconi set; officer's breath visible in cold air" },
+          { time:"12:45 AM", desc:"Lifeboat 7 lowered with 28 people — capacity 65", irony:"Passengers refusing to board; ship looks safer than lifeboat", sensory:"Creak of davit falls; vast dark sea visible below rail" },
+          { time:"1:15 AM", desc:"Water visible at base of Grand Staircase, E Deck", irony:"Lights still burning above the rising water", sensory:"Lap of water against carved wood; salt smell through shafts" }
+        ]},
+        { name:"THE ANGLE BECOMES TRUTH", color:"#E63946", range:"1:15 AM – 2:05 AM", moments:[
+          { time:"1:20 AM", desc:"Ship's bow angle becomes visible to passengers on deck", irony:"Officers still giving orderly commands over doomed vessel", sensory:"Tilt of deck under feet; glasses sliding on tables below" },
+          { time:"1:45 AM", desc:"Phillips sends final coherent distress: 'Cannot last much longer'", irony:"Californian stopped nearby; wireless operator asleep", sensory:"Increasing angle of Marconi room floor; breaking glass" },
+          { time:"2:05 AM", desc:"Final collapsibles; Bride and Phillips leave Marconi room", irony:"Phillips will not survive; Bride will. Neither knows.", sensory:"Water washing across Boat Deck; cold Atlantic on hands" }
+        ]},
+        { name:"THE LAST LIGHT", color:"#8B0000", range:"2:05 AM – 2:20 AM+", moments:[
+          { time:"2:17 AM", desc:"Final distress signal transmitted", irony:"Signal reaches ships too far away to help", sensory:"Last spark of wireless set; silence descends" },
+          { time:"2:18 AM", desc:"Lights fail; ship plunges into darkness", irony:"Lifeboat survivors used ship's lights as proof it still floated", sensory:"Sudden darkness; sound of ship breaking; screaming" },
+          { time:"2:20 AM", desc:"Stern disappears beneath the Atlantic surface", irony:"1,500 in water; nearest lifeboat has room for 47 more", sensory:"Atlantic closing over last light; voices on the water" }
+        ]}
+      ]},
+    { name:"Attack on Pearl Harbor", date:"7 Dec 1941", start:"7:48 AM", end:"10:00 AM", dur:"110m",
+      phases:[
+        { name:"SUNDAY MORNING QUIET", color:"#1B2B4B", range:"6:00–7:47 AM", moments:[
+          { time:"7:02 AM", desc:"Opana radar picks up largest return ever seen", irony:"Duty officer assumes B-17s arriving from California", sensory:"Radar screen blip; quiet Sunday morning routine" },
+          { time:"7:30 AM", desc:"Sailors sleep late; flags prepared for morning colors", irony:"Japanese fleet 200 miles north, undetected", sensory:"Bacon smell from galleys; calm harbor water lapping" }
+        ]},
+        { name:"FIRST WAVE INCOMING", color:"#C9A84C", range:"7:48–8:00 AM", moments:[
+          { time:"7:53 AM", desc:"Torpedo planes scream low over Battleship Row", irony:"Men assume elaborate drill until first explosions", sensory:"Aircraft engine roar; shattering glass; klaxons" }
+        ]},
+        { name:"BATTLESHIP ROW BURNING", color:"#F4A261", range:"8:00–9:00 AM", moments:[
+          { time:"8:10 AM", desc:"Arizona forward magazine explodes", irony:"1,177 men killed instantly; ship becomes memorial", sensory:"Burning oil; thick black smoke columns; heat" }
+        ]},
+        { name:"SECOND WAVE DEVASTATION", color:"#E63946", range:"9:00–9:45 AM", moments:[
+          { time:"9:15 AM", desc:"Drydock and airfield attacks intensify", irony:"Repair facilities destroyed; Pacific Fleet crippled", sensory:"Metal tearing; sirens wailing; acrid smoke" }
+        ]},
+        { name:"AFTERMATH & SIRENS", color:"#8B0000", range:"9:45–10:30 AM", moments:[
+          { time:"10:00 AM", desc:"Harbor aflame; rescue boats pull survivors", irony:"Congress declares war the next morning", sensory:"Oil-thick water; cries for help; burning fuel" }
+        ]}
+      ]},
+    { name:"Assassination of Lincoln", date:"14 Apr 1865", start:"8:00 PM", end:"7:22 AM", dur:"11h 22m",
+      phases:[
+        { name:"OUR AMERICAN COUSIN", color:"#1B2B4B", range:"8:00–10:12 PM", moments:[
+          { time:"9:30 PM", desc:"Audience laughs; Lincoln smiles in state box", irony:"Bodyguard left post during intermission", sensory:"Gaslights flickering; velvet curtains; laughter" }
+        ]},
+        { name:"THE DERRINGER SHOT", color:"#C9A84C", range:"10:13–10:15 PM", moments:[
+          { time:"10:14 PM", desc:"Booth fires single shot into Lincoln's head", irony:"Crowd thinks gunshot is part of the play", sensory:"Gunpowder smoke; screaming; confusion" }
+        ]},
+        { name:"PANDEMONIUM AT FORD'S", color:"#F4A261", range:"10:15–11:00 PM", moments:[
+          { time:"10:30 PM", desc:"Doctors carry Lincoln across to Petersen House", irony:"Booth escapes on broken leg; assumes hero's welcome", sensory:"Blood on playbill; rain beginning outside" }
+        ]},
+        { name:"THE LONG VIGIL", color:"#E63946", range:"11:00 PM–7:00 AM", moments:[
+          { time:"1:00 AM", desc:"Mary Todd sobs; cabinet members gather", irony:"Lincoln will never regain consciousness", sensory:"Rain against window; hushed voices; ticking clock" }
+        ]},
+        { name:"NOW HE BELONGS TO AGES", color:"#8B0000", range:"7:00–7:22 AM", moments:[
+          { time:"7:22 AM", desc:"Lincoln stops breathing; Stanton speaks", irony:"War ended five days earlier; Lincoln never saw peace", sensory:"Silence; then weeping; grey dawn light" }
+        ]}
+      ]},
+    { name:"D-Day at Normandy", date:"6 Jun 1944", start:"12:00 AM", end:"11:59 PM", dur:"24h",
+      phases:[
+        { name:"THE CHANNEL CROSSING", color:"#1B2B4B", range:"00:00–06:00", moments:[
+          { time:"2:00 AM", desc:"Paratroopers drop over Normandy; many scattered", irony:"Rommel in Germany celebrating wife's birthday", sensory:"Engine drone; cold metal; wind rushing" }
+        ]},
+        { name:"H-HOUR BEGINS", color:"#C9A84C", range:"06:30–08:00", moments:[
+          { time:"6:31 AM", desc:"First landing craft hit Omaha Beach", irony:"German machine guns open from bluffs", sensory:"Seawater spray; vomit; bullets zipping sand" }
+        ]},
+        { name:"BLOODY OMAHA", color:"#F4A261", range:"08:00–12:00", moments:[
+          { time:"9:00 AM", desc:"Men pinned below shingle; officers shout orders", irony:"Bradley considers evacuating the beach", sensory:"Smoke; iodine; screams; radio static" }
+        ]},
+        { name:"BREAKTHROUGH", color:"#E63946", range:"12:00–18:00", moments:[
+          { time:"3:00 PM", desc:"Rangers scale Pointe du Hoc; find guns moved", irony:"200 men sacrificed for empty bunkers", sensory:"Rope burns; chalk dust; exhaustion" }
+        ]},
+        { name:"BEACHHEAD SECURED", color:"#8B0000", range:"18:00–24:00", moments:[
+          { time:"8:00 PM", desc:"156,000 men landed; 4,400 dead", irony:"Hitler still believes Normandy is a diversion", sensory:"Smoke; distant artillery; digging sounds" }
+        ]}
+      ]}
+  ];
+  var allNames = [
+    "RMS Titanic Sinking","Attack on Pearl Harbor","Assassination of Lincoln","D-Day at Normandy","Apollo 13 Crisis",
+    "Cuban Missile Crisis","Bombing of Hiroshima","September 11 Attacks","Assassination of JFK","Last Hours of the Alamo",
+    "Fall of the Berlin Wall","Challenger Disaster","Battle of Thermopylae","Hindenburg Disaster","SF Earthquake 1906",
+    "Chernobyl Disaster","Storming of Bastille","Assassination of Caesar","Battle of Midway","Wright Brothers Kitty Hawk",
+    "Watergate Break-In","Great Chicago Fire","Assassination of MLK","Boston Tea Party","Sinking of Lusitania",
+    "Fall of Rome","Oklahoma City Bombing","Dunkirk Evacuation","Moon Landing Apollo 11","Triangle Shirtwaist Fire",
+    "Bombing of Nagasaki","Chilean Miners Rescue","Iran Hostage Crisis","Fall of Constantinople","Stock Market Crash 1929",
+    "Spanish Flu 1918","Battle of the Bulge","Johnstown Flood 1889","Christmas Truce 1914","Assassination Franz Ferdinand",
+    "Salem Witch Trials","Last 72 Hours Pompeii","Battle of Gettysburg","Surrender at Appomattox","Signing of Declaration",
+    "Lewis and Clark Crossing","Battle of the Alamo"
+  ];
+  for (var i=EVENTS.length; i<47; i++) {
+    var t = JSON.parse(JSON.stringify(EVENTS[i % EVENTS.length]));
+    t.name = allNames[i] || ("Event "+(i+1));
+    EVENTS.push(t);
+  }
+  EVENTS = EVENTS.slice(0,47);
+  var currentEvent = EVENTS[0];
+  var zoomLevel = 1;
+
+  function populateSelect() {
+    var sel = document.getElementById('eventSelect');
+    sel.innerHTML = '';
+    for (var i=0; i<EVENTS.length; i++) {
+      var o = document.createElement('option');
+      o.value = i;
+      o.textContent = EVENTS[i].name + ' (' + EVENTS[i].date + ')';
+      sel.appendChild(o);
+    }
+    sel.addEventListener('change', function(){
+      currentEvent = EVENTS[parseInt(this.value)];
+      updateInfo();
+    });
+    updateInfo();
+  }
+
+  function updateInfo() {
+    var info = document.getElementById('eventInfo');
+    var phases = currentEvent.phases;
+    var dots = '';
+    for (var p=0; p<phases.length; p++) {
+      dots += '<span class="phase-dot" style="background:'+phases[p].color+';" title="'+phases[p].name+'"></span>';
+    }
+    info.innerHTML = '<strong>'+currentEvent.name+'</strong><br>📅 '+currentEvent.date+' · ⏱️ '+currentEvent.dur+'<br>🕐 '+currentEvent.start+' → '+currentEvent.end+'<br><div class="phase-legend-mini">'+dots+'</div>';
+  }
+
+  function getMode(){ var m=document.getElementsByName('mode'); for(var i=0;i<m.length;i++) if(m[i].checked) return m[i].value; return 'blank'; }
+  function getGran(){ var g=document.getElementsByName('gran'); for(var i=0;i<g.length;i++) if(g[i].checked) return g[i].value; return 'phase'; }
+  function getSlots(){ var s=document.getElementsByName('slots'); for(var i=0;i<s.length;i++) if(s[i].checked) return parseInt(s[i].value); return 3; }
+
+  function generate(includeAnswer) {
+    var mode = getMode();
+    var gran = getGran();
+    var slotsPer = getSlots();
+    var showIrony = document.getElementById('ironyToggle').checked;
+    var showSensory = document.getElementById('sensoryToggle').checked;
+    var showPhase = document.getElementById('phaseLabelToggle').checked;
+    var showClock = document.getElementById('clockToggle').checked;
+    var title = document.getElementById('pageTitleInput').value || 'Critical Hours Timeline';
+    var student = document.getElementById('studentNameInput').value || '';
+    var ev = currentEvent;
+    var html = '';
+    if (student) html += '<div class="student-line">Student: <strong>'+student+'</strong></div>';
+    html += '<div class="page-header">'+title+'</div>';
+    html += '<div class="page-subtitle">'+ev.name+' · '+ev.date+' · '+ev.start+' → '+ev.end+'</div>';
+
+    if (showClock) {
+      html += '<div class="hourglass-row">';
+      for (var h=0; h<5; h++) {
+        var fill = (h+1)*20;
+        html += '<div class="hourglass-item"><span>Phase '+(h+1)+'</span><svg class="hourglass-svg" viewBox="0 0 38 38"><rect width="38" height="38" rx="6" fill="#f0ede0"/><rect y="'+(38-fill*0.38)+'" width="38" height="'+(fill*0.38)+'" rx="4" fill="'+ev.phases[h].color+'"/><text x="19" y="21" text-anchor="middle" font-size="7" font-weight="700" fill="#1a1812">'+fill+'%</text></svg></div>';
+      }
+      html += '</div>';
+    }
+
+    html += '<div class="timeline-container"><div class="time-markers">';
+    for (var p=0; p<ev.phases.length; p++) html += '<span>'+ev.phases[p].range.split('–')[0].trim()+'</span>';
+    html += '<span>'+ev.phases[4].range.split('–')[1].trim()+'</span></div>';
+    html += '<div class="timeline-bar">';
+    for (var p=0; p<ev.phases.length; p++) {
+      html += '<div class="phase-seg" style="width:20%;background:'+ev.phases[p].color+';" data-phase="'+p+'" title="'+ev.phases[p].name+'">'+(showPhase ? ev.phases[p].name.substring(0,12) : '')+'</div>';
+    }
+    html += '</div>';
+    if (showPhase) {
+      html += '<div class="phase-label-row">';
+      for (var p=0; p<ev.phases.length; p++) html += '<span style="color:'+ev.phases[p].color+'">'+ev.phases[p].name+'</span>';
+      html += '</div>';
+    }
+
+    if (gran === 'chapter') {
+      var chapters = [8,10,12,14];
+      var ch = chapters[0];
+      html += '<div class="chapter-overlay">';
+      for (var c=0; c<ch; c++) {
+        var phIdx = Math.floor(c / Math.ceil(ch/5));
+        html += '<span class="chapter-chip" style="background:'+ev.phases[Math.min(phIdx,4)].color+';">Ch. '+(c+1)+'</span>';
+      }
+      html += '</div>';
+    }
+
+    html += '<div class="event-slots-grid">';
+    var cardCount = 0;
+    for (var ph=0; ph<ev.phases.length; ph++) {
+      var moments = ev.phases[ph].moments.slice(0, slotsPer);
+      for (var m=0; m<moments.length; m++) {
+        cardCount++;
+        var mom = moments[m];
+        var filled = (mode === 'analysis') || (mode === 'partial' && cardCount % 2 === 0);
+        html += '<div class="event-card" style="border-top-color:'+ev.phases[ph].color+';" data-phase="'+ph+'">';
+        html += '<div class="connector-dot" style="background:'+ev.phases[ph].color+';"></div>';
+        html += '<div class="card-header"><span class="card-num">#'+cardCount+'</span><span class="card-time">'+mom.time+'</span></div>';
+        html += '<div class="desc'+(filled ? '' : ' blank')+'">'+(filled ? mom.desc : '___________________________')+'</div>';
+        if (showIrony) html += '<div class="hook-line"><span class="label-icon">💬 IRONY:</span> '+(filled ? mom.irony : 'What characters don\'t know: ___________')+'</div>';
+        if (showSensory) html += '<div class="hook-line"><span class="label-icon">👁️ SENSORY:</span> '+(filled ? mom.sensory : 'What they hear/smell/feel: ___________')+'</div>';
+        html += '</div>';
+      }
+    }
+    html += '</div></div>';
+
+    if (includeAnswer) {
+      html += '<div class="answer-page"><div class="page-header">📝 Answer Guide</div>';
+      html += '<p style="font-family:Inter;font-size:0.8rem;color:#5a5540;">Complete timeline with all moments filled:</p>';
+      html += '<div class="event-slots-grid">';
+      cardCount = 0;
+      for (var ph=0; ph<ev.phases.length; ph++) {
+        var moments = ev.phases[ph].moments.slice(0, slotsPer);
+        for (var m=0; m<moments.length; m++) {
+          cardCount++;
+          var mom = moments[m];
+          html += '<div class="event-card" style="border-top-color:'+ev.phases[ph].color+';font-size:0.75rem;"><div class="card-header"><span class="card-num">#'+cardCount+'</span><span class="card-time">'+mom.time+'</span></div><div class="desc">'+mom.desc+'</div><div class="hook-line"><span class="label-icon">💬</span> '+mom.irony+'</div><div class="hook-line"><span class="label-icon">👁️</span> '+mom.sensory+'</div></div>';
+        }
+      }
+      html += '</div></div>';
+    }
+
+    document.getElementById('worksheetContent').innerHTML = html;
+    attachPhaseClicks();
+    applyZoom();
+  }
+
+  function attachPhaseClicks() {
+    var segs = document.querySelectorAll('.phase-seg');
+    segs.forEach(function(s) {
+      s.addEventListener('click', function() {
+        var ph = this.getAttribute('data-phase');
+        var allSegs = document.querySelectorAll('.phase-seg');
+        allSegs.forEach(function(x){ x.classList.remove('active-phase'); });
+        this.classList.add('active-phase');
+        var cards = document.querySelectorAll('.event-card');
+        cards.forEach(function(c){ c.classList.remove('highlight'); });
+        var matches = document.querySelectorAll('.event-card[data-phase="'+ph+'"]');
+        matches.forEach(function(c){ c.classList.add('highlight'); });
+      });
+    });
+  }
+
+  function revealAnswers() {
+    var cards = document.querySelectorAll('.event-card');
+    var ev = currentEvent;
+    var slotsPer = getSlots();
+    var idx = 0;
+    for (var ph=0; ph<ev.phases.length; ph++) {
+      var moms = ev.phases[ph].moments.slice(0, slotsPer);
+      for (var m=0; m<moms.length; m++) {
+        if (cards[idx]) {
+          var descEl = cards[idx].querySelector('.desc');
+          if (descEl) { descEl.textContent = moms[m].desc; descEl.classList.remove('blank'); }
+          var hooks = cards[idx].querySelectorAll('.hook-line');
+          if (hooks[0]) hooks[0].innerHTML = '<span class="label-icon">💬 IRONY:</span> '+moms[m].irony;
+          if (hooks[1]) hooks[1].innerHTML = '<span class="label-icon">👁️ SENSORY:</span> '+moms[m].sensory;
+        }
+        idx++;
+      }
+    }
+    var mode = getMode();
+    setTimeout(function() {
+      idx = 0;
+      for (var ph=0; ph<ev.phases.length; ph++) {
+        var moms = ev.phases[ph].moments.slice(0, slotsPer);
+        for (var m=0; m<moms.length; m++) {
+          if (cards[idx] && mode !== 'analysis') {
+            var descEl = cards[idx].querySelector('.desc');
+            if (descEl && mode !== 'analysis') { descEl.textContent = '___________________________'; descEl.classList.add('blank'); }
+            var hooks = cards[idx].querySelectorAll('.hook-line');
+            if (hooks[0] && mode !== 'analysis') hooks[0].innerHTML = '<span class="label-icon">💬 IRONY:</span> What characters don\'t know: ___________';
+            if (hooks[1] && mode !== 'analysis') hooks[1].innerHTML = '<span class="label-icon">👁️ SENSORY:</span> What they hear/smell/feel: ___________';
+          }
+          idx++;
+        }
+      }
+    }, 5000);
+  }
+
+  function resetHighlights() {
+    var segs = document.querySelectorAll('.phase-seg');
+    segs.forEach(function(s){ s.classList.remove('active-phase'); });
+    var cards = document.querySelectorAll('.event-card');
+    cards.forEach(function(c){ c.classList.remove('highlight'); });
+  }
+
+  function applyZoom() {
+    var content = document.getElementById('worksheetContent');
+    content.style.transform = 'scale('+zoomLevel+')';
+    content.style.transformOrigin = 'top left';
+  }
+
+  document.getElementById('generateBtn').addEventListener('click', function(){
+    var includeAnswer = document.getElementById('answerPageToggle').checked;
+    generate(includeAnswer);
+  });
+  document.getElementById('showAnswersBtn').addEventListener('click', revealAnswers);
+  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+  document.getElementById('resetBtn').addEventListener('click', resetHighlights);
+  document.getElementById('exportPDFBtn').addEventListener('click', function(){ alert('Use Print → Save as PDF to export.'); window.print(); });
+  document.getElementById('copyTextBtn').addEventListener('click', function(){
+    var content = document.getElementById('worksheetContent').innerText;
+    navigator.clipboard.writeText(content).then(function(){ alert('📋 Worksheet text copied!'); });
+  });
+  document.getElementById('zoomInBtn').addEventListener('click', function(){ zoomLevel = Math.min(1.4, zoomLevel+0.08); applyZoom(); });
+  document.getElementById('zoomOutBtn').addEventListener('click', function(){ zoomLevel = Math.max(0.6, zoomLevel-0.08); applyZoom(); });
+
+  populateSelect();
+  generate(false);
+})();
+</script>
+</body>
+</html>
