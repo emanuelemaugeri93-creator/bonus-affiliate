@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Midlife Romance · Story Angle Selector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #faf7f2;
+      font-family: 'Lato', sans-serif;
+      color: #2c2c2c;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+    }
+    .app-container {
+      display: flex;
+      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #faf7f2;
+      box-shadow: 0 0 40px rgba(0,0,0,0.02);
+    }
+    .sidebar {
+      width: 300px;
+      background: #6b2737;
+      color: #fff;
+      padding: 32px 24px 32px 28px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      box-shadow: 4px 0 12px rgba(0,0,0,0.04);
+    }
+    .sidebar .heart-icon { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+    .sidebar .heart-icon svg { width: 28px; height: 28px; fill: #d48a8a; }
+    .sidebar .app-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; letter-spacing: 0.03em; color: #fff; line-height: 1.1; }
+    .sidebar .tagline { font-size: 14px; font-weight: 300; color: rgba(255,255,255,0.75); margin-top: 6px; letter-spacing: 0.02em; }
+    .sidebar .divider { height: 2px; background: #d48a8a; width: 48px; margin: 24px 0 28px 0; opacity: 0.6; }
+    .sidebar .section-label { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 18px; font-weight: 400; }
+    .param-group { margin-bottom: 28px; }
+    .param-group .param-label { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.9); letter-spacing: 0.02em; display: block; margin-bottom: 10px; }
+    .pill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pill {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 40px;
+      padding: 8px 8px;
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.75);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Lato', sans-serif;
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+      background: transparent;
+    }
+    .pill.active { background: #d48a8a; border-color: #d48a8a; color: #fff; font-weight: 400; box-shadow: 0 2px 6px rgba(212, 138, 138, 0.3); }
+    .pill:hover { background: rgba(255,255,255,0.15); }
+    .pill.active:hover { background: #d48a8a; }
+    .segmented { display: flex; flex-wrap: wrap; gap: 6px; }
+    .segmented .pill { flex: 1 0 auto; min-width: 60px; background: rgba(255,255,255,0.06); }
+    .segmented .pill.active { background: #d48a8a; border-color: #d48a8a; }
+    .generate-btn {
+      background: #d4848a;
+      color: #fff;
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 600;
+      border: none;
+      border-radius: 60px;
+      padding: 16px 12px;
+      width: 100%;
+      margin: 18px 0 16px 0;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: all 0.2s;
+      box-shadow: 0 6px 16px rgba(212, 132, 138, 0.25);
+      line-height: 1.2;
+    }
+    .generate-btn:hover { background: #c4747a; transform: scale(1.01); box-shadow: 0 8px 24px rgba(212, 132, 138, 0.35); }
+    .generate-btn.pulse { animation: subtlePulse 2.8s infinite ease-in-out; }
+    @keyframes subtlePulse { 0% { box-shadow: 0 6px 16px rgba(212, 132, 138, 0.2); } 50% { box-shadow: 0 6px 28px rgba(212, 132, 138, 0.45); } 100% { box-shadow: 0 6px 16px rgba(212, 132, 138, 0.2); } }
+    .reroll-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); border-radius: 40px; padding: 10px 0; width: 100%; font-size: 14px; font-weight: 400; cursor: pointer; transition: 0.15s; margin-top: 8px; font-family: 'Lato', sans-serif; }
+    .reroll-ghost:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .saved-toggle { background: transparent; border: none; color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 400; padding: 12px 0 6px 0; width: 100%; text-align: left; cursor: pointer; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 20px; font-family: 'Lato', sans-serif; letter-spacing: 0.02em; display: flex; justify-content: space-between; align-items: center; }
+    .saved-toggle span { color: #d48a8a; font-weight: 700; }
+    .saved-panel { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 8px 0; margin-top: 6px; max-height: 300px; overflow-y: auto; }
+    .saved-item { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; color: rgba(255,255,255,0.8); cursor: pointer; display: flex; justify-content: space-between; }
+    .saved-item:hover { background: rgba(255,255,255,0.05); }
+    .saved-item .del { color: #d48a8a; opacity: 0.6; font-size: 18px; line-height: 1; padding-left: 12px; }
+    .main { flex: 1; padding: 40px 44px 48px 44px; background: #faf7f2; overflow-y: auto; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 70%; text-align: center; color: #a09187; }
+    .empty-state svg { width: 120px; height: 120px; stroke: #d4b8b0; stroke-width: 1.2; fill: none; margin-bottom: 28px; }
+    .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400; color: #6b2737; margin-bottom: 8px; }
+    .empty-state p { font-size: 17px; max-width: 400px; color: #b5a69b; }
+    .concept-grid { display: grid; grid-template-columns: 1fr; gap: 40px; }
+    .concept-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .concept-card { background: #fff; border-radius: 20px; padding: 32px 34px 38px; box-shadow: 0 12px 36px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s; border: 1px solid rgba(212, 138, 138, 0.08); display: flex; flex-direction: column; }
+    .concept-card .reveal { opacity: 0; animation: fadeUp 0.5s forwards; }
+    .concept-card .reveal:nth-child(1) { animation-delay: 0.05s; }
+    .concept-card .reveal:nth-child(2) { animation-delay: 0.2s; }
+    .concept-card .reveal:nth-child(3) { animation-delay: 0.35s; }
+    .concept-card .reveal:nth-child(4) { animation-delay: 0.5s; }
+    .concept-card .reveal:nth-child(5) { animation-delay: 0.65s; }
+    .concept-card .reveal:nth-child(6) { animation-delay: 0.8s; }
+    .concept-card .reveal:nth-child(7) { animation-delay: 0.95s; }
+    @keyframes fadeUp { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+    .concept-card .story-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #6b2737; line-height: 1.1; margin-bottom: 2px; letter-spacing: -0.01em; }
+    .concept-card .title-sub { font-size: 13px; color: #b5a69b; font-style: italic; margin-bottom: 16px; font-weight: 300; }
+    .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .badge { background: #d48a8a; color: #fff; border-radius: 40px; padding: 4px 18px; font-size: 13px; font-weight: 400; letter-spacing: 0.02em; display: inline-block; background: #d48a8a; }
+    .badge.trope { background: #6b2737; }
+    .badge.setting { background: #d48a8a; }
+    .concept-card h4 { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: #6b2737; margin: 16px 0 4px 0; letter-spacing: 0.02em; }
+    .concept-card h4.italic { font-style: italic; font-weight: 400; font-size: 15px; color: #7f5a5a; }
+    .concept-card p { font-size: 15px; color: #3a3430; line-height: 1.6; margin-bottom: 6px; }
+    .concept-card .hook { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; color: #d48a8a; line-height: 1.3; padding: 12px 0 8px 0; border-top: 1px solid #f0e8e0; margin-top: 12px; }
+    .bot-prompt-box { background: #f6f0ea; border-radius: 16px; padding: 18px 20px; font-size: 14px; line-height: 1.6; color: #2c2c2c; margin: 20px 0 14px 0; font-family: 'Lato', sans-serif; border-left: 4px solid #d48a8a; white-space: pre-wrap; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; align-items: center; }
+    .card-actions button { background: transparent; border: 1px solid #d4c8be; border-radius: 40px; padding: 8px 18px; font-size: 13px; font-family: 'Lato', sans-serif; font-weight: 400; color: #4d3f38; cursor: pointer; transition: 0.15s; background: #fff; }
+    .card-actions button:hover { background: #f3ece6; border-color: #b5a69b; }
+    .card-actions .copy-prompt { background: #6b2737; border-color: #6b2737; color: #fff; }
+    .card-actions .copy-prompt:hover { background: #5a1f2d; }
+    .card-actions .save-btn { background: #d48a8a; border-color: #d48a8a; color: #fff; }
+    .card-actions .save-btn:hover { background: #c47a7a; }
+    @media print { .sidebar { display: none; } .app-container { display: block; background: #fff; } .main { padding: 20px; } .concept-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; } .generate-btn, .reroll-ghost, .saved-toggle { display: none; } .badge { background: #d48a8a !important; color: #fff !important; } }
+    .main::-webkit-scrollbar { width: 6px; }
+    .main::-webkit-scrollbar-track { background: #f0e8e0; }
+    .main::-webkit-scrollbar-thumb { background: #d4b8b0; border-radius: 8px; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <aside class="sidebar" id="sidebar">
+    <div class="heart-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    </div>
+    <div class="app-title">STORY ANGLE SELECTOR</div>
+    <div class="tagline">Find your story before you open the bot</div>
+    <div class="divider"></div>
+    <div class="section-label">STORY PARAMETERS</div>
+
+    <div class="param-group">
+      <span class="param-label">Trope (multi-select)</span>
+      <div class="pill-grid" id="tropePicker">
+        <button class="pill" data-trope="Second Chance Love">Second Chance</button>
+        <button class="pill" data-trope="Widow Finds Love Again">Widow</button>
+        <button class="pill" data-trope="Divorced & Rediscovering">Divorced</button>
+        <button class="pill" data-trope="Late Bloomer Romance">Late Bloomer</button>
+        <button class="pill" data-trope="Empty Nester New Beginning">Empty Nester</button>
+        <button class="pill" data-trope="Workplace Second Act">Workplace</button>
+        <button class="pill" data-trope="Small Town Newcomer">Small Town</button>
+        <button class="pill" data-trope="Reunion Romance">Reunion</button>
+        <button class="pill" data-trope="Unexpected Inheritance">Inheritance</button>
+        <button class="pill" data-trope="Caretaker Falls in Love">Caretaker</button>
+      </div>
+    </div>
+
+    <div class="param-group">
+      <span class="param-label">Setting</span>
+      <div class="segmented" id="settingPicker">
+        <button class="pill active" data-setting="Coastal / Beach Town">Coastal</button>
+        <button class="pill" data-setting="Vineyard / Wine Country">Vineyard</button>
+        <button class="pill" data-setting="Mountain Retreat">Mountain</button>
+        <button class="pill" data-setting="Small Southern Town">Southern</button>
+        <button class="pill" data-setting="Italian / European Escape">European</button>
+        <button class="pill" data-setting="Pacific Northwest">PNW</button>
+        <button class="pill" data-setting="New England Village">New England</button>
+        <button class="pill" data-setting="Desert / Southwest">Desert</button>
+      </div>
+    </div>
+
+    <div class="param-group">
+      <span class="param-label">Protagonist Age</span>
+      <div class="segmented" id="agePicker">
+        <button class="pill" data-age="Mid 30s (career-focused)">Mid 30s</button>
+        <button class="pill" data-age="Late 30s (biological clock)">Late 30s</button>
+        <button class="pill active" data-age="Early 40s (post-divorce awakening)">Early 40s</button>
+        <button class="pill" data-age="Mid 40s (life reset)">Mid 40s</button>
+        <button class="pill" data-age="Late 40s (empty nest transition)">Late 40s</button>
+        <button class="pill" data-age="Early 50s (rediscovering herself)">Early 50s</button>
+        <button class="pill" data-age="Mid 50s (second chapter)">Mid 50s</button>
+        <button class="pill" data-age="Late 50s (widow's second chapter)">Late 50s</button>
+        <button class="pill" data-age="Early 60s (it's never too late)">Early 60s</button>
+        <button class="pill" data-age="Mid 60s (golden years)">Mid 60s</button>
+        <button class="pill" data-age="70s+ (finding love again)">70s+</button>
+      </div>
+    </div>
+
+    <div class="param-group">
+      <span class="param-label">Emotional Tone</span>
+      <div class="segmented" id="tonePicker">
+        <button class="pill active" data-tone="Warm & Hopeful">Warm</button>
+        <button class="pill" data-tone="Bittersweet & Deep">Bittersweet</button>
+        <button class="pill" data-tone="Light & Uplifting">Light</button>
+        <button class="pill" data-tone="Emotionally Complex">Complex</button>
+        <button class="pill" data-tone="Heartwarming & Tender">Tender</button>
+        <button class="pill" data-tone="Passionate & Intense">Intense</button>
+      </div>
+    </div>
+
+    <div class="param-group">
+      <span class="param-label">Number of Concepts</span>
+      <div class="segmented" id="countPicker">
+        <button class="pill active" data-count="1">1</button>
+        <button class="pill" data-count="3">3</button>
+        <button class="pill" data-count="5">5</button>
+      </div>
+    </div>
+
+    <button class="generate-btn pulse" id="generateBtn">✨ GENERATE MY STORY CONCEPT</button>
+    <button class="reroll-ghost" id="rerollBtn">↻ Try Another Variation</button>
+    <button class="saved-toggle" id="savedToggle">⭐ SAVED CONCEPTS (<span id="savedCount">0</span>)</button>
+    <div id="savedPanel" class="saved-panel" style="display:none;"></div>
+  </aside>
+
+  <main class="main" id="mainArea">
+    <div id="emptyState" class="empty-state">
+      <svg viewBox="0 0 100 80"><path d="M20 20 L80 20 L80 60 L20 60 Z" stroke="#d4b8b0" stroke-width="1.5" /><path d="M30 30 L70 30 M30 40 L60 40 M30 50 L50 50" stroke="#d4b8b0" stroke-width="1.2" /><circle cx="70" cy="44" r="3" stroke="#d4b8b0" fill="none" /><path d="M10 70 L20 60 L30 70 L40 60 L50 70 L60 60 L70 70 L80 60 L90 70" stroke="#d4b8b0" stroke-width="1.2" fill="none" /></svg>
+      <h3>Your story is waiting.</h3>
+      <p>Choose your parameters and let's find it together.</p>
+    </div>
+    <div id="conceptContainer" class="concept-grid" style="display:none;"></div>
+  </main>
+</div>
+<script>
+(function() {
+  // ----- MASSIVE DATA BANKS FOR INFINITE VARIETY (ES5) -----
+  var NAMES = {
+    coastal: ['Margaret','Caroline','Eleanor','Diane','Susan','Patricia','Catherine','Helen','Barbara','Louise','Frances','Vivienne','Claire','Anne','Beth','Ruth','Constance','Dorothy','Iris','Marian','Genevieve','Beatrice','Lillian','Esther','Mabel','Florence','Edith','Hazel','Audrey','Nora','Rose','Violet','June','Pearl','Ruby'],
+    vineyard: ['Celeste','Adrienne','Simone','Claudette','Marguerite','Isabelle','Dominique','Giselle','Colette','Juliette','Eloise','Camille','Natalie','Vivienne','Adele','Delphine','Manon','Sylvie','Odette','Margaux','Brigitte','Cosette','Fleur','Jolie','Valerie','Coralie','Elodie','Geneva','Maxine','Renee'],
+    mountain: ['Grace','Faith','Hope','Rose','Violet','Lily','Hazel','Fern','Clara','Wren','Joy','June','Mae','Belle','Sage','Iris','Olive','Pearl','Dawn','Skye','Amber','Raven','Willow','Briar','Lark','Aspen','Cedar','Juniper','Sierra','Winter'],
+    european: ['Sofia','Elena','Valentina','Lucia','Maria','Francesca','Beatrice','Giulia','Alessandra','Chiara','Serafina','Isabella','Emilia','Aria','Luna','Gaia','Rosa','Marta','Clara','Fiamma','Vittoria','Aurora','Sara','Eva','Anna','Martina','Silvia','Gabriella','Michela','Cecilia'],
+    southern: ['Scarlett','Magnolia','Dixie','Belle','Sawyer','Caroline','Ellie','June','Mabel','Ruby','Pearl','Genevieve','Louisa','Ada','Clara','Dahlia','Georgia','Savannah','Annabeth','Daisy','Charlotte','Harper','Eden','Clementine','Sage','Blaire','Delta','Jolene','Millie','Etta'],
+    pnw: ['Juniper','Raven','Willow','Sage','Iris','Fern','Lark','Coral','Skye','Meridian','Aspen','Cedar','Meadow','Olive','Brynn','Wren','Sierra','Rain','Tempest','Aurora','Fjord','Cascade','Everest','Haven','Breeze','Terra','Luna','Stella','Nova','Indigo'],
+    newengland: ['Abigail','Betsy','Constance','Eleanor','Hester','Lydia','Prudence','Patience','Mercy','Faith','Hope','Charity','Desire','Honor','Temperance','Sarah','Rebecca','Ruth','Esther','Bethany','Prudence','Tabitha','Dorcas','Hannah','Judith','Martha','Miriam','Penelope','Sophia','Patience'],
+    desert: ['Paloma','Soledad','Luz','Marisol','Dulce','Alma','Rosa','Esperanza','Luna','Aurora','Rocio','Guadalupe','Angelica','Pilar','Cruz','Estrella','Nieves','Carmen','Ines','Elena','Savina','Tierra','Milagros','Celeste','Alba','Delfina','Isadora','Magdalena','Serafina','Teresa']
+  };
+  var LOVE_NAMES = {
+    coastal: ['Thomas','Edward','William','James','Robert','Charles','George','Arthur','Henry','Frank','Samuel','Joseph','David','Peter','Michael','Daniel','Christopher','Jonathan','Matthew','Andrew','Joshua','Nicholas','Ryan','Nathan','Oliver','Benjamin','Elijah','Gabriel','Isaac','Liam'],
+    vineyard: ['Marco','Luca','Antoine','Pierre','Sebastian','Jean','Olivier','Thierry','Francois','Gilles','Paolo','Matteo','Alessandro','Dante','Enzo','Raphael','Damien','Marcel','Armand','Benoit','Emile','Remy','Etienne','Gaspard','Hugo','Andre','Jacques','Louis','Philippe','Maxime'],
+    mountain: ['Eli','Silas','Jedidiah','Ezra','Moses','Levi','Zachariah','Nathaniel','Caleb','Ezekiel','Gideon','Amos','Micah','Abel','Asher','Boaz','Judah','Solomon','Isaiah','Jeremiah','Ethan','Noah','Tobias','Elijah','Jonah','Josiah','Malachi','Samuel','Timothy','Zachary'],
+    european: ['Alessandro','Dante','Enzo','Matteo','Marco','Luca','Giovanni','Rafael','Diego','Carlos','Javier','Antonio','Lorenzo','Massimo','Sergio','Fabio','Leonardo','Edoardo','Tommaso','Federico','Emilio','Francesco','Alessio','Matteo','Luca','Paolo','Roberto','Stefano','Vincenzo','Angelo'],
+    southern: ['Beau','Hank','Cash','Duke','Boyd','Tucker','Wyatt','Rhett','Jeb','Sawyer','Garrett','Mason','Cole','Travis','Boone','Waylon','Earl','Jed','Cyrus','Marshall','Jasper','Levi','Caleb','Asa','Judah','Clayton','Emmett','Garrison','Houston','Jethro'],
+    pnw: ['River','Forrest','Everett','Hawthorne','Alden','Linden','Douglas','Fraser','Glen','Heath','Kai','Sterling','Ridge','Orion','Cedar','Sawyer','Fisher','Grey','Brooks','Sage','Alder','Flynn','Rowan','Dashiell','Torin','Corbin','Fletcher','Griffin','Lachlan','Shepherd'],
+    newengland: ['Nathaniel','Ephraim','Ezra','Silas','Thaddeus','Micah','Josiah','Cyrus','Amos','Elihu','Asa','Gideon','Reuben','Solomon','Levi','Barnabas','Jedidiah','Elijah','Malachi','Ezekiel','Seth','Enoch','Micah','Obadiah','Zachariah','Abner','Elihu','Jabez','Mordecai','Phineas'],
+    desert: ['Mateo','Rafael','Diego','Carlos','Javier','Antonio','Luis','Miguel','Angel','Esteban','Salvador','Manuel','Pablo','Cruz','Estevan','Ricardo','Fernando','Emilio','Hugo','Ivan','Raul','Joel','Tomas','Leo','Dario','Elias','Felix','Gabriel','Nico','Santino']
+  };
+  
+  // OCCUPATIONS - expanded with more variety
+  var OCCUPATIONS_F = [
+    'retired schoolteacher','recently widowed librarian','landscape architect on sabbatical','recently divorced interior designer','food writer on assignment','winery consultant','retired nurse','former corporate lawyer who quit','gallery owner selling the business','high school principal who just retired','children\'s book author','empty-nest event planner','travel journalist','antique shop owner','retired chef','former dance instructor','botanical garden curator','bookstore owner','artisanal baker','yoga studio founder','retired museum curator','professional organizer','gardening columnist','pottery studio owner','bed & breakfast innkeeper','perfumer','floral designer','vintage clothing dealer','kayak guide','set designer','calligrapher','weaver','herbalist','art restorer','horse trainer','professor of literature','marine biologist','documentary filmmaker','midwife','journalist'
+  ];
+  var OCCUPATIONS_M = [
+    'lighthouse keeper who moved after his own loss','winery owner rebuilding after divorce','widowed carpenter who restored the old house','retired doctor who moved to be near grandchildren','former architect running the family farm','marine biologist at the research station','bookshop owner','harbor master','vineyard manager','small-town doctor','retired professor','artist-in-residence','sailboat captain','herbalist','woodworker','chef at a country inn','pottery maker','beekeeper','farmer','blacksmith','antique restorer','boat builder','park ranger','outdoor guide','furniture maker','glassblower','vintner','orchardist','photographer','violin maker','silversmith','boatwright','farrier','stone mason','cartographer','organic farmer','conservationist','craftsman','greenhouse owner','nature photographer'
+  ];
+
+  // EMOTIONAL WOUNDS - 15+ per trope for maximum variety
+  var WOUNDS = {
+    'Second Chance Love': [
+      'She left him 25 years ago for the "safer" choice — and has wondered ever since if she chose wrong.',
+      'She broke his heart when she walked away; now she\'s back in town and afraid to hope.',
+      'She chose duty over love once, and she\'s never forgiven herself.',
+      'She spent her whole life wondering "what if" about the one who got away.',
+      'She betrayed him for ambition, and now ambition feels hollow.',
+      'She walked out on him during a crisis, and the guilt has haunted her.',
+      'She stayed in a loveless marriage while he remained her secret dream.',
+      'She never told him she loved him, and now he\'s back with a new life.',
+      'She sacrificed their future for her career, and now she\'s losing that too.',
+      'She thought she was protecting him, but she was only protecting herself.',
+      'She chose to raise her sister\'s child instead of following him, and now the child is grown.',
+      'She was too afraid to say yes, and she\'s been saying no ever since.',
+      'She let fear steal her chance once, and she\'s determined not to let it happen again.',
+      'She\'s been carrying a torch for him for so long that it\'s burned her hands.',
+      'She made the "practical" choice and has regretted it every single day.'
+    ],
+    'Widow Finds Love Again': [
+      'She loved her husband completely — and now she can\'t imagine loving anyone else, or whether she even deserves to.',
+      'She\'s been a widow so long she\'s forgotten what it feels like to be desired.',
+      'She made a promise to her late husband — and now she\'s breaking it by falling for someone new.',
+      'She wears her wedding ring like a shield against the world.',
+      'She\'s terrified that loving again would dishonor his memory.',
+      'She kept his secrets, and now she\'s carrying the weight of his past.',
+      'She built her identity around being his wife, and now she\'s no one.',
+      'She\'s angry at him for leaving her alone, and she\'s ashamed of that anger.',
+      'She dreams of him every night, and she\'s afraid to let go of the dreams.',
+      'She\'s starting to forget his voice, and she panics when she does.',
+      'She feels like a widow and a fraud at the same time.',
+      'She\'s been alone so long she\'s not sure she knows how to be with someone.',
+      'She made a deathbed promise that she\'s now questioning.',
+      'She\'s finally ready to take off her ring, but she\'s afraid of what that means.',
+      'She\'s been the strong one for everyone else, but now she needs someone to be strong for her.'
+    ],
+    'Divorced & Rediscovering': [
+      'She gave 22 years to a marriage that ended anyway, and she no longer trusts her own judgment about love.',
+      'She spent decades being someone\'s wife; she doesn\'t know who she is alone.',
+      'She\'s been divorced twice and wonders if she\'s simply broken.',
+      'She stayed with him for years after she stopped loving him, and she\'s furious at herself.',
+      'She caught him cheating, and she still feels the shame of it.',
+      'She lost herself in his world, and now she has to build her own from scratch.',
+      'She\'s afraid that her best years are behind her and love is for the young.',
+      'She fought for that marriage until she had nothing left to give.',
+      'She\'s still paying for his mistakes financially and emotionally.',
+      'She\'s terrified of being alone, but even more scared of being trapped again.',
+      'She gave up her career for him, and now she has nothing to fall back on.',
+      'She\'s been the "cool girl" who never complained, and she\'s exhausted.',
+      'She\'s been divorced so long she\'s forgotten how to be in a relationship.',
+      'She\'s afraid she\'s the common denominator in her failed marriages.',
+      'She\'s been so focused on surviving that she forgot how to live.'
+    ],
+    'Late Bloomer Romance': [
+      'She chose career over love her whole life and now wonders if it\'s simply too late.',
+      'She\'s never been in love and fears she\'s past the age of innocence.',
+      'She watched everyone else find love, but never believed it was for her.',
+      'She\'s spent years taking care of aging parents, and now she\'s free and lost.',
+      'She was the "strong one" who never needed anyone, and now she\'s lonely.',
+      'She\'s afraid of intimacy because she\'s never practiced it.',
+      'She has a list of reasons why she\'s better off alone, and she\'s running out of reasons.',
+      'She\'s been hurt by men in the past, and she closed that door for good.',
+      'She\'s starting to feel invisible, and she\'s desperate to be seen.',
+      'She thinks she\'s too old for passion, but her body disagrees.',
+      'She\'s been the responsible one her whole life, and she\'s tired of it.',
+      'She\'s afraid she doesn\'t know how to love because she\'s never been loved right.',
+      'She\'s convinced that love is for other people, not for her.',
+      'She\'s been waiting for the "right time" and suddenly realizes it\'s now or never.',
+      'She\'s built walls so high that she\'s forgotten what it feels like to let someone in.'
+    ],
+    'Empty Nester New Beginning': [
+      'With her last child gone, she realized she doesn\'t know who she is when she\'s not someone\'s mother.',
+      'She poured everything into her children and now the house is silent.',
+      'She\'s been a mother so long she forgot she was a woman.',
+      'Her children were her identity, and now she\'s facing a void.',
+      'She\'s been the fixer in the family, and no one needs her to fix anything.',
+      'She\'s ready to have adventures, but she doesn\'t know where to start.',
+      'She\'s afraid that her husband will see her as "just a mom" now.',
+      'She\'s been putting her dreams on hold for 30 years, and they feel childish.',
+      'She\'s tired of being tired, but she doesn\'t know what else to do.',
+      'She\'s lost the sense of purpose that came with raising kids.',
+      'She\'s been so focused on her children that she forgot she had a marriage.',
+      'She\'s afraid of the silence because it forces her to think about herself.',
+      'She\'s been a mother for so long that she\'s forgotten how to be a woman.',
+      'She\'s terrified of the empty house because it means she has to face herself.',
+      'She\'s been so busy taking care of everyone else that she forgot to take care of herself.'
+    ],
+    'Workplace Second Act': [
+      'She gave her career everything — and now she\'s being forced out, wondering what she has left.',
+      'She\'s the only woman in the room, and she\'s tired of being invisible.',
+      'She sacrificed love for success, and now success feels empty.',
+      'She was passed over for promotion one too many times.',
+      'She\'s been the "office mom" for years, and she\'s sick of it.',
+      'She built a company from scratch, and now she\'s being pushed aside.',
+      'She\'s burned out and doesn\'t know how to stop.',
+      'She\'s been working so hard she forgot to live her life.',
+      'She\'s afraid that if she leaves her job, she\'ll have nothing.',
+      'She\'s been the caretaker for everyone at work, but no one takes care of her.',
+      'She\'s been so good at her job that no one sees the woman behind it.',
+      'She\'s tired of being "one of the boys" and wants to be seen as herself.',
+      'She\'s been told she\'s "too ambitious" and now she\'s questioning everything.',
+      'She\'s realized that climbing the ladder doesn\'t mean she\'s going anywhere.',
+      'She\'s been so focused on success that she forgot to build a life outside of work.'
+    ],
+    'Small Town Newcomer': [
+      'She moved to escape a scandal and now everyone knows her business.',
+      'She\'s the outsider who doesn\'t belong — and she\'s terrified of being rejected again.',
+      'She left her old life behind, but she can\'t outrun her past.',
+      'She\'s running from a bad relationship and landed in a place where everyone gossips.',
+      'She\'s determined to start over, but she doesn\'t know how to be vulnerable.',
+      'She\'s used to being invisible, and now everyone is watching.',
+      'She\'s got secrets that she\'s not ready to share.',
+      'She\'s afraid of being lonely, but she\'s even more afraid of being hurt.',
+      'She\'s looking for a fresh start, but she\'s carrying too much baggage.',
+      'She\'s skeptical of everyone\'s kindness because she\'s been burned before.',
+      'She\'s arrived with a fake name and a real desire to disappear.',
+      'She\'s been the outsider her whole life, and she\'s tired of it.',
+      'She\'s running from a past that refuses to stay in the rearview mirror.',
+      'She\'s desperate to reinvent herself but doesn\'t know who she wants to become.',
+      'She\'s been hurt by small-town gossip before and expects the worst.'
+    ],
+    'Reunion Romance': [
+      'She spent twenty years wondering what if — and now he\'s back.',
+      'She never stopped loving him, but she\'s afraid to admit it.',
+      'She buried her feelings so deep she forgot they were there.',
+      'She sees him again and realizes she\'s been settling ever since.',
+      'She\'s angry at him for leaving, and she\'s angry at herself for still caring.',
+      'She\'s worried that she\'s idealizing the past.',
+      'She\'s changed, and she\'s afraid he hasn\'t.',
+      'She\'s been successful, but she\'s still the girl he left behind.',
+      'She\'s afraid of falling for him again and losing herself.',
+      'She\'s got a picture of them from high school, and she can\'t stop looking at it.',
+      'She\'s been married twice, and both times she compared them to him.',
+      'She\'s terrified that the magic they had was just youthful naivety.',
+      'She\'s spent years convincing herself she\'s over him, and now she\'s face to face with him.',
+      'She\'s afraid that if she gives him a second chance, she\'ll be hurt again.',
+      'She\'s been carrying the memory of him like a secret, and now he\'s here in person.'
+    ],
+    'Unexpected Inheritance': [
+      'She inherited a house she never wanted — and secrets she never expected.',
+      'She\'s the black sheep who doesn\'t deserve this gift.',
+      'She came to sell the house and instead found a reason to stay.',
+      'She\'s been cut out of the will, but she\'s the one who has to clean up the mess.',
+      'She\'s suspicious of the "gift" because nothing comes for free.',
+      'She\'s been running from her family, but now she has to face them.',
+      'She\'s afraid of making the same mistakes her parents made.',
+      'She\'s got a dozen reasons to walk away, but one reason to stay.',
+      'She\'s been given a chance to change everything, and it\'s terrifying.',
+      'She\'s the one who always takes care of things, and she\'s tired of it.',
+      'She inherits a vineyard and doesn\'t know the first thing about wine.',
+      'She discovers a hidden letter that changes everything she thought she knew.',
+      'She\'s been given a legacy she never asked for and doesn\'t feel worthy of.',
+      'She inherited a house that comes with a ghost — both literal and metaphorical.',
+      'She\'s been the black sheep her whole life, and now she\'s been given the keys to the castle.'
+    ],
+    'Caretaker Falls in Love': [
+      'She\'s spent her life taking care of others — and now she\'s falling for someone who wants to take care of her.',
+      'She\'s afraid to let go of control.',
+      'She\'s been the strong one for so long she doesn\'t know how to be vulnerable.',
+      'She\'s terrified of being a burden.',
+      'She\'s been used by people who took her kindness for weakness.',
+      'She\'s determined never to need anyone again.',
+      'She\'s been taking care of ailing parents, and she\'s forgotten herself.',
+      'She\'s always been the giver, and she doesn\'t know how to receive.',
+      'She\'s afraid that if she lets someone in, they\'ll break her heart.',
+      'She\'s been in survival mode so long she\'s forgotten what joy feels like.',
+      'She\'s the one everyone leans on, but no one asks how she\'s doing.',
+      'She\'s so used to being needed that she doesn\'t know how to be wanted.',
+      'She\'s been taking care of everyone else so long that she\'s lost the ability to accept care.',
+      'She\'s afraid that if she stops being the caretaker, she\'ll have no purpose.',
+      'She\'s been so focused on everyone else\'s needs that she\'s forgotten she has needs too.'
+    ]
+  };
+
+  var SETTING_DETAILS = {
+    'Coastal / Beach Town': { atmosphere:'salt air and second chances', locations:['the old lighthouse','the harbor café','the cottage with the rose garden','the boardwalk at sunset','the seaside chapel','the driftwood beach','the fishing pier','the tide pools','the clam shack','the ferry landing'], sensory:'the sound of waves and the smell of sea lavender', season:'late summer turning to golden autumn' },
+    'Vineyard / Wine Country': { atmosphere:'sun-drenched and slow', locations:['the stone farmhouse','the tasting room at harvest time','the old olive grove','the vineyard terrace','the rustic cantina','the cellar door','the lavender field','the hilltop chapel','the old press house','the annual harvest festival'], sensory:'warm earth, ripe fruit, and evenings that smell like pine smoke', season:'late summer harvest' },
+    'Mountain Retreat': { atmosphere:'pine and possibility', locations:['the cabin with the view','the general store','the trail to the waterfall','the lodge fireplace','the hidden lake','the mountain pass','the pine grove','the ranger station','the old mining road','the peak overlook'], sensory:'cold air and woodsmoke', season:'early autumn' },
+    'Small Southern Town': { atmosphere:'magnolias and secrets', locations:['the courthouse square','the old cemetery','the porch swing','the church social hall','the riverside dock','the pecan orchard','the old mill','the diner','the family estate','the live oak grove'], sensory:'sweet tea and gardenia', season:'spring' },
+    'Italian / European Escape': { atmosphere:'sunlight on ancient stones', locations:['the piazza','the vineyard villa','the coastal promenade','the medieval hilltop','the hidden cove','the olive grove','the ancient fortress','the sun-drenched terrace','the cobblestone street','the hilltop cathedral'], sensory:'olive oil and rosemary', season:'late summer' },
+    'Pacific Northwest': { atmosphere:'mist and mystery', locations:['the lighthouse','the coastal trail','the bookshop by the sea','the old pier','the foggy cove','the cedar grove','the tidal pool','the ferry dock','the rainforest trail','the beachcomber\'s shack'], sensory:'salt and cedar', season:'autumn' },
+    'New England Village': { atmosphere:'crisp and cozy', locations:['the village green','the covered bridge','the inn with the fire','the cobblestone street','the seaside cottage','the maple grove','the town hall','the general store','the wharf','the old meeting house'], sensory:'woodsmoke and apple cider', season:'fall foliage' },
+    'Desert / Southwest': { atmosphere:'wide open and wild', locations:['the adobe casita','the desert garden','the canyon road','the arroyo','the mesa overlook','the sagebrush flat','the hidden spring','the pueblo ruins','the star-gazing hill','the wildflower meadow'], sensory:'dry earth and sage', season:'spring bloom' }
+  };
+
+  // ARCH BEATS — expanded with more variety
+  var ARC_BEAT1 = [
+    'After {wound}, {name} has spent {time} convincing herself she doesn\'t need {thing}.',
+    'For {time}, {name} has carried {wound}, and now she\'s exhausted.',
+    'The ache of {wound} has followed {name} for {time}, and she\'s ready to let it go.',
+    '{name} has been running from {wound} for {time}, but she can\'t run forever.',
+    'The silence in {name}\'s life after {wound} is louder than she ever expected.',
+    '{name} has always believed that {wound}, and it\'s time she questioned that belief.',
+    'She\'s been {wound} for so long that she\'s forgotten what it feels like to be free.',
+    '{name} has built a life around {wound}, but it\'s a fragile foundation.',
+    '{name} thought she had moved past {wound}, but it keeps calling her back.',
+    'The shadow of {wound} has been {name}\'s constant companion for {time}.',
+    '{name} has been hiding from {wound} behind a mask of busyness.',
+    'The weight of {wound} has been pressing on {name}\'s heart for {time}.',
+    '{name} has been living with {wound} for so long that it\'s become a part of her.',
+    'Despite all her success, {name} can\'t escape the truth of {wound}.'
+  ];
+  var ARC_BEAT2 = [
+    'When {love} {action}, {name} realizes for the first time that {discovery}.',
+    '{love}\'s arrival at {place} is the shock {name} needed to break free.',
+    'It\'s the small gesture from {love} that cracks {name}\'s defenses open.',
+    '{love} doesn\'t know he\'s {action}, but it changes everything for {name}.',
+    'The moment {love} says {quote}, {name} feels the ground shift beneath her.',
+    '{love} challenges {name} to {action}, and she surprises herself by accepting.',
+    'In the middle of {place}, {love} looks at {name} and she knows nothing will be the same.',
+    '{love} gives {name} something she never expected: {surprise}.',
+    'It\'s the unexpected kindness of {love} that unravels {name} completely.',
+    'When {love} offers {name} {surprise}, she sees a future she never dared to imagine.',
+    '{love} shows {name} what it feels like to be truly seen for the first time.',
+    'The moment {love} enters {place}, {name}\'s carefully constructed walls begin to crumble.',
+    '{love} does something so simple yet so profound that {name} can\'t ignore it.',
+    'An ordinary moment with {love} becomes the turning point for {name}.'
+  ];
+  var ARC_BEAT3 = [
+    'She learns that {wisdom} — and that the bravest thing she\'s ever done is letting herself be loved again.',
+    '{name} understands that {wisdom}, and she finally releases the hold of {wound}.',
+    'The journey teaches {name} that {wisdom}, and she steps into her second act.',
+    'She discovers that {wisdom}, and she chooses herself this time.',
+    '{name} realizes that {wisdom}, and she opens her heart to {love}.',
+    'In the end, {name} embraces {wisdom}, and she finds peace at last.',
+    'She comes to see that {wisdom}, and she\'s no longer afraid of what\'s ahead.',
+    '{name} learns to {wisdom}, and she lets go of the weight she\'s been carrying.',
+    'The greatest lesson {name} learns is that {wisdom}, and it sets her free.',
+    '{name} finally accepts that {wisdom}, and she allows herself to be happy.',
+    '{name} discovers that {wisdom}, and she finds the courage to begin again.',
+    'She realizes that {wisdom}, and she finally gives herself permission to love.',
+    '{name} understands that {wisdom}, and she steps into the life she was meant to live.',
+    'Through {love}, {name} learns that {wisdom}, and she\'s forever changed.'
+  ];
+
+  // HOOK LINES — expanded with more variety
+  var HOOKS = [
+    'When a chance encounter at {place} gives {name} a reason to stay, she must choose between the safe life she planned and the love she never expected.',
+    'She came to {place} to escape her past, but what she finds is a future she never dared to imagine.',
+    'In the heart of {place}, {name} discovers that the only thing more frightening than falling is never knowing what could have been.',
+    'She thought she was done with love, but {place} has other plans for her heart.',
+    'When the woman who always puts everyone first meets {love}, she learns that sometimes the bravest thing is to need someone.',
+    '{place} holds secrets that have been buried for years, and {name} is about to uncover them all — including the secret of her own heart.',
+    'She\'s spent her life being invisible, but in {place}, she\'s finally seen for who she truly is.',
+    'The journey to {place} was supposed to be a goodbye, but it turned into an unexpected hello.',
+    'She\'s been living someone else\'s dream for so long that she forgot she had one of her own.',
+    'What if the life you\'ve been running from is the one you were always meant to find?',
+    'She thought she had her life figured out, until {place} showed her she had only just begun.',
+    'In the quiet of {place}, {name} hears something she\'s never heard before: her own heart.',
+    'She came to {place} looking for answers and found a love that made her question everything.',
+    'The last thing {name} expected when she arrived at {place} was to find herself — and him.',
+    'She was ready to give up on love, but {place} had a different plan for her heart.',
+    'Sometimes the best love story is the one you never saw coming.',
+    'She went to {place} to hide from the world and ended up discovering a new one.',
+    'A chance encounter at {place} becomes the beginning of everything {name} never knew she wanted.'
+  ];
+
+  // TITLE COMBINATIONS — expanded
+  var TITLE_A = ['The Light','The Last','The Secret','The Promise','The Return','The House','The Garden','The Sea','The Path','The Song','The Heart','The Way','The Window','The Door','The Shore','The Star','The Dream','The Hope','The Gift','The Echo','The Whisper','The Glow','The Sound','The Embrace','The Beginning','The Truth','The Gift','The Journey','The Discovery','The Awakening','The Flame','The Bridge','The Key','The Moment','The Dance','The Silence','The Courage','The Love','The Grace','The Homecoming'];
+  var TITLE_B = ['Cedar Cove','Moonlight Bay','Rosemary Lane','Whisper Creek','Swan Point','Honey Hill','Maple Street','Magnolia','Ivy House','Sage Meadow','Willow Brook','Sunset Harbor','Mistwood','Hawthorne','Evergreen','Clover Hill','Riverbend','Aspen Grove','Larkwood','Starlight','Bluebell','Honeysuckle','Tanglewood','Rosewood','Silver Creek','Fern Hollow','Crystal Lake','Pine Ridge','Morning Dove','Wildflower','Cinnamon Ridge','Buttercup Valley','Golden Pond','Whispering Pines','Morning Glory','Sunrise Point','Tranquility Cove','Harmony Hill','Serenity Falls','Promise Lane'];
+
+  // helper
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  // UI state
+  var selectedTropes = ['Second Chance Love'];
+  var selectedSetting = 'Coastal / Beach Town';
+  var selectedAge = 'Early 40s (post-divorce awakening)';
+  var selectedTone = 'Warm & Hopeful';
+  var selectedCount = 1;
+  var generatedConcepts = [];
+  var savedConcepts = JSON.parse(localStorage.getItem('ml_savedConcepts')) || [];
+  var currentConceptIndex = 0;
+
+  // DOM refs
+  var tropeBtns = document.querySelectorAll('#tropePicker .pill');
+  var settingBtns = document.querySelectorAll('#settingPicker .pill');
+  var ageBtns = document.querySelectorAll('#agePicker .pill');
+  var toneBtns = document.querySelectorAll('#tonePicker .pill');
+  var countBtns = document.querySelectorAll('#countPicker .pill');
+  var generateBtn = document.getElementById('generateBtn');
+  var rerollBtn = document.getElementById('rerollBtn');
+  var savedToggle = document.getElementById('savedToggle');
+  var savedPanel = document.getElementById('savedPanel');
+  var savedCountSpan = document.getElementById('savedCount');
+  var emptyState = document.getElementById('emptyState');
+  var container = document.getElementById('conceptContainer');
+
+  // pill setup
+  function setupPills() {
+    tropeBtns.forEach(function(b) {
+      b.addEventListener('click', function() {
+        var trope = this.getAttribute('data-trope');
+        var idx = selectedTropes.indexOf(trope);
+        if (idx > -1) { selectedTropes.splice(idx, 1); this.classList.remove('active'); }
+        else { selectedTropes.push(trope); this.classList.add('active'); }
+        if (selectedTropes.length === 0) { selectedTropes = ['Second Chance Love']; tropeBtns[0].classList.add('active'); }
+      });
+    });
+    function singleSelect(btns, storeKey, defaultValue) {
+      btns.forEach(function(b) {
+        b.addEventListener('click', function() {
+          btns.forEach(function(x) { x.classList.remove('active'); });
+          this.classList.add('active');
+          var val = this.getAttribute(storeKey);
+          if (storeKey === 'data-setting') selectedSetting = val;
+          else if (storeKey === 'data-age') selectedAge = val;
+          else if (storeKey === 'data-tone') selectedTone = val;
+          else if (storeKey === 'data-count') selectedCount = parseInt(val, 10);
+        });
+      });
+    }
+    singleSelect(settingBtns, 'data-setting', 'Coastal / Beach Town');
+    singleSelect(ageBtns, 'data-age', 'Early 40s (post-divorce awakening)');
+    singleSelect(toneBtns, 'data-tone', 'Warm & Hopeful');
+    singleSelect(countBtns, 'data-count', 1);
+    tropeBtns[0].classList.add('active');
+  }
+  setupPills();
+
+  // ---- GENERATION ENGINE - ALWAYS FRESH ----
+  function generateFreshConcept(trope, setting, age, tone) {
+    var settingKey = setting;
+    var nameBank = NAMES.coastal;
+    if (setting.indexOf('Coastal') > -1) nameBank = NAMES.coastal;
+    else if (setting.indexOf('Vineyard') > -1) nameBank = NAMES.vineyard;
+    else if (setting.indexOf('Mountain') > -1) nameBank = NAMES.mountain;
+    else if (setting.indexOf('European') > -1) nameBank = NAMES.european;
+    else if (setting.indexOf('Southern') > -1) nameBank = NAMES.southern;
+    else if (setting.indexOf('Pacific') > -1) nameBank = NAMES.pnw;
+    else if (setting.indexOf('New England') > -1) nameBank = NAMES.newengland;
+    else if (setting.indexOf('Desert') > -1) nameBank = NAMES.desert;
+    var loveBank = LOVE_NAMES.coastal;
+    if (setting.indexOf('Coastal') > -1) loveBank = LOVE_NAMES.coastal;
+    else if (setting.indexOf('Vineyard') > -1) loveBank = LOVE_NAMES.vineyard;
+    else if (setting.indexOf('Mountain') > -1) loveBank = LOVE_NAMES.mountain;
+    else if (setting.indexOf('European') > -1) loveBank = LOVE_NAMES.european;
+    else if (setting.indexOf('Southern') > -1) loveBank = LOVE_NAMES.southern;
+    else if (setting.indexOf('Pacific') > -1) loveBank = LOVE_NAMES.pnw;
+    else if (setting.indexOf('New England') > -1) loveBank = LOVE_NAMES.newengland;
+    else if (setting.indexOf('Desert') > -1) loveBank = LOVE_NAMES.desert;
+
+    var pName = pick(nameBank);
+    var lName = pick(loveBank);
+    var pOcc = pick(OCCUPATIONS_F);
+    var lOcc = pick(OCCUPATIONS_M);
+    var wounds = WOUNDS[trope] || ['She has been holding back her heart for too long.'];
+    var wound = pick(wounds);
+    var settingDetail = SETTING_DETAILS[setting] || { atmosphere:'gentle and warm', locations:['the old house','the café','the garden'], sensory:'soft light and comfort', season:'spring' };
+
+    var title = pick(TITLE_A) + ' ' + pick(TITLE_B);
+    title = title.toUpperCase();
+
+    var timePhrases = ['years', 'decades', 'a lifetime', 'so long she lost count', 'half her life', 'more than she cares to remember', 'too many years', 'countless seasons', 'longer than she wants to admit', 'a very long time', 'the better part of her life', 'what feels like forever', 'ages', 'many years'];
+    var needPhrases = ['love', 'happiness', 'connection', 'someone to share her life with', 'to be truly seen', 'a reason to hope', 'to feel alive again', 'someone who sees her', 'to be chosen for once', 'a partner', 'to let go', 'peace', 'forgiveness', 'a fresh start', 'to be loved for who she is'];
+    var time = pick(timePhrases);
+    var need = pick(needPhrases);
+
+    // Beat 1
+    var beat1Template = pick(ARC_BEAT1);
+    var beat1 = beat1Template.replace(/{wound}/g, wound.toLowerCase()).replace(/{name}/g, pName).replace(/{time}/g, time).replace(/{thing}/g, need);
+
+    // Beat 2
+    var actions = ['offers her a cup of coffee', 'fixes the broken gate', 'leaves a book on her doorstep', 'defends her in a conversation', 'shows up with flowers', 'tells her she\'s beautiful', 'shares his own story', 'asks her to dance', 'invites her to the town fair', 'simply smiles at her', 'helps her carry groceries', 'sings her a song', 'reads her a poem', 'builds her a bench', 'plants a garden for her', 'gives her a genuine compliment', 'holds the door for her', 'remembers her name', 'offers to help without being asked', 'shares his umbrella', 'makes her laugh', 'cooks her dinner', 'fixes her car', 'listens to her without judging', 'asks her opinion and really listens'];
+    var discoveries = ['she deserves to be happy', 'she\'s still capable of passion', 'she\'s been hiding from life', 'she\'s not too old for this', 'she can trust again', 'she\'s been wrong about herself', 'she\'s stronger than she thinks', 'she wants more out of life', 'she\'s ready to take a risk', 'she\'s worthy of love', 'she\'s been missing out', 'she can still change her life', 'she\'s not as alone as she thought', 'she has more to offer than she realizes', 'love is still possible for her', 'she has choices', 'her story isn\'t finished yet', 'she\'s allowed to be selfish', 'she doesn\'t have to be perfect to be loved', 'the best part of her life is still ahead'];
+    var places = pick(settingDetail.locations);
+    var beat2Template = pick(ARC_BEAT2);
+    var quotes = ['I\'ve been waiting for you', 'I noticed you', 'You\'re not invisible to me', 'I think you\'re wonderful', 'You deserve to be happy', 'You\'re the most interesting person here', 'I\'ve been looking for you', 'You seem lost, I was too', 'I think we\'re meant to know each other', 'You have beautiful eyes', 'I\'d like to get to know you', 'You\'re the most honest person I\'ve met', 'I can see you', 'You\'re different from anyone I\'ve met', 'I think I\'ve been waiting for you my whole life'];
+    var surprises = ['hope', 'a reason to stay', 'a glimpse of who she used to be', 'the courage to change', 'a mirror to her own soul', 'a second chance', 'a new beginning', 'the truth about herself', 'a sense of belonging', 'a feeling of being understood', 'a future she never imagined', 'the strength to let go', 'a door she thought was closed forever', 'a reason to believe again'];
+    var beat2 = beat2Template.replace(/{love}/g, lName).replace(/{action}/g, pick(actions)).replace(/{name}/g, pName).replace(/{discovery}/g, pick(discoveries)).replace(/{place}/g, places).replace(/{quote}/g, '"' + pick(quotes) + '"').replace(/{surprise}/g, pick(surprises));
+
+    // Beat 3
+    var wisdoms = ['love doesn\'t have an expiration date', 'it\'s never too late to start over', 'she is worthy of love just as she is', 'the best love is the one you find after you stop looking', 'courage is feeling the fear and choosing love anyway', 'her heart still has room for more', 'she can write her own story', 'she\'s allowed to be happy', 'her second act can be her best one', 'the only true failure is never trying', 'she can choose herself and still choose love', 'the love she gives herself is the love she\'ll receive', 'she deserves a life as full as the ones she\'s created for others', 'the heart always knows the way home', 'real love arrives when you least expect it', 'you can\'t find your future if you\'re still holding onto your past', 'every ending is a new beginning', 'love is always worth the risk', 'she is exactly where she needs to be', 'the best is yet to come'];
+    var beat3Template = pick(ARC_BEAT3);
+    var beat3 = beat3Template.replace(/{wisdom}/g, pick(wisdoms)).replace(/{name}/g, pName).replace(/{wound}/g, wound.toLowerCase()).replace(/{love}/g, lName);
+
+    // Hook
+    var hookTemplate = pick(HOOKS);
+    var hook = hookTemplate.replace(/{place}/g, places).replace(/{name}/g, pName).replace(/{love}/g, lName);
+
+    var botPrompt = 'I want to write a midlife romance novel. Here is my story concept: ' + trope + ', set in ' + setting + '. Protagonist: ' + pName + ', ' + age + ', ' + pOcc + '. Her central wound: ' + wound + '. Love interest: ' + lName + ', ' + lOcc + '. Emotional tone: ' + tone + '. Target length: Full Novel — 13,000 words / 10 chapters.';
+
+    return {
+      title: title,
+      trope: trope,
+      setting: setting,
+      age: age,
+      tone: tone,
+      pName: pName,
+      pOcc: pOcc,
+      lName: lName,
+      lOcc: lOcc,
+      wound: wound,
+      beat1: beat1,
+      beat2: beat2,
+      beat3: beat3,
+      hook: hook,
+      botPrompt: botPrompt,
+      settingDetail: settingDetail
+    };
+  }
+
+  function generateMultiple(count) {
+    var results = [];
+    for (var i = 0; i < count; i++) {
+      var trope = pick(selectedTropes);
+      results.push(generateFreshConcept(trope, selectedSetting, selectedAge, selectedTone));
+    }
+    return results;
+  }
+
+  // ----- RENDER -----
+  function renderConcepts(concepts) {
+    if (!concepts || concepts.length === 0) {
+      emptyState.style.display = 'flex';
+      container.style.display = 'none';
+      return;
+    }
+    emptyState.style.display = 'none';
+    container.style.display = 'grid';
+    container.className = 'concept-grid' + (concepts.length > 1 ? ' cols-2' : '');
+    var html = '';
+    for (var i = 0; i < concepts.length; i++) {
+      var c = concepts[i];
+      html += '<div class="concept-card">';
+      html += '<div class="reveal"><div class="story-title">' + c.title + '</div><div class="title-sub">Your working title — change it anytime</div></div>';
+      html += '<div class="badge-row reveal"><span class="badge trope">' + c.trope + '</span><span class="badge setting">' + c.setting + '</span></div>';
+      html += '<div class="reveal"><h4 class="italic">YOUR HEROINE</h4><p>' + c.pName + ', ' + c.age + ', ' + c.pOcc + '. ' + c.wound + '</p></div>';
+      html += '<div class="reveal"><h4>LOVE INTEREST</h4><p>' + c.lName + ', ' + c.lOcc + '. He\'s proof that it\'s possible to rebuild — if you\'re brave enough.</p></div>';
+      html += '<div class="reveal"><h4>CENTRAL EMOTIONAL ARC</h4><p><strong>Beat 1 — The Wound:</strong> ' + c.beat1 + '</p><p><strong>Beat 2 — The Turning Point:</strong> ' + c.beat2 + '</p><p><strong>Beat 3 — The Resolution:</strong> ' + c.beat3 + '</p></div>';
+      html += '<div class="hook reveal">' + c.hook + '</div>';
+      html += '<div class="bot-prompt-box reveal">' + c.botPrompt + '</div>';
+      html += '<div class="card-actions reveal">';
+      html += '<button class="copy-prompt" data-bot="' + i + '">📋 COPY BOT PROMPT</button>';
+      html += '<button class="copy-full" data-bot="' + i + '">📋 COPY FULL CONCEPT</button>';
+      html += '<button class="save-btn" data-bot="' + i + '">⭐ SAVE THIS CONCEPT</button>';
+      html += '</div></div>';
+    }
+    container.innerHTML = html;
+
+    container.querySelectorAll('.copy-prompt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-bot'), 10);
+        copyText(concepts[idx].botPrompt);
+      });
+    });
+    container.querySelectorAll('.copy-full').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-bot'), 10);
+        var c = concepts[idx];
+        var full = c.title + '\n' + c.trope + ' · ' + c.setting + '\n\nProtagonist: ' + c.pName + ', ' + c.age + ', ' + c.pOcc + '\nWound: ' + c.wound + '\nLove Interest: ' + c.lName + ', ' + c.lOcc + '\n\nARC:\n' + c.beat1 + '\n' + c.beat2 + '\n' + c.beat3 + '\n\nHook: ' + c.hook + '\n\nBOT PROMPT:\n' + c.botPrompt;
+        copyText(full);
+      });
+    });
+    container.querySelectorAll('.save-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-bot'), 10);
+        var c = concepts[idx];
+        var exists = savedConcepts.some(function(s) { return s.title === c.title && s.pName === c.pName && s.lName === c.lName; });
+        if (!exists) {
+          savedConcepts.push(c);
+          localStorage.setItem('ml_savedConcepts', JSON.stringify(savedConcepts));
+          updateSavedUI();
+        }
+      });
+    });
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function() { fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  function updateSavedUI() {
+    savedCountSpan.textContent = savedConcepts.length;
+    var panel = document.getElementById('savedPanel');
+    if (savedConcepts.length === 0) { panel.innerHTML = '<div style="padding:12px;color:rgba(255,255,255,0.5);font-size:13px;">No saved concepts yet</div>'; }
+    else {
+      var html = '';
+      savedConcepts.forEach(function(c, idx) {
+        html += '<div class="saved-item"><span>' + c.title + ' (' + c.pName + ')</span><span class="del" data-idx="' + idx + '">✕</span></div>';
+      });
+      panel.innerHTML = html;
+      panel.querySelectorAll('.del').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var idx = parseInt(this.getAttribute('data-idx'), 10);
+          savedConcepts.splice(idx, 1);
+          localStorage.setItem('ml_savedConcepts', JSON.stringify(savedConcepts));
+          updateSavedUI();
+        });
+      });
+      panel.querySelectorAll('.saved-item span:first-child').forEach(function(el, idx) {
+        el.addEventListener('click', function() {
+          var c = savedConcepts[idx];
+          renderConcepts([c]);
+        });
+      });
+    }
+  }
+
+  // ----- EVENTS -----
+  generateBtn.addEventListener('click', function() {
+    var concepts = generateMultiple(selectedCount);
+    generatedConcepts = concepts;
+    renderConcepts(concepts);
+  });
+
+  rerollBtn.addEventListener('click', function() {
+    if (generatedConcepts.length > 0) {
+      var newConcepts = generateMultiple(selectedCount);
+      generatedConcepts = newConcepts;
+      renderConcepts(newConcepts);
+    } else {
+      generateBtn.click();
+    }
+  }); a
+
+  savedToggle.addEventListener('click', function() {
+    var panel = document.getElementById('savedPanel');
+    if (panel.style.display === 'none') { panel.style.display = 'block'; updateSavedUI(); }
+    else { panel.style.display = 'none'; }
+  });
+
+  updateSavedUI();
+})();
+</script>
+</body>
+</html>
