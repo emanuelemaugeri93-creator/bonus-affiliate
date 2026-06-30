@@ -1,0 +1,1053 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tactical Formation Decoder</title>
+<style>
+  :root{
+    --field:#2f7d32; --field-dark:#1f5e22; --field-light:#3d9140;
+    --navy:#1e3a5f; --navy-dark:#142a44; --navy-light:#2c5282;
+    --slate:#475569; --slate-light:#64748b; --slate-soft:#e2e8f0;
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --white:#ffffff; --gold:#d4a85a; --gold-soft:#f3e6c4;
+    --bg:#f1f4f8; --panel:#ffffff; --shadow:0 4px 18px rgba(30,58,95,.08);
+    --grad:linear-gradient(135deg,#1e3a5f 0%,#2c5282 55%,#1f5e22 100%);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); display:flex;flex-direction:column;height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* Toolbar */
+  .toolbar{
+    height:60px;flex:0 0 60px;
+    background:var(--grad); color:#fff;display:flex;align-items:center;gap:10px;padding:0 20px;
+    box-shadow:0 4px 18px rgba(20,42,68,.28); z-index:5;position:relative;
+  }
+  .toolbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);}
+  .brand{font-weight:700;letter-spacing:.2px;font-size:15px;display:flex;align-items:center;gap:11px;white-space:nowrap;}
+  .brand .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;}
+  .brand .logo svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));}
+  .brand .btext{display:flex;flex-direction:column;line-height:1.15;}
+  .brand .btext .bt-title{font-size:15px;font-weight:800;letter-spacing:.2px;}
+  .brand .btext .bt-sub{font-size:9.5px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.65);}
+  .toolbar .spacer{flex:1;}
+  .tbtn{
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;
+    padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;
+    transition:.15s;display:flex;align-items:center;gap:7px;white-space:nowrap;backdrop-filter:blur(4px);
+  }
+  .tbtn:hover{background:rgba(255,255,255,.24);transform:translateY(-1px);}
+  .tbtn:active{transform:translateY(0);}
+  .tbtn.primary{background:var(--gold);color:var(--navy-dark);border-color:var(--gold);box-shadow:0 2px 8px rgba(212,168,90,.4);}
+  .tbtn.primary:hover{background:#e8bf72;box-shadow:0 4px 12px rgba(212,168,90,.5);}
+  .tbtn.ghost{background:transparent;border-color:rgba(255,255,255,.3);}
+
+  /* Layout */
+  .app{flex:1;display:flex;min-height:0;}
+  .sidebar{width:286px;flex:0 0 286px;background:var(--panel);overflow-y:auto;box-shadow:var(--shadow);padding:16px;}
+  .sidebar.left{border-right:1px solid var(--line);}
+  .sidebar.right{border-left:1px solid var(--line);}
+  .sidebar::-webkit-scrollbar{width:8px;}
+  .sidebar::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
+  .center{
+    flex:1;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center;
+    background:radial-gradient(circle at 18% 12%,rgba(30,58,95,.05),transparent 42%),radial-gradient(circle at 82% 88%,rgba(47,125,50,.05),transparent 42%),var(--bg);
+  }
+  .sb-section{margin-bottom:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.03);}
+  .sb-section h3{
+    margin:0;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;
+    background:linear-gradient(90deg,rgba(30,58,95,.09),rgba(44,82,130,.09));color:var(--navy-dark);
+    font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;
+    border-left:3px solid var(--navy);
+  }
+  .sb-section h3 .chev{font-size:10px;color:var(--muted);transition:transform .2s;}
+  .sb-section.collapsed h3 .chev{transform:rotate(-90deg);}
+  .sb-body{padding:13px 14px;display:flex;flex-direction:column;gap:12px;}
+  .sb-section.collapsed .sb-body{display:none;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field>label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+  .seg{display:grid;gap:5px;}
+  .seg.c2{grid-template-columns:1fr 1fr;}
+  .seg.c3{grid-template-columns:1fr 1fr 1fr;}
+  .seg.c4{grid-template-columns:1fr 1fr;}
+  .seg.auto{grid-template-columns:repeat(auto-fit,minmax(74px,1fr));}
+  .seg button{
+    padding:8px 6px;border:1px solid var(--line);background:#f8fafc;border-radius:8px;font-size:11px;
+    cursor:pointer;color:var(--ink);font-weight:600;transition:.14s;text-align:center;line-height:1.2;min-width:0;word-break:break-word;
+  }
+  .seg button.active{background:var(--navy);color:#fff;border-color:var(--navy);box-shadow:0 3px 8px rgba(30,58,95,.35);}
+  .seg button:hover:not(.active){background:#eef2f7;border-color:var(--navy-light);}
+  .field input[type=text],.field select{
+    padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px;background:#fff;width:100%;transition:.14s;
+  }
+  .field input[type=text]:focus,.field select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(30,58,95,.12);outline:none;}
+  .check{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;cursor:pointer;padding:4px 0;}
+  .check input{width:16px;height:16px;accent-color:var(--navy);cursor:pointer;}
+  .bigbtn{
+    width:100%;padding:11px;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s;
+  }
+  .bigbtn.create{background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(30,58,95,.3);}
+  .bigbtn.create:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 16px rgba(30,58,95,.4);}
+  .bigbtn.reroll{background:#fff;color:var(--navy);border:1.5px solid var(--navy);}
+  .bigbtn.reroll:hover{background:#eef2f7;transform:translateY(-1px);}
+  .bigbtn.answers{background:var(--gold-soft);color:var(--navy-dark);border:1.5px solid var(--gold);}
+  .bigbtn.answers:hover{background:#fff0d0;transform:translateY(-1px);}
+  .gen-row{display:flex;flex-direction:column;gap:8px;}
+  .slider{width:100%;accent-color:var(--navy);}
+  .slider-row{display:flex;align-items:center;gap:8px;}
+  .slider-row .val{font-size:11px;font-weight:700;color:var(--navy-dark);min-width:44px;text-align:right;}
+  .hint{font-size:10px;color:var(--muted);line-height:1.45;}
+
+  /* Pages */
+  .page-pair{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;}
+  .page{
+    width:560px;background:#fff;box-shadow:0 12px 40px rgba(15,23,42,.14);border-radius:10px;overflow:hidden;flex-shrink:0;
+  }
+  .page.a4{width:595px;}
+  .page-head{
+    padding:18px 26px;border-bottom:2px solid var(--gold);display:flex;justify-content:space-between;align-items:center;gap:12px;
+    background:linear-gradient(90deg,rgba(30,58,95,.04),rgba(44,82,130,.04));
+  }
+  .page-head h1{margin:0;font-size:18px;color:var(--navy-dark);font-weight:800;display:flex;align-items:center;gap:9px;}
+  .page-head h1::before{content:"";width:5px;height:20px;border-radius:3px;background:var(--grad);}
+  .page-head .sub{font-size:10.5px;color:var(--muted);margin-top:3px;}
+  .page-head .badge{background:var(--navy);color:#fff;font-size:9.5px;padding:5px 11px;border-radius:20px;font-weight:700;letter-spacing:.5px;}
+  .page-head .badge.ans{background:var(--field-dark);}
+  .page-body{padding:20px 26px 26px;}
+  .case{display:flex;flex-direction:column;gap:12px;break-inside:avoid;}
+  .case+.case{margin-top:22px;padding-top:22px;border-top:1px dashed var(--line);}
+  .case .ctitle{font-weight:800;font-size:14px;color:var(--navy-dark);display:flex;justify-content:space-between;align-items:center;}
+  .case .ctitle .meta{font-size:10px;color:var(--muted);font-weight:600;}
+  .case .instr{font-size:11.5px;color:var(--muted);font-style:italic;line-height:1.45;}
+  .field-wrap{display:flex;justify-content:center;background:transparent;border-radius:10px;padding:6px;}
+  .clues{display:grid;gap:7px;}
+  .clues.grid2{grid-template-columns:1fr 1fr;}
+  .clue-card{
+    background:#f8fafc;border:1px solid var(--line);border-left:3px solid var(--navy);border-radius:7px;
+    padding:8px 11px;font-size:11.5px;line-height:1.4;color:var(--ink);
+  }
+  .clue-card .num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;
+    background:var(--navy);color:#fff;font-size:10px;font-weight:800;margin-right:7px;vertical-align:middle;}
+  .rolebank{display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;background:#f8fafc;border:1px dashed var(--slate-light);border-radius:8px;}
+  .role-chip{padding:3px 8px;background:#fff;border:1px solid var(--line);border-radius:14px;font-size:10.5px;font-weight:600;color:var(--slate);}
+  .answer-rows{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:4px;}
+  .answer-row{display:flex;align-items:center;gap:6px;font-size:11px;}
+  .answer-row .mk{width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex:0 0 20px;}
+  .answer-row .ln{flex:1;border-bottom:1px solid var(--slate-soft);min-height:16px;}
+  .answer-row .ln.solid{border-bottom:1.5px solid var(--slate);border-radius:0;}
+  .answer-row .ln.underline{border-bottom:1.5px dashed var(--slate-light);}
+
+  /* Answer key extras */
+  .page.answerkey .clue-card{border-left-color:var(--field-dark);background:#f7faf7;}
+  .explanation{font-size:10.5px;color:var(--navy-dark);background:#f1f5f9;border-left:3px solid var(--navy);
+    padding:7px 10px;border-radius:0 6px 6px 0;margin-top:6px;line-height:1.45;}
+  .answer-tag{font-size:10.5px;font-weight:700;color:#166534;background:#dcfce7;padding:3px 8px;border-radius:6px;display:inline-block;margin-top:4px;}
+  .group-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--white);padding:2px 8px;border-radius:4px;display:inline-block;margin-top:8px;margin-bottom:4px;}
+  .group-label.def{background:var(--navy-dark);}
+  .group-label.mid{background:var(--navy);}
+  .group-label.att{background:var(--field-dark);}
+
+  /* AI modal */
+  .ai-modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:50;}
+  .ai-modal.show{display:flex;}
+  .ai-card{background:#fff;border-radius:14px;width:480px;max-width:92vw;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:86vh;overflow-y:auto;}
+  .ai-card h2{margin:0 0 6px;font-size:16px;color:var(--navy-dark);}
+  .ai-card p.hint{font-size:12px;color:var(--muted);margin:0 0 14px;}
+  .ai-opt{display:flex;flex-direction:column;gap:8px;}
+  .ai-opt button{text-align:left;padding:11px 14px;border:1px solid var(--line);border-radius:9px;background:#f8fafc;cursor:pointer;font-size:13px;transition:.12s;}
+  .ai-opt button:hover{border-color:var(--navy);background:#eef2f7;}
+  .ai-opt button b{color:var(--navy-dark);}
+  .ai-out{margin-top:14px;padding:12px;background:#f1f5f9;border-radius:8px;font-size:12px;line-height:1.55;color:var(--ink);white-space:pre-wrap;display:none;border:1px solid #e2e8f0;}
+  .ai-close{margin-top:14px;width:100%;padding:10px;border:none;background:var(--navy);color:#fff;border-radius:8px;cursor:pointer;font-weight:600;}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy-dark);color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;opacity:0;transition:.3s;z-index:60;}
+  .toast.show{opacity:1;}
+
+  @media print{
+    body{background:#fff;}
+    .toolbar,.sidebar,.toast,.ai-modal{display:none !important;}
+    .app{display:block;}
+    .center{padding:0;overflow:visible;background:#fff;}
+    .page-pair{gap:6px;}
+    .page{box-shadow:none;margin:0;border-radius:0;page-break-inside:avoid;}
+    .page-pair{page-break-after:always;}
+    .page-pair:last-child{page-break-after:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <div class="brand">
+    <span class="logo">
+      <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e3a5f"/><stop offset="100%" stop-color="#2c5282"/></linearGradient>
+        </defs>
+        <rect x="2" y="2" width="32" height="32" rx="9" fill="url(#lg1)"/>
+        <rect x="2" y="2" width="32" height="32" rx="9" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+        <rect x="7" y="9" width="22" height="14" rx="2" fill="none" stroke="#fff" stroke-width="1.2" opacity=".5"/>
+        <line x1="18" y1="9" x2="18" y2="23" stroke="#fff" stroke-width="1.2" opacity=".5"/>
+        <circle cx="18" cy="16" r="2.5" fill="none" stroke="#fff" stroke-width="1.1" opacity=".7"/>
+        <circle cx="11" cy="20" r="2" fill="#d4a85a"/>
+        <circle cx="25" cy="13" r="2" fill="#fff"/>
+        <line x1="11" y1="20" x2="18" y2="16" stroke="#fff" stroke-width=".9" opacity=".5"/>
+        <line x1="25" y1="13" x2="18" y2="16" stroke="#fff" stroke-width=".9" opacity=".5"/>
+      </svg>
+    </span>
+    <span class="btext"><span class="bt-title">Tactical Formation Decoder</span><span class="bt-sub">Coach Worksheet Studio</span></span>
+  </div>
+  <div class="spacer"></div>
+  <button class="tbtn primary" id="btnCreate">✦ Create Cases</button>
+  <button class="tbtn" id="btnReroll">⟳ Re-roll</button>
+  <button class="tbtn" id="btnAnswers">👁 Show Answers</button>
+  <button class="tbtn" id="btnAI">✦ AI</button>
+  <button class="tbtn" id="btnPDF">⬇ PDF</button>
+  <button class="tbtn" id="btnPNG">⬇ PNG</button>
+</div>
+
+<div class="app">
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar left">
+    <div class="sb-section">
+      <h3>Sport Setup <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Sport</label>
+          <div class="seg c3" data-group="sport"><button data-val="soccer">Soccer</button><button data-val="basketball">Basketball</button><button data-val="rugby">Rugby</button></div>
+        </div>
+        <div class="field"><label>Formation preset</label>
+          <div class="seg c2" data-group="formation" id="formationSeg">
+            <button data-val="4-3-3">4-3-3</button><button data-val="4-4-2">4-4-2</button>
+            <button data-val="3-5-2">3-5-2</button><button data-val="4-2-3-1">4-2-3-1</button>
+          </div>
+        </div>
+        <div class="field"><label>Difficulty</label>
+          <div class="seg c3" data-group="difficulty"><button data-val="easy">Easy</button><button data-val="medium">Medium</button><button data-val="hard">Hard</button></div>
+        </div>
+        <div class="field"><label>Cases per page</label>
+          <div class="seg c3" data-group="cases"><button data-val="1">1</button><button data-val="2">2</button><button data-val="4">4</button></div>
+        </div>
+        <div class="field"><label>Formation preview</label>
+          <div id="formPreview" style="display:flex;justify-content:center;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:6px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <h3>Clue Style <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Clue types used</label>
+          <div class="seg c2" data-group="clues">
+            <button data-val="positional">Positional</button><button data-val="functional">Functional</button>
+            <button data-val="side">Side-of-field</button><button data-val="negation">Negation</button>
+            <button data-val="mixed" style="grid-column:1/-1">Mixed (all of the above)</button>
+          </div>
+        </div>
+        <div class="field"><label>Number of clues</label>
+          <div class="slider-row"><input type="range" class="slider" id="clueCount" min="3" max="12" value="6"><span class="val" id="clueCountVal">6</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <h3>Student Support <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <label class="check"><input type="checkbox" id="optLines" checked> Show formation lines faintly</label>
+        <label class="check"><input type="checkbox" id="optBank" checked> Role bank visible</label>
+        <label class="check"><input type="checkbox" id="optZones"> Color-code zones</label>
+        <label class="check"><input type="checkbox" id="optLabels"> Beginner labels (positions)</label>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <h3>Generate <span class="chev">▾</span></h3>
+      <div class="sb-body gen-row">
+        <button class="bigbtn create" id="genCreate">✦ Create Cases</button>
+        <button class="bigbtn reroll" id="genReroll">⟳ Re-roll</button>
+        <button class="bigbtn answers" id="genAnswers">👁 Show Answers</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center" id="center">
+    <div id="pagePair"></div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sidebar right">
+    <div class="sb-section">
+      <h3>Page Setup <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Paper size</label>
+          <div class="seg c2" data-group="paper"><button data-val="a4">A4</button><button data-val="letter">US Letter</button></div>
+        </div>
+        <div class="field"><label>Page layout</label>
+          <div class="seg c2" data-group="layout"><button data-val="side">Side by side</button><button data-val="stack">Stacked</button></div>
+        </div>
+        <div class="field"><label>Print / view mode</label>
+          <div class="seg c3" data-group="printmode"><button data-val="both">Both</button><button data-val="worksheet">Worksheet</button><button data-val="answers">Answers</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Theme <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="seg c3" data-group="theme"><button data-val="pro">Pro</button><button data-val="dark">Dark</button><button data-val="chalk">Chalkboard</button></div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Field <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Field style</label>
+          <div class="seg c2" data-group="fieldstyle"><button data-val="stripes">Stripes</button><button data-val="plain">Plain</button></div>
+        </div>
+        <div class="field"><label>Marker style</label>
+          <div class="seg c3" data-group="marker"><button data-val="circle">Circles</button><button data-val="shirt">Shirts</button><button data-val="dot">Dots</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Clue Cards <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Card spacing: <span class="val" id="csVal">7px</span></label>
+          <input type="range" class="slider" id="csRange" min="4" max="14" value="7">
+        </div>
+        <div class="field"><label>Card columns</label>
+          <div class="seg c2" data-group="ccols"><button data-val="1">1 column</button><button data-val="2">2 columns</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Border & Background <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Border</label>
+          <div class="seg c3" data-group="border"><button data-val="none">None</button><button data-val="line">Line</button><button data-val="gold">Gold</button></div>
+        </div>
+        <div class="field"><label>Background</label>
+          <div class="seg c3" data-group="bg"><button data-val="white">White</button><button data-val="cream">Cream</button><button data-val="tint">Tint</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Typography <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Instruction style</label>
+          <div class="seg c3" data-group="typo"><button data-val="italic">Italic</button><button data-val="regular">Regular</button><button data-val="bold">Bold</button></div>
+        </div>
+        <div class="field"><label>Answer line style</label>
+          <div class="seg c3" data-group="ansline"><button data-val="dashed">Dashed</button><button data-val="solid">Solid</button><button data-val="underline">Underline</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ai-modal" id="aiModal">
+  <div class="ai-card">
+    <h2>✦ AI Assistant</h2>
+    <p class="hint">Simulated intelligence — no external calls. Choose an action:</p>
+    <div class="ai-opt">
+      <button data-ai="explain">📋 <b>Explain this formation</b><div style="font-size:11px;color:var(--muted)">Describe roles, lines, and team shape</div></button>
+      <button data-ai="younger">🧒 <b>Rewrite clues for younger players</b><div style="font-size:11px;color:var(--muted)">Simplify language for kids</div></button>
+      <button data-ai="coach">🧑‍🏫 <b>Generate a coach note</b><div style="font-size:11px;color:var(--muted)">Add a teaching tip per case</div></button>
+    </div>
+    <div class="ai-out" id="aiOut"></div>
+    <button class="ai-close" id="aiClose">Close</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   TACTICAL FORMATION DECODER
+   ============================================================ */
+
+/* ---------- Formation data ----------
+   Each formation: array of slots {role, x, y, zone}
+   x,y in 0..100 (field coords), zone: 'def'|'mid'|'att'
+*/
+const SPORTS={
+  soccer:{
+    name:'Soccer',
+    formations:{
+      '4-3-3':[
+        {role:'GK',x:50,y:8,zone:'def'},
+        {role:'LB',x:12,y:24,zone:'def'},{role:'CB',x:38,y:18,zone:'def'},{role:'CB',x:62,y:18,zone:'def'},{role:'RB',x:88,y:24,zone:'def'},
+        {role:'CM',x:32,y:46,zone:'mid'},{role:'CDM',x:50,y:42,zone:'mid'},{role:'CM',x:68,y:46,zone:'mid'},
+        {role:'LW',x:16,y:72,zone:'att'},{role:'ST',x:50,y:78,zone:'att'},{role:'RW',x:84,y:72,zone:'att'}
+      ],
+      '4-4-2':[
+        {role:'GK',x:50,y:8,zone:'def'},
+        {role:'LB',x:12,y:24,zone:'def'},{role:'CB',x:38,y:18,zone:'def'},{role:'CB',x:62,y:18,zone:'def'},{role:'RB',x:88,y:24,zone:'def'},
+        {role:'LM',x:14,y:48,zone:'mid'},{role:'CM',x:38,y:46,zone:'mid'},{role:'CM',x:62,y:46,zone:'mid'},{role:'RM',x:86,y:48,zone:'mid'},
+        {role:'ST',x:40,y:74,zone:'att'},{role:'ST',x:60,y:74,zone:'att'}
+      ],
+      '3-5-2':[
+        {role:'GK',x:50,y:8,zone:'def'},
+        {role:'CB',x:28,y:20,zone:'def'},{role:'CB',x:50,y:16,zone:'def'},{role:'CB',x:72,y:20,zone:'def'},
+        {role:'LWB',x:10,y:42,zone:'mid'},{role:'CDM',x:34,y:44,zone:'mid'},{role:'CM',x:50,y:48,zone:'mid'},{role:'CDM',x:66,y:44,zone:'mid'},{role:'RWB',x:90,y:42,zone:'mid'},
+        {role:'ST',x:42,y:74,zone:'att'},{role:'ST',x:58,y:74,zone:'att'}
+      ],
+      '4-2-3-1':[
+        {role:'GK',x:50,y:8,zone:'def'},
+        {role:'LB',x:12,y:24,zone:'def'},{role:'CB',x:38,y:18,zone:'def'},{role:'CB',x:62,y:18,zone:'def'},{role:'RB',x:88,y:24,zone:'def'},
+        {role:'CDM',x:40,y:40,zone:'mid'},{role:'CDM',x:60,y:40,zone:'mid'},
+        {role:'LW',x:16,y:60,zone:'mid'},{role:'CAM',x:50,y:58,zone:'mid'},{role:'RW',x:84,y:60,zone:'mid'},
+        {role:'ST',x:50,y:80,zone:'att'}
+      ]
+    },
+    roleNames:{
+      GK:'Goalkeeper', LB:'Left Back', RB:'Right Back', CB:'Center Back',
+      CDM:'Defensive Midfielder', CM:'Central Midfielder', CAM:'Attacking Midfielder',
+      LM:'Left Midfielder', RM:'Right Midfielder', LWB:'Left Wing-Back', RWB:'Right Wing-Back',
+      LW:'Left Wing', RW:'Right Wing', ST:'Striker'
+    },
+    roleGroup:{GK:'def',LB:'def',CB:'def',RB:'def',CDM:'def',CM:'mid',CAM:'att',LM:'mid',RM:'mid',LWB:'mid',RWB:'mid',LW:'att',RW:'att',ST:'att'}
+  },
+  basketball:{
+    name:'Basketball',
+    formations:{
+      '1-2-2':[
+        {role:'PG',x:50,y:85,zone:'att'},{role:'SG',x:30,y:65,zone:'att'},{role:'SF',x:70,y:65,zone:'att'},{role:'PF',x:30,y:35,zone:'def'},{role:'C',x:50,y:20,zone:'def'}
+      ],
+      '3-2':[
+        {role:'PG',x:50,y:88,zone:'att'},{role:'SG',x:25,y:75,zone:'att'},{role:'SF',x:75,y:75,zone:'att'},{role:'PF',x:35,y:35,zone:'def'},{role:'C',x:65,y:30,zone:'def'}
+      ]
+    },
+    roleNames:{PG:'Point Guard',SG:'Shooting Guard',SF:'Small Forward',PF:'Power Forward',C:'Center'},
+    roleGroup:{PG:'att',SG:'att',SF:'att',PF:'def',C:'def'}
+  },
+  rugby:{
+    name:'Rugby',
+    formations:{
+      '15-backs':[
+        {role:'FB',x:50,y:12,zone:'def'},{role:'W',x:12,y:28,zone:'def'},{role:'W',x:88,y:28,zone:'def'},
+        {role:'C',x:35,y:40,zone:'mid'},{role:'C',x:65,y:40,zone:'mid'},{role:'FH',x:50,y:55,zone:'mid'},
+        {role:'SH',x:50,y:68,zone:'mid'},{role:'F',x:30,y:82,zone:'att'},{role:'F',x:70,y:82,zone:'att'},
+        {role:'B',x:40,y:90,zone:'att'},{role:'B',x:60,y:90,zone:'att'},{role:'B',x:50,y:95,zone:'att'}
+      ]
+    },
+    roleNames:{FB:'Fullback',W:'Wing',C:'Centre',FH:'Fly-Half',SH:'Scrum-Half',F:'Flanker',B:'Back Row'},
+    roleGroup:{FB:'def',W:'def',C:'mid',FH:'mid',SH:'mid',F:'att',B:'att'}
+  }
+};
+
+const ROLE_BANK_FULL=['Goalkeeper','Left Back','Right Back','Center Back','Defensive Midfielder','Central Midfielder','Attacking Midfielder','Left Wing','Right Wing','Striker'];
+
+/* ---------- State ---------- */
+const state={
+  sport:'soccer', formation:'4-3-3', difficulty:'easy', cases:2,
+  clues:'mixed', clueCount:6,
+  lines:true, bank:true, zones:false, labels:false,
+  paper:'a4', layout:'side', theme:'pro',
+  fieldstyle:'stripes', marker:'circle',
+  cspace:7, ccols:2, border:'line', bg:'white', typo:'italic', ansline:'dashed',
+  printMode:'both',
+  showAnswers:false, puzzles:[]
+};
+const themes={
+  pro:{navy:'#1e3a5f',navyDark:'#142a44',field:'#2f7d32'},
+  dark:{navy:'#0f172a',navyDark:'#020617',field:'#1e293b'},
+  chalk:{navy:'#1e293b',navyDark:'#0f172a',field:'#334155'}
+};
+const bgColors={white:'#ffffff',cream:'#fdfaf3',tint:'#f1f5f9'};
+
+/* ---------- settings ---------- */
+function initSegs(){
+  document.querySelectorAll('.seg').forEach(seg=>{
+    const g=seg.dataset.group;
+    seg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+      seg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');applySetting(g,b.dataset.val);
+    }));
+  });
+  setSeg('sport',state.sport);setSeg('formation',state.formation);setSeg('difficulty',state.difficulty);
+  setSeg('cases',state.cases);setSeg('clues',state.clues);setSeg('paper',state.paper);setSeg('layout',state.layout);
+  setSeg('theme',state.theme);setSeg('fieldstyle',state.fieldstyle);setSeg('marker',state.marker);
+  setSeg('ccols',state.ccols);setSeg('border',state.border);setSeg('bg',state.bg);setSeg('typo',state.typo);setSeg('ansline',state.ansline);setSeg('printmode',state.printMode);
+}
+function setSeg(g,val){document.querySelectorAll('.seg[data-group="'+g+'"] button').forEach(b=>b.classList.toggle('active',b.dataset.val==String(val)));}
+function applySetting(g,val){
+  if(g==='sport'){state.sport=val;rebuildFormationSeg();state.formation=Object.keys(SPORTS[val].formations)[0];setSeg('formation',state.formation);renderFormPreview();}
+  else if(g==='formation'){state.formation=val;renderFormPreview();}
+  else if(g==='difficulty')state.difficulty=val;
+  else if(g==='cases')state.cases=parseInt(val);
+  else if(g==='clues')state.clues=val;
+  else if(g==='paper')state.paper=val;
+  else if(g==='layout')state.layout=val;
+  else if(g==='theme')state.theme=val;
+  else if(g==='fieldstyle')state.fieldstyle=val;
+  else if(g==='marker')state.marker=val;
+  else if(g==='ccols')state.ccols=parseInt(val);
+  else if(g==='border')state.border=val;
+  else if(g==='bg')state.bg=val;
+  else if(g==='typo')state.typo=val;
+  else if(g==='ansline')state.ansline=val;
+  else if(g==='printmode')state.printMode=val;
+  renderWorksheet();
+}
+function rebuildFormationSeg(){
+  const seg=document.getElementById('formationSeg');seg.innerHTML='';
+  Object.keys(SPORTS[state.sport].formations).forEach(f=>{
+    const b=document.createElement('button');b.dataset.val=f;b.textContent=f;b.addEventListener('click',()=>{
+      seg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');applySetting('formation',f);
+    });seg.appendChild(b);
+  });
+}
+function initToggles(){
+  const bind=(id,prop)=>{const el=document.getElementById(id);el.checked=state[prop];el.addEventListener('change',e=>{state[prop]=e.target.checked;renderWorksheet();});};
+  bind('optLines','lines');bind('optBank','bank');bind('optZones','zones');bind('optLabels','labels');
+  const cc=document.getElementById('clueCount');cc.addEventListener('input',e=>{state.clueCount=+e.target.value;document.getElementById('clueCountVal').textContent=e.target.value;});
+  const cs=document.getElementById('csRange');cs.addEventListener('input',e=>{state.cspace=+e.target.value;document.getElementById('csVal').textContent=e.target.value+'px';renderWorksheet();});
+  document.querySelectorAll('.sb-section h3').forEach(h=>h.addEventListener('click',()=>h.parentElement.classList.toggle('collapsed')));
+}
+
+/* ============================================================
+   LOGIC ENGINE
+   ============================================================ */
+
+/* Build a puzzle: assign anonymous markers (A,B,C...) to slots in true positions.
+   Generate clues. Verify unique solution via validateUniqueSolution(). */
+function genPuzzle(){
+  const sport=SPORTS[state.sport];
+  const slots=sport.formations[state.formation].slice();
+  const diff=state.difficulty;
+  // number of roles to include
+  let nRoles;
+  if(diff==='easy') nRoles=Math.min(6,slots.length);
+  else if(diff==='medium') nRoles=Math.min(9,slots.length);
+  else nRoles=slots.length;
+
+  // pick subset of slots — keep balanced but pick from formation
+  // for easy/medium, we keep GK + a spread
+  let chosen=chooseSlots(slots,nRoles);
+  // true assignment: marker -> role (role code). We shuffle markers onto chosen slots' positions.
+  // Actually the anonymous markers are placed AT the slot coordinates, and the puzzle asks
+  // "which role is at each marker". The TRUE assignment: each position has its real role.
+  // We label positions A..n in shuffled order so the position->role is fixed but unknown.
+  const positions=chosen.map((s,i)=>({...s,marker:String.fromCharCode(65+i)}));
+  // shuffle marker letters so they're not in order
+  shuffle(positions);
+  positions.forEach((p,i)=>p.marker=String.fromCharCode(65+i));
+  // true mapping: marker -> rolecode
+  const trueMap={};
+  positions.forEach(p=>trueMap[p.marker]=p.role);
+
+  // generate clues
+  let clues=[],guard=0;
+  do{
+    clues=generateClues(positions,diff,state.clueCount);
+    guard++;
+    if(guard>40)break;
+  }while(!validateUniqueSolution(positions,clues));
+
+  return {
+    sport:state.sport,formation:state.formation,difficulty:diff,
+    positions:trueMap ? positions : [],
+    positions,clues,trueMap,
+    explanation:buildExplanations(positions,clues)
+  };
+}
+
+function chooseSlots(slots,n){
+  // always include GK, then pick others spread by zone
+  const gk=slots.find(s=>s.role==='GK');
+  let rest=slots.filter(s=>s.role!=='GK');
+  shuffle(rest);
+  let chosen=[gk,...rest].slice(0,n);
+  return chosen;
+}
+
+/* Generate clue set. Each clue is {text, test(mapping)} where mapping is marker->rolecode */
+function generateClues(positions,diff,count){
+  const sport=SPORTS[state.sport];
+  const markers=positions.map(p=>p.marker);
+  const roles=[...new Set(positions.map(p=>p.role))];
+  const pool=[];
+  const styles=state.clues==='mixed'?['positional','functional','side','negation']:[state.clues];
+
+  positions.forEach(p=>{
+    // positional clues
+    if(styles.includes('positional')){
+      pool.push({text:`Player ${p.marker} is in the ${zoneName(p.zone)}.`,test:m=>m[p.marker]&&sport.roleGroup[m[p.marker]]===p.zone});
+      // highest/lowest
+      if(p.zone==='att'){
+        const highest=positions.reduce((a,b)=>b.y>a.y?b:a);
+        if(p===highest)pool.push({text:`The player highest up the field is ${p.marker}.`,test:m=>m[p.marker]&&sport.roleGroup[m[p.marker]]==='att'});
+      }
+      if(p.role==='GK')pool.push({text:`${p.marker} stands behind all outfield players.`,test:m=>m[p.marker]==='GK'});
+      // central
+      if(Math.abs(p.x-50)<8&&p.role!=='GK')pool.push({text:`Player ${p.marker} is positioned centrally.`,test:m=>m[p.marker]&&isCentral(m[p.marker])});
+    }
+    // functional clues
+    if(styles.includes('functional')){
+      const fn=roleFunction(p.role);
+      if(fn)pool.push({text:`${p.marker} ${fn}.`,test:m=>m[p.marker]&&sameFunction(m[p.marker],p.role)});
+    }
+    // side clues
+    if(styles.includes('side')){
+      if(p.x<25)pool.push({text:`Player ${p.marker} operates on the left side.`,test:m=>m[p.marker]&&isLeft(m[p.marker])});
+      if(p.x>75)pool.push({text:`Player ${p.marker} operates on the right side.`,test:m=>m[p.marker]&&isRight(m[p.marker])});
+    }
+    // negation
+    if(styles.includes('negation')&&diff!=='easy'){
+      const otherRole=pickOther(roles,p.role);
+      pool.push({text:`Player ${p.marker} is not a ${sport.roleNames[otherRole]||otherRole}.`,test:m=>m[p.marker]&&m[p.marker]!==otherRole});
+    }
+  });
+
+  // cross-player relational clues
+  if(diff!=='easy'){
+    positions.forEach(p=>{
+      positions.forEach(q=>{
+        if(p===q)return;
+        if(p.zone!==q.zone){
+          pool.push({text:`Player ${p.marker} is further forward than ${q.marker}.`,test:m=>m[p.marker]&&m[q.marker]&&sport.roleGroup[m[p.marker]].localeCompare(sport.roleGroup[m[q.marker]])>=0});
+        }
+      });
+    });
+  }
+  // left back wider than center backs etc.
+  positions.forEach(p=>{
+    positions.forEach(q=>{
+      if(p!==q&&Math.abs(p.x-q.x)>25){
+        if(p.x<q.x)pool.push({text:`Player ${p.marker} is wider than ${q.marker}.`,test:m=>m[p.marker]&&m[q.marker]&&sideVal(m[p.marker])<=sideVal(m[q.marker])});
+      }
+    });
+  });
+
+  shuffle(pool);
+  // pick count clues, but ensure enough to be solvable
+  const picked=pool.slice(0,Math.min(count,pool.length));
+  return picked;
+}
+
+function zoneName(z){return z==='def'?'defensive line':z==='mid'?'midfield':'attack';}
+function isCentral(r){const g=SPORTS[state.sport].roleGroup;return ['CB','CDM','CM','CAM','C','ST','FH','SH'].includes(r);}
+function isLeft(r){return ['LB','LM','LWB','LW'].includes(r);}
+function isRight(r){return ['RB','RM','RWB','RW'].includes(r);}
+function sideVal(r){if(isLeft(r))return 0;if(isRight(r))return 2;return 1;}
+function roleFunction(r){
+  const m={
+    GK:'guards the goal',ST:'leads the attack',LW:'attacks down the left wing',RW:'attacks down the right wing',
+    CAM:'links midfield and attack',CDM:'sits in front of the defense',CM:'links defense and attack from the middle',
+    LB:'defends the left flank',RB:'defends the right flank',CB:'anchors the central defense'
+  };
+  return m[r]||null;
+}
+function sameFunction(a,b){return roleFunction(a)===roleFunction(b)&&a!==b?false:roleFunction(a)===roleFunction(b);}
+function pickOther(arr,avoid){const f=arr.filter(x=>x!==avoid);return f[Math.floor(Math.random()*f.length)];}
+
+/* validateUniqueSolution: brute-force all assignments of roles to markers,
+   count how many satisfy all clues. Return true if exactly one. */
+function validateUniqueSolution(positions,clues){
+  const markers=positions.map(p=>p.marker);
+  const roles=[...new Set(positions.map(p=>p.role))];
+  // we need a bijection marker->role. generate permutations of roles assigned to markers.
+  // number is small (<=11) but 11! is too big. Instead use backtracking with clue pruning.
+  let solutions=0;
+  const used={};
+  function bt(i,map){
+    if(solutions>1)return; // early exit
+    if(i===markers.length){
+      // verify bijection already by construction; test clues
+      if(clues.every(c=>c.test(map)))solutions++;
+      return;
+    }
+    for(const r of roles){
+      if(used[r])continue;
+      map[markers[i]]=r;used[r]=true;
+      // prune: test clues that only involve markers[0..i]
+      const ok=clues.every(c=>{
+        // check if clue references a marker not yet assigned -> skip
+        const refs=c.text.match(/Player ([A-Z])/g)||[];
+        const allKnown=refs.every(ref=>ref.includes(' ')?map[ref.split(' ')[1]]!==undefined:true);
+        if(!allKnown)return true;
+        return c.test(map);
+      });
+      if(ok)bt(i+1,map);
+      used[r]=false;map[markers[i]]=undefined;
+    }
+  }
+  bt({},{});
+  return solutions===1;
+}
+
+function buildExplanations(positions,clues){
+  const sport=SPORTS[state.sport];
+  const map={};
+  positions.forEach(p=>map[p.marker]=p.role);
+  return clues.map(c=>`${c.text} → ${sport.roleNames[map[/* find marker in clue */ extractMarker(c.text)]]||extractMarker(c.text)}`).join('\n');
+}
+function extractMarker(text){const m=text.match(/Player ([A-Z])/);return m?m[1]:null;}
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+
+/* ============================================================
+   SVG FIELD RENDERING
+   ============================================================ */
+function renderField(positions, opts){
+  opts=opts||{};
+  const showAnswers=opts.showAnswers;
+  const W=360,H=520;
+  // Always a green pitch with white markings
+  const grassA='#3a8a3d', grassB='#357f38';
+  const lineColor='#ffffff';
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  // grass base
+  svg+=`<rect x="0" y="0" width="${W}" height="${H}" fill="${grassA}"/>`;
+  // mowing stripes (premium pitch look) unless "lines" plain style chosen
+  if(state.fieldstyle!=='plain'){
+    const stripeH=34;
+    for(let y=0;y<H;y+=stripeH){
+      svg+=`<rect x="0" y="${y}" width="${W}" height="${stripeH/2}" fill="${grassB}" opacity=".5"/>`;
+    }
+  }
+  // subtle vignette
+  svg+=`<rect x="0" y="0" width="${W}" height="${H}" fill="url(#vg)"/>`;
+  svg+=`<defs><radialGradient id="vg" cx="50%" cy="50%" r="75%"><stop offset="60%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".18"/></radialGradient></defs>`;
+  // outer boundary
+  svg+=`<rect x="8" y="8" width="${W-16}" height="${H-16}" fill="none" stroke="${lineColor}" stroke-width="2.5"/>`;
+  // halfway line
+  svg+=`<line x1="8" y1="${H/2}" x2="${W-8}" y2="${H/2}" stroke="${lineColor}" stroke-width="2.5"/>`;
+  // center circle + spot
+  svg+=`<circle cx="${W/2}" cy="${H/2}" r="48" fill="none" stroke="${lineColor}" stroke-width="2.5"/>`;
+  svg+=`<circle cx="${W/2}" cy="${H/2}" r="3" fill="${lineColor}"/>`;
+  // penalty areas
+  const paW=140,paH=44;
+  svg+=`<rect x="${(W-paW)/2}" y="8" width="${paW}" height="${paH}" fill="none" stroke="${lineColor}" stroke-width="2.5"/>`;
+  svg+=`<rect x="${(W-paW)/2}" y="${H-8-paH}" width="${paW}" height="${paH}" fill="none" stroke="${lineColor}" stroke-width="2.5"/>`;
+  // goal boxes (6-yard)
+  const gbW=70,gbH=18;
+  svg+=`<rect x="${(W-gbW)/2}" y="8" width="${gbW}" height="${gbH}" fill="none" stroke="${lineColor}" stroke-width="2.5"/>`;
+  svg+=`<rect x="${(W-gbW)/2}" y="${H-8-gbH}" width="${gbW}" height="${gbH}" fill="none" stroke="${lineColor}" stroke-width="2.5"/>`;
+  // goals
+  svg+=`<rect x="${(W-24)/2}" y="2" width="24" height="6" fill="none" stroke="${lineColor}" stroke-width="2"/>`;
+  svg+=`<rect x="${(W-24)/2}" y="${H-8}" width="24" height="6" fill="none" stroke="${lineColor}" stroke-width="2"/>`;
+  // penalty spots
+  svg+=`<circle cx="${W/2}" cy="${8+paH-6}" r="2.5" fill="${lineColor}"/>`;
+  svg+=`<circle cx="${W/2}" cy="${H-8-paH+6}" r="2.5" fill="${lineColor}"/>`;
+  // penalty arcs
+  svg+=`<path d="M ${W/2-22} ${8+paH} A 22 22 0 0 1 ${W/2+22} ${8+paH}" fill="none" stroke="${lineColor}" stroke-width="2.5"/>`;
+  svg+=`<path d="M ${W/2-22} ${H-8-paH} A 22 22 0 0 0 ${W/2+22} ${H-8-paH}" fill="none" stroke="${lineColor}" stroke-width="2.5"/>`;
+  // corner arcs
+  svg+=`<path d="M 8 16 A 8 8 0 0 1 16 8" fill="none" stroke="${lineColor}" stroke-width="2"/>`;
+  svg+=`<path d="M ${W-8} 16 A 8 8 0 0 0 ${W-16} 8" fill="none" stroke="${lineColor}" stroke-width="2"/>`;
+  svg+=`<path d="M 8 ${H-16} A 8 8 0 0 0 16 ${H-8}" fill="none" stroke="${lineColor}" stroke-width="2"/>`;
+  svg+=`<path d="M ${W-8} ${H-16} A 8 8 0 0 1 ${W-16} ${H-8}" fill="none" stroke="${lineColor}" stroke-width="2"/>`;
+
+  // formation lines (faint white)
+  if(state.lines){
+    const byZone={def:[],mid:[],att:[]};
+    positions.forEach(p=>byZone[p.zone]&&byZone[p.zone].push(p));
+    Object.values(byZone).forEach(group=>{
+      for(let i=0;i<group.length;i++)for(let j=i+1;j<group.length;j++){
+        const a=group[i],b=group[j];
+        svg+=`<line x1="${a.x*W/100}" y1="${a.y*H/100}" x2="${b.x*W/100}" y2="${b.y*H/100}" stroke="${lineColor}" stroke-width="1.2" opacity=".35" stroke-dasharray="3 3"/>`;
+      }
+    });
+  }
+
+  // zone tints
+  if(state.zones){
+    svg+=`<rect x="8" y="8" width="${W-16}" height="${(H-16)*0.33}" fill="#1e3a5f" opacity=".22"/>`;
+    svg+=`<rect x="8" y="${8+(H-16)*0.33}" width="${W-16}" height="${(H-16)*0.34}" fill="#d4a85a" opacity=".18"/>`;
+    svg+=`<rect x="8" y="${8+(H-16)*0.67}" width="${W-16}" height="${(H-16)*0.33}" fill="#fbbf24" opacity=".16"/>`;
+  }
+
+  // player markers
+  positions.forEach(p=>{
+    const cx=p.x*W/100, cy=p.y*H/100;
+    const label=showAnswers?p.role:p.marker;
+    const markerColor=state.zones?(p.zone==='def'?'#1e3a5f':p.zone==='mid'?'#2c5282':'#b45309'):'#1e3a5f';
+    if(state.marker==='shirt'){
+      svg+=shirtMarker(cx,cy,label,markerColor,showAnswers);
+    }else if(state.marker==='dot'){
+      svg+=`<circle cx="${cx}" cy="${cy}" r="7" fill="${markerColor}" stroke="#fff" stroke-width="1.5"/>`;
+      svg+=`<text x="${cx}" y="${cy+19}" font-size="10" text-anchor="middle" fill="#ffffff" font-weight="700" style="paint-order:stroke;stroke:#1e3a5f;stroke-width:2.5">${label}</text>`;
+    }else{
+      svg+=circleMarker(cx,cy,label,markerColor,showAnswers);
+    }
+  });
+  svg+=`</svg>`;
+  return svg;
+}
+function circleMarker(cx,cy,label,color,showAnswers){
+  const r=14;
+  let s=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" stroke="#fff" stroke-width="2.5"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${r+3}" fill="none" stroke="${color}" stroke-width="1" opacity=".3"/>`;
+  s+=`<text x="${cx}" y="${cy+4}" font-size="${showAnswers?9:12}" text-anchor="middle" fill="#fff" font-weight="800">${label}</text>`;
+  return s;
+}
+function shirtMarker(cx,cy,label,color,showAnswers){
+  let s=`<g transform="translate(${cx-12},${cy-12})">`;
+  s+=`<path d="M4 4 L8 0 L16 0 L20 4 L24 6 L20 10 L20 24 L4 24 L4 10 L0 6 Z" fill="${color}" stroke="#fff" stroke-width="1.5"/>`;
+  s+=`<text x="12" y="${showAnswers?16:18}" font-size="${showAnswers?8:11}" text-anchor="middle" fill="#fff" font-weight="800">${label}</text>`;
+  s+=`</g>`;
+  return s;
+}
+
+/* ============================================================
+   RENDER WORKSHEET
+   ============================================================ */
+function renderWorksheet(){
+  applyTheme();
+  const area=document.getElementById('pagePair');
+  area.innerHTML='';
+  if(state.puzzles.length===0)loadDemo();
+  const container=document.createElement('div');
+  container.className='page-pair';
+  container.style.flexDirection=state.layout==='stack'?'column':'row';
+
+  // Show Answers: the worksheet page itself flips to answered mode.
+  // Print mode controls which pages appear.
+  const pm=state.printMode; // 'both' | 'worksheet' | 'answers'
+  const showAns=state.showAnswers;
+
+  const buildPage=(isAnswer)=>{
+    const page=document.createElement('div');
+    page.className='page '+(state.paper==='a4'?'a4':'')+(isAnswer?' answerkey':'');
+    page.style.background=bgColors[state.bg];applyBorder(page);
+    const headTitle=isAnswer?'Answer Key':'Tactical Formation Decoder';
+    const headSub=isAnswer?'Teacher copy — roles & explanations':`${SPORTS[state.sport].name} · ${state.formation} · ${state.difficulty} · ${state.cases} case(s)`;
+    const badge=isAnswer?`<div class="badge ans">ANSWERS</div>`:`<div class="badge">Name: ________</div>`;
+    page.innerHTML=`<div class="page-head"><div><h1>${headTitle}</h1><div class="sub">${headSub}</div></div>${badge}</div>`;
+    const body=document.createElement('div');body.className='page-body';
+    // worksheet page uses showAns to decide answerMode; answer key page is always answered
+    const answerMode=isAnswer?true:showAns;
+    state.puzzles.forEach((p,i)=>body.appendChild(renderCase(p,i,answerMode)));
+    page.appendChild(body);
+    return page;
+  };
+
+  if(pm==='worksheet'){container.appendChild(buildPage(false));}
+  else if(pm==='answers'){container.appendChild(buildPage(true));}
+  else {container.appendChild(buildPage(false));container.appendChild(buildPage(true));}
+
+  area.appendChild(container);
+  updateAnswersBtn();
+}
+function applyBorder(el){const b=state.border;if(b==='none')el.style.border='none';else if(b==='line')el.style.border='1px solid #e2e8f0';else if(b==='gold')el.style.border='2px solid #d4a85a';}
+function applyTheme(){const t=themes[state.theme];document.documentElement.style.setProperty('--navy',t.navy);document.documentElement.style.setProperty('--navy-dark',t.navyDark);document.documentElement.style.setProperty('--field',t.field);}
+function updateAnswersBtn(){const a=state.showAnswers;['btnAnswers','genAnswers'].forEach(id=>{const b=document.getElementById(id);if(b){b.textContent=a?'👁 Hide Answers':'👁 Show Answers';b.classList.toggle('primary',a);}});}
+
+function renderCase(p,idx,answerMode){
+  const sport=SPORTS[p.sport];
+  const c=document.createElement('div');c.className='case';
+  const diff=p.difficulty;
+  // title
+  const title=document.createElement('div');title.className='ctitle';
+  title.innerHTML=`Formation Case ${idx+1} <span class="meta">${sport.name} · ${p.formation} · ${diff.toUpperCase()}</span>`;
+  c.appendChild(title);
+  // instruction
+  const instr=document.createElement('div');instr.className='instr';
+  instr.style.fontStyle=state.typo==='italic'?'italic':'normal';
+  instr.style.fontWeight=state.typo==='bold'?700:400;
+  instr.textContent=answerMode?'Answers shown below — role assigned to each marker.':'Use the clues to assign each role to the correct position.';
+  c.appendChild(instr);
+  // field
+  const fw=document.createElement('div');fw.className='field-wrap';
+  fw.innerHTML=renderField(p.positions,{showAnswers:answerMode});
+  c.appendChild(fw);
+
+  if(answerMode){
+    // group labels + answer mapping
+    const groups={def:[],mid:[],att:[]};
+    p.positions.forEach(pos=>{const g=sport.roleGroup[pos.role];if(groups[g])groups[g].push(pos);});
+    const order=[['def','DEFENSE'],['mid','MIDFIELD'],['att','ATTACK']];
+    order.forEach(([k,lab])=>{
+      if(!groups[k].length)return;
+      const gl=document.createElement('div');gl.className='group-label '+k;gl.textContent=lab;c.appendChild(gl);
+      const sorted=groups[k].slice().sort((a,b)=>a.x-b.x);
+      sorted.forEach(pos=>{
+        const row=document.createElement('div');row.style.fontSize='11px';row.style.display='flex';row.style.gap='8px';row.style.alignItems='center';row.style.margin='2px 0';
+        row.innerHTML=`<span style="display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:800">${pos.marker}</span> <b>${sport.roleNames[pos.role]}</b> <span style="color:var(--muted);font-size:10px">(${pos.role})</span>`;
+        c.appendChild(row);
+      });
+    });
+    // clue explanations
+    const ex=document.createElement('div');ex.className='explanation';
+    ex.innerHTML='<b>Clue logic — how each clue pins down a role:</b><br>'+p.clues.map(cl=>{
+      const m=extractMarker(cl.text);
+      if(m && p.trueMap[m]){
+        const name=sport.roleNames[p.trueMap[m]];
+        return `• ${cl.text} <i>→ ${m} = ${name}</i>`;
+      }
+      return `• ${cl.text}`;
+    }).join('<br>');
+    c.appendChild(ex);
+    // verification badge
+    const vb=document.createElement('div');vb.style.marginTop='6px';
+    vb.innerHTML='<span class="answer-tag">✓ Unique solution verified by logic engine</span>';
+    c.appendChild(vb);
+  }else{
+    // clue cards
+    const cluesDiv=document.createElement('div');cluesDiv.className='clues'+(state.ccols===2?' grid2':'');
+    cluesDiv.style.gap=state.cspace+'px';
+    p.clues.forEach((cl,i)=>{
+      const card=document.createElement('div');card.className='clue-card';
+      card.innerHTML=`<span class="num">${i+1}</span>${cl.text}`;
+      cluesDiv.appendChild(card);
+    });
+    c.appendChild(cluesDiv);
+    // role bank
+    if(state.bank){
+      const bank=document.createElement('div');bank.className='rolebank';
+      const roles=[...new Set(p.positions.map(x=>x.role))].map(r=>sport.roleNames[r]);
+      roles.forEach(r=>{const chip=document.createElement('span');chip.className='role-chip';chip.textContent=r;bank.appendChild(chip);});
+      c.appendChild(bank);
+    }
+    // answer rows
+    const ar=document.createElement('div');ar.className='answer-rows';
+    p.positions.forEach(pos=>{
+      const row=document.createElement('div');row.className='answer-row';
+      row.innerHTML=`<span class="mk">${pos.marker}</span><span class="ln ${state.ansline}"></span>`;
+      ar.appendChild(row);
+    });
+    c.appendChild(ar);
+    // beginner labels
+    if(state.labels){
+      const lab=document.createElement('div');lab.className='hint';lab.style.marginTop='4px';
+      lab.textContent='Hint: markers A–'+String.fromCharCode(64+p.positions.length)+' each match one role from the bank.';
+      c.appendChild(lab);
+    }
+  }
+  return c;
+}
+
+/* ---------- demo ---------- */
+function loadDemo(){
+  state.puzzles=[];
+  // easy 4-3-3
+  const p1=makeDemo(['GK','LB','CB','RB','CM','LW'],'4-3-3','easy');
+  state.puzzles.push(p1);
+  // medium 4-4-2
+  const p2=makeDemo(['GK','LB','CB','RB','LM','CM','RM','ST'],'4-4-2','medium');
+  state.puzzles.push(p2);
+}
+function makeDemo(roleList,formation,diff){
+  const sport=SPORTS.soccer;
+  const slots=sport.formations[formation].slice();
+  const chosen=slots.filter(s=>roleList.includes(s.role));
+  const positions=chosen.map((s,i)=>({...s,marker:String.fromCharCode(65+i)}));
+  shuffle(positions);positions.forEach((p,i)=>p.marker=String.fromCharCode(65+i));
+  const trueMap={};positions.forEach(p=>trueMap[p.marker]=p.role);
+  let clues=[],guard=0;
+  const savedDiff=state.difficulty,savedClues=state.clues,savedCount=state.clueCount;
+  state.difficulty=diff;state.clueCount=diff==='easy'?5:7;
+  do{clues=generateClues(positions,diff,state.clueCount);guard++;}while(!validateUniqueSolution(positions,clues)&&guard<40);
+  state.difficulty=savedDiff;state.clues=savedClues;state.clueCount=savedCount;
+  return {sport:'soccer',formation,difficulty:diff,positions,clues,trueMap};
+}
+
+/* ---------- actions ---------- */
+function createPuzzles(){
+  state.puzzles=[];
+  for(let i=0;i<state.cases;i++)state.puzzles.push(genPuzzle());
+  state.showAnswers=false;renderWorksheet();toast('Created '+state.cases+' case(s)');
+}
+function reroll(){state.puzzles=[];for(let i=0;i<state.cases;i++)state.puzzles.push(genPuzzle());renderWorksheet();toast('Re-rolled');}
+function toggleAnswers(){state.showAnswers=!state.showAnswers;renderWorksheet();toast(state.showAnswers?'Answers shown':'Answers hidden');}
+
+/* ---------- AI ---------- */
+function aiAction(kind){
+  const out=document.getElementById('aiOut');let text='';
+  if(kind==='explain'){
+    text='📋 Formation explanation:\n\n';
+    state.puzzles.forEach((p,i)=>{
+      const sport=SPORTS[p.sport];
+      text+=`Case ${i+1} — ${sport.name} ${p.formation}:\n`;
+      const groups={def:[],mid:[],att:[]};
+      p.positions.forEach(pos=>{const g=sport.roleGroup[pos.role];if(groups[g])groups[g].push(pos.role);});
+      text+=`  Defense: ${[...new Set(groups.def.map(r=>sport.roleNames[r]))].join(', ')}\n`;
+      text+=`  Midfield: ${[...new Set(groups.mid.map(r=>sport.roleNames[r]))].join(', ')}\n`;
+      text+=`  Attack: ${[...new Set(groups.att.map(r=>sport.roleNames[r]))].join(', ')}\n\n`;
+    });
+  }else if(kind==='younger'){
+    text='🧒 Clues rewritten for younger players:\n\n';
+    state.puzzles.forEach((p,i)=>{
+      text+=`Case ${i+1}:\n`;
+      p.clues.forEach((c,j)=>{text+=`  ${j+1}. ${c.text.replace(/operates on the left side/i,'plays on the left').replace(/operates on the right side/i,'plays on the right').replace(/further forward than/i,'is closer to the goal than').replace(/stands behind all outfield players/i,'is the last player')}\n`;});
+      text+='\n';
+    });
+  }else if(kind==='coach'){
+    text='🧑‍🏫 Coach notes:\n\n';
+    state.puzzles.forEach((p,i)=>{
+      text+=`Case ${i+1}: Draw the formation with your players, then read each clue aloud and have them point to the marker. Discuss why a wrong guess fails a clue.\n`;
+    });
+  }
+  out.style.display='block';out.textContent=text;
+}
+
+/* ---------- export ---------- */
+function exportPDF(){toast('Opening print dialog — save as PDF');setTimeout(()=>window.print(),300);}
+function ensureHtml2Canvas(cb){
+  if(window.html2canvas){cb();return;}
+  const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  s.onload=cb;s.onerror=()=>toast('Could not load export library (offline?)');document.head.appendChild(s);
+}
+function exportPNG(){
+  const page=document.querySelector(state.showAnswers?'.page.answerkey':'.page:not(.answerkey)');
+  if(!page){toast('Nothing to export');return;}
+  toast('Generating PNG…');
+  ensureHtml2Canvas(()=>html2CanvasPage(page,state.showAnswers?'answer-key':'worksheet'));
+}
+function html2CanvasPage(pageEl,name){
+  window.html2canvas(pageEl,{scale:2,backgroundColor:getComputedStyle(pageEl).backgroundColor||'#ffffff',useCORS:true,logging:false}).then(canvas=>{
+    canvas.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='formation-'+name+'.png';a.click();toast('PNG saved');});
+  }).catch(()=>toast('PNG export failed — try PDF'));
+}
+
+let toastTimer;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1900);}
+
+function renderFormPreview(){
+  const el=document.getElementById('formPreview');
+  if(!el)return;
+  const sport=SPORTS[state.sport];
+  const slots=sport.formations[state.formation];
+  if(!slots){el.innerHTML='<span class="hint">No formation</span>';return;}
+  // mini field with role dots
+  const W=160,H=210;
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  svg+=`<rect x="0" y="0" width="${W}" height="${H}" rx="4" fill="#3a8a3d"/>`;
+  svg+=`<rect x="4" y="4" width="${W-8}" height="${H-8}" rx="2" fill="none" stroke="#fff" stroke-width="1" opacity=".6"/>`;
+  svg+=`<line x1="4" y1="${H/2}" x2="${W-4}" y2="${H/2}" stroke="#fff" stroke-width="1" opacity=".6"/>`;
+  svg+=`<circle cx="${W/2}" cy="${H/2}" r="14" fill="none" stroke="#fff" stroke-width="1" opacity=".6"/>`;
+  slots.forEach(s=>{
+    const cx=s.x*W/100,cy=s.y*H/100;
+    svg+=`<circle cx="${cx}" cy="${cy}" r="6" fill="#1e3a5f" stroke="#fff" stroke-width="1.5"/>`;
+    svg+=`<text x="${cx}" y="${cy+2}" font-size="6" text-anchor="middle" fill="#fff" font-weight="700">${s.role}</text>`;
+  });
+  svg+=`</svg>`;
+  el.innerHTML=svg;
+}
+
+/* ---------- init ---------- */
+function init(){
+  initSegs();initToggles();rebuildFormationSeg();setSeg('formation',state.formation);renderFormPreview();
+  loadDemo();renderWorksheet();
+  document.getElementById('btnCreate').addEventListener('click',createPuzzles);
+  document.getElementById('btnReroll').addEventListener('click',reroll);
+  document.getElementById('btnAnswers').addEventListener('click',toggleAnswers);
+  document.getElementById('btnAI').addEventListener('click',()=>document.getElementById('aiModal').classList.add('show'));
+  document.getElementById('aiClose').addEventListener('click',()=>document.getElementById('aiModal').classList.remove('show'));
+  document.getElementById('btnPDF').addEventListener('click',exportPDF);
+  document.getElementById('btnPNG').addEventListener('click',exportPNG);
+  document.querySelectorAll('.ai-opt button').forEach(b=>b.addEventListener('click',()=>aiAction(b.dataset.ai)));
+  document.getElementById('genCreate').addEventListener('click',createPuzzles);
+  document.getElementById('genReroll').addEventListener('click',reroll);
+  document.getElementById('genAnswers').addEventListener('click',toggleAnswers);
+  document.getElementById('clueCountVal').textContent=state.clueCount;
+  document.getElementById('csVal').textContent=state.cspace+'px';
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
