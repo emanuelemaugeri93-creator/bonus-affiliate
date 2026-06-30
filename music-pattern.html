@@ -1,0 +1,1033 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Pattern Composer</title>
+<style>
+  :root{
+    --indigo:#4f46e5; --indigo-dark:#3730a3; --purple:#7c3aed; --purple-light:#a78bfa;
+    --ink:#1e1b4b; --muted:#6b7280; --line:#e5e7eb; --gold:#d4a85a; --gold-soft:#f3e6c4;
+    --bg:#f4f5fb; --panel:#ffffff; --shadow:0 4px 18px rgba(79,70,229,.08);
+    --grad:linear-gradient(135deg,#4f46e5 0%,#7c3aed 55%,#a855f7 100%);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); display:flex;flex-direction:column;height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* Toolbar */
+  .toolbar{
+    height:60px;flex:0 0 60px;
+    background:var(--grad);
+    color:#fff;display:flex;align-items:center;gap:10px;padding:0 20px;
+    box-shadow:0 4px 18px rgba(55,48,163,.28); z-index:5;position:relative;
+  }
+  .toolbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);}
+  .brand{font-weight:700;letter-spacing:.2px;font-size:15px;display:flex;align-items:center;gap:11px;white-space:nowrap;}
+  .brand .logo{width:36px;height:36px;display:flex;align-items:center;justify-content:center;}
+  .brand .logo svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));}
+  .brand .btext{display:flex;flex-direction:column;line-height:1.15;}
+  .brand .btext .bt-title{font-size:15px;font-weight:800;letter-spacing:.2px;}
+  .brand .btext .bt-sub{font-size:9.5px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.65);}
+  .toolbar .spacer{flex:1;}
+  .tbtn{
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+    color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;
+    font-weight:600;transition:.15s;display:flex;align-items:center;gap:7px;white-space:nowrap;
+    backdrop-filter:blur(4px);
+  }
+  .tbtn:hover{background:rgba(255,255,255,.24);transform:translateY(-1px);}
+  .tbtn:active{transform:translateY(0);}
+  .tbtn.primary{background:var(--gold);color:var(--indigo-dark);border-color:var(--gold);box-shadow:0 2px 8px rgba(212,168,90,.4);}
+  .tbtn.primary:hover{background:#e8bf72;box-shadow:0 4px 12px rgba(212,168,90,.5);}
+  .tbtn.ghost{background:transparent;border-color:rgba(255,255,255,.3);}
+  .tbtn svg{width:14px;height:14px;}
+
+  /* Layout */
+  .app{flex:1;display:flex;min-height:0;}
+  .sidebar{
+    width:286px;flex:0 0 286px;background:var(--panel);overflow-y:auto;
+    box-shadow:var(--shadow);padding:16px;
+  }
+  .sidebar.left{border-right:1px solid var(--line);}
+  .sidebar.right{border-left:1px solid var(--line);}
+  .sidebar::-webkit-scrollbar{width:8px;}
+  .sidebar::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px;}
+  .sidebar.left::-webkit-scrollbar-thumb{background:#c7d2fe;}
+  .center{
+    flex:1;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(124,58,237,.06), transparent 42%),
+      radial-gradient(circle at 82% 88%, rgba(79,70,229,.06), transparent 42%),
+      var(--bg);
+  }
+  .sb-section{margin-bottom:14px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.03);}
+  .sb-section h3{
+    margin:0;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;
+    background:linear-gradient(90deg,rgba(79,70,229,.09),rgba(124,58,237,.09));
+    color:var(--indigo-dark);font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;
+    border-left:3px solid var(--purple);
+  }
+  .sb-section h3 .chev{font-size:10px;color:var(--muted);transition:transform .2s;}
+  .sb-section.collapsed h3 .chev{transform:rotate(-90deg);}
+  .sb-body{padding:13px 14px;display:flex;flex-direction:column;gap:12px;}
+  .sb-section.collapsed .sb-body{display:none;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field > label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+  .seg{display:grid;gap:5px;}
+  .seg.c2{grid-template-columns:1fr 1fr;}
+  .seg.c3{grid-template-columns:1fr 1fr 1fr;}
+  .seg.c4{grid-template-columns:1fr 1fr;}
+  .seg.auto{grid-template-columns:repeat(auto-fit,minmax(74px,1fr));}
+  .seg button{
+    padding:8px 6px;border:1px solid var(--line);background:#fafbff;
+    border-radius:8px;font-size:11px;cursor:pointer;color:var(--ink);font-weight:600;transition:.14s;
+    text-align:center; line-height:1.2; min-width:0; word-break:break-word;
+  }
+  .seg button.active{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 3px 8px rgba(79,70,229,.35);}
+  .seg button:hover:not(.active){background:#eef0ff;border-color:var(--purple-light);}
+  .field input[type=text],.field input[type=number],.field select{
+    padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:12px;background:#fff;width:100%;transition:.14s;
+  }
+  .field input[type=text]:focus,.field input[type=number]:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(79,70,229,.12);outline:none;}
+  .check{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;cursor:pointer;padding:4px 0;}
+  .check input{width:16px;height:16px;accent-color:var(--indigo);cursor:pointer;}
+  .bigbtn{
+    width:100%;padding:11px;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s;
+  }
+  .bigbtn.create{background:var(--grad);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.3);}
+  .bigbtn.create:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 16px rgba(79,70,229,.4);}
+  .bigbtn.reroll{background:#fff;color:var(--indigo);border:1.5px solid var(--indigo);}
+  .bigbtn.reroll:hover{background:#eef0ff;transform:translateY(-1px);}
+  .bigbtn.answers{background:var(--gold-soft);color:var(--indigo-dark);border:1.5px solid var(--gold);}
+  .bigbtn.answers:hover{background:#fff0d0;transform:translateY(-1px);}
+  .gen-row{display:flex;flex-direction:column;gap:8px;}
+  .slider{width:100%;accent-color:var(--indigo);}
+  .slider-row{display:flex;align-items:center;gap:8px;}
+  .slider-row .val{font-size:11px;font-weight:700;color:var(--indigo-dark);min-width:40px;text-align:right;}
+  .hint{font-size:10px;color:var(--muted);line-height:1.45;}
+
+  /* Page nav */
+  .pagenav{
+    display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;justify-content:center;
+  }
+  .pagenav .pgbtn{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600;color:var(--indigo-dark);}
+  .pagenav .pgbtn:hover{background:#eef0ff;}
+  .pagenav .pginfo{font-size:12px;color:var(--muted);font-weight:600;}
+  .pagenav .pgtab{padding:6px 12px;border:1px solid var(--line);border-radius:7px;font-size:12px;cursor:pointer;font-weight:600;background:#fff;}
+  .pagenav .pgtab.active{background:var(--indigo);color:#fff;border-color:var(--indigo);}
+
+  /* Worksheet */
+  .page{
+    width:794px;background:#fff;box-shadow:0 12px 40px rgba(30,27,75,.14);
+    margin-bottom:24px;border-radius:10px;overflow:hidden;
+  }
+  .page.letter{width:816px;}
+  .page-head{
+    padding:20px 34px;border-bottom:2px solid var(--gold);
+    display:flex;justify-content:space-between;align-items:center;gap:16px;
+    background:linear-gradient(90deg,rgba(79,70,229,.04),rgba(124,58,237,.04));
+  }
+  .page-head h1{margin:0;font-size:22px;color:var(--indigo-dark);font-weight:800;display:flex;align-items:center;gap:10px;}
+  .page-head h1::before{content:"";width:5px;height:22px;border-radius:3px;background:var(--grad);}
+  .page-head .sub{font-size:11px;color:var(--muted);margin-top:4px;}
+  .page-head .badge{background:var(--grad);color:#fff;font-size:10px;padding:6px 12px;border-radius:20px;font-weight:700;letter-spacing:.5px;box-shadow:0 2px 6px rgba(79,70,229,.3);}
+  .page-body{padding:26px 32px 32px;}
+  .page-body.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px 28px;}
+  .page-body.grid4{display:grid;grid-template-columns:1fr 1fr;gap:18px 24px;}
+  .page-body.grid6{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px 20px;}
+  .case{
+    border:1px solid var(--line);border-radius:12px;padding:15px;
+    background:#fcfcff;break-inside:avoid;display:flex;flex-direction:column;
+    transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  .case:hover{box-shadow:0 6px 18px rgba(79,70,229,.12);transform:translateY(-2px);}
+  .case .ctitle{font-weight:800;font-size:13px;color:var(--indigo-dark);display:flex;justify-content:space-between;align-items:center;}
+  .case .ctitle .dif{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.4px;}
+  .dif.easy{background:#dcfce7;color:#166534;}
+  .dif.medium{background:#fef3c7;color:#92400e;}
+  .dif.hard{background:#fee2e2;color:#991b1b;}
+  .case .instr{font-size:11px;color:var(--muted);margin:6px 0 8px;}
+  .staff-wrap{display:flex;justify-content:center;margin:6px 0 10px;overflow:visible;padding:4px 0;}
+  .choices{display:flex;flex-direction:column;gap:6px;margin-top:7px;}
+  .choice{
+    border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:12px;cursor:pointer;
+    display:flex;align-items:center;gap:9px;background:#fff;transition:.12s;
+  }
+  .choice:hover{border-color:var(--purple-light);background:#faf8ff;}
+  .choice .lbl{width:20px;height:20px;border-radius:50%;background:var(--grad);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex:0 0 20px;}
+  .choice.sel{border-color:var(--indigo);background:#eef0ff;box-shadow:0 0 0 3px rgba(79,70,229,.12);}
+  .choice.correct-pick{border-color:#16a34a;background:#dcfce7;}
+  .answerbox{
+    border:1.5px dashed var(--purple-light);border-radius:8px;padding:10px 10px;font-size:12px;color:var(--muted);
+    margin-top:6px;text-align:center;min-height:30px;background:#faf8ff;
+  }
+  .answerbox.solid{border-style:solid;border-color:var(--line);}
+  .answerbox.underline{border:none;border-bottom:2px solid var(--purple-light);border-radius:0;background:transparent;padding:14px 4px;}
+  .answerbox small{display:block;font-size:10px;color:var(--muted);margin-bottom:4px;}
+  .keybank{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;justify-content:center;}
+  .keybtn{padding:4px 9px;border:1px solid var(--line);border-radius:6px;font-size:11px;background:#fff;cursor:pointer;font-weight:600;}
+  .keybtn:hover{background:#eef0ff;border-color:var(--indigo);}
+  .mini-keyboard{margin-top:8px;display:flex;justify-content:center;}
+
+  /* Answer key */
+  .page.answerkey .case{border-color:var(--gold);}
+  .page.answerkey .case.correct{background:#f7f3ff;border-color:var(--purple-light);}
+  .explanation{font-size:11px;color:var(--indigo-dark);background:#f5f3ff;border-left:3px solid var(--purple);
+    padding:7px 10px;border-radius:0 6px 6px 0;margin-top:7px;line-height:1.45;}
+  .answer-tag{font-size:11px;font-weight:700;color:#166534;background:#dcfce7;padding:3px 9px;border-radius:6px;display:inline-block;margin-top:5px;}
+
+  /* AI panel */
+  .ai-modal{position:fixed;inset:0;background:rgba(30,27,75,.5);display:none;align-items:center;justify-content:center;z-index:50;}
+  .ai-modal.show{display:flex;}
+  .ai-card{background:#fff;border-radius:14px;width:460px;max-width:92vw;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:86vh;overflow-y:auto;}
+  .ai-card h2{margin:0 0 6px;font-size:16px;color:var(--indigo-dark);}
+  .ai-card p.hint{font-size:12px;color:var(--muted);margin:0 0 14px;}
+  .ai-opt{display:flex;flex-direction:column;gap:8px;}
+  .ai-opt button{text-align:left;padding:11px 14px;border:1px solid var(--line);border-radius:9px;background:#fafbff;cursor:pointer;font-size:13px;transition:.12s;}
+  .ai-opt button:hover{border-color:var(--indigo);background:#eef0ff;}
+  .ai-opt button b{color:var(--indigo-dark);}
+  .ai-out{margin-top:14px;padding:12px;background:#f5f3ff;border-radius:8px;font-size:12px;line-height:1.55;color:var(--ink);white-space:pre-wrap;display:none;border:1px solid #e9e4ff;}
+  .ai-close{margin-top:14px;width:100%;padding:10px;border:none;background:var(--indigo);color:#fff;border-radius:8px;cursor:pointer;font-weight:600;}
+
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;opacity:0;transition:.3s;z-index:60;}
+  .toast.show{opacity:1;}
+
+  @media print{
+    body{background:#fff;}
+    .toolbar,.sidebar,.toast,.ai-modal,.pagenav{display:none !important;}
+    .app{display:block;}
+    .center{padding:0;overflow:visible;background:#fff;}
+    .page{box-shadow:none;margin:0;width:auto;max-width:100%;border-radius:0;page-break-after:always;}
+    .page:last-child{page-break-after:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <div class="brand">
+    <span class="logo">
+      <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#4f46e5"/><stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+          <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#d4a85a"/><stop offset="100%" stop-color="#f3e6c4"/>
+          </linearGradient>
+        </defs>
+        <rect x="2" y="2" width="32" height="32" rx="9" fill="url(#lg1)"/>
+        <rect x="2" y="2" width="32" height="32" rx="9" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+        <g stroke="#fff" stroke-width="1.1" opacity=".85">
+          <line x1="9" y1="13" x2="27" y2="13"/><line x1="9" y1="16.5" x2="27" y2="16.5"/>
+          <line x1="9" y1="20" x2="27" y2="20"/><line x1="9" y1="23.5" x2="27" y2="23.5"/>
+          <line x1="9" y1="27" x2="27" y2="27"/>
+        </g>
+        <ellipse cx="14" cy="23.5" rx="3.2" ry="2.4" fill="url(#lg2)" stroke="#fff" stroke-width=".9"/>
+        <line x1="17" y1="23.5" x2="17" y2="11" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+        <ellipse cx="22" cy="20" rx="3.2" ry="2.4" fill="url(#lg2)" stroke="#fff" stroke-width=".9"/>
+        <line x1="25" y1="20" x2="25" y2="7.5" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <span class="btext"><span class="bt-title">Music Pattern Composer</span><span class="bt-sub">Worksheet Studio</span></span>
+  </div>
+  <div class="spacer"></div>
+  <button class="tbtn primary" id="btnCreate">✦ Create Puzzles</button>
+  <button class="tbtn" id="btnReroll">⟳ Re-roll</button>
+  <button class="tbtn" id="btnAnswers">👁 Show Answers</button>
+  <button class="tbtn" id="btnAI">✦ AI</button>
+  <button class="tbtn" id="btnPDF">⬇ PDF</button>
+  <button class="tbtn" id="btnPNG">⬇ PNG</button>
+  <button class="tbtn ghost" id="btnReset">↺ Reset</button>
+</div>
+
+<div class="app">
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar left">
+    <div class="sb-section">
+      <h3>Worksheet <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Worksheet title</label><input type="text" id="wsTitle" value="Music Pattern Worksheet"></div>
+        <div class="field"><label>Subtitle / class</label><input type="text" id="wsSub" value="Pattern Recognition Practice"></div>
+        <div class="field">
+          <label>Pages to generate</label>
+          <div class="seg c3" data-group="pages">
+            <button data-val="1">1</button><button data-val="2">2</button><button data-val="3">3</button>
+            <button data-val="5">5</button><button data-val="10">10</button><button data-val="20">20</button>
+          </div>
+        </div>
+        <div class="hint">Generate unlimited multi-page worksheets. Use the page tabs above the preview to navigate.</div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <h3>Puzzle Setup <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Cases per page</label>
+          <div class="seg c3" data-group="cases"><button data-val="2">2</button><button data-val="4">4</button><button data-val="6">6</button></div>
+        </div>
+        <div class="field"><label>Difficulty</label>
+          <div class="seg c3" data-group="difficulty"><button data-val="easy">Easy</button><button data-val="medium">Medium</button><button data-val="hard">Hard</button></div>
+        </div>
+        <div class="field"><label>Pattern type</label>
+          <div class="seg c2" data-group="ptype">
+            <button data-val="intervals">Intervals</button><button data-val="scales">Scales</button>
+            <button data-val="rhythm">Rhythm</button><button data-val="mixed">Mixed</button>
+          </div>
+        </div>
+        <div class="field"><label>Answer format</label>
+          <div class="seg c3" data-group="ansformat">
+            <button data-val="mc">Multiple choice</button><button data-val="write">Write note</button><button data-val="circle">Circle ending</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <h3>Music Range <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Clef</label>
+          <div class="seg c2" data-group="clef"><button data-val="treble">Treble</button><button data-val="bass">Bass</button></div>
+        </div>
+        <div class="field"><label>Note range</label>
+          <div class="seg c3" data-group="range"><button data-val="narrow">C–G</button><button data-val="mid">C–C</button><button data-val="wide">Wider</button></div>
+        </div>
+        <div class="field"><label>Key context</label>
+          <div class="seg c4" data-group="key">
+            <button data-val="C">C major</button><button data-val="G">G major</button>
+            <button data-val="F">F major</button><button data-val="none">No acc.</button>
+          </div>
+        </div>
+        <div class="field"><label>Rhythm mode</label>
+          <div class="seg c2" data-group="rhy"><button data-val="simple">Simple only</button><button data-val="rests">Include rests</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <h3>Student Mode <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Age level</label>
+          <div class="seg c3" data-group="age"><button data-val="beginner">Beginner</button><button data-val="elementary">Elementary</button><button data-val="middle">Middle</button></div>
+        </div>
+        <label class="check"><input type="checkbox" id="optColor"> Colored notes</label>
+        <label class="check"><input type="checkbox" id="optLabels"> Note labels (C D E)</label>
+        <label class="check"><input type="checkbox" id="optSolfege"> Solfège hints (Do Re Mi)</label>
+        <label class="check"><input type="checkbox" id="optKeyboard"> Mini keyboard (beginner)</label>
+        <label class="check"><input type="checkbox" id="optTimeSig"> Show time signature</label>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <h3>Generate <span class="chev">▾</span></h3>
+      <div class="sb-body gen-row">
+        <button class="bigbtn create" id="genCreate">✦ Create Puzzles</button>
+        <button class="bigbtn reroll" id="genReroll">⟳ Re-roll All</button>
+        <button class="bigbtn answers" id="genAnswers">👁 Show Answers</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center" id="center">
+    <div class="pagenav" id="pagenav"></div>
+    <div id="worksheetArea"></div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sidebar right">
+    <div class="sb-section">
+      <h3>Page Setup <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Paper size</label>
+          <div class="seg c2" data-group="paper"><button data-val="a4">A4</button><button data-val="letter">US Letter</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Theme <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="seg c3" data-group="theme"><button data-val="indigo">Indigo</button><button data-val="classic">Classic</button><button data-val="kids">Kids</button></div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Spacing <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Case padding</label>
+          <div class="slider-row"><input type="range" class="slider" id="spcRange" min="8" max="22" value="14"><span class="val" id="spcVal">14px</span></div>
+        </div>
+        <div class="field"><label>Note spacing</label>
+          <div class="slider-row"><input type="range" class="slider" id="noteSpcRange" min="22" max="42" value="30"><span class="val" id="noteSpcVal">30px</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Border <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="seg c3" data-group="border"><button data-val="none">None</button><button data-val="line">Line</button><button data-val="gold">Gold</button></div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Background <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="seg c3" data-group="bg"><button data-val="white">White</button><button data-val="cream">Cream</button><button data-val="tint">Tint</button></div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Staff <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Staff line thickness</label>
+          <div class="slider-row"><input type="range" class="slider" id="thkRange" min="0.6" max="2.4" step="0.2" value="1.2"><span class="val" id="thkVal">1.2</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Typography & Answers <span class="chev">▾</span></h3>
+      <div class="sb-body">
+        <div class="field"><label>Instruction style</label>
+          <div class="seg c3" data-group="typo"><button data-val="italic">Italic</button><button data-val="regular">Regular</button><button data-val="bold">Bold</button></div>
+        </div>
+        <div class="field"><label>Answer box style</label>
+          <div class="seg c3" data-group="abox"><button data-val="dashed">Dashed</button><button data-val="solid">Solid</button><button data-val="underline">Underline</button></div>
+        </div>
+        <label class="check"><input type="checkbox" id="rsColor"> Note color mode</label>
+      </div>
+    </div>
+    <div class="sb-section">
+      <h3>Library <span class="chev">▾</span></h3>
+      <div class="sb-body gen-row">
+        <button class="bigbtn reroll" id="btnSavePreset">💾 Save preset</button>
+        <button class="bigbtn answers" id="btnLoadPreset">📂 Load preset</button>
+        <div class="hint">Settings auto-save to your browser.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ai-modal" id="aiModal">
+  <div class="ai-card">
+    <h2>✦ AI Assistant</h2>
+    <p class="hint">Simulated intelligence — no external calls. Choose an action:</p>
+    <div class="ai-opt">
+      <button data-ai="easy">✏️ <b>Suggest easier instructions</b><div style="font-size:11px;color:var(--muted)">Rewrite puzzle prompts for younger students</div></button>
+      <button data-ai="tip">💡 <b>Generate a teacher tip</b><div style="font-size:11px;color:var(--muted)">Add a teaching note for each puzzle</div></button>
+      <button data-ai="kid">🧒 <b>Rewrite explanations in student-friendly language</b><div style="font-size:11px;color:var(--muted)">Simplify answer-key text</div></button>
+      <button data-ai="diff">📈 <b>Suggest a difficulty progression</b><div style="font-size:11px;color:var(--muted)">Order puzzles from easy to hard</div></button>
+    </div>
+    <div class="ai-out" id="aiOut"></div>
+    <button class="ai-close" id="aiClose">Close</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   MUSIC PATTERN COMPOSER
+   ============================================================ */
+const LETTERS=['C','D','E','F','G','A','B'];
+const SOLFEGE=['Do','Re','Mi','Fa','Sol','La','Ti'];
+const NOTE_COLORS={'C':'#ef4444','D':'#f59e0b','E':'#22c55e','F':'#3b82f6','G':'#a855f7','A':'#ec4899','B':'#14b8a6'};
+
+function diatonicIndex(n){return n.oct*7+LETTERS.indexOf(n.letter)+n.acc;}
+function letterIndex(l){return LETTERS.indexOf(l);}
+
+function stepToNote(step, clef, acc){
+  let oct=Math.floor(step/7); let li=((step%7)+7)%7;
+  return {letter:LETTERS[li],acc:acc||0,oct:oct};
+}
+function staffPos(n, clef){
+  let di = diatonicIndex(n);
+  return clef==='treble' ? di - diatonicIndex({letter:'E',acc:0,oct:4})
+                         : di - diatonicIndex({letter:'G',acc:0,oct:2});
+}
+
+const state={
+  pages:1, currentPage:0, worksheets:[],
+  wsTitle:'Music Pattern Worksheet', wsSub:'Pattern Recognition Practice',
+  cases:4, difficulty:'easy', ptype:'intervals', ansformat:'mc',
+  clef:'treble', range:'mid', key:'C', rhy:'simple',
+  age:'elementary', colored:false, labels:false, solfege:false, keyboard:false, timeSig:true,
+  paper:'a4', theme:'indigo', border:'line', bg:'white',
+  staffThick:1.2, spacing:14, noteSpacing:30, typo:'italic', abox:'dashed',
+  showAnswers:false
+};
+const palette={
+  indigo:{accent:'#4f46e5',accent2:'#7c3aed'},
+  classic:{accent:'#1e293b',accent2:'#475569'},
+  kids:{accent:'#ec4899',accent2:'#f59e0b'}
+};
+const bgColors={white:'#ffffff',cream:'#fdfaf3',tint:'#f5f3ff'};
+
+/* ---------- settings wiring ---------- */
+function initSegs(){
+  document.querySelectorAll('.seg').forEach(seg=>{
+    const g=seg.dataset.group;
+    seg.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click',()=>{
+        seg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        applySetting(g,b.dataset.val);
+      });
+    });
+  });
+  setSeg('pages',state.pages); setSeg('cases',state.cases); setSeg('difficulty',state.difficulty);
+  setSeg('ptype',state.ptype); setSeg('ansformat',state.ansformat); setSeg('clef',state.clef);
+  setSeg('range',state.range); setSeg('key',state.key); setSeg('rhy',state.rhy);
+  setSeg('age',state.age); setSeg('paper',state.paper); setSeg('theme',state.theme);
+  setSeg('border',state.border); setSeg('bg',state.bg); setSeg('typo',state.typo); setSeg('abox',state.abox);
+}
+function setSeg(g,val){document.querySelectorAll('.seg[data-group="'+g+'"] button').forEach(b=>b.classList.toggle('active',b.dataset.val==String(val)));}
+function applySetting(g,val){
+  if(g==='pages'){state.pages=parseInt(val);state.currentPage=0;}
+  else if(g==='cases')state.cases=parseInt(val);
+  else if(g==='difficulty')state.difficulty=val;
+  else if(g==='ptype')state.ptype=val;
+  else if(g==='ansformat')state.ansformat=val;
+  else if(g==='clef')state.clef=val;
+  else if(g==='range')state.range=val;
+  else if(g==='key')state.key=val;
+  else if(g==='rhy')state.rhy=val;
+  else if(g==='age')state.age=val;
+  else if(g==='paper')state.paper=val;
+  else if(g==='theme')state.theme=val;
+  else if(g==='border')state.border=val;
+  else if(g==='bg')state.bg=val;
+  else if(g==='typo')state.typo=val;
+  else if(g==='abox')state.abox=val;
+  saveSettings();
+  if(['paper','bg','border','theme','spacing','staffThick','noteSpacing','typo','abox','clef'].includes(g))renderWorksheet();
+}
+function initToggles(){
+  const bind=(id,prop)=>{const el=document.getElementById(id);el.checked=state[prop];el.addEventListener('change',e=>{state[prop]=e.target.checked;saveSettings();renderWorksheet();});};
+  bind('optColor','colored'); bind('optLabels','labels'); bind('optSolfege','solfege');
+  bind('optKeyboard','keyboard'); bind('optTimeSig','timeSig'); bind('rsColor','colored');
+  document.getElementById('optColor').addEventListener('change',e=>{document.getElementById('rsColor').checked=e.target.checked;});
+  document.getElementById('rsColor').addEventListener('change',e=>{document.getElementById('optColor').checked=e.target.checked;state.colored=e.target.checked;renderWorksheet();});
+  const spc=document.getElementById('spcRange');spc.addEventListener('input',e=>{state.spacing=+e.target.value;document.getElementById('spcVal').textContent=e.target.value+'px';renderWorksheet();});
+  const ns=document.getElementById('noteSpcRange');ns.addEventListener('input',e=>{state.noteSpacing=+e.target.value;document.getElementById('noteSpcVal').textContent=e.target.value+'px';renderWorksheet();});
+  const thk=document.getElementById('thkRange');thk.addEventListener('input',e=>{state.staffThick=+e.target.value;document.getElementById('thkVal').textContent=e.target.value;renderWorksheet();});
+  document.querySelectorAll('.sb-section h3').forEach(h=>h.addEventListener('click',()=>h.parentElement.classList.toggle('collapsed')));
+  document.getElementById('wsTitle').addEventListener('input',e=>{state.wsTitle=e.target.value;renderWorksheet();});
+  document.getElementById('wsSub').addEventListener('input',e=>{state.wsSub=e.target.value;renderWorksheet();});
+}
+
+/* ---------- localStorage ---------- */
+function saveSettings(){
+  const s={};for(const k of ['pages','cases','difficulty','ptype','ansformat','clef','range','key','rhy','age','colored','labels','solfege','keyboard','timeSig','paper','theme','border','bg','staffThick','spacing','noteSpacing','typo','abox','wsTitle','wsSub'])s[k]=state[k];
+  try{localStorage.setItem('mpc_settings',JSON.stringify(s));}catch(e){}
+}
+function loadSettings(){
+  try{const s=JSON.parse(localStorage.getItem('mpc_settings')||'{}');Object.assign(state,s);}catch(e){}
+}
+
+/* ---------- range ---------- */
+function rangeBounds(){
+  let low,high;
+  if(state.clef==='treble'){
+    if(state.range==='narrow'){low={letter:'C',oct:4};high={letter:'G',oct:4};}
+    else if(state.range==='mid'){low={letter:'C',oct:4};high={letter:'C',oct:5};}
+    else {low={letter:'A',oct:3};high={letter:'E',oct:5};}
+  }else{
+    if(state.range==='narrow'){low={letter:'C',oct:2};high={letter:'G',oct:2};}
+    else if(state.range==='mid'){low={letter:'C',oct:2};high={letter:'C',oct:3};}
+    else {low={letter:'E',oct:1};high={letter:'G',oct:3};}
+  }
+  return [diatonicIndex({...low,acc:0}),diatonicIndex({...high,acc:0})];
+}
+function inRange(step){const [lo,hi]=rangeBounds();return step>=lo&&step<=hi;}
+function keyAcc(letter){
+  if(state.key==='G') return letter==='F'?1:0;
+  if(state.key==='F') return letter==='B'?-1:0;
+  return 0;
+}
+
+/* ---------- pattern engine ---------- */
+function genPattern(){
+  const type = state.ptype==='mixed' ? pick(['intervals','scales','rhythm']) : state.ptype;
+  const diff=state.difficulty;
+  let seqLen = diff==='easy'?4:diff==='medium'?6:8;
+  let choicesCount = diff==='easy'?3:4;
+  let p,guard=0;
+  do{
+    if(type==='rhythm') p=genRhythm(seqLen,choicesCount);
+    else if(type==='scales') p=genScale(seqLen,choicesCount);
+    else p=genInterval(seqLen,choicesCount);
+    p.difficulty=diff;
+  }while(!validatePatternUniqueness(p) && guard++<20);
+  return p;
+}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function randInt(a,b){return a+Math.floor(Math.random()*(b-a+1));}
+
+function genInterval(seqLen,choicesCount){
+  const [lo,hi]=rangeBounds();
+  const diff=state.difficulty;
+  let rules=[];
+  if(diff==='easy') rules=['step-up','step-down','third-up','repeat'];
+  else if(diff==='medium') rules=['step-up','step-down','third-up','third-down','up-third-down-second','repeat'];
+  else rules=['step-up','step-down','third-up','third-down','up-third-down-second','alternate-up-down','skip-2','mirror'];
+  const rule=pick(rules);
+  let start,seq=[],attempts=0;
+  while(attempts++<60){
+    start=randInt(lo+1,hi-1);
+    seq=buildIntervalSeq(start,rule,seqLen);
+    if(seq.every(n=>inRange(diatonicIndex(n))))break;
+  }
+  const answer=seq[seq.length-1];
+  const shown=seq.slice(0,seq.length-1);
+  let distractors=new Set(),guard=0;
+  while(distractors.size<choicesCount-1 && guard++<120){
+    let cand=neighborNote(answer,randInt(-4,4));
+    if(cand && inRange(diatonicIndex(cand)) && !sameNote(cand,answer)){
+      if(!satisfiesIntervalRule(shown,rule,cand) && !distractors.has(noteKey(cand))) distractors.add(noteKey(cand));
+    }
+  }
+  let choices=[answer,...distractorsToNotes(distractors)];
+  shuffle(choices);
+  return {type:'intervals',rule,shown,answer,choices,explanation:intervalExplanation(rule),instruction:intervalInstruction(rule),missingIndex:seq.length-1};
+}
+function buildIntervalSeq(start,rule,len){
+  let seq=[stepToNote(start,state.clef)];seq[0].acc=keyAcc(seq[0].letter);
+  let cur=start;
+  for(let i=1;i<len;i++){
+    let next=cur;
+    switch(rule){
+      case 'step-up':next=cur+1;break;
+      case 'step-down':next=cur-1;break;
+      case 'third-up':next=cur+2;break;
+      case 'third-down':next=cur-2;break;
+      case 'repeat':next=cur;break;
+      case 'up-third-down-second':next=(i%2===1)?cur+2:cur-1;break;
+      case 'alternate-up-down':next=(i%2===1)?cur+1:cur-1;break;
+      case 'skip-2':next=cur+(i%2===1?2:1);break;
+      case 'mirror':next= i<=Math.floor(len/2)?cur+1:cur-1;break;
+    }
+    cur=next;
+    let n=stepToNote(cur,state.clef);n.acc=keyAcc(n.letter);seq.push(n);
+  }
+  return seq;
+}
+function satisfiesIntervalRule(shown,rule,cand){
+  const prev=shown[shown.length-1];
+  const diff=diatonicIndex(cand)-diatonicIndex(prev);
+  switch(rule){
+    case 'step-up':return diff===1;
+    case 'step-down':return diff===-1;
+    case 'third-up':return diff===2;
+    case 'third-down':return diff===-2;
+    case 'repeat':return diff===0;
+    case 'up-third-down-second':{const i=shown.length;return (i%2===1)?diff===2:diff===-1;}
+    case 'alternate-up-down':{const i=shown.length;return (i%2===1)?diff===1:diff===-1;}
+    case 'skip-2':{const i=shown.length;return i%2===1?diff===2:diff===1;}
+    case 'mirror':return diff===-1;
+  }
+  return false;
+}
+function intervalExplanation(rule){
+  const m={'step-up':'This pattern moves upward by steps in '+state.key+' major.','step-down':'This pattern moves downward by steps, one note at a time.','third-up':'Each note jumps up a third (skipping one scale degree).','third-down':'Each note drops down a third, skipping one letter name.','repeat':'The same note repeats — the answer is the same pitch.','up-third-down-second':'The pattern alternates: up a third, then down a second.','alternate-up-down':'The pattern alternates one step up and one step down.','skip-2':'The pattern skips up a third, then continues by step.','mirror':'The pattern rises then mirrors back down by step.'};
+  return m[rule]||'This pattern follows a stepwise interval rule.';
+}
+function intervalInstruction(rule){
+  const m={'step-up':'Look at the notes going up by step. What note comes next?','step-down':'The notes go down one step each time. Fill in the last note.','third-up':'Each note skips up a third. Complete the pattern.','third-down':'Each note drops a third. What is the missing note?','repeat':'The same note repeats. Which note completes it?','up-third-down-second':'Up a third, down a second — find the last note.','alternate-up-down':'The pattern alternates up and down by step.','skip-2':'Skip up, then step. Finish the pattern.','mirror':'The pattern rises then turns back. Find the last note.'};
+  return m[rule]||'Find the rule and complete the pattern.';
+}
+
+function genScale(seqLen,choicesCount){
+  const [lo,hi]=rangeBounds();
+  const diff=state.difficulty;
+  let rules=diff==='easy'?['ascending','descending']:diff==='medium'?['ascending','descending','skip-every','tonic-dom']:['ascending','descending','skip-every','tonic-dom','pentatonic'];
+  const rule=pick(rules);
+  let tonicCandidates=[];
+  for(let s=lo;s<=hi;s++){let n=stepToNote(s,state.clef);if(['C','G','F'].includes(n.letter))tonicCandidates.push(s);}
+  if(state.key==='G') tonicCandidates=tonicCandidates.filter(s=>stepToNote(s,state.clef).letter==='G');
+  else if(state.key==='F') tonicCandidates=tonicCandidates.filter(s=>stepToNote(s,state.clef).letter==='F');
+  else tonicCandidates=tonicCandidates.filter(s=>stepToNote(s,state.clef).letter==='C');
+  if(!tonicCandidates.length) tonicCandidates=[lo];
+  let tonic,seq=[],attempts=0;
+  do{tonic=pick(tonicCandidates);seq=buildScaleSeq(tonic,rule,seqLen);attempts++;}
+  while((!seq.every(n=>inRange(diatonicIndex(n))))&&attempts<30);
+  const answer=seq[seq.length-1];
+  const shown=seq.slice(0,seq.length-1);
+  let distractors=new Set(),guard=0;
+  while(distractors.size<choicesCount-1 && guard++<120){
+    let cand=neighborNote(answer,randInt(-3,3));
+    if(cand&&inRange(diatonicIndex(cand))&&!sameNote(cand,answer)&&!satisfiesScaleRule(shown,rule,cand,tonic)&&!distractors.has(noteKey(cand)))distractors.add(noteKey(cand));
+  }
+  let choices=[answer,...distractorsToNotes(distractors)];
+  shuffle(choices);
+  return {type:'scales',rule,shown,answer,choices,explanation:scaleExplanation(rule),instruction:scaleInstruction(rule),missingIndex:seq.length-1,tonic};
+}
+function buildScaleSeq(tonic,rule,len){
+  let seq=[];
+  for(let i=0;i<len;i++){
+    let step;
+    if(rule==='ascending')step=tonic+i;
+    else if(rule==='descending')step=tonic-i;
+    else if(rule==='skip-every')step=tonic+i*2;
+    else if(rule==='tonic-dom')step=(i%2===0)?tonic:tonic+4;
+    else if(rule==='pentatonic'){const p=[0,1,2,4,5];step=tonic+p[i%p.length];}
+    let n=stepToNote(step,state.clef);n.acc=keyAcc(n.letter);seq.push(n);
+  }
+  return seq;
+}
+function satisfiesScaleRule(shown,rule,cand,tonic){
+  const i=shown.length;const s=diatonicIndex(cand);
+  if(rule==='ascending')return s===tonic+i;
+  if(rule==='descending')return s===tonic-i;
+  if(rule==='skip-every')return s===tonic+i*2;
+  if(rule==='tonic-dom')return (i%2===0)?s===tonic:s===tonic+4;
+  if(rule==='pentatonic'){const p=[0,1,2,4,5];return s===tonic+p[i%p.length];}
+  return false;
+}
+function scaleExplanation(rule){
+  const m={'ascending':'This is an ascending scale in '+state.key+' major — each note steps up.','descending':'This is a descending scale — each note steps down by one.','skip-every':'Every note skips one scale degree (skips up a third).','tonic-dom':'The pattern alternates between tonic (I) and dominant (V).','pentatonic':'This uses a five-note (pentatonic) pattern.'};
+  return m[rule];
+}
+function scaleInstruction(rule){
+  const m={'ascending':'The scale climbs upward. What note comes next?','descending':'The scale goes downward. Complete the last note.','skip-every':'Skip one note each time. Find the next note.','tonic-dom':'Tonic and dominant alternate. Finish the pattern.','pentatonic':'A five-note pattern. What completes it?'};
+  return m[rule];
+}
+
+function genRhythm(seqLen,choicesCount){
+  const diff=state.difficulty;
+  const cells=diff==='easy'?[['q','q','h'],['q','h','q'],['h','q','q'],['q','q','q','q']]:diff==='medium'?[['q','q','h','q'],['q','h','q','q'],['h','q','q','h'],['q','q','q','h']]:[['q','q','h','q','q'],['q','h','q','q','h'],['h','q','q','q','h'],['q','q','q','h','q']];
+  const cell=pick(cells);
+  const useRests=state.rhy==='rests'&&Math.random()<0.5;
+  let seq=[];
+  for(let i=0;i<seqLen;i++){
+    let d=cell[i%cell.length];
+    if(useRests&&i>0&&i%3===0)d=d==='h'?'hr':'qr';
+    seq.push({dur:d,rest:d.endsWith('r')});
+  }
+  const answer=seq[seq.length-1];
+  const shown=seq.slice(0,seq.length-1);
+  let distractors=new Set(),guard=0;
+  const allDur=['q','h','w','qr','hr'];
+  while(distractors.size<choicesCount-1&&guard++<40){let d=pick(allDur);if(d!==answer.dur&&!satisfiesRhythmRule(shown,cell,d))distractors.add(d);}
+  let choices=[...distractors,answer.dur];
+  shuffle(choices);
+  return {type:'rhythm',rule:'cell',cell,shown,answer,choices,explanation:rhythmExplanation(cell,useRests),instruction:'The rhythm repeats a pattern. Choose the rhythm that completes the measure.',missingIndex:seq.length-1};
+}
+function satisfiesRhythmRule(shown,cell,d){return d===cell[shown.length%cell.length];}
+function rhythmExplanation(cell,useRests){
+  const names={q:'quarter',h:'half',w:'whole',qr:'quarter rest',hr:'half rest'};
+  return 'The rhythm repeats the cell: '+cell.map(d=>names[d]).join('–')+(useRests?'. Rests replace some beats.':'')+'.';
+}
+
+function neighborNote(note,delta){let step=diatonicIndex(note)+delta;if(!inRange(step))return null;let n=stepToNote(step,state.clef);n.acc=keyAcc(n.letter);return n;}
+function noteKey(n){return n.letter+'|'+n.acc+'|'+n.oct;}
+function sameNote(a,b){return a.letter===b.letter&&a.acc===b.acc&&a.oct===b.oct;}
+function distractorsToNotes(set){return [...set].map(k=>{const m=k.split('|');return {letter:m[0],acc:+m[1],oct:+m[2]};});}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+
+function validatePatternUniqueness(p){
+  if(!p.choices||p.choices.length<2)return false;
+  if(p.type==='rhythm'){
+    const correct=p.answer.dur;
+    return p.choices.filter(c=>c===correct).length===1;
+  }
+  const correct=p.answer;
+  if(p.choices.filter(c=>sameNote(c,correct)).length!==1)return false;
+  const shown=p.shown;
+  for(const c of p.choices){
+    const isCorrect=sameNote(c,correct);
+    let satisfies;
+    if(p.type==='intervals')satisfies=satisfiesIntervalRule(shown,p.rule,c);
+    else if(p.type==='scales')satisfies=satisfiesScaleRule(shown,p.rule,c,p.tonic||0);
+    else satisfies=false;
+    if(satisfies&&!isCorrect)return false;
+    if(!satisfies&&isCorrect)return false;
+  }
+  return true;
+}
+
+/* ============================================================
+   SVG RENDERING
+   ============================================================ */
+function renderStaffSVG(notes, opts){
+  opts=opts||{};
+  const showAnswers=opts.showAnswers;
+  const missingIndex=opts.missingIndex;
+  const sp=state.noteSpacing;
+  const sw=state.staffThick;
+  const padLeft=74, padRight=24;
+  const lineY0=72;          // y of top staff line
+  const staffH=40;          // 5 lines × 10
+  // compute vertical extents so nothing clips
+  let minY=lineY0-30, maxY=lineY0+staffH+30;
+  notes.forEach(n=>{
+    if(n.rest||(n.dur&&n.dur.endsWith('r')))return;
+    const pos=staffPos(n,state.clef);
+    const y=lineY0+staffH-pos*5;
+    minY=Math.min(minY,y-30,(pos>8?lineY0+staffH-pos*5:y));   // stem up + high ledgers
+    maxY=Math.max(maxY,y+30,(pos<0?lineY0+staffH-pos*5:y));   // stem down + low ledgers
+  });
+  if(state.solfege)maxY=Math.max(maxY,lineY0+staffH+22);
+  if(state.labels)maxY=Math.max(maxY,lineY0+staffH+16);
+  const vbTop=Math.min(0,minY-8);
+  const h=(maxY-vbTop)+10;
+  const w=padLeft+padRight+notes.length*sp;
+  let svg=`<svg width="${w}" height="${h}" viewBox="0 ${vbTop} ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">`;
+  for(let i=0;i<5;i++){let y=lineY0+i*10;svg+=`<line x1="${padLeft-10}" y1="${y}" x2="${w-padRight+10}" y2="${y}" stroke="#1e1b4b" stroke-width="${sw}"/>`;}
+  svg+=`<line x1="${padLeft-10}" y1="${lineY0}" x2="${padLeft-10}" y2="${lineY0+staffH}" stroke="#1e1b4b" stroke-width="${sw*1.4}"/>`;
+  svg+=`<line x1="${w-padRight+10}" y1="${lineY0}" x2="${w-padRight+10}" y2="${lineY0+staffH}" stroke="#1e1b4b" stroke-width="${sw*1.4}"/>`;
+  svg+=renderClef(padLeft-8,lineY0,staffH);
+  if(state.key==='G')svg+=`<text x="${padLeft+22}" y="${lineY0+12}" font-size="20" fill="#1e1b4b">♯</text>`;
+  if(state.key==='F')svg+=`<text x="${padLeft+22}" y="${lineY0+36}" font-size="20" fill="#1e1b4b">♭</text>`;
+  if(state.timeSig){
+    const tsx=padLeft+(state.key==='none'?30:44);
+    svg+=`<text x="${tsx}" y="${lineY0+16}" font-size="20" font-weight="700" fill="#1e1b4b" text-anchor="middle">4</text>`;
+    svg+=`<text x="${tsx}" y="${lineY0+36}" font-size="20" font-weight="700" fill="#1e1b4b" text-anchor="middle">4</text>`;
+  }
+  notes.forEach((n,i)=>{
+    const x=padLeft+62+i*sp;
+    const isMissing=(!showAnswers&&i===missingIndex);
+    if(n.rest||n.dur&&n.dur.endsWith('r'))svg+=renderRest(x,lineY0,staffH,n.dur||'qr',isMissing,sw);
+    else svg+=renderNote(x,lineY0,staffH,n,isMissing,sw);
+  });
+  svg+=`</svg>`;
+  return svg;
+}
+function renderClef(x,lineY0,staffH){
+  if(state.clef==='treble')return `<text x="${x}" y="${lineY0+staffH}" font-size="62" fill="#4f46e5" font-weight="700">𝄞</text>`;
+  return `<text x="${x}" y="${lineY0+staffH-2}" font-size="50" fill="#4f46e5" font-weight="700">𝄢</text>`;
+}
+function renderNote(x,lineY0,staffH,n,missing,sw){
+  const pos=staffPos(n,state.clef);
+  const y=lineY0+staffH-pos*5;
+  const color=missing?'#c7d2fe':(state.colored?NOTE_COLORS[n.letter]:'#1e1b4b');
+  let ledger='';
+  if(pos<0)for(let p=-2;p>=pos;p-=2)ledger+=`<line x1="${x-8}" y1="${lineY0+staffH-p*5}" x2="${x+8}" y2="${lineY0+staffH-p*5}" stroke="#1e1b4b" stroke-width="${sw}"/>`;
+  if(pos>8)for(let p=10;p<=pos;p+=2)ledger+=`<line x1="${x-8}" y1="${lineY0+staffH-p*5}" x2="${x+8}" y2="${lineY0+staffH-p*5}" stroke="#1e1b4b" stroke-width="${sw}"/>`;
+  let dur=n.dur||'q';
+  let head='';
+  if(dur==='w')head=`<ellipse cx="${x}" cy="${y}" rx="7.5" ry="5.5" fill="none" stroke="${color}" stroke-width="2"/>`;
+  else if(dur==='h')head=`<ellipse cx="${x}" cy="${y}" rx="7.5" ry="5.5" fill="none" stroke="${color}" stroke-width="2"/>`;
+  else head=`<ellipse cx="${x}" cy="${y}" rx="7.5" ry="5.5" fill="${color}"/>`;
+  let stem='';
+  if(dur==='q'||dur==='h'){let up=pos<4;if(up)stem=`<line x1="${x+6}" y1="${y}" x2="${x+6}" y2="${y-28}" stroke="${color}" stroke-width="1.6"/>`;else stem=`<line x1="${x-6}" y1="${y}" x2="${x-6}" y2="${y+28}" stroke="${color}" stroke-width="1.6"/>`;}
+  let label='';
+  if(state.labels&&!missing)label=`<text x="${x}" y="${y+20}" font-size="9" text-anchor="middle" fill="${color}" font-weight="700">${n.letter}</text>`;
+  if(state.solfege&&!missing)label+=`<text x="${x}" y="${lineY0+staffH+14}" font-size="8" text-anchor="middle" fill="#7c3aed">${SOLFEGE[letterIndex(n.letter)]}</text>`;
+  let acc='';
+  if(n.acc>0)acc=`<text x="${x-14}" y="${y+5}" font-size="15" fill="${color}">♯</text>`;
+  if(n.acc<0)acc=`<text x="${x-14}" y="${y+5}" font-size="15" fill="${color}">♭</text>`;
+  let qmark=missing?`<text x="${x}" y="${y+6}" font-size="20" text-anchor="middle" fill="#a78bfa" font-weight="700">?</text>`:'';
+  return ledger+acc+head+stem+label+qmark;
+}
+function renderRest(x,lineY0,staffH,dur,missing,sw){
+  const color=missing?'#c7d2fe':'#1e1b4b';
+  if(dur==='qr')return `<path d="M${x-3} ${lineY0+6} L${x+4} ${lineY0+16} L${x-3} ${lineY0+22} L${x+4} ${lineY0+32}" stroke="${color}" stroke-width="2.4" fill="none" stroke-linecap="round"/>${missing?`<text x="${x}" y="${lineY0+30}" font-size="14" text-anchor="middle" fill="#a78bfa">?</text>`:''}`;
+  if(dur==='hr')return `<rect x="${x-6}" y="${lineY0+18}" width="12" height="5" fill="${color}"/>${missing?`<text x="${x}" y="${lineY0+34}" font-size="14" text-anchor="middle" fill="#a78bfa">?</text>`:''}`;
+  return '';
+}
+function miniKeyboardSVG(){
+  const keys=['C','D','E','F','G','A','B','C','D','E'];
+  let svg=`<svg width="190" height="50" viewBox="0 0 190 50">`;
+  keys.forEach((k,i)=>{const x=i*19;const col=state.colored?NOTE_COLORS[k]:'#1e1b4b';svg+=`<rect x="${x}" y="6" width="17" height="38" rx="2" fill="#fff" stroke="#cbd5e1" stroke-width="1"/>`;if(state.labels)svg+=`<text x="${x+8.5}" y="40" font-size="8" text-anchor="middle" fill="${col}" font-weight="700">${k}</text>`;});
+  svg+=`</svg>`;
+  return svg;
+}
+
+/* ---------- render ---------- */
+function renderWorksheet(){
+  const area=document.getElementById('worksheetArea');
+  area.innerHTML='';
+  if(state.worksheets.length===0){loadDemo();}
+  renderPageNav();
+  const gridClass=state.cases===2?'grid2':state.cases===4?'grid4':'grid6';
+  const ws=state.worksheets[state.currentPage]||state.worksheets[0];
+  if(!ws)return;
+  const answerMode=state.showAnswers;
+  const page=document.createElement('div');
+  page.className='page '+(state.paper==='letter'?'letter':'')+(answerMode?' answerkey':'');
+  page.style.background=bgColors[state.bg];applyBorder(page);
+  page.innerHTML=`<div class="page-head"><div><h1>${answerMode?'Answer Key':esc(state.wsTitle)}</h1><div class="sub">${answerMode?('Teacher copy — Page '+(state.currentPage+1)+' · highlighted answers and explanations'):esc(state.wsSub)+' · '+state.ptype.charAt(0).toUpperCase()+state.ptype.slice(1)+' · '+state.difficulty+' · '+state.clef+' clef · '+(state.key==='none'?'No accidentals':state.key+' major')+' · Page '+(state.currentPage+1)}</div></div><div class="badge"${answerMode?' style="background:#7c3aed"':''}>${answerMode?'ANSWERS':'Name: __________'}</div></div>`;
+  const body=document.createElement('div');body.className='page-body '+gridClass;
+  ws.forEach((p,i)=>body.appendChild(renderCase(p,i,answerMode)));
+  page.appendChild(body);area.appendChild(page);
+  applyTheme();
+  updateAnswersBtn();
+}
+function updateAnswersBtn(){
+  const active=state.showAnswers;
+  ['btnAnswers','genAnswers'].forEach(id=>{const b=document.getElementById(id);if(b){b.textContent=active?'👁 Hide Answers':'👁 Show Answers';b.classList.toggle('primary',active);}});
+}
+function renderPageNav(){
+  const nav=document.getElementById('pagenav');nav.innerHTML='';
+  const prev=document.createElement('button');prev.className='pgbtn';prev.textContent='◄ Prev';prev.onclick=()=>{if(state.currentPage>0){state.currentPage--;renderWorksheet();}};nav.appendChild(prev);
+  state.worksheets.forEach((w,i)=>{
+    const t=document.createElement('button');t.className='pgtab'+(i===state.currentPage?' active':'');t.textContent='Page '+(i+1);t.onclick=()=>{state.currentPage=i;renderWorksheet();};nav.appendChild(t);
+  });
+  const next=document.createElement('button');next.className='pgbtn';next.textContent='Next ►';next.onclick=()=>{if(state.currentPage<state.worksheets.length-1){state.currentPage++;renderWorksheet();}};nav.appendChild(next);
+  const info=document.createElement('span');info.className='pginfo';info.textContent=state.worksheets.length+' page(s) · '+(state.showAnswers?'Answers visible':'Worksheet view');nav.appendChild(info);
+  const add=document.createElement('button');add.className='pgbtn';add.textContent='+ Add page';add.onclick=addPage;nav.appendChild(add);
+}
+function applyBorder(el){const b=state.border;if(b==='none')el.style.border='none';else if(b==='line')el.style.border='1px solid #e5e7eb';else if(b==='gold')el.style.border='2px solid #d4a85a';}
+function applyTheme(){const pal=palette[state.theme];document.documentElement.style.setProperty('--indigo',pal.accent);document.documentElement.style.setProperty('--purple',pal.accent2);}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function renderCase(p,idx,answerMode){
+  const c=document.createElement('div');c.className='case'+(answerMode?' correct':'');c.style.padding=state.spacing+'px';
+  const diff=p.difficulty||state.difficulty;
+  const fullSeq=answerMode?[...p.shown,p.answer]:null;
+  const missingIndex=p.shown.length;
+  let renderNotes=[...p.shown, p.type==='rhythm'?{dur:'qr',rest:true}:p.answer];
+  if(answerMode)renderNotes=fullSeq;
+  let choicesHTML='';
+  if(!answerMode&&state.ansformat==='mc'){
+    choicesHTML='<div class="choices">'+p.choices.map((ch,i)=>{const label=String.fromCharCode(65+i);const text=p.type==='rhythm'?durLabel(ch):noteLabel(ch);return `<div class="choice" data-idx="${i}"><span class="lbl">${label}</span>${miniChoiceSVG(p.type,ch)}<span>${text}</span></div>`;}).join('')+'</div>';
+  }else if(!answerMode&&state.ansformat==='write'){
+    choicesHTML=`<div class="answerbox ${state.abox}"><small>Write the missing ${p.type==='rhythm'?'rhythm':'note'}:</small>____________________</div>`;
+    if(p.type!=='rhythm'&&state.age==='beginner')choicesHTML+='<div class="keybank">'+['C','D','E','F','G','A','B'].map(l=>`<span class="keybtn">${l}</span>`).join('')+'</div>';
+  }else if(!answerMode&&state.ansformat==='circle'){
+    choicesHTML='<div class="choices">'+p.choices.map((ch,i)=>{const label=String.fromCharCode(65+i);const text=p.type==='rhythm'?durLabel(ch):noteLabel(ch);return `<div class="choice" data-idx="${i}"><span class="lbl">${label}</span>${miniChoiceSVG(p.type,ch)}<span>${text}</span></div>`;}).join('')+'</div>';
+    choicesHTML=`<div style="font-size:11px;color:var(--muted);margin-top:5px;">Circle the correct ending above.</div>`+choicesHTML;
+  }
+  let answerHTML='';
+  if(answerMode){
+    answerHTML=`<div class="answer-tag">Correct: ${p.type==='rhythm'?durLabel(p.answer.dur):noteLabel(p.answer)}</div><div class="explanation">${esc(p.explanation)}</div>`;
+  }
+  let kb='';
+  if(!answerMode&&state.keyboard&&state.age==='beginner'&&p.type!=='rhythm'){kb=`<div class="mini-keyboard">${miniKeyboardSVG()}</div>`;}
+  c.innerHTML=`<div class="ctitle">Pattern ${idx+1} <span class="dif ${diff}">${diff.toUpperCase()}</span></div><div class="instr" style="font-style:${state.typo==='italic'?'italic':'normal'};font-weight:${state.typo==='bold'?700:400}">${answerMode?'Answer:':esc(p.instruction)}</div><div class="staff-wrap">${renderStaffSVG(renderNotes,{showAnswers:answerMode,missingIndex})}</div>${kb}${answerMode?answerHTML:choicesHTML}`;
+  return c;
+}
+function noteLabel(n){return n.letter+(n.acc>0?'♯':n.acc<0?'♭':'');}
+function durLabel(d){return {q:'♩ quarter',h:'𝅗𝅥 half',w:'𝅝 whole',qr:'𝄽 quarter rest',hr:'𝄻 half rest'}[d]||d;}
+function miniChoiceSVG(type,ch){
+  if(type==='rhythm'){
+    if(ch.endsWith('r'))return `<svg width="22" height="28" viewBox="0 0 22 28">${ch==='hr'?'<rect x="2" y="12" width="14" height="4" fill="#333"/>':'<path d="M4 6 L10 12 L4 16 L10 20" stroke="#333" stroke-width="2" fill="none"/>'}</svg>`;
+    return `<svg width="22" height="28" viewBox="0 0 22 28">${ch==='w'?'<ellipse cx="11" cy="14" rx="6" ry="4" fill="none" stroke="#333" stroke-width="2"/>':'<ellipse cx="9" cy="14" rx="5" ry="4" fill="#333"/><line x1="14" y1="14" x2="14" y2="2" stroke="#333" stroke-width="1.5"/>'}</svg>`;
+  }
+  const pos=staffPos(ch,state.clef);const y=24-pos*2.5;const color=state.colored?NOTE_COLORS[ch.letter]:'#333';
+  return `<svg width="22" height="28" viewBox="0 0 22 28"><ellipse cx="9" cy="${y}" rx="5" ry="3.5" fill="${color}"/><line x1="14" y1="${y}" x2="14" y2="${y-14}" stroke="${color}" stroke-width="1.4"/></svg>`;
+}
+
+/* ---------- demo ---------- */
+function loadDemo(){
+  state.worksheets=[[
+    {type:'intervals',rule:'step-up',difficulty:'easy',shown:[{letter:'C',acc:0,oct:4},{letter:'D',acc:0,oct:4},{letter:'E',acc:0,oct:4}],answer:{letter:'F',acc:0,oct:4},choices:[{letter:'F',acc:0,oct:4},{letter:'G',acc:0,oct:4},{letter:'D',acc:0,oct:4}],instruction:'Look at the notes going up by step. What note comes next?',explanation:'This pattern moves upward by steps in C major.'},
+    {type:'scales',rule:'ascending',difficulty:'easy',tonic:0,shown:[{letter:'C',acc:0,oct:4},{letter:'D',acc:0,oct:4},{letter:'E',acc:0,oct:4},{letter:'F',acc:0,oct:4},{letter:'G',acc:0,oct:4}],answer:{letter:'A',acc:0,oct:4},choices:[{letter:'A',acc:0,oct:4},{letter:'G',acc:0,oct:4},{letter:'B',acc:0,oct:4},{letter:'F',acc:0,oct:4}],instruction:'The scale climbs upward. What note comes next?',explanation:'This is an ascending scale in C major — each note steps up.'},
+    {type:'rhythm',rule:'cell',cell:['q','q','h'],difficulty:'easy',shown:[{dur:'q',rest:false},{dur:'q',rest:false},{dur:'h',rest:false},{dur:'q',rest:false}],answer:{dur:'h',rest:false},choices:['h','q','w'],instruction:'The rhythm repeats a pattern. Choose the rhythm that completes the measure.',explanation:'The rhythm repeats the cell: quarter–quarter–half.'},
+    {type:'intervals',rule:'third-up',difficulty:'medium',shown:[{letter:'C',acc:0,oct:4},{letter:'E',acc:0,oct:4},{letter:'G',acc:0,oct:4}],answer:{letter:'B',acc:0,oct:4},choices:[{letter:'B',acc:0,oct:4},{letter:'A',acc:0,oct:4},{letter:'C',acc:0,oct:5},{letter:'G',acc:0,oct:4}],instruction:'Each note skips up a third. Complete the pattern.',explanation:'Each note jumps up a third (skipping one scale degree).'}
+  ]];
+  state.currentPage=0;
+}
+
+/* ---------- actions ---------- */
+function createPuzzles(){
+  state.worksheets=[];
+  for(let p=0;p<state.pages;p++){
+    const page=[];
+    for(let i=0;i<state.cases;i++)page.push(genPattern());
+    state.worksheets.push(page);
+  }
+  state.currentPage=0;state.showAnswers=false;renderWorksheet();toast('Created '+state.pages+' page(s) · '+state.pages*state.cases+' puzzles');
+}
+function reroll(){state.worksheets=state.worksheets.map(()=>{const page=[];for(let i=0;i<state.cases;i++)page.push(genPattern());return page;});renderWorksheet();toast('Re-rolled all pages');}
+function rerollPage(){const page=[];for(let i=0;i<state.cases;i++)page.push(genPattern());state.worksheets[state.currentPage]=page;renderWorksheet();toast('Re-rolled page '+(state.currentPage+1));}
+function addPage(){const page=[];for(let i=0;i<state.cases;i++)page.push(genPattern());state.worksheets.push(page);state.currentPage=state.worksheets.length-1;renderWorksheet();toast('Added page '+(state.currentPage+1));}
+function toggleAnswers(){state.showAnswers=!state.showAnswers;renderWorksheet();toast(state.showAnswers?'Answers shown':'Answers hidden');}
+
+/* ---------- AI ---------- */
+function aiAction(kind){
+  const out=document.getElementById('aiOut');let text='';
+  if(kind==='easy'){
+    text='✏️ Simpler instructions:\n\n';state.worksheets[state.currentPage].forEach((p,i)=>{
+      const easy=p.type==='rhythm'?'Clap the rhythm. What comes next?':'Look how the notes move. Draw the next note.';
+      text+=`Pattern ${i+1}: ${easy}\n`;
+    });
+  }else if(kind==='tip'){
+    text='💡 Teacher tips:\n\n';state.worksheets[state.currentPage].forEach((p,i)=>{
+      const tip=p.type==='rhythm'?'Have students clap the cell aloud before choosing.':'Ask students to sing the letter names in order before filling the blank.';
+      text+=`Pattern ${i+1}: ${tip}\n`;
+    });
+  }else if(kind==='kid'){
+    text='🧒 Student-friendly explanations:\n\n';state.worksheets[state.currentPage].forEach((p,i)=>{
+      text+=`Pattern ${i+1}: ${p.explanation.replace(/ascending scale/i,'going-up scale').replace(/descending/i,'going-down').replace(/third/i,'skip of one note')} 🎵\n`;
+    });
+  }else if(kind==='diff'){
+    text='📈 Difficulty progression suggestion:\n\nOrder puzzles by complexity — start with stepwise patterns, then skips, then alternating rules. For this page, a good order is:\n';
+    const order=[...state.worksheets[state.currentPage]].sort((a,b)=>{const w={intervals:1,scales:2,rhythm:3};return (w[a.type]||0)-(w[b.type]||0);});
+    order.forEach((p,i)=>text+=`${i+1}. ${p.type} (${p.difficulty}) — ${p.instruction}\n`);
+  }
+  out.style.display='block';out.textContent=text;
+}
+
+/* ---------- export ---------- */
+function exportPDF(){toast('Opening print dialog — save as PDF');setTimeout(()=>window.print(),300);}
+function ensureHtml2Canvas(cb){
+  if(window.html2canvas){cb();return;}
+  const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  s.onload=cb;s.onerror=()=>toast('Could not load export library (offline?)');
+  document.head.appendChild(s);
+}
+function exportPNG(){
+  const page=document.querySelector('.page');
+  if(!page){toast('Nothing to export');return;}
+  toast('Generating PNG…');
+  ensureHtml2Canvas(()=>html2CanvasPage(page,state.showAnswers?'answer-key':'worksheet'));
+}
+function html2CanvasPage(pageEl,name){
+  window.html2canvas(pageEl,{scale:2,backgroundColor:getComputedStyle(pageEl).backgroundColor||'#ffffff',useCORS:true,logging:false}).then(canvas=>{
+    canvas.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='music-pattern-'+name+'-page'+(state.currentPage+1)+'.png';a.click();toast('PNG saved');});
+  }).catch(()=>toast('PNG export failed — try PDF'));
+}
+
+/* ---------- preset ---------- */
+function savePreset(){saveSettings();toast('Preset saved to browser');}
+function loadPreset(){loadSettings();initSegs();['optColor','optLabels','optSolfege','optKeyboard','optTimeSig','rsColor'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=state[el.id==='rsColor'?'colored':el.id.replace('opt','').charAt(0).toLowerCase()+el.id.slice(4)]||false;});renderWorksheet();toast('Preset loaded');}
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1900);}
+
+/* ---------- init ---------- */
+function init(){
+  loadSettings();
+  initSegs();
+  initToggles();
+  document.getElementById('wsTitle').value=state.wsTitle;
+  document.getElementById('wsSub').value=state.wsSub;
+  document.getElementById('spcVal').textContent=state.spacing+'px';
+  document.getElementById('noteSpcVal').textContent=state.noteSpacing+'px';
+  document.getElementById('thkVal').textContent=state.staffThick;
+  loadDemo();renderWorksheet();
+
+  document.getElementById('btnCreate').addEventListener('click',createPuzzles);
+  document.getElementById('btnReroll').addEventListener('click',reroll);
+  document.getElementById('btnAnswers').addEventListener('click',toggleAnswers);
+  document.getElementById('btnAI').addEventListener('click',()=>document.getElementById('aiModal').classList.add('show'));
+  document.getElementById('aiClose').addEventListener('click',()=>document.getElementById('aiModal').classList.remove('show'));
+  document.getElementById('btnPDF').addEventListener('click',exportPDF);
+  document.getElementById('btnPNG').addEventListener('click',exportPNG);
+  document.getElementById('btnReset').addEventListener('click',()=>{if(confirm('Reset all settings to defaults?')){localStorage.removeItem('mpc_settings');location.reload();}});
+  document.querySelectorAll('.ai-opt button').forEach(b=>b.addEventListener('click',()=>aiAction(b.dataset.ai)));
+  document.getElementById('genCreate').addEventListener('click',createPuzzles);
+  document.getElementById('genReroll').addEventListener('click',reroll);
+  document.getElementById('genAnswers').addEventListener('click',toggleAnswers);
+  document.getElementById('btnSavePreset').addEventListener('click',savePreset);
+  document.getElementById('btnLoadPreset').addEventListener('click',loadPreset);
+
+  document.addEventListener('click',e=>{
+    const ch=e.target.closest('.choice');
+    if(ch&&!ch.closest('.answerkey')){const parent=ch.parentElement;parent.querySelectorAll('.choice').forEach(c=>c.classList.remove('sel'));ch.classList.add('sel');}
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'&&state.currentPage>0){state.currentPage--;renderWorksheet();}
+    if(e.key==='ArrowRight'&&state.currentPage<state.worksheets.length-1){state.currentPage++;renderWorksheet();}
+    if(e.key==='r'&&(e.metaKey||e.ctrlKey)){e.preventDefault();reroll();}
+  });
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
