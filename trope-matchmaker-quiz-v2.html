@@ -1,779 +1,1216 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>Trope Matchmaker · Dark Romance</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #0d0d14;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      color: #f0eef7;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      margin: 0;
-    }
-    .quiz-container {
-      max-width: 760px;
-      width: 100%;
-      background: rgba(20, 18, 30, 0.65);
-      backdrop-filter: blur(6px);
-      border-radius: 56px 56px 48px 48px;
-      padding: 28px 28px 32px;
-      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(255, 0, 110, 0.2);
-      position: relative;
-      overflow: hidden;
-      min-height: 620px;
-      display: flex;
-      flex-direction: column;
-      transition: all 0.2s;
-    }
-    .quiz-container::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 56px;
-      padding: 1.5px;
-      background: linear-gradient(135deg, #FF006E, #8338EC, #3A86FF);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
-    /* header with logo */
-    .quiz-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 18px;
-      flex-shrink: 0;
-    }
-    .logo-svg {
-      width: 48px;
-      height: 48px;
-      flex-shrink: 0;
-      filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.3));
-    }
-    .logo-text {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 1.6rem;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #FF006E, #b275ff, #3A86FF);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .progress-wrap {
-      width: 100%;
-      height: 6px;
-      background: #25233a;
-      border-radius: 12px;
-      margin-bottom: 18px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #FF006E, #8338EC, #3A86FF);
-      border-radius: 12px;
-      transition: width 0.45s cubic-bezier(0.2, 0.9, 0.4, 1);
-    }
-    .question-counter {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      color: #a79fc7;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .question-counter span {
-      background: rgba(255,255,255,0.05);
-      padding: 4px 16px;
-      border-radius: 40px;
-      border: 1px solid #3a3455;
-    }
-    .slide-stage {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
-      min-height: 340px;
-    }
-    .slide {
-      display: none;
-      flex-direction: column;
-      gap: 20px;
-      animation: slideFade 0.35s ease forwards;
-    }
-    .slide.active { display: flex; }
-    @keyframes slideFade {
-      0% { opacity: 0.3; transform: translateX(16px); }
-      100% { opacity: 1; transform: translateX(0); }
-    }
-    .slide-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 1.9rem;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-      color: #f2edff;
-    }
-    .slide-sub {
-      font-weight: 500;
-      color: #b7add6;
-      font-size: 1rem;
-      border-left: 4px solid #FF006E;
-      padding-left: 16px;
-      margin-bottom: 4px;
-    }
-    .options-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 6px;
-    }
-    .option-btn {
-      background: rgba(30, 28, 44, 0.7);
-      border: 1px solid #3d365a;
-      border-radius: 28px;
-      padding: 18px 24px;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-weight: 500;
-      font-size: 1.05rem;
-      text-align: left;
-      color: #ede8ff;
-      backdrop-filter: blur(2px);
-      transition: all 0.12s ease;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      line-height: 1.3;
-    }
-    .option-btn svg {
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      color: #b07cff;
-      transition: 0.15s;
-    }
-    .option-btn:hover {
-      background: #322e4a;
-      border-color: #b07cff;
-      transform: scale(1.01);
-      box-shadow: 0 0 24px rgba(131, 56, 236, 0.25);
-    }
-    .option-btn:hover svg { color: #FF006E; }
-    .option-btn:active {
-      transform: scale(0.96);
-      background: #3f3a5c;
-      border-color: #FF006E;
-    }
-    .option-btn .label-text { flex: 1; }
-    /* intro */
-    .intro-center {
-      align-items: center;
-      text-align: center;
-      justify-content: center;
-      min-height: 380px;
-      gap: 16px;
-    }
-    .intro-center .logo-big svg {
-      width: 80px;
-      height: 80px;
-      filter: drop-shadow(0 0 20px rgba(255, 0, 110, 0.3));
-    }
-    .intro-center h1 {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 2.8rem;
-      line-height: 1.1;
-      background: linear-gradient(135deg, #FF006E, #b275ff, #3A86FF);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -0.02em;
-    }
-    .intro-center p {
-      font-size: 1.2rem;
-      color: #b8add9;
-      max-width: 420px;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #FF006E, #b045e0);
-      border: none;
-      padding: 18px 48px;
-      border-radius: 60px;
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 1.3rem;
-      color: white;
-      box-shadow: 0 8px 28px rgba(255, 0, 110, 0.35);
-      transition: all 0.12s;
-      cursor: pointer;
-      margin-top: 16px;
-      letter-spacing: 0.5px;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .btn-primary:active { transform: scale(0.94); }
-    .btn-primary svg { stroke: white; stroke-width: 2; }
-    /* result */
-    .result-card {
-      background: rgba(16, 14, 26, 0.7);
-      border-radius: 40px;
-      padding: 30px 24px;
-      border: 1px solid #5a4a82;
-      backdrop-filter: blur(4px);
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      animation: shimmerResult 1.2s ease;
-      position: relative;
-    }
-    @keyframes shimmerResult {
-      0% { opacity: 0.4; background-position: -200% 0; }
-      100% { opacity: 1; background-position: 200% 0; }
-    }
-    .result-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 2.4rem;
-      background: linear-gradient(135deg, #FF006E, #be6aff, #3A86FF);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1.1;
-    }
-    .badge-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 6px 0 2px;
-    }
-    .badge {
-      background: #26223f;
-      padding: 8px 20px;
-      border-radius: 60px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      border: 1px solid #6e5b9e;
-      color: #ded5ff;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .badge svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; }
-    .badge-heat {
-      background: linear-gradient(135deg, #ff2d7e, #a545e0);
-      border-color: #ff6aaf;
-      color: white;
-    }
-    .comp-list {
-      background: #1b192b;
-      padding: 16px 20px;
-      border-radius: 30px;
-      font-weight: 500;
-      border-left: 6px solid #8338EC;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 16px;
-      align-items: center;
-    }
-    .comp-list svg { width: 20px; height: 20px; stroke: #b07cff; stroke-width: 2; fill: none; margin-right: 4px; }
-    .premise-box {
-      background: #0f0d1b;
-      border-radius: 30px;
-      padding: 22px 24px;
-      border: 1px dashed #7a62b0;
-      font-weight: 500;
-      font-size: 1.08rem;
-      line-height: 1.5;
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-    }
-    .premise-box svg { width: 24px; height: 24px; stroke: #FF006E; stroke-width: 2; fill: none; flex-shrink: 0; margin-top: 2px; }
-    .action-row {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-    .btn-secondary {
-      background: transparent;
-      border: 2px solid #5a4a82;
-      padding: 12px 28px;
-      border-radius: 60px;
-      font-weight: 700;
-      color: #d7cef5;
-      transition: 0.1s;
-      cursor: pointer;
-      font-size: 0.95rem;
-      flex: 1 1 auto;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .btn-secondary:active { transform: scale(0.94); background: #2e284a; }
-    .btn-secondary svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; fill: none; }
-    .btn-copy {
-      background: #3A86FF;
-      border: none;
-      color: white;
-    }
-    .btn-copy:active { background: #1f5fc4; }
-    .btn-retake {
-      background: transparent;
-      border: 2px solid #FF006E;
-      color: #FF006E;
-    }
-    .btn-retake svg { stroke: #FF006E; }
-    .hidden { display: none !important; }
-    /* extra meta */
-    .result-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      font-size: 0.9rem;
-      color: #b7add6;
-      border-top: 1px solid #2e284a;
-      padding-top: 14px;
-      margin-top: 4px;
-    }
-    .result-meta span { display: flex; align-items: center; gap: 6px; }
-    .result-meta svg { width: 18px; height: 18px; stroke: #8a7bb5; stroke-width: 2; fill: none; }
-    /* confetti burst */
-    .confetti-burst {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at 30% 40%, rgba(255,0,110,0.15), rgba(131,56,236,0.08) 60%, transparent 80%);
-      opacity: 0.9;
-      border-radius: 40px;
-      animation: confettiPulse 1.2s ease 2;
-    }
-    @keyframes confettiPulse {
-      0% { opacity: 0.2; transform: scale(0.9); }
-      50% { opacity: 0.9; transform: scale(1.04); }
-      100% { opacity: 0.3; transform: scale(1); }
-    }
-    @media (max-width: 500px) {
-      .quiz-container { padding: 20px 16px; border-radius: 32px; }
-      .slide-title { font-size: 1.5rem; }
-      .intro-center h1 { font-size: 2.2rem; }
-      .option-btn { padding: 14px 16px; font-size: 0.9rem; }
-      .result-title { font-size: 1.8rem; }
-      .logo-text { font-size: 1.2rem; }
-      .logo-svg { width: 38px; height: 38px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trope Matchmaker Quiz — What Dark Romance Should You Write?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+
+body{
+  min-height:100vh;background:#0d0d14;color:#f5f0f8;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle at 15% 10%,rgba(255,0,110,0.10),transparent 35%),
+    radial-gradient(circle at 85% 90%,rgba(58,134,255,0.10),transparent 35%),
+    radial-gradient(circle at 50% 50%,rgba(131,56,236,0.06),transparent 45%);
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,0.008) 0px,rgba(255,255,255,0.008) 1px,transparent 1px,transparent 3px);
+}
+
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:#0d0d14}
+::-webkit-scrollbar-thumb{background:rgba(131,56,236,0.4);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:rgba(131,56,236,0.6)}
+
+.svg-icon{display:inline-block;vertical-align:middle;flex-shrink:0}
+
+.app-shell{max-width:680px;margin:0 auto;padding:0 20px;min-height:100vh;position:relative;z-index:1;display:flex;flex-direction:column}
+
+/* PROGRESS BAR */
+.progress-wrap{position:fixed;top:0;left:0;right:0;z-index:200;height:5px;background:rgba(255,255,255,0.06)}
+.progress-bar{height:100%;width:0%;border-radius:0 4px 4px 0;
+  background:linear-gradient(90deg,#FF006E,#8338EC,#3A86FF);
+  transition:width 0.5s cubic-bezier(0.22,1,0.36,1);
+  box-shadow:0 0 12px rgba(131,56,236,0.6);
+}
+.progress-label{
+  position:fixed;top:12px;right:20px;z-index:201;font-size:11px;font-weight:700;
+  color:rgba(245,240,248,0.5);letter-spacing:1px;display:none;align-items:center;gap:6px;
+}
+
+/* SCREENS */
+.screen{display:none;flex:1;flex-direction:column;justify-content:center;padding:60px 0 40px;min-height:100vh}
+.screen.active{display:flex;animation:screenIn 0.5s ease forwards}
+@keyframes screenIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+.screen.slide-out{animation:screenOut 0.35s ease forwards}
+@keyframes screenOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-40px)}}
+
+/* LANDING */
+.landing{text-align:center}
+.landing-logo{margin-bottom:20px;animation:logoFloat 3.5s ease-in-out infinite}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.landing-title{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(34px,8vw,54px);line-height:1.05;margin-bottom:16px;
+  background:linear-gradient(120deg,#FF006E,#8338EC,#3A86FF);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.landing-sub{color:rgba(245,240,248,0.65);font-size:16px;line-height:1.7;max-width:440px;margin:0 auto 36px}
+.landing-meta{display:flex;gap:14px;justify-content:center;margin-bottom:36px;flex-wrap:wrap}
+.meta-chip{
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);
+  padding:8px 18px;border-radius:30px;font-size:12px;font-weight:600;color:rgba(245,240,248,0.8);
+  display:flex;align-items:center;gap:8px;
+}
+.meta-chip .dot{width:6px;height:6px;border-radius:50%}
+.dot-pink{background:#FF006E;box-shadow:0 0 8px #FF006E}
+.dot-purple{background:#8338EC;box-shadow:0 0 8px #8338EC}
+.dot-blue{background:#3A86FF;box-shadow:0 0 8px #3A86FF}
+
+/* BUTTONS */
+.btn-start,.btn-retake{
+  background:linear-gradient(135deg,#FF006E,#8338EC);color:#fff;border:none;
+  padding:18px 48px;border-radius:16px;
+  font-family:'Syne',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.5px;
+  cursor:pointer;box-shadow:0 8px 32px rgba(131,56,236,0.4);
+  transition:transform 0.15s ease,box-shadow 0.15s ease;position:relative;overflow:hidden;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-start:hover,.btn-retake:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(131,56,236,0.55)}
+.btn-start:active,.btn-retake:active{transform:translateY(1px) scale(0.97)}
+.btn-start.btn-pressed,.btn-retake.btn-pressed{transform:scale(0.95)}
+
+/* QUESTION SCREEN */
+.question-num{font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8338EC;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.question-text{font-family:'Syne',sans-serif;font-weight:700;font-size:clamp(22px,5.5vw,30px);line-height:1.3;margin-bottom:32px;color:#f5f0f8}
+.answers-grid{display:flex;flex-direction:column;gap:14px}
+.answer-card{
+  background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:16px;padding:20px 22px;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:500;color:#e0dce8;
+  transition:all 0.2s ease;position:relative;overflow:hidden;text-align:left;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.answer-card::before{
+  content:'';position:absolute;inset:0;opacity:0;
+  background:linear-gradient(135deg,rgba(255,0,110,0.12),rgba(131,56,236,0.12));
+  transition:opacity 0.2s ease;pointer-events:none;
+}
+.answer-card:hover{border-color:rgba(131,56,236,0.5);transform:translateX(4px);box-shadow:0 4px 20px rgba(131,56,236,0.15)}
+.answer-card:hover::before{opacity:1}
+.answer-card:active{transform:translateX(4px) scale(0.98)}
+.answer-card.selected{border-color:#FF006E;background:rgba(255,0,110,0.08)}
+.answer-card.selected::before{opacity:1}
+.answer-card .ans-icon{margin-top:1px;opacity:0.6;transition:opacity 0.2s}
+.answer-card:hover .ans-icon,.answer-card.selected .ans-icon{opacity:1}
+.answer-card .ans-text{flex:1}
+
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:28px}
+.btn-back{
+  background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(245,240,248,0.6);
+  padding:12px 24px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;
+  transition:all 0.15s ease;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-back:hover{color:#f5f0f8;border-color:rgba(255,255,255,0.3)}
+.btn-back:disabled{opacity:0.3;cursor:not-allowed}
+.btn-next{
+  background:linear-gradient(135deg,#8338EC,#3A86FF);color:#fff;border:none;
+  padding:13px 36px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;
+  transition:all 0.15s ease;box-shadow:0 4px 18px rgba(58,134,255,0.3);
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-next:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(58,134,255,0.45)}
+.btn-next:active{transform:translateY(1px) scale(0.97)}
+.btn-next:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none;transform:none}
+
+/* RESULT SCREEN */
+.result-screen{padding-top:40px}
+.result-reveal-logo{margin:0 auto 16px;animation:popIn 0.6s ease;display:flex;justify-content:center}
+@keyframes popIn{0%{transform:scale(0) rotate(-20deg)}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+.result-title{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(30px,7vw,44px);line-height:1.1;
+  text-align:center;margin-bottom:8px;
+  background:linear-gradient(120deg,#FF006E,#8338EC,#3A86FF);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:titleReveal 0.8s ease 0.2s both;
+}
+@keyframes titleReveal{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.result-subtitle{text-align:center;color:rgba(245,240,248,0.5);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px;animation:titleReveal 0.8s ease 0.4s both}
+
+.result-badges{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:32px;animation:titleReveal 0.8s ease 0.5s both}
+.trope-badge{
+  background:rgba(255,255,255,0.06);border:1.5px solid rgba(131,56,236,0.4);
+  padding:8px 20px;border-radius:30px;font-size:13px;font-weight:700;color:#c9a8ff;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.heat-badge{
+  background:linear-gradient(135deg,rgba(255,0,110,0.2),rgba(131,56,236,0.2));
+  border:1.5px solid rgba(255,0,110,0.4);padding:8px 20px;border-radius:30px;
+  font-size:13px;font-weight:700;color:#ff6bc4;
+  display:inline-flex;align-items:center;gap:8px;
+}
+
+.result-section{margin-bottom:28px;animation:titleReveal 0.8s ease 0.6s both}
+.result-section.delay-7{animation-delay:0.7s}
+.result-section.delay-8{animation-delay:0.8s}
+.result-section.delay-9{animation-delay:0.9s}
+.result-label{
+  font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(245,240,248,0.4);margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.result-desc{font-size:15.5px;line-height:1.75;color:#e0dce8}
+
+/* SCORE BREAKDOWN */
+.score-breakdown{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);
+  border-radius:16px;padding:18px 20px;margin-bottom:28px;
+}
+.score-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.score-row:last-child{margin-bottom:0}
+.score-name{width:140px;font-size:12px;font-weight:600;color:#d0ccda;flex-shrink:0}
+.score-bar-bg{flex:1;height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:4px;transition:width 0.8s cubic-bezier(0.22,1,0.36,1);animation:barGrow 1s ease 0.8s both}
+@keyframes barGrow{from{width:0!important}}
+.score-bar-fill.pink{background:linear-gradient(90deg,#FF006E,#ff4b8b)}
+.score-bar-fill.purple{background:linear-gradient(90deg,#8338EC,#a855f7)}
+.score-bar-fill.blue{background:linear-gradient(90deg,#3A86FF,#5ba3ff)}
+
+/* COMP TITLES */
+.comp-list{display:flex;flex-direction:column;gap:8px}
+.comp-item{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  padding:14px 16px;border-radius:12px;font-size:14px;color:#d0ccda;
+  display:flex;align-items:center;gap:12px;
+}
+.comp-item .comp-icon{opacity:0.5;flex-shrink:0}
+.comp-item b{color:#3A86FF;font-weight:700}
+
+/* WRITING PROMPTS */
+.prompt-list{display:flex;flex-direction:column;gap:10px}
+.prompt-item{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);
+  border-left:3px solid #8338EC;border-radius:0 12px 12px 0;
+  padding:14px 16px;font-size:13.5px;line-height:1.65;color:#d0ccda;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.prompt-item .prompt-bullet{color:#FF006E;font-weight:700;flex-shrink:0;margin-top:1px}
+
+.premise-box{
+  background:linear-gradient(135deg,rgba(255,0,110,0.08),rgba(131,56,236,0.08));
+  border:1.5px solid rgba(131,56,236,0.25);border-radius:16px;padding:20px 22px;
+  font-size:15px;line-height:1.75;color:#f0e9fb;font-style:italic;
+}
+.premise-box .premise-label{
+  font-style:normal;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
+  color:#FF006E;margin-bottom:8px;display:flex;align-items:center;gap:8px;
+}
+
+.result-actions{display:flex;flex-direction:column;gap:12px;margin-top:36px;animation:titleReveal 0.8s ease 0.8s both}
+.btn-copy-result{
+  background:linear-gradient(135deg,#FF006E,#8338EC);color:#fff;border:none;
+  padding:16px 24px;border-radius:14px;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all 0.15s ease;box-shadow:0 6px 24px rgba(255,0,110,0.3);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-copy-result:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(255,0,110,0.45)}
+.btn-copy-result:active{transform:translateY(1px) scale(0.98)}
+.btn-action-row{display:flex;gap:12px}
+.btn-retake-full,.btn-save-full{
+  flex:1;background:transparent;border:1.5px solid rgba(255,255,255,0.15);color:rgba(245,240,248,0.7);
+  padding:15px 20px;border-radius:14px;font-size:13.5px;font-weight:600;cursor:pointer;
+  transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-retake-full:hover,.btn-save-full:hover{border-color:rgba(255,255,255,0.35);color:#f5f0f8}
+.btn-retake-full:active,.btn-save-full:active{transform:translateY(1px) scale(0.98)}
+.btn-save-full.saved{border-color:#8338EC;color:#c9a8ff;background:rgba(131,56,236,0.1)}
+
+/* SAVED RESULTS BANNER */
+.saved-banner{
+  background:rgba(131,56,236,0.08);border:1px solid rgba(131,56,236,0.25);
+  border-radius:14px;padding:14px 20px;margin-bottom:20px;font-size:13px;color:#c9a8ff;
+  display:none;align-items:center;gap:10px;
+}
+.saved-banner.show{display:flex;animation:titleReveal 0.4s ease}
+
+/* CONFETTI */
+.confetti-container{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden}
+.confetti-piece{position:absolute;width:10px;height:10px;top:-20px;opacity:0;animation:confettiFall linear forwards}
+@keyframes confettiFall{
+  0%{opacity:1;transform:translateY(0) rotate(0deg)}
+  100%{opacity:0;transform:translateY(100vh) rotate(720deg)}
+}
+
+/* SHIMMER OVERLAY */
+.shimmer-overlay{
+  position:fixed;inset:0;pointer-events:none;z-index:998;opacity:0;
+  background:radial-gradient(circle at center,rgba(131,56,236,0.25),transparent 60%);
+  transition:opacity 0.5s ease;
+}
+.shimmer-overlay.show{opacity:1;animation:shimmerPulse 1.2s ease forwards}
+@keyframes shimmerPulse{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:rgba(20,20,30,0.95);border:1px solid rgba(131,56,236,0.5);
+  color:#fff;padding:13px 28px;border-radius:14px;font-size:14px;font-weight:500;
+  backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  transition:transform 0.3s ease,opacity 0.3s ease;opacity:0;z-index:1000;pointer-events:none;
+  white-space:nowrap;display:flex;align-items:center;gap:8px;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* FOOTER */
+.footer{text-align:center;padding:30px 20px 50px;color:rgba(245,240,248,0.3);font-size:12px;letter-spacing:0.5px}
+.footer-links{margin-top:6px;font-size:11px}
+.footer-links span{color:rgba(245,240,248,0.2)}
+
+/* RESPONSIVE */
+@media(max-width:520px){
+  .app-shell{padding:0 16px}
+  .answer-card{padding:18px 18px;font-size:14.5px}
+  .question-text{margin-bottom:24px}
+  .progress-label{font-size:10px;right:16px}
+  .toast{font-size:12px;padding:10px 18px;max-width:90vw;white-space:normal}
+  .result-actions{gap:10px}
+  .score-name{width:100px;font-size:11px}
+  .btn-action-row{flex-direction:column}
+}
+</style>
 </head>
 <body>
-<div class="quiz-container" id="app">
-  <div class="quiz-header">
-    <svg class="logo-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="32" cy="32" r="28" stroke="url(#lg)" stroke-width="2.5"/>
-      <path d="M20 32 L28 40 L44 24" stroke="url(#lg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M22 44 L34 50 L42 38" stroke="url(#lg)" stroke-width="2.5" stroke-linecap="round"/>
-      <defs><linearGradient id="lg" x1="0" y1="0" x2="64" y2="64"><stop offset="0%" stop-color="#FF006E"/><stop offset="50%" stop-color="#8338EC"/><stop offset="100%" stop-color="#3A86FF"/></linearGradient></defs>
-    </svg>
-    <span class="logo-text">Trope Matchmaker</span>
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+<div class="progress-label" id="progressLabel"><svg class="svg-icon" width="12" height="12"><use href="#i-check"></use></svg> <span id="progressLabelText">1 / 8</span></div>
+<div class="confetti-container" id="confettiContainer"></div>
+<div class="shimmer-overlay" id="shimmerOverlay"></div>
+
+<!-- SVG DEFS -->
+<svg width="0" height="0" style="position:absolute" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+<symbol id="i-rocket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L13.5 8.5 L20 10 L13.5 11.5 L12 18 L10.5 11.5 L4 10 L10.5 8.5 Z"/><path d="M5 3 L5.7 5.3 L8 6 L5.7 6.7 L5 9 L4.3 6.7 L2 6 L4.3 5.3 Z"/><path d="M19 14 L19.7 16.3 L22 17 L19.7 17.7 L19 20 L18.3 17.7 L16 17 L18.3 16.3 Z"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+<symbol id="i-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+<symbol id="i-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></symbol>
+<symbol id="i-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-mountain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3l4 8 5-5 5 15H2L8 3z"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><line x1="8" y1="6" x2="10" y2="6"/><line x1="14" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+<symbol id="i-heart-crack" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/><polyline points="12 12 9.5 9.5 11 7 8.5 4.5"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+<symbol id="i-skull" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/><path d="M9 15c1.5 1 4.5 1 6 0"/></symbol>
+<symbol id="i-theater" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h20v14H2z"/><path d="M2 17l-1 4h22l-1-4"/><path d="M8 7v6M12 7v6M16 7v6"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-droplet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></symbol>
+<symbol id="i-gem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9 6 3"/><path d="M11 3L8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></symbol>
+<symbol id="i-ghost" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h.01M15 12h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-2 3 2 3-2 3 2V10a8 8 0 0 0-8-8z"/></symbol>
+<symbol id="i-anchor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><line x1="12" y1="22" x2="12" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></symbol>
+<symbol id="i-feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
+</defs>
+</svg>
+
+<div class="app-shell">
+
+  <!-- LANDING -->
+  <div class="screen landing active" id="screenLanding">
+    <div class="landing-logo">
+      <svg width="72" height="72" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF006E"/>
+            <stop offset="50%" stop-color="#8338EC"/>
+            <stop offset="100%" stop-color="#3A86FF"/>
+          </linearGradient>
+          <linearGradient id="logoGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF006E" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#3A86FF" stop-opacity="0.4"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="48" fill="none" stroke="url(#logoGrad)" stroke-width="1" opacity="0.4"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="url(#logoGrad)" stroke-width="0.6" opacity="0.3"/>
+        <path d="M30 82 L30 28 Q30 18 42 18 L58 18 Q74 18 74 34 Q74 48 58 48 L38 48 L38 82 Z" fill="none" stroke="url(#logoGrad)" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M66 52 L82 82" stroke="url(#logoGrad)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M42 30 L42 40 M48 30 L48 40 M54 30 L54 40" stroke="url(#logoGrad2)" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="50" cy="50" r="46" fill="none" stroke="url(#logoGrad)" stroke-width="0.5" opacity="0.2" stroke-dasharray="2 4"/>
+      </svg>
+    </div>
+    <h1 class="landing-title">Trope Matchmaker</h1>
+    <p class="landing-sub">Answer 8 questions. Get the book you were always meant to write — trope combo, heat level, comp titles, writing prompts, and a ready-to-use starter premise.</p>
+    <div class="landing-meta">
+      <span class="meta-chip"><svg class="svg-icon" width="14" height="14"><use href="#i-book"></use></svg> 8 Questions</span>
+      <span class="meta-chip"><span class="dot dot-purple"></span> 10 Tropes</span>
+      <span class="meta-chip"><span class="dot dot-blue"></span> 3 Heat Levels</span>
+    </div>
+    <button class="btn-start" id="startBtn">
+      <svg class="svg-icon" width="20" height="20"><use href="#i-rocket"></use></svg>
+      <span>Start Quiz</span>
+    </button>
   </div>
 
-  <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
-  <div class="question-counter"><span id="qCounter">0 / 8</span></div>
-
-  <div class="slide-stage" id="slideStage">
-    <!-- INTRO -->
-    <div class="slide active intro-center" data-slide="intro">
-      <div class="logo-big">
-        <svg viewBox="0 0 80 80" width="80" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="40" cy="40" r="34" stroke="url(#lg2)" stroke-width="2.5"/>
-          <path d="M26 40 L36 50 L54 30" stroke="url(#lg2)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M28 54 L42 62 L52 48" stroke="url(#lg2)" stroke-width="2.5" stroke-linecap="round"/>
-          <defs><linearGradient id="lg2" x1="0" y1="0" x2="80" y2="80"><stop offset="0%" stop-color="#FF006E"/><stop offset="50%" stop-color="#8338EC"/><stop offset="100%" stop-color="#3A86FF"/></linearGradient></defs>
-        </svg>
-      </div>
-      <h1>⚡ TROPE<br>MATCHMAKER</h1>
-      <p style="font-family:'Plus Jakarta Sans'; font-weight:500;">Answer 8 questions.<br>Get the book you were always meant to write.</p>
-      <button class="btn-primary" id="startQuizBtn">
-        <svg viewBox="0 0 24 24" width="24" height="24"><polyline points="5 12 10 17 20 7"/></svg>
-        Start Quiz
-      </button>
-      <div style="margin-top:6px; font-size:0.8rem; color:#6a5e8a;">dark romance · neon pop · booktok energy</div>
+  <!-- QUESTION SCREEN -->
+  <div class="screen" id="screenQuestion">
+    <div class="question-num" id="questionNum"><svg class="svg-icon" width="14" height="14"><use href="#i-layers"></use></svg> Question 1 of 8</div>
+    <h2 class="question-text" id="questionText"></h2>
+    <div class="answers-grid" id="answersGrid"></div>
+    <div class="nav-row">
+      <button class="btn-back" id="btnBack" disabled><svg class="svg-icon" width="16" height="16"><use href="#i-arrow-left"></use></svg> Back</button>
+      <button class="btn-next" id="btnNext" disabled>Next <svg class="svg-icon" width="16" height="16"><use href="#i-arrow-right"></use></svg></button>
     </div>
   </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="screen result-screen" id="screenResult">
+    <div class="result-reveal-logo">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 L13.5 8.5 L20 10 L13.5 11.5 L12 18 L10.5 11.5 L4 10 L10.5 8.5 Z"/>
+      </svg>
+    </div>
+    <h1 class="result-title" id="resultTitle"></h1>
+    <div class="result-subtitle" id="resultSubtitle">Your Perfect Dark Romance Recipe</div>
+    <div class="result-badges" id="resultBadges"></div>
+
+    <div class="saved-banner" id="savedBanner"><svg class="svg-icon" width="18" height="18"><use href="#i-check"></use></svg> <span id="savedBannerText"></span></div>
+
+    <div class="result-section">
+      <div class="result-label"><svg class="svg-icon" width="14" height="14"><use href="#i-feather"></use></svg> What You Should Write</div>
+      <p class="result-desc" id="resultDesc"></p>
+    </div>
+
+    <div class="result-section">
+      <div class="result-label"><svg class="svg-icon" width="14" height="14"><use href="#i-bookmark"></use></svg> Comp Titles — Read These First</div>
+      <div class="comp-list" id="compList"></div>
+    </div>
+
+    <div class="result-section">
+      <div class="result-label"><svg class="svg-icon" width="14" height="14"><use href="#i-pen"></use></svg> Scene Starter Prompts</div>
+      <div class="prompt-list" id="promptList"></div>
+    </div>
+
+    <div class="result-section delay-7">
+      <div class="result-label"><svg class="svg-icon" width="14" height="14"><use href="#i-target"></use></svg> Trope Breakdown</div>
+      <div class="score-breakdown" id="scoreBreakdown"></div>
+    </div>
+
+    <div class="result-section delay-8">
+      <div class="result-label"><svg class="svg-icon" width="14" height="14"><use href="#i-sparkles"></use></svg> Your Starter Premise</div>
+      <div class="premise-box">
+        <span class="premise-label"><svg class="svg-icon" width="14" height="14"><use href="#i-zap"></use></svg> Logline</span>
+        <span id="resultPremise"></span>
+      </div>
+    </div>
+
+    <div class="result-actions delay-9">
+      <button class="btn-copy-result" id="btnCopyResult">
+        <svg class="svg-icon" width="20" height="20"><use href="#i-copy"></use></svg>
+        <span>Copy My Result</span>
+      </button>
+      <div class="btn-action-row">
+        <button class="btn-save-full" id="btnSave">
+          <svg class="svg-icon" width="18" height="18"><use href="#i-heart"></use></svg>
+          <span id="saveBtnText">Save Result</span>
+        </button>
+        <button class="btn-retake-full" id="btnRetake">
+          <svg class="svg-icon" width="18" height="18"><use href="#i-refresh"></use></svg>
+          <span>Retake Quiz</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<footer class="footer">
+  Trope Matchmaker — Every author's perfect dark romance starts here.
+  <div class="footer-links"><span>v2.0</span> · Neon Pop Edition</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
 <script>
-  (function() {
-    // ----- SVG icons (helpers) -----
-    function iconSVG(name) {
-      var map = {
-        'flame': '<svg viewBox="0 0 24 24"><path d="M12 2C8 6 4 9 4 13c0 4 3 7 8 7s8-3 8-7c0-4-4-7-8-11z"/><path d="M12 10c-2 1-3 3-3 5s1 4 3 4 3-2 3-4-1-4-3-5z"/></svg>',
-        'book': '<svg viewBox="0 0 24 24"><path d="M4 6v14c0 1.1.9 2 2 2h12a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v14"/><path d="M8 4h10v12H8z"/><path d="M8 10h6"/></svg>',
-        'copy': '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
-        'refresh': '<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15.5A9 9 0 112 10.5"/></svg>',
-        'target': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg>',
-        'tag': '<svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><path d="M7 7h.01"/></svg>',
-        'spark': '<svg viewBox="0 0 24 24"><path d="M12 2L8 8l-6 2 6 2 4 6 4-6 6-2-6-2-4-6z"/><path d="M12 14l-2 4 2 4 2-4-2-4z"/></svg>'
-      };
-      return map[name] || '';
+(function() {
+  'use strict';
+
+  /* ==================== QUIZ DATA ==================== */
+
+  var questions = [
+    {
+      q: "Your hero just found out the heroine lied to him. What does he do?",
+      icon: "i-eye",
+      options: [
+        { text: "Goes ice cold and shuts her out completely — she has to claw her way back", icon: "i-snow", scores: { "Slow Burn":2, "Secret Identity":1, slow:1 } },
+        { text: "Locks the door, blocks the exit, and demands the full truth right now", icon: "i-lock", scores: { "Possessive Obsession":2, "Forced Proximity":1, explicit:1 } },
+        { text: "Something violent and a little terrifying — a wall gets punched before he speaks", icon: "i-zap", scores: { "Mafia/Organized Crime":2, "Forbidden/Taboo":1, extreme:1 } },
+        { text: "Calmly reveals he knew all along — he's been watching her for weeks", icon: "i-eye", scores: { "Secret Identity":2, "Possessive Obsession":1, "Rescue/Protector":1, explicit:1 } }
+      ]
+    },
+    {
+      q: "Pick your ideal \"trapped together\" scenario:",
+      icon: "i-home",
+      options: [
+        { text: "A remote cabin during a multi-day blizzard with no phone signal", icon: "i-snow", scores: { "Forced Proximity":2, "Slow Burn":1, "Rescue/Protector":1, slow:1 } },
+        { text: "One bed. One hotel room. One very bad idea.", icon: "i-home", scores: { "Forced Proximity":2, "Possessive Obsession":1, explicit:1 } },
+        { text: "An elevator breakdown at 2 AM in a building that's supposed to be empty", icon: "i-building", scores: { "Forced Proximity":2, "Age Gap":1, slow:1 } },
+        { text: "A marriage contract neither of them chose — signed in blood and lawyer fees", icon: "i-lock", scores: { "Arranged Marriage":2, "Mafia/Organized Crime":1, "Forbidden/Taboo":1, extreme:1 } }
+      ]
+    },
+    {
+      q: "What emotional wound should your hero carry?",
+      icon: "i-heart-crack",
+      options: [
+        { text: "He was betrayed by the last person he trusted with his heart — and he made sure they paid", icon: "i-heart-crack", scores: { "Enemies to Lovers":2, "Slow Burn":1, slow:1 } },
+        { text: "He lost someone he couldn't protect and swore it would never happen again", icon: "i-shield", scores: { "Rescue/Protector":2, "Possessive Obsession":1, explicit:1 } },
+        { text: "He was raised to see love as a weakness to be exploited, not a gift to be given", icon: "i-skull", scores: { "Mafia/Organized Crime":2, "Forbidden/Taboo":1, extreme:1 } },
+        { text: "He's been living a lie so long he forgot who he really is — and she's about to find out", icon: "i-theater", scores: { "Secret Identity":2, "Age Gap":1, explicit:1 } }
+      ]
+    },
+    {
+      q: "How should the physical tension build between them?",
+      icon: "i-flame",
+      options: [
+        { text: "A slow burn that makes you scream at the book to JUST KISS ALREADY", icon: "i-clock", scores: { "Slow Burn":2, "Enemies to Lovers":1, slow:2 } },
+        { text: "One explosive scene that changes everything — then they literally can't stop", icon: "i-zap", scores: { "Possessive Obsession":2, "Forced Proximity":1, explicit:2 } },
+        { text: "Push and pull that goes from tender to dangerous, page by page", icon: "i-droplet", scores: { "Forbidden/Taboo":2, "Rescue/Protector":1, extreme:1 } },
+        { text: "She doesn't realize how badly he wants her until it's too late to run", icon: "i-eye", scores: { "Possessive Obsession":2, "Mafia/Organized Crime":1, "Age Gap":1, extreme:1 } }
+      ]
+    },
+    {
+      q: "Pick your ideal setting for the story to unfold:",
+      icon: "i-building",
+      options: [
+        { text: "A glittering city full of old money, hidden identities, and beautiful liars", icon: "i-building", scores: { "Secret Identity":2, "Age Gap":1, explicit:1 } },
+        { text: "A tight-knit criminal underworld where everyone knows everyone's sins", icon: "i-gem", scores: { "Mafia/Organized Crime":2, "Arranged Marriage":1, extreme:1 } },
+        { text: "A small town where the past won't stay buried and neither will he", icon: "i-mountain", scores: { "Enemies to Lovers":2, "Slow Burn":1, "Rescue/Protector":1, slow:1 } },
+        { text: "An isolated estate where no one can hear you scream — or moan", icon: "i-home", scores: { "Forced Proximity":2, "Forbidden/Taboo":1, "Possessive Obsession":1, explicit:1 } }
+      ]
+    },
+    {
+      q: "How do you want to feel by the last page?",
+      icon: "i-trophy",
+      options: [
+        { text: "Devastated and grateful — they earned every single piece of that happy ending", icon: "i-trophy", scores: { "Slow Burn":2, "Enemies to Lovers":1, slow:1 } },
+        { text: "Breathless and a little unhinged — what did I just read and why am I okay with it", icon: "i-ghost", scores: { "Possessive Obsession":2, "Forbidden/Taboo":1, extreme:1 } },
+        { text: "Safe and swoony — he'd burn the world for her, and he absolutely did", icon: "i-shield", scores: { "Rescue/Protector":2, "Mafia/Organized Crime":1, explicit:1 } },
+        { text: "Feral. Absolutely feral. I need the next book and I need it NOW", icon: "i-flame", scores: { "Arranged Marriage":2, "Age Gap":1, extreme:1 } }
+      ]
+    },
+    {
+      q: "What's your danger tolerance for this book?",
+      icon: "i-shield",
+      options: [
+        { text: "Emotional danger only — break my heart, don't break the law", icon: "i-heart-crack", scores: { "Slow Burn":2, "Enemies to Lovers":1, slow:2 } },
+        { text: "Some moral gray area — he's done bad things for good reasons and he'd do it again", icon: "i-anchor", scores: { "Rescue/Protector":2, "Forbidden/Taboo":1, explicit:1 } },
+        { text: "Full underworld — crime families, blood debts, and power plays at the dinner table", icon: "i-skull", scores: { "Mafia/Organized Crime":2, "Arranged Marriage":1, extreme:2 } },
+        { text: "Taboo territory — the thing you shouldn't want but can't stop thinking about", icon: "i-lock", scores: { "Forbidden/Taboo":2, "Age Gap":1, extreme:2 } }
+      ]
+    },
+    {
+      q: "What's the escapism fantasy you're REALLY here for?",
+      icon: "i-sparkles",
+      options: [
+        { text: "Being chosen so hard it borders on obsession — he sees only her", icon: "i-eye", scores: { "Possessive Obsession":2, "Rescue/Protector":1, explicit:1 } },
+        { text: "Proving that even enemies can't fight fate — the hate makes it hotter", icon: "i-zap", scores: { "Enemies to Lovers":2, "Slow Burn":1, slow:1 } },
+        { text: "Being protected by someone dangerous enough to actually keep you safe", icon: "i-shield", scores: { "Rescue/Protector":2, "Mafia/Organized Crime":1, explicit:1 } },
+        { text: "The thrill of the forbidden — the thing society says you absolutely cannot have", icon: "i-lock", scores: { "Forbidden/Taboo":2, "Age Gap":1, "Arranged Marriage":1, extreme:1 } }
+      ]
+    }
+  ];
+
+  /* ==================== RESULT PAIRINGS ==================== */
+
+  var resultPairings = {
+    "Enemies to Lovers|Slow Burn": {
+      title: "The Slow Burn That Burns",
+      desc: "Your reader lives for the tension. Every glance, every loaded silence, every almost-touch is a countdown to an explosion that earns its payoff. Write a book where the emotional armor comes off one piece at a time — and when they finally collide, it's earned, devastating, and worth every page of waiting.",
+      heat: "Slow Burn & Suggestive",
+      comps: [
+        { title: "Twisted Love", author: "Ana Huang" },
+        { title: "Vicious", author: "L.J. Shen" },
+        { title: "Punk 57", author: "Penelope Douglas" }
+      ],
+      prompts: [
+        "Write the scene where they're forced to share a car for six hours and the silence becomes louder than any argument they've ever had.",
+        "Write the moment he almost touches her face and stops himself, and she spends the rest of the night wondering if she imagined it.",
+        "Write the chapter where they finally argue about the real thing, and the fight turns into the first time they're honest with each other."
+      ],
+      premise: "Two rivals who've spent years destroying each other from opposite sides of the city are forced to share a remote safe house when a threat targets them both — and the hatred they've perfected starts to look uncomfortably like the only honest thing either of them has ever felt."
+    },
+    "Enemies to Lovers|Forced Proximity": {
+      title: "Too Close to Hate",
+      desc: "They can't stand each other. They also can't leave. Your reader wants the crackling, claustrophobic energy of two people who despise each other trapped in a space small enough to make lying impossible. Write the book where proximity becomes intimacy and hatred becomes heat.",
+      heat: "Explicit & Frequent",
+      comps: [
+        { title: "Butcher & Blackbird", author: "Brynne Weaver" },
+        { title: "The Kiss Thief", author: "L.J. Shen" },
+        { title: "Corrupt", author: "Penelope Douglas" }
+      ],
+      prompts: [
+        "Write the scene where the power goes out and the only flashlight is in his jacket, which he's not wearing.",
+        "Write the moment she catches him watching her sleep and neither of them pretends it didn't happen.",
+        "Write the fight that starts with an insult and ends with her pressed against a wall, both of them daring the other to be the one who breaks first."
+      ],
+      premise: "A cutthroat investigative journalist and the crime syndicate heir she's been trying to expose get trapped in a locked-down penthouse during a city-wide blackout — and the secrets they trade to survive the night are far more dangerous than anything she planned to publish."
+    },
+    "Possessive Obsession|Forced Proximity": {
+      title: "The Cage You Chose",
+      desc: "He won't let her leave — and she's not sure she wants to. Your reader craves the intoxicating line between captivity and devotion, where his obsession feels like the safest place she's ever been. Write a story where the walls close in and the heat turns up until neither of them can think straight.",
+      heat: "Explicit & Frequent",
+      comps: [
+        { title: "Haunting Adeline", author: "H.D. Carlton" },
+        { title: "Credence", author: "Penelope Douglas" },
+        { title: "Den of Vipers", author: "K.A. Knight" }
+      ],
+      prompts: [
+        "Write the scene where she discovers the hidden room where he's been keeping everything he knows about her, and he's not sorry.",
+        "Write the first morning she wakes up and realizes the door is unlocked, and she doesn't leave.",
+        "Write the moment he tells her she can go, and the terrifying realization that she doesn't want to."
+      ],
+      premise: "A woman fleeing a dangerous past holes up in a remote mountain cabin owned by a man who watches her every move — he says it's for her protection, but the way he memorizes her routines says it's something far more consuming."
+    },
+    "Possessive Obsession|Age Gap": {
+      title: "Older, Darker, Closer",
+      desc: "He's older, he's experienced, and he's decided she's his. Your reader wants the intoxicating power imbalance of a man who knows exactly what he wants and a woman who's about to discover she wants it too. Write a story where experience meets innocence and the gap between them is the most dangerous part.",
+      heat: "Explicit & Frequent",
+      comps: [
+        { title: "Birthday Girl", author: "Penelope Douglas" },
+        { title: "Credence", author: "Penelope Douglas" },
+        { title: "Priest", author: "Sierra Simone" }
+      ],
+      prompts: [
+        "Write the dinner scene where he orders for her without asking, and she lets him, and that's how they both know something has shifted.",
+        "Write the moment someone mistakes them for father and daughter and his reaction is not what she expected.",
+        "Write the chapter where she finds out exactly how long he's been waiting for her to be ready."
+      ],
+      premise: "A young woman takes a job as a live-in assistant for a reclusive billionaire twice her age — and discovers his carefully controlled world is built around a single, consuming obsession that she just walked into."
+    },
+    "Mafia/Organized Crime|Arranged Marriage": {
+      title: "Blood Vows",
+      desc: "She's traded to settle a debt. He's the monster her family sold her to. Your reader wants the slow, dangerous thaw of two people bound by a contract that was supposed to be transactional but becomes something neither of them can control. Write the book where the marriage is the trap and love is the escape.",
+      heat: "Extreme & Taboo-Forward",
+      comps: [
+        { title: "King of Wrath", author: "Ana Huang" },
+        { title: "Bound by Honor", author: "Cora Reilly" },
+        { title: "The Kiss Thief", author: "L.J. Shen" }
+      ],
+      prompts: [
+        "Write the wedding night scene where he tells her he won't touch her until she asks him to, and the power of that promise is more terrifying than anything he's done.",
+        "Write the moment she sees him interact with someone from his world and realizes the man she married is far more dangerous than the one she was warned about.",
+        "Write the scene where she discovers what her family actually traded her for, and her husband is the only one who's angry about it."
+      ],
+      premise: "A sheltered daughter is married off to a rival crime family's heir to cement a fragile truce — but her new husband's coldness hides a desperate plan to dismantle both families from the inside, and she's the one piece he can't afford to lose."
+    },
+    "Forbidden/Taboo|Age Gap": {
+      title: "What You Shouldn't Want",
+      desc: "He's off-limits in every way that matters. She knows it. He knows it. Neither of them cares. Your reader craves the breathless, guilty thrill of a relationship society says is wrong but feels inevitable. Write a story where the forbidden isn't just the obstacle — it's the entire point.",
+      heat: "Extreme & Taboo-Forward",
+      comps: [
+        { title: "Priest", author: "Sierra Simone" },
+        { title: "Credence", author: "Penelope Douglas" },
+        { title: "Birthday Girl", author: "Penelope Douglas" }
+      ],
+      prompts: [
+        "Write the scene where someone almost catches them together, and the fear makes everything sharper.",
+        "Write the moment she decides she doesn't care about the consequences anymore, and tells him.",
+        "Write the chapter where the outside world finally pushes back, and they have to decide what they're willing to lose."
+      ],
+      premise: "A woman returns to her childhood town and falls for the man who was once her late father's closest friend — a man whose silence about the past hides secrets that could destroy them both if the truth ever comes out."
+    },
+    "Rescue/Protector|Possessive Obsession": {
+      title: "The Predator Who Guards",
+      desc: "He's the most dangerous man she's ever met — and the only one who can keep her alive. Your reader wants the paradox of a protector whose methods are as terrifying as the threats he's shielding her from. Write a story where safety comes at the price of surrender.",
+      heat: "Explicit & Frequent",
+      comps: [
+        { title: "Haunting Adeline", author: "H.D. Carlton" },
+        { title: "Den of Vipers", author: "K.A. Knight" },
+        { title: "Twisted Love", author: "Ana Huang" }
+      ],
+      prompts: [
+        "Write the scene where he teaches her how to shoot, and his hands on her body are not about the gun.",
+        "Write the night he comes back from dealing with a threat, and the blood on his shirt is the first time she sees what he really is.",
+        "Write the moment she realizes the safest she has ever felt is in the arms of the most dangerous man she has ever known."
+      ],
+      premise: "A woman with a target on her back is taken under the protection of a man known for never leaving loose ends — and she quickly realizes the only thing more dangerous than the people hunting her is how much she wants to stay in his cage."
+    },
+    "Secret Identity|Age Gap": {
+      title: "The Man Behind the Mask",
+      desc: "He's been lying about who he is since the day they met. She's about to find out. Your reader loves the moment of revelation — when the person they trusted turns out to be someone entirely different, and somehow that makes it hotter. Write a story where the truth is the most dangerous seduction.",
+      heat: "Explicit & Frequent",
+      comps: [
+        { title: "Vicious", author: "L.J. Shen" },
+        { title: "Twisted Love", author: "Ana Huang" },
+        { title: "Punk 57", author: "Penelope Douglas" }
+      ],
+      prompts: [
+        "Write the scene where she discovers his real name, and every memory she has of him rearranges itself around the truth.",
+        "Write the moment he realizes she's been investigating him while he's been seducing her, and the game they've been playing suddenly has real stakes.",
+        "Write the chapter where he takes off the mask for the first time, and she has to decide if the man underneath is someone she can love."
+      ],
+      premise: "A young artist falls for an enigmatic older stranger who commissions her work — unaware he's the billionaire behind the corporate empire that destroyed her family, and his interest in her is far less innocent than it appears."
+    },
+    "Slow Burn|Rescue/Protector": {
+      title: "The Long Way to Safe",
+      desc: "He saved her life. Now he has to save her heart — one agonizingly slow step at a time. Your reader wants the tender, tentative build of trust between a woman who's been broken and a man who knows better than to push. Write a story where patience is the most powerful seduction.",
+      heat: "Slow Burn & Suggestive",
+      comps: [
+        { title: "Twisted Love", author: "Ana Huang" },
+        { title: "Addicted to You", author: "Krista & Becca Ritchie" },
+        { title: "King of Wrath", author: "Ana Huang" }
+      ],
+      prompts: [
+        "Write the scene where she flinches at his touch, and he spends the next week teaching her that his hands are safe.",
+        "Write the first time she falls asleep near him, and he doesn't move for three hours because he doesn't want to break the trust.",
+        "Write the chapter where he finally tells her what happened to him, and they realize they're both survivors of the same kind of war."
+      ],
+      premise: "A trauma survivor hiding in a small town is reluctantly taken in by a former special forces operative who insists on protecting her — and the more she unravels his carefully guarded past, the more she realizes saving her might be the thing that finally breaks him."
+    },
+    "Mafia/Organized Crime|Forbidden/Taboo": {
+      title: "The Sins We Inherit",
+      desc: "She grew up on the wrong side of his empire. He owns every side. Your reader wants the electric danger of a romance that crosses lines neither of them should cross — where loyalty to the family and desire for each other are at war. Write a story where the most forbidden thing isn't the love — it's choosing it anyway.",
+      heat: "Extreme & Taboo-Forward",
+      comps: [
+        { title: "Bound by Honor", author: "Cora Reilly" },
+        { title: "Den of Vipers", author: "K.A. Knight" },
+        { title: "King of Wrath", author: "Ana Huang" }
+      ],
+      prompts: [
+        "Write the scene at a family dinner where they're sitting across from each other and no one at the table knows what happened between them last night.",
+        "Write the moment he has to choose between protecting her and protecting his operation, and she watches him make the wrong choice.",
+        "Write the chapter where she's offered a way out, and has to decide if freedom is worth losing him."
+      ],
+      premise: "A bartender working in rival territory catches the attention of the crime lord who controls the city's underground — and when he discovers she's been feeding information to the FBI, he has to choose between the empire he built and the woman who could dismantle it."
+    },
+    "Arranged Marriage|Possessive Obsession": {
+      title: "Signed, Sealed, Consumed",
+      desc: "She agreed to the marriage. She didn't agree to this. Your reader wants the slow-burn dread and dark thrill of a contract wife discovering her husband's fixation goes far beyond duty — and the terrifying realization that his obsession is the only thing keeping her alive. Write a story where vows are weapons.",
+      heat: "Explicit & Frequent",
+      comps: [
+        { title: "King of Wrath", author: "Ana Huang" },
+        { title: "The Kiss Thief", author: "L.J. Shen" },
+        { title: "Bound by Honor", author: "Cora Reilly" }
+      ],
+      prompts: [
+        "Write the scene where she finds the surveillance room and realizes he's been watching her since before they met.",
+        "Write the first time he says her actual name instead of a title, and the weight of that small word changes everything.",
+        "Write the chapter where someone tries to use her against him, and she discovers exactly how far he'll go to keep what's his."
+      ],
+      premise: "A woman forced into a political marriage with a cold, calculating crime lord discovers his obsessive surveillance of her isn't control — it's the only thing standing between her and the people who want her dead before the ink on the marriage license dries."
+    },
+    "Secret Identity|Forced Proximity": {
+      title: "Close Enough to Lie",
+      desc: "They're stuck together. One of them isn't who they say they are. Your reader loves the claustrophobic intimacy of forced proximity with a ticking time bomb of a secret underneath. Write a story where the walls are close, the truth is closer, and the attraction is the most dangerous thing in the room.",
+      heat: "Explicit & Frequent",
+      comps: [
+        { title: "Vicious", author: "L.J. Shen" },
+        { title: "Punk 57", author: "Penelope Douglas" },
+        { title: "Butcher & Blackbird", author: "Brynne Weaver" }
+      ],
+      prompts: [
+        "Write the scene where she finds his real ID, and has to decide whether to confront him or play along.",
+        "Write the night they finally sleep together, and the guilt he feels is not about the act but about what she doesn't know.",
+        "Write the chapter where the truth explodes, and the confined space that brought them together becomes the thing that traps them both."
+      ],
+      premise: "A woman hiding out in a safe house discovers the quiet, kind stranger assigned to protect her is actually the undercover agent who put her father in prison — and his mission isn't over until he decides whether she's a witness or a target."
+    },
+    "Enemies to Lovers|Possessive Obsession": {
+      title: "Love as a War Crime",
+      desc: "They've been at each other's throats for years. Now he's decided the war is over — because he's won. Your reader wants the dark satisfaction of an enemy who becomes an obsession, where the hatred was always just desire wearing a different mask. Write a story where surrender is the only way to survive.",
+      heat: "Explicit & Frequent",
+      comps: [
+        { title: "Vicious", author: "L.J. Shen" },
+        { title: "Corrupt", author: "Penelope Douglas" },
+        { title: "The Kiss Thief", author: "L.J. Shen" }
+      ],
+      prompts: [
+        "Write the scene where he corners her at a public event and whispers the one thing he knows will undo her.",
+        "Write the moment she realizes he's been engineering their encounters for months, and she's angrier about not noticing than about the manipulation.",
+        "Write the chapter where she finally fights back, and he smiles for the first time, because that's what he's been waiting for."
+      ],
+      premise: "After years of bitter rivalry, a ruthless CEO acquires his enemy's company — and discovers the one condition of the sale is the man's daughter, who has her own agenda and zero intention of being anyone's prize."
+    }
+  };
+
+  var fallbackResult = {
+    title: "Your Dark Romance DNA",
+    desc: "Your answers reveal a unique blend of tropes that doesn't fit any single mold — which is exactly what makes your book idea irresistible. Lean into the tension between these two dynamics: one creates the danger, the other creates the desire. Your reader wants both, and they want them to collide.",
+    heat: "Explicit & Frequent",
+    comps: [
+      { title: "Twisted Love", author: "Ana Huang" },
+      { title: "Haunting Adeline", author: "H.D. Carlton" },
+      { title: "Vicious", author: "L.J. Shen" }
+    ],
+    prompts: [
+      "Write the scene where they're forced to be in the same room and neither will be the first to speak.",
+      "Write the moment one of them almost reveals the truth about themselves, and pulls back at the last second.",
+      "Write the chapter where the tension finally breaks, and it's messier and more complicated than either of them expected."
+    ],
+    premise: "Two people whose paths should never have crossed are thrown together by circumstance — one of them hiding a truth that could destroy everything, the other hiding a desire that already has — and the collision between their secrets is about to change both their lives forever."
+  };
+
+  /* ==================== STATE ==================== */
+
+  var currentQuestion = 0;
+  var selectedAnswers = [];
+  var tropeScores = {};
+  var heatScores = { slow:0, explicit:0, extreme:0 };
+  var resultData = null;
+
+  /* ==================== HELPERS ==================== */
+
+  function escapeHTML(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showScreen(id){
+    var screens = document.querySelectorAll('.screen');
+    for(var i=0;i<screens.length;i++){
+      if(screens[i].id === id){
+        screens[i].style.display = 'flex';
+        screens[i].className = 'screen active';
+      } else {
+        screens[i].className = 'screen';
+        screens[i].style.display = 'none';
+      }
+    }
+  }
+
+  /* ==================== STORAGE ==================== */
+
+  var STORAGE_KEY = 'tropeMatchmaker_saved_v2';
+
+  function loadSavedResults(){
+    try{
+      var data = localStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    }catch(e){ return []; }
+  }
+  function saveResultsArray(arr){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }catch(e){}
+  }
+  var savedResults = loadSavedResults();
+
+  function isCurrentResultSaved(){
+    if(!resultData || !resultData._id) return false;
+    for(var i=0;i<savedResults.length;i++){
+      if(savedResults[i]._id === resultData._id) return true;
+    }
+    return false;
+  }
+
+  function toggleSaveResult(){
+    if(!resultData) return;
+    var existingIdx = -1;
+    for(var i=0;i<savedResults.length;i++){
+      if(savedResults[i]._id === resultData._id){ existingIdx=i; break; }
+    }
+    if(existingIdx !== -1){
+      savedResults.splice(existingIdx,1);
+      showToast('Result removed from saved.');
+    }else{
+      savedResults.push(JSON.parse(JSON.stringify(resultData)));
+      showToast('Result saved to your archive.');
+    }
+    saveResultsArray(savedResults);
+    updateSaveButton();
+  }
+
+  function updateSaveButton(){
+    var btn = document.getElementById('btnSave');
+    var txt = document.getElementById('saveBtnText');
+    var banner = document.getElementById('savedBanner');
+    var bannerText = document.getElementById('savedBannerText');
+
+    if(isCurrentResultSaved()){
+      btn.className = 'btn-save-full saved';
+      txt.innerHTML = 'Saved';
+      bannerText.innerHTML = 'This result is saved to your browser. ' + savedResults.length + ' result(s) archived total.';
+      banner.className = 'saved-banner show';
+    } else {
+      btn.className = 'btn-save-full';
+      txt.innerHTML = 'Save Result';
+      banner.className = 'saved-banner';
+    }
+  }
+
+  /* ==================== QUIZ FLOW ==================== */
+
+  function startQuiz(){
+    currentQuestion = 0;
+    selectedAnswers = [];
+    tropeScores = {};
+    heatScores = { slow:0, explicit:0, extreme:0 };
+    var progressLabel = document.getElementById('progressLabel');
+    if (progressLabel) {
+      progressLabel.style.display = 'flex';
+    }
+    showScreen('screenQuestion');
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    var q = questions[currentQuestion];
+    document.getElementById('questionNum').innerHTML = '<svg class="svg-icon" width="14" height="14"><use href="#i-layers"></use></svg> Question ' + (currentQuestion+1) + ' of 8';
+    document.getElementById('questionText').innerHTML = escapeHTML(q.q);
+
+    var grid = document.getElementById('answersGrid');
+    var html = '';
+    for(var i=0;i<q.options.length;i++){
+      var sel = (selectedAnswers[currentQuestion] === i) ? ' selected' : '';
+      var iconHTML = q.options[i].icon ? '<svg class="svg-icon ans-icon" width="20" height="20"><use href="#'+q.options[i].icon+'"></use></svg>' : '';
+      html += '<div class="answer-card'+sel+'" data-idx="'+i+'">'+iconHTML+'<span class="ans-text">'+q.options[i].text+'</span></div>';
+    }
+    grid.innerHTML = html;
+
+    var pct = (currentQuestion / 8) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    var progressLabelText = document.getElementById('progressLabelText');
+    if (progressLabelText) {
+      progressLabelText.textContent = (currentQuestion+1) + ' / 8';
     }
 
-    // ----- QUESTIONS (8) -----
-    var QUESTIONS = [
-      { q: "Your book boyfriend just found out you lied to him. What does he do?",
-        options: [
-          { label: "Walks away, cold and silent", scores: { 'Slow Burn': 3, 'Secret Identity': 2, heat: 0 } },
-          { label: "Locks the door and demands the truth", scores: { 'Possessive Obsession': 3, 'Forced Proximity': 1, heat: 2 } },
-          { label: "Something violent, a little terrifying", scores: { 'Mafia/Organized Crime': 3, 'Possessive Obsession': 2, heat: 3 } },
-          { label: "He doesn't react — he already knew", scores: { 'Secret Identity': 3, 'Slow Burn': 1, heat: 1 } }
-        ] },
-      { q: "Pick your ideal 'trapped together' scenario",
-        options: [
-          { label: "Blizzard cabin, one bed", scores: { 'Forced Proximity': 3, 'Slow Burn': 2, heat: 1 } },
-          { label: "Single hotel room on a business trip", scores: { 'Forced Proximity': 2, 'Enemies to Lovers': 2, heat: 2 } },
-          { label: "Stuck in an elevator with a stranger", scores: { 'Forced Proximity': 2, 'Secret Identity': 1, heat: 1 } },
-          { label: "Arranged marriage to a dangerous family", scores: { 'Arranged Marriage': 3, 'Mafia/Organized Crime': 2, heat: 2 } }
-        ] },
-      { q: "How do you want to feel by the last page?",
-        options: [
-          { label: "Breathless and wrecked", scores: { 'Possessive Obsession': 2, 'Forbidden/Taboo': 2, heat: 3 } },
-          { label: "Satisfied, but wanting more", scores: { 'Slow Burn': 2, 'Enemies to Lovers': 1, heat: 2 } },
-          { label: "Hopeful, like love won", scores: { 'Rescue/Protector': 3, 'Age Gap': 1, heat: 1 } },
-          { label: "Shocked and obsessed", scores: { 'Secret Identity': 2, 'Mafia/Organized Crime': 2, heat: 3 } }
-        ] },
-      { q: "What kind of emotional wound pulls you in?",
-        options: [
-          { label: "Betrayal by someone they trusted", scores: { 'Enemies to Lovers': 2, 'Secret Identity': 2, heat: 1 } },
-          { label: "Loss of a family member", scores: { 'Rescue/Protector': 2, 'Age Gap': 1, heat: 0 } },
-          { label: "Never being enough", scores: { 'Possessive Obsession': 2, 'Forbidden/Taboo': 1, heat: 2 } },
-          { label: "Forced into a life they hate", scores: { 'Arranged Marriage': 3, 'Mafia/Organized Crime': 2, heat: 2 } }
-        ] },
-      { q: "Choose your favorite setting/vibe",
-        options: [
-          { label: "Dark city underworld", scores: { 'Mafia/Organized Crime': 3, 'Possessive Obsession': 1, heat: 2 } },
-          { label: "Isolated mansion / estate", scores: { 'Forced Proximity': 2, 'Age Gap': 2, heat: 1 } },
-          { label: "Small town with secrets", scores: { 'Secret Identity': 2, 'Slow Burn': 2, heat: 1 } },
-          { label: "Glamorous, dangerous party scene", scores: { 'Enemies to Lovers': 2, 'Forbidden/Taboo': 2, heat: 2 } }
-        ] },
-      { q: "How intense do you like the physical tension?",
-        options: [
-          { label: "Slow, simmering looks", scores: { 'Slow Burn': 3, heat: 0 } },
-          { label: "Frequent, explicit encounters", scores: { 'Possessive Obsession': 2, heat: 2 } },
-          { label: "Taboo, edge-of-comfort scenes", scores: { 'Forbidden/Taboo': 3, heat: 3 } },
-          { label: "Teasing, will-they-won't-they", scores: { 'Enemies to Lovers': 2, heat: 1 } }
-        ] },
-      { q: "What's your danger tolerance?",
-        options: [
-          { label: "Low — protect them at all costs", scores: { 'Rescue/Protector': 3, heat: 1 } },
-          { label: "Medium — some threats, but love wins", scores: { 'Mafia/Organized Crime': 1, 'Forced Proximity': 1, heat: 2 } },
-          { label: "High — I love a morally grey hero", scores: { 'Possessive Obsession': 2, 'Mafia/Organized Crime': 2, heat: 3 } },
-          { label: "Extreme — dangerous, dark, obsessive", scores: { 'Forbidden/Taboo': 3, 'Possessive Obsession': 2, heat: 3 } }
-        ] },
-      { q: "Which ending vibe calls to you?",
-        options: [
-          { label: "Hard-won HEA", scores: { 'Enemies to Lovers': 2, 'Rescue/Protector': 2, heat: 1 } },
-          { label: "Bittersweet but beautiful", scores: { 'Age Gap': 2, 'Forbidden/Taboo': 1, heat: 0 } },
-          { label: "Dangerous love, unapologetic", scores: { 'Possessive Obsession': 3, 'Mafia/Organized Crime': 2, heat: 3 } },
-          { label: "They burn the world together", scores: { 'Arranged Marriage': 2, 'Mafia/Organized Crime': 1, heat: 2 } }
-        ] }
-    ];
-
-    var TROPES = ['Enemies to Lovers','Possessive Obsession','Forced Proximity','Arranged Marriage','Secret Identity','Age Gap','Mafia/Organized Crime','Forbidden/Taboo','Slow Burn','Rescue/Protector'];
-    var HEAT_LEVELS = ['Slow Burn & Suggestive','Explicit & Frequent','Extreme & Taboo-Forward'];
-
-    var RESULT_MAP = {
-      'Enemies to Lovers+Forced Proximity': {
-        title: 'The Cage You Chose',
-        desc: 'Two people who can\'t stand each other are trapped in a high-stakes situation where every glance is a war and every touch is a surrender. Write the book where hate turns into obsession.',
-        comps: ['The Risk by Elle Kennedy', 'Brutal Prince by Sophie Lark', 'Vicious by L.J. Shen'],
-        premise: 'A [prosecutor] forced to share a safe house with the [mafia boss] who ruined their case discovers that the real danger isn\'t the enemies outside — it\'s the desire they can\'t escape.'
-      },
-      'Possessive Obsession+Age Gap': {
-        title: 'The Edge of Control',
-        desc: 'An older, powerful man who needs to own every part of her — but she\'s not as breakable as he thinks. High heat, high tension, high stakes.',
-        comps: ['Born in Blood by Cora Reilly', 'Twisted Love by Ana Huang', 'The Silver Swan by Amo Jones'],
-        premise: 'A [young artist] becomes the obsession of a [reclusive billionaire] who will destroy anyone who looks at her — but her own dark past might be the thing that destroys them both.'
-      },
-      'Mafia/Organized Crime+Arranged Marriage': {
-        title: 'Vows of Blood',
-        desc: 'Marriage as a contract, but the heart doesn\'t follow the rules. When two families collide, the only thing more dangerous than the alliance is the chemistry between the bride and groom.',
-        comps: ['The Sweetest Oblivion by Danielle Lori', 'Bound by Honor by Cora Reilly', 'King of Wrath by Ana Huang'],
-        premise: 'A [teacher] forced to marry into a [crime dynasty] discovers her new husband isn\'t trying to control her — he\'s trying to keep her alive from the people who want her dead.'
-      },
-      'Enemies to Lovers+Possessive Obsession': {
-        title: 'Hate to Want You',
-        desc: 'They despise each other with a passion that burns too hot. Every fight is foreplay, and every surrender is a victory. This is the book where enemies become the only thing the other needs.',
-        comps: ['Haunting Adeline by H.D. Carlton', 'Butcher & Blackbird by Brynne Weaver', 'The Predator by RuNyx'],
-        premise: 'A [detective] hunting a [serial killer] finds that her target is more obsessed with her than she is with him — and he\'ll let himself be caught just to get close.'
-      },
-      'Forbidden/Taboo+Age Gap': {
-        title: 'The Unspoken Rule',
-        desc: 'They were never supposed to want each other. The age gap, the power dynamic, the secrets — but the heart wants what it wants. Taboo has never been so irresistible.',
-        comps: ['Punk 57 by Penelope Douglas', 'The Idea of You by Robinne Lee', 'Birthday Girl by Penelope Douglas'],
-        premise: 'A [graduate student] finds herself drawn to her [professor] who hides a dark past — and the forbidden affair they start could destroy both their futures.'
-      },
-      'Mafia/Organized Crime+Possessive Obsession': {
-        title: 'Caged Crown',
-        desc: 'He rules the underworld, and she becomes his greatest obsession. He\'ll burn the world to keep her — but she\'s not a pawn; she\'s a queen in the making.',
-        comps: ['Crown of Crimson by Karina Halle', 'Savage Hearts by J.T. Geissinger', 'Mafia Mistress by Mila Finelli'],
-        premise: 'A [bartender] catches the eye of a [crime lord] who demands her loyalty — and she discovers she\'s the only one who can see past his monster to the man who will do anything for her.'
-      },
-      'Slow Burn+Rescue/Protector': {
-        title: 'Safe in the Fire',
-        desc: 'A protector who never wanted to care, and a survivor who never wanted to need anyone. The slow burn builds into an inferno of love and devotion.',
-        comps: ['The Simple Wild by K.A. Tucker', 'Wait for You by Jennifer L. Armentrout', 'The Deal by Elle Kennedy'],
-        premise: 'A [bodyguard] hired to protect a [wild heiress] finds himself falling for her — but her enemies are closer than they think, and his past might be the reason she\'s in danger.'
-      },
-      'Secret Identity+Enemies to Lovers': {
-        title: 'Masked Devotion',
-        desc: 'They hate each other in public, but in private they\'re something else. When the masks come off, the truth is more dangerous than any lie.',
-        comps: ['The Darkest Temptation by Danielle Lori', 'Hidden Truths by J. Saman', 'Ruthless Empire by Rina Kent'],
-        premise: 'A [journalist] infiltrates a [crime syndicate] to expose them — but the man she\'s falling for is the same one she\'s meant to destroy, and he knows exactly who she is.'
-      },
-      'Forced Proximity+Possessive Obsession': {
-        title: 'The Only One',
-        desc: 'They\'re trapped together, and he\'s not letting her go. Possessive, intense, and utterly consuming — this is the book where proximity becomes possession.',
-        comps: ['Storm and Silence by Robert Thier', 'The Duke and I by Julia Quinn (dark twist)', 'Hate to Love You by Tijan'],
-        premise: 'A [pilot] and a [mysterious passenger] are stranded in a remote cabin — and he has no intention of letting her leave until she agrees to be his.'
-      },
-      'Arranged Marriage+Forbidden/Taboo': {
-        title: 'Married to the Devil',
-        desc: 'A marriage bound by duty, but the attraction is anything but. When taboo desires meet arranged vows, the result is a love story that breaks every rule.',
-        comps: ['The Villain by L.J. Shen', 'Paper Princess by Erin Watt', 'Cruel King by Rina Kent'],
-        premise: 'A [heiress] is married off to a [ruthless businessman] with a dark secret — and she finds herself drawn to the very thing she\'s supposed to fear.'
-      },
-      'Age Gap+Rescue/Protector': {
-        title: 'Shelter & Sin',
-        desc: 'An older protector with a past, a younger woman with a future. He saves her, but she saves him right back. Age is just a number when the connection is everything.',
-        comps: ['The Kiss Thief by L.J. Shen', 'Broken Vow by Sophie Lark', 'Tempt Me by Nina West'],
-        premise: 'A [veterinarian] takes in a [troubled teenager] who is actually a [runaway heiress] — and the age gap between them becomes the least of their problems when her family comes looking.'
-      },
-      'Slow Burn+Possessive Obsession': {
-        title: 'Burn for You',
-        desc: 'The slowest of burns, but when the fire catches, it\'s all-consuming. Possessive, tender, and deep — this is the book where patience is rewarded with passion.',
-        comps: ['From Blood and Ash by Jennifer L. Armentrout', 'The Love Hypothesis by Ali Hazelwood', 'It Ends with Us by Colleen Hoover (dark edge)'],
-        premise: 'A [librarian] and a [billionaire] with a dark obsession meet in a small town — and their slow dance of desire hides a secret that could destroy them both.'
-      }
-    };
-
-    // ----- state -----
-    var app = document.getElementById('app');
-    var stage = document.getElementById('slideStage');
-    var progressFill = document.getElementById('progressFill');
-    var qCounter = document.getElementById('qCounter');
-    var currentSlide = 0; // 0=intro,1-8=questions,9=result
-    var answers = [];
-    var tropeScores = {};
-    var heatScore = 0;
-    TROPES.forEach(function(t) { tropeScores[t] = 0; });
-
-    function resetState() {
-      currentSlide = 0; answers = [];
-      TROPES.forEach(function(t) { tropeScores[t] = 0; });
-      heatScore = 0;
+    document.getElementById('btnBack').disabled = (currentQuestion === 0);
+    document.getElementById('btnNext').disabled = (selectedAnswers[currentQuestion] === undefined);
+    if(currentQuestion === 7){
+      document.getElementById('btnNext').innerHTML = 'See My Result <svg class="svg-icon" width="18" height="18"><use href="#i-sparkles"></use></svg>';
+    } else {
+      document.getElementById('btnNext').innerHTML = 'Next <svg class="svg-icon" width="16" height="16"><use href="#i-arrow-right"></use></svg>';
     }
 
-    function renderSlide(index) {
-      var slides = stage.querySelectorAll('.slide');
-      slides.forEach(function(s) { s.classList.remove('active'); });
-      if (index === 0) {
-        var intro = stage.querySelector('[data-slide="intro"]');
-        if (intro) intro.classList.add('active');
-        progressFill.style.width = '0%';
-        qCounter.textContent = '0 / 8';
-        return;
-      }
-      if (index === 9) {
-        var resultSlide = stage.querySelector('[data-slide="result"]');
-        if (resultSlide) { resultSlide.classList.add('active'); fillResult(); }
-        progressFill.style.width = '100%';
-        qCounter.textContent = '8 / 8';
-        return;
-      }
-      var qIdx = index - 1;
-      var slideEl = stage.querySelector('[data-slide="q' + qIdx + '"]');
-      if (slideEl) {
-        slideEl.classList.add('active');
-        var pct = (qIdx / 8) * 100;
-        progressFill.style.width = pct + '%';
-        qCounter.textContent = (qIdx+1) + ' / 8';
-      }
-    }
-
-    function buildQuestions() {
-      var existing = stage.querySelectorAll('[data-slide^="q"]');
-      existing.forEach(function(el) { el.remove(); });
-      QUESTIONS.forEach(function(q, idx) {
-        var div = document.createElement('div');
-        div.className = 'slide';
-        div.setAttribute('data-slide', 'q' + idx);
-        var title = document.createElement('div');
-        title.className = 'slide-title';
-        title.textContent = q.q;
-        div.appendChild(title);
-        var opts = document.createElement('div');
-        opts.className = 'options-grid';
-        q.options.forEach(function(opt, oi) {
-          var btn = document.createElement('button');
-          btn.className = 'option-btn';
-          var label = opt.label;
-          // add svg icon (use target as generic)
-          btn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg><span class="label-text">' + label + '</span>';
-          btn.setAttribute('data-qidx', idx);
-          btn.setAttribute('data-optidx', oi);
-          btn.addEventListener('click', function(e) { handleAnswer(idx, oi); });
-          opts.appendChild(btn);
-        });
-        div.appendChild(opts);
-        stage.appendChild(div);
+    // Attach event listeners to answer cards
+    var cards = document.querySelectorAll('#answersGrid .answer-card');
+    for(var j=0;j<cards.length;j++){
+      cards[j].addEventListener('click', function(e){
+        var idx = parseInt(this.getAttribute('data-idx'), 10);
+        selectAnswer(idx);
       });
-      // result slide
-      var resultDiv = document.createElement('div');
-      resultDiv.className = 'slide';
-      resultDiv.setAttribute('data-slide', 'result');
-      resultDiv.innerHTML = 
-        '<div class="result-card" id="resultCard">' +
-          '<div class="confetti-burst"></div>' +
-          '<div class="result-title" id="resultTitle">✨ Your Trope Match</div>' +
-          '<div class="badge-group" id="resultBadges"></div>' +
-          '<div id="resultDesc" style="font-weight:400; line-height:1.5;"></div>' +
-          '<div class="comp-list" id="resultComps"></div>' +
-          '<div class="premise-box" id="resultPremise"></div>' +
-          '<div class="result-meta" id="resultMeta"></div>' +
-          '<div class="action-row">' +
-            '<button class="btn-secondary btn-copy" id="copyResultBtn"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy My Result</button>' +
-            '<button class="btn-secondary btn-retake" id="retakeBtn"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15.5A9 9 0 112 10.5"/></svg> Retake</button>' +
-          '</div>' +
-        '</div>';
-      stage.appendChild(resultDiv);
-      document.getElementById('copyResultBtn').addEventListener('click', copyResult);
-      document.getElementById('retakeBtn').addEventListener('click', retakeQuiz);
     }
+  }
 
-    function handleAnswer(qIdx, optIdx) {
-      var q = QUESTIONS[qIdx];
-      var opt = q.options[optIdx];
-      var scores = opt.scores;
-      for (var key in scores) {
-        if (key === 'heat') { heatScore += scores[key]; }
-        else { if (tropeScores.hasOwnProperty(key)) tropeScores[key] += scores[key]; }
-      }
-      answers.push({ qIdx: qIdx, optIdx: optIdx });
-      if (currentSlide < 8) {
-        currentSlide++;
-        renderSlide(currentSlide);
-        if (currentSlide === 9) renderSlide(9);
+  function selectAnswer(idx){
+    selectedAnswers[currentQuestion] = idx;
+    var cards = document.querySelectorAll('#answersGrid .answer-card');
+    for(var i=0;i<cards.length;i++){
+      cards[i].className = 'answer-card';
+      if(parseInt(cards[i].getAttribute('data-idx'),10) === idx){
+        cards[i].className = 'answer-card selected';
       }
     }
+    document.getElementById('btnNext').disabled = false;
+  }
 
-    function getTopTropes() {
-      var sorted = TROPES.slice().sort(function(a,b) { return tropeScores[b] - tropeScores[a]; });
-      return sorted.slice(0,2);
+  function goBack(){
+    if(currentQuestion > 0){
+      currentQuestion--;
+      var screen = document.getElementById('screenQuestion');
+      screen.className = 'screen slide-out';
+      setTimeout(function(){
+        renderQuestion();
+        screen.className = 'screen active';
+      }, 320);
     }
-    function getHeatLevel() {
-      if (heatScore <= 4) return HEAT_LEVELS[0];
-      if (heatScore <= 8) return HEAT_LEVELS[1];
-      return HEAT_LEVELS[2];
+  }
+
+  function goNext(){
+    if(selectedAnswers[currentQuestion] === undefined) return;
+
+    if(currentQuestion < 7){
+      currentQuestion++;
+      var screen = document.getElementById('screenQuestion');
+      screen.className = 'screen slide-out';
+      setTimeout(function(){
+        renderQuestion();
+        screen.className = 'screen active';
+      }, 320);
+    } else {
+      document.getElementById('progressBar').style.width = '100%';
+      var progressLabel = document.getElementById('progressLabel');
+      if (progressLabel) {
+        progressLabel.style.display = 'none';
+      }
+      calculateResult();
+      showScreen('screenResult');
+      triggerConfetti();
+      setTimeout(updateSaveButton, 100);
     }
-    function getResultPair(t1, t2) {
-      var key1 = t1+'+'+t2, key2 = t2+'+'+t1;
-      if (RESULT_MAP[key1]) return RESULT_MAP[key1];
-      if (RESULT_MAP[key2]) return RESULT_MAP[key2];
-      return RESULT_MAP['Enemies to Lovers+Forced Proximity'];
+  }
+
+  /* ==================== SCORING ==================== */
+
+  function calculateResult(){
+    tropeScores = {};
+    heatScores = { slow:0, explicit:0, extreme:0 };
+
+    for(var qi=0; qi<selectedAnswers.length; qi++){
+      var ansIdx = selectedAnswers[qi];
+      var scores = questions[qi].options[ansIdx].scores;
+      for(var key in scores){
+        if(!scores.hasOwnProperty(key)) continue;
+        if(key === 'slow' || key === 'explicit' || key === 'extreme'){
+          heatScores[key] += scores[key];
+        } else {
+          if(!tropeScores[key]) tropeScores[key] = 0;
+          tropeScores[key] += scores[key];
+        }
+      }
     }
 
-    function fillResult() {
-      var top = getTopTropes();
-      var heat = getHeatLevel();
-      var pair = getResultPair(top[0], top[1]);
-      document.getElementById('resultTitle').textContent = pair.title;
-      var badgeDiv = document.getElementById('resultBadges');
-      badgeDiv.innerHTML = '';
-      top.forEach(function(t) {
-        var b = document.createElement('span');
-        b.className = 'badge';
-        b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><path d="M7 7h.01"/></svg> ' + t;
-        badgeDiv.appendChild(b);
+    var sorted = [];
+    for(var t in tropeScores){
+      if(tropeScores.hasOwnProperty(t)){
+        sorted.push({ name:t, score:tropeScores[t] });
+      }
+    }
+    sorted.sort(function(a,b){ return b.score - a.score; });
+
+    var top1 = sorted.length > 0 ? sorted[0].name : "Enemies to Lovers";
+    var top2 = sorted.length > 1 ? sorted[1].name : "Slow Burn";
+
+    var heatName = "Explicit & Frequent";
+    if(heatScores.slow >= heatScores.explicit && heatScores.slow >= heatScores.extreme){
+      heatName = "Slow Burn & Suggestive";
+    } else if(heatScores.extreme > heatScores.explicit && heatScores.extreme > heatScores.slow){
+      heatName = "Extreme & Taboo-Forward";
+    }
+
+    var key1 = top1 + "|" + top2;
+    var key2 = top2 + "|" + top1;
+
+    if(resultPairings[key1]){
+      resultData = JSON.parse(JSON.stringify(resultPairings[key1]));
+    } else if(resultPairings[key2]){
+      resultData = JSON.parse(JSON.stringify(resultPairings[key2]));
+    } else {
+      resultData = JSON.parse(JSON.stringify(fallbackResult));
+    }
+
+    resultData._trope1 = top1;
+    resultData._trope2 = top2;
+    resultData._heat = heatName;
+    resultData._id = 'r_' + Date.now();
+    resultData._allScores = sorted;
+    resultData._heatScores = { slow: heatScores.slow, explicit: heatScores.explicit, extreme: heatScores.extreme };
+
+    renderResult();
+  }
+
+  function renderResult(){
+    document.getElementById('resultTitle').innerHTML = escapeHTML(resultData.title);
+    document.getElementById('resultDesc').innerHTML = escapeHTML(resultData.desc);
+    document.getElementById('resultPremise').innerHTML = escapeHTML(resultData.premise);
+
+    var badges = '';
+    badges += '<span class="trope-badge"><svg class="svg-icon" width="14" height="14"><use href="#i-layers"></use></svg> '+escapeHTML(resultData._trope1)+'</span>';
+    badges += '<span class="trope-badge"><svg class="svg-icon" width="14" height="14"><use href="#i-layers"></use></svg> '+escapeHTML(resultData._trope2)+'</span>';
+    badges += '<span class="heat-badge"><svg class="svg-icon" width="14" height="14"><use href="#i-flame"></use></svg> '+escapeHTML(resultData._heat)+'</span>';
+    document.getElementById('resultBadges').innerHTML = badges;
+
+    var compHtml = '';
+    for(var i=0;i<resultData.comps.length;i++){
+      compHtml += '<div class="comp-item"><svg class="svg-icon comp-icon" width="16" height="16"><use href="#i-book"></use></svg> <span><b>'+escapeHTML(resultData.comps[i].title)+'</b> by '+escapeHTML(resultData.comps[i].author)+'</span></div>';
+    }
+    document.getElementById('compList').innerHTML = compHtml;
+
+    var promptHtml = '';
+    for(var j=0;j<resultData.prompts.length;j++){
+      promptHtml += '<div class="prompt-item"><span class="prompt-bullet"><svg class="svg-icon" width="16" height="16"><use href="#i-pen"></use></svg></span><span>'+escapeHTML(resultData.prompts[j])+'</span></div>';
+    }
+    document.getElementById('promptList').innerHTML = promptHtml;
+
+    renderScoreBreakdown();
+  }
+
+  function renderScoreBreakdown(){
+    var scores = resultData._allScores;
+    var maxScore = 1;
+    for(var i=0;i<scores.length;i++){
+      if(scores[i].score > maxScore) maxScore = scores[i].score;
+    }
+
+    var heatScoresData = resultData._heatScores;
+    var heatMax = 1;
+    if(heatScoresData.slow > heatMax) heatMax = heatScoresData.slow;
+    if(heatScoresData.explicit > heatMax) heatMax = heatScoresData.explicit;
+    if(heatScoresData.extreme > heatMax) heatMax = heatScoresData.extreme;
+
+    var colors = ['pink','purple','blue'];
+    var html = '';
+
+    for(var k=0;k<scores.length && k<6;k++){
+      var pct = Math.round((scores[k].score / maxScore) * 100);
+      var colorClass = colors[k % 3];
+      html += '<div class="score-row">';
+      html += '<span class="score-name">'+escapeHTML(scores[k].name)+'</span>';
+      html += '<div class="score-bar-bg"><div class="score-bar-fill '+colorClass+'" style="width:'+pct+'%;"></div></div>';
+      html += '</div>';
+    }
+
+    html += '<div class="score-row" style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">';
+    html += '<span class="score-name" style="color:#ff6bc4;">Heat: Slow</span>';
+    html += '<div class="score-bar-bg"><div class="score-bar-fill pink" style="width:'+Math.round((heatScoresData.slow/heatMax)*100)+'%;"></div></div>';
+    html += '</div>';
+    html += '<div class="score-row">';
+    html += '<span class="score-name" style="color:#c9a8ff;">Heat: Explicit</span>';
+    html += '<div class="score-bar-bg"><div class="score-bar-fill purple" style="width:'+Math.round((heatScoresData.explicit/heatMax)*100)+'%;"></div></div>';
+    html += '</div>';
+    html += '<div class="score-row">';
+    html += '<span class="score-name" style="color:#5ba3ff;">Heat: Extreme</span>';
+    html += '<div class="score-bar-bg"><div class="score-bar-fill blue" style="width:'+Math.round((heatScoresData.extreme/heatMax)*100)+'%;"></div></div>';
+    html += '</div>';
+
+    document.getElementById('scoreBreakdown').innerHTML = html;
+  }
+
+  /* ==================== CONFETTI ==================== */
+
+  function triggerConfetti(){
+    var container = document.getElementById('confettiContainer');
+    container.innerHTML = '';
+    var colors = ['#FF006E','#8338EC','#3A86FF','#FFD60A','#ffffff'];
+    var pieces = 70;
+    for(var i=0;i<pieces;i++){
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random()*100 + '%';
+      piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.width = (6 + Math.random()*8) + 'px';
+      piece.style.height = (6 + Math.random()*8) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.animationDuration = (1.5 + Math.random()*2) + 's';
+      piece.style.animationDelay = (Math.random()*0.5) + 's';
+      container.appendChild(piece);
+    }
+
+    var overlay = document.getElementById('shimmerOverlay');
+    overlay.className = 'shimmer-overlay show';
+    setTimeout(function(){ overlay.className = 'shimmer-overlay'; }, 1200);
+
+    setTimeout(function(){ container.innerHTML = ''; }, 4500);
+  }
+
+  /* ==================== COPY ==================== */
+
+  function copyResult(){
+    if(!resultData) return;
+    var nl = '\n';
+    var line = '========================================' + nl;
+    var text = line;
+    text += '   TROPE MATCHMAKER -- MY RESULT' + nl;
+    text += line + nl;
+    text += 'RESULT: ' + resultData.title + nl + nl;
+    text += 'TROPE COMBO: ' + resultData._trope1 + ' + ' + resultData._trope2 + nl;
+    text += 'HEAT LEVEL: ' + resultData._heat + nl + nl;
+    text += '--- WHAT YOU SHOULD WRITE ---' + nl;
+    text += resultData.desc + nl + nl;
+    text += '--- COMP TITLES ---' + nl;
+    for(var i=0;i<resultData.comps.length;i++){
+      text += '  * ' + resultData.comps[i].title + ' by ' + resultData.comps[i].author + nl;
+    }
+    text += nl + '--- SCENE STARTER PROMPTS ---' + nl;
+    for(var j=0;j<resultData.prompts.length;j++){
+      text += '  * ' + resultData.prompts[j] + nl;
+    }
+    text += nl + '--- STARTER PREMISE ---' + nl;
+    text += resultData.premise + nl + nl + line;
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        showToast('Result copied to clipboard!');
+      }).catch(function(){
+        showToast('Copy failed. Please copy manually.');
       });
-      var hb = document.createElement('span');
-      hb.className = 'badge badge-heat';
-      hb.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C8 6 4 9 4 13c0 4 3 7 8 7s8-3 8-7c0-4-4-7-8-11z"/><path d="M12 10c-2 1-3 3-3 5s1 4 3 4 3-2 3-4-1-4-3-5z"/></svg> ' + heat;
-      badgeDiv.appendChild(hb);
+    } else {
+      var textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position='fixed';
+      textarea.style.top='-9999px';
+      textarea.style.opacity='0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      var success=false;
+      try{ success = document.execCommand('copy'); }catch(e){ success=false; }
+      document.body.removeChild(textarea);
+      if(success){ showToast('Result copied to clipboard!'); }
+      else{ showToast('Copy failed. Please copy manually.'); }
+    }
+  }
 
-      document.getElementById('resultDesc').textContent = pair.desc;
-      var compsHtml = '<svg viewBox="0 0 24 24"><path d="M4 6v14c0 1.1.9 2 2 2h12a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v14"/><path d="M8 4h10v12H8z"/><path d="M8 10h6"/></svg> ' + pair.comps.join(' · ');
-      document.getElementById('resultComps').innerHTML = compsHtml;
-      document.getElementById('resultPremise').innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2L8 8l-6 2 6 2 4 6 4-6 6-2-6-2-4-6z"/><path d="M12 14l-2 4 2 4 2-4-2-4z"/></svg> ' + pair.premise;
+  /* ==================== RETAKE ==================== */
 
-      // meta: show trope scores (optional)
-      var meta = document.getElementById('resultMeta');
-      meta.innerHTML = '<span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg> Top tropes: ' + top[0] + ' + ' + top[1] + '</span>' +
-                       '<span><svg viewBox="0 0 24 24"><path d="M12 2C8 6 4 9 4 13c0 4 3 7 8 7s8-3 8-7c0-4-4-7-8-11z"/><path d="M12 10c-2 1-3 3-3 5s1 4 3 4 3-2 3-4-1-4-3-5z"/></svg> Heat score: ' + heatScore + '</span>';
+  function retakeQuiz(){
+    currentQuestion = 0;
+    selectedAnswers = [];
+    tropeScores = {};
+    heatScores = { slow:0, explicit:0, extreme:0 };
+    resultData = null;
+    document.getElementById('progressBar').style.width = '0%';
+    var progressLabel = document.getElementById('progressLabel');
+    if (progressLabel) {
+      progressLabel.style.display = 'none';
     }
+    var banner = document.getElementById('savedBanner');
+    if(banner) banner.className = 'saved-banner';
+    showScreen('screenLanding');
+  }
 
-    function copyResult() {
-      var title = document.getElementById('resultTitle').textContent;
-      var badges = document.querySelectorAll('#resultBadges .badge');
-      var bText = []; badges.forEach(function(b) { bText.push(b.textContent.trim()); });
-      var desc = document.getElementById('resultDesc').textContent;
-      var comps = document.getElementById('resultComps').textContent;
-      var premise = document.getElementById('resultPremise').textContent;
-      var text = '✨ TROPE MATCHMAKER RESULT ✨\n\n' + title + '\n' + bText.join(' · ') + '\n\n' + desc + '\n\n' + comps + '\n\n' + premise;
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function() { alert('📋 Result copied!'); }).catch(function() { fallbackCopy(text); });
-      } else { fallbackCopy(text); }
-    }
-    function fallbackCopy(text) {
-      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('📋 Result copied!');
-    }
-    function retakeQuiz() {
-      resetState();
-      var slides = stage.querySelectorAll('.slide');
-      slides.forEach(function(s) { s.classList.remove('active'); });
-      var intro = stage.querySelector('[data-slide="intro"]');
-      if (intro) intro.classList.add('active');
-      progressFill.style.width = '0%'; qCounter.textContent = '0 / 8';
-      TROPES.forEach(function(t) { tropeScores[t] = 0; });
-      heatScore = 0; answers = []; currentSlide = 0;
-    }
+  /* ==================== TOAST ==================== */
 
-    function init() {
-      resetState();
-      buildQuestions();
-      document.getElementById('startQuizBtn').addEventListener('click', function() {
-        var intro = stage.querySelector('[data-slide="intro"]');
-        if (intro) intro.classList.remove('active');
-        currentSlide = 1;
-        renderSlide(1);
-      });
-      var intro = stage.querySelector('[data-slide="intro"]');
-      if (intro) intro.classList.add('active');
-      progressFill.style.width = '0%';
-      qCounter.textContent = '0 / 8';
-    }
-    init();
-  })();
+  var toastTimer = null;
+  function showToast(msg){
+    var toast = document.getElementById('toast');
+    toast.innerHTML = '<svg class="svg-icon" width="16" height="16"><use href="#i-check"></use></svg> ' + msg;
+    toast.className = 'toast show';
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.className='toast'; }, 2800);
+  }
+
+  /* ==================== INIT ==================== */
+
+  // Attach event listeners after DOM is ready
+  function initApp() {
+    document.getElementById('startBtn').addEventListener('click', startQuiz);
+    document.getElementById('btnBack').addEventListener('click', goBack);
+    document.getElementById('btnNext').addEventListener('click', goNext);
+    document.getElementById('btnCopyResult').addEventListener('click', copyResult);
+    document.getElementById('btnSave').addEventListener('click', toggleSaveResult);
+    document.getElementById('btnRetake').addEventListener('click', retakeQuiz);
+    
+    showScreen('screenLanding');
+  }
+
+  // Run on DOMContentLoaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+  } else {
+    initApp();
+  }
+
+})();
 </script>
+
 </body>
 </html>
