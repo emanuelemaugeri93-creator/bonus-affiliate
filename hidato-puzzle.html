@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hidato Path Studio — Solid Export Edition</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+html, body,
+[class*="section"],
+[class*="block"],
+[class*="row"],
+[class*="column"],
+[class*="wrapper"],
+[class*="container"]{
+    margin:0 !important;
+    padding:0 !important;
+    max-width:none !important;
+    box-sizing:border-box;
+}
+*,
+*::before,
+*::after{ box-sizing:border-box; }
+html, body{
+    width:100% !important;
+    height:100% !important;
+    overflow:hidden;
+    font-family:Inter, "Segoe UI", Arial, sans-serif;
+    background:#070b16;
+}
+
+:root{
+    --bg-1:#08111f;
+    --bg-2:#111b34;
+    --bg-3:#18112b;
+    --line:rgba(255,255,255,0.12);
+    --text:#f7f8fc;
+    --muted:#aab3cc;
+    --accent:#4da3ff;
+    --accent-2:#7f6bff;
+    --glow:rgba(77,163,255,0.35);
+    --paper:#ffffff;
+    --paper-ink:#101421;
+    --paper-muted:#6d7488;
+    --paper-line:#d8e2f0;
+    --given:#eaf4ff;
+    --given-2:#d8ecff;
+    --endpoint:#fff0b8;
+    --cell-bg:#ffffff;
+    --board-shell-1:#f3f8ff;
+    --board-shell-2:#eef4ff;
+    --shadow:0 20px 60px rgba(0,0,0,0.35);
+}
+
+.app-shell{
+    position:fixed !important;
+    inset:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 15% 18%, rgba(77,163,255,0.22), transparent 28%),
+        radial-gradient(circle at 82% 14%, rgba(127,107,255,0.18), transparent 26%),
+        radial-gradient(circle at 50% 100%, rgba(0,255,210,0.10), transparent 35%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 48%, var(--bg-3));
+    color:var(--text);
+}
+.app-shell::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size:40px 40px;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.1));
+    pointer-events:none;
+}
+.app-shell::after{
+    content:"";
+    position:absolute;
+    width:560px;
+    height:560px;
+    border-radius:50%;
+    right:-140px;
+    bottom:-150px;
+    background:radial-gradient(circle, rgba(255,255,255,0.08), transparent 62%);
+    filter:blur(12px);
+    pointer-events:none;
+}
+
+.workspace{
+    position:relative;
+    z-index:2;
+    display:grid;
+    grid-template-columns:360px 1fr;
+    width:100%;
+    height:100%;
+}
+
+.sidebar{
+    min-height:0;
+    background:linear-gradient(180deg, rgba(10,14,30,0.94), rgba(8,12,24,0.90));
+    backdrop-filter:blur(22px);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+}
+.sidebar-scroll{ min-height:0; overflow:auto; padding:22px; }
+.sidebar-scroll::-webkit-scrollbar,
+.preview-scroll::-webkit-scrollbar{ width:10px; height:10px; }
+.sidebar-scroll::-webkit-scrollbar-thumb,
+.preview-scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.14); border-radius:999px; }
+
+.brand{
+    position:relative;
+    padding:22px 20px 20px;
+    margin-bottom:18px;
+    border:1px solid var(--line);
+    border-radius:24px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+    box-shadow:var(--shadow);
+    overflow:hidden;
+}
+.brand::before{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    background:linear-gradient(120deg, rgba(77,163,255,0.30), rgba(127,107,255,0) 42%, rgba(255,255,255,0.04));
+    pointer-events:none;
+}
+.brand-kicker{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 12px; border-radius:999px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+    color:#dbe8ff; font-size:11px; font-weight:800; letter-spacing:0.14em; text-transform:uppercase;
+}
+.brand h1{ margin:16px 0 10px; font-size:32px; line-height:0.95; letter-spacing:-0.04em; }
+.brand h1 span{
+    background:linear-gradient(90deg, #ffffff, #8fcbff 45%, #a992ff 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.brand p{ margin:0; font-size:14px; line-height:1.6; color:var(--muted); }
+
+.panel{
+    margin-bottom:16px; padding:18px; border:1px solid var(--line); border-radius:22px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025));
+    box-shadow:0 8px 30px rgba(0,0,0,0.18);
+}
+.panel-title{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:16px; }
+.panel-title h2{ margin:0; font-size:13px; letter-spacing:0.14em; text-transform:uppercase; color:#eef4ff; }
+.panel-badge{
+    padding:6px 10px; border-radius:999px; font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+    color:#d7e9ff; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);
+}
+
+.field{ margin-bottom:14px; min-width:0; }
+.field:last-child{ margin-bottom:0; }
+.label{
+    display:block; margin-bottom:8px; font-size:11px; font-weight:800; letter-spacing:0.14em;
+    text-transform:uppercase; color:#c4d1ea;
+}
+.input, .select{
+    display:block; width:100%; min-width:0; max-width:100%; padding:12px 13px; color:#fff;
+    background:rgba(5,8,18,0.55); border:1px solid rgba(255,255,255,0.12); border-radius:12px; outline:none;
+}
+.input:focus, .select:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(77,163,255,0.18); }
+#puzzleCount{ width:100%; max-width:100%; }
+
+.grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.grid-2 > *{ min-width:0; }
+.diff-group{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.diff-btn, .primary-btn, .secondary-btn, .toggle-btn, .nav-btn, .small-btn{
+    border:none; cursor:pointer;
+    transition:transform .18s ease, filter .18s ease, opacity .18s ease, background .18s ease, border-color .18s ease;
+}
+.diff-btn{
+    padding:11px 8px; color:#dfe8ff; background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1); border-radius:12px; font-size:12px; font-weight:700;
+}
+.diff-btn.active{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#fff;
+    box-shadow:0 8px 22px var(--glow); border-color:transparent;
+}
+.diff-btn:hover, .primary-btn:hover, .secondary-btn:hover, .toggle-btn:hover, .nav-btn:hover, .small-btn:hover{
+    transform:translateY(-1px); filter:brightness(1.04);
+}
+
+.color-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.color-box{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+.color-box input[type="color"]{
+    width:100%; height:44px; padding:4px; background:rgba(5,8,18,0.55);
+    border:1px solid rgba(255,255,255,0.12); border-radius:12px; cursor:pointer;
+}
+.range-wrap{ display:flex; align-items:center; gap:10px; }
+.range-wrap input[type="range"]{ flex:1; }
+.range-chip{
+    min-width:58px; text-align:center; padding:8px 10px; border-radius:999px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#e8f2ff;
+    font-size:12px; font-weight:700;
+}
+.checkbox{ display:flex; align-items:center; gap:10px; color:#d6e2fb; font-size:14px; }
+.checkbox input{ width:16px; height:16px; accent-color:var(--accent); }
+
+.primary-btn{
+    width:100%; padding:15px 16px; border-radius:14px; font-size:14px; font-weight:800;
+    letter-spacing:0.04em; color:#fff; background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 14px 34px var(--glow);
+}
+.secondary-btn{
+    width:100%; padding:12px 14px; border-radius:14px; font-size:13px; font-weight:700; color:#e8efff;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+}
+.primary-btn:disabled, .secondary-btn:disabled, .small-btn:disabled{
+    opacity:.55; cursor:not-allowed; transform:none; filter:none;
+}
+.progress-text{ min-height:20px; font-size:13px; color:var(--muted); line-height:1.4; }
+.progress-bar{
+    margin-top:10px; height:12px; border-radius:999px; overflow:hidden;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+}
+.progress-fill{
+    width:0%; height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition:width .2s ease;
+}
+.note{ font-size:12px; color:var(--muted); line-height:1.6; }
+.swatches{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:10px; }
+.swatch{ height:32px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); cursor:pointer; }
+
+.main{ display:flex; flex-direction:column; min-width:0; min-height:0; }
+.topbar{
+    padding:18px 20px; border-bottom:1px solid var(--line);
+    background:rgba(12,17,31,0.56); backdrop-filter:blur(20px);
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+}
+.topbar-group{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
+.kpi-chip{
+    padding:10px 13px; border-radius:999px; background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12); color:#e5efff; font-size:12px; font-weight:700;
+}
+.toggle-btn, .nav-btn, .small-btn{
+    padding:11px 14px; border-radius:12px; color:#f0f4ff; background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12); font-size:13px; font-weight:700;
+}
+.toggle-btn.active{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2)); border-color:transparent;
+    box-shadow:0 10px 28px var(--glow);
+}
+.zoom-select{ width:96px; }
+.layout-select{ width:170px; }
+
+.preview-scroll{ flex:1; min-height:0; overflow:auto; padding:26px 26px 18px; }
+.preview-center{ min-height:100%; display:flex; align-items:flex-start; justify-content:center; }
+.preview-stage{ transform-origin:top center; transition:transform .18s ease; }
+.empty-state{
+    width:820px; max-width:100%; padding:34px; border-radius:28px;
+    border:1px solid rgba(255,255,255,0.14);
+    background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+    box-shadow:var(--shadow);
+}
+.empty-state h3{ margin:0 0 10px; font-size:30px; line-height:1; letter-spacing:-0.04em; }
+.empty-state p{ margin:0; color:var(--muted); line-height:1.7; }
+.navbar{
+    padding:16px 20px 20px; border-top:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    background:rgba(10,14,26,0.64); backdrop-filter:blur(18px);
+}
+.page-status{ color:#d5e4ff; font-size:13px; font-weight:700; }
+.nav-btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; filter:none; }
+.meta{ color:var(--muted); font-size:12px; line-height:1.5; text-align:right; }
+
+.sheet-pages{
+    display:grid; justify-content:center; align-content:start; gap:24px;
+    width:max-content; max-width:none; margin:0 auto;
+}
+.sheet-pages.layout-single{ grid-template-columns:max-content; }
+.sheet-pages.layout-spread{ grid-template-columns:repeat(2, max-content); }
+.sheet-pages.layout-strip{ grid-template-columns:repeat(3, max-content); }
+.sheet-pages.layout-grid{ grid-template-columns:repeat(2, max-content); }
+
+.page-item{
+    --paper-scale:1;
+    width:calc(820px * var(--paper-scale));
+    height:calc(1080px * var(--paper-scale));
+    display:flex; align-items:flex-start; justify-content:flex-start; overflow:visible; flex:0 0 auto;
+}
+.page-item > .paper{
+    width:820px; min-height:1080px; margin:0;
+    transform:scale(var(--paper-scale)); transform-origin:top left; flex:0 0 auto;
+}
+.sheet-pages.layout-single .page-item{ --paper-scale:1; }
+.sheet-pages.layout-spread .page-item{ --paper-scale:0.48; }
+.sheet-pages.layout-strip .page-item{ --paper-scale:0.31; }
+.sheet-pages.layout-grid .page-item{ --paper-scale:0.40; }
+
+.paper{
+    width:820px; min-height:1080px; position:relative; overflow:hidden;
+    color:var(--paper-ink); background:var(--paper); border-radius:30px;
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.36),
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 0 0 12px rgba(255,255,255,0.02);
+    padding:38px 38px 34px;
+}
+.paper.fade-in{ animation:fadeIn .28s ease; }
+@keyframes fadeIn{ from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+.paper::before{
+    content:""; position:absolute; inset:0;
+    background:var(--paper-pattern, none); opacity:var(--pattern-opacity, .28); pointer-events:none;
+}
+.paper-inner{ position:relative; z-index:2; }
+.paper-top-strip{
+    height:10px; border-radius:999px; margin-bottom:18px;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    box-shadow:0 12px 28px rgba(0,0,0,0.12);
+}
+.page-head{ position:relative; margin-bottom:18px; }
+.head-badge{
+    display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border-radius:999px;
+    font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.16em; color:#fff;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 12px 28px rgba(0,0,0,0.14);
+}
+.page-title{ margin:16px 0 8px; font-size:36px; line-height:0.98; letter-spacing:-0.045em; color:var(--paper-ink); }
+.page-subtitle{ margin:0; color:var(--paper-muted); font-size:14px; line-height:1.6; }
+
+.header-ribbon .title-card, .header-capsule .title-card,
+.header-split .title-card, .header-classic .title-card{ margin-top:16px; }
+.title-card{ border-radius:24px; padding:18px 20px; }
+.header-ribbon .title-card{
+    background:linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,255,255,0.72));
+    border:1px solid rgba(0,0,0,0.06); box-shadow:0 14px 30px rgba(0,0,0,0.06);
+}
+.header-capsule .title-card{
+    background:#fff; border:2px solid rgba(0,0,0,0.08); box-shadow:inset 0 0 0 6px rgba(0,0,0,0.03);
+}
+.header-classic .title-card{
+    background:transparent; border-top:3px solid var(--accent); border-bottom:1px solid var(--paper-line);
+    border-radius:0; padding-left:0; padding-right:0;
+}
+.header-split .title-card{
+    background:
+        linear-gradient(90deg, rgba(0,0,0,0.04) 0 36%, transparent 36%),
+        linear-gradient(180deg, #ffffff, rgba(0,0,0,0.02));
+    border:1px solid rgba(0,0,0,0.06);
+}
+.header-split .page-title, .header-split .page-subtitle{ padding-left:20px; }
+
+.board-shell{
+    position:relative; margin-top:20px; border-radius:28px; padding:26px;
+    background:linear-gradient(180deg, var(--board-shell-1), var(--board-shell-2));
+    border:1px solid var(--paper-line);
+}
+.board-shell::after{
+    content:""; position:absolute; inset:12px; border-radius:20px;
+    border:1px dashed rgba(0,0,0,0.12); pointer-events:none; opacity:.55;
+}
+.board-wrap{
+    display:flex; justify-content:center; align-items:center; min-height:620px; position:relative; z-index:2;
+}
+.board{ display:grid; gap:0; justify-content:center; align-content:center; }
+.cell{
+    position:relative; display:flex; align-items:center; justify-content:center; font-weight:800;
+    color:var(--paper-ink); background:var(--cell-bg); border:1px solid var(--paper-line);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.55);
+}
+.cell.blank{ color:transparent; }
+.cell.given{ background:linear-gradient(180deg, var(--given), var(--given-2)); border-color:var(--paper-line); }
+.cell.endpoint{ background:linear-gradient(180deg, var(--endpoint), #fff); border-color:#e4c55f; }
+.cell.void{ background:transparent; border:none; box-shadow:none; }
+.cell-shape-rounded .cell{ border-radius:14px; }
+.cell-shape-pill .cell{ border-radius:20px; }
+.cell-shape-soft .cell{ border-radius:8px; }
+.cell-shape-square .cell{ border-radius:0; }
+
+.page-footer{
+    position:absolute; left:38px; right:38px; bottom:18px;
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    color:var(--paper-muted); font-size:12px; border-top:1px solid var(--paper-line); padding-top:10px;
+}
+.footer-chip{
+    padding:6px 10px; border-radius:999px; background:rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.06); color:var(--paper-ink); font-weight:700;
+}
+
+.border-glow{
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.32),
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 0 0 10px rgba(255,255,255,0.05),
+        0 0 80px rgba(255,255,255,0.05);
+}
+.border-frame{
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.32),
+        inset 0 0 0 2px rgba(0,0,0,0.06),
+        inset 0 0 0 12px rgba(255,255,255,0.35);
+}
+.border-double{
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.32),
+        0 0 0 1px rgba(0,0,0,0.06),
+        0 0 0 8px #fff,
+        0 0 0 9px rgba(0,0,0,0.08);
+}
+.border-dashed{ box-shadow:0 24px 70px rgba(0,0,0,0.32); }
+.border-dashed::after{
+    content:""; position:absolute; inset:12px; border:2px dashed rgba(0,0,0,0.14);
+    border-radius:22px; pointer-events:none;
+}
+.border-clean{ box-shadow:0 24px 70px rgba(0,0,0,0.32), 0 0 0 1px rgba(0,0,0,0.06); }
+
+.pattern-none{ --paper-pattern:none; --pattern-opacity:0; }
+.pattern-dots{
+    --paper-pattern: radial-gradient(circle at 2px 2px, rgba(0,0,0,0.08) 1.6px, transparent 2px);
+    --pattern-opacity:.22; background-size:26px 26px;
+}
+.pattern-grid{
+    --paper-pattern:
+        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+    --pattern-opacity:.20; background-size:30px 30px;
+}
+.pattern-stars{
+    --paper-pattern:
+        radial-gradient(circle at 20% 22%, rgba(0,0,0,0.08) 2px, transparent 3px),
+        radial-gradient(circle at 72% 28%, rgba(0,0,0,0.06) 1.8px, transparent 3px),
+        radial-gradient(circle at 52% 68%, rgba(0,0,0,0.08) 1.8px, transparent 3px),
+        radial-gradient(circle at 86% 78%, rgba(0,0,0,0.06) 2px, transparent 3px);
+    --pattern-opacity:.24; background-size:160px 160px;
+}
+.pattern-confetti{
+    --paper-pattern:
+        radial-gradient(circle at 12% 16%, rgba(0,0,0,0.08) 4px, transparent 5px),
+        radial-gradient(circle at 68% 18%, rgba(0,0,0,0.08) 4px, transparent 5px),
+        radial-gradient(circle at 24% 74%, rgba(0,0,0,0.06) 3px, transparent 4px),
+        radial-gradient(circle at 78% 66%, rgba(0,0,0,0.06) 3px, transparent 4px),
+        linear-gradient(45deg, transparent 48%, rgba(0,0,0,0.05) 48% 52%, transparent 52%),
+        linear-gradient(-45deg, transparent 48%, rgba(0,0,0,0.05) 48% 52%, transparent 52%);
+    --pattern-opacity:.18; background-size:130px 130px;
+}
+
+.answer-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; }
+.answer-card{
+    border-radius:22px; padding:16px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,1));
+    border:1px solid var(--paper-line); box-shadow:0 10px 24px rgba(0,0,0,0.05);
+}
+.answer-card h4{ margin:0 0 12px; font-size:15px; letter-spacing:-0.02em; }
+.answer-mini{ display:flex; justify-content:center; align-items:center; }
+.answer-board .cell{ font-weight:700; }
+.answer-style-dark .answer-card{
+    background:linear-gradient(180deg, #10172c, #17213d); border-color:rgba(255,255,255,0.08); color:#fff;
+}
+.answer-style-dark .answer-board .cell{ background:#fff; color:#101421; }
+.answer-style-badges .answer-card{ position:relative; overflow:hidden; }
+.answer-style-badges .answer-card::before{
+    content:"SOLVED"; position:absolute; top:12px; right:-28px; transform:rotate(32deg);
+    padding:6px 34px; background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#fff; font-size:10px; letter-spacing:0.16em; font-weight:800;
+}
+.answer-style-clean .answer-card{ border-radius:12px; box-shadow:none; }
+
+.export-deck{ position:absolute; left:-100000px; top:0; padding:24px; background:#fff; z-index:-1; }
+.export-sheet-wrap{ padding:24px; background:#fff; }
+
+@media (max-width: 1180px){ .workspace{ grid-template-columns:330px 1fr; } }
+@media (max-width: 980px){
+    .workspace{ grid-template-columns:1fr; }
+    .sidebar{ border-right:none; border-bottom:1px solid var(--line); max-height:48vh; }
+}
+@media (max-width: 760px){
+    .topbar,.navbar{ padding-left:14px; padding-right:14px; }
+    .preview-scroll{ padding:14px; }
+    .answer-grid{ grid-template-columns:1fr; }
+    .grid-2,.color-row,.diff-group{ grid-template-columns:1fr 1fr; }
+    .sheet-pages.layout-spread .page-item{ --paper-scale:0.33; }
+    .sheet-pages.layout-strip .page-item{ --paper-scale:0.22; }
+    .sheet-pages.layout-grid .page-item{ --paper-scale:0.28; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div class="workspace">
+        <aside class="sidebar">
+            <div class="sidebar-scroll">
+
+                <div class="brand">
+                    <div class="brand-kicker">Premium Bonus Studio</div>
+                    <h1><span>Hidato Path Studio</span></h1>
+                    <p>Create colorful irregular number-path worksheets, switch styles live, preview multi-page layouts, and export with solid, faithful colors.</p>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><h2>Generator</h2><div class="panel-badge">Core Engine</div></div>
+
+                    <div class="field">
+                        <label class="label" for="puzzleCount">Puzzle Count</label>
+                        <input class="input" id="puzzleCount" type="number" min="1" max="40" value="6" />
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="shapeSelect">Grid Shape</label>
+                        <select class="select" id="shapeSelect">
+                            <option value="square">Square</option>
+                            <option value="diamond">Diamond</option>
+                            <option value="hex">Hexagon Approximation</option>
+                            <option value="cross">Cross / Plus Shape</option>
+                            <option value="freeform">Free-form Irregular</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="sizeSelect">Grid Size</label>
+                        <select class="select" id="sizeSelect">
+                            <option value="small">Small (~25 cells)</option>
+                            <option value="medium" selected>Medium (~49 cells)</option>
+                            <option value="large">Large (~81 cells)</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <span class="label">Difficulty</span>
+                        <div class="diff-group" id="difficultyGroup">
+                            <button type="button" class="diff-btn" data-diff="Easy">Easy</button>
+                            <button type="button" class="diff-btn active" data-diff="Medium">Medium</button>
+                            <button type="button" class="diff-btn" data-diff="Hard">Hard</button>
+                            <button type="button" class="diff-btn" data-diff="Expert">Expert</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><h2>Style Studio</h2><div class="panel-badge">Wow Mode</div></div>
+
+                    <div class="field">
+                        <label class="label" for="presetSelect">Visual Preset</label>
+                        <select class="select" id="presetSelect">
+                            <option value="neon">Electric Neon</option>
+                            <option value="royal">Royal Gold</option>
+                            <option value="candy">Candy Classroom</option>
+                            <option value="ocean">Ocean Pop</option>
+                            <option value="midnight">Midnight Prism</option>
+                        </select>
+                        <div class="swatches">
+                            <div class="swatch" data-preset="neon" style="background:linear-gradient(135deg,#2f86ff,#8b5cf6);"></div>
+                            <div class="swatch" data-preset="royal" style="background:linear-gradient(135deg,#f59e0b,#8b5cf6);"></div>
+                            <div class="swatch" data-preset="candy" style="background:linear-gradient(135deg,#ff5fb2,#8b5cf6);"></div>
+                            <div class="swatch" data-preset="ocean" style="background:linear-gradient(135deg,#00c6ff,#00e0a4);"></div>
+                            <div class="swatch" data-preset="midnight" style="background:linear-gradient(135deg,#6f7bf7,#1f3358);"></div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="bookTitleInput">Worksheet Title</label>
+                        <input class="input" id="bookTitleInput" type="text" value="Hidato Path Challenge" />
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="bookSubtitleInput">Subtitle / Tagline</label>
+                        <input class="input" id="bookSubtitleInput" type="text" value="Irregular Number Path Puzzles for Sharp Minds" />
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="label" for="headerStyleSelect">Header Style</label>
+                            <select class="select" id="headerStyleSelect">
+                                <option value="ribbon">Ribbon</option>
+                                <option value="capsule">Capsule</option>
+                                <option value="split">Split Banner</option>
+                                <option value="classic">Classic Editorial</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="borderStyleSelect">Page Border</label>
+                            <select class="select" id="borderStyleSelect">
+                                <option value="glow">Glow Frame</option>
+                                <option value="frame">Premium Frame</option>
+                                <option value="double">Double Border</option>
+                                <option value="dashed">Dashed Studio</option>
+                                <option value="clean">Clean Minimal</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="label" for="cellShapeSelect">Cell Shape</label>
+                            <select class="select" id="cellShapeSelect">
+                                <option value="rounded">Rounded</option>
+                                <option value="square">Square</option>
+                                <option value="pill">Pill Soft</option>
+                                <option value="soft">Soft Corner</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="patternSelect">Background Pattern</label>
+                            <select class="select" id="patternSelect">
+                                <option value="dots">Dots</option>
+                                <option value="grid">Grid</option>
+                                <option value="stars">Stars</option>
+                                <option value="confetti">Confetti</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="answerStyleSelect">Answer Key Style</label>
+                        <select class="select" id="answerStyleSelect">
+                            <option value="badges">Badge Cards</option>
+                            <option value="dark">Dark Cards</option>
+                            <option value="clean">Clean Compact</option>
+                        </select>
+                    </div>
+
+                    <div class="color-row">
+                        <div class="color-box">
+                            <label class="label" for="accentColor">Primary Accent</label>
+                            <input id="accentColor" type="color" value="#4da3ff" />
+                        </div>
+                        <div class="color-box">
+                            <label class="label" for="accentColor2">Secondary Accent</label>
+                            <input id="accentColor2" type="color" value="#7f6bff" />
+                        </div>
+                    </div>
+
+                    <div class="color-row" style="margin-top:10px;">
+                        <div class="color-box">
+                            <label class="label" for="paperColor">Worksheet Paper</label>
+                            <input id="paperColor" type="color" value="#ffffff" />
+                        </div>
+                        <div class="color-box">
+                            <label class="label" for="inkColor">Worksheet Text</label>
+                            <input id="inkColor" type="color" value="#101421" />
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-top:12px;">
+                        <label class="label" for="boardTintRange">Puzzle Board Tint</label>
+                        <div class="range-wrap">
+                            <input id="boardTintRange" type="range" min="0" max="28" value="10" />
+                            <div class="range-chip" id="boardTintChip">10%</div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="checkbox">
+                            <input type="checkbox" id="footerToggle" checked />
+                            <span>Show footer page numbers</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><h2>Output</h2><div class="panel-badge">Solid Export</div></div>
+
+                    <button class="primary-btn" id="generateBtn" type="button">Generate 6 Puzzles</button>
+                    <button class="secondary-btn" id="applyStylesBtn" type="button" style="margin-top:10px;">Apply Style Changes</button>
+
+                    <div style="margin-top:14px;">
+                        <div class="progress-text" id="progressText">Ready.</div>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    </div>
+
+                    <div class="note" style="margin-top:12px;">
+                        Export now inlines solid colors before capture (no more checkerboard cells) and print pages are sized exactly to each sheet's real aspect ratio (no more cropping).
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <div class="topbar-group">
+                    <div class="kpi-chip" id="kpiDeck">No deck generated</div>
+                    <div class="kpi-chip" id="kpiStyle">Preset: Electric Neon</div>
+                </div>
+
+                <div class="topbar-group">
+                    <button class="toggle-btn active" id="puzzleViewBtn" type="button">Puzzle View</button>
+                    <button class="toggle-btn" id="answerViewBtn" type="button">Answer View</button>
+
+                    <select class="select layout-select" id="layoutSelect">
+                        <option value="single">Single Page</option>
+                        <option value="spread">2-Page Spread</option>
+                        <option value="strip">3-Up Strip</option>
+                        <option value="grid">2x2 Grid</option>
+                    </select>
+
+                    <select class="select zoom-select" id="zoomSelect">
+                        <option value="0.1">10%</option>
+                        <option value="0.2">20%</option>
+                        <option value="0.35">35%</option>
+                        <option value="0.5">50%</option>
+                        <option value="0.7">70%</option>
+                        <option value="0.85">85%</option>
+                        <option value="1" selected>100%</option>
+                        <option value="1.15">115%</option>
+                        <option value="1.3">130%</option>
+                    </select>
+
+                    <button class="small-btn" id="exactPdfBtn" type="button">Download Exact PDF</button>
+                    <button class="small-btn" id="exactPrintBtn" type="button">Exact Print</button>
+                </div>
+            </div>
+
+            <div class="preview-scroll">
+                <div class="preview-center">
+                    <div class="preview-stage" id="previewStage">
+                        <div class="empty-state" id="emptyState">
+                            <h3>Premium live preview</h3>
+                            <p>Generate a batch, switch presets, recolor the worksheets, choose the page arrangement, and export with the same solid colors you see here.</p>
+                        </div>
+                        <div id="screenPreview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navbar">
+                <div class="topbar-group">
+                    <button class="nav-btn" id="prevBtn" type="button">Previous</button>
+                    <button class="nav-btn" id="nextBtn" type="button">Next</button>
+                </div>
+                <div class="page-status" id="pageStatus">Sheet 0 / 0</div>
+                <div class="meta" id="deckMeta">No deck generated yet.</div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="exportDeck" class="export-deck"></div>
+
+<script>
+(function(){
+    var EXPORT_SCALE = 3;
+    var state = {
+        difficulty: "Medium",
+        currentView: "puzzle",
+        currentPage: 0,
+        zoom: 1,
+        previewLayout: "single",
+        generating: false,
+        exporting: false,
+        puzzles: [],
+        puzzlePages: [],
+        answerPages: [],
+        footerNumbers: true,
+        style: {
+            preset: "neon",
+            title: "Hidato Path Challenge",
+            subtitle: "Irregular Number Path Puzzles for Sharp Minds",
+            headerStyle: "ribbon",
+            borderStyle: "glow",
+            cellShape: "rounded",
+            pattern: "dots",
+            answerStyle: "badges",
+            accent1: "#4da3ff",
+            accent2: "#7f6bff",
+            paper: "#ffffff",
+            ink: "#101421",
+            boardTint: 10
+        }
+    };
+
+    var difficultyPercents = { "Easy": 0.35, "Medium": 0.25, "Hard": 0.15, "Expert": 0.08 };
+
+    var sizeProfiles = {
+        small: {
+            square: { side: 5 }, diamond: { radius: 3 }, hex: { rows: [3,4,5,5,4,4,3] },
+            cross: { base: 7, thickness: 2 }, freeform: { base: 7, target: 25 }
+        },
+        medium: {
+            square: { side: 7 }, diamond: { radius: 4 }, hex: { rows: [4,5,6,7,7,6,5,5,4] },
+            cross: { base: 9, thickness: 3 }, freeform: { base: 9, target: 49 }
+        },
+        large: {
+            square: { side: 9 }, diamond: { radius: 6 }, hex: { rows: [5,6,7,8,9,9,8,7,7,6,5] },
+            cross: { base: 11, thickness: 4 }, freeform: { base: 11, target: 81 }
+        }
+    };
+
+    var shapeNames = { square:"Square", diamond:"Diamond", hex:"Hexagon Approximation", cross:"Cross / Plus", freeform:"Free-form Irregular" };
+    var sizeNames = { small:"Small", medium:"Medium", large:"Large" };
+
+    var presets = {
+        neon: {
+            label:"Electric Neon", accent1:"#4da3ff", accent2:"#7f6bff", paper:"#ffffff", ink:"#101421",
+            headerStyle:"ribbon", borderStyle:"glow", cellShape:"rounded", pattern:"dots", answerStyle:"badges",
+            boardTint:10, shell:{ bg1:"#08111f", bg2:"#111b34", bg3:"#18112b", text:"#f7f8fc", muted:"#aab3cc" }
+        },
+        royal: {
+            label:"Royal Gold", accent1:"#f59e0b", accent2:"#7c3aed", paper:"#fffdfa", ink:"#1a1330",
+            headerStyle:"split", borderStyle:"double", cellShape:"soft", pattern:"stars", answerStyle:"dark",
+            boardTint:14, shell:{ bg1:"#130d1b", bg2:"#24132d", bg3:"#5b2d0e", text:"#fff8ee", muted:"#dac9b2" }
+        },
+        candy: {
+            label:"Candy Classroom", accent1:"#ff5fb2", accent2:"#8b5cf6", paper:"#ffffff", ink:"#23153a",
+            headerStyle:"capsule", borderStyle:"frame", cellShape:"pill", pattern:"confetti", answerStyle:"badges",
+            boardTint:18, shell:{ bg1:"#1d1231", bg2:"#30184d", bg3:"#501d42", text:"#fff7fd", muted:"#d9bfd3" }
+        },
+        ocean: {
+            label:"Ocean Pop", accent1:"#00c6ff", accent2:"#00d68f", paper:"#fbffff", ink:"#102436",
+            headerStyle:"ribbon", borderStyle:"frame", cellShape:"rounded", pattern:"grid", answerStyle:"clean",
+            boardTint:12, shell:{ bg1:"#071925", bg2:"#0d3040", bg3:"#12414a", text:"#f4ffff", muted:"#bdd7dd" }
+        },
+        midnight: {
+            label:"Midnight Prism", accent1:"#6f7bf7", accent2:"#2fd4ff", paper:"#fdfdff", ink:"#12162a",
+            headerStyle:"classic", borderStyle:"clean", cellShape:"square", pattern:"none", answerStyle:"dark",
+            boardTint:8, shell:{ bg1:"#0a0d18", bg2:"#151a33", bg3:"#1f3358", text:"#f5f7ff", muted:"#b9c0da" }
+        }
+    };
+
+    function init(){
+        bindUI();
+        applyPresetToState("neon");
+        syncControlsFromState();
+        applyShellTheme();
+        updateGenerateButtonLabel();
+        updateZoom();
+        updateStyleKPI();
+        updateNavState();
+    }
+
+    function bindUI(){
+        var diffButtons = document.querySelectorAll(".diff-btn");
+        var i;
+        for(i=0;i<diffButtons.length;i++){
+            diffButtons[i].onclick = function(){ setDifficulty(this.getAttribute("data-diff")); };
+        }
+
+        document.getElementById("puzzleCount").oninput = updateGenerateButtonLabel;
+        document.getElementById("generateBtn").onclick = generateBatch;
+        document.getElementById("applyStylesBtn").onclick = function(){
+            readStyleControls(); applyShellTheme(); rerenderAll();
+        };
+
+        document.getElementById("footerToggle").onchange = function(){
+            state.footerNumbers = !!this.checked; rerenderAll();
+        };
+
+        document.getElementById("zoomSelect").onchange = function(){
+            state.zoom = parseFloat(this.value || "1"); updateZoom();
+        };
+
+        document.getElementById("layoutSelect").onchange = function(){
+            state.previewLayout = this.value || "single"; state.currentPage = 0; rerenderAll();
+        };
+
+        document.getElementById("puzzleViewBtn").onclick = function(){
+            state.currentView = "puzzle"; state.currentPage = 0; updateViewButtons(); renderPreview();
+        };
+        document.getElementById("answerViewBtn").onclick = function(){
+            state.currentView = "answer"; state.currentPage = 0; updateViewButtons(); renderPreview();
+        };
+
+        document.getElementById("prevBtn").onclick = function(){
+            if(state.currentPage > 0){ state.currentPage--; renderPreview(); }
+        };
+        document.getElementById("nextBtn").onclick = function(){
+            var groups = getCurrentGroups();
+            if(state.currentPage < groups.length - 1){ state.currentPage++; renderPreview(); }
+        };
+
+        document.getElementById("exactPdfBtn").onclick = downloadExactPDF;
+        document.getElementById("exactPrintBtn").onclick = exactPrint;
+
+        document.getElementById("presetSelect").onchange = function(){
+            applyPresetToState(this.value); syncControlsFromState(); applyShellTheme(); rerenderAll();
+        };
+
+        var swatches = document.querySelectorAll(".swatch");
+        for(i=0;i<swatches.length;i++){
+            swatches[i].onclick = function(){
+                var preset = this.getAttribute("data-preset");
+                document.getElementById("presetSelect").value = preset;
+                applyPresetToState(preset); syncControlsFromState(); applyShellTheme(); rerenderAll();
+            };
+        }
+
+        document.getElementById("boardTintRange").oninput = function(){
+            document.getElementById("boardTintChip").innerHTML = this.value + "%";
+        };
+
+        var liveStyleIds = [
+            "bookTitleInput","bookSubtitleInput","headerStyleSelect","borderStyleSelect",
+            "cellShapeSelect","patternSelect","answerStyleSelect","accentColor",
+            "accentColor2","paperColor","inkColor","boardTintRange"
+        ];
+        for(i=0;i<liveStyleIds.length;i++){ attachLivePreview(liveStyleIds[i]); }
+    }
+
+    function attachLivePreview(id){
+        var el = document.getElementById(id);
+        if(!el){ return; }
+        el.oninput = function(){ readStyleControls(); applyShellTheme(); rerenderAll(); };
+        el.onchange = function(){ readStyleControls(); applyShellTheme(); rerenderAll(); };
+    }
+
+    function setDifficulty(diff){
+        state.difficulty = diff;
+        var buttons = document.querySelectorAll(".diff-btn");
+        for(var i=0;i<buttons.length;i++){
+            buttons[i].className = buttons[i].getAttribute("data-diff") === diff ? "diff-btn active" : "diff-btn";
+        }
+    }
+
+    function applyPresetToState(name){
+        var p = presets[name] || presets.neon;
+        state.style.preset = name;
+        state.style.title = state.style.title || "Hidato Path Challenge";
+        state.style.subtitle = state.style.subtitle || "Irregular Number Path Puzzles for Sharp Minds";
+        state.style.headerStyle = p.headerStyle;
+        state.style.borderStyle = p.borderStyle;
+        state.style.cellShape = p.cellShape;
+        state.style.pattern = p.pattern;
+        state.style.answerStyle = p.answerStyle;
+        state.style.accent1 = p.accent1;
+        state.style.accent2 = p.accent2;
+        state.style.paper = p.paper;
+        state.style.ink = p.ink;
+        state.style.boardTint = p.boardTint;
+        state.shell = p.shell;
+    }
+
+    function syncControlsFromState(){
+        document.getElementById("presetSelect").value = state.style.preset;
+        document.getElementById("bookTitleInput").value = state.style.title;
+        document.getElementById("bookSubtitleInput").value = state.style.subtitle;
+        document.getElementById("headerStyleSelect").value = state.style.headerStyle;
+        document.getElementById("borderStyleSelect").value = state.style.borderStyle;
+        document.getElementById("cellShapeSelect").value = state.style.cellShape;
+        document.getElementById("patternSelect").value = state.style.pattern;
+        document.getElementById("answerStyleSelect").value = state.style.answerStyle;
+        document.getElementById("accentColor").value = state.style.accent1;
+        document.getElementById("accentColor2").value = state.style.accent2;
+        document.getElementById("paperColor").value = state.style.paper;
+        document.getElementById("inkColor").value = state.style.ink;
+        document.getElementById("boardTintRange").value = state.style.boardTint;
+        document.getElementById("boardTintChip").innerHTML = state.style.boardTint + "%";
+        document.getElementById("layoutSelect").value = state.previewLayout;
+    }
+
+    function readStyleControls(){
+        state.style.title = document.getElementById("bookTitleInput").value || "Hidato Path Challenge";
+        state.style.subtitle = document.getElementById("bookSubtitleInput").value || "Irregular Number Path Puzzles for Sharp Minds";
+        state.style.headerStyle = document.getElementById("headerStyleSelect").value;
+        state.style.borderStyle = document.getElementById("borderStyleSelect").value;
+        state.style.cellShape = document.getElementById("cellShapeSelect").value;
+        state.style.pattern = document.getElementById("patternSelect").value;
+        state.style.answerStyle = document.getElementById("answerStyleSelect").value;
+        state.style.accent1 = document.getElementById("accentColor").value;
+        state.style.accent2 = document.getElementById("accentColor2").value;
+        state.style.paper = document.getElementById("paperColor").value;
+        state.style.ink = document.getElementById("inkColor").value;
+        state.style.boardTint = parseInt(document.getElementById("boardTintRange").value, 10) || 0;
+        state.footerNumbers = !!document.getElementById("footerToggle").checked;
+        state.previewLayout = document.getElementById("layoutSelect").value || "single";
+        updateStyleKPI();
+    }
+
+    function applyShellTheme(){
+        var root = document.documentElement;
+        var shell = state.shell || presets[state.style.preset].shell;
+        root.style.setProperty("--bg-1", shell.bg1);
+        root.style.setProperty("--bg-2", shell.bg2);
+        root.style.setProperty("--bg-3", shell.bg3);
+        root.style.setProperty("--text", shell.text);
+        root.style.setProperty("--muted", shell.muted);
+        root.style.setProperty("--accent", state.style.accent1);
+        root.style.setProperty("--accent-2", state.style.accent2);
+        root.style.setProperty("--glow", hexToRgba(state.style.accent1, 0.36));
+    }
+
+    function updateStyleKPI(){
+        var presetName = presets[state.style.preset] ? presets[state.style.preset].label : state.style.preset;
+        document.getElementById("kpiStyle").innerHTML = "Preset: " + presetName;
+    }
+
+    function updateGenerateButtonLabel(){
+        var count = parseInt(document.getElementById("puzzleCount").value, 10);
+        if(isNaN(count) || count < 1){ count = 1; }
+        if(count > 40){ count = 40; }
+        document.getElementById("generateBtn").innerHTML = "Generate " + count + " Puzzles";
+    }
+
+    function updateZoom(){
+        document.getElementById("previewStage").style.transform = "scale(" + state.zoom + ")";
+    }
+
+    function setProgress(text, pct){
+        document.getElementById("progressText").innerHTML = text;
+        document.getElementById("progressFill").style.width = pct + "%";
+    }
+
+    function updateDeckKPI(){
+        if(!state.puzzles.length){
+            document.getElementById("kpiDeck").innerHTML = "No deck generated";
+        }else{
+            document.getElementById("kpiDeck").innerHTML = state.puzzles.length + " puzzles · " + (state.puzzlePages.length + state.answerPages.length) + " pages";
+        }
+    }
+
+    function disableExportButtons(flag){
+        document.getElementById("exactPdfBtn").disabled = flag;
+        document.getElementById("exactPrintBtn").disabled = flag;
+    }
+
+    function generateBatch(){
+        if(state.generating){ return; }
+        var count = parseInt(document.getElementById("puzzleCount").value, 10);
+        if(isNaN(count) || count < 1){ count = 1; }
+        if(count > 40){ count = 40; }
+
+        readStyleControls();
+        var shape = document.getElementById("shapeSelect").value;
+        var size = document.getElementById("sizeSelect").value;
+
+        state.generating = true;
+        state.puzzles = [];
+        state.puzzlePages = [];
+        state.answerPages = [];
+        state.currentView = "puzzle";
+        state.currentPage = 0;
+        updateViewButtons();
+        document.getElementById("generateBtn").disabled = true;
+        document.getElementById("emptyState").style.display = "none";
+        document.getElementById("screenPreview").innerHTML = "";
+        document.getElementById("exportDeck").innerHTML = "";
+        setProgress("Preparing premium worksheet deck...", 2);
+
+        var index = 0;
+        function nextStep(){
+            if(index >= count){
+                state.generating = false;
+                document.getElementById("generateBtn").disabled = false;
+                buildPages();
+                rerenderAll();
+                setProgress("Generated " + state.puzzles.length + " puzzle" + (state.puzzles.length === 1 ? "" : "s") + ".", 100);
+                return;
+            }
+            setProgress("Generating puzzle " + (index + 1) + " of " + count + "...", Math.max(4, Math.round((index / count) * 100)));
+            setTimeout(function(){
+                var puzzle = buildSinglePuzzle(shape, size, state.difficulty, index + 1);
+                if(puzzle){ state.puzzles.push(puzzle); }
+                index++;
+                nextStep();
+            }, 10);
+        }
+        nextStep();
+    }
+
+    function buildSinglePuzzle(shape, size, difficulty, puzzleNumber){
+        var attempts = 0;
+        while(attempts < 24){
+            attempts++;
+            var mask = createMask(shape, size);
+            var graph = buildGraph(mask);
+            if(graph.cells.length < 6){ continue; }
+            var path = findHamiltonianPath(graph);
+            if(!path){ continue; }
+            var puzzle = buildPuzzleFromPath(graph, path, shape, size, difficulty, puzzleNumber);
+            if(!puzzle){ continue; }
+            return puzzle;
+        }
+        var fallbackMask = createMask("square", size);
+        var fallbackGraph = buildGraph(fallbackMask);
+        var fallbackPath = findHamiltonianPath(fallbackGraph);
+        if(fallbackPath){
+            return buildPuzzleFromPath(fallbackGraph, fallbackPath, "square", size, difficulty, puzzleNumber);
+        }
+        return null;
+    }
+
+    function createMask(shape, sizeKey){
+        var profile = sizeProfiles[sizeKey][shape];
+        if(shape === "square"){ return buildSquareMask(profile.side); }
+        if(shape === "diamond"){ return buildDiamondMask(profile.radius); }
+        if(shape === "hex"){ return buildHexMask(profile.rows); }
+        if(shape === "cross"){ return buildCrossMask(profile.base, profile.thickness); }
+        return buildFreeformMask(profile.base, profile.target);
+    }
+
+    function buildSquareMask(side){
+        var mask = [];
+        for(var r=0;r<side;r++){
+            var row = [];
+            for(var c=0;c<side;c++){ row.push(true); }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildDiamondMask(radius){
+        var side = radius * 2 + 1;
+        var center = radius;
+        var mask = [];
+        for(var r=0;r<side;r++){
+            var row = [];
+            for(var c=0;c<side;c++){ row.push(Math.abs(r - center) + Math.abs(c - center) <= radius); }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildHexMask(rowLengths){
+        var rows = rowLengths.length;
+        var maxCols = 0;
+        var i;
+        for(i=0;i<rowLengths.length;i++){ if(rowLengths[i] > maxCols){ maxCols = rowLengths[i]; } }
+        var mask = [];
+        for(i=0;i<rows;i++){
+            var len = rowLengths[i];
+            var start = Math.floor((maxCols - len) / 2);
+            var row = [];
+            for(var c=0;c<maxCols;c++){ row.push(c >= start && c < start + len); }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildCrossMask(base, thickness){
+        var start = Math.floor((base - thickness) / 2);
+        var end = start + thickness - 1;
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){ row.push((r >= start && r <= end) || (c >= start && c <= end)); }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildFreeformMask(base, target){
+        var mask = [];
+        var r, c;
+        for(r=0;r<base;r++){
+            var row = [];
+            for(c=0;c<base;c++){ row.push(false); }
+            mask.push(row);
+        }
+        var centerR = Math.floor(base / 2);
+        var centerC = Math.floor(base / 2);
+        mask[centerR][centerC] = true;
+        var validCount = 1;
+        var frontier = [[centerR, centerC]];
+        var dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+
+        while(validCount < target){
+            var source = frontier[Math.floor(Math.random() * frontier.length)];
+            var orderedDirs = shuffle(dirs.slice(0));
+            var added = false;
+            for(var i=0;i<orderedDirs.length;i++){
+                r = source[0] + orderedDirs[i][0];
+                c = source[1] + orderedDirs[i][1];
+                if(r >= 0 && r < base && c >= 0 && c < base && !mask[r][c]){
+                    mask[r][c] = true;
+                    frontier.push([r,c]);
+                    validCount++;
+                    added = true;
+                    break;
+                }
+            }
+            if(!added){ frontier.push([Math.floor(Math.random() * base), Math.floor(Math.random() * base)]); }
+        }
+        return mask;
+    }
+
+    function buildGraph(mask){
+        var rows = mask.length;
+        var cols = mask[0].length;
+        var idMatrix = [];
+        var cells = [];
+        var id = 0;
+        var r, c;
+
+        for(r=0;r<rows;r++){
+            idMatrix[r] = [];
+            for(c=0;c<cols;c++){
+                if(mask[r][c]){
+                    idMatrix[r][c] = id;
+                    cells.push({ id:id, r:r, c:c });
+                    id++;
+                }else{ idMatrix[r][c] = -1; }
+            }
+        }
+
+        var neighbors = [];
+        for(r=0;r<cells.length;r++){ neighbors[r] = []; }
+
+        var dirs = [-1,0,1];
+        for(r=0;r<cells.length;r++){
+            var cell = cells[r];
+            for(var i=0;i<dirs.length;i++){
+                for(var j=0;j<dirs.length;j++){
+                    var dr = dirs[i];
+                    var dc = dirs[j];
+                    if(dr === 0 && dc === 0){ continue; }
+                    var nr = cell.r + dr;
+                    var nc = cell.c + dc;
+                    if(nr >= 0 && nr < rows && nc >= 0 && nc < cols){
+                        var nid = idMatrix[nr][nc];
+                        if(nid !== -1){ neighbors[cell.id].push(nid); }
+                    }
+                }
+            }
+        }
+
+        return { mask:mask, rows:rows, cols:cols, idMatrix:idMatrix, cells:cells, neighbors:neighbors };
+    }
+
+    function findHamiltonianPath(graph){
+        var total = graph.cells.length;
+        var starts = [];
+        var i, j;
+        for(i=0;i<graph.cells.length;i++){ starts.push(i); }
+        starts.sort(function(a,b){ return graph.neighbors[a].length - graph.neighbors[b].length; });
+
+        var maxAttempts = total <= 30 ? 50 : total <= 60 ? 70 : 90;
+        var nodeCap = total <= 30 ? 25000 : total <= 60 ? 80000 : 160000;
+
+        for(i=0;i<maxAttempts;i++){
+            var candidateBand = Math.min(8, starts.length);
+            var start = starts[Math.floor(Math.random() * candidateBand)];
+            var visited = [];
+            var path = [];
+            for(j=0;j<total;j++){ visited[j] = false; }
+            visited[start] = true;
+            path[0] = start;
+            var counter = { nodes:0, cap:nodeCap };
+            if(depthFirstHamilton(start, 1, path, visited, graph, counter)){ return path.slice(0); }
+        }
+        return null;
+    }
+
+    function depthFirstHamilton(current, depth, path, visited, graph, counter){
+        counter.nodes++;
+        if(counter.nodes > counter.cap){ return false; }
+        var total = graph.cells.length;
+        if(depth === total){ return true; }
+        var options = getOrderedHamiltonMoves(current, visited, graph);
+        for(var i=0;i<options.length;i++){
+            var next = options[i];
+            visited[next] = true;
+            path[depth] = next;
+            var remaining = total - depth - 1;
+            var ok = true;
+            if(remaining > 1 && hasIsolatedUnvisited(visited, graph)){ ok = false; }
+            if(ok && remaining > 2 && !allUnvisitedConnected(visited, graph)){ ok = false; }
+            if(ok && depthFirstHamilton(next, depth + 1, path, visited, graph, counter)){ return true; }
+            visited[next] = false;
+        }
+        return false;
+    }
+
+    function getOrderedHamiltonMoves(current, visited, graph){
+        var raw = [];
+        var neighbors = graph.neighbors[current];
+        for(var i=0;i<neighbors.length;i++){
+            var nb = neighbors[i];
+            if(!visited[nb]){ raw.push({ id:nb, score:countUnvisitedNeighbors(nb, visited, graph), rnd:Math.random() }); }
+        }
+        raw.sort(function(a,b){ if(a.score === b.score){ return a.rnd - b.rnd; } return a.score - b.score; });
+        var out = [];
+        for(var j=0;j<raw.length;j++){ out.push(raw[j].id); }
+        return out;
+    }
+
+    function countUnvisitedNeighbors(id, visited, graph){
+        var list = graph.neighbors[id];
+        var count = 0;
+        for(var i=0;i<list.length;i++){ if(!visited[list[i]]){ count++; } }
+        return count;
+    }
+
+    function hasIsolatedUnvisited(visited, graph){
+        var totalUnvisited = 0;
+        var i, j, count, list;
+        for(i=0;i<graph.cells.length;i++){ if(!visited[i]){ totalUnvisited++; } }
+        if(totalUnvisited <= 1){ return false; }
+        for(i=0;i<graph.cells.length;i++){
+            if(visited[i]){ continue; }
+            count = 0;
+            list = graph.neighbors[i];
+            for(j=0;j<list.length;j++){ if(!visited[list[j]]){ count++; } }
+            if(count === 0){ return true; }
+        }
+        return false;
+    }
+
+    function allUnvisitedConnected(visited, graph){
+        var totalUnvisited = 0;
+        var start = -1;
+        var i, j;
+        for(i=0;i<graph.cells.length;i++){
+            if(!visited[i]){ totalUnvisited++; if(start === -1){ start = i; } }
+        }
+        if(totalUnvisited <= 1){ return true; }
+        var queue = [start];
+        var seen = [];
+        seen[start] = true;
+        var count = 0;
+        while(queue.length){
+            var cur = queue.shift();
+            count++;
+            var list = graph.neighbors[cur];
+            for(j=0;j<list.length;j++){
+                var nb = list[j];
+                if(!visited[nb] && !seen[nb]){ seen[nb] = true; queue.push(nb); }
+            }
+        }
+        return count === totalUnvisited;
+    }
+
+    function buildPuzzleFromPath(graph, path, shape, size, difficulty, puzzleNumber){
+        var n = path.length;
+        var solutionByCell = [];
+        var solutionByNumber = [];
+        var i;
+        for(i=0;i<n;i++){ solutionByCell[path[i]] = i + 1; solutionByNumber[i + 1] = path[i]; }
+
+        var givens = createInitialGivens(n, difficultyPercents[difficulty] || 0.25);
+        var puzzle = {
+            graph:graph, path:path, solutionByCell:solutionByCell, solutionByNumber:solutionByNumber,
+            givens:givens, shape:shape, size:size, difficulty:difficulty, puzzleNumber:puzzleNumber,
+            cellCount:n, uniquenessStatus:"Best-effort"
+        };
+        enforceBestEffortUniqueness(puzzle);
+        puzzle.givenMap = makeGivenMap(puzzle.givens);
+        return puzzle;
+    }
+
+    function createInitialGivens(n, percent){
+        var target = Math.max(2, Math.round(n * percent));
+        if(target > n){ target = n; }
+        var set = {};
+        set[1] = true; set[n] = true;
+        var needed = target - 2;
+        var interval = (n - 1) / (needed + 1);
+        for(var i=1;i<=needed;i++){
+            var pos = Math.round(i * interval + (Math.random() - 0.5) * Math.max(1, interval * 0.35));
+            if(pos < 2){ pos = 2; }
+            if(pos > n - 1){ pos = n - 1; }
+            if(set[pos]){
+                for(var scan=1;scan<n;scan++){
+                    if(pos + scan < n && !set[pos + scan]){ pos = pos + scan; break; }
+                    if(pos - scan > 1 && !set[pos - scan]){ pos = pos - scan; break; }
+                }
+            }
+            set[pos] = true;
+        }
+        var arr = [];
+        for(i=1;i<=n;i++){ if(set[i]){ arr.push(i); } }
+        arr.sort(function(a,b){ return a-b; });
+        return arr;
+    }
+
+    function makeGivenMap(givens){
+        var map = {};
+        for(var i=0;i<givens.length;i++){ map[givens[i]] = true; }
+        return map;
+    }
+
+    function enforceBestEffortUniqueness(puzzle){
+        var retry = 0;
+        var maxRetries = 30;
+        var unique = false;
+        var result;
+        while(retry < maxRetries){
+            result = countSolutionsForPuzzle(puzzle, 2, getSolverStepLimit(puzzle.cellCount));
+            if(result.count === 1 && !result.aborted){ unique = true; break; }
+            if(!addClueFromLargestGap(puzzle)){ break; }
+            retry++;
+        }
+        puzzle.uniquenessStatus = unique ? "Validated single solution" : "Best-effort single solution";
+    }
+
+    function getSolverStepLimit(cellCount){
+        if(cellCount <= 30){ return 16000; }
+        if(cellCount <= 55){ return 42000; }
+        return 90000;
+    }
+
+    function addClueFromLargestGap(puzzle){
+        var givens = puzzle.givens.slice(0);
+        var bestGap = 0, bestA = -1, bestB = -1, i, gap;
+        for(i=0;i<givens.length - 1;i++){
+            gap = givens[i + 1] - givens[i];
+            if(gap > bestGap){ bestGap = gap; bestA = givens[i]; bestB = givens[i + 1]; }
+        }
+        if(bestGap <= 1){ return false; }
+        var mid = Math.floor((bestA + bestB) / 2);
+        var set = makeGivenMap(givens);
+        if(!set[mid]){ givens.push(mid); }
+        else{
+            var delta, added = false;
+            for(delta=1;delta<bestGap;delta++){
+                if(mid - delta > bestA && !set[mid - delta]){ givens.push(mid - delta); added = true; break; }
+                if(mid + delta < bestB && !set[mid + delta]){ givens.push(mid + delta); added = true; break; }
+            }
+            if(!added){ return false; }
+        }
+        givens.sort(function(a,b){ return a-b; });
+        puzzle.givens = givens;
+        return true;
+    }
+
+    function countSolutionsForPuzzle(puzzle, limit, stepLimit){
+        var givens = puzzle.givens.slice(0).sort(function(a,b){ return a-b; });
+        var fixedCell = [];
+        var cellCount = puzzle.graph.cells.length;
+        var i;
+        for(i=0;i<cellCount;i++){ fixedCell[i] = false; }
+        for(i=0;i<givens.length;i++){ fixedCell[puzzle.solutionByNumber[givens[i]]] = true; }
+
+        var segments = [];
+        for(i=0;i<givens.length - 1;i++){
+            segments.push({
+                startNum: givens[i], endNum: givens[i + 1],
+                startCell: puzzle.solutionByNumber[givens[i]], endCell: puzzle.solutionByNumber[givens[i + 1]],
+                len: givens[i + 1] - givens[i]
+            });
+        }
+        segments.sort(function(a,b){
+            if(a.len === b.len){ return chebDistById(a.startCell, a.endCell, puzzle.graph.cells) - chebDistById(b.startCell, b.endCell, puzzle.graph.cells); }
+            return a.len - b.len;
+        });
+
+        var solver = { count:0, limit:limit, steps:0, stepLimit:stepLimit, aborted:false };
+        var used = [];
+        for(i=0;i<cellCount;i++){ used[i] = false; }
+        solveSegmentsRecursive(0, used, segments, fixedCell, puzzle.graph, solver);
+        return solver;
+    }
+
+    function solveSegmentsRecursive(index, used, segments, fixedCell, graph, solver){
+        if(solver.count >= solver.limit || solver.aborted){ return; }
+        if(index >= segments.length){ solver.count++; return; }
+        var seg = segments[index];
+        var localVisited = [];
+        var pathIntermediates = [];
+        exploreSegment(seg, seg.startCell, 0, localVisited, pathIntermediates, used, fixedCell, segments, index, graph, solver);
+    }
+
+    function exploreSegment(seg, current, stepsTaken, localVisited, pathIntermediates, used, fixedCell, segments, segIndex, graph, solver){
+        if(solver.count >= solver.limit || solver.aborted){ return; }
+        solver.steps++;
+        if(solver.steps > solver.stepLimit){ solver.aborted = true; return; }
+
+        if(stepsTaken === seg.len){
+            if(current === seg.endCell){
+                var nextUsed = used.slice(0);
+                for(var i=0;i<pathIntermediates.length;i++){ nextUsed[pathIntermediates[i]] = true; }
+                solveSegmentsRecursive(segIndex + 1, nextUsed, segments, fixedCell, graph, solver);
+            }
+            return;
+        }
+
+        var remaining = seg.len - stepsTaken;
+        var nbs = graph.neighbors[current];
+        var options = [];
+        for(var j=0;j<nbs.length;j++){
+            var next = nbs[j];
+            if(next === seg.endCell){
+                if(remaining !== 1){ continue; }
+                options.push({ id:next, score:-1, rnd:Math.random() });
+                continue;
+            }
+            if(used[next] || fixedCell[next] || localVisited[next]){ continue; }
+            if(chebDistById(next, seg.endCell, graph.cells) > remaining - 1){ continue; }
+            if(!canReachSegmentEnd(next, seg.endCell, remaining - 1, used, fixedCell, localVisited, graph)){ continue; }
+            options.push({ id:next, score:countSegmentOpenNeighbors(next, seg.endCell, used, fixedCell, localVisited, graph), rnd:Math.random() });
+        }
+        options.sort(function(a,b){ if(a.score === b.score){ return a.rnd - b.rnd; } return a.score - b.score; });
+
+        for(j=0;j<options.length;j++){
+            next = options[j].id;
+            if(next !== seg.endCell){ localVisited[next] = true; pathIntermediates.push(next); }
+            exploreSegment(seg, next, stepsTaken + 1, localVisited, pathIntermediates, used, fixedCell, segments, segIndex, graph, solver);
+            if(next !== seg.endCell){ localVisited[next] = false; pathIntermediates.pop(); }
+            if(solver.count >= solver.limit || solver.aborted){ return; }
+        }
+    }
+
+    function canReachSegmentEnd(start, end, remainingSteps, used, fixedCell, localVisited, graph){
+        var queue = [start];
+        var dist = [];
+        var seen = [];
+        dist[start] = 0; seen[start] = true;
+        var reachableCount = 0;
+        while(queue.length){
+            var cur = queue.shift();
+            reachableCount++;
+            var nbs = graph.neighbors[cur];
+            for(var i=0;i<nbs.length;i++){
+                var nb = nbs[i];
+                if(seen[nb]){ continue; }
+                if(nb !== end){ if(used[nb] || fixedCell[nb] || localVisited[nb]){ continue; } }
+                seen[nb] = true; dist[nb] = dist[cur] + 1; queue.push(nb);
+            }
+        }
+        if(typeof dist[end] === "undefined"){ return false; }
+        if(dist[end] > remainingSteps){ return false; }
+        if(reachableCount < remainingSteps + 1){ return false; }
+        return true;
+    }
+
+    function countSegmentOpenNeighbors(id, end, used, fixedCell, localVisited, graph){
+        var nbs = graph.neighbors[id];
+        var count = 0;
+        for(var i=0;i<nbs.length;i++){
+            var nb = nbs[i];
+            if(nb === end){ count++; continue; }
+            if(!used[nb] && !fixedCell[nb] && !localVisited[nb]){ count++; }
+        }
+        return count;
+    }
+
+    function chebDistById(aId, bId, cells){
+        var a = cells[aId];
+        var b = cells[bId];
+        return Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c));
+    }
+
+    function shuffle(arr){
+        for(var i=arr.length - 1;i>0;i--){
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+        }
+        return arr;
+    }
+
+    function buildPages(){
+        state.puzzlePages = [];
+        state.answerPages = [];
+        var p, pageNumber = 1;
+        for(p=0;p<state.puzzles.length;p++){
+            state.puzzlePages.push({ type:"puzzle", puzzle:state.puzzles[p], pageNumber:pageNumber });
+            pageNumber++;
+        }
+        var group = [];
+        for(p=0;p<state.puzzles.length;p++){
+            group.push(state.puzzles[p]);
+            if(group.length === 4 || p === state.puzzles.length - 1){
+                state.answerPages.push({ type:"answers", puzzles:group.slice(0), pageNumber:pageNumber });
+                pageNumber++;
+                group = [];
+            }
+        }
+    }
+
+    function rerenderAll(){
+        renderPreview();
+        renderExportDeck();
+        updateMeta();
+        updateDeckKPI();
+    }
+
+    function getCurrentPages(){ return state.currentView === "puzzle" ? state.puzzlePages : state.answerPages; }
+
+    function getLayoutGroupSize(){
+        if(state.previewLayout === "spread"){ return 2; }
+        if(state.previewLayout === "strip"){ return 3; }
+        if(state.previewLayout === "grid"){ return 4; }
+        return 1;
+    }
+
+    function chunkPages(pages, size){
+        var groups = [];
+        for(var i=0;i<pages.length;i += size){ groups.push(pages.slice(i, i + size)); }
+        return groups;
+    }
+
+    function getCurrentGroups(){ return chunkPages(getCurrentPages(), getLayoutGroupSize()); }
+
+    function renderPreview(){
+        var screen = document.getElementById("screenPreview");
+        var groups = getCurrentGroups();
+        if(!groups.length){
+            document.getElementById("emptyState").style.display = "block";
+            screen.innerHTML = "";
+            updateNavState();
+            return;
+        }
+        document.getElementById("emptyState").style.display = "none";
+        if(state.currentPage < 0){ state.currentPage = 0; }
+        if(state.currentPage > groups.length - 1){ state.currentPage = groups.length - 1; }
+        screen.innerHTML = renderGroupSheet(groups[state.currentPage], state.previewLayout, "screen");
+        updateNavState();
+    }
+
+    function renderExportDeck(){
+        var deck = document.getElementById("exportDeck");
+        if(!state.puzzles.length){ deck.innerHTML = ""; return; }
+        var html = "";
+        var puzzleGroups = chunkPages(state.puzzlePages, getLayoutGroupSize());
+        var answerGroups = chunkPages(state.answerPages, getLayoutGroupSize());
+        var i;
+        for(i=0;i<puzzleGroups.length;i++){
+            html += '<div class="export-sheet-wrap">' + renderGroupSheet(puzzleGroups[i], state.previewLayout, "export") + '</div>';
+        }
+        for(i=0;i<answerGroups.length;i++){
+            html += '<div class="export-sheet-wrap">' + renderGroupSheet(answerGroups[i], state.previewLayout, "export") + '</div>';
+        }
+        deck.innerHTML = html;
+    }
+
+    function renderGroupSheet(group, layout, mode){
+        var html = '<div class="sheet-pages layout-' + layout + '">';
+        for(var i=0;i<group.length;i++){
+            html += '<div class="page-item">';
+            if(group[i].type === "puzzle"){ html += renderPuzzlePage(group[i], mode); }
+            else{ html += renderAnswerPage(group[i], mode); }
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function renderPuzzlePage(page, mode){
+        var puzzle = page.puzzle;
+        var v = getResolvedColors();
+        var styleVars = getPaperVars(v);
+        var classes = [
+            "paper", "header-" + state.style.headerStyle, "border-" + state.style.borderStyle,
+            "cell-shape-" + state.style.cellShape, "pattern-" + state.style.pattern
+        ];
+        if(mode === "screen"){ classes.push("fade-in"); }
+
+        var label = shapeNames[puzzle.shape] + " · " + sizeNames[puzzle.size] + " · " + puzzle.cellCount + " cells · " + puzzle.difficulty;
+        var footer = state.footerNumbers ? (
+            '<div class="page-footer" style="border-top-color:' + v.paperLine + ';color:' + v.paperMuted + ';"><div class="footer-chip" style="color:' + v.ink + ';">Puzzle ' + puzzle.puzzleNumber + '</div><div>' + page.pageNumber + '</div></div>'
+        ) : "";
+
+        return ''
+        + '<div class="' + classes.join(" ") + '" style="' + styleVars + '">'
+            + '<div class="paper-inner">'
+                + '<div class="paper-top-strip"></div>'
+                + '<div class="page-head">'
+                    + '<div class="head-badge">Hidato Puzzle</div>'
+                    + '<div class="title-card">'
+                        + '<h2 class="page-title" style="color:' + v.ink + ';">' + escapeHtml(state.style.title) + ' #' + puzzle.puzzleNumber + '</h2>'
+                        + '<p class="page-subtitle" style="color:' + v.paperMuted + ';">' + escapeHtml(state.style.subtitle) + ' · ' + label + '</p>'
+                    + '</div>'
+                + '</div>'
+                + '<div class="board-shell" style="background:linear-gradient(180deg,' + v.boardShell1 + ',' + v.boardShell2 + ');border-color:' + v.paperLine + ';">'
+                    + '<div class="board-wrap">'
+                        + renderBoard(puzzle, "puzzle", false, v)
+                    + '</div>'
+                + '</div>'
+            + '</div>'
+            + footer
+        + '</div>';
+    }
+
+    function renderAnswerPage(page, mode){
+        var v = getResolvedColors();
+        var styleVars = getPaperVars(v);
+        var classes = [
+            "paper", "header-" + state.style.headerStyle, "border-" + state.style.borderStyle,
+            "pattern-" + state.style.pattern, "answer-style-" + state.style.answerStyle
+        ];
+        if(mode === "screen"){ classes.push("fade-in"); }
+
+        var itemsHtml = "";
+        for(var i=0;i<page.puzzles.length;i++){
+            itemsHtml += ''
+            + '<div class="answer-card" style="background:' + v.paper + ';border-color:' + v.paperLine + ';">'
+                + '<h4 style="color:' + v.ink + ';">Hidato Answer #' + page.puzzles[i].puzzleNumber + '</h4>'
+                + '<div class="answer-mini">' + renderBoard(page.puzzles[i], "answer", true, v) + '</div>'
+            + '</div>';
+        }
+
+        var footer = state.footerNumbers ? (
+            '<div class="page-footer" style="border-top-color:' + v.paperLine + ';color:' + v.paperMuted + ';"><div class="footer-chip" style="color:' + v.ink + ';">Answer Key</div><div>' + page.pageNumber + '</div></div>'
+        ) : "";
+
+        return ''
+        + '<div class="' + classes.join(" ") + '" style="' + styleVars + '">'
+            + '<div class="paper-inner">'
+                + '<div class="paper-top-strip"></div>'
+                + '<div class="page-head">'
+                    + '<div class="head-badge">Solved Pages</div>'
+                    + '<div class="title-card">'
+                        + '<h2 class="page-title" style="color:' + v.ink + ';">' + escapeHtml(state.style.title) + ' — Answers</h2>'
+                        + '<p class="page-subtitle" style="color:' + v.paperMuted + ';">Compact solution sheets styled to match your selected worksheet theme.</p>'
+                    + '</div>'
+                + '</div>'
+                + '<div class="answer-grid">' + itemsHtml + '</div>'
+            + '</div>'
+            + footer
+        + '</div>';
+    }
+
+    function renderBoard(puzzle, mode, compact, v){
+        var rows = puzzle.graph.rows;
+        var cols = puzzle.graph.cols;
+        var maxDim = Math.max(rows, cols);
+        var size = compact ? Math.max(20, Math.floor(240 / maxDim)) : Math.max(36, Math.floor(560 / maxDim));
+        var boardClass = compact ? 'board answer-board' : 'board';
+        var html = '<div class="' + boardClass + '" style="grid-template-columns:repeat(' + cols + ',' + size + 'px);">';
+        var r, c, id, num, fsize, cellStyle, isGiven, isEndpoint, isBlank;
+
+        for(r=0;r<rows;r++){
+            for(c=0;c<cols;c++){
+                id = puzzle.graph.idMatrix[r][c];
+                if(id === -1){
+                    html += '<div class="cell void" style="width:' + size + 'px;height:' + size + 'px;background:transparent;border:none;box-shadow:none;"></div>';
+                }else{
+                    num = mode === "answer" ? puzzle.solutionByCell[id] : (puzzle.givenMap[puzzle.solutionByCell[id]] ? puzzle.solutionByCell[id] : "");
+                    isBlank = (num === "");
+                    isGiven = mode === "puzzle" && puzzle.givenMap[puzzle.solutionByCell[id]];
+                    isEndpoint = mode === "puzzle" && isGiven && (puzzle.solutionByCell[id] === 1 || puzzle.solutionByCell[id] === puzzle.cellCount);
+                    fsize = Math.max(10, Math.floor(size * 0.34));
+
+                    if(isEndpoint){
+                        cellStyle = 'background:' + v.endpoint + ';border-color:#e4c55f;color:' + v.ink + ';';
+                    }else if(isGiven){
+                        cellStyle = 'background:' + v.given + ';border-color:' + v.paperLine + ';color:' + v.ink + ';';
+                    }else{
+                        cellStyle = 'background:' + v.cellBg + ';border-color:' + v.paperLine + ';color:' + (isBlank ? v.cellBg : v.ink) + ';';
+                    }
+
+                    html += '<div class="cell" style="width:' + size + 'px;height:' + size + 'px;font-size:' + fsize + 'px;' + cellStyle + '">' + (isBlank ? "&nbsp;" : num) + '</div>';
+                }
+            }
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function getResolvedColors(){
+        var boardTint = state.style.boardTint || 0;
+        return {
+            accent1: state.style.accent1,
+            accent2: state.style.accent2,
+            paper: state.style.paper,
+            ink: state.style.ink,
+            paperMuted: mixHex(state.style.ink, "#ffffff", 64),
+            paperLine: mixHex(state.style.accent1, "#cfd8e8", 18),
+            given: mixHex(state.style.accent1, "#ffffff", 16),
+            given2: mixHex(state.style.accent1, "#ffffff", 8),
+            endpoint: mixHex("#f4c542", "#ffffff", 30),
+            cellBg: state.style.paper,
+            boardShell1: mixHex(state.style.accent1, "#ffffff", boardTint),
+            boardShell2: mixHex(state.style.accent2, "#ffffff", Math.max(4, Math.floor(boardTint * 0.55)))
+        };
+    }
+
+    function getPaperVars(v){
+        return ''
+            + '--accent:' + v.accent1 + ';'
+            + '--accent-2:' + v.accent2 + ';'
+            + '--paper:' + v.paper + ';'
+            + '--paper-ink:' + v.ink + ';'
+            + '--paper-muted:' + v.paperMuted + ';'
+            + '--paper-line:' + v.paperLine + ';'
+            + '--given:' + v.given + ';'
+            + '--given-2:' + v.given2 + ';'
+            + '--endpoint:' + v.endpoint + ';'
+            + '--cell-bg:' + v.cellBg + ';'
+            + '--board-shell-1:' + v.boardShell1 + ';'
+            + '--board-shell-2:' + v.boardShell2 + ';'
+            + 'background:' + v.paper + ';';
+    }
+
+    function updateNavState(){
+        var groups = getCurrentGroups();
+        var total = groups.length;
+        var current = total ? state.currentPage + 1 : 0;
+        var startIndex = total ? (state.currentPage * getLayoutGroupSize()) + 1 : 0;
+        var endIndex = total ? Math.min((state.currentPage + 1) * getLayoutGroupSize(), getCurrentPages().length) : 0;
+        document.getElementById("pageStatus").innerHTML =
+            "Sheet " + current + " / " + total + (total ? " · Pages " + startIndex + "–" + endIndex : "");
+        document.getElementById("prevBtn").disabled = state.currentPage <= 0;
+        document.getElementById("nextBtn").disabled = state.currentPage >= total - 1 || total === 0;
+    }
+
+    function updateMeta(){
+        if(!state.puzzles.length){
+            document.getElementById("deckMeta").innerHTML = "No deck generated yet.";
+            return;
+        }
+        var totalPages = state.puzzlePages.length + state.answerPages.length;
+        var totalSheets = chunkPages(state.puzzlePages, getLayoutGroupSize()).length + chunkPages(state.answerPages, getLayoutGroupSize()).length;
+        document.getElementById("deckMeta").innerHTML =
+            state.puzzles.length + " puzzles · " + totalPages + " pages · " + totalSheets + " export sheets";
+    }
+
+    function updateViewButtons(){
+        document.getElementById("puzzleViewBtn").className = state.currentView === "puzzle" ? "toggle-btn active" : "toggle-btn";
+        document.getElementById("answerViewBtn").className = state.currentView === "answer" ? "toggle-btn active" : "toggle-btn";
+    }
+
+    function wait(ms){ return new Promise(function(resolve){ setTimeout(resolve, ms); }); }
+
+    async function ensureFontsReady(){
+        if(document.fonts && document.fonts.ready){
+            try{ await document.fonts.ready; }catch(e){}
+        }
+    }
+
+    async function renderSheetCanvases(scale, label){
+        readStyleControls();
+        renderExportDeck();
+        await ensureFontsReady();
+        await wait(80);
+
+        var nodes = Array.prototype.slice.call(document.querySelectorAll("#exportDeck .export-sheet-wrap"));
+        var sheets = [];
+
+        for(var i=0;i<nodes.length;i++){
+            setProgress((label || "Rendering") + " " + (i + 1) + " of " + nodes.length + "...", Math.round((i / Math.max(nodes.length,1)) * 84) + 8);
+            await wait(10);
+
+            var rect = nodes[i].getBoundingClientRect();
+            var canvas = await html2canvas(nodes[i], {
+                backgroundColor: "#ffffff",
+                scale: scale,
+                useCORS: true,
+                allowTaint: true,
+                logging: false,
+                imageTimeout: 0,
+                removeContainer: true,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: Math.ceil(rect.width),
+                windowHeight: Math.ceil(rect.height)
+            });
+
+            sheets.push({
+                canvas: canvas,
+                widthPx: Math.max(1, Math.round(rect.width)),
+                heightPx: Math.max(1, Math.round(rect.height))
+            });
+        }
+
+        return sheets;
+    }
+
+    async function downloadExactPDF(){
+        if(!state.puzzles.length || state.exporting){ return; }
+        state.exporting = true;
+        disableExportButtons(true);
+        setProgress("Preparing exact PDF export...", 4);
+
+        try{
+            var jsPDFRef = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
+            if(!jsPDFRef){ throw new Error("jsPDF not loaded"); }
+
+            var sheets = await renderSheetCanvases(EXPORT_SCALE, "Rendering PDF sheet");
+            if(!sheets.length){ throw new Error("No sheets to export"); }
+
+            var pdf = null;
+            for(var i=0;i<sheets.length;i++){
+                var pageWidthPt = sheets[i].widthPx * 0.75;
+                var pageHeightPt = sheets[i].heightPx * 0.75;
+                var orientation = pageWidthPt >= pageHeightPt ? "landscape" : "portrait";
+
+                if(!pdf){
+                    pdf = new jsPDFRef({ orientation:orientation, unit:"pt", format:[pageWidthPt, pageHeightPt], compress:true });
+                }else{
+                    pdf.addPage([pageWidthPt, pageHeightPt], orientation);
+                }
+
+                var img = sheets[i].canvas.toDataURL("image/png", 1.0);
+                pdf.addImage(img, "PNG", 0, 0, pageWidthPt, pageHeightPt, undefined, "NONE");
+                setProgress("Composing PDF " + (i + 1) + " of " + sheets.length + "...", Math.round(((i + 1) / sheets.length) * 94));
+            }
+
+            setProgress("Saving PDF...", 98);
+            pdf.save("hidato-path-studio-exact.pdf");
+            setProgress("Exact PDF exported.", 100);
+        }catch(err){
+            console.error(err);
+            setProgress("Exact PDF export failed.", 0);
+        }
+
+        state.exporting = false;
+        disableExportButtons(false);
+    }
+
+    async function exactPrint(){
+        if(!state.puzzles.length || state.exporting){ return; }
+        state.exporting = true;
+        disableExportButtons(true);
+        setProgress("Preparing exact print sheets...", 4);
+
+        try{
+            var sheets = await renderSheetCanvases(EXPORT_SCALE, "Rendering print sheet");
+            if(!sheets.length){ throw new Error("No sheets to print"); }
+
+            var pageStyles = "";
+            var bodyHtml = "";
+
+            for(var i=0;i<sheets.length;i++){
+                var img = sheets[i].canvas.toDataURL("image/png", 1.0);
+                var widthMm = (sheets[i].widthPx / sheets[i].canvas.width) * (sheets[i].canvas.width / EXPORT_SCALE) * 0.2646;
+                var heightMm = (sheets[i].heightPx / sheets[i].canvas.height) * (sheets[i].canvas.height / EXPORT_SCALE) * 0.2646;
+                var pageName = "sheet" + i;
+
+                pageStyles += '@page ' + pageName + ' { size: ' + widthMm.toFixed(2) + 'mm ' + heightMm.toFixed(2) + 'mm; margin: 0; }\n';
+                bodyHtml += '<div class="sheet" style="page:' + pageName + ';width:' + widthMm.toFixed(2) + 'mm;height:' + heightMm.toFixed(2) + 'mm;"><img src="' + img + '" alt="sheet ' + (i + 1) + '"></div>';
+
+                setProgress("Preparing print image " + (i + 1) + " of " + sheets.length + "...", Math.round(((i + 1) / sheets.length) * 94));
+            }
+
+            var html = ''
+            + '<!DOCTYPE html><html><head><title>Exact Print</title><meta charset="utf-8">'
+            + '<style>'
+            + 'html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+            + '.sheet{page-break-after:always;break-after:page;display:block;margin:0 auto;overflow:hidden;}'
+            + '.sheet:last-child{page-break-after:auto;break-after:auto;}'
+            + '.sheet img{display:block;width:100%;height:100%;object-fit:contain;}'
+            + pageStyles
+            + '@media print{html,body{background:#fff !important;}}'
+            + '</style></head><body>'
+            + bodyHtml
+            + '<script>window.onload=function(){setTimeout(function(){window.focus();window.print();},220);};<\/script>'
+            + '</body></html>';
+
+            var win = window.open('', '_blank');
+            if(!win){ throw new Error("Popup blocked"); }
+            win.document.open();
+            win.document.write(html);
+            win.document.close();
+            setProgress("Exact print window ready.", 100);
+        }catch(err){
+            console.error(err);
+            setProgress("Exact print failed.", 0);
+        }
+
+        state.exporting = false;
+        disableExportButtons(false);
+    }
+
+    function escapeHtml(str){
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function hexToRgb(hex){
+        hex = (hex || "").replace("#", "");
+        if(hex.length === 3){ hex = hex.charAt(0)+hex.charAt(0)+hex.charAt(1)+hex.charAt(1)+hex.charAt(2)+hex.charAt(2); }
+        var bigint = parseInt(hex, 16);
+        return { r:(bigint >> 16) & 255, g:(bigint >> 8) & 255, b:bigint & 255 };
+    }
+
+    function componentToHex(c){
+        var hex = c.toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+    }
+
+    function rgbToHex(r,g,b){ return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b); }
+
+    function mixHex(hex1, hex2, percentFrom1){
+        var a = hexToRgb(hex1);
+        var b = hexToRgb(hex2);
+        var p = Math.max(0, Math.min(100, percentFrom1)) / 100;
+        var r = Math.round(a.r * p + b.r * (1 - p));
+        var g = Math.round(a.g * p + b.g * (1 - p));
+        var bb = Math.round(a.b * p + b.b * (1 - p));
+        return rgbToHex(r,g,bb);
+    }
+
+    function hexToRgba(hex, alpha){
+        var rgb = hexToRgb(hex);
+        return "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + "," + alpha + ")";
+    }
+
+    init();
+})();
+</script>
+</body>
+</html>
