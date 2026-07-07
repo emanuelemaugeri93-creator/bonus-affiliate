@@ -1,0 +1,2984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Futoshiki Logic Studio — Worksheet Shape Edition</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+html, body,
+[class*="section"],
+[class*="block"],
+[class*="row"],
+[class*="column"],
+[class*="wrapper"],
+[class*="container"]{
+    margin:0 !important;
+    padding:0 !important;
+    max-width:none !important;
+    box-sizing:border-box;
+}
+*,
+*::before,
+*::after{ box-sizing:border-box; }
+html, body{
+    width:100% !important;
+    height:100% !important;
+    overflow:hidden;
+    font-family:"DM Sans","Sora",Inter,"Segoe UI",Arial,sans-serif;
+    background:#08111f;
+}
+:root{
+    --bg-1:#08111f;
+    --bg-2:#111b34;
+    --bg-3:#18112b;
+    --line:rgba(255,255,255,0.12);
+    --text:#f7f8fc;
+    --muted:#aab3cc;
+    --accent:#0070F3;
+    --accent-2:#6ea8ff;
+    --glow:rgba(0,112,243,0.34);
+    --paper:#ffffff;
+    --paper-ink:#101421;
+    --paper-muted:#6d7488;
+    --paper-line:#d8e2f0;
+    --board-shell-1:#f7fbff;
+    --board-shell-2:#eef5ff;
+    --given:#eaf4ff;
+    --given-2:#d7ebff;
+    --cell-bg:#ffffff;
+    --shadow:0 20px 60px rgba(0,0,0,0.35);
+}
+.app-shell{
+    position:fixed !important;
+    inset:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 15% 18%, rgba(0,112,243,0.22), transparent 28%),
+        radial-gradient(circle at 82% 14%, rgba(110,168,255,0.16), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(0,170,255,0.08), transparent 35%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 48%, var(--bg-3));
+    color:var(--text);
+}
+.app-shell::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:40px 40px;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.12));
+    pointer-events:none;
+}
+.app-shell::after{
+    content:"";
+    position:absolute;
+    width:560px;
+    height:560px;
+    border-radius:50%;
+    right:-140px;
+    bottom:-160px;
+    background:radial-gradient(circle, rgba(255,255,255,0.08), transparent 62%);
+    filter:blur(12px);
+    pointer-events:none;
+}
+.workspace{
+    position:relative;
+    z-index:2;
+    display:grid;
+    grid-template-columns:360px 1fr;
+    width:100%;
+    height:100%;
+}
+.sidebar{
+    min-height:0;
+    background:linear-gradient(180deg, rgba(10,14,30,0.94), rgba(8,12,24,0.90));
+    backdrop-filter:blur(22px);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+}
+.sidebar-scroll{
+    min-height:0;
+    overflow:auto;
+    padding:22px;
+}
+.sidebar-scroll::-webkit-scrollbar,
+.preview-scroll::-webkit-scrollbar{ width:10px; height:10px; }
+.sidebar-scroll::-webkit-scrollbar-thumb,
+.preview-scroll::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,0.14);
+    border-radius:999px;
+}
+.brand{
+    position:relative;
+    padding:22px 20px 20px;
+    margin-bottom:18px;
+    border:1px solid var(--line);
+    border-radius:24px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+    box-shadow:var(--shadow);
+    overflow:hidden;
+}
+.brand::before{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    background:linear-gradient(120deg, rgba(0,112,243,0.26), rgba(110,168,255,0) 44%, rgba(255,255,255,0.04));
+    pointer-events:none;
+}
+.brand-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    color:#dbe8ff;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+}
+.brand h1{
+    margin:16px 0 10px;
+    font-size:32px;
+    line-height:0.95;
+    letter-spacing:-0.04em;
+    font-family:"Sora","DM Sans",sans-serif;
+}
+.brand h1 span{
+    background:linear-gradient(90deg, #ffffff, #8fcbff 46%, #d5e6ff 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+.brand p{
+    margin:0;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--muted);
+}
+.panel{
+    margin-bottom:16px;
+    padding:18px;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025));
+    box-shadow:0 8px 30px rgba(0,0,0,0.18);
+}
+.panel-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:16px;
+}
+.panel-title h2{
+    margin:0;
+    font-size:13px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#eef4ff;
+}
+.panel-badge{
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:10px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#d7e9ff;
+    border:1px solid rgba(255,255,255,0.1);
+    background:rgba(255,255,255,0.05);
+}
+.field{ margin-bottom:14px; min-width:0; }
+.field:last-child{ margin-bottom:0; }
+.label{
+    display:block;
+    margin-bottom:8px;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#c4d1ea;
+}
+.input,.select{
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    padding:12px 13px;
+    color:#fff;
+    background:rgba(5,8,18,0.55);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px;
+    outline:none;
+}
+.input:focus,.select:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(0,112,243,0.18);
+}
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+.diff-group{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+.diff-btn,.primary-btn,.secondary-btn,.toggle-btn,.nav-btn,.small-btn{
+    border:none;
+    cursor:pointer;
+    transition:transform .18s ease, filter .18s ease, opacity .18s ease, background .18s ease, border-color .18s ease;
+}
+.diff-btn{
+    padding:11px 8px;
+    color:#dfe8ff;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    font-size:12px;
+    font-weight:700;
+}
+.diff-btn.active{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#fff;
+    box-shadow:0 8px 22px var(--glow);
+    border-color:transparent;
+}
+.diff-btn:hover,.primary-btn:hover,.secondary-btn:hover,.toggle-btn:hover,.nav-btn:hover,.small-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(1.04);
+}
+.primary-btn{
+    width:100%;
+    padding:15px 16px;
+    border-radius:14px;
+    font-size:14px;
+    font-weight:800;
+    letter-spacing:0.04em;
+    color:#fff;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 14px 34px var(--glow);
+}
+.secondary-btn{
+    width:100%;
+    padding:12px 14px;
+    border-radius:14px;
+    font-size:13px;
+    font-weight:700;
+    color:#e8efff;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+}
+.primary-btn:disabled,.secondary-btn:disabled,.small-btn:disabled,.nav-btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    transform:none;
+    filter:none;
+}
+.progress-text{
+    min-height:20px;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.4;
+}
+.progress-bar{
+    margin-top:10px;
+    height:12px;
+    border-radius:999px;
+    overflow:hidden;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.1);
+}
+.progress-fill{
+    width:0%;
+    height:100%;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition:width .2s ease;
+}
+.note{ font-size:12px; color:var(--muted); line-height:1.6; }
+.swatches{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-top:10px;
+}
+.swatch{
+    height:32px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.12);
+    cursor:pointer;
+}
+.color-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+.color-box{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+.color-box input[type="color"]{
+    width:100%;
+    height:44px;
+    padding:4px;
+    background:rgba(5,8,18,0.55);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px;
+    cursor:pointer;
+}
+.range-wrap{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.range-wrap input[type="range"]{ flex:1; }
+.range-chip{
+    min-width:58px;
+    text-align:center;
+    padding:8px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    color:#e8f2ff;
+    font-size:12px;
+    font-weight:700;
+}
+.checkbox{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#d6e2fb;
+    font-size:14px;
+}
+.checkbox input{
+    width:16px;
+    height:16px;
+    accent-color:var(--accent);
+}
+.main{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+}
+.topbar{
+    padding:18px 20px;
+    border-bottom:1px solid var(--line);
+    background:rgba(12,17,31,0.56);
+    backdrop-filter:blur(20px);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+}
+.topbar-group{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    min-width:0;
+}
+.kpi-chip{
+    padding:10px 13px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    color:#e5efff;
+    font-size:12px;
+    font-weight:700;
+}
+.toggle-btn,.nav-btn,.small-btn{
+    padding:11px 14px;
+    border-radius:12px;
+    color:#f0f4ff;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    font-size:13px;
+    font-weight:700;
+}
+.toggle-btn.active{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color:transparent;
+    box-shadow:0 10px 28px var(--glow);
+}
+.zoom-select{ width:96px; }
+.layout-select{ width:170px; }
+.preview-scroll{
+    flex:1;
+    min-height:0;
+    overflow:auto;
+    padding:26px 26px 18px;
+}
+.preview-center{
+    min-height:100%;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+}
+.preview-stage{
+    transform-origin:top center;
+    transition:transform .18s ease;
+}
+.empty-state{
+    width:820px;
+    max-width:100%;
+    padding:34px;
+    border-radius:28px;
+    border:1px solid rgba(255,255,255,0.14);
+    background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+    box-shadow:var(--shadow);
+}
+.empty-state h3{
+    margin:0 0 10px;
+    font-size:30px;
+    line-height:1;
+    letter-spacing:-0.04em;
+    font-family:"Sora","DM Sans",sans-serif;
+}
+.empty-state p{
+    margin:0;
+    color:var(--muted);
+    line-height:1.7;
+}
+.navbar{
+    padding:16px 20px 20px;
+    border-top:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    background:rgba(10,14,26,0.64);
+    backdrop-filter:blur(18px);
+}
+.page-status{
+    color:#d5e4ff;
+    font-size:13px;
+    font-weight:700;
+}
+.meta{
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+    text-align:right;
+}
+.sheet-pages{
+    display:grid;
+    justify-content:center;
+    align-content:start;
+    gap:24px;
+    width:max-content;
+    max-width:none;
+    margin:0 auto;
+}
+.sheet-pages.layout-single{ grid-template-columns:max-content; }
+.sheet-pages.layout-spread{ grid-template-columns:repeat(2, max-content); }
+.sheet-pages.layout-strip{ grid-template-columns:repeat(3, max-content); }
+.sheet-pages.layout-grid{ grid-template-columns:repeat(2, max-content); }
+.page-item{
+    --paper-scale:1;
+    width:calc(820px * var(--paper-scale));
+    height:calc(1080px * var(--paper-scale));
+    display:flex;
+    align-items:flex-start;
+    justify-content:flex-start;
+    overflow:visible;
+    flex:0 0 auto;
+}
+.page-item > .paper{
+    width:820px;
+    min-height:1080px;
+    margin:0;
+    transform:scale(var(--paper-scale));
+    transform-origin:top left;
+    flex:0 0 auto;
+}
+.sheet-pages.layout-single .page-item{ --paper-scale:1; }
+.sheet-pages.layout-spread .page-item{ --paper-scale:0.48; }
+.sheet-pages.layout-strip .page-item{ --paper-scale:0.31; }
+.sheet-pages.layout-grid .page-item{ --paper-scale:0.40; }
+
+.paper{
+    width:820px;
+    min-height:1080px;
+    position:relative;
+    overflow:hidden;
+    color:var(--paper-ink);
+    background:var(--paper);
+    border-radius:30px;
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.36),
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 0 0 12px rgba(255,255,255,0.02);
+    padding:38px 38px 34px;
+}
+.paper.fade-in{ animation:fadeIn .28s ease; }
+@keyframes fadeIn{
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:translateY(0);}
+}
+.paper::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+}
+.paper.pattern-none::before{ background:none; opacity:0; }
+.paper.pattern-dots::before{
+    background:radial-gradient(circle at 2px 2px, rgba(0,0,0,0.08) 1.6px, transparent 2px);
+    background-size:26px 26px;
+    opacity:.22;
+}
+.paper.pattern-grid::before{
+    background:
+        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size:30px 30px;
+    opacity:.20;
+}
+.paper.pattern-stars::before{
+    background:
+        radial-gradient(circle at 20% 22%, rgba(0,0,0,0.08) 2px, transparent 3px),
+        radial-gradient(circle at 72% 28%, rgba(0,0,0,0.06) 1.8px, transparent 3px),
+        radial-gradient(circle at 52% 68%, rgba(0,0,0,0.08) 1.8px, transparent 3px),
+        radial-gradient(circle at 86% 78%, rgba(0,0,0,0.06) 2px, transparent 3px);
+    background-size:160px 160px;
+    opacity:.24;
+}
+.paper.pattern-confetti::before{
+    background:
+        radial-gradient(circle at 12% 16%, rgba(0,0,0,0.08) 4px, transparent 5px),
+        radial-gradient(circle at 68% 18%, rgba(0,0,0,0.08) 4px, transparent 5px),
+        radial-gradient(circle at 24% 74%, rgba(0,0,0,0.06) 3px, transparent 4px),
+        radial-gradient(circle at 78% 66%, rgba(0,0,0,0.06) 3px, transparent 4px),
+        linear-gradient(45deg, transparent 48%, rgba(0,0,0,0.05) 48% 52%, transparent 52%),
+        linear-gradient(-45deg, transparent 48%, rgba(0,0,0,0.05) 48% 52%, transparent 52%);
+    background-size:130px 130px;
+    opacity:.18;
+}
+.paper-inner{
+    position:relative;
+    z-index:2;
+}
+.paper-top-strip{
+    height:10px;
+    border-radius:999px;
+    margin-bottom:18px;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    box-shadow:0 12px 28px rgba(0,0,0,0.12);
+}
+.page-head{ position:relative; margin-bottom:18px; }
+.head-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 14px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.16em;
+    color:#fff;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 12px 28px rgba(0,0,0,0.14);
+}
+.title-card{
+    margin-top:16px;
+    border-radius:24px;
+    padding:18px 20px;
+}
+.page-title{
+    margin:0 0 8px;
+    font-size:36px;
+    line-height:0.98;
+    letter-spacing:-0.045em;
+    color:var(--paper-ink);
+    font-family:"Sora","DM Sans",sans-serif;
+}
+.page-subtitle{
+    margin:0;
+    color:var(--paper-muted);
+    font-size:14px;
+    line-height:1.6;
+}
+.stats-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:12px;
+}
+.stat-chip{
+    display:inline-flex;
+    align-items:center;
+    padding:8px 10px;
+    border:1px solid rgba(0,0,0,0.06);
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--paper-muted);
+    background:#fff;
+}
+.paper.header-ribbon .title-card{
+    background:linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,255,255,0.72));
+    border:1px solid rgba(0,0,0,0.06);
+    box-shadow:0 14px 30px rgba(0,0,0,0.06);
+}
+.paper.header-capsule .title-card{
+    background:#fff;
+    border:2px solid rgba(0,0,0,0.08);
+    box-shadow:inset 0 0 0 6px rgba(0,0,0,0.03);
+}
+.paper.header-classic .title-card{
+    background:transparent;
+    border-top:3px solid var(--accent);
+    border-bottom:1px solid var(--paper-line);
+    border-radius:0;
+    padding-left:0;
+    padding-right:0;
+}
+.paper.header-split .title-card{
+    background:
+        linear-gradient(90deg, rgba(0,0,0,0.04) 0 36px, transparent 36px),
+        linear-gradient(180deg, #ffffff, rgba(0,0,0,0.02));
+    border:1px solid rgba(0,0,0,0.06);
+    box-shadow:0 14px 30px rgba(0,0,0,0.05);
+}
+.paper.header-split .page-title,
+.paper.header-split .page-subtitle,
+.paper.header-split .stats-row{ padding-left:20px; }
+
+.paper.border-glow{
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.32),
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 0 0 10px rgba(255,255,255,0.05),
+        0 0 80px rgba(255,255,255,0.05);
+}
+.paper.border-frame{
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.32),
+        inset 0 0 0 2px rgba(0,0,0,0.06),
+        inset 0 0 0 12px rgba(255,255,255,0.35);
+}
+.paper.border-double{
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.32),
+        0 0 0 1px rgba(0,0,0,0.06),
+        0 0 0 8px #fff,
+        0 0 0 9px rgba(0,0,0,0.08);
+}
+.paper.border-dashed{
+    box-shadow:0 24px 70px rgba(0,0,0,0.32);
+}
+.paper.border-dashed::after{
+    content:"";
+    position:absolute;
+    inset:12px;
+    border:2px dashed rgba(0,0,0,0.14);
+    border-radius:22px;
+    pointer-events:none;
+}
+.paper.border-clean{
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.32),
+        0 0 0 1px rgba(0,0,0,0.06);
+}
+
+.board-shell{
+    position:relative;
+    margin-top:20px;
+    border-radius:28px;
+    padding:26px;
+    background:linear-gradient(180deg, var(--board-shell-1), var(--board-shell-2));
+    border:1px solid var(--paper-line);
+}
+.board-shell::after{
+    content:"";
+    position:absolute;
+    inset:12px;
+    border-radius:20px;
+    border:1px dashed rgba(0,0,0,0.12);
+    pointer-events:none;
+    opacity:.55;
+}
+.board-wrap{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:620px;
+    position:relative;
+    z-index:2;
+}
+.futo-board{
+    display:grid;
+    gap:0;
+    justify-content:center;
+    align-content:center;
+}
+.fcell{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:100%;
+    background:var(--cell-bg);
+    border:1px solid rgba(16,20,33,0.12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.70);
+    color:var(--paper-ink);
+    font-weight:800;
+}
+.fcell.given{ background:linear-gradient(180deg, var(--given), var(--given-2)); }
+.fcell.answer{ background:linear-gradient(180deg, #ffffff, #fbfdff); }
+.fcell.void{
+    background:transparent;
+    border:none;
+    box-shadow:none;
+}
+.paper.cell-shape-square .fcell:not(.void){ border-radius:0; }
+.paper.cell-shape-soft .fcell:not(.void){ border-radius:8px; }
+.paper.cell-shape-rounded .fcell:not(.void){ border-radius:14px; }
+.paper.cell-shape-pill .fcell:not(.void){ border-radius:20px; }
+
+.ineq{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#111827;
+    font-weight:800;
+    user-select:none;
+}
+.paper.ineq-style-classic .ineq{ opacity:1; font-weight:800; }
+.paper.ineq-style-minimal .ineq{ opacity:.72; font-weight:700; }
+.paper.ineq-style-bold .ineq{ opacity:1; font-weight:900; text-shadow:0 1px 0 rgba(255,255,255,0.5); }
+.cross-gap{ width:100%; height:100%; }
+.answer-grid{
+    display:grid;
+    grid-template-columns:1.15fr .85fr;
+    gap:20px;
+    margin-top:20px;
+}
+.answer-card{
+    border-radius:22px;
+    padding:18px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,1));
+    border:1px solid var(--paper-line);
+    box-shadow:0 10px 24px rgba(0,0,0,0.05);
+}
+.answer-card-wide{ grid-column:1 / -1; }
+.answer-card h4{
+    margin:0 0 12px;
+    font-size:15px;
+    letter-spacing:-0.02em;
+    color:var(--paper-ink);
+}
+.answer-board-wrap{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.answer-note{
+    color:var(--paper-muted);
+    font-size:13px;
+    line-height:1.7;
+}
+.answer-metric{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.03);
+    border:1px solid rgba(0,0,0,0.05);
+    color:var(--paper-ink);
+    font-size:13px;
+    font-weight:700;
+}
+.paper.answer-style-dark .answer-card{
+    background:linear-gradient(180deg, #10172c, #17213d);
+    border-color:rgba(255,255,255,0.08);
+}
+.paper.answer-style-dark .answer-card h4,
+.paper.answer-style-dark .answer-note,
+.paper.answer-style-dark .answer-metric{ color:#ffffff; }
+.paper.answer-style-dark .answer-metric{
+    background:rgba(255,255,255,0.06);
+    border-color:rgba(255,255,255,0.10);
+}
+.paper.answer-style-badges .answer-card{
+    position:relative;
+    overflow:hidden;
+}
+.paper.answer-style-badges .answer-card::before{
+    content:"SOLVED";
+    position:absolute;
+    top:12px;
+    right:-28px;
+    transform:rotate(32deg);
+    padding:6px 34px;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#fff;
+    font-size:10px;
+    letter-spacing:0.16em;
+    font-weight:800;
+}
+.paper.answer-style-clean .answer-card{
+    border-radius:12px;
+    box-shadow:none;
+}
+.page-footer{
+    position:absolute;
+    left:38px;
+    right:38px;
+    bottom:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    color:var(--paper-muted);
+    font-size:12px;
+    border-top:1px solid var(--paper-line);
+    padding-top:10px;
+}
+.footer-chip{
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.06);
+    color:var(--paper-ink);
+    font-weight:700;
+}
+.export-deck{
+    position:absolute;
+    left:-99999px;
+    top:0;
+    background:#ffffff;
+    padding:0;
+}
+.export-page{
+    width:210mm;
+    height:297mm;
+    min-width:210mm;
+    min-height:297mm;
+    max-width:210mm;
+    max-height:297mm;
+    overflow:hidden;
+    background:#ffffff;
+    padding:0;
+    display:flex;
+    align-items:stretch;
+    justify-content:stretch;
+    page-break-after:always;
+    break-after:page;
+}
+.export-page:last-child{
+    page-break-after:auto;
+    break-after:auto;
+}
+.export-page .paper{
+    width:210mm !important;
+    height:297mm !important;
+    min-height:297mm !important;
+    max-height:297mm !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    margin:0 !important;
+    transform:none !important;
+}
+
+@media (max-width:1180px){ .workspace{ grid-template-columns:330px 1fr; } }
+@media (max-width:980px){
+    .workspace{ grid-template-columns:1fr; }
+    .sidebar{
+        border-right:none;
+        border-bottom:1px solid var(--line);
+        max-height:48vh;
+    }
+}
+@media (max-width:760px){
+    .topbar,.navbar{ padding-left:14px; padding-right:14px; }
+    .preview-scroll{ padding:14px; }
+    .grid-2,.color-row{ grid-template-columns:1fr; }
+    .diff-group{ grid-template-columns:1fr 1fr; }
+    .answer-grid{ grid-template-columns:1fr; }
+    .sheet-pages.layout-spread .page-item{ --paper-scale:0.33; }
+    .sheet-pages.layout-strip .page-item{ --paper-scale:0.22; }
+    .sheet-pages.layout-grid .page-item{ --paper-scale:0.28; }
+}
+@page{
+    size:A4 portrait;
+    margin:0;
+}
+@media print{
+    *{
+        -webkit-print-color-adjust:exact !important;
+        print-color-adjust:exact !important;
+    }
+    html, body{
+        margin:0 !important;
+        padding:0 !important;
+        width:100% !important;
+        height:100% !important;
+        overflow:visible !important;
+        background:#fff !important;
+    }
+    .app-shell{ display:none !important; }
+    #exportDeck{
+        position:static !important;
+        left:auto !important;
+        top:auto !important;
+        width:auto !important;
+        background:#fff !important;
+        display:block !important;
+    }
+    .export-page{
+        width:210mm !important;
+        height:297mm !important;
+        min-height:297mm !important;
+        max-height:297mm !important;
+        margin:0 !important;
+        padding:0 !important;
+        overflow:hidden !important;
+        page-break-after:always !important;
+        break-after:page !important;
+    }
+    .export-page .paper{
+        width:210mm !important;
+        height:297mm !important;
+        min-height:297mm !important;
+        max-height:297mm !important;
+        box-shadow:none !important;
+        border-radius:0 !important;
+        border:none !important;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div class="workspace">
+
+        <aside class="sidebar">
+            <div class="sidebar-scroll">
+
+                <div class="brand">
+                    <div class="brand-kicker">Premium Bonus Studio</div>
+                    <h1><span>Futoshiki Logic Studio</span></h1>
+                    <p>Create premium Futoshiki worksheet decks with real worksheet grid shapes, live preview, and exact A4 export.</p>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Generator</h2>
+                        <div class="panel-badge">Shape Engine</div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="puzzleCount">Puzzle Count</label>
+                        <input class="input" id="puzzleCount" type="number" min="1" max="24" value="6" />
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="label" for="shapeSelect">Grid Shape</label>
+                            <select class="select" id="shapeSelect">
+                                <option value="square">Square</option>
+                                <option value="diamond">Diamond</option>
+                                <option value="hex">Hexagon</option>
+                                <option value="cross">Cross Plus</option>
+                                <option value="ring">Ring Donut</option>
+                                <option value="tshape">T Shape</option>
+                                <option value="hshape">H Shape</option>
+                                <option value="octagon">Octagon</option>
+                                <option value="freeform">Free-form Irregular</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="sizeSelect">Grid Size</label>
+                            <select class="select" id="sizeSelect">
+                                <option value="small">Small</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="large">Large</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="label" for="pageOrderSelect">Page Order</label>
+                            <select class="select" id="pageOrderSelect">
+                                <option value="split" selected>Puzzles then Answers</option>
+                                <option value="paired">Puzzle + Answer Pairs</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="seedModeSelect">Variation</label>
+                            <select class="select" id="seedModeSelect">
+                                <option value="fresh" selected>Fresh Random</option>
+                                <option value="stable">Stable Rhythm</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <span class="label">Difficulty</span>
+                        <div class="diff-group" id="difficultyGroup">
+                            <button type="button" class="diff-btn" data-diff="Easy">Easy</button>
+                            <button type="button" class="diff-btn active" data-diff="Medium">Medium</button>
+                            <button type="button" class="diff-btn" data-diff="Hard">Hard</button>
+                            <button type="button" class="diff-btn" data-diff="Expert">Expert</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Theme Studio</h2>
+                        <div class="panel-badge">Preset</div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="presetSelect">Visual Preset</label>
+                        <select class="select" id="presetSelect">
+                            <option value="cobalt">Cobalt Air</option>
+                            <option value="royal">Royal Gold</option>
+                            <option value="rose">Rose Quartz</option>
+                            <option value="midnight">Midnight Prism</option>
+                        </select>
+                        <div class="swatches">
+                            <div class="swatch" data-preset="cobalt" style="background:linear-gradient(135deg,#0070F3,#6ea8ff);"></div>
+                            <div class="swatch" data-preset="royal" style="background:linear-gradient(135deg,#f59e0b,#7c3aed);"></div>
+                            <div class="swatch" data-preset="rose" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);"></div>
+                            <div class="swatch" data-preset="midnight" style="background:linear-gradient(135deg,#6f7bf7,#2fd4ff);"></div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="titleInput">Worksheet Title</label>
+                        <input class="input" id="titleInput" type="text" value="Futoshiki Shape Challenge" />
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="subtitleInput">Subtitle / Tagline</label>
+                        <input class="input" id="subtitleInput" type="text" value="Irregular Inequality Puzzles for Sharp Minds" />
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="label" for="headerStyleSelect">Header Shape</label>
+                            <select class="select" id="headerStyleSelect">
+                                <option value="ribbon">Ribbon</option>
+                                <option value="capsule">Capsule</option>
+                                <option value="split">Split Banner</option>
+                                <option value="classic">Classic Editorial</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="borderStyleSelect">Page Border</label>
+                            <select class="select" id="borderStyleSelect">
+                                <option value="glow">Glow Frame</option>
+                                <option value="frame">Premium Frame</option>
+                                <option value="double">Double Border</option>
+                                <option value="dashed">Dashed Studio</option>
+                                <option value="clean">Clean Minimal</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="label" for="cellShapeSelect">Cell Shape</label>
+                            <select class="select" id="cellShapeSelect">
+                                <option value="rounded">Rounded</option>
+                                <option value="square">Square</option>
+                                <option value="pill">Pill Soft</option>
+                                <option value="soft">Soft Corner</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="ineqStyleSelect">Inequality Style</label>
+                            <select class="select" id="ineqStyleSelect">
+                                <option value="classic">Classic</option>
+                                <option value="minimal">Minimal</option>
+                                <option value="bold">Bold</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="label" for="patternSelect">Paper Pattern</label>
+                            <select class="select" id="patternSelect">
+                                <option value="dots">Dots</option>
+                                <option value="grid">Grid</option>
+                                <option value="stars">Stars</option>
+                                <option value="confetti">Confetti</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="answerStyleSelect">Answer Style</label>
+                            <select class="select" id="answerStyleSelect">
+                                <option value="badges">Badge Cards</option>
+                                <option value="dark">Dark Cards</option>
+                                <option value="clean">Clean Compact</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="color-row">
+                        <div class="color-box">
+                            <label class="label" for="accentColor">Primary Accent</label>
+                            <input id="accentColor" type="color" value="#0070F3" />
+                        </div>
+                        <div class="color-box">
+                            <label class="label" for="accentColor2">Secondary Accent</label>
+                            <input id="accentColor2" type="color" value="#6ea8ff" />
+                        </div>
+                    </div>
+
+                    <div class="color-row" style="margin-top:10px;">
+                        <div class="color-box">
+                            <label class="label" for="paperColor">Paper</label>
+                            <input id="paperColor" type="color" value="#ffffff" />
+                        </div>
+                        <div class="color-box">
+                            <label class="label" for="inkColor">Text</label>
+                            <input id="inkColor" type="color" value="#101421" />
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-top:12px;">
+                        <label class="label" for="boardTintRange">Board Tint</label>
+                        <div class="range-wrap">
+                            <input id="boardTintRange" type="range" min="0" max="28" value="10" />
+                            <div class="range-chip" id="boardTintChip">10</div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="checkbox">
+                            <input type="checkbox" id="footerToggle" checked />
+                            <span>Show footer page numbers</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Output</h2>
+                        <div class="panel-badge">A4 Real Export</div>
+                    </div>
+
+                    <button class="primary-btn" id="generateBtn" type="button">Generate 6 Puzzles</button>
+                    <button class="secondary-btn" id="applyThemeBtn" type="button" style="margin-top:10px;">Apply Style Changes</button>
+
+                    <div style="margin-top:14px;">
+                        <div class="progress-text" id="progressText">Ready.</div>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    </div>
+
+                    <div class="note" style="margin-top:12px;">
+                        Preview zoom and preview layout are screen-only. PNG, PDF, and print always render exact A4 pages from the export deck.
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <div class="topbar-group">
+                    <div class="kpi-chip" id="kpiDeck">No deck generated</div>
+                    <div class="kpi-chip" id="kpiStyle">Preset: Cobalt Air</div>
+                    <div class="kpi-chip" id="kpiMode">View: Puzzle</div>
+                </div>
+
+                <div class="topbar-group">
+                    <button class="toggle-btn active" id="puzzleViewBtn" type="button">Puzzle View</button>
+                    <button class="toggle-btn" id="answerViewBtn" type="button">Answer View</button>
+
+                    <select class="select layout-select" id="layoutSelect">
+                        <option value="single">Single Page</option>
+                        <option value="spread">2-Page Spread</option>
+                        <option value="strip">3-Up Strip</option>
+                        <option value="grid">2x2 Grid</option>
+                    </select>
+
+                    <select class="select zoom-select" id="zoomSelect">
+                        <option value="0.1">10%</option>
+                        <option value="0.25">25%</option>
+                        <option value="0.5">50%</option>
+                        <option value="0.75">75%</option>
+                        <option value="1" selected>100%</option>
+                        <option value="1.15">115%</option>
+                        <option value="1.3">130%</option>
+                    </select>
+
+                    <button class="small-btn" id="pngBtn" type="button">Save Current PNG</button>
+                    <button class="small-btn" id="exactPdfBtn" type="button">Download PDF</button>
+                    <button class="small-btn" id="exactPrintBtn" type="button">Web Print</button>
+                </div>
+            </div>
+
+            <div class="preview-scroll">
+                <div class="preview-center">
+                    <div class="preview-stage" id="previewStage">
+                        <div class="empty-state" id="emptyState">
+                            <h3>Worksheet shape preview</h3>
+                            <p>Generate a shape-based Futoshiki batch, switch grid silhouettes, browse puzzle and answer sheets, and export through a real A4 page pipeline.</p>
+                        </div>
+                        <div id="screenPreview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navbar">
+                <div class="topbar-group">
+                    <button class="nav-btn" id="prevBtn" type="button">Previous</button>
+                    <button class="nav-btn" id="nextBtn" type="button">Next</button>
+                </div>
+                <div class="page-status" id="pageStatus">Sheet 0 / 0</div>
+                <div class="meta" id="deckMeta">No deck generated yet.</div>
+            </div>
+        </main>
+
+    </div>
+</div>
+
+<div id="exportDeck" class="export-deck"></div>
+
+<script>
+(function(){
+    var presets = {
+        cobalt: {
+            label:"Cobalt Air",
+            accent:"#0070F3",
+            accent2:"#6ea8ff",
+            bg1:"#08111f",
+            bg2:"#111b34",
+            bg3:"#18112b",
+            text:"#f7f8fc",
+            muted:"#aab3cc",
+            paper:"#ffffff",
+            ink:"#101421",
+            boardTint:10,
+            headerStyle:"ribbon",
+            borderStyle:"glow",
+            cellShape:"rounded",
+            pattern:"dots",
+            answerStyle:"badges",
+            ineqStyle:"classic"
+        },
+        royal: {
+            label:"Royal Gold",
+            accent:"#f59e0b",
+            accent2:"#7c3aed",
+            bg1:"#130d1b",
+            bg2:"#24132d",
+            bg3:"#5b2d0e",
+            text:"#fff8ee",
+            muted:"#dac9b2",
+            paper:"#fffdfa",
+            ink:"#1a1330",
+            boardTint:14,
+            headerStyle:"split",
+            borderStyle:"double",
+            cellShape:"soft",
+            pattern:"stars",
+            answerStyle:"dark",
+            ineqStyle:"bold"
+        },
+        rose: {
+            label:"Rose Quartz",
+            accent:"#ec4899",
+            accent2:"#8b5cf6",
+            bg1:"#1d1231",
+            bg2:"#30184d",
+            bg3:"#501d42",
+            text:"#fff7fd",
+            muted:"#d9bfd3",
+            paper:"#ffffff",
+            ink:"#23153a",
+            boardTint:18,
+            headerStyle:"capsule",
+            borderStyle:"frame",
+            cellShape:"pill",
+            pattern:"confetti",
+            answerStyle:"badges",
+            ineqStyle:"classic"
+        },
+        midnight: {
+            label:"Midnight Prism",
+            accent:"#6f7bf7",
+            accent2:"#2fd4ff",
+            bg1:"#0a0d18",
+            bg2:"#151a33",
+            bg3:"#1f3358",
+            text:"#f5f7ff",
+            muted:"#b9c0da",
+            paper:"#fdfdff",
+            ink:"#12162a",
+            boardTint:8,
+            headerStyle:"classic",
+            borderStyle:"clean",
+            cellShape:"square",
+            pattern:"none",
+            answerStyle:"dark",
+            ineqStyle:"minimal"
+        }
+    };
+
+    var sizeProfiles = {
+        small: {
+            square:{ side:5 },
+            diamond:{ radius:2 },
+            hex:{ rows:[3,4,5,4,3] },
+            cross:{ base:5, thickness:1 },
+            ring:{ base:5, hole:1 },
+            tshape:{ base:5, stem:1, top:2 },
+            hshape:{ base:5, pillar:1, bridge:1 },
+            octagon:{ base:5, cut:1 },
+            freeform:{ base:5, target:18 }
+        },
+        medium: {
+            square:{ side:6 },
+            diamond:{ radius:3 },
+            hex:{ rows:[4,5,6,5,4,3,2] },
+            cross:{ base:7, thickness:3 },
+            ring:{ base:7, hole:3 },
+            tshape:{ base:7, stem:3, top:2 },
+            hshape:{ base:7, pillar:2, bridge:3 },
+            octagon:{ base:7, cut:1 },
+            freeform:{ base:7, target:28 }
+        },
+        large: {
+            square:{ side:7 },
+            diamond:{ radius:3 },
+            hex:{ rows:[5,6,7,7,7,6,5] },
+            cross:{ base:7, thickness:3 },
+            ring:{ base:7, hole:1 },
+            tshape:{ base:7, stem:3, top:3 },
+            hshape:{ base:7, pillar:2, bridge:3 },
+            octagon:{ base:7, cut:2 },
+            freeform:{ base:7, target:34 }
+        }
+    };
+
+    var shapeNames = {
+        square:"Square",
+        diamond:"Diamond",
+        hex:"Hexagon",
+        cross:"Cross Plus",
+        ring:"Ring Donut",
+        tshape:"T Shape",
+        hshape:"H Shape",
+        octagon:"Octagon",
+        freeform:"Free-form"
+    };
+
+    var difficultyProfiles = {
+        Easy:   { pairPct:0.52, givenPct:0.22, prefer:"given" },
+        Medium: { pairPct:0.38, givenPct:0.12, prefer:"mix" },
+        Hard:   { pairPct:0.27, givenPct:0.05, prefer:"ineq" },
+        Expert: { pairPct:0.18, givenPct:0.00, prefer:"ineq" }
+    };
+
+    var state = {
+        difficulty:"Medium",
+        currentView:"puzzle",
+        currentPage:0,
+        zoom:1,
+        previewLayout:"single",
+        generating:false,
+        exporting:false,
+        currentShape:"square",
+        currentSizeKey:"medium",
+        pageOrder:"split",
+        seedMode:"fresh",
+        puzzles:[],
+        puzzlePages:[],
+        answerPages:[],
+        style:{
+            preset:"cobalt",
+            title:"Futoshiki Shape Challenge",
+            subtitle:"Irregular Inequality Puzzles for Sharp Minds",
+            footerNumbers:true,
+            accent1:"#0070F3",
+            accent2:"#6ea8ff",
+            paper:"#ffffff",
+            ink:"#101421",
+            boardTint:10,
+            headerStyle:"ribbon",
+            borderStyle:"glow",
+            cellShape:"rounded",
+            pattern:"dots",
+            answerStyle:"badges",
+            ineqStyle:"classic"
+        }
+    };
+
+    function init(){
+        bindUI();
+        applyPresetToState("cobalt");
+        syncControlsFromState();
+        applyShellTheme();
+        updateGenerateButtonLabel();
+        updateZoom();
+        updateViewButtons();
+        updateStyleKPI();
+        updateDeckKPI();
+        updateMeta();
+        updateNavState();
+    }
+
+    function bindUI(){
+        var diffButtons = document.querySelectorAll(".diff-btn");
+        for(var i=0;i<diffButtons.length;i++){
+            diffButtons[i].onclick = function(){
+                setDifficulty(this.getAttribute("data-diff"));
+            };
+        }
+
+        document.getElementById("puzzleCount").oninput = updateGenerateButtonLabel;
+        document.getElementById("generateBtn").onclick = generateBatch;
+        document.getElementById("applyThemeBtn").onclick = function(){
+            readControls();
+            applyShellTheme();
+            rerenderAll();
+        };
+
+        document.getElementById("puzzleViewBtn").onclick = function(){
+            state.currentView = "puzzle";
+            state.currentPage = 0;
+            updateViewButtons();
+            renderPreview();
+        };
+        document.getElementById("answerViewBtn").onclick = function(){
+            state.currentView = "answer";
+            state.currentPage = 0;
+            updateViewButtons();
+            renderPreview();
+        };
+
+        document.getElementById("layoutSelect").onchange = function(){
+            state.previewLayout = this.value || "single";
+            state.currentPage = 0;
+            rerenderAll();
+        };
+        document.getElementById("zoomSelect").onchange = function(){
+            state.zoom = parseFloat(this.value || "1");
+            updateZoom();
+        };
+
+        document.getElementById("prevBtn").onclick = function(){
+            if(state.currentPage > 0){
+                state.currentPage--;
+                renderPreview();
+            }
+        };
+        document.getElementById("nextBtn").onclick = function(){
+            var groups = getCurrentGroups();
+            if(state.currentPage < groups.length - 1){
+                state.currentPage++;
+                renderPreview();
+            }
+        };
+
+        document.getElementById("presetSelect").onchange = function(){
+            applyPresetToState(this.value);
+            syncControlsFromState();
+            applyShellTheme();
+            rerenderAll();
+        };
+
+        var swatches = document.querySelectorAll(".swatch");
+        for(var j=0;j<swatches.length;j++){
+            swatches[j].onclick = function(){
+                applyPresetToState(this.getAttribute("data-preset"));
+                syncControlsFromState();
+                applyShellTheme();
+                rerenderAll();
+            };
+        }
+
+        document.getElementById("boardTintRange").oninput = function(){
+            document.getElementById("boardTintChip").innerHTML = this.value;
+        };
+
+        var liveIds = [
+            "shapeSelect","sizeSelect","pageOrderSelect","seedModeSelect",
+            "titleInput","subtitleInput","footerToggle",
+            "accentColor","accentColor2","paperColor","inkColor","boardTintRange",
+            "headerStyleSelect","borderStyleSelect","cellShapeSelect","patternSelect",
+            "answerStyleSelect","ineqStyleSelect"
+        ];
+
+        for(var k=0;k<liveIds.length;k++){
+            attachLiveControl(liveIds[k]);
+        }
+
+        document.getElementById("pngBtn").onclick = saveCurrentPageAsPNG;
+        document.getElementById("exactPdfBtn").onclick = downloadExactPDF;
+        document.getElementById("exactPrintBtn").onclick = exactPrint;
+    }
+
+    function attachLiveControl(id){
+        var el = document.getElementById(id);
+        if(!el){ return; }
+        el.oninput = function(){
+            readControls();
+            applyShellTheme();
+            rerenderAll();
+        };
+        el.onchange = function(){
+            readControls();
+            applyShellTheme();
+            rerenderAll();
+        };
+    }
+
+    function setDifficulty(diff){
+        state.difficulty = diff;
+        var buttons = document.querySelectorAll(".diff-btn");
+        for(var i=0;i<buttons.length;i++){
+            buttons[i].className = buttons[i].getAttribute("data-diff") === diff ? "diff-btn active" : "diff-btn";
+        }
+    }
+
+    function applyPresetToState(name){
+        var p = presets[name] || presets.cobalt;
+        state.style.preset = name;
+        state.style.accent1 = p.accent;
+        state.style.accent2 = p.accent2;
+        state.style.paper = p.paper;
+        state.style.ink = p.ink;
+        state.style.boardTint = p.boardTint;
+        state.style.headerStyle = p.headerStyle;
+        state.style.borderStyle = p.borderStyle;
+        state.style.cellShape = p.cellShape;
+        state.style.pattern = p.pattern;
+        state.style.answerStyle = p.answerStyle;
+        state.style.ineqStyle = p.ineqStyle;
+    }
+
+    function syncControlsFromState(){
+        document.getElementById("presetSelect").value = state.style.preset;
+        document.getElementById("titleInput").value = state.style.title;
+        document.getElementById("subtitleInput").value = state.style.subtitle;
+        document.getElementById("footerToggle").checked = !!state.style.footerNumbers;
+        document.getElementById("accentColor").value = state.style.accent1;
+        document.getElementById("accentColor2").value = state.style.accent2;
+        document.getElementById("paperColor").value = state.style.paper;
+        document.getElementById("inkColor").value = state.style.ink;
+        document.getElementById("boardTintRange").value = state.style.boardTint;
+        document.getElementById("boardTintChip").innerHTML = state.style.boardTint;
+        document.getElementById("headerStyleSelect").value = state.style.headerStyle;
+        document.getElementById("borderStyleSelect").value = state.style.borderStyle;
+        document.getElementById("cellShapeSelect").value = state.style.cellShape;
+        document.getElementById("patternSelect").value = state.style.pattern;
+        document.getElementById("answerStyleSelect").value = state.style.answerStyle;
+        document.getElementById("ineqStyleSelect").value = state.style.ineqStyle;
+        document.getElementById("shapeSelect").value = state.currentShape;
+        document.getElementById("sizeSelect").value = state.currentSizeKey;
+        document.getElementById("pageOrderSelect").value = state.pageOrder;
+        document.getElementById("seedModeSelect").value = state.seedMode;
+    }
+
+    function readControls(){
+        state.currentShape = document.getElementById("shapeSelect").value || "square";
+        state.currentSizeKey = document.getElementById("sizeSelect").value || "medium";
+        state.pageOrder = document.getElementById("pageOrderSelect").value || "split";
+        state.seedMode = document.getElementById("seedModeSelect").value || "fresh";
+        state.style.preset = document.getElementById("presetSelect").value || "cobalt";
+        state.style.title = document.getElementById("titleInput").value || "Futoshiki Shape Challenge";
+        state.style.subtitle = document.getElementById("subtitleInput").value || "Irregular Inequality Puzzles for Sharp Minds";
+        state.style.footerNumbers = !!document.getElementById("footerToggle").checked;
+        state.style.accent1 = document.getElementById("accentColor").value || "#0070F3";
+        state.style.accent2 = document.getElementById("accentColor2").value || "#6ea8ff";
+        state.style.paper = document.getElementById("paperColor").value || "#ffffff";
+        state.style.ink = document.getElementById("inkColor").value || "#101421";
+        state.style.boardTint = parseInt(document.getElementById("boardTintRange").value, 10) || 0;
+        state.style.headerStyle = document.getElementById("headerStyleSelect").value || "ribbon";
+        state.style.borderStyle = document.getElementById("borderStyleSelect").value || "glow";
+        state.style.cellShape = document.getElementById("cellShapeSelect").value || "rounded";
+        state.style.pattern = document.getElementById("patternSelect").value || "dots";
+        state.style.answerStyle = document.getElementById("answerStyleSelect").value || "badges";
+        state.style.ineqStyle = document.getElementById("ineqStyleSelect").value || "classic";
+        state.previewLayout = document.getElementById("layoutSelect").value || "single";
+        updateStyleKPI();
+    }
+
+    function applyShellTheme(){
+        var p = presets[state.style.preset] || presets.cobalt;
+        var root = document.documentElement;
+        var boardA = mixHex(state.style.paper, state.style.accent1, state.style.boardTint / 100);
+        var boardB = mixHex(state.style.paper, state.style.accent2, Math.max(0.03, (state.style.boardTint + 6) / 100));
+        var givenA = mixHex(state.style.paper, state.style.accent1, 0.10);
+        var givenB = mixHex(state.style.paper, state.style.accent2, 0.14);
+
+        root.style.setProperty("--bg-1", p.bg1);
+        root.style.setProperty("--bg-2", p.bg2);
+        root.style.setProperty("--bg-3", p.bg3);
+        root.style.setProperty("--text", p.text);
+        root.style.setProperty("--muted", p.muted);
+        root.style.setProperty("--accent", state.style.accent1);
+        root.style.setProperty("--accent-2", state.style.accent2);
+        root.style.setProperty("--glow", hexToRgba(state.style.accent1, 0.34));
+        root.style.setProperty("--paper", state.style.paper);
+        root.style.setProperty("--paper-ink", state.style.ink);
+        root.style.setProperty("--paper-muted", mixHex(state.style.ink, "#aeb6c7", 0.55));
+        root.style.setProperty("--paper-line", mixHex(state.style.paper, "#b7c6da", 0.55));
+        root.style.setProperty("--board-shell-1", boardA);
+        root.style.setProperty("--board-shell-2", boardB);
+        root.style.setProperty("--given", givenA);
+        root.style.setProperty("--given-2", givenB);
+        root.style.setProperty("--cell-bg", "#ffffff");
+    }
+
+    function updateStyleKPI(){
+        var p = presets[state.style.preset] || presets.cobalt;
+        document.getElementById("kpiStyle").innerHTML = "Preset: " + p.label;
+    }
+
+    function updateGenerateButtonLabel(){
+        var count = parseInt(document.getElementById("puzzleCount").value, 10);
+        if(isNaN(count) || count < 1){ count = 1; }
+        if(count > 24){ count = 24; }
+        document.getElementById("generateBtn").innerHTML = "Generate " + count + " Puzzles";
+    }
+
+    function updateZoom(){
+        document.getElementById("previewStage").style.transform = "scale(" + state.zoom + ")";
+    }
+
+    function setProgress(text, pct){
+        document.getElementById("progressText").innerHTML = text;
+        document.getElementById("progressFill").style.width = pct + "%";
+    }
+
+    function disableExportButtons(flag){
+        document.getElementById("pngBtn").disabled = flag;
+        document.getElementById("exactPdfBtn").disabled = flag;
+        document.getElementById("exactPrintBtn").disabled = flag;
+    }
+
+    function updateViewButtons(){
+        document.getElementById("puzzleViewBtn").className = state.currentView === "puzzle" ? "toggle-btn active" : "toggle-btn";
+        document.getElementById("answerViewBtn").className = state.currentView === "answer" ? "toggle-btn active" : "toggle-btn";
+        document.getElementById("kpiMode").innerHTML = "View: " + (state.currentView === "puzzle" ? "Puzzle" : "Answer");
+    }
+
+    function updateDeckKPI(){
+        if(!state.puzzles.length){
+            document.getElementById("kpiDeck").innerHTML = "No deck generated";
+        }else{
+            document.getElementById("kpiDeck").innerHTML =
+                state.puzzles.length + " puzzles · " +
+                shapeNames[state.currentShape] + " · " +
+                state.currentSizeKey + " · " + state.difficulty;
+        }
+    }
+
+    function updateMeta(){
+        if(!state.puzzles.length){
+            document.getElementById("deckMeta").innerHTML = "No deck generated yet.";
+            return;
+        }
+        var totalPages = state.puzzlePages.length + state.answerPages.length;
+        var groups = getCurrentGroups().length;
+        document.getElementById("deckMeta").innerHTML =
+            shapeNames[state.currentShape] + " · " +
+            totalPages + " pages · " +
+            groups + " preview sheets";
+    }
+
+    function updateNavState(){
+        var groups = getCurrentGroups();
+        var total = groups.length;
+        var current = total ? state.currentPage + 1 : 0;
+        var startIndex = total ? (state.currentPage * getLayoutGroupSize()) + 1 : 0;
+        var endIndex = total ? Math.min((state.currentPage + 1) * getLayoutGroupSize(), getCurrentPages().length) : 0;
+
+        document.getElementById("pageStatus").innerHTML = "Sheet " + current + " / " + total + (total ? " · Pages " + startIndex + "–" + endIndex : "");
+        document.getElementById("prevBtn").disabled = state.currentPage <= 0;
+        document.getElementById("nextBtn").disabled = state.currentPage >= total - 1 || total === 0;
+    }
+
+    function getCurrentPages(){
+        return state.currentView === "puzzle" ? state.puzzlePages : state.answerPages;
+    }
+
+    function getLayoutGroupSize(){
+        if(state.previewLayout === "spread"){ return 2; }
+        if(state.previewLayout === "strip"){ return 3; }
+        if(state.previewLayout === "grid"){ return 4; }
+        return 1;
+    }
+
+    function chunkPages(pages, size){
+        var groups = [];
+        for(var i=0;i<pages.length;i+=size){
+            groups.push(pages.slice(i, i + size));
+        }
+        return groups;
+    }
+
+    function getCurrentGroups(){
+        return chunkPages(getCurrentPages(), getLayoutGroupSize());
+    }
+
+    function rerenderAll(){
+        renderPreview();
+        renderExportDeck();
+        updateDeckKPI();
+        updateMeta();
+        updateNavState();
+    }
+
+    function buildPages(){
+        state.puzzlePages = [];
+        state.answerPages = [];
+
+        if(state.pageOrder === "paired"){
+            for(var i=0;i<state.puzzles.length;i++){
+                state.puzzlePages.push({ type:"puzzle", puzzle:state.puzzles[i], pageNumber:(i * 2) + 1 });
+                state.answerPages.push({ type:"answer", puzzle:state.puzzles[i], pageNumber:(i * 2) + 2 });
+            }
+        }else{
+            for(var j=0;j<state.puzzles.length;j++){
+                state.puzzlePages.push({ type:"puzzle", puzzle:state.puzzles[j], pageNumber:j + 1 });
+            }
+            for(var k=0;k<state.puzzles.length;k++){
+                state.answerPages.push({ type:"answer", puzzle:state.puzzles[k], pageNumber:state.puzzles.length + k + 1 });
+            }
+        }
+    }
+
+    function generateBatch(){
+        if(state.generating){ return; }
+
+        readControls();
+
+        var count = parseInt(document.getElementById("puzzleCount").value, 10);
+        if(isNaN(count) || count < 1){ count = 1; }
+        if(count > 24){ count = 24; }
+
+        state.generating = true;
+        state.puzzles = [];
+        state.puzzlePages = [];
+        state.answerPages = [];
+        state.currentView = "puzzle";
+        state.currentPage = 0;
+
+        updateViewButtons();
+        document.getElementById("generateBtn").disabled = true;
+        disableExportButtons(true);
+        document.getElementById("screenPreview").innerHTML = "";
+        document.getElementById("exportDeck").innerHTML = "";
+        document.getElementById("emptyState").style.display = "none";
+
+        setProgress("Preparing worksheet shape deck...", 2);
+
+        var index = 0;
+        function nextStep(){
+            if(index >= count){
+                state.generating = false;
+                document.getElementById("generateBtn").disabled = false;
+                disableExportButtons(false);
+                buildPages();
+                rerenderAll();
+                setProgress("Generated " + state.puzzles.length + " puzzle" + (state.puzzles.length === 1 ? "" : "s") + ".", 100);
+                return;
+            }
+
+            setProgress("Generating puzzle " + (index + 1) + " of " + count + "...", Math.max(4, Math.round((index / count) * 100)));
+
+            setTimeout(function(){
+                var puzzle = buildSinglePuzzle(state.currentShape, state.currentSizeKey, state.difficulty, index + 1);
+                if(puzzle){ state.puzzles.push(puzzle); }
+                index++;
+                nextStep();
+            }, 10);
+        }
+
+        nextStep();
+    }
+
+    function renderPreview(){
+        var screen = document.getElementById("screenPreview");
+        var groups = getCurrentGroups();
+
+        if(!groups.length){
+            document.getElementById("emptyState").style.display = "block";
+            screen.innerHTML = "";
+            updateNavState();
+            return;
+        }
+
+        document.getElementById("emptyState").style.display = "none";
+
+        if(state.currentPage < 0){ state.currentPage = 0; }
+        if(state.currentPage > groups.length - 1){ state.currentPage = groups.length - 1; }
+
+        screen.innerHTML = renderGroupSheet(groups[state.currentPage], state.previewLayout, "screen");
+        updateNavState();
+    }
+
+    function renderExportDeck(){
+        var deck = document.getElementById("exportDeck");
+        if(!state.puzzles.length){
+            deck.innerHTML = "";
+            return;
+        }
+
+        var html = "";
+        if(state.pageOrder === "paired"){
+            for(var i=0;i<state.puzzles.length;i++){
+                html += '<div class="export-page">' + renderPuzzlePage({ type:"puzzle", puzzle:state.puzzles[i], pageNumber:(i * 2) + 1 }, false) + '</div>';
+                html += '<div class="export-page">' + renderAnswerPage({ type:"answer", puzzle:state.puzzles[i], pageNumber:(i * 2) + 2 }, false) + '</div>';
+            }
+        }else{
+            for(var j=0;j<state.puzzlePages.length;j++){
+                html += '<div class="export-page">' + renderPuzzlePage(state.puzzlePages[j], false) + '</div>';
+            }
+            for(var k=0;k<state.answerPages.length;k++){
+                html += '<div class="export-page">' + renderAnswerPage(state.answerPages[k], false) + '</div>';
+            }
+        }
+        deck.innerHTML = html;
+    }
+
+    function renderGroupSheet(group, layout, mode){
+        var html = '<div class="sheet-pages layout-' + layout + '">';
+        for(var i=0;i<group.length;i++){
+            html += '<div class="page-item">';
+            html += group[i].type === "puzzle" ? renderPuzzlePage(group[i], mode === "screen") : renderAnswerPage(group[i], mode === "screen");
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function getPaperClass(withFade){
+        var cls = "paper";
+        if(withFade){ cls += " fade-in"; }
+        cls += " header-" + state.style.headerStyle;
+        cls += " border-" + state.style.borderStyle;
+        cls += " cell-shape-" + state.style.cellShape;
+        cls += " pattern-" + state.style.pattern;
+        cls += " answer-style-" + state.style.answerStyle;
+        cls += " ineq-style-" + state.style.ineqStyle;
+        return cls;
+    }
+
+    function renderPuzzlePage(page, withFade){
+        var puzzle = page.puzzle;
+        var stats = ''
+            + '<div class="stats-row">'
+            + '<div class="stat-chip">' + shapeNames[puzzle.shape] + '</div>'
+            + '<div class="stat-chip">' + puzzle.rows + '×' + puzzle.cols + '</div>'
+            + '<div class="stat-chip">' + puzzle.activeCount + ' active cells</div>'
+            + '<div class="stat-chip">' + puzzle.difficulty + '</div>'
+            + '</div>';
+
+        return ''
+        + '<div class="' + getPaperClass(withFade) + '">'
+            + '<div class="paper-inner">'
+                + '<div class="paper-top-strip"></div>'
+                + '<div class="page-head">'
+                    + '<div class="head-badge">Futoshiki Puzzle</div>'
+                    + '<div class="title-card">'
+                        + '<h2 class="page-title">' + escapeHtml(state.style.title) + ' #' + puzzle.puzzleNumber + '</h2>'
+                        + '<p class="page-subtitle">' + escapeHtml(state.style.subtitle) + ' · ' + shapeNames[puzzle.shape] + ' · ' + puzzle.difficulty + '</p>'
+                        + stats
+                    + '</div>'
+                + '</div>'
+                + '<div class="board-shell"><div class="board-wrap">' + renderBoard(puzzle, false) + '</div></div>'
+            + '</div>'
+            + renderFooter(page, 'Puzzle ' + puzzle.puzzleNumber, puzzle.uniquenessStatus)
+        + '</div>';
+    }
+
+    function renderAnswerPage(page, withFade){
+        var puzzle = page.puzzle;
+        return ''
+        + '<div class="' + getPaperClass(withFade) + '">'
+            + '<div class="paper-inner">'
+                + '<div class="paper-top-strip"></div>'
+                + '<div class="page-head">'
+                    + '<div class="head-badge">Solved Answer</div>'
+                    + '<div class="title-card">'
+                        + '<h2 class="page-title">' + escapeHtml(state.style.title) + ' — Answer #' + puzzle.puzzleNumber + '</h2>'
+                        + '<p class="page-subtitle">Solved shape grid with the same inequality layout used in the puzzle.</p>'
+                    + '</div>'
+                + '</div>'
+                + renderAnswerContent(puzzle)
+            + '</div>'
+            + renderFooter(page, 'Answer ' + puzzle.puzzleNumber, puzzle.uniquenessStatus)
+        + '</div>';
+    }
+
+    function renderAnswerContent(puzzle){
+        return ''
+        + '<div class="answer-grid">'
+            + '<div class="answer-card answer-card-wide">'
+                + '<h4>Solved Grid</h4>'
+                + '<div class="answer-board-wrap">' + renderBoard(puzzle, true) + '</div>'
+            + '</div>'
+            + '<div class="answer-card">'
+                + '<h4>Clue Profile</h4>'
+                + '<div class="answer-note">Row and column uniqueness apply only to active cells inside the worksheet shape, while inequalities connect adjacent active cells.</div>'
+                + '<div class="answer-metric">' + puzzle.pairList.length + ' inequality clues</div>'
+                + '<div class="answer-metric">' + puzzle.givenList.length + ' given numbers</div>'
+            + '</div>'
+            + '<div class="answer-card">'
+                + '<h4>Generation Status</h4>'
+                + '<div class="answer-note">Solver pass: ' + escapeHtml(puzzle.uniquenessStatus) + '.</div>'
+                + '<div class="answer-metric">' + puzzle.activeCount + ' active cells</div>'
+                + '<div class="answer-metric">' + puzzle.retriesUsed + ' refinement retries</div>'
+            + '</div>'
+        + '</div>';
+    }
+
+    function renderFooter(page, label, status){
+        if(!state.style.footerNumbers){ return ''; }
+        return '<div class="page-footer"><div class="footer-chip">' + label + '</div><div>' + escapeHtml(status) + ' · ' + page.pageNumber + '</div></div>';
+    }
+
+    function renderBoard(puzzle, showSolution){
+        var rows = puzzle.rows;
+        var cols = puzzle.cols;
+        var metrics = getBoardMetrics(Math.max(rows, cols));
+        var tracks = buildTrackList(cols, metrics.cell, metrics.gap);
+        var rowTracks = buildTrackList(rows, metrics.cell, metrics.gap);
+        var html = '<div class="futo-board" style="grid-template-columns:' + tracks + ';grid-template-rows:' + rowTracks + ';">';
+
+        for(var vr=0; vr<(rows * 2 - 1); vr++){
+            for(var vc=0; vc<(cols * 2 - 1); vc++){
+                if(vr % 2 === 0 && vc % 2 === 0){
+                    var r = Math.floor(vr / 2);
+                    var c = Math.floor(vc / 2);
+                    if(!puzzle.shapeMask[r][c]){
+                        html += '<div class="fcell void" style="width:' + metrics.cell + 'px;height:' + metrics.cell + 'px;"></div>';
+                    }else{
+                        var val = showSolution ? puzzle.solution[r][c] : puzzle.givensGrid[r][c];
+                        var cellClass = "fcell";
+                        if(showSolution){ cellClass += " answer"; }
+                        else if(puzzle.givensGrid[r][c]){ cellClass += " given"; }
+
+                        html += '<div class="' + cellClass + '" style="width:' + metrics.cell + 'px;height:' + metrics.cell + 'px;font-size:' + metrics.font + 'px;">' + (val ? val : '&nbsp;') + '</div>';
+                    }
+                }else if(vr % 2 === 0 && vc % 2 === 1){
+                    var hr = Math.floor(vr / 2);
+                    var hc = Math.floor(vc / 2);
+                    var hsym = puzzle.hClues[hr][hc] || '';
+                    html += '<div class="ineq" style="width:' + metrics.gap + 'px;height:' + metrics.cell + 'px;font-size:' + metrics.ineq + 'px;">' + hsym + '</div>';
+                }else if(vr % 2 === 1 && vc % 2 === 0){
+                    var vr2 = Math.floor(vr / 2);
+                    var vc2 = Math.floor(vc / 2);
+                    var vsym = puzzle.vClues[vr2][vc2] || '';
+                    html += '<div class="ineq" style="width:' + metrics.cell + 'px;height:' + metrics.gap + 'px;font-size:' + metrics.ineq + 'px;">' + vsym + '</div>';
+                }else{
+                    html += '<div class="cross-gap" style="width:' + metrics.gap + 'px;height:' + metrics.gap + 'px;"></div>';
+                }
+            }
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function getBoardMetrics(maxDim){
+        if(maxDim <= 5){ return { cell:84, gap:24, font:32, ineq:23 }; }
+        if(maxDim === 6){ return { cell:72, gap:22, font:28, ineq:21 }; }
+        return { cell:62, gap:20, font:24, ineq:18 };
+    }
+
+    function buildTrackList(n, cell, gap){
+        var parts = [];
+        for(var i=0;i<n;i++){
+            parts.push(cell + "px");
+            if(i < n - 1){ parts.push(gap + "px"); }
+        }
+        return parts.join(" ");
+    }
+
+    function saveCurrentPageAsPNG(){
+        if(!state.puzzles.length || state.exporting){ return; }
+
+        state.exporting = true;
+        disableExportButtons(true);
+        setProgress("Preparing PNG export...", 10);
+
+        ensureFontsReady(function(){
+            var currentPages = getCurrentPages();
+            var pageIndex = state.currentPage * getLayoutGroupSize();
+            var current = currentPages[pageIndex] || currentPages[0];
+
+            if(!current){
+                state.exporting = false;
+                disableExportButtons(false);
+                setProgress("PNG export failed.", 0);
+                return;
+            }
+
+            var pageHtml = current.type === "puzzle" ? renderPuzzlePage(current, false) : renderAnswerPage(current, false);
+            var tempWrap = document.createElement("div");
+            tempWrap.style.position = "absolute";
+            tempWrap.style.left = "-99999px";
+            tempWrap.style.top = "0";
+            tempWrap.style.width = "210mm";
+            tempWrap.style.height = "297mm";
+            tempWrap.style.background = "#fff";
+            tempWrap.innerHTML = pageHtml;
+            document.body.appendChild(tempWrap);
+
+            var paper = tempWrap.querySelector(".paper");
+            paper.style.width = "210mm";
+            paper.style.height = "297mm";
+            paper.style.minHeight = "297mm";
+            paper.style.maxHeight = "297mm";
+            paper.style.borderRadius = "0";
+            paper.style.boxShadow = "none";
+            paper.style.margin = "0";
+
+            wait(80, function(){
+                htmlToImage.toPng(paper, {
+                    pixelRatio:2,
+                    backgroundColor:"#ffffff",
+                    cacheBust:true
+                }).then(function(dataUrl){
+                    var link = document.createElement("a");
+                    var mode = state.currentView === "answer" ? "Answer" : "Puzzle";
+                    link.download = "Futoshiki_" + state.currentShape + "_" + mode + "_Page_" + (pageIndex + 1) + ".png";
+                    link.href = dataUrl;
+                    link.click();
+                    if(tempWrap.parentNode){ tempWrap.parentNode.removeChild(tempWrap); }
+                    setProgress("PNG exported.", 100);
+                    state.exporting = false;
+                    disableExportButtons(false);
+                }).catch(function(err){
+                    console.error(err);
+                    if(tempWrap.parentNode){ tempWrap.parentNode.removeChild(tempWrap); }
+                    setProgress("PNG export failed.", 0);
+                    state.exporting = false;
+                    disableExportButtons(false);
+                });
+            });
+        });
+    }
+
+    function exactPrint(){
+        if(!state.puzzles.length || state.exporting){ return; }
+        renderExportDeck();
+        setProgress("Opening print layout...", 90);
+        setTimeout(function(){
+            window.print();
+            setProgress("Print layout ready.", 100);
+        }, 120);
+    }
+
+    function downloadExactPDF(){
+        if(!state.puzzles.length || state.exporting){ return; }
+
+        state.exporting = true;
+        disableExportButtons(true);
+        setProgress("Preparing exact PDF...", 8);
+
+        renderExportDeck();
+        ensureFontsReady(function(){
+            wait(100, function(){
+                try{
+                    var jsPDFRef = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
+                    if(!jsPDFRef){ throw new Error("jsPDF not loaded"); }
+
+                    var pages = Array.prototype.slice.call(document.querySelectorAll("#exportDeck .export-page"));
+                    if(!pages.length){ throw new Error("No export pages found"); }
+
+                    var pdf = new jsPDFRef({
+                        orientation:"portrait",
+                        unit:"mm",
+                        format:"a4",
+                        compress:true
+                    });
+
+                    exportPdfPage(0, pages, pdf);
+                }catch(err){
+                    console.error(err);
+                    setProgress("Exact PDF export failed.", 0);
+                    state.exporting = false;
+                    disableExportButtons(false);
+                }
+            });
+        });
+    }
+
+    function exportPdfPage(index, pages, pdf){
+        if(index >= pages.length){
+            pdf.save("futoshiki-shape-studio.pdf");
+            setProgress("Exact PDF exported.", 100);
+            state.exporting = false;
+            disableExportButtons(false);
+            return;
+        }
+
+        var paper = pages[index].querySelector(".paper");
+
+        htmlToImage.toPng(paper, {
+            pixelRatio:2,
+            backgroundColor:"#ffffff",
+            cacheBust:true
+        }).then(function(dataUrl){
+            if(index > 0){ pdf.addPage("a4", "portrait"); }
+            pdf.addImage(dataUrl, "PNG", 0, 0, 210, 297, undefined, "FAST");
+            setProgress("Building PDF " + (index + 1) + " of " + pages.length + "...", Math.round(((index + 1) / pages.length) * 96));
+            exportPdfPage(index + 1, pages, pdf);
+        }).catch(function(err){
+            console.error(err);
+            setProgress("Exact PDF export failed.", 0);
+            state.exporting = false;
+            disableExportButtons(false);
+        });
+    }
+
+    function buildSinglePuzzle(shape, sizeKey, difficulty, puzzleNumber){
+        var attempts = 0;
+        while(attempts < 20){
+            attempts++;
+            var shapeMask = createShapeMask(shape, sizeKey);
+            if(!shapeMask){ continue; }
+
+            var rows = shapeMask.length;
+            var cols = shapeMask[0].length;
+            if(rows !== cols){ continue; }
+
+            var solution = generateLatinSquare(rows, state.seedMode === "stable" ? puzzleNumber : null);
+            if(!solution){ continue; }
+
+            var puzzle = buildPuzzleFromSolution(shapeMask, solution, shape, sizeKey, difficulty, puzzleNumber);
+            if(puzzle){ return puzzle; }
+        }
+        return null;
+    }
+
+    function buildPuzzleFromSolution(shapeMask, solution, shape, sizeKey, difficulty, puzzleNumber){
+        var rows = shapeMask.length;
+        var cols = shapeMask[0].length;
+        var activeCells = [];
+        var r, c;
+
+        for(r=0;r<rows;r++){
+            for(c=0;c<cols;c++){
+                if(shapeMask[r][c]){ activeCells.push({ r:r, c:c }); }
+            }
+        }
+        if(activeCells.length < 8){ return null; }
+
+        var allPairs = createAllPairs(shapeMask, solution);
+        if(!allPairs.length){ return null; }
+
+        var profile = difficultyProfiles[difficulty] || difficultyProfiles.Medium;
+        var pairPool = allPairs.slice();
+        var cellPool = activeCells.slice();
+        shuffle(pairPool);
+        shuffle(cellPool);
+
+        var targetPairs = Math.max(1, Math.round(allPairs.length * profile.pairPct));
+        var targetGivens = Math.round(activeCells.length * profile.givenPct);
+        if(difficulty === "Easy"){ targetGivens = Math.max(targetGivens, 3); }
+        if(difficulty === "Medium"){ targetGivens = Math.max(targetGivens, 2); }
+        if(difficulty === "Hard"){ targetGivens = Math.max(targetGivens, 1); }
+
+        var puzzle = {
+            shape:shape,
+            sizeKey:sizeKey,
+            difficulty:difficulty,
+            puzzleNumber:puzzleNumber,
+            rows:rows,
+            cols:cols,
+            digitMax:rows,
+            activeCount:activeCells.length,
+            shapeMask:shapeMask,
+            solution:maskSolution(shapeMask, solution),
+            pairList:[],
+            givenList:[],
+            hClues:makeMatrix(rows, cols - 1, ""),
+            vClues:makeMatrix(rows - 1, cols, ""),
+            givensGrid:makeMatrix(rows, cols, 0),
+            pairPool:pairPool,
+            cellPool:cellPool,
+            uniquenessStatus:"Best effort",
+            retriesUsed:0
+        };
+
+        for(var i=0;i<targetPairs && puzzle.pairPool.length;i++){
+            addPairClue(puzzle, puzzle.pairPool.shift());
+        }
+        for(var j=0;j<targetGivens && puzzle.cellPool.length;j++){
+            addGivenClue(puzzle, puzzle.cellPool.shift());
+        }
+
+        rebuildPuzzleData(puzzle);
+        enforceUniqueness(puzzle, profile);
+        return puzzle;
+    }
+
+    function maskSolution(shapeMask, latin){
+        var out = [];
+        for(var r=0;r<shapeMask.length;r++){
+            var row = [];
+            for(var c=0;c<shapeMask[0].length;c++){
+                row.push(shapeMask[r][c] ? latin[r][c] : 0);
+            }
+            out.push(row);
+        }
+        return out;
+    }
+
+    function createAllPairs(shapeMask, solution){
+        var out = [];
+        var rows = shapeMask.length;
+        var cols = shapeMask[0].length;
+
+        for(var r=0;r<rows;r++){
+            for(var c=0;c<cols-1;c++){
+                if(shapeMask[r][c] && shapeMask[r][c+1]){
+                    out.push({
+                        type:"h",
+                        r:r,
+                        c:c,
+                        rel:solution[r][c] < solution[r][c+1] ? "<" : ">"
+                    });
+                }
+            }
+        }
+        for(var rr=0;rr<rows-1;rr++){
+            for(var cc=0;cc<cols;cc++){
+                if(shapeMask[rr][cc] && shapeMask[rr+1][cc]){
+                    out.push({
+                        type:"v",
+                        r:rr,
+                        c:cc,
+                        rel:solution[rr][cc] < solution[rr+1][cc] ? "<" : ">"
+                    });
+                }
+            }
+        }
+        return out;
+    }
+
+    function addPairClue(puzzle, pair){
+        puzzle.pairList.push({
+            type:pair.type,
+            r:pair.r,
+            c:pair.c,
+            rel:pair.rel
+        });
+    }
+
+    function addGivenClue(puzzle, cell){
+        puzzle.givenList.push({ r:cell.r, c:cell.c });
+    }
+
+    function rebuildPuzzleData(puzzle){
+        puzzle.hClues = makeMatrix(puzzle.rows, puzzle.cols - 1, "");
+        puzzle.vClues = makeMatrix(puzzle.rows - 1, puzzle.cols, "");
+        puzzle.givensGrid = makeMatrix(puzzle.rows, puzzle.cols, 0);
+
+        for(var i=0;i<puzzle.pairList.length;i++){
+            var p = puzzle.pairList[i];
+            if(p.type === "h"){
+                puzzle.hClues[p.r][p.c] = p.rel;
+            }else{
+                puzzle.vClues[p.r][p.c] = p.rel === "<" ? "∨" : "∧";
+            }
+        }
+
+        for(var j=0;j<puzzle.givenList.length;j++){
+            var g = puzzle.givenList[j];
+            puzzle.givensGrid[g.r][g.c] = puzzle.solution[g.r][g.c];
+        }
+    }
+
+    function enforceUniqueness(puzzle, profile){
+        var retry = 0;
+        var maxRetries = 18;
+        var last = null;
+
+        while(retry <= maxRetries){
+            rebuildPuzzleData(puzzle);
+            last = countSolutions(puzzle, 2, getSolverStepLimit(puzzle.activeCount));
+
+            if(last.count === 1 && !last.aborted){
+                puzzle.uniquenessStatus = "Validated unique";
+                puzzle.retriesUsed = retry;
+                return;
+            }
+
+            if(!addOneClue(puzzle, profile)){ break; }
+            retry++;
+        }
+
+        puzzle.uniquenessStatus = last && last.count === 1 && !last.aborted ? "Validated unique" : "Best effort";
+        puzzle.retriesUsed = retry;
+        rebuildPuzzleData(puzzle);
+    }
+
+    function addOneClue(puzzle, profile){
+        var prefer = profile.prefer;
+        var usePairFirst = false;
+
+        if(prefer === "ineq"){ usePairFirst = true; }
+        else if(prefer === "given"){ usePairFirst = false; }
+        else{ usePairFirst = Math.random() < 0.5; }
+
+        if(usePairFirst){
+            if(puzzle.pairPool.length){
+                addPairClue(puzzle, puzzle.pairPool.shift());
+                return true;
+            }
+            if(puzzle.cellPool.length){
+                addGivenClue(puzzle, puzzle.cellPool.shift());
+                return true;
+            }
+        }else{
+            if(puzzle.cellPool.length){
+                addGivenClue(puzzle, puzzle.cellPool.shift());
+                return true;
+            }
+            if(puzzle.pairPool.length){
+                addPairClue(puzzle, puzzle.pairPool.shift());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function getSolverStepLimit(activeCount){
+        if(activeCount <= 18){ return 18000; }
+        if(activeCount <= 28){ return 52000; }
+        return 110000;
+    }
+
+    function countSolutions(puzzle, limit, stepLimit){
+        var grid = createWorkingGrid(puzzle);
+        var ctx = {
+            count:0,
+            limit:limit,
+            stepLimit:stepLimit,
+            steps:0,
+            aborted:false
+        };
+        solveCountRecursive(grid, puzzle, ctx);
+        return { count:ctx.count, aborted:ctx.aborted };
+    }
+
+    function createWorkingGrid(puzzle){
+        var out = [];
+        for(var r=0;r<puzzle.rows;r++){
+            var row = [];
+            for(var c=0;c<puzzle.cols;c++){
+                if(!puzzle.shapeMask[r][c]) row.push(null);
+                else row.push(puzzle.givensGrid[r][c] || 0);
+            }
+            out.push(row);
+        }
+        return out;
+    }
+
+    function solveCountRecursive(grid, puzzle, ctx){
+        if(ctx.aborted || ctx.count >= ctx.limit){ return; }
+
+        ctx.steps++;
+        if(ctx.steps > ctx.stepLimit){
+            ctx.aborted = true;
+            return;
+        }
+
+        var prep = propagateState(grid, puzzle);
+        if(!prep.valid){ return; }
+
+        grid = prep.grid;
+        var masks = prep.masks;
+
+        if(isSolvedShapeGrid(grid, puzzle.shapeMask)){
+            ctx.count++;
+            return;
+        }
+
+        var pick = selectSolverCell(grid, masks, puzzle);
+        if(!pick || pick.fail){ return; }
+
+        var values = maskToValues(masks[pick.r][pick.c], puzzle.digitMax);
+        for(var i=0;i<values.length;i++){
+            var nextGrid = cloneGrid(grid);
+            nextGrid[pick.r][pick.c] = values[i];
+            solveCountRecursive(nextGrid, puzzle, ctx);
+            if(ctx.aborted || ctx.count >= ctx.limit){ return; }
+        }
+    }
+
+    function propagateState(grid, puzzle){
+        var changed = true;
+        var guard = 0;
+
+        while(changed && guard < 60){
+            changed = false;
+            guard++;
+
+            var masksResult = computeDomains(grid, puzzle);
+            if(!masksResult.valid){ return { valid:false }; }
+
+            var masks = masksResult.masks;
+
+            for(var r=0;r<puzzle.rows;r++){
+                for(var c=0;c<puzzle.cols;c++){
+                    if(!puzzle.shapeMask[r][c] || grid[r][c] !== 0){ continue; }
+                    if(bitCount(masks[r][c]) === 1){
+                        grid[r][c] = singleValueFromMask(masks[r][c], puzzle.digitMax);
+                        changed = true;
+                    }
+                }
+            }
+            if(changed){ continue; }
+
+            for(var row=0;row<puzzle.rows;row++){
+                for(var d=1;d<=puzzle.digitMax;d++){
+                    var count = 0;
+                    var pos = null;
+                    for(var cc=0;cc<puzzle.cols;cc++){
+                        if(!puzzle.shapeMask[row][cc]){ continue; }
+                        if(grid[row][cc] === d){
+                            count = 1;
+                            pos = null;
+                            break;
+                        }
+                        if(grid[row][cc] === 0 && hasDigitMask(masks[row][cc], d)){
+                            count++;
+                            pos = { r:row, c:cc };
+                        }
+                    }
+                    if(count === 1 && pos){
+                        grid[pos.r][pos.c] = d;
+                        changed = true;
+                    }
+                }
+            }
+            if(changed){ continue; }
+
+            for(var col=0;col<puzzle.cols;col++){
+                for(var dd=1;dd<=puzzle.digitMax;dd++){
+                    var count2 = 0;
+                    var pos2 = null;
+                    for(var rr=0;rr<puzzle.rows;rr++){
+                        if(!puzzle.shapeMask[rr][col]){ continue; }
+                        if(grid[rr][col] === dd){
+                            count2 = 1;
+                            pos2 = null;
+                            break;
+                        }
+                        if(grid[rr][col] === 0 && hasDigitMask(masks[rr][col], dd)){
+                            count2++;
+                            pos2 = { r:rr, c:col };
+                        }
+                    }
+                    if(count2 === 1 && pos2){
+                        grid[pos2.r][pos2.c] = dd;
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        var finalResult = computeDomains(grid, puzzle);
+        if(!finalResult.valid){ return { valid:false }; }
+        return { valid:true, grid:grid, masks:finalResult.masks };
+    }
+
+    function computeDomains(grid, puzzle){
+        var n = puzzle.digitMax;
+        var fullMask = (1 << n) - 1;
+        var rowUsed = [];
+        var colUsed = [];
+        var r, c, bit;
+
+        for(r=0;r<puzzle.rows;r++){ rowUsed[r] = 0; }
+        for(c=0;c<puzzle.cols;c++){ colUsed[c] = 0; }
+
+        for(r=0;r<puzzle.rows;r++){
+            for(c=0;c<puzzle.cols;c++){
+                if(!puzzle.shapeMask[r][c]){ continue; }
+                if(grid[r][c] && grid[r][c] > 0){
+                    bit = 1 << (grid[r][c] - 1);
+                    if(rowUsed[r] & bit){ return { valid:false }; }
+                    if(colUsed[c] & bit){ return { valid:false }; }
+                    rowUsed[r] |= bit;
+                    colUsed[c] |= bit;
+                }
+            }
+        }
+
+        var masks = makeMatrix(puzzle.rows, puzzle.cols, 0);
+
+        for(r=0;r<puzzle.rows;r++){
+            for(c=0;c<puzzle.cols;c++){
+                if(!puzzle.shapeMask[r][c]){
+                    masks[r][c] = 0;
+                }else if(grid[r][c] && grid[r][c] > 0){
+                    masks[r][c] = 1 << (grid[r][c] - 1);
+                }else{
+                    masks[r][c] = fullMask & (~rowUsed[r]) & (~colUsed[c]);
+                    if(masks[r][c] === 0){ return { valid:false }; }
+                }
+            }
+        }
+
+        var changed = true;
+        var guard = 0;
+        while(changed && guard < 50){
+            changed = false;
+            guard++;
+
+            for(var i=0;i<puzzle.pairList.length;i++){
+                var pair = puzzle.pairList[i];
+                var r1 = pair.r;
+                var c1 = pair.c;
+                var r2 = pair.type === "h" ? pair.r : pair.r + 1;
+                var c2 = pair.type === "h" ? pair.c + 1 : pair.c;
+
+                var m1 = masks[r1][c1];
+                var m2 = masks[r2][c2];
+
+                var nm1 = restrictMaskToRelation(m1, m2, pair.rel, true, n);
+                var nm2 = restrictMaskToRelation(m2, m1, pair.rel, false, n);
+
+                if(nm1 === 0 || nm2 === 0){ return { valid:false }; }
+
+                if(nm1 !== m1){
+                    masks[r1][c1] = nm1;
+                    changed = true;
+                }
+                if(nm2 !== m2){
+                    masks[r2][c2] = nm2;
+                    changed = true;
+                }
+            }
+        }
+
+        for(r=0;r<puzzle.rows;r++){
+            for(c=0;c<puzzle.cols;c++){
+                if(puzzle.shapeMask[r][c] && masks[r][c] === 0){ return { valid:false }; }
+            }
+        }
+
+        return { valid:true, masks:masks };
+    }
+
+    function restrictMaskToRelation(maskA, maskB, rel, isFirstCell, n){
+        var out = 0;
+        for(var a=1;a<=n;a++){
+            if(!hasDigitMask(maskA, a)){ continue; }
+            var valid = false;
+
+            for(var b=1;b<=n;b++){
+                if(!hasDigitMask(maskB, b)){ continue; }
+
+                if(rel === "<"){
+                    if(isFirstCell && a < b){ valid = true; break; }
+                    if(!isFirstCell && a > b){ valid = true; break; }
+                }else{
+                    if(isFirstCell && a > b){ valid = true; break; }
+                    if(!isFirstCell && a < b){ valid = true; break; }
+                }
+            }
+
+            if(valid){ out |= (1 << (a - 1)); }
+        }
+        return out;
+    }
+
+    function selectSolverCell(grid, masks, puzzle){
+        var best = null;
+        for(var r=0;r<puzzle.rows;r++){
+            for(var c=0;c<puzzle.cols;c++){
+                if(!puzzle.shapeMask[r][c] || grid[r][c] !== 0){ continue; }
+                var count = bitCount(masks[r][c]);
+                if(count === 0){ return { fail:true }; }
+                if(!best || count < best.count){
+                    best = { r:r, c:c, count:count };
+                }
+            }
+        }
+        return best;
+    }
+
+    function isSolvedShapeGrid(grid, mask){
+        for(var r=0;r<mask.length;r++){
+            for(var c=0;c<mask[0].length;c++){
+                if(mask[r][c] && (!grid[r][c] || grid[r][c] <= 0)){ return false; }
+            }
+        }
+        return true;
+    }
+
+    function generateLatinSquare(n, stableSeed){
+        var base = [];
+        for(var r=0;r<n;r++){
+            var row = [];
+            for(var c=0;c<n;c++){
+                row.push(((r + c) % n) + 1);
+            }
+            base.push(row);
+        }
+
+        var rowPerm = [];
+        var colPerm = [];
+        var numPerm = [];
+        for(var i=0;i<n;i++){
+            rowPerm.push(i);
+            colPerm.push(i);
+            numPerm.push(i + 1);
+        }
+
+        if(stableSeed !== null){
+            seededShuffle(rowPerm, stableSeed * 17 + n);
+            seededShuffle(colPerm, stableSeed * 29 + n);
+            seededShuffle(numPerm, stableSeed * 41 + n);
+        }else{
+            shuffle(rowPerm);
+            shuffle(colPerm);
+            shuffle(numPerm);
+        }
+
+        var out = [];
+        for(var rr=0;rr<n;rr++){
+            var outRow = [];
+            for(var cc=0;cc<n;cc++){
+                outRow.push(numPerm[base[rowPerm[rr]][colPerm[cc]] - 1]);
+            }
+            out.push(outRow);
+        }
+        return out;
+    }
+
+    function createShapeMask(shape, sizeKey){
+        var profile = sizeProfiles[sizeKey] && sizeProfiles[sizeKey][shape];
+        if(!profile){ return null; }
+
+        if(shape === "square") return buildSquareMask(profile.side);
+        if(shape === "diamond") return buildDiamondMask(profile.radius);
+        if(shape === "hex") return buildHexMask(profile.rows);
+        if(shape === "cross") return buildCrossMask(profile.base, profile.thickness);
+        if(shape === "ring") return buildRingMask(profile.base, profile.hole);
+        if(shape === "tshape") return buildTMask(profile.base, profile.stem, profile.top);
+        if(shape === "hshape") return buildHMask(profile.base, profile.pillar, profile.bridge);
+        if(shape === "octagon") return buildOctagonMask(profile.base, profile.cut);
+        if(shape === "freeform") return buildFreeformMask(profile.base, profile.target);
+        return null;
+    }
+
+    function buildSquareMask(side){
+        var mask = [];
+        for(var r=0;r<side;r++){
+            var row = [];
+            for(var c=0;c<side;c++){ row.push(true); }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildDiamondMask(radius){
+        var side = radius * 2 + 1;
+        var center = radius;
+        var mask = [];
+        for(var r=0;r<side;r++){
+            var row = [];
+            for(var c=0;c<side;c++){
+                row.push(Math.abs(r - center) + Math.abs(c - center) <= radius);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildHexMask(rowLengths){
+        var rows = rowLengths.length;
+        var maxCols = 0;
+        for(var i=0;i<rowLengths.length;i++){
+            if(rowLengths[i] > maxCols){ maxCols = rowLengths[i]; }
+        }
+        var mask = [];
+        for(var r=0;r<rows;r++){
+            var len = rowLengths[r];
+            var start = Math.floor((maxCols - len) / 2);
+            var row = [];
+            for(var c=0;c<maxCols;c++){
+                row.push(c >= start && c < start + len);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildCrossMask(base, thickness){
+        var start = Math.floor((base - thickness) / 2);
+        var end = start + thickness - 1;
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                row.push(r >= start && r <= end || c >= start && c <= end);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildRingMask(base, hole){
+        var start = Math.floor((base - hole) / 2);
+        var end = start + hole - 1;
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                var inHole = r >= start && r <= end && c >= start && c <= end;
+                row.push(!inHole);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildTMask(base, stem, top){
+        var stemStart = Math.floor((base - stem) / 2);
+        var stemEnd = stemStart + stem - 1;
+        var topRows = Math.max(1, top);
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                var topBar = r < topRows;
+                var stemCol = c >= stemStart && c <= stemEnd;
+                row.push(topBar || stemCol);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildHMask(base, pillar, bridge){
+        var midStart = Math.floor((base - bridge) / 2);
+        var midEnd = midStart + bridge - 1;
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                var leftPillar = c < pillar;
+                var rightPillar = c >= base - pillar;
+                var middleBar = r >= midStart && r <= midEnd;
+                row.push(leftPillar || rightPillar || middleBar);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildOctagonMask(base, cut){
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                var tl = r < cut && c < cut && r + c < cut;
+                var tr = r < cut && c >= base - cut && r + (base - 1 - c) < cut;
+                var bl = r >= base - cut && c < cut && (base - 1 - r) + c < cut;
+                var br = r >= base - cut && c >= base - cut && (base - 1 - r) + (base - 1 - c) < cut;
+                row.push(!(tl || tr || bl || br));
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildFreeformMask(base, target){
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){ row.push(false); }
+            mask.push(row);
+        }
+
+        var centerR = Math.floor(base / 2);
+        var centerC = Math.floor(base / 2);
+        mask[centerR][centerC] = true;
+
+        var frontier = [[centerR, centerC]];
+        var count = 1;
+        var dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+
+        while(count < target && frontier.length){
+            var source = frontier[Math.floor(Math.random() * frontier.length)];
+            var shuffled = dirs.slice();
+            shuffle(shuffled);
+            var added = false;
+
+            for(var i=0;i<shuffled.length;i++){
+                var nr = source[0] + shuffled[i][0];
+                var nc = source[1] + shuffled[i][1];
+                if(nr >= 0 && nr < base && nc >= 0 && nc < base && !mask[nr][nc]){
+                    mask[nr][nc] = true;
+                    frontier.push([nr, nc]);
+                    count++;
+                    added = true;
+                    break;
+                }
+            }
+
+            if(!added){
+                frontier.push([Math.floor(Math.random() * base), Math.floor(Math.random() * base)]);
+            }
+        }
+        return mask;
+    }
+
+    function makeMatrix(rows, cols, value){
+        var out = [];
+        for(var r=0;r<rows;r++){
+            var row = [];
+            for(var c=0;c<cols;c++){ row.push(value); }
+            out.push(row);
+        }
+        return out;
+    }
+
+    function cloneGrid(grid){
+        var out = [];
+        for(var i=0;i<grid.length;i++){ out.push(grid[i].slice()); }
+        return out;
+    }
+
+    function shuffle(arr){
+        for(var i=arr.length - 1;i>0;i--){
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = arr[i];
+            arr[i] = arr[j];
+            arr[j] = t;
+        }
+        return arr;
+    }
+
+    function seededShuffle(arr, seed){
+        for(var i=arr.length - 1;i>0;i--){
+            seed = (seed * 9301 + 49297) % 233280;
+            var rnd = seed / 233280;
+            var j = Math.floor(rnd * (i + 1));
+            var t = arr[i];
+            arr[i] = arr[j];
+            arr[j] = t;
+        }
+        return arr;
+    }
+
+    function wait(ms, cb){
+        setTimeout(cb, ms);
+    }
+
+    function ensureFontsReady(cb){
+        if(document.fonts && document.fonts.ready && document.fonts.ready.then){
+            document.fonts.ready.then(function(){ cb(); }).catch(function(){ cb(); });
+        }else{
+            cb();
+        }
+    }
+
+    function bitCount(mask){
+        var count = 0;
+        while(mask){
+            mask &= (mask - 1);
+            count++;
+        }
+        return count;
+    }
+
+    function hasDigitMask(mask, digit){
+        return !!(mask & (1 << (digit - 1)));
+    }
+
+    function singleValueFromMask(mask, n){
+        for(var i=1;i<=n;i++){
+            if(mask === (1 << (i - 1))){ return i; }
+        }
+        return 0;
+    }
+
+    function maskToValues(mask, n){
+        var out = [];
+        for(var i=1;i<=n;i++){
+            if(hasDigitMask(mask, i)){ out.push(i); }
+        }
+        return out;
+    }
+
+    function escapeHtml(str){
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function hexToRgb(hex){
+        var clean = String(hex || "").replace("#", "");
+        if(clean.length === 3){
+            clean = clean.charAt(0)+clean.charAt(0)+clean.charAt(1)+clean.charAt(1)+clean.charAt(2)+clean.charAt(2);
+        }
+        return {
+            r: parseInt(clean.substr(0,2), 16),
+            g: parseInt(clean.substr(2,2), 16),
+            b: parseInt(clean.substr(4,2), 16)
+        };
+    }
+
+    function rgbToHex(r, g, b){
+        return "#" + padHex(r) + padHex(g) + padHex(b);
+    }
+
+    function padHex(num){
+        var s = Math.max(0, Math.min(255, num)).toString(16);
+        return s.length === 1 ? "0" + s : s;
+    }
+
+    function hexToRgba(hex, alpha){
+        var rgb = hexToRgb(hex);
+        return "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + "," + alpha + ")";
+    }
+
+    function mixHex(hex1, hex2, ratio){
+        var a = hexToRgb(hex1);
+        var b = hexToRgb(hex2);
+        var t = Math.max(0, Math.min(1, ratio));
+        var r = Math.round(a.r + (b.r - a.r) * t);
+        var g = Math.round(a.g + (b.g - a.g) * t);
+        var bb = Math.round(a.b + (b.b - a.b) * t);
+        return rgbToHex(r, g, bb);
+    }
+
+    init();
+})();
+</script>
+</body>
+</html>
