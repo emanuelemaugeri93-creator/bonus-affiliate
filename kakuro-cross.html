@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kakuro Cross Generator — Shape Layout Edition</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+html, body,
+[class*="section"],
+[class*="block"],
+[class*="row"],
+[class*="column"],
+[class*="wrapper"],
+[class*="container"]{
+    margin:0 !important;
+    padding:0 !important;
+    max-width:none !important;
+    box-sizing:border-box;
+}
+*,
+*::before,
+*::after{ box-sizing:border-box; }
+
+html, body{
+    width:100% !important;
+    height:100% !important;
+    overflow:hidden;
+    font-family:Inter, "Segoe UI", Arial, sans-serif;
+    background:#071117;
+}
+
+:root{
+    --bg-1:#071117;
+    --bg-2:#10202b;
+    --bg-3:#1c1730;
+    --line:rgba(255,255,255,0.12);
+    --text:#f7f8fc;
+    --muted:#aab3cc;
+
+    --accent:#14b8a6;
+    --accent-2:#f59e0b;
+    --glow:rgba(20,184,166,0.32);
+
+    --paper:#ffffff;
+    --paper-ink:#111827;
+    --paper-muted:#6b7280;
+    --paper-line:#dbe4ef;
+
+    --board-shell-1:#f4fffd;
+    --board-shell-2:#fff8ef;
+
+    --k-black:#1d2433;
+    --k-black-2:#101726;
+    --k-clue:#ffffff;
+    --k-white:#ffffff;
+    --k-void:#edf3f9;
+
+    --shadow:0 20px 60px rgba(0,0,0,0.35);
+}
+
+.app-shell{
+    position:fixed !important;
+    inset:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 16% 18%, rgba(20,184,166,0.22), transparent 28%),
+        radial-gradient(circle at 82% 14%, rgba(245,158,11,0.17), transparent 26%),
+        radial-gradient(circle at 50% 100%, rgba(92,246,198,0.08), transparent 35%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 48%, var(--bg-3));
+    color:var(--text);
+}
+.app-shell::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size:40px 40px;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.1));
+    pointer-events:none;
+}
+.app-shell::after{
+    content:"";
+    position:absolute;
+    width:560px;
+    height:560px;
+    border-radius:50%;
+    right:-140px;
+    bottom:-150px;
+    background:radial-gradient(circle, rgba(255,255,255,0.08), transparent 62%);
+    filter:blur(12px);
+    pointer-events:none;
+}
+
+.workspace{
+    position:relative;
+    z-index:2;
+    display:grid;
+    grid-template-columns:360px 1fr;
+    width:100%;
+    height:100%;
+}
+
+.sidebar{
+    min-height:0;
+    background:linear-gradient(180deg, rgba(10,14,30,0.94), rgba(8,12,24,0.90));
+    backdrop-filter:blur(22px);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+}
+.sidebar-scroll{
+    min-height:0;
+    overflow:auto;
+    padding:22px;
+}
+.sidebar-scroll::-webkit-scrollbar,
+.preview-scroll::-webkit-scrollbar{
+    width:10px;
+    height:10px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb,
+.preview-scroll::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,0.14);
+    border-radius:999px;
+}
+
+.brand{
+    position:relative;
+    padding:22px 20px 20px;
+    margin-bottom:18px;
+    border:1px solid var(--line);
+    border-radius:24px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+    box-shadow:var(--shadow);
+    overflow:hidden;
+}
+.brand::before{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    background:linear-gradient(120deg, rgba(20,184,166,0.30), rgba(245,158,11,0) 42%, rgba(255,255,255,0.04));
+    pointer-events:none;
+}
+.brand-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    color:#d8fff8;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+}
+.brand h1{
+    margin:16px 0 10px;
+    font-size:32px;
+    line-height:0.95;
+    letter-spacing:-0.04em;
+}
+.brand h1 span{
+    background:linear-gradient(90deg, #ffffff, #7df3e4 42%, #ffd58f 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+.brand p{
+    margin:0;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--muted);
+}
+
+.panel{
+    margin-bottom:16px;
+    padding:18px;
+    border:1px solid var(--line);
+    border-radius:22px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025));
+    box-shadow:0 8px 30px rgba(0,0,0,0.18);
+}
+.panel-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:16px;
+}
+.panel-title h2{
+    margin:0;
+    font-size:13px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#eef4ff;
+}
+.panel-badge{
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:10px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#d7e9ff;
+    border:1px solid rgba(255,255,255,0.1);
+    background:rgba(255,255,255,0.05);
+}
+
+.field{
+    margin-bottom:14px;
+    min-width:0;
+}
+.field:last-child{ margin-bottom:0; }
+
+.label{
+    display:block;
+    margin-bottom:8px;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#c4d1ea;
+}
+
+.input,
+.select{
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    padding:12px 13px;
+    color:#fff;
+    background:rgba(5,8,18,0.55);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:12px;
+    outline:none;
+}
+.input:focus,
+.select:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(20,184,166,0.18);
+}
+
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+.diff-group{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+.diff-btn,
+.primary-btn,
+.secondary-btn,
+.toggle-btn,
+.nav-btn,
+.small-btn{
+    border:none;
+    cursor:pointer;
+    transition:transform .18s ease, filter .18s ease, opacity .18s ease, background .18s ease, border-color .18s ease;
+}
+.diff-btn{
+    padding:11px 8px;
+    color:#dfe8ff;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    font-size:12px;
+    font-weight:700;
+}
+.diff-btn.active{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#fff;
+    box-shadow:0 8px 22px var(--glow);
+    border-color:transparent;
+}
+.diff-btn:hover,
+.primary-btn:hover,
+.secondary-btn:hover,
+.toggle-btn:hover,
+.nav-btn:hover,
+.small-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(1.04);
+}
+
+.primary-btn{
+    width:100%;
+    padding:15px 16px;
+    border-radius:14px;
+    font-size:14px;
+    font-weight:800;
+    letter-spacing:0.04em;
+    color:#fff;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 14px 34px var(--glow);
+}
+.secondary-btn{
+    width:100%;
+    padding:12px 14px;
+    border-radius:14px;
+    font-size:13px;
+    font-weight:700;
+    color:#e8efff;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+}
+.primary-btn:disabled,
+.secondary-btn:disabled,
+.small-btn:disabled,
+.nav-btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    transform:none;
+    filter:none;
+}
+
+.progress-text{
+    min-height:20px;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.4;
+}
+.progress-bar{
+    margin-top:10px;
+    height:12px;
+    border-radius:999px;
+    overflow:hidden;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.1);
+}
+.progress-fill{
+    width:0%;
+    height:100%;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition:width .2s ease;
+}
+.note{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.6;
+}
+.swatches{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-top:10px;
+}
+.swatch{
+    height:32px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.12);
+    cursor:pointer;
+}
+.checkbox{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#d6e2fb;
+    font-size:14px;
+}
+.checkbox input{
+    width:16px;
+    height:16px;
+    accent-color:var(--accent);
+}
+
+.main{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+}
+.topbar{
+    padding:18px 20px;
+    border-bottom:1px solid var(--line);
+    background:rgba(12,17,31,0.56);
+    backdrop-filter:blur(20px);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+}
+.topbar-group{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    min-width:0;
+}
+.kpi-chip{
+    padding:10px 13px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    color:#e5efff;
+    font-size:12px;
+    font-weight:700;
+}
+.toggle-btn,
+.nav-btn,
+.small-btn{
+    padding:11px 14px;
+    border-radius:12px;
+    color:#f0f4ff;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    font-size:13px;
+    font-weight:700;
+}
+.toggle-btn.active{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color:transparent;
+    box-shadow:0 10px 28px var(--glow);
+}
+.zoom-select{ width:96px; }
+.layout-select{ width:170px; }
+
+.preview-scroll{
+    flex:1;
+    min-height:0;
+    overflow:auto;
+    padding:26px 26px 18px;
+}
+.preview-center{
+    min-height:100%;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+}
+.preview-stage{
+    transform-origin:top center;
+    transition:transform .18s ease;
+}
+.empty-state{
+    width:820px;
+    max-width:100%;
+    padding:34px;
+    border-radius:28px;
+    border:1px solid rgba(255,255,255,0.14);
+    background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+    box-shadow:var(--shadow);
+}
+.empty-state h3{
+    margin:0 0 10px;
+    font-size:30px;
+    line-height:1;
+    letter-spacing:-0.04em;
+}
+.empty-state p{
+    margin:0;
+    color:var(--muted);
+    line-height:1.7;
+}
+.navbar{
+    padding:16px 20px 20px;
+    border-top:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    background:rgba(10,14,26,0.64);
+    backdrop-filter:blur(18px);
+}
+.page-status{
+    color:#d5e4ff;
+    font-size:13px;
+    font-weight:700;
+}
+.meta{
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+    text-align:right;
+}
+
+.sheet-pages{
+    display:grid;
+    justify-content:center;
+    align-content:start;
+    gap:24px;
+    width:max-content;
+    max-width:none;
+    margin:0 auto;
+}
+.sheet-pages.layout-single{ grid-template-columns:max-content; }
+.sheet-pages.layout-spread{ grid-template-columns:repeat(2, max-content); }
+.sheet-pages.layout-strip{ grid-template-columns:repeat(3, max-content); }
+.sheet-pages.layout-grid{ grid-template-columns:repeat(2, max-content); }
+
+.page-item{
+    --paper-scale:1;
+    width:calc(820px * var(--paper-scale));
+    height:calc(1080px * var(--paper-scale));
+    display:flex;
+    align-items:flex-start;
+    justify-content:flex-start;
+    overflow:visible;
+    flex:0 0 auto;
+}
+.page-item > .paper{
+    width:820px;
+    min-height:1080px;
+    margin:0;
+    transform:scale(var(--paper-scale));
+    transform-origin:top left;
+    flex:0 0 auto;
+}
+.sheet-pages.layout-single .page-item{ --paper-scale:1; }
+.sheet-pages.layout-spread .page-item{ --paper-scale:0.48; }
+.sheet-pages.layout-strip .page-item{ --paper-scale:0.31; }
+.sheet-pages.layout-grid .page-item{ --paper-scale:0.40; }
+
+.paper{
+    width:820px;
+    min-height:1080px;
+    position:relative;
+    overflow:hidden;
+    color:var(--paper-ink);
+    background:var(--paper);
+    border-radius:30px;
+    box-shadow:
+        0 24px 70px rgba(0,0,0,0.36),
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 0 0 12px rgba(255,255,255,0.02);
+    padding:38px 38px 34px;
+}
+.paper.fade-in{
+    animation:fadeIn .28s ease;
+}
+@keyframes fadeIn{
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:translateY(0);}
+}
+.paper::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        radial-gradient(circle at 18% 16%, rgba(20,184,166,0.05), transparent 24%),
+        radial-gradient(circle at 78% 22%, rgba(245,158,11,0.05), transparent 26%),
+        linear-gradient(rgba(0,0,0,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.018) 1px, transparent 1px);
+    background-size:auto, auto, 30px 30px, 30px 30px;
+    opacity:.52;
+    pointer-events:none;
+}
+.paper-inner{
+    position:relative;
+    z-index:2;
+}
+.paper-top-strip{
+    height:10px;
+    border-radius:999px;
+    margin-bottom:18px;
+    background:linear-gradient(90deg, var(--accent), var(--accent-2));
+    box-shadow:0 12px 28px rgba(0,0,0,0.12);
+}
+.page-head{
+    position:relative;
+    margin-bottom:18px;
+}
+.head-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 14px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.16em;
+    color:#fff;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 12px 28px rgba(0,0,0,0.14);
+}
+.title-card{
+    margin-top:16px;
+    border-radius:24px;
+    padding:18px 20px;
+    background:linear-gradient(135deg, rgba(255,255,255,0.88), rgba(255,255,255,0.72));
+    border:1px solid rgba(0,0,0,0.06);
+    box-shadow:0 14px 30px rgba(0,0,0,0.06);
+}
+.page-title{
+    margin:0 0 8px;
+    font-size:36px;
+    line-height:0.98;
+    letter-spacing:-0.045em;
+    color:var(--paper-ink);
+}
+.page-subtitle{
+    margin:0;
+    color:var(--paper-muted);
+    font-size:14px;
+    line-height:1.6;
+}
+
+.board-shell{
+    position:relative;
+    margin-top:20px;
+    border-radius:28px;
+    padding:26px;
+    background:linear-gradient(180deg, var(--board-shell-1), var(--board-shell-2));
+    border:1px solid var(--paper-line);
+}
+.board-shell::after{
+    content:"";
+    position:absolute;
+    inset:12px;
+    border-radius:20px;
+    border:1px dashed rgba(0,0,0,0.12);
+    pointer-events:none;
+    opacity:.55;
+}
+.board-wrap{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:620px;
+    position:relative;
+    z-index:2;
+}
+
+.kakuro-grid{
+    display:grid;
+    gap:0;
+    justify-content:center;
+    align-content:center;
+    border:2px solid rgba(17,24,39,0.12);
+    border-radius:18px;
+    overflow:hidden;
+    background:#d9e5ee;
+    box-shadow:0 16px 32px rgba(0,0,0,0.06);
+}
+.kcell{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border-right:1px solid rgba(17,24,39,0.10);
+    border-bottom:1px solid rgba(17,24,39,0.10);
+}
+.kcell.white{
+    background:linear-gradient(180deg, var(--k-white), #fbfdff);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.85);
+}
+.kcell.white .digit{
+    font-weight:800;
+    color:#0f172a;
+    letter-spacing:-0.02em;
+}
+.kcell.black{
+    background:linear-gradient(180deg, var(--k-black), var(--k-black-2));
+}
+.kcell.black::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg, transparent 0 calc(50% - 0.8px), rgba(255,255,255,0.58) calc(50% - 0.8px) calc(50% + 0.8px), transparent calc(50% + 0.8px) 100%);
+    pointer-events:none;
+}
+.kcell.void{
+    background:transparent;
+    border:none;
+    box-shadow:none;
+}
+.clue-across{
+    position:absolute;
+    top:4px;
+    right:5px;
+    font-size:11px;
+    line-height:1;
+    font-weight:800;
+    color:var(--k-clue);
+}
+.clue-down{
+    position:absolute;
+    bottom:4px;
+    left:5px;
+    font-size:11px;
+    line-height:1;
+    font-weight:800;
+    color:var(--k-clue);
+}
+
+.page-footer{
+    position:absolute;
+    left:38px;
+    right:38px;
+    bottom:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    color:var(--paper-muted);
+    font-size:12px;
+    border-top:1px solid var(--paper-line);
+    padding-top:10px;
+}
+.footer-chip{
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.06);
+    color:var(--paper-ink);
+    font-weight:700;
+}
+
+.export-deck{
+    position:absolute;
+    left:-99999px;
+    top:0;
+    background:#ffffff;
+    padding:0;
+}
+.export-page{
+    width:210mm;
+    height:297mm;
+    min-width:210mm;
+    min-height:297mm;
+    max-width:210mm;
+    max-height:297mm;
+    overflow:hidden;
+    background:#ffffff;
+    padding:0;
+    display:flex;
+    align-items:stretch;
+    justify-content:stretch;
+    page-break-after:always;
+    break-after:page;
+}
+.export-page:last-child{
+    page-break-after:auto;
+    break-after:auto;
+}
+.export-page .paper{
+    width:210mm !important;
+    height:297mm !important;
+    min-height:297mm !important;
+    max-height:297mm !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    margin:0 !important;
+    transform:none !important;
+}
+
+@media (max-width:1180px){
+    .workspace{ grid-template-columns:330px 1fr; }
+}
+@media (max-width:980px){
+    .workspace{ grid-template-columns:1fr; }
+    .sidebar{
+        border-right:none;
+        border-bottom:1px solid var(--line);
+        max-height:48vh;
+    }
+}
+@media (max-width:760px){
+    .topbar,.navbar{ padding-left:14px; padding-right:14px; }
+    .preview-scroll{ padding:14px; }
+    .grid-2{ grid-template-columns:1fr; }
+    .sheet-pages.layout-spread .page-item{ --paper-scale:0.33; }
+    .sheet-pages.layout-strip .page-item{ --paper-scale:0.22; }
+    .sheet-pages.layout-grid .page-item{ --paper-scale:0.28; }
+}
+
+@page{
+    size:A4 portrait;
+    margin:0;
+}
+@media print{
+    *{
+        -webkit-print-color-adjust:exact !important;
+        print-color-adjust:exact !important;
+    }
+    html, body{
+        margin:0 !important;
+        padding:0 !important;
+        width:100% !important;
+        height:100% !important;
+        overflow:visible !important;
+        background:#fff !important;
+    }
+    .app-shell{ display:none !important; }
+    #exportDeck{
+        position:static !important;
+        left:auto !important;
+        top:auto !important;
+        width:auto !important;
+        background:#fff !important;
+        display:block !important;
+    }
+    .export-page{
+        width:210mm !important;
+        height:297mm !important;
+        min-height:297mm !important;
+        max-height:297mm !important;
+        margin:0 !important;
+        padding:0 !important;
+        overflow:hidden !important;
+        page-break-after:always !important;
+        break-after:page !important;
+    }
+    .export-page .paper{
+        width:210mm !important;
+        height:297mm !important;
+        min-height:297mm !important;
+        max-height:297mm !important;
+        box-shadow:none !important;
+        border-radius:0 !important;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+    <div class="workspace">
+
+        <aside class="sidebar">
+            <div class="sidebar-scroll">
+
+                <div class="brand">
+                    <div class="brand-kicker">Premium Bonus Studio</div>
+                    <h1><span>Kakuro Cross Generator</span></h1>
+                    <p>Create Kakuro worksheet decks with multiple grid shapes, multi-page preview layouts, and real A4 export.</p>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Generator</h2>
+                        <div class="panel-badge">Shape Engine</div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="puzzleCount">Puzzle Count</label>
+                        <input class="input" id="puzzleCount" type="number" min="1" max="24" value="6" />
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="label" for="shapeSelect">Grid Shape</label>
+                            <select class="select" id="shapeSelect">
+                                <option value="square">Square</option>
+                                <option value="diamond">Diamond</option>
+                                <option value="hex">Hexagon</option>
+                                <option value="cross">Cross Plus</option>
+                                <option value="ring">Ring / Donut</option>
+                                <option value="tshape">T Shape</option>
+                                <option value="hshape">H Shape</option>
+                                <option value="octagon">Octagon</option>
+                                <option value="freeform">Free-form Irregular</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label class="label" for="sizeSelect">Grid Size</label>
+                            <select class="select" id="sizeSelect">
+                                <option value="small">Small</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="large">Large</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <span class="label">Difficulty</span>
+                        <div class="diff-group" id="difficultyGroup">
+                            <button type="button" class="diff-btn" data-diff="Easy">Easy</button>
+                            <button type="button" class="diff-btn active" data-diff="Medium">Medium</button>
+                            <button type="button" class="diff-btn" data-diff="Hard">Hard</button>
+                            <button type="button" class="diff-btn" data-diff="Expert">Expert</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Theme Studio</h2>
+                        <div class="panel-badge">Preset</div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="presetSelect">Visual Preset</label>
+                        <select class="select" id="presetSelect">
+                            <option value="tealgold">Teal Gold</option>
+                            <option value="rubycyan">Ruby Cyan</option>
+                            <option value="violetmint">Violet Mint</option>
+                            <option value="sunsetlime">Sunset Lime</option>
+                        </select>
+
+                        <div class="swatches">
+                            <div class="swatch" data-preset="tealgold" style="background:linear-gradient(135deg,#14b8a6,#f59e0b);"></div>
+                            <div class="swatch" data-preset="rubycyan" style="background:linear-gradient(135deg,#ef4444,#22d3ee);"></div>
+                            <div class="swatch" data-preset="violetmint" style="background:linear-gradient(135deg,#8b5cf6,#34d399);"></div>
+                            <div class="swatch" data-preset="sunsetlime" style="background:linear-gradient(135deg,#f97316,#84cc16);"></div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="titleInput">Worksheet Title</label>
+                        <input class="input" id="titleInput" type="text" value="Kakuro Cross Challenge" />
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="subtitleInput">Subtitle / Tagline</label>
+                        <input class="input" id="subtitleInput" type="text" value="Crossword-Style Sum Puzzles for Sharp Minds" />
+                    </div>
+
+                    <div class="field">
+                        <label class="checkbox">
+                            <input type="checkbox" id="footerToggle" checked />
+                            <span>Show footer page numbers</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">
+                        <h2>Output</h2>
+                        <div class="panel-badge">A4 Real Export</div>
+                    </div>
+
+                    <button class="primary-btn" id="generateBtn" type="button">Generate 6 Puzzles</button>
+                    <button class="secondary-btn" id="applyThemeBtn" type="button" style="margin-top:10px;">Apply Theme Changes</button>
+
+                    <div style="margin-top:14px;">
+                        <div class="progress-text" id="progressText">Ready.</div>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    </div>
+
+                    <div class="note" style="margin-top:12px;">
+                        Preview zoom and preview layout are screen-only. PNG, PDF, and print always use real A4 pages.
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <main class="main">
+            <div class="topbar">
+                <div class="topbar-group">
+                    <div class="kpi-chip" id="kpiDeck">No deck generated</div>
+                    <div class="kpi-chip" id="kpiStyle">Preset: Teal Gold</div>
+                    <div class="kpi-chip" id="kpiMode">View: Puzzle</div>
+                </div>
+
+                <div class="topbar-group">
+                    <button class="toggle-btn active" id="puzzleViewBtn" type="button">Puzzle View</button>
+                    <button class="toggle-btn" id="answerViewBtn" type="button">Answer View</button>
+
+                    <select class="select layout-select" id="layoutSelect">
+                        <option value="single">Single Page</option>
+                        <option value="spread">2-Page Spread</option>
+                        <option value="strip">3-Up Strip</option>
+                        <option value="grid">2x2 Grid</option>
+                    </select>
+
+                    <select class="select zoom-select" id="zoomSelect">
+                        <option value="0.25">25%</option>
+                        <option value="0.5">50%</option>
+                        <option value="0.75">75%</option>
+                        <option value="1" selected>100%</option>
+                        <option value="1.15">115%</option>
+                        <option value="1.3">130%</option>
+                    </select>
+
+                    <button class="small-btn" id="pngBtn" type="button">Save Current PNG</button>
+                    <button class="small-btn" id="exactPdfBtn" type="button">Download PDF</button>
+                    <button class="small-btn" id="exactPrintBtn" type="button">Web Print</button>
+                </div>
+            </div>
+
+            <div class="preview-scroll">
+                <div class="preview-center">
+                    <div class="preview-stage" id="previewStage">
+                        <div class="empty-state" id="emptyState">
+                            <h3>Premium live preview</h3>
+                            <p>Generate a Kakuro batch, change the grid shape, switch preview layout, zoom up to 130%, and export through a real A4 page pipeline.</p>
+                        </div>
+                        <div id="screenPreview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navbar">
+                <div class="topbar-group">
+                    <button class="nav-btn" id="prevBtn" type="button">Previous</button>
+                    <button class="nav-btn" id="nextBtn" type="button">Next</button>
+                </div>
+                <div class="page-status" id="pageStatus">Sheet 0 / 0</div>
+                <div class="meta" id="deckMeta">No deck generated yet.</div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="exportDeck" class="export-deck"></div>
+
+<script>
+(function(){
+    var presets = {
+        tealgold: {
+            label:"Teal Gold",
+            accent:"#14b8a6",
+            accent2:"#f59e0b",
+            glow:"rgba(20,184,166,0.32)",
+            bg1:"#071117",
+            bg2:"#10202b",
+            bg3:"#1c1730",
+            text:"#f7f8fc",
+            muted:"#aab3cc",
+            board1:"#f4fffd",
+            board2:"#fff8ef"
+        },
+        rubycyan: {
+            label:"Ruby Cyan",
+            accent:"#ef4444",
+            accent2:"#22d3ee",
+            glow:"rgba(239,68,68,0.30)",
+            bg1:"#140b12",
+            bg2:"#241a24",
+            bg3:"#102536",
+            text:"#f9f7fb",
+            muted:"#c4c0d3",
+            board1:"#fff5f6",
+            board2:"#effdff"
+        },
+        violetmint: {
+            label:"Violet Mint",
+            accent:"#8b5cf6",
+            accent2:"#34d399",
+            glow:"rgba(139,92,246,0.30)",
+            bg1:"#100f1c",
+            bg2:"#1a1630",
+            bg3:"#0f2b24",
+            text:"#f7f8fc",
+            muted:"#bbb8d3",
+            board1:"#faf7ff",
+            board2:"#effff9"
+        },
+        sunsetlime: {
+            label:"Sunset Lime",
+            accent:"#f97316",
+            accent2:"#84cc16",
+            glow:"rgba(249,115,22,0.30)",
+            bg1:"#15100a",
+            bg2:"#2d1c14",
+            bg3:"#1d2811",
+            text:"#fffaf4",
+            muted:"#d4c9bd",
+            board1:"#fff9f1",
+            board2:"#f8ffe9"
+        }
+    };
+
+    var sizeProfiles = {
+        small: {
+            square:{ side:7 },
+            diamond:{ radius:4 },
+            hex:{ rows:[3,4,5,6,5,4,3] },
+            cross:{ base:9, thickness:3 },
+            ring:{ base:9, hole:3 },
+            tshape:{ base:9, stem:3, top:3 },
+            hshape:{ base:9, pillar:2, bridge:3 },
+            octagon:{ base:9, cut:2 },
+            freeform:{ base:9, target:30 }
+        },
+        medium: {
+            square:{ side:9 },
+            diamond:{ radius:5 },
+            hex:{ rows:[4,5,6,7,6,5,4] },
+            cross:{ base:11, thickness:3 },
+            ring:{ base:11, hole:3 },
+            tshape:{ base:11, stem:3, top:3 },
+            hshape:{ base:11, pillar:2, bridge:3 },
+            octagon:{ base:11, cut:2 },
+            freeform:{ base:11, target:46 }
+        },
+        large: {
+            square:{ side:11 },
+            diamond:{ radius:6 },
+            hex:{ rows:[5,6,7,8,9,8,7,6,5] },
+            cross:{ base:13, thickness:4 },
+            ring:{ base:13, hole:5 },
+            tshape:{ base:13, stem:3, top:4 },
+            hshape:{ base:13, pillar:3, bridge:3 },
+            octagon:{ base:13, cut:3 },
+            freeform:{ base:13, target:68 }
+        }
+    };
+
+    var shapeNames = {
+        square:"Square",
+        diamond:"Diamond",
+        hex:"Hexagon",
+        cross:"Cross Plus",
+        ring:"Ring / Donut",
+        tshape:"T Shape",
+        hshape:"H Shape",
+        octagon:"Octagon",
+        freeform:"Free-form"
+    };
+
+    var state = {
+        difficulty:"Medium",
+        currentView:"puzzle",
+        currentPage:0,
+        zoom:1,
+        previewLayout:"single",
+        generating:false,
+        exporting:false,
+        currentShape:"square",
+        currentSizeKey:"medium",
+        puzzles:[],
+        puzzlePages:[],
+        answerPages:[],
+        style:{
+            preset:"tealgold",
+            title:"Kakuro Cross Challenge",
+            subtitle:"Crossword-Style Sum Puzzles for Sharp Minds",
+            footerNumbers:true
+        }
+    };
+
+    var difficultyConfig = {
+        Easy:{ blackDensity:0.18 },
+        Medium:{ blackDensity:0.14 },
+        Hard:{ blackDensity:0.11 },
+        Expert:{ blackDensity:0.08 }
+    };
+
+    function init(){
+        bindUI();
+        applyPresetToUI("tealgold");
+        readStyleControls();
+        applyShellTheme();
+        updateGenerateButtonLabel();
+        updateZoom();
+        updateViewButtons();
+        updateStyleKPI();
+        updateDeckKPI();
+        updateMeta();
+        updateNavState();
+    }
+
+    function bindUI(){
+        var diffButtons = document.querySelectorAll(".diff-btn");
+        for(var i=0;i<diffButtons.length;i++){
+            diffButtons[i].onclick = function(){
+                setDifficulty(this.getAttribute("data-diff"));
+            };
+        }
+
+        document.getElementById("puzzleCount").oninput = updateGenerateButtonLabel;
+        document.getElementById("generateBtn").onclick = generateBatch;
+        document.getElementById("applyThemeBtn").onclick = function(){
+            readStyleControls();
+            applyShellTheme();
+            rerenderAll();
+        };
+
+        document.getElementById("puzzleViewBtn").onclick = function(){
+            state.currentView = "puzzle";
+            state.currentPage = 0;
+            updateViewButtons();
+            renderPreview();
+        };
+
+        document.getElementById("answerViewBtn").onclick = function(){
+            state.currentView = "answer";
+            state.currentPage = 0;
+            updateViewButtons();
+            renderPreview();
+        };
+
+        document.getElementById("layoutSelect").onchange = function(){
+            state.previewLayout = this.value || "single";
+            state.currentPage = 0;
+            rerenderAll();
+        };
+
+        document.getElementById("zoomSelect").onchange = function(){
+            state.zoom = parseFloat(this.value || "1");
+            updateZoom();
+        };
+
+        document.getElementById("prevBtn").onclick = function(){
+            if(state.currentPage > 0){
+                state.currentPage--;
+                renderPreview();
+            }
+        };
+
+        document.getElementById("nextBtn").onclick = function(){
+            var groups = getCurrentGroups();
+            if(state.currentPage < groups.length - 1){
+                state.currentPage++;
+                renderPreview();
+            }
+        };
+
+        document.getElementById("presetSelect").onchange = function(){
+            applyPresetToUI(this.value);
+            readStyleControls();
+            applyShellTheme();
+            rerenderAll();
+        };
+
+        var swatches = document.querySelectorAll(".swatch");
+        for(var j=0;j<swatches.length;j++){
+            swatches[j].onclick = function(){
+                applyPresetToUI(this.getAttribute("data-preset"));
+                readStyleControls();
+                applyShellTheme();
+                rerenderAll();
+            };
+        }
+
+        var liveIds = [
+            "shapeSelect",
+            "sizeSelect",
+            "titleInput",
+            "subtitleInput",
+            "footerToggle"
+        ];
+
+        for(var k=0;k<liveIds.length;k++){
+            attachLiveControl(liveIds[k]);
+        }
+
+        document.getElementById("pngBtn").onclick = saveCurrentPageAsPNG;
+        document.getElementById("exactPdfBtn").onclick = downloadExactPDF;
+        document.getElementById("exactPrintBtn").onclick = exactPrint;
+    }
+
+    function attachLiveControl(id){
+        var el = document.getElementById(id);
+        if(!el){ return; }
+        el.oninput = function(){
+            readStyleControls();
+            rerenderAll();
+        };
+        el.onchange = function(){
+            readStyleControls();
+            rerenderAll();
+        };
+    }
+
+    function setDifficulty(diff){
+        state.difficulty = diff;
+        var buttons = document.querySelectorAll(".diff-btn");
+        for(var i=0;i<buttons.length;i++){
+            buttons[i].className = buttons[i].getAttribute("data-diff") === diff ? "diff-btn active" : "diff-btn";
+        }
+    }
+
+    function applyPresetToUI(name){
+        state.style.preset = name;
+        document.getElementById("presetSelect").value = name;
+    }
+
+    function readStyleControls(){
+        state.style.preset = document.getElementById("presetSelect").value || "tealgold";
+        state.style.title = document.getElementById("titleInput").value || "Kakuro Cross Challenge";
+        state.style.subtitle = document.getElementById("subtitleInput").value || "Crossword-Style Sum Puzzles for Sharp Minds";
+        state.style.footerNumbers = !!document.getElementById("footerToggle").checked;
+        state.currentShape = document.getElementById("shapeSelect").value || "square";
+        state.currentSizeKey = document.getElementById("sizeSelect").value || "medium";
+        state.previewLayout = document.getElementById("layoutSelect").value || "single";
+        updateStyleKPI();
+    }
+
+    function applyShellTheme(){
+        var p = presets[state.style.preset] || presets.tealgold;
+        var root = document.documentElement;
+        root.style.setProperty("--bg-1", p.bg1);
+        root.style.setProperty("--bg-2", p.bg2);
+        root.style.setProperty("--bg-3", p.bg3);
+        root.style.setProperty("--text", p.text);
+        root.style.setProperty("--muted", p.muted);
+        root.style.setProperty("--accent", p.accent);
+        root.style.setProperty("--accent-2", p.accent2);
+        root.style.setProperty("--glow", p.glow);
+        root.style.setProperty("--board-shell-1", p.board1);
+        root.style.setProperty("--board-shell-2", p.board2);
+    }
+
+    function updateStyleKPI(){
+        var p = presets[state.style.preset] || presets.tealgold;
+        document.getElementById("kpiStyle").innerHTML = "Preset: " + p.label;
+    }
+
+    function updateGenerateButtonLabel(){
+        var count = parseInt(document.getElementById("puzzleCount").value, 10);
+        if(isNaN(count) || count < 1){ count = 1; }
+        if(count > 24){ count = 24; }
+        document.getElementById("generateBtn").innerHTML = "Generate " + count + " Puzzles";
+    }
+
+    function updateZoom(){
+        document.getElementById("previewStage").style.transform = "scale(" + state.zoom + ")";
+    }
+
+    function setProgress(text, pct){
+        document.getElementById("progressText").innerHTML = text;
+        document.getElementById("progressFill").style.width = pct + "%";
+    }
+
+    function disableExportButtons(flag){
+        document.getElementById("pngBtn").disabled = flag;
+        document.getElementById("exactPdfBtn").disabled = flag;
+        document.getElementById("exactPrintBtn").disabled = flag;
+    }
+
+    function updateViewButtons(){
+        document.getElementById("puzzleViewBtn").className = state.currentView === "puzzle" ? "toggle-btn active" : "toggle-btn";
+        document.getElementById("answerViewBtn").className = state.currentView === "answer" ? "toggle-btn active" : "toggle-btn";
+        document.getElementById("kpiMode").innerHTML = "View: " + (state.currentView === "puzzle" ? "Puzzle" : "Answer");
+    }
+
+    function updateDeckKPI(){
+        if(!state.puzzles.length){
+            document.getElementById("kpiDeck").innerHTML = "No deck generated";
+        }else{
+            document.getElementById("kpiDeck").innerHTML =
+                state.puzzles.length + " puzzles · " +
+                shapeNames[state.currentShape] + " · " +
+                state.currentSizeKey + " · " +
+                state.difficulty;
+        }
+    }
+
+    function updateMeta(){
+        if(!state.puzzles.length){
+            document.getElementById("deckMeta").innerHTML = "No deck generated yet.";
+            return;
+        }
+        var totalPages = state.puzzlePages.length + state.answerPages.length;
+        var groups = getCurrentGroups().length;
+        document.getElementById("deckMeta").innerHTML =
+            shapeNames[state.currentShape] + " · " +
+            totalPages + " pages · " +
+            groups + " preview sheets";
+    }
+
+    function updateNavState(){
+        var groups = getCurrentGroups();
+        var total = groups.length;
+        var current = total ? state.currentPage + 1 : 0;
+        var startIndex = total ? (state.currentPage * getLayoutGroupSize()) + 1 : 0;
+        var endIndex = total ? Math.min((state.currentPage + 1) * getLayoutGroupSize(), getCurrentPages().length) : 0;
+        document.getElementById("pageStatus").innerHTML = "Sheet " + current + " / " + total + (total ? " · Pages " + startIndex + "–" + endIndex : "");
+        document.getElementById("prevBtn").disabled = state.currentPage <= 0;
+        document.getElementById("nextBtn").disabled = state.currentPage >= total - 1 || total === 0;
+    }
+
+    function wait(ms){
+        return new Promise(function(resolve){ setTimeout(resolve, ms); });
+    }
+
+    async function ensureFontsReady(){
+        if(document.fonts && document.fonts.ready){
+            try{ await document.fonts.ready; }catch(e){}
+        }
+    }
+
+    function getCurrentPages(){
+        return state.currentView === "puzzle" ? state.puzzlePages : state.answerPages;
+    }
+
+    function getLayoutGroupSize(){
+        if(state.previewLayout === "spread"){ return 2; }
+        if(state.previewLayout === "strip"){ return 3; }
+        if(state.previewLayout === "grid"){ return 4; }
+        return 1;
+    }
+
+    function chunkPages(pages, size){
+        var groups = [];
+        for(var i=0;i<pages.length;i += size){
+            groups.push(pages.slice(i, i + size));
+        }
+        return groups;
+    }
+
+    function getCurrentGroups(){
+        return chunkPages(getCurrentPages(), getLayoutGroupSize());
+    }
+
+    function rerenderAll(){
+        renderPreview();
+        renderExportDeck();
+        updateDeckKPI();
+        updateMeta();
+        updateNavState();
+    }
+
+    function buildPages(){
+        state.puzzlePages = [];
+        state.answerPages = [];
+
+        for(var i=0;i<state.puzzles.length;i++){
+            state.puzzlePages.push({ type:"puzzle", puzzle:state.puzzles[i], pageNumber:i + 1 });
+        }
+        for(var j=0;j<state.puzzles.length;j++){
+            state.answerPages.push({ type:"answer", puzzle:state.puzzles[j], pageNumber:state.puzzles.length + j + 1 });
+        }
+    }
+
+    function generateBatch(){
+        if(state.generating){ return; }
+
+        readStyleControls();
+
+        var count = parseInt(document.getElementById("puzzleCount").value, 10);
+        if(isNaN(count) || count < 1){ count = 1; }
+        if(count > 24){ count = 24; }
+
+        state.generating = true;
+        state.puzzles = [];
+        state.puzzlePages = [];
+        state.answerPages = [];
+        state.currentView = "puzzle";
+        state.currentPage = 0;
+
+        updateViewButtons();
+        document.getElementById("generateBtn").disabled = true;
+        disableExportButtons(true);
+        document.getElementById("screenPreview").innerHTML = "";
+        document.getElementById("exportDeck").innerHTML = "";
+        document.getElementById("emptyState").style.display = "none";
+
+        setProgress("Preparing Kakuro worksheet deck...", 2);
+
+        var index = 0;
+        function nextStep(){
+            if(index >= count){
+                state.generating = false;
+                document.getElementById("generateBtn").disabled = false;
+                disableExportButtons(false);
+                buildPages();
+                rerenderAll();
+                setProgress("Generated " + state.puzzles.length + " puzzle" + (state.puzzles.length === 1 ? "" : "s") + ".", 100);
+                return;
+            }
+
+            setProgress("Generating puzzle " + (index + 1) + " of " + count + "...", Math.max(4, Math.round((index / count) * 100)));
+
+            setTimeout(function(){
+                var puzzle = buildSinglePuzzle(state.currentShape, state.currentSizeKey, state.difficulty, index + 1);
+                if(puzzle){ state.puzzles.push(puzzle); }
+                index++;
+                nextStep();
+            }, 10);
+        }
+
+        nextStep();
+    }
+
+    function renderPreview(){
+        var screen = document.getElementById("screenPreview");
+        var groups = getCurrentGroups();
+
+        if(!groups.length){
+            document.getElementById("emptyState").style.display = "block";
+            screen.innerHTML = "";
+            updateNavState();
+            return;
+        }
+
+        document.getElementById("emptyState").style.display = "none";
+
+        if(state.currentPage < 0){ state.currentPage = 0; }
+        if(state.currentPage > groups.length - 1){ state.currentPage = groups.length - 1; }
+
+        screen.innerHTML = renderGroupSheet(groups[state.currentPage], state.previewLayout, "screen");
+        updateNavState();
+    }
+
+    function renderExportDeck(){
+        var deck = document.getElementById("exportDeck");
+        if(!state.puzzles.length){
+            deck.innerHTML = "";
+            return;
+        }
+
+        var html = "";
+        for(var i=0;i<state.puzzlePages.length;i++){
+            html += '<div class="export-page">' + renderPuzzlePage(state.puzzlePages[i], false) + '</div>';
+        }
+        for(var j=0;j<state.answerPages.length;j++){
+            html += '<div class="export-page">' + renderAnswerPage(state.answerPages[j], false) + '</div>';
+        }
+        deck.innerHTML = html;
+    }
+
+    function renderGroupSheet(group, layout, mode){
+        var html = '<div class="sheet-pages layout-' + layout + '">';
+        for(var i=0;i<group.length;i++){
+            html += '<div class="page-item">';
+            html += group[i].type === "puzzle" ? renderPuzzlePage(group[i], mode === "screen") : renderAnswerPage(group[i], mode === "screen");
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function renderPuzzlePage(page, withFade){
+        var puzzle = page.puzzle;
+        var gridHtml = renderKakuroGrid(puzzle, false);
+
+        return ''
+        + '<div class="paper' + (withFade ? ' fade-in' : '') + '">'
+            + '<div class="paper-inner">'
+                + '<div class="paper-top-strip"></div>'
+                + '<div class="page-head">'
+                    + '<div class="head-badge">Kakuro Puzzle</div>'
+                    + '<div class="title-card">'
+                        + '<h2 class="page-title">' + escapeHtml(state.style.title) + ' #' + puzzle.puzzleNumber + '</h2>'
+                        + '<p class="page-subtitle">' + escapeHtml(state.style.subtitle) + ' · ' + shapeNames[puzzle.shape] + ' · ' + puzzle.sizeKey + ' · ' + puzzle.difficulty + '</p>'
+                    + '</div>'
+                + '</div>'
+                + '<div class="board-shell"><div class="board-wrap">' + gridHtml + '</div></div>'
+            + '</div>'
+            + renderFooter(page, 'Puzzle ' + puzzle.puzzleNumber)
+        + '</div>';
+    }
+
+    function renderAnswerPage(page, withFade){
+        var puzzle = page.puzzle;
+        var gridHtml = renderKakuroGrid(puzzle, true);
+
+        return ''
+        + '<div class="paper' + (withFade ? ' fade-in' : '') + '">'
+            + '<div class="paper-inner">'
+                + '<div class="paper-top-strip"></div>'
+                + '<div class="page-head">'
+                    + '<div class="head-badge">Solved Answer</div>'
+                    + '<div class="title-card">'
+                        + '<h2 class="page-title">' + escapeHtml(state.style.title) + ' — Answer #' + puzzle.puzzleNumber + '</h2>'
+                        + '<p class="page-subtitle">Full solution grid · ' + shapeNames[puzzle.shape] + ' · ' + puzzle.sizeKey + ' · ' + puzzle.difficulty + '</p>'
+                    + '</div>'
+                + '</div>'
+                + '<div class="board-shell"><div class="board-wrap">' + gridHtml + '</div></div>'
+            + '</div>'
+            + renderFooter(page, 'Answer ' + puzzle.puzzleNumber)
+        + '</div>';
+    }
+
+    function renderFooter(page, label){
+        if(!state.style.footerNumbers){ return ''; }
+        return '<div class="page-footer"><div class="footer-chip">' + label + '</div><div>' + page.pageNumber + '</div></div>';
+    }
+
+    function renderKakuroGrid(puzzle, showSolution){
+        var rows = puzzle.rows;
+        var cols = puzzle.cols;
+        var cellPx = getGridCellSize(Math.max(rows, cols));
+        var clueFont = Math.max(9, Math.floor(cellPx * 0.19));
+        var digitFont = Math.max(14, Math.floor(cellPx * 0.37));
+        var html = '<div class="kakuro-grid" style="grid-template-columns:repeat(' + cols + ',' + cellPx + 'px);">';
+
+        for(var r=0;r<rows;r++){
+            for(var c=0;c<cols;c++){
+                if(!puzzle.shapeMask[r][c]){
+                    html += '<div class="kcell void" style="width:' + cellPx + 'px;height:' + cellPx + 'px;"></div>';
+                    continue;
+                }
+
+                if(puzzle.playMask[r][c]){
+                    var digit = showSolution ? puzzle.solution[r][c] : '';
+                    html += ''
+                    + '<div class="kcell white" style="width:' + cellPx + 'px;height:' + cellPx + 'px;">'
+                        + '<div class="digit" style="font-size:' + digitFont + 'px;">' + digit + '</div>'
+                    + '</div>';
+                }else{
+                    var key = r + '_' + c;
+                    var acrossVal = puzzle.clues.across[key];
+                    var downVal = puzzle.clues.down[key];
+
+                    html += ''
+                    + '<div class="kcell black" style="width:' + cellPx + 'px;height:' + cellPx + 'px;">'
+                        + (typeof acrossVal !== "undefined" ? '<div class="clue-across" style="font-size:' + clueFont + 'px;">' + acrossVal + '</div>' : '')
+                        + (typeof downVal !== "undefined" ? '<div class="clue-down" style="font-size:' + clueFont + 'px;">' + downVal + '</div>' : '')
+                    + '</div>';
+                }
+            }
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function getGridCellSize(maxDim){
+        if(maxDim <= 7){ return 72; }
+        if(maxDim <= 9){ return 58; }
+        if(maxDim <= 11){ return 48; }
+        return 40;
+    }
+
+    async function saveCurrentPageAsPNG(){
+        if(!state.puzzles.length || state.exporting){ return; }
+
+        state.exporting = true;
+        disableExportButtons(true);
+        setProgress("Preparing PNG export...", 10);
+
+        try{
+            await ensureFontsReady();
+
+            var currentPages = getCurrentPages();
+            var pageIndex = state.currentPage * getLayoutGroupSize();
+            var current = currentPages[pageIndex] || currentPages[0];
+            if(!current){ throw new Error("No current page available"); }
+
+            var pageHtml = current.type === "puzzle"
+                ? renderPuzzlePage(current, false)
+                : renderAnswerPage(current, false);
+
+            var tempWrap = document.createElement("div");
+            tempWrap.style.position = "absolute";
+            tempWrap.style.left = "-99999px";
+            tempWrap.style.top = "0";
+            tempWrap.style.width = "210mm";
+            tempWrap.style.height = "297mm";
+            tempWrap.style.background = "#fff";
+            tempWrap.innerHTML = pageHtml;
+            document.body.appendChild(tempWrap);
+
+            var paper = tempWrap.querySelector(".paper");
+            paper.style.width = "210mm";
+            paper.style.height = "297mm";
+            paper.style.minHeight = "297mm";
+            paper.style.maxHeight = "297mm";
+            paper.style.borderRadius = "0";
+            paper.style.boxShadow = "none";
+            paper.style.margin = "0";
+
+            await wait(80);
+
+            var dataUrl = await htmlToImage.toPng(paper, {
+                pixelRatio: 2,
+                backgroundColor: "#ffffff",
+                cacheBust: true
+            });
+
+            var link = document.createElement("a");
+            var mode = state.currentView === "answer" ? "Answer" : "Puzzle";
+            link.download = "Kakuro_" + mode + "_Page_" + (pageIndex + 1) + ".png";
+            link.href = dataUrl;
+            link.click();
+
+            document.body.removeChild(tempWrap);
+            setProgress("PNG exported.", 100);
+        }catch(err){
+            console.error(err);
+            setProgress("PNG export failed.", 0);
+        }
+
+        state.exporting = false;
+        disableExportButtons(false);
+    }
+
+    function exactPrint(){
+        if(!state.puzzles.length || state.exporting){ return; }
+        renderExportDeck();
+        setProgress("Opening print layout...", 90);
+        setTimeout(function(){
+            window.print();
+            setProgress("Print layout ready.", 100);
+        }, 120);
+    }
+
+    async function downloadExactPDF(){
+        if(!state.puzzles.length || state.exporting){ return; }
+
+        state.exporting = true;
+        disableExportButtons(true);
+        setProgress("Preparing exact PDF...", 8);
+
+        try{
+            renderExportDeck();
+            await ensureFontsReady();
+            await wait(100);
+
+            var jsPDFRef = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
+            if(!jsPDFRef){ throw new Error("jsPDF not loaded"); }
+
+            var pages = Array.prototype.slice.call(document.querySelectorAll("#exportDeck .export-page"));
+            if(!pages.length){ throw new Error("No export pages found"); }
+
+            var pdf = new jsPDFRef({
+                orientation:"portrait",
+                unit:"mm",
+                format:"a4",
+                compress:true
+            });
+
+            for(var i=0;i<pages.length;i++){
+                var paper = pages[i].querySelector(".paper");
+
+                var dataUrl = await htmlToImage.toPng(paper, {
+                    pixelRatio: 2,
+                    backgroundColor: "#ffffff",
+                    cacheBust: true
+                });
+
+                if(i > 0){ pdf.addPage("a4", "portrait"); }
+                pdf.addImage(dataUrl, "PNG", 0, 0, 210, 297, undefined, "FAST");
+
+                setProgress("Building PDF " + (i + 1) + " of " + pages.length + "...", Math.round(((i + 1) / pages.length) * 96));
+            }
+
+            pdf.save("kakuro-cross-generator.pdf");
+            setProgress("Exact PDF exported.", 100);
+        }catch(err){
+            console.error(err);
+            setProgress("Exact PDF export failed.", 0);
+        }
+
+        state.exporting = false;
+        disableExportButtons(false);
+    }
+
+    function buildSinglePuzzle(shape, sizeKey, difficulty, puzzleNumber){
+        var cfg = difficultyConfig[difficulty] || difficultyConfig.Medium;
+        var attempts = 0;
+
+        while(attempts < 60){
+            attempts++;
+
+            var shapeMask = createShapeMask(shape, sizeKey);
+            if(!shapeMask){ continue; }
+
+            var playMask = createPlayMask(shapeMask, cfg.blackDensity);
+            if(!playMask){ continue; }
+
+            if(!validatePlayMask(shapeMask, playMask)){ continue; }
+
+            var runs = extractRuns(shapeMask, playMask);
+            if(!runs.length){ continue; }
+
+            var solution = solveGridDigits(shapeMask, playMask);
+            if(!solution){ continue; }
+
+            var clues = computeClueData(solution, runs);
+
+            return {
+                shape:shape,
+                sizeKey:sizeKey,
+                difficulty:difficulty,
+                puzzleNumber:puzzleNumber,
+                shapeMask:shapeMask,
+                playMask:playMask,
+                rows:shapeMask.length,
+                cols:shapeMask[0].length,
+                runs:runs,
+                solution:solution,
+                clues:clues
+            };
+        }
+
+        return null;
+    }
+
+    function createShapeMask(shape, sizeKey){
+        var profile = sizeProfiles[sizeKey] && sizeProfiles[sizeKey][shape];
+        if(!profile){ return null; }
+
+        if(shape === "square"){ return buildSquareMask(profile.side); }
+        if(shape === "diamond"){ return buildDiamondMask(profile.radius); }
+        if(shape === "hex"){ return buildHexMask(profile.rows); }
+        if(shape === "cross"){ return buildCrossMask(profile.base, profile.thickness); }
+        if(shape === "ring"){ return buildRingMask(profile.base, profile.hole); }
+        if(shape === "tshape"){ return buildTMask(profile.base, profile.stem, profile.top); }
+        if(shape === "hshape"){ return buildHMask(profile.base, profile.pillar, profile.bridge); }
+        if(shape === "octagon"){ return buildOctagonMask(profile.base, profile.cut); }
+        if(shape === "freeform"){ return buildFreeformMask(profile.base, profile.target); }
+
+        return null;
+    }
+
+    function buildSquareMask(side){
+        var mask = [];
+        for(var r=0;r<side;r++){
+            var row = [];
+            for(var c=0;c<side;c++){ row.push(true); }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildDiamondMask(radius){
+        var side = radius * 2 + 1;
+        var center = radius;
+        var mask = [];
+        for(var r=0;r<side;r++){
+            var row = [];
+            for(var c=0;c<side;c++){
+                row.push(Math.abs(r - center) + Math.abs(c - center) <= radius);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildHexMask(rowLengths){
+        var rows = rowLengths.length;
+        var maxCols = 0;
+        for(var i=0;i<rowLengths.length;i++){
+            if(rowLengths[i] > maxCols){ maxCols = rowLengths[i]; }
+        }
+
+        var mask = [];
+        for(var r=0;r<rows;r++){
+            var len = rowLengths[r];
+            var start = Math.floor((maxCols - len) / 2);
+            var row = [];
+            for(var c=0;c<maxCols;c++){
+                row.push(c >= start && c < start + len);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildCrossMask(base, thickness){
+        var start = Math.floor((base - thickness) / 2);
+        var end = start + thickness - 1;
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                row.push((r >= start && r <= end) || (c >= start && c <= end));
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildRingMask(base, hole){
+        var mask = [];
+        var start = Math.floor((base - hole) / 2);
+        var end = start + hole - 1;
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                var inHole = r >= start && r <= end && c >= start && c <= end;
+                row.push(!inHole);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildTMask(base, stem, top){
+        var mask = [];
+        var stemStart = Math.floor((base - stem) / 2);
+        var stemEnd = stemStart + stem - 1;
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                var topBar = r < top;
+                var stemCol = c >= stemStart && c <= stemEnd;
+                row.push(topBar || stemCol);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildHMask(base, pillar, bridge){
+        var mask = [];
+        var midStart = Math.floor((base - bridge) / 2);
+        var midEnd = midStart + bridge - 1;
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                var leftPillar = c < pillar;
+                var rightPillar = c >= base - pillar;
+                var middleBar = r >= midStart && r <= midEnd;
+                row.push(leftPillar || rightPillar || middleBar);
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildOctagonMask(base, cut){
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){
+                var tl = (r < cut && c < cut && (r + c) < cut);
+                var tr = (r < cut && c >= base - cut && (r + (base - 1 - c)) < cut);
+                var bl = (r >= base - cut && c < cut && ((base - 1 - r) + c) < cut);
+                var br = (r >= base - cut && c >= base - cut && ((base - 1 - r) + (base - 1 - c)) < cut);
+                row.push(!(tl || tr || bl || br));
+            }
+            mask.push(row);
+        }
+        return mask;
+    }
+
+    function buildFreeformMask(base, target){
+        var mask = [];
+        for(var r=0;r<base;r++){
+            var row = [];
+            for(var c=0;c<base;c++){ row.push(false); }
+            mask.push(row);
+        }
+
+        var centerR = Math.floor(base / 2);
+        var centerC = Math.floor(base / 2);
+        mask[centerR][centerC] = true;
+
+        var frontier = [[centerR, centerC]];
+        var count = 1;
+        var dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+
+        while(count < target && frontier.length){
+            var source = frontier[Math.floor(Math.random() * frontier.length)];
+            var shuffled = shuffle(dirs.slice());
+            var added = false;
+
+            for(var i=0;i<shuffled.length;i++){
+                var nr = source[0] + shuffled[i][0];
+                var nc = source[1] + shuffled[i][1];
+                if(nr >= 0 && nr < base && nc >= 0 && nc < base && !mask[nr][nc]){
+                    mask[nr][nc] = true;
+                    frontier.push([nr, nc]);
+                    count++;
+                    added = true;
+                    break;
+                }
+            }
+
+            if(!added){
+                frontier.push([Math.floor(Math.random() * base), Math.floor(Math.random() * base)]);
+            }
+        }
+
+        return mask;
+    }
+
+    function cloneMatrix(matrix){
+        var out = [];
+        for(var r=0;r<matrix.length;r++){ out.push(matrix[r].slice()); }
+        return out;
+    }
+
+    function createPlayMask(shapeMask, density){
+        var rows = shapeMask.length;
+        var cols = shapeMask[0].length;
+        var playMask = cloneMatrix(shapeMask);
+        var forcedBlack = [];
+        var candidates = [];
+
+        for(var r=0;r<rows;r++){
+            forcedBlack[r] = [];
+            for(var c=0;c<cols;c++){ forcedBlack[r][c] = false; }
+        }
+
+        for(var r1=0;r1<rows;r1++){
+            for(var c1=0;c1<cols;c1++){
+                if(!shapeMask[r1][c1]){ continue; }
+
+                var leftInShape = c1 > 0 && shapeMask[r1][c1 - 1];
+                var upInShape = r1 > 0 && shapeMask[r1 - 1][c1];
+
+                if(!leftInShape || !upInShape){
+                    forcedBlack[r1][c1] = true;
+                    playMask[r1][c1] = false;
+                }
+            }
+        }
+
+        for(var r2=0;r2<rows;r2++){
+            for(var c2=0;c2<cols;c2++){
+                if(!shapeMask[r2][c2] || forcedBlack[r2][c2]){ continue; }
+
+                var nearEdge = isShapeBoundary(shapeMask, r2, c2);
+                var chance = nearEdge ? density * 0.55 : density;
+
+                if(Math.random() < chance){
+                    playMask[r2][c2] = false;
+                }else{
+                    candidates.push([r2, c2]);
+                }
+            }
+        }
+
+        repairRuns(shapeMask, playMask);
+
+        var whiteCount = countWhites(playMask);
+        var shapeCount = countShapeCells(shapeMask);
+        if(whiteCount < Math.max(8, Math.floor(shapeCount * 0.33))){ return null; }
+        if(!validatePlayMask(shapeMask, playMask)){ return null; }
+
+        return playMask;
+    }
+
+    function isShapeBoundary(shapeMask, r, c){
+        var dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+        for(var i=0;i<dirs.length;i++){
+            var nr = r + dirs[i][0];
+            var nc = c + dirs[i][1];
+            if(nr < 0 || nr >= shapeMask.length || nc < 0 || nc >= shapeMask[0].length || !shapeMask[nr][nc]){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function countShapeCells(shapeMask){
+        var count = 0;
+        for(var r=0;r<shapeMask.length;r++){
+            for(var c=0;c<shapeMask[0].length;c++){
+                if(shapeMask[r][c]){ count++; }
+            }
+        }
+        return count;
+    }
+
+    function countWhites(playMask){
+        var count = 0;
+        for(var r=0;r<playMask.length;r++){
+            for(var c=0;c<playMask[0].length;c++){
+                if(playMask[r][c]){ count++; }
+            }
+        }
+        return count;
+    }
+
+    function repairRuns(shapeMask, playMask){
+        var rows = shapeMask.length;
+        var cols = shapeMask[0].length;
+        var changed = true;
+        var guard = 0;
+
+        while(changed && guard < 30){
+            changed = false;
+            guard++;
+
+            for(var r=0;r<rows;r++){
+                var start = -1;
+                for(var c=0;c<=cols;c++){
+                    var inShape = c < cols && shapeMask[r][c];
+                    var isWhite = c < cols && playMask[r][c];
+
+                    if(!inShape){
+                        if(start !== -1){
+                            if(c - start === 1){
+                                playMask[r][start] = false;
+                                changed = true;
+                            }
+                            start = -1;
+                        }
+                        continue;
+                    }
+
+                    if(isWhite && start === -1){ start = c; }
+                    if((!isWhite || c === cols - 1) && start !== -1){
+                        var endC = (!isWhite ? c - 1 : c);
+                        var len = endC - start + 1;
+                        if(len === 1){
+                            playMask[r][start] = false;
+                            changed = true;
+                        }
+                        start = -1;
+                    }
+                }
+            }
+
+            for(var c2=0;c2<cols;c2++){
+                var start2 = -1;
+                for(var r2=0;r2<=rows;r2++){
+                    var inShape2 = r2 < rows && shapeMask[r2][c2];
+                    var isWhite2 = r2 < rows && playMask[r2][c2];
+
+                    if(!inShape2){
+                        if(start2 !== -1){
+                            if(r2 - start2 === 1){
+                                playMask[start2][c2] = false;
+                                changed = true;
+                            }
+                            start2 = -1;
+                        }
+                        continue;
+                    }
+
+                    if(isWhite2 && start2 === -1){ start2 = r2; }
+                    if((!isWhite2 || r2 === rows - 1) && start2 !== -1){
+                        var endR = (!isWhite2 ? r2 - 1 : r2);
+                        var len2 = endR - start2 + 1;
+                        if(len2 === 1){
+                            playMask[start2][c2] = false;
+                            changed = true;
+                        }
+                        start2 = -1;
+                    }
+                }
+            }
+        }
+    }
+
+    function validatePlayMask(shapeMask, playMask){
+        var rows = shapeMask.length;
+        var cols = shapeMask[0].length;
+
+        for(var r=0;r<rows;r++){
+            var len = 0;
+            for(var c=0;c<=cols;c++){
+                var inShape = c < cols && shapeMask[r][c];
+                var isWhite = c < cols && playMask[r][c];
+
+                if(inShape && isWhite){ len++; }
+                else{
+                    if(len === 1){ return false; }
+                    len = 0;
+                }
+            }
+        }
+
+        for(var c2=0;c2<cols;c2++){
+            var len2 = 0;
+            for(var r2=0;r2<=rows;r2++){
+                var inShape2 = r2 < rows && shapeMask[r2][c2];
+                var isWhite2 = r2 < rows && playMask[r2][c2];
+
+                if(inShape2 && isWhite2){ len2++; }
+                else{
+                    if(len2 === 1){ return false; }
+                    len2 = 0;
+                }
+            }
+        }
+
+        return validateConnectivity(playMask);
+    }
+
+    function validateConnectivity(playMask){
+        var rows = playMask.length;
+        var cols = playMask[0].length;
+        var start = null;
+        var total = 0;
+
+        for(var r=0;r<rows;r++){
+            for(var c=0;c<cols;c++){
+                if(playMask[r][c]){
+                    total++;
+                    if(!start){ start = {r:r, c:c}; }
+                }
+            }
+        }
+        if(!start){ return false; }
+
+        var queue = [start];
+        var seen = {};
+        seen[start.r + "_" + start.c] = true;
+        var count = 0;
+        var dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+
+        while(queue.length){
+            var cur = queue.shift();
+            count++;
+            for(var i=0;i<dirs.length;i++){
+                var nr = cur.r + dirs[i][0];
+                var nc = cur.c + dirs[i][1];
+                var key = nr + "_" + nc;
+                if(nr >= 0 && nr < rows && nc >= 0 && nc < cols && playMask[nr][nc] && !seen[key]){
+                    seen[key] = true;
+                    queue.push({r:nr, c:nc});
+                }
+            }
+        }
+
+        return count === total;
+    }
+
+    function extractRuns(shapeMask, playMask){
+        var rows = shapeMask.length;
+        var cols = shapeMask[0].length;
+        var runs = [];
+
+        for(var r=0;r<rows;r++){
+            var start = -1;
+            for(var c=0;c<=cols;c++){
+                var isWhite = c < cols && playMask[r][c];
+                if(isWhite && start === -1){ start = c; }
+
+                if((!isWhite || c === cols) && start !== -1){
+                    var end = c - 1;
+                    if(end - start + 1 >= 2){
+                        var leftClueC = start - 1;
+                        if(leftClueC >= 0 && shapeMask[r][leftClueC] && !playMask[r][leftClueC]){
+                            var cells = [];
+                            for(var cc=start; cc<=end; cc++){ cells.push({r:r, c:cc}); }
+                            runs.push({
+                                dir:"across",
+                                clueR:r,
+                                clueC:leftClueC,
+                                cells:cells
+                            });
+                        }
+                    }
+                    start = -1;
+                }
+            }
+        }
+
+        for(var c2=0;c2<cols;c2++){
+            var start2 = -1;
+            for(var r2=0;r2<=rows;r2++){
+                var isWhite2 = r2 < rows && playMask[r2][c2];
+                if(isWhite2 && start2 === -1){ start2 = r2; }
+
+                if((!isWhite2 || r2 === rows) && start2 !== -1){
+                    var end2 = r2 - 1;
+                    if(end2 - start2 + 1 >= 2){
+                        var upClueR = start2 - 1;
+                        if(upClueR >= 0 && shapeMask[upClueR][c2] && !playMask[upClueR][c2]){
+                            var vcells = [];
+                            for(var rr=start2; rr<=end2; rr++){ vcells.push({r:rr, c:c2}); }
+                            runs.push({
+                                dir:"down",
+                                clueR:upClueR,
+                                clueC:c2,
+                                cells:vcells
+                            });
+                        }
+                    }
+                    start2 = -1;
+                }
+            }
+        }
+
+        return runs;
+    }
+
+    function solveGridDigits(shapeMask, playMask){
+        var rows = playMask.length;
+        var cols = playMask[0].length;
+        var solution = [];
+        var whiteCells = [];
+
+        for(var r=0;r<rows;r++){
+            solution[r] = [];
+            for(var c=0;c<cols;c++){
+                solution[r][c] = 0;
+                if(playMask[r][c]){ whiteCells.push({r:r, c:c}); }
+            }
+        }
+
+        whiteCells.sort(function(a, b){
+            return countLocalSpan(playMask, a.r, a.c) < countLocalSpan(playMask, b.r, b.c) ? 1 : -1;
+        });
+
+        var budget = {
+            steps:0,
+            cap: whiteCells.length <= 25 ? 180000 : whiteCells.length <= 45 ? 420000 : 900000
+        };
+
+        return backtrackFill(0, whiteCells, solution, playMask, budget) ? solution : null;
+    }
+
+    function countLocalSpan(playMask, r, c){
+        return getRunLength(playMask, r, c, "across") + getRunLength(playMask, r, c, "down");
+    }
+
+    function getRunLength(playMask, r, c, dir){
+        var len = 1;
+        if(dir === "across"){
+            for(var cc=c-1; cc>=0 && playMask[r][cc]; cc--){ len++; }
+            for(var cc2=c+1; cc2<playMask[0].length && playMask[r][cc2]; cc2++){ len++; }
+        }else{
+            for(var rr=r-1; rr>=0 && playMask[rr][c]; rr--){ len++; }
+            for(var rr2=r+1; rr2<playMask.length && playMask[rr2][c]; rr2++){ len++; }
+        }
+        return len;
+    }
+
+    function backtrackFill(index, whiteCells, solution, playMask, budget){
+        budget.steps++;
+        if(budget.steps > budget.cap){ return false; }
+        if(index >= whiteCells.length){ return true; }
+
+        var cell = whiteCells[index];
+        var digits = shuffle([1,2,3,4,5,6,7,8,9]);
+
+        for(var i=0;i<digits.length;i++){
+            var d = digits[i];
+            if(isDigitValid(cell.r, cell.c, d, solution, playMask)){
+                solution[cell.r][cell.c] = d;
+                if(backtrackFill(index + 1, whiteCells, solution, playMask, budget)){ return true; }
+                solution[cell.r][cell.c] = 0;
+            }
+        }
+
+        return false;
+    }
+
+    function isDigitValid(r, c, d, solution, playMask){
+        var cc, rr;
+
+        for(cc=c-1; cc>=0 && playMask[r][cc]; cc--){
+            if(solution[r][cc] === d){ return false; }
+        }
+        for(cc=c+1; cc<playMask[0].length && playMask[r][cc]; cc++){
+            if(solution[r][cc] === d){ return false; }
+        }
+
+        for(rr=r-1; rr>=0 && playMask[rr][c]; rr--){
+            if(solution[rr][c] === d){ return false; }
+        }
+        for(rr=r+1; rr<playMask.length && playMask[rr][c]; rr++){
+            if(solution[rr][c] === d){ return false; }
+        }
+
+        return true;
+    }
+
+    function computeClueData(solution, runs){
+        var clues = { across:{}, down:{} };
+
+        for(var i=0;i<runs.length;i++){
+            var sum = 0;
+            for(var j=0;j<runs[i].cells.length;j++){
+                var cell = runs[i].cells[j];
+                sum += solution[cell.r][cell.c];
+            }
+            var key = runs[i].clueR + "_" + runs[i].clueC;
+            if(runs[i].dir === "across"){ clues.across[key] = sum; }
+            else{ clues.down[key] = sum; }
+        }
+
+        return clues;
+    }
+
+    function shuffle(arr){
+        for(var i=arr.length - 1;i>0;i--){
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = arr[i];
+            arr[i] = arr[j];
+            arr[j] = t;
+        }
+        return arr;
+    }
+
+    function escapeHtml(str){
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    init();
+})();
+</script>
+</body>
+</html>
