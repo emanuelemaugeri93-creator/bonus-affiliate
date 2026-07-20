@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Paper Puppet Theater • Unlimited Blueprint Generator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #f5f0e8;
+      display: flex;
+      min-height: 100vh;
+      color: #2e2e2e;
+    }
+    .sidebar {
+      width: 340px;
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      color: #f0e6d2;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+      z-index: 10;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+    .sidebar h2 {
+      font-weight: 500;
+      font-size: 1.7rem;
+      letter-spacing: 0.5px;
+      color: #c8a951;
+      border-bottom: 1px solid rgba(200,169,81,0.4);
+      padding-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .sidebar h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #c8a951;
+      margin-bottom: -0.5rem;
+      font-weight: 600;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .control-group label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+      color: #c8a951;
+    }
+    select, input[type="number"] {
+      background: #2a2a40;
+      border: 1px solid #4a4a5e;
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      color: #f5f0e8;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: 0.2s;
+      background: #1f1f32;
+    }
+    select:focus, input:focus {
+      border-color: #c8a951;
+      box-shadow: 0 0 0 3px rgba(200,169,81,0.25);
+    }
+    input[type="number"] {
+      width: 80px;
+    }
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 0.3rem;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .checkbox-item input[type="checkbox"] {
+      accent-color: #c8a951;
+      width: 1rem;
+      height: 1rem;
+      margin-right: 0.2rem;
+    }
+    .button-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+    .btn {
+      background: #2a2a40;
+      border: 1px solid #5a5a72;
+      color: #f0e6d2;
+      padding: 0.8rem 1.2rem;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .btn-primary {
+      background: #c8a951;
+      border: none;
+      color: #1a1a2e;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(200,169,81,0.35);
+    }
+    .btn-primary:hover {
+      background: #dbb754;
+      box-shadow: 0 6px 16px rgba(200,169,81,0.5);
+    }
+    .btn:hover {
+      background: #3a3a52;
+      border-color: #c8a951;
+    }
+    .btn-accent {
+      background: #5a3e7e;
+      border-color: #7b5ea7;
+    }
+    .btn-accent:hover {
+      background: #6b4a96;
+    }
+    .main {
+      flex: 1;
+      padding: 2rem 2.5rem;
+      overflow-y: auto;
+      background: #f5f0e8;
+    }
+    .prompt-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      margin-bottom: 2rem;
+      transition: box-shadow 0.25s;
+    }
+    .prompt-card:hover {
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .copy-btn {
+      background: #16213e;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.8rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #c8a951;
+      color: #1a1a2e;
+      transition: 0.2s;
+    }
+    .copy-btn.copied {
+      background: #2e7d32;
+      color: white;
+    }
+    .stats {
+      display: flex;
+      gap: 1.2rem;
+      font-size: 0.85rem;
+      color: #5a5a5a;
+      background: #f5f0e8;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+    }
+    .variation-id {
+      font-size: 0.75rem;
+      background: #ede3d3;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      color: #5a5a5a;
+    }
+    .prompt-text {
+      background: #f9f7f2;
+      border: 1px solid #e0d7c6;
+      border-radius: 10px;
+      padding: 1.8rem;
+      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+      white-space: pre-wrap;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #2e2e2e;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .tags-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 1.5rem;
+    }
+    .tag {
+      background: #ede3d3;
+      padding: 0.3rem 1rem;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #3a3a3a;
+    }
+    .counter-badge {
+      background: #16213e;
+      color: #c8a951;
+      padding: 0.2rem 0.8rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    hr {
+      border: 0.5px solid #d4c9b4;
+      margin: 1.5rem 0 1rem;
+    }
+    .seed-info {
+      font-size: 0.75rem;
+      color: #8a8a8a;
+      margin-top: 0.5rem;
+    }
+    @media (max-width: 750px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        max-height: none;
+      }
+      .main {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <h2>🎭 Paper Puppet Theater Generator</h2>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <span class="counter-badge" id="generationCounter">#0</span>
+      <span style="font-size:0.7rem; opacity:0.7;">unique variations</span>
+    </div>
+    
+    <h3>🎨 Theme & Characters</h3>
+    <div class="control-group">
+      <label>Puppet Theme</label>
+      <select id="themeSelect">
+        <option value="Enchanted Forest Fairy Tale">✨ Enchanted Forest Fairy Tale</option>
+        <option value="Under-the-Sea Adventure">🌊 Under-the-Sea Adventure</option>
+        <option value="Barnyard Farm Friends">🐄 Barnyard Farm Friends</option>
+        <option value="Outer Space Explorers">🚀 Outer Space Explorers</option>
+        <option value="Pirate Cove Adventure">🏴‍☠️ Pirate Cove Adventure</option>
+        <option value="Dinosaur Discovery">🦕 Dinosaur Discovery</option>
+        <option value="Royal Castle Kingdom">👑 Royal Castle Kingdom</option>
+        <option value="Jungle Safari Crew">🐒 Jungle Safari Crew</option>
+        <option value="Arctic Animal Friends">❄️ Arctic Animal Friends</option>
+        <option value="Circus Big Top">🎪 Circus Big Top</option>
+        <option value="Superhero Squad (kid-friendly)">🦸 Superhero Squad (kid-friendly)</option>
+        <option value="Enchanted Garden Bugs">🐞 Enchanted Garden Bugs</option>
+        <option value="Mythical Creatures Academy">🐉 Mythical Creatures Academy</option>
+        <option value="Steampunk Inventors">⚙️ Steampunk Inventors</option>
+        <option value="Candy Kingdom">🍭 Candy Kingdom</option>
+        <option value="Ancient Egypt Explorers">🏺 Ancient Egypt Explorers</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Puppet Type</label>
+      <select id="charTypeSelect">
+        <option value="Hand puppet with rod-arm design">Hand puppet with rod-arm design</option>
+        <option value="Stick puppet (single dowel)">Stick puppet (single dowel)</option>
+        <option value="Finger puppet ring-style">Finger puppet ring-style</option>
+        <option value="Marionette-style with visible joint tabs">Marionette-style with visible joint tabs</option>
+        <option value="Popsicle-stick puppet">Popsicle-stick puppet</option>
+        <option value="Paper bag puppet template">Paper bag puppet template</option>
+        <option value="Shadow puppet silhouette style">Shadow puppet silhouette style</option>
+        <option value="Split-pin articulated puppet">Split-pin articulated puppet</option>
+        <option value="Glove puppet with movable mouth">Glove puppet with movable mouth</option>
+        <option value="String puppet with control bar">String puppet with control bar</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Number of Characters (2-6)</label>
+      <input type="number" id="charCount" min="2" max="6" value="3">
+    </div>
+
+    <h3>📄 Book Structure</h3>
+    <div class="control-group">
+      <label>Page Count Target</label>
+      <select id="pageTarget">
+        <option value="14-18 pages">14-18 pages</option>
+        <option value="18-24 pages">18-24 pages</option>
+        <option value="24-30 pages" selected>24-30 pages</option>
+        <option value="30-36 pages">30-36 pages</option>
+        <option value="36-42 pages">36-42 pages (maxi)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Include Sections</label>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><input type="checkbox" id="headSwap" checked> Interchangeable Head/Face Swap</div>
+        <div class="checkbox-item"><input type="checkbox" id="costumeAccessory" checked> Costume & Accessory Pages</div>
+        <div class="checkbox-item"><input type="checkbox" id="backdrop" checked> Reusable Backdrop/Scenery</div>
+        <div class="checkbox-item"><input type="checkbox" id="miniScript" checked> Mini Script Page</div>
+        <div class="checkbox-item"><input type="checkbox" id="theaterStage" checked> Theater Stage Cutout</div>
+        <div class="checkbox-item"><input type="checkbox" id="propItems"> Extra Prop Items</div>
+        <div class="checkbox-item"><input type="checkbox" id="coloringPages"> Bonus Coloring Pages</div>
+      </div>
+    </div>
+
+    <h3>🎲 Random Controls</h3>
+    <div class="button-row">
+      <button class="btn btn-primary" id="generateBtn">🎲 Generate New Blueprint</button>
+      <button class="btn btn-accent" id="surpriseBtn">✨ Surprise Me! (Full Random)</button>
+      <button class="btn" id="chaosBtn">🌪️ Creative Chaos Mode</button>
+    </div>
+    <div class="seed-info" id="seedDisplay">Seed: -</div>
+    <div style="font-size:0.75rem; opacity:0.7; margin-top:auto; font-style: italic;">
+      ∞ possible combinations • each blueprint is unique
+    </div>
+  </div>
+
+  <div class="main" id="mainContent">
+    <div class="prompt-card" id="promptCard">
+      <div class="card-header">
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <button class="copy-btn" id="copyButton">📋 Copy Full Blueprint Prompt</button>
+          <span class="variation-id" id="variationId">Var: -</span>
+        </div>
+        <div class="stats" id="statsDisplay">Words: 0 | Characters: 0</div>
+      </div>
+      <div class="prompt-text" id="promptDisplay"></div>
+      <div class="tags-preview" id="tagsPreview"></div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ============ EXPANDED CONTENT BANKS (ALL ENGLISH) ============
+      var themeCharacters = {
+        "Enchanted Forest Fairy Tale": ["Willow the Fox", "Bramble the Owl", "Pip the Hedgehog", "Fern the Deer", "Thistle the Badger", "Luna the Moth", "Acorn the Squirrel", "Petal the Fairy"],
+        "Under-the-Sea Adventure": ["Coral the Mermaid", "Finley the Pufferfish", "Shelly the Turtle", "Bubbles the Seahorse", "Drift the Jellyfish", "Pearl the Octopus", "Splash the Dolphin", "Glimmer the Starfish"],
+        "Barnyard Farm Friends": ["Clover the Cow", "Rusty the Rooster", "Puddles the Duck", "Woolly the Sheep", "Oink the Pig", "Biscuit the Horse", "Cheep the Chick", "Patches the Dog"],
+        "Outer Space Explorers": ["Nova the Astronaut", "Cosmo the Robot", "Ziggy the Alien", "Luna the Moon Cat", "Orbit the Space Dog", "Stardust the Comet", "Quasar the Pilot", "Nebula the Scientist"],
+        "Pirate Cove Adventure": ["Captain Redbeard", "Scurvy the Parrot", "Barnacle Bill", "Coral the Pirate Queen", "Cannonball the Crab", "Silver the Shark", "Rum the Cabin Boy", "Tempest the Navigator"],
+        "Dinosaur Discovery": ["Rex the T-Rex", "Trixie the Triceratops", "Spike the Stegosaurus", "Ptera the Pterodactyl", "Bronto the Brontosaurus", "Fossil the Archaeologist", "Lava the Volcanologist", "Amber the Paleontologist"],
+        "Royal Castle Kingdom": ["Princess Elara", "Sir Leo the Knight", "Queen Marigold", "Jester Jinx", "Duke the Dragon", "Lady Petal", "Merlin the Wizard", "Page the Squire"],
+        "Jungle Safari Crew": ["Zara the Explorer", "Kito the Monkey", "Nala the Lion Cub", "Zuri the Zebra", "Tiko the Toucan", "Bunga the Elephant", "Ranger Rick", "Liana the Researcher"],
+        "Arctic Animal Friends": ["Nanu the Polar Bear", "Siku the Seal", "Puff the Puffin", "Glacier the Arctic Fox", "Tundra the Snowy Owl", "Flake the Penguin", "Blizzard the Wolf", "Aurora the Whale"],
+        "Circus Big Top": ["Ringo the Ringmaster", "Bubbles the Clown", "Zara the Acrobat", "Jumbo the Elephant", "Stripes the Tiger", "Fifi the Poodle", "Twist the Contortionist", "Sparkle the Juggler"],
+        "Superhero Squad (kid-friendly)": ["Captain Kindness", "Mighty Mouse", "Green Guardian", "Sparkle Girl", "Thunder Boy", "Invisi-Kid", "Shield Maiden", "Speedster Sam"],
+        "Enchanted Garden Bugs": ["Buzzy the Bee", "Dot the Ladybug", "Wiggles the Caterpillar", "Flutter the Butterfly", "Spinner the Spider", "Glimmer the Firefly", "Buzz the Hornet", "Leafy the Mantis"],
+        "Mythical Creatures Academy": ["Blaze the Dragon", "Phoenix Reborn", "Starlight the Unicorn", "Griffin Guardian", "Sage the Centaur", "Melody the Mermaid", "Pixie the Sprite", "Pegasus Winged"],
+        "Steampunk Inventors": ["Professor Cogsworth", "Lady Steam", "Rusty the Robot", "Aria the Pilot", "Gearhart the Clockmaker", "Bolt the Engineer", "Pipe the Plumber", "Gadget the Inventor"],
+        "Candy Kingdom": ["King Caramel", "Princess Sugar", "Mister Ice Cream", "Miss Chocolate", "Doctor Lollipop", "Baroness Biscuit", "Sir Marshmallow", "Lady Gummy"],
+        "Ancient Egypt Explorers": ["Pharaoh Golden", "Cleopatra Queen", "Anubis Guardian", "Bastet the Cat", "Ra the Sun God", "Ibis the Scribe", "Scarab Mystic", "Nefertiti Wisdom"]
+      };
+
+      var costumeConcepts = {
+        "Enchanted Forest Fairy Tale": ["Acorn cap helmet", "Moss cloak", "Flower crown", "Leaf tunic", "Berry necklace", "Fern wings", "Mushroom hat", "Pinecone armor", "Twig scepter", "Ivy garland"],
+        "Under-the-Sea Adventure": ["Seashell tiara", "Kelp scarf", "Coral bracelet", "Pearl necklace", "Starfish hairpin", "Bubble wand", "Fish scale cape", "Jellyfish umbrella", "Anemone crown", "Shell belt"],
+        "Barnyard Farm Friends": ["Straw hat", "Bandana", "Overalls", "Sunbonnet", "Checked shirt", "Mud boots", "Egg basket", "Sunflower crown", "Farm apron", "Neck kerchief"],
+        "Outer Space Explorers": ["Helmet visor", "Rocket pack", "Moon boots", "Alien antennae", "Star cape", "Laser badge", "Galaxy goggles", "Satellite ears", "Space gloves", "Anti-gravity belt"],
+        "Pirate Cove Adventure": ["Tricorn hat", "Eye patch", "Hook hand", "Parrot shoulder accessory", "Treasure map belt", "Striped shirt", "Peg leg", "Cutlass", "Pirate bandana", "Gold earring"],
+        "Dinosaur Discovery": ["Dino-scale vest", "Fossil necklace", "Explorer hat", "Leaf umbrella", "Volcano backpack", "Amber glasses", "Tail armor", "Claw gloves", "Paleontologist boots", "Prehistoric compass"],
+        "Royal Castle Kingdom": ["Crown", "Velvet cape", "Scepter", "Knight helmet", "Jester collar", "Royal robe", "Glass slipper", "Shield brooch", "Ceremonial sword", "Princess tiara"],
+        "Jungle Safari Crew": ["Binoculars", "Safari hat", "Vine belt", "Leaf poncho", "Compass cuff", "Animal-print scarf", "Canteen", "Tribal mask", "Camouflage backpack", "Jungle boots"],
+        "Arctic Animal Friends": ["Fur-lined hood", "Ice crystal crown", "Snowflake cape", "Scarf", "Mittens", "Penguin backpack", "Glacier goggles", "Earmuffs", "Snow boots", "Icicle necklace"],
+        "Circus Big Top": ["Top hat", "Clown nose", "Tutu", "Bow tie", "Juggling balls", "Acrobat leotard", "Lion mane collar", "Sparkly vest", "Clown shoes", "Parasol"],
+        "Superhero Squad (kid-friendly)": ["Mask", "Cape", "Emblem shield", "Utility belt", "Power cuffs", "Lightning boots", "Invisibility cloak", "Star bracelet", "Protective helmet", "Energy gloves"],
+        "Enchanted Garden Bugs": ["Dewdrop crown", "Petal dress", "Antennae headband", "Wing cape", "Leaf umbrella", "Pollen pouch", "Web backpack", "Berry helmet", "Seed necklace", "Flower shoes"],
+        "Mythical Creatures Academy": ["Dragon wings", "Unicorn horn", "Phoenix feathers", "Griffin claws", "Centaur quiver", "Mermaid tail", "Sprite hat", "Pegasus bridle", "Dragon scales", "Fairy dust"],
+        "Steampunk Inventors": ["Brass goggles", "Top hat", "Gear gloves", "Leather cape", "Pocket compass", "Wrench", "Pocket watch", "Metal boots", "Tool belt", "Monocle"],
+        "Candy Kingdom": ["Lollipop crown", "Candy necklace", "Candy cane staff", "Chocolate earrings", "Gummy shoes", "Marshmallow cape", "Jelly ring", "Licorice bracelet", "Wafer hat", "Cookie belt"],
+        "Ancient Egypt Explorers": ["Pharaoh crown", "Gold collar", "Ankh scepter", "Royal wig", "Papyrus sandals", "Serpent bracelets", "Linen kilt", "Eye makeup", "Scarab pectoral", "Shepherd's staff"]
+      };
+
+      var backdropConcepts = {
+        "Enchanted Forest Fairy Tale": ["Mossy forest clearing with toadstools", "Twinkling fairy glen", "Old oak tree doorway", "Babbling brook bridge", "Enchanted hollow log", "Firefly meadow", "Woodland throne of roots", "Cobweb lace corner", "Fairy ring of mushrooms", "Secret waterfall"],
+        "Under-the-Sea Adventure": ["Coral reef palace", "Sunken ship treasure room", "Kelp forest", "Abandoned mermaid garden", "Deep sea volcanic vent", "Sandy ocean floor", "Jellyfish chandelier", "Shell archway", "Underwater cave", "Coral castle"],
+        "Barnyard Farm Friends": ["Red barn with hayloft", "Sunflower field", "Vegetable garden patch", "Cozy chicken coop", "Windmill hill", "Country fence sunrise", "Farm pond", "Apple orchard", "Horse stable", "Sunny barnyard"],
+        "Outer Space Explorers": ["Cratered moon surface", "Space station control room", "Alien jungle planet", "Asteroid belt", "Rocket ship interior", "Nebula clouds", "Martian desert", "Galactic council chamber", "Space base", "Saturn's rings"],
+        "Pirate Cove Adventure": ["Deserted island beach", "Pirate ship deck", "Cave with treasure chest", "Skull rock cove", "Mermaid lagoon", "Cannon battle deck", "Spyglass lookout", "Harbor tavern", "Hidden anchorage", "Abandoned lighthouse"],
+        "Dinosaur Discovery": ["Volcano valley", "Prehistoric jungle", "Dino nest plateau", "Tar pit edge", "Fossil dig site", "Waterfall grotto", "Fern meadow", "Meteor shower sky", "Dinosaur swamp", "Carboniferous forest"],
+        "Royal Castle Kingdom": ["Throne room", "Castle courtyard", "Dragon's lair", "Royal garden maze", "Banquet hall", "Enchanted mirror chamber", "Knight's training ground", "Tower balcony", "Drawbridge", "Music chamber"],
+        "Jungle Safari Crew": ["Waterfall pool", "Canopy treetop", "Ancient temple ruins", "Safari camp sunset", "Bamboo forest", "River crossing", "Cave with glowing crystals", "Baobab tree", "Hidden trail", "Elephant clearing"],
+        "Arctic Animal Friends": ["Ice palace", "Northern lights sky", "Frozen tundra", "Igloo village", "Glacier cave", "Snowy pine forest", "Iceberg platform", "Aurora borealis bridge", "Frozen lake", "Arctic mountains"],
+        "Circus Big Top": ["Striped big top tent", "Trapeze platform", "Circus ring", "Animal wagon train", "Cotton candy stand", "Spotlight stage", "Acrobat net", "Clown alley", "Circus entrance", "Behind the scenes"],
+        "Superhero Squad (kid-friendly)": ["City skyline rooftop", "Secret headquarters", "Park rescue scene", "School superhero fair", "Comic book city", "Underwater base", "Sky cloud chase", "Science laboratory", "City bridge", "High-tech cave"],
+        "Enchanted Garden Bugs": ["Giant sunflower", "Dewdrop spiderweb", "Mushroom village", "Rose petal pond", "Underground root tunnel", "Leaf canopy", "Lavender field", "Berry bush hideout", "Clover meadow", "Ant trail"],
+        "Mythical Creatures Academy": ["Magic castle classroom", "Forbidden forest", "Enchanted lake", "Ancient library", "Dragon flying field", "Unicorn garden", "Astronomy tower", "Crystal cavern", "Cloud bridge", "Potion hall"],
+        "Steampunk Inventors": ["Gear workshop", "Steam laboratory", "Flying city", "Engine room", "Blueprint library", "Airship station", "Metal forge", "Clock tower", "Underground tunnel", "Invention fair"],
+        "Candy Kingdom": ["Caramel castle", "Chocolate river", "Lollipop forest", "Cookie village", "Ice cream mountains", "Cotton candy plains", "Caramel cave", "Gummy bridge", "Mint garden", "Jelly lake"],
+        "Ancient Egypt Explorers": ["Pharaoh's palace", "Pyramid chamber", "Nile riverbank", "Hieroglyphic temple", "Spice market", "Hidden tomb", "Desert oasis", "Sphinx at sunset", "Papyrus workshop", "Hanging gardens"]
+      };
+
+      var propItems = {
+        "Enchanted Forest Fairy Tale": ["Magic wand", "Acorn potion", "Spell book", "Bamboo flute", "Crystal gem"],
+        "Under-the-Sea Adventure": ["Treasure chest", "Trident", "Sea compass", "Glowing pearl", "Shell horn"],
+        "Barnyard Farm Friends": ["Egg basket", "Toy pitchfork", "Watering can", "Red apple", "Milk pail"],
+        "Outer Space Explorers": ["Laser pistol", "Star map", "Energy crystal", "Communicator", "Gravity boots"],
+        "Pirate Cove Adventure": ["Treasure map", "Message in a bottle", "Pirate compass", "Toy cannon", "Spyglass"],
+        "Dinosaur Discovery": ["Dinosaur egg", "Excavation brush", "Fossil bones", "Prehistoric amulet", "Magnifying glass"],
+        "Royal Castle Kingdom": ["Royal scepter", "Magic mirror", "Castle key", "Decree scroll", "Royal seal"],
+        "Jungle Safari Crew": ["Explorer compass", "Toy machete", "Whistle", "Butterfly net", "Canteen"],
+        "Arctic Animal Friends": ["Snow shovel", "Ice crystal", "Sled", "Ice lantern", "Fishing rod"],
+        "Circus Big Top": ["Fire hoop", "Juggling balls", "Trumpet", "Balancing umbrella", "Hula hoop"],
+        "Superhero Squad (kid-friendly)": ["Energy shield", "Truth lasso", "Thunder hammer", "Power ring", "Grappling hook"],
+        "Enchanted Garden Bugs": ["Magnifying glass", "Dew collector", "Garden map", "Pollen basket", "Leaf raft"],
+        "Mythical Creatures Academy": ["Spell scroll", "Dragon egg", "Phoenix feather", "Unicorn horn", "Magic crystal"],
+        "Steampunk Inventors": ["Wrench", "Magnifying goggles", "Steam pistol", "Blueprint map", "Clockwork key"],
+        "Candy Kingdom": ["Candy cane", "Ice cream scoop", "Cookie cutters", "Cake decorator", "Gumball machine"],
+        "Ancient Egypt Explorers": ["Sacred Ankh", "Papyrus scroll", "Canopic jar", "Scales of justice", "Royal crook"]
+      };
+
+      // ============ ADVANCED RANDOM FUNCTIONS ============
+      var generationCount = 0;
+      var currentSeed = 0;
+
+      function seededRandom(seed) {
+        var x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+      }
+
+      function generateSeed() {
+        return Math.floor(Math.random() * 999999) + 1;
+      }
+
+      function shuffleWithSeed(arr, seed) {
+        var array = arr.slice();
+        var currentIndex = array.length, temporaryValue, randomIndex;
+        var localSeed = seed;
+        while (0 !== currentIndex) {
+          localSeed = localSeed * 16807 % 2147483647;
+          randomIndex = Math.floor(seededRandom(localSeed) * currentIndex);
+          currentIndex -= 1;
+          temporaryValue = array[currentIndex];
+          array[currentIndex] = array[randomIndex];
+          array[randomIndex] = temporaryValue;
+        }
+        return array;
+      }
+
+      function pickRandomWeighted(arr, seed, avoid) {
+        var available = arr.filter(function(item) { return item !== avoid; });
+        if (available.length === 0) available = arr;
+        var idx = Math.floor(seededRandom(seed) * available.length);
+        return available[idx];
+      }
+
+      function getRandomInt(min, max, seed) {
+        return Math.floor(seededRandom(seed) * (max - min + 1)) + min;
+      }
+
+      function getSelectedTheme() {
+        return document.getElementById('themeSelect').value;
+      }
+      function getCharType() {
+        return document.getElementById('charTypeSelect').value;
+      }
+      function getCharCount() {
+        var val = parseInt(document.getElementById('charCount').value, 10);
+        if (isNaN(val) || val < 2) return 2;
+        if (val > 6) return 6;
+        return val;
+      }
+      function getPageTarget() {
+        return document.getElementById('pageTarget').value;
+      }
+      function isChecked(id) {
+        return document.getElementById(id).checked;
+      }
+
+      function generateUniqueVariationId(seed) {
+        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        var result = '';
+        for (var i = 0; i < 8; i++) {
+          result += chars.charAt(Math.floor(seededRandom(seed + i) * chars.length));
+        }
+        return result;
+      }
+
+      function generateBlueprint(forceSeed) {
+        var seed = forceSeed || generateSeed();
+        currentSeed = seed;
+        generationCount++;
+
+        var theme = getSelectedTheme();
+        var charType = getCharType();
+        var charCount = getCharCount();
+        var pageTarget = getPageTarget();
+        var includeHead = isChecked('headSwap');
+        var includeCostume = isChecked('costumeAccessory');
+        var includeBackdrop = isChecked('backdrop');
+        var includeScript = isChecked('miniScript');
+        var includeStage = isChecked('theaterStage');
+        var includeProps = isChecked('propItems');
+        var includeColoring = isChecked('coloringPages');
+
+        var characters = themeCharacters[theme] || ["Character A", "Character B"];
+        var shuffledChars = shuffleWithSeed(characters, seed);
+        var selectedChars = shuffledChars.slice(0, Math.min(charCount, shuffledChars.length));
+        while (selectedChars.length < charCount) {
+          selectedChars.push("Companion " + (selectedChars.length + 1) + " " + generateUniqueVariationId(seed + selectedChars.length));
+        }
+
+        var costumes = costumeConcepts[theme] || ["themed accessory"];
+        var backdrops = backdropConcepts[theme] || ["scenic backdrop"];
+        var props = propItems[theme] || ["prop item"];
+
+        // Character consistency guide with unique variations
+        var consistencyLines = [];
+        var faceShapes = ["distinctive oval", "soft round", "characteristic triangular", "delicate heart-shaped", "defined rectangular", "gentle square"];
+        var expressions = ["joyful smile", "curious gaze", "determined expression", "dreamy eyes", "cheerful and lively face", "mischievous grin"];
+        for (var i = 0; i < selectedChars.length; i++) {
+          var ch = selectedChars[i];
+          var faceShape = faceShapes[Math.floor(seededRandom(seed + i * 7) * faceShapes.length)];
+          var expr = expressions[Math.floor(seededRandom(seed + i * 13) * expressions.length)];
+          consistencyLines.push("Character " + (i+1) + ": " + ch + " — Face shape: " + faceShape + ". Expression: " + expr + ". Key color scheme: anchored to '" + theme + "' palette. Distinguishing feature: unique accessory/symbol. Puppet structure: " + charType + " with clearly marked attachment points.");
+        }
+
+        var fitRefVariations = [
+          "PUPPET FIT REFERENCE TEMPLATE (must appear on every interchangeable-piece page): Base puppet body/joint template for " + charType + ". Includes hand-hold tab or rod placement guide, head-attachment notch, joint pivot dots for movement. All costume/head/accessory pieces must align to this template scale. Visible reference silhouette with dashed cut lines.",
+          "DIMENSIONAL FIT GUIDE: Every page with interchangeable elements must show the base template of the " + charType + " with highlighted attachment points. 1:1 scale silhouette reference with indicators for head, body, and joints.",
+          "FIT REFERENCE: The base puppet (" + charType + ") serves as a dimensional template on every costume/accessory sheet. Shows attachment scheme, cutting guides, and alignment zones to ensure perfect interchangeability."
+        ];
+        var fitRef = fitRefVariations[Math.floor(seededRandom(seed + 42) * fitRefVariations.length)];
+
+        // Page construction with algorithmic variation
+        var pages = [];
+        var pageNum = 1;
+        
+        // Cover with creative variations
+        var coverPrompts = [
+          "Vertical 8.5x11 full-color cover illustration. '" + theme + "' themed paper puppet theater. All puppet characters (" + selectedChars.join(", ") + ") posed dynamically on a decorated stage. Title 'Paper Puppet Theater' with engaging subtitle. Marketplace-ready, vibrant, and inviting.",
+          "8.5x11 full-color cover featuring " + selectedChars.join(", ") + " in an action scene from the " + theme + " world. Children's book illustration style, warm and inviting colors.",
+          "Professional 8.5x11 cover with " + selectedChars[0] + " in the foreground and other characters in the background. " + theme + " theme, eye-catching marketplace design."
+        ];
+        pages.push({num: pageNum++, title: "Cover", purpose: "Marketplace-ready product cover", prompt: coverPrompts[Math.floor(seededRandom(seed + 99) * coverPrompts.length)]});
+
+        // Instructions
+        pages.push({num: pageNum++, title: "Welcome & Instructions", purpose: "How to use the puppet activity book", prompt: "8.5x11 black-and-white line art page. Simple icons showing how to color, cut, and assemble the " + charType + " puppets. Clear text areas for step-by-step instructions in print-friendly font."});
+
+        // Character base pages
+        for (var c = 0; c < selectedChars.length; c++) {
+          var basePrompts = [
+            "Vertical 8.5x11 black-and-white line art. " + selectedChars[c] + " as a complete " + charType + ". Include fit reference template and joint assembly guides. Clear, bold cut lines.",
+            "8.5x11 black-and-white sheet with " + selectedChars[c] + " " + charType + " puppet. Shows assembly diagram, pivot points, and attachments. Ready to color and cut out.",
+            selectedChars[c] + " base puppet (" + charType + ") in line art on 8.5x11. Includes cutting indicators, dimensional guide, and quick assembly notes."
+          ];
+          pages.push({num: pageNum++, title: selectedChars[c] + " Base Puppet", purpose: "Main puppet body template", prompt: basePrompts[Math.floor(seededRandom(seed + c * 31) * basePrompts.length)]});
+        }
+
+        // Interchangeable heads
+        if (includeHead) {
+          var headCount = getRandomInt(2, 4, seed + 55);
+          for (var h = 0; h < headCount; h++) {
+            var headsForPage = shuffleWithSeed(selectedChars, seed + h * 17).slice(0, Math.min(3, selectedChars.length));
+            pages.push({num: pageNum++, title: "Head Swap Set " + (h+1), purpose: "Alternative expressions and faces", prompt: "8.5x11 line art sheet with interchangeable heads for " + headsForPage.join(", ") + ". Each head has attachment tab compatible with fit reference template. Various expressions. Ready to color."});
+          }
+        }
+
+        // Costumes and accessories
+        if (includeCostume) {
+          var costumePageCount = getRandomInt(2, 5, seed + 77);
+          for (var k = 0; k < costumePageCount; k++) {
+            var targetChar = selectedChars[k % selectedChars.length];
+            var shuffledCostumes = shuffleWithSeed(costumes, seed + k * 41);
+            var selectedCostumes = shuffledCostumes.slice(0, getRandomInt(2, 4, seed + k * 19));
+            var costumePrompts = [
+              "8.5x11 black-and-white line art. Costume pieces: " + selectedCostumes.join(", ") + " designed for " + targetChar + ". Fit reference template visible on page. Ready to cut and color.",
+              "Costume sheet 8.5x11 for " + targetChar + " featuring " + selectedCostumes.join(", ") + ". Each piece shows alignment guides with the base puppet. Detailed line art.",
+              targetChar + " wearing " + selectedCostumes[0] + " and accessories (" + selectedCostumes.slice(1).join(", ") + ") on 8.5x11 page with dimensional template and assembly instructions."
+            ];
+            pages.push({num: pageNum++, title: "Costumes " + targetChar + " " + (k+1), purpose: "Interchangeable outfits and accessories", prompt: costumePrompts[Math.floor(seededRandom(seed + k * 53) * costumePrompts.length)]});
+          }
+        }
+
+        // Prop items
+        if (includeProps) {
+          var propPageCount = getRandomInt(1, 3, seed + 89);
+          for (var pp = 0; pp < propPageCount; pp++) {
+            var shuffledProps = shuffleWithSeed(props, seed + pp * 67);
+            var selectedProps = shuffledProps.slice(0, getRandomInt(2, 4, seed + pp * 23));
+            pages.push({num: pageNum++, title: "Scene Props " + (pp+1), purpose: "Accessories for performances", prompt: "8.5x11 line art with prop items: " + selectedProps.join(", ") + ". Scaled proportionally for " + charType + " puppets. Includes dimensional guide. Ready to cut out."});
+          }
+        }
+
+        // Backdrops
+        if (includeBackdrop) {
+          var backdropCount = getRandomInt(2, 4, seed + 101);
+          var usedBackdrops = [];
+          for (var b = 0; b < backdropCount; b++) {
+            var bg = pickRandomWeighted(backdrops, seed + b * 73, usedBackdrops[usedBackdrops.length-1]);
+            usedBackdrops.push(bg);
+            var bgPrompts = [
+              "8.5x11 black-and-white line art backdrop: " + bg + ". Foldable self-standing design. Puppet scale reference included. Detailed and immersive.",
+              "Scenery: " + bg + " in 8.5x11 line art. Foldable base, puppet position indicators. Rich with details to color.",
+              "Stage setting with " + bg + " as 8.5x11 backdrop. Fold lines, rear support, marked puppet action zone."
+            ];
+            pages.push({num: pageNum++, title: "Backdrop " + (b+1) + ": " + bg.split(' ').slice(0,3).join(' '), purpose: "Reusable scenery background", prompt: bgPrompts[Math.floor(seededRandom(seed + b * 83) * bgPrompts.length)]});
+          }
+        }
+
+        // Mini script
+        if (includeScript) {
+          var a = selectedChars[0] || "Character 1";
+          var b = selectedChars[1] || "Character 2";
+          var scriptTemplates = [
+            a + ': "Look! A magical path!"\n' + b + ': "Let\'s explore it together!"\n' + a + ': "I\'ll wear my new costume."\n' + b + ': "Perfect! The show is about to begin."',
+            a + ': "Did you see the hidden treasure?"\n' + b + ': "Yes! Behind the scenery backdrop!"\n' + a + ': "Let\'s grab our props."\n' + b + ': "Ready for adventure!"',
+            a + ': "What a beautiful stage!"\n' + b + ': "I built it with the new backdrop."\n' + a + ': "Let\'s put on a show for everyone."\n' + b + ': "Lights, curtain, action!"',
+            a + ': "I love your new hat!"\n' + b + ': "Thanks! I got it from the costume page."\n' + a + ': "Let\'s swap heads for fun."\n' + b + ': "What a hilarious idea!"'
+          ];
+          var script = scriptTemplates[Math.floor(seededRandom(seed + 113) * scriptTemplates.length)];
+          pages.push({num: pageNum++, title: "Mini Script Page", purpose: "Short performable dialogue", prompt: "8.5x11 page with large speech bubbles and character icons. Dialogue: \"" + script.replace(/\n/g, ' ') + "\" Decorative stage-themed border. Space for director's notes."});
+        }
+
+        // Theater stage
+        if (includeStage) {
+          var stagePrompts = [
+            "Foldable theater stage 8.5x11 line art. Proscenium frame with curtains, decorative elements themed '" + theme + "', puppet slot. Includes detailed assembly guide.",
+            "Paper theater 8.5x11 to cut and fold. Decorated proscenium arch with '" + theme + "' motifs, openable curtain, stable base. Visual step-by-step instructions.",
+            "Foldable theatrical structure 8.5x11 in black and white. Classic proscenium architecture with '" + theme + "' details. Raised stage area, interlocking guides, side supports."
+          ];
+          pages.push({num: pageNum++, title: "Theater Stage Cutout", purpose: "Foldable proscenium frame", prompt: stagePrompts[Math.floor(seededRandom(seed + 127) * stagePrompts.length)]});
+        }
+
+        // Bonus coloring pages
+        if (includeColoring) {
+          var coloringCount = getRandomInt(2, 4, seed + 137);
+          for (var col = 0; col < coloringCount; col++) {
+            var colChar = selectedChars[col % selectedChars.length];
+            pages.push({num: pageNum++, title: "Color " + colChar, purpose: "Bonus coloring page", prompt: "8.5x11 detailed line art illustration of " + colChar + " in a " + theme + " scene. Outlines only, ready to be colored. Includes decorative borders."});
+          }
+        }
+
+        // Page range management
+        var targetRange = pageTarget;
+        var minPages = 14; var maxPages = 18;
+        if (targetRange === "18-24 pages") { minPages = 18; maxPages = 24; }
+        else if (targetRange === "24-30 pages") { minPages = 24; maxPages = 30; }
+        else if (targetRange === "30-36 pages") { minPages = 30; maxPages = 36; }
+        else if (targetRange === "36-42 pages") { minPages = 36; maxPages = 42; }
+        
+        var targetPageCount = getRandomInt(minPages, maxPages, seed + 149);
+        while (pages.length < targetPageCount) {
+          var fillerTypes = ["Extra Activity Page", "Complete the Drawing", "Creative Play", "Character Sheet", "Additional Scenario", "Puppet Theater Game"];
+          var fillerType = fillerTypes[Math.floor(seededRandom(seed + pages.length * 29) * fillerTypes.length)];
+          pages.push({num: pageNum++, title: fillerType, purpose: "Additional " + theme + " themed content", prompt: "8.5x11 additional line art themed '" + theme + "'. Creative activity or decorative element. Dimensional reference template included if applicable."});
+        }
+        if (pages.length > maxPages) pages = pages.slice(0, maxPages);
+
+        var variationId = generateUniqueVariationId(seed);
+
+        // Final prompt assembly
+        var promptStr = "";
+        promptStr += "PRODUCT TITLE: Paper Puppet Theater – " + theme + " Activity Book\n";
+        promptStr += "SUBTITLE: Color, Cut & Perform Your Own Puppet Show\n";
+        promptStr += "RECOMMENDED AGE: 4-9 years | Use Case: creative play, fine motor skills, storytelling\n";
+        promptStr += "Unique Variation: #" + variationId + " | Seed: " + seed + "\n\n";
+        promptStr += "SHORT DESCRIPTION: A complete printable paper puppet theater kit featuring " + charCount + " unique " + charType + " characters in a " + theme + " world. Includes interchangeable heads, costumes, backdrops, props, and a foldable stage.\n\n";
+        promptStr += "7 SEO KEYWORDS: paper puppets, printable puppet theater, color and cut activity, kids craft book, " + theme.toLowerCase() + ", DIY puppet show, imaginative play\n\n";
+        promptStr += "PRODUCT CONCEPT OVERVIEW: This blueprint generates a full activity book where children color, cut, and assemble puppets with interchangeable parts. All pieces follow a consistent fit reference template for perfect scaling and interchangeability.\n\n";
+        promptStr += "CHARACTER CONSISTENCY GUIDE:\n";
+        for (var l = 0; l < consistencyLines.length; l++) {
+          promptStr += consistencyLines[l] + "\n";
+        }
+        promptStr += "\nPUPPET FIT REFERENCE TEMPLATE:\n" + fitRef + "\n\n";
+        promptStr += "PRODUCT STRUCTURE OVERVIEW: Cover, instructions, character bases, interchangeable heads, costumes/accessories, props, backdrops, script, theater stage, bonus pages.\n\n";
+        promptStr += "COVER PROMPT:\n[" + pages[0].prompt + "]\n\n";
+        promptStr += "PAGE-BY-PAGE PRODUCT PLAN:\n";
+        for (var p = 0; p < pages.length; p++) {
+          promptStr += "Page " + pages[p].num + ": " + pages[p].title + " | Purpose: " + pages[p].purpose + "\n";
+          promptStr += "IMAGE PROMPT: " + pages[p].prompt + "\n\n";
+        }
+        promptStr += "PRODUCT VERSION SUGGESTIONS:\n- Full-color edition with pre-colored puppets\n- Simplified younger kids edition (larger pieces, fewer cuts)\n- '" + theme + " Storytime' companion storybook\n- Holiday-themed expansion pack for " + theme + "\n- Interactive digital edition with animated assembly instructions\n- Classroom bundle with multiple puppet sets\n";
+
+        return { 
+          prompt: promptStr, 
+          theme: theme, 
+          charType: charType, 
+          charCount: charCount, 
+          pageTarget: pageTarget, 
+          pages: pages,
+          seed: seed,
+          variationId: variationId,
+          generationNumber: generationCount
+        };
+      }
+
+      function updateUI(data) {
+        document.getElementById('promptDisplay').textContent = data.prompt;
+        var wordCount = data.prompt.split(/\s+/).filter(function(w){return w.length>0;}).length;
+        var charCount = data.prompt.length;
+        document.getElementById('statsDisplay').textContent = 'Words: ' + wordCount + ' | Characters: ' + charCount;
+        document.getElementById('variationId').textContent = 'Var: #' + data.variationId;
+        document.getElementById('generationCounter').textContent = '#' + data.generationNumber;
+        document.getElementById('seedDisplay').textContent = 'Seed: ' + data.seed + ' | ∞ combinations';
+        
+        var tagsHtml = '<span class="tag">🎭 ' + data.theme + '</span>';
+        tagsHtml += '<span class="tag">🧵 ' + data.charType + '</span>';
+        tagsHtml += '<span class="tag">👥 ' + data.charCount + ' characters</span>';
+        tagsHtml += '<span class="tag">📄 ' + data.pageTarget + '</span>';
+        tagsHtml += '<span class="tag">🔢 Seed: ' + data.seed + '</span>';
+        document.getElementById('tagsPreview').innerHTML = tagsHtml;
+      }
+
+      function refreshBlueprint() {
+        var blueprint = generateBlueprint();
+        updateUI(blueprint);
+      }
+
+      function randomizeControls() {
+        var themes = Object.keys(themeCharacters);
+        document.getElementById('themeSelect').value = themes[Math.floor(Math.random() * themes.length)];
+        var types = [
+          "Hand puppet with rod-arm design", "Stick puppet (single dowel)", "Finger puppet ring-style",
+          "Marionette-style with visible joint tabs", "Popsicle-stick puppet", "Paper bag puppet template",
+          "Shadow puppet silhouette style", "Split-pin articulated puppet", "Glove puppet with movable mouth",
+          "String puppet with control bar"
+        ];
+        document.getElementById('charTypeSelect').value = types[Math.floor(Math.random() * types.length)];
+        document.getElementById('charCount').value = Math.floor(Math.random() * 5) + 2;
+        var pageOptions = ["14-18 pages","18-24 pages","24-30 pages","30-36 pages","36-42 pages"];
+        document.getElementById('pageTarget').value = pageOptions[Math.floor(Math.random() * pageOptions.length)];
+        document.getElementById('headSwap').checked = Math.random() > 0.15;
+        document.getElementById('costumeAccessory').checked = Math.random() > 0.1;
+        document.getElementById('backdrop').checked = Math.random() > 0.15;
+        document.getElementById('miniScript').checked = Math.random() > 0.2;
+        document.getElementById('theaterStage').checked = Math.random() > 0.15;
+        document.getElementById('propItems').checked = Math.random() > 0.3;
+        document.getElementById('coloringPages').checked = Math.random() > 0.35;
+        refreshBlueprint();
+      }
+
+      function chaosMode() {
+        randomizeControls();
+        var seed = generateSeed();
+        var blueprint = generateBlueprint(seed);
+        updateUI(blueprint);
+      }
+
+      function setupCopy() {
+        var copyBtn = document.getElementById('copyButton');
+        copyBtn.addEventListener('click', function() {
+          var text = document.getElementById('promptDisplay').textContent;
+          if (!text) return;
+          navigator.clipboard.writeText(text).then(function() {
+            copyBtn.classList.add('copied');
+            copyBtn.innerHTML = '✓ Copied!';
+            setTimeout(function() {
+              copyBtn.classList.remove('copied');
+              copyBtn.innerHTML = '📋 Copy Full Blueprint Prompt';
+            }, 2000);
+          }).catch(function() {
+            alert('Copy failed. Please select and copy manually.');
+          });
+        });
+      }
+
+      window.addEventListener('DOMContentLoaded', function() {
+        refreshBlueprint();
+        document.getElementById('generateBtn').addEventListener('click', refreshBlueprint);
+        document.getElementById('surpriseBtn').addEventListener('click', randomizeControls);
+        document.getElementById('chaosBtn').addEventListener('click', chaosMode);
+        setupCopy();
+
+        var controls = ['themeSelect','charTypeSelect','charCount','pageTarget','headSwap','costumeAccessory','backdrop','miniScript','theaterStage','propItems','coloringPages'];
+        controls.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('change', refreshBlueprint);
+            if (el.type === 'number') el.addEventListener('input', refreshBlueprint);
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
