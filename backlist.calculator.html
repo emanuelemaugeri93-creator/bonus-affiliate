@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Backlist Reactivation Calculator · KDP Author Intelligence Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-warm: #F9F6F0;
+      --bg-card: #FFFFFF;
+      --ink-primary: #1E1B18;
+      --ink-secondary: #3D3832;
+      --ink-muted: #6B635A;
+      --accent-primary: #2D6A4F;
+      --accent-deep: #1B4332;
+      --accent-glow: #40916C;
+      --accent-warm: #D4A373;
+      --accent-warm-light: #FAEDCD;
+      --danger: #BC4742;
+      --danger-light: #FDE8E8;
+      --border-subtle: #E0D8CC;
+      --border-medium: #D1C7B8;
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+      --shadow-elevated: 0 2px 6px rgba(0,0,0,0.05), 0 8px 28px rgba(0,0,0,0.10);
+      --shadow-button: 0 2px 8px rgba(45,106,79,0.25);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --transition-smooth: 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    body {
+      background-color: var(--bg-warm);
+      background-image: 
+        radial-gradient(ellipse at 15% 5%, rgba(45,106,79,0.03) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 90%, rgba(212,163,115,0.04) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 50%, rgba(45,106,79,0.015) 0%, transparent 70%);
+      color: var(--ink-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1.5rem 3.5rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header-section {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent-primary);
+      border: 1.5px solid var(--accent-primary);
+      padding: 0.35rem 1.2rem;
+      border-radius: 30px;
+      margin-bottom: 0.9rem;
+      background: rgba(45,106,79,0.05);
+    }
+    .header-section h1 {
+      font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+      font-weight: 600;
+      font-size: clamp(2.4rem, 5vw, 3.4rem);
+      letter-spacing: -0.6px;
+      color: var(--ink-primary);
+      margin-bottom: 0.3rem;
+      line-height: 1.15;
+    }
+    .header-section h1 .highlight {
+      color: var(--accent-primary);
+      position: relative;
+    }
+    .header-section h1 .highlight::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-warm);
+      opacity: 0.5;
+      border-radius: 2px;
+    }
+    .header-section .subtitle {
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: 1rem;
+      color: var(--ink-muted);
+      font-style: italic;
+      letter-spacing: 0.2px;
+      margin-top: 0.4rem;
+      max-width: 550px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── Dashboard Grid ── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    /* ── Input Panel ── */
+    .input-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.8rem 1.8rem 1.6rem;
+      box-shadow: var(--shadow-card);
+      position: sticky;
+      top: 1.5rem;
+    }
+    .input-panel .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .panel-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--accent-warm-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--accent-warm);
+    }
+    .panel-header h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: var(--ink-primary);
+      letter-spacing: -0.2px;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: var(--ink-muted);
+      margin-bottom: 0.4rem;
+    }
+    .form-group label .label-icon {
+      font-size: 0.85rem;
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .input-wrapper input[type="number"] {
+      width: 100%;
+      background: #FBF9F5;
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.9rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--ink-primary);
+      transition: all var(--transition-smooth);
+    }
+    .input-wrapper input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(45,106,79,0.08);
+      background: #FFFFFF;
+    }
+    .input-suffix {
+      position: absolute;
+      right: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      font-weight: 500;
+      pointer-events: none;
+    }
+    .slider-group {
+      margin-bottom: 1.2rem;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+    .slider-header label {
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: var(--ink-muted);
+      margin-bottom: 0;
+    }
+    .slider-value-badge {
+      background: var(--accent-warm-light);
+      color: var(--accent-warm);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-primary);
+      cursor: pointer;
+      height: 6px;
+    }
+    .helper-text {
+      font-size: 0.68rem;
+      color: var(--ink-muted);
+      font-style: italic;
+      margin-top: 0.3rem;
+      line-height: 1.4;
+      padding-left: 0.2rem;
+    }
+    .btn-calculate {
+      width: 100%;
+      background: var(--accent-primary);
+      color: #FFF;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.82rem;
+      letter-spacing: 0.6px;
+      padding: 0.8rem 1.5rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      margin-top: 0.8rem;
+      box-shadow: var(--shadow-button);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .btn-calculate:hover {
+      background: var(--accent-deep);
+      box-shadow: 0 4px 16px rgba(45,106,79,0.35);
+      transform: translateY(-1px);
+    }
+    .btn-calculate:active {
+      transform: scale(0.97);
+    }
+    .btn-reset {
+      width: 100%;
+      background: transparent;
+      color: var(--ink-muted);
+      border: 1.5px solid var(--border-medium);
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 0.75rem;
+      letter-spacing: 0.4px;
+      padding: 0.55rem 1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      margin-top: 0.6rem;
+    }
+    .btn-reset:hover {
+      border-color: var(--ink-muted);
+      color: var(--ink-primary);
+      background: #FBF9F5;
+    }
+
+    /* ── Results Section ── */
+    .results-section {
+      display: none;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .results-section.visible {
+      display: flex;
+      animation: fadeSlideUp 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    @keyframes fadeSlideUp {
+      0% { opacity: 0; transform: translateY(16px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Metric Cards ── */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 1.5rem 1.6rem;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition-smooth);
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    .metric-card.lost::before {
+      background: linear-gradient(90deg, var(--danger), #E07A5F);
+    }
+    .metric-card.gain::before {
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-glow));
+    }
+    .metric-card .card-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .metric-card .card-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 3rem;
+      color: var(--ink-primary);
+      line-height: 1.05;
+      transition: all 0.3s ease;
+    }
+    .metric-card.lost .card-value {
+      color: var(--danger);
+    }
+    .metric-card.gain .card-value {
+      color: var(--accent-primary);
+    }
+    .metric-card .card-detail {
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      margin-top: 0.3rem;
+      line-height: 1.4;
+    }
+    .metric-card .card-detail strong {
+      color: var(--ink-secondary);
+    }
+
+    /* ── Quick Stats Row ── */
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+    }
+    .stat-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.9rem 0.8rem;
+      text-align: center;
+      box-shadow: var(--shadow-card);
+    }
+    .stat-item .stat-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--ink-primary);
+      line-height: 1.1;
+    }
+    .stat-item .stat-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* ── Chart Card ── */
+    .chart-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      padding: 1.5rem 1.6rem;
+      box-shadow: var(--shadow-card);
+    }
+    .chart-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: var(--ink-primary);
+      margin-bottom: 0.9rem;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      max-height: 300px;
+    }
+    .chart-wrapper canvas {
+      width: 100% !important;
+    }
+
+    /* ── Narrative Card ── */
+    .narrative-card {
+      background: #FDFBF7;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.4rem 1.6rem;
+      font-size: 0.85rem;
+      color: var(--ink-secondary);
+      line-height: 1.65;
+      border-left: 4px solid var(--accent-warm);
+      box-shadow: var(--shadow-card);
+    }
+    .narrative-card .highlight-loss {
+      font-weight: 700;
+      color: var(--danger);
+      background: var(--danger-light);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+    }
+    .narrative-card .highlight-gain {
+      font-weight: 700;
+      color: var(--accent-primary);
+      background: rgba(45,106,79,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+    }
+    .narrative-card .highlight-neutral {
+      font-weight: 700;
+      color: var(--ink-primary);
+    }
+
+    /* ── Action Cards ── */
+    .action-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .action-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.2rem 1.4rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+    }
+    .action-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .action-icon.green {
+      background: rgba(45,106,79,0.1);
+      color: var(--accent-primary);
+    }
+    .action-icon.amber {
+      background: var(--accent-warm-light);
+      color: var(--accent-warm);
+    }
+    .action-content h4 {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--ink-primary);
+      margin-bottom: 0.2rem;
+    }
+    .action-content p {
+      font-size: 0.72rem;
+      color: var(--ink-muted);
+      line-height: 1.4;
+    }
+
+    /* ── Disclaimer ── */
+    .disclaimer-bar {
+      text-align: center;
+      font-size: 0.65rem;
+      color: #A0988C;
+      font-style: italic;
+      padding: 0.6rem 1rem;
+      background: rgba(0,0,0,0.015);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 850px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      .input-panel {
+        position: static;
+      }
+      .metrics-row {
+        grid-template-columns: 1fr;
+      }
+      .quick-stats {
+        grid-template-columns: 1fr 1fr;
+      }
+      .action-cards {
+        grid-template-columns: 1fr;
+      }
+      .metric-card .card-value {
+        font-size: 2.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="badge">📊 Author Intelligence</div>
+    <h1>Backlist Reactivation<span class="highlight">.</span> Calculator</h1>
+    <p class="subtitle">Discover the hidden subscriber potential sleeping in your already-published books — and the cost of waiting another day.</p>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dashboard">
+    <!-- Input Panel -->
+    <div class="input-panel" id="inputPanel">
+      <div class="panel-header">
+        <div class="panel-icon">📋</div>
+        <h2>Your Backlist Profile</h2>
+      </div>
+
+      <div class="form-group">
+        <label><span class="label-icon">📚</span> Number of Published Books</label>
+        <div class="input-wrapper">
+          <input type="number" id="numBooks" value="3" min="1" max="200" step="1">
+          <span class="input-suffix">books</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label><span class="label-icon">📈</span> Avg. Monthly Sales Per Book</label>
+        <div class="input-wrapper">
+          <input type="number" id="avgSales" value="40" min="1" max="100000" step="1">
+          <span class="input-suffix">sales/mo</span>
+        </div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label><span class="label-icon">🎯</span> Estimated Opt‑In Rate</label>
+          <span class="slider-value-badge" id="optInBadge">20%</span>
+        </div>
+        <input type="range" id="optInRate" value="20" min="5" max="50" step="1">
+        <p class="helper-text">Industry range: 15–35%. Higher for dedicated reader magnets, lower for generic newsletter signups.</p>
+      </div>
+
+      <div class="form-group">
+        <label><span class="label-icon">⏳</span> Months Since Publication / Last Update</label>
+        <div class="input-wrapper">
+          <input type="number" id="monthsSince" value="6" min="1" max="240" step="1">
+          <span class="input-suffix">months</span>
+        </div>
+      </div>
+
+      <button class="btn-calculate" id="calculateBtn">
+        <span>🔍</span> Calculate My Missed Readers
+      </button>
+      <button class="btn-reset" id="resetBtn">↺ Reset to Defaults</button>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-section" id="resultsSection">
+      <!-- Main Metrics -->
+      <div class="metrics-row">
+        <div class="metric-card lost" id="lostCard">
+          <div class="card-label">⚠️ Subscribers Already Missed</div>
+          <div class="card-value" id="lostNumber">0</div>
+          <div class="card-detail" id="lostDetail"></div>
+        </div>
+        <div class="metric-card gain" id="gainCard">
+          <div class="card-label">🚀 Potential 12‑Month Gain</div>
+          <div class="card-value" id="gainNumber">0</div>
+          <div class="card-detail" id="gainDetail"></div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="quick-stats">
+        <div class="stat-item">
+          <div class="stat-number" id="statMonthlySales">0</div>
+          <div class="stat-label">Monthly Total Sales</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="statMonthlySubs">0</div>
+          <div class="stat-label">Monthly Potential Subs</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="statDailyLoss">0</div>
+          <div class="stat-label">Daily Subscriber Loss</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="statYearlyValue">$0</div>
+          <div class="stat-label">Est. Yearly List Value</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-card">
+        <h3>📊 Cumulative Subscriber Growth Projection <span style="font-weight:400;font-size:0.7rem;color:var(--ink-muted);">(Conservative Linear Estimate)</span></h3>
+        <div class="chart-wrapper">
+          <canvas id="growthChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Narrative -->
+      <div class="narrative-card" id="narrativeCard">
+        <p id="narrativeText"></p>
+      </div>
+
+      <!-- Action Recommendations -->
+      <div class="action-cards">
+        <div class="action-card">
+          <div class="action-icon green">⚡</div>
+          <div class="action-content">
+            <h4>Immediate Action: Add Reader Links</h4>
+            <p>Update your back matter in all <span class="highlight-neutral" id="actionBookCount">3</span> books with a direct link to your reader magnet landing page.</p>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="action-icon amber">🎁</div>
+          <div class="action-content">
+            <h4>Optimize Your Offer</h4>
+            <p>Test different reader magnet formats. A dedicated bonus chapter typically converts <span class="highlight-neutral">5–10% higher</span> than a generic newsletter signup.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="disclaimer-bar">
+        📌 Estimates based on your inputs and typical industry opt‑in ranges. Actual results vary by genre, offer quality, audience engagement, and market conditions.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ── DOM References ──
+    var numBooksInput = document.getElementById('numBooks');
+    var avgSalesInput = document.getElementById('avgSales');
+    var optInRateInput = document.getElementById('optInRate');
+    var optInBadge = document.getElementById('optInBadge');
+    var monthsSinceInput = document.getElementById('monthsSince');
+    var calculateBtn = document.getElementById('calculateBtn');
+    var resetBtn = document.getElementById('resetBtn');
+    var resultsSection = document.getElementById('resultsSection');
+
+    // Metric displays
+    var lostNumberEl = document.getElementById('lostNumber');
+    var lostDetailEl = document.getElementById('lostDetail');
+    var gainNumberEl = document.getElementById('gainNumber');
+    var gainDetailEl = document.getElementById('gainDetail');
+
+    // Quick stats
+    var statMonthlySalesEl = document.getElementById('statMonthlySales');
+    var statMonthlySubsEl = document.getElementById('statMonthlySubs');
+    var statDailyLossEl = document.getElementById('statDailyLoss');
+    var statYearlyValueEl = document.getElementById('statYearlyValue');
+
+    // Narrative & actions
+    var narrativeTextEl = document.getElementById('narrativeText');
+    var actionBookCountEl = document.getElementById('actionBookCount');
+
+    // Chart
+    var chartCanvas = document.getElementById('growthChart');
+    var chartInstance = null;
+
+    // Animation state
+    var animationIds = [];
+    var currentValues = {
+      lost: 0,
+      gain: 0,
+      monthlySales: 0,
+      monthlySubs: 0,
+      dailyLoss: 0,
+      yearlyValue: 0
+    };
+
+    // ── Default Values ──
+    var DEFAULTS = {
+      numBooks: 3,
+      avgSales: 40,
+      optInRate: 20,
+      monthsSince: 6
+    };
+
+    // ── Utility Functions ──
+    function cancelAllAnimations() {
+      for (var i = 0; i < animationIds.length; i++) {
+        if (animationIds[i]) {
+          cancelAnimationFrame(animationIds[i]);
+        }
+      }
+      animationIds = [];
+    }
+
+    function formatNumber(num) {
+      return num.toLocaleString('en-US');
+    }
+
+    function pluralize(count, singular, plural) {
+      return count === 1 ? singular : (plural || singular + 's');
+    }
+
+    // ── Slider Update ──
+    function updateSliderDisplay() {
+      optInBadge.textContent = optInRateInput.value + '%';
+    }
+    optInRateInput.addEventListener('input', updateSliderDisplay);
+
+    // ── Get Input Values ──
+    function getInputValues() {
+      return {
+        numBooks: Math.max(1, parseInt(numBooksInput.value, 10) || 0),
+        avgSales: Math.max(1, parseInt(avgSalesInput.value, 10) || 0),
+        optInRate: Math.max(1, parseInt(optInRateInput.value, 10) || 0),
+        monthsSince: Math.max(1, parseInt(monthsSinceInput.value, 10) || 0)
+      };
+    }
+
+    // ── Calculate All Metrics ──
+    function calculateAllMetrics(inputs) {
+      var monthlyTotalSales = inputs.numBooks * inputs.avgSales;
+      var monthlyPotentialSubs = Math.round(monthlyTotalSales * (inputs.optInRate / 100));
+      var subscribersLostToDate = monthlyPotentialSubs * inputs.monthsSince;
+      var projected12MonthGain = monthlyPotentialSubs * 12;
+      var dailyLoss = Math.round(monthlyPotentialSubs / 30.44);
+      var cumulative3Month = monthlyPotentialSubs * 3;
+      var cumulative6Month = monthlyPotentialSubs * 6;
+      var cumulative12Month = projected12MonthGain;
+      var yearlyListValue = Math.round(projected12MonthGain * 1.50);
+
+      return {
+        monthlyTotalSales: monthlyTotalSales,
+        monthlyPotentialSubs: monthlyPotentialSubs,
+        subscribersLostToDate: subscribersLostToDate,
+        projected12MonthGain: projected12MonthGain,
+        dailyLoss: dailyLoss,
+        yearlyListValue: yearlyListValue,
+        cumulative3Month: cumulative3Month,
+        cumulative6Month: cumulative6Month,
+        cumulative12Month: cumulative12Month
+      };
+    }
+
+    // ── Animated Counter ──
+    function animateValue(element, startVal, endVal, duration, formatter) {
+      var startTime = null;
+      var diff = endVal - startVal;
+      formatter = formatter || formatNumber;
+
+      var animId = null;
+
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        var progress = Math.min((timestamp - startTime) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        var currentVal = Math.round(startVal + diff * eased);
+        element.textContent = formatter(currentVal);
+        if (progress < 1) {
+          animId = requestAnimationFrame(step);
+          animationIds.push(animId);
+        } else {
+          element.textContent = formatter(endVal);
+        }
+      }
+
+      animId = requestAnimationFrame(step);
+      animationIds.push(animId);
+    }
+
+    // ── Render Chart ──
+    function renderChart(cumulative3, cumulative6, cumulative12, monthlySubs) {
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+
+      var ctx = chartCanvas.getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['3 Months', '6 Months', '12 Months'],
+          datasets: [
+            {
+              label: 'Without Reader Link',
+              data: [0, 0, 0],
+              backgroundColor: 'rgba(180,175,165,0.45)',
+              borderColor: '#C5C0B5',
+              borderWidth: 1.5,
+              borderRadius: 6,
+              borderSkipped: false
+            },
+            {
+              label: 'With Reader Link (Cumulative)',
+              data: [cumulative3, cumulative6, cumulative12],
+              backgroundColor: 'rgba(45,106,79,0.75)',
+              borderColor: '#2D6A4F',
+              borderWidth: 2,
+              borderRadius: 6,
+              borderSkipped: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { family: "'Inter', sans-serif", size: 11, weight: '500' },
+                color: '#3D3832',
+                usePointStyle: true,
+                pointStyleWidth: 10,
+                padding: 20
+              }
+            },
+            tooltip: {
+              backgroundColor: '#1E1B18',
+              titleFont: { family: "'Inter', sans-serif", size: 12, weight: '600' },
+              bodyFont: { family: "'Inter', sans-serif", size: 11 },
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' subscribers';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: { family: "'Inter', sans-serif", size: 10 },
+                color: '#6B635A',
+                callback: function(value) { return value.toLocaleString(); }
+              },
+              title: {
+                display: true,
+                text: 'Cumulative Subscribers',
+                font: { family: "'Inter', sans-serif", size: 10, weight: '600' },
+                color: '#6B635A'
+              },
+              grid: { color: '#E8E2D8' }
+            },
+            x: {
+              ticks: {
+                font: { family: "'Inter', sans-serif", size: 10, weight: '500' },
+                color: '#6B635A'
+              },
+              grid: { display: false }
+            }
+          },
+          animation: {
+            duration: 900,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+    }
+
+    // ── Generate Narrative ──
+    function generateNarrative(inputs, metrics) {
+      var bookWord = pluralize(inputs.numBooks, 'book', 'books');
+      var monthWord = pluralize(inputs.monthsSince, 'month', 'months');
+      var totalSalesEstimate = metrics.monthlyTotalSales * inputs.monthsSince;
+
+      return (
+        'Based on your inputs, your <span class="highlight-neutral">' + formatNumber(inputs.numBooks) + ' published ' + bookWord + '</span> ' +
+        'have generated an estimated <span class="highlight-neutral">' + formatNumber(totalSalesEstimate) + ' total sales</span> ' +
+        'over the past <span class="highlight-neutral">' + inputs.monthsSince + ' ' + monthWord + '</span> — ' +
+        'and virtually every one of those readers left without a direct way for you to reach them again. ' +
+        'By adding your reader magnet link today, you could begin capturing roughly ' +
+        '<span class="highlight-gain">' + formatNumber(metrics.monthlyPotentialSubs) + ' new email subscribers every month</span>. ' +
+        'Over the next 12 months, that conservative linear projection puts ' +
+        '<span class="highlight-gain">' + formatNumber(metrics.projected12MonthGain) + ' engaged readers</span> on your list — ' +
+        'readers who already know and enjoy your work. The ' +
+        '<span class="highlight-loss">' + formatNumber(metrics.subscribersLostToDate) + ' subscribers</span> you\'ve already missed ' +
+        'represent real fans you can never directly contact, but every day you wait adds approximately ' +
+        '<span class="highlight-loss">' + formatNumber(metrics.dailyLoss) + ' more</span> to that number. ' +
+        'At an estimated lifetime value of just $1.50 per subscriber, your backlist alone could represent ' +
+        '<span class="highlight-gain">$' + formatNumber(metrics.yearlyListValue) + ' in untapped email list value</span> over the coming year.'
+      );
+    }
+
+    // ── Update All Displays ──
+    function updateAllDisplays(inputs, metrics, animate) {
+      var duration = animate ? 1000 : 0;
+
+      cancelAllAnimations();
+
+      // Main metrics
+      animateValue(lostNumberEl, currentValues.lost, metrics.subscribersLostToDate, duration, formatNumber);
+      animateValue(gainNumberEl, currentValues.gain, metrics.projected12MonthGain, duration, formatNumber);
+
+      // Quick stats
+      animateValue(statMonthlySalesEl, currentValues.monthlySales, metrics.monthlyTotalSales, duration, formatNumber);
+      animateValue(statMonthlySubsEl, currentValues.monthlySubs, metrics.monthlyPotentialSubs, duration, formatNumber);
+      animateValue(statDailyLossEl, currentValues.dailyLoss, metrics.dailyLoss, duration, formatNumber);
+      animateValue(statYearlyValueEl, currentValues.yearlyValue, metrics.yearlyListValue, duration, function(v) {
+        return '$' + formatNumber(v);
+      });
+
+      // Update current values
+      currentValues.lost = metrics.subscribersLostToDate;
+      currentValues.gain = metrics.projected12MonthGain;
+      currentValues.monthlySales = metrics.monthlyTotalSales;
+      currentValues.monthlySubs = metrics.monthlyPotentialSubs;
+      currentValues.dailyLoss = metrics.dailyLoss;
+      currentValues.yearlyValue = metrics.yearlyListValue;
+
+      // Detail texts
+      lostDetailEl.innerHTML = 'Over <strong>' + inputs.monthsSince + ' ' + pluralize(inputs.monthsSince, 'month', 'months') + '</strong> without a reader capture link in your back matter.';
+      gainDetailEl.innerHTML = 'At <strong>' + inputs.optInRate + '% opt‑in rate</strong> across <strong>' + formatNumber(metrics.monthlyTotalSales) + ' monthly sales</strong>.';
+
+      // Narrative
+      narrativeTextEl.innerHTML = generateNarrative(inputs, metrics);
+
+      // Action card
+      actionBookCountEl.textContent = formatNumber(inputs.numBooks);
+
+      // Chart
+      renderChart(metrics.cumulative3Month, metrics.cumulative6Month, metrics.cumulative12Month, metrics.monthlyPotentialSubs);
+    }
+
+    // ── Main Calculation Trigger ──
+    function runCalculation(animate) {
+      var inputs = getInputValues();
+
+      if (inputs.numBooks <= 0 || inputs.avgSales <= 0 || inputs.monthsSince <= 0) {
+        alert('Please ensure all number inputs are greater than zero.');
+        return;
+      }
+
+      var metrics = calculateAllMetrics(inputs);
+
+      // Show results section
+      if (!resultsSection.classList.contains('visible')) {
+        resultsSection.classList.add('visible');
+      }
+
+      updateAllDisplays(inputs, metrics, animate !== false);
+    }
+
+    // ── Reset to Defaults ──
+    function resetToDefaults() {
+      numBooksInput.value = DEFAULTS.numBooks;
+      avgSalesInput.value = DEFAULTS.avgSales;
+      optInRateInput.value = DEFAULTS.optInRate;
+      monthsSinceInput.value = DEFAULTS.monthsSince;
+      updateSliderDisplay();
+
+      // Reset current values to trigger fresh animation
+      currentValues = { lost: 0, gain: 0, monthlySales: 0, monthlySubs: 0, dailyLoss: 0, yearlyValue: 0 };
+      runCalculation(true);
+    }
+
+    // ── Event Listeners ──
+    calculateBtn.addEventListener('click', function() {
+      currentValues = { lost: 0, gain: 0, monthlySales: 0, monthlySubs: 0, dailyLoss: 0, yearlyValue: 0 };
+      runCalculation(true);
+    });
+
+    resetBtn.addEventListener('click', resetToDefaults);
+
+    // ── Initialize ──
+    function init() {
+      updateSliderDisplay();
+      currentValues = { lost: 0, gain: 0, monthlySales: 0, monthlySubs: 0, dailyLoss: 0, yearlyValue: 0 };
+      runCalculation(false);
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>
