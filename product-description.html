@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Product Description Interview Assistant Pro • PageCraft AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0B0818;
+      --bg-card: #1A1530;
+      --bg-card-hover: #241E3D;
+      --bg-input: #14102A;
+      --border-subtle: #2D2547;
+      --border-focus: #7C3AED;
+      --text-primary: #F0EBFF;
+      --text-secondary: #B9AED9;
+      --text-muted: #8A7FB5;
+      --coral: #FF6B4A;
+      --violet: #7C3AED;
+      --violet-light: #A78BFA;
+      --gold: #FFD166;
+      --teal: #06D6A0;
+      --success: #059669;
+      --danger: #EF4444;
+      --glow-coral: rgba(255,107,74,0.5);
+      --glow-violet: rgba(124,58,237,0.6);
+      --gradient-main: linear-gradient(135deg, #FF6B4A 0%, #C241FB 100%);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --shadow-glow: 0 0 30px rgba(124,58,237,0.2);
+      --transition: cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background-image: 
+        radial-gradient(ellipse at 15% 10%, rgba(124,58,237,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 90%, rgba(255,107,74,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 50%, rgba(6,214,160,0.04) 0%, transparent 60%);
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 820px;
+      background: rgba(15,11,28,0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: var(--radius-xl);
+      padding: 2rem 2rem 2.4rem;
+      box-shadow: 0 35px 70px -18px rgba(0,0,0,0.9), 0 0 0 1px rgba(124,58,237,0.22), var(--shadow-glow);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      min-height: 640px;
+      max-height: 90vh;
+    }
+
+    .app-shell::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--violet), var(--coral), var(--gold), transparent);
+      opacity: 0.7;
+      z-index: 5;
+    }
+
+    .content-layer {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Progress */
+    .progress-section { margin-bottom: 1.4rem; flex-shrink: 0; }
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 0.4rem;
+    }
+    .progress-phase {
+      font-family: 'Sora', sans-serif; font-weight: 700;
+      font-size: 0.7rem; letter-spacing: 0.09em;
+      color: var(--coral); text-transform: uppercase;
+    }
+    .progress-count {
+      font-weight: 700; font-size: 0.8rem; color: var(--violet-light);
+    }
+    .progress-rail {
+      height: 6px; background: rgba(45,37,71,0.7);
+      border-radius: 20px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: var(--gradient-main);
+      border-radius: 20px;
+      transition: width 0.4s var(--transition);
+      box-shadow: 0 0 14px var(--glow-coral);
+    }
+    .progress-dots {
+      display: flex; gap: 4px; margin-top: 0.4rem;
+    }
+    .progress-dot {
+      flex:1; height: 3px; border-radius: 3px;
+      background: #2D2547; transition: all 0.35s;
+    }
+    .progress-dot.done { background: var(--coral); box-shadow: 0 0 8px var(--glow-coral); }
+    .progress-dot.current { background: var(--violet); box-shadow: 0 0 10px var(--glow-violet); }
+    .progress-dot.skipped { background: #5A5078; }
+
+    /* Screens */
+    .screen {
+      display: none; flex-direction: column; flex: 1;
+      animation: slideUp 0.4s var(--transition);
+      overflow: hidden;
+    }
+    .screen.active { display: flex; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Intro */
+    .intro-panel {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; flex: 1; text-align: center; gap: 1rem;
+    }
+    .intro-icon {
+      font-size: 3.5rem;
+      filter: drop-shadow(0 0 20px rgba(255,107,74,0.5));
+    }
+    h1 {
+      font-family: 'Sora', sans-serif; font-weight: 800;
+      font-size: 2.2rem; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #FF6B4A 15%, #C084FC 70%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1.2;
+    }
+    .tagline {
+      font-size: 0.95rem; color: var(--text-secondary);
+      max-width: 460px; line-height: 1.6;
+    }
+    .feature-strip {
+      display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center;
+      margin: 0.3rem 0 0.5rem;
+    }
+    .feature-chip {
+      background: rgba(124,58,237,0.15); border: 1px solid var(--border-subtle);
+      padding: 0.35rem 0.9rem; border-radius: 2rem;
+      font-size: 0.72rem; font-weight: 600; color: var(--text-secondary);
+    }
+    .btn {
+      background: var(--gradient-main); border: none;
+      padding: 0.85rem 2rem; border-radius: 3rem;
+      font-family: 'Sora', sans-serif; font-weight: 700;
+      font-size: 0.95rem; color: #FFF; letter-spacing: 0.03em;
+      cursor: pointer; transition: all 0.3s;
+      box-shadow: 0 12px 28px -8px rgba(124,58,237,0.7);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 35px -8px #7C3AED;
+    }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--violet);
+      box-shadow: none; color: var(--text-primary);
+    }
+    .btn-sm { padding: 0.55rem 1.3rem; font-size: 0.82rem; }
+    .btn-xs { padding: 0.35rem 0.8rem; font-size: 0.7rem; border-radius: 2rem; }
+    .btn-copied { background: var(--success) !important; border-color: var(--success) !important; }
+
+    /* Question */
+    .question-block {
+      display: flex; flex-direction: column; flex: 1; gap: 0.8rem;
+      overflow-y: auto;
+    }
+    .question-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 0.5rem;
+    }
+    .question-number {
+      font-family: 'Sora', sans-serif; font-size: 0.68rem;
+      font-weight: 700; letter-spacing: 0.09em;
+      color: var(--coral); text-transform: uppercase;
+    }
+    .question-actions {
+      display: flex; gap: 0.4rem;
+    }
+    .btn-skip {
+      background: transparent; border: 1px solid var(--border-subtle);
+      color: var(--text-muted); font-size: 0.68rem; cursor: pointer;
+      padding: 0.3rem 0.7rem; border-radius: 2rem;
+      font-weight: 600; transition: all 0.2s;
+    }
+    .btn-skip:hover { border-color: var(--violet); color: var(--violet-light); }
+    .question-text {
+      font-family: 'Sora', sans-serif; font-weight: 700;
+      font-size: 1.5rem; line-height: 1.35;
+      background: linear-gradient(to bottom, #FAF5FF, #CBBBF0);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .question-hint {
+      font-size: 0.8rem; color: var(--text-muted);
+      line-height: 1.5; margin-top: -0.2rem;
+    }
+    .answer-area {
+      display: flex; flex-direction: column; gap: 0.3rem; flex: 1;
+      min-height: 0;
+    }
+    .answer-label {
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--violet-light);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .char-count {
+      font-weight: 400; color: var(--text-muted); font-size: 0.65rem;
+    }
+    .char-count.warning { color: var(--coral); }
+    textarea {
+      flex: 1; min-height: 120px;
+      background: var(--bg-input); border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 0.9rem 1.1rem;
+      font-family: 'Inter', sans-serif; font-size: 0.92rem;
+      color: var(--text-primary); line-height: 1.6;
+      resize: none; outline: none; transition: all 0.25s;
+    }
+    textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+    }
+    textarea::placeholder {
+      color: #5A5078; font-style: italic; font-size: 0.88rem;
+    }
+    .nav-row {
+      display: flex; gap: 0.5rem; justify-content: space-between;
+      margin-top: 0.4rem; flex-shrink: 0;
+    }
+    .nav-row-right { display: flex; gap: 0.5rem; }
+
+    /* Question Navigator Sidebar */
+    .q-nav-mini {
+      display: flex; gap: 3px; flex-wrap: wrap;
+      margin-bottom: 0.3rem;
+    }
+    .q-nav-dot {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 1.5px solid var(--border-subtle);
+      background: transparent; cursor: pointer;
+      font-size: 0.58rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); transition: all 0.2s;
+    }
+    .q-nav-dot.answered { border-color: var(--teal); color: var(--teal); background: rgba(6,214,160,0.08); }
+    .q-nav-dot.skipped { border-color: #5A5078; color: #5A5078; }
+    .q-nav-dot.current { border-color: var(--violet); color: var(--violet); background: rgba(124,58,237,0.15); box-shadow: 0 0 8px var(--glow-violet); }
+    .q-nav-dot:hover { border-color: var(--violet-light); }
+
+    /* Result */
+    .result-panel {
+      display: flex; flex-direction: column; flex: 1; gap: 0.8rem;
+      overflow: hidden;
+    }
+    .result-header {
+      text-align: center; flex-shrink: 0;
+    }
+    .result-icon {
+      font-size: 2.2rem;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-7px); }
+    }
+    .result-title {
+      font-family: 'Sora', sans-serif; font-weight: 800;
+      font-size: 1.7rem;
+      background: linear-gradient(135deg, #FF6B4A, #C084FC);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin: 0.2rem 0;
+    }
+    .completion-stats {
+      display: flex; gap: 0.8rem; justify-content: center;
+      font-size: 0.72rem; color: var(--text-muted);
+    }
+    .completion-stats span { display: flex; align-items: center; gap: 0.25rem; }
+    .compiled-box {
+      background: var(--bg-card); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg); padding: 1.3rem 1.5rem;
+      overflow-y: auto; flex: 1; min-height: 200px;
+      font-size: 0.85rem; line-height: 1.7; color: var(--text-secondary);
+      white-space: pre-wrap; font-family: 'Inter', monospace;
+    }
+    .compiled-box .section-label {
+      color: var(--violet-light); font-weight: 700;
+    }
+    .compiled-box .empty-answer {
+      color: #5A5078; font-style: italic;
+    }
+    .copy-row {
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
+      justify-content: center; flex-shrink: 0;
+    }
+
+    .toast {
+      position: fixed; bottom: 40px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #0A0A0F; color: #FFF;
+      padding: 0.8rem 1.6rem; border-radius: 50px;
+      font-weight: 600; font-size: 0.85rem; z-index: 1000;
+      opacity: 0; transition: all 0.35s var(--transition);
+      pointer-events: none; box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+      .app-shell { padding: 1.4rem 1.1rem; border-radius: var(--radius-lg); }
+      .question-text { font-size: 1.25rem; }
+      h1 { font-size: 1.7rem; }
+      textarea { min-height: 100px; }
+      .q-nav-dot { width: 18px; height: 18px; font-size: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell" id="appRoot">
+  <div class="content-layer">
+    <div class="progress-section" id="progressArch">
+      <div class="progress-header">
+        <span class="progress-phase" id="phaseLabel">INTERVIEW</span>
+        <span class="progress-count" id="stepDisplay">1 / 9</span>
+      </div>
+      <div class="progress-rail">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-dots" id="progressDots"></div>
+    </div>
+
+    <!-- INTRO -->
+    <div id="introScreen" class="screen active">
+      <div class="intro-panel">
+        <div class="intro-icon">📝</div>
+        <h1>Product Description Interview</h1>
+        <p class="tagline">Answer 9 guided questions about your product, audience, and offer. We'll compile everything into a clean, AI-ready brief you can paste directly into your page builder.</p>
+        <div class="feature-strip">
+          <span class="feature-chip">🎯 Guided Prompts</span>
+          <span class="feature-chip">💾 Auto-Save</span>
+          <span class="feature-chip">📋 AI-Ready Export</span>
+          <span class="feature-chip">⏭️ Skip & Return</span>
+        </div>
+        <button class="btn" id="startBtn">▶ Start Interview</button>
+      </div>
+    </div>
+
+    <!-- QUESTION -->
+    <div id="questionScreen" class="screen">
+      <div class="q-nav-mini" id="qNavMini"></div>
+      <div class="question-block">
+        <div class="question-meta">
+          <div class="question-number" id="qNumber"></div>
+          <div class="question-actions">
+            <button class="btn-skip" id="skipBtn">⏭️ Skip for now</button>
+          </div>
+        </div>
+        <div class="question-text" id="qText"></div>
+        <div class="question-hint" id="qHint"></div>
+        <div class="answer-area">
+          <label class="answer-label" for="answerInput">
+            Your Answer
+            <span class="char-count" id="charCount">0 chars</span>
+          </label>
+          <textarea id="answerInput" placeholder=""></textarea>
+        </div>
+        <div class="nav-row">
+          <button class="btn btn-ghost btn-sm" id="backBtn">← Back</button>
+          <div class="nav-row-right">
+            <button class="btn btn-sm" id="nextBtn">Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="resultScreen" class="screen">
+      <div class="result-panel">
+        <div class="result-header">
+          <div class="result-icon">✅</div>
+          <div class="result-title">Your AI-Ready Brief</div>
+          <div class="completion-stats" id="completionStats"></div>
+        </div>
+        <div class="compiled-box" id="compiledOutput"></div>
+        <div class="copy-row">
+          <button class="btn btn-sm" id="copyFormattedBtn">📋 Copy Formatted</button>
+          <button class="btn btn-sm" id="copyPlainBtn">📄 Copy Plain Text</button>
+          <button class="btn btn-ghost btn-sm" id="editBtn">✏️ Return to Interview</button>
+          <button class="btn btn-ghost btn-sm" id="retakeBtn">🔄 Start Over</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="copyToast"><span>✅</span> Copied to clipboard!</div>
+
+<script>
+  (function() {
+    // ============ STATE ============
+    var currentStep = 0;
+    var TOTAL_STEPS = 9;
+    var answers = [];
+    var skipped = [];
+    var toastTimer = null;
+
+    for (var i = 0; i < TOTAL_STEPS; i++) {
+      answers.push('');
+      skipped.push(false);
+    }
+
+    // ============ QUESTION BANK ============
+    var questions = [
+      {
+        title: "Product Basics",
+        text: "In one or two sentences, what is your product and what does it do?",
+        hint: "Be concise but specific. Name it and describe the core function clearly.",
+        placeholder: "Example: NotionUX is a complete Notion template system that helps freelance designers manage their entire client workflow — from onboarding to final invoice — in one organized workspace. It replaces scattered emails, spreadsheets, and sticky notes with an interconnected system."
+      },
+      {
+        title: "Target Buyer",
+        text: "Who is this for? Describe your ideal buyer — their situation, role, or where they are right now.",
+        hint: "Think about their identity, context, goals, and what they're struggling to accomplish on their own.",
+        placeholder: "Example: Freelance graphic designers with 3–10 active clients who feel overwhelmed by project chaos. They're usually 1–3 years into freelancing, making decent money but losing 5–10 hours per week to admin tasks. They've tried generic project tools but nothing fits their specific workflow."
+      },
+      {
+        title: "Core Frustration",
+        text: "What's the #1 frustration or problem that makes someone need this? Be specific — what does it feel like on a bad day without a solution?",
+        hint: "Use sensory and emotional language. Paint the 'before' picture vividly so the reader feels the pain.",
+        placeholder: "Example: It's 11 PM and they're digging through 47 email threads trying to find a client's brand assets from three weeks ago. Their desktop is a graveyard of unnamed files. They feel scattered, unprofessional, and exhausted. They know they're losing billable hours to chaos, but they don't have time to build a system — they're too busy putting out fires."
+      },
+      {
+        title: "Desired Outcome",
+        text: "What does life/work look like AFTER using your product? What's the transformation or result?",
+        hint: "Describe the 'after' state with concrete benefits and emotional payoff. Make it aspirational.",
+        placeholder: "Example: Within one week, every client project lives in one organized workspace. Onboarding a new client takes 15 minutes instead of 2 hours. They know exactly where every asset, deadline, and conversation lives. They feel in control, professional, and they reclaim 5+ hours per week — time they now spend on creative work or with family."
+      },
+      {
+        title: "Unique Mechanism",
+        text: "What makes your approach different or better than the obvious alternatives? What's your 'unique mechanism'?",
+        hint: "Why shouldn't they just use a free tool, a competitor, or piece together their own solution?",
+        placeholder: "Example: Unlike generic project templates that give you blank pages and expect you to build everything, NotionUX uses a proprietary 'Client Flow Framework' — six pre-connected databases that already understand how freelance projects actually flow from pitch to payment. It's not a blank canvas; it's a pre-built operating system designed specifically for the freelance design workflow."
+      },
+      {
+        title: "Offer Details",
+        text: "What exactly do they get, and at what price? List every deliverable, format, and any bonuses included.",
+        hint: "Be transparent and specific. Clarity builds trust. Mention format, quantity, and access terms.",
+        placeholder: "Example: Complete NotionUX template system ($47 one-time). Includes: main workspace with 6 interconnected databases, 12 pre-built client project templates, 45-minute step-by-step setup walkthrough video, 3 bonus automation scripts (invoice generator, client portal, feedback collector), and lifetime access with all future updates. Instant download after purchase."
+      },
+      {
+        title: "Objections & Rebuttals",
+        text: "What's the #1 reason someone might hesitate to buy? What would you say to address that hesitation directly?",
+        hint: "Acknowledge the doubt honestly — don't dismiss it. Then provide a genuine, helpful response.",
+        placeholder: "Example: Objection: 'I've tried Notion templates before and they were too complicated to set up.' — I completely understand. Most templates are beautiful but impractical. NotionUX is different because it includes a 45-minute walkthrough where I set it up with you step by step. The databases come pre-configured with relational links already built. Most users are fully operational within 90 minutes, even with zero prior Notion experience."
+      },
+      {
+        title: "Proof & Credibility",
+        text: "What proof do you have (or plan to gather) — results, testimonials, your own story, credentials, or data? If you have none yet, be honest about that.",
+        hint: "Authenticity matters more than polished proof. Share what's real, even if it's your own journey.",
+        placeholder: "Example: I've been a freelance designer for 6 years and built this system for my own studio. I tested it with 12 beta users over 3 months — 10 reported saving 4+ hours per week. I have 7 written testimonials and 2 video reviews. One user said: 'I finally feel like a professional, not a chaos manager.' I also have before/after screenshots of real workspaces."
+      },
+      {
+        title: "Guarantee & Urgency",
+        text: "What's your guarantee or risk-reversal policy? Is there any genuine, honest urgency (real deadline, limited bonuses, or upcoming price change)?",
+        hint: "Never fake urgency. Only mention scarcity if it's real. A strong guarantee often matters more than a deadline.",
+        placeholder: "Example: 30-day 'no questions asked' refund policy — if it doesn't save you time, you get every cent back. The launch price of $47 is available for the first 7 days; after that it moves to the regular price of $67. The first 50 buyers also get access to a live group setup call where I personally help you configure your workspace — I cap it at 50 because I can genuinely support that many people."
+      }
+    ];
+
+    // ============ DOM REFS ============
+    var introScreen = document.getElementById('introScreen');
+    var questionScreen = document.getElementById('questionScreen');
+    var resultScreen = document.getElementById('resultScreen');
+    var qNumber = document.getElementById('qNumber');
+    var qText = document.getElementById('qText');
+    var qHint = document.getElementById('qHint');
+    var answerInput = document.getElementById('answerInput');
+    var nextBtn = document.getElementById('nextBtn');
+    var backBtn = document.getElementById('backBtn');
+    var skipBtn = document.getElementById('skipBtn');
+    var progressFill = document.getElementById('progressFill');
+    var phaseLabel = document.getElementById('phaseLabel');
+    var stepDisplay = document.getElementById('stepDisplay');
+    var progressDots = document.getElementById('progressDots');
+    var progressArch = document.getElementById('progressArch');
+    var compiledOutput = document.getElementById('compiledOutput');
+    var copyToast = document.getElementById('copyToast');
+    var qNavMini = document.getElementById('qNavMini');
+    var charCount = document.getElementById('charCount');
+    var completionStats = document.getElementById('completionStats');
+
+    // ============ UI HELPERS ============
+    function renderDots() {
+      progressDots.innerHTML = '';
+      for (var i = 0; i < TOTAL_STEPS; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        if (i < currentStep) dot.classList.add(skipped[i] ? 'skipped' : 'done');
+        if (i === currentStep) dot.classList.add('current');
+        progressDots.appendChild(dot);
+      }
+    }
+
+    function renderMiniNav() {
+      qNavMini.innerHTML = '';
+      for (var i = 0; i < TOTAL_STEPS; i++) {
+        var dot = document.createElement('span');
+        dot.className = 'q-nav-dot';
+        if (i === currentStep) dot.classList.add('current');
+        else if (answers[i].trim() !== '') dot.classList.add('answered');
+        else if (skipped[i]) dot.classList.add('skipped');
+        dot.textContent = i + 1;
+        dot.title = questions[i].title + (skipped[i] ? ' (skipped)' : answers[i].trim() ? ' (answered)' : '');
+        dot.addEventListener('click', (function(idx) {
+          return function() {
+            saveCurrentAnswer();
+            loadQuestion(idx);
+          };
+        })(i));
+        qNavMini.appendChild(dot);
+      }
+    }
+
+    function updateProgress(step) {
+      var pct = Math.round((step / TOTAL_STEPS) * 100);
+      progressFill.style.width = pct + '%';
+      stepDisplay.textContent = (step + 1) + ' / ' + TOTAL_STEPS;
+      if (step === 0) phaseLabel.textContent = 'WARM UP';
+      else if (step < 3) phaseLabel.textContent = 'DISCOVERY';
+      else if (step < 6) phaseLabel.textContent = 'DEEP DIVE';
+      else if (step < 8) phaseLabel.textContent = 'REFINE';
+      else phaseLabel.textContent = 'WRAP UP';
+      renderDots();
+      renderMiniNav();
+    }
+
+    function updateCharCount() {
+      var len = answerInput.value.length;
+      charCount.textContent = len + ' chars';
+      charCount.classList.toggle('warning', len > 800);
+    }
+
+    function switchScreen(scr) {
+      introScreen.classList.remove('active');
+      questionScreen.classList.remove('active');
+      resultScreen.classList.remove('active');
+      scr.classList.add('active');
+    }
+
+    // ============ QUESTION FLOW ============
+    function loadQuestion(idx) {
+      if (idx >= TOTAL_STEPS) {
+        compileAndShowResult();
+        return;
+      }
+      currentStep = idx;
+      var q = questions[idx];
+
+      qNumber.textContent = 'QUESTION ' + (idx + 1) + ' — ' + q.title.toUpperCase();
+      qText.textContent = q.text;
+      qHint.textContent = q.hint;
+      answerInput.value = answers[idx];
+      answerInput.placeholder = q.placeholder;
+
+      backBtn.style.display = idx > 0 ? 'inline-flex' : 'none';
+      nextBtn.textContent = idx === TOTAL_STEPS - 1 ? '✓ Finish & Compile' : 'Next →';
+      skipBtn.textContent = skipped[idx] ? '↩️ Un-skip' : '⏭️ Skip for now';
+
+      updateProgress(idx);
+      updateCharCount();
+      switchScreen(questionScreen);
+
+      setTimeout(function() {
+        answerInput.focus();
+      }, 150);
+    }
+
+    function saveCurrentAnswer() {
+      if (currentStep < TOTAL_STEPS) {
+        answers[currentStep] = answerInput.value;
+        if (answers[currentStep].trim() !== '') {
+          skipped[currentStep] = false;
+        }
+      }
+    }
+
+    function goNext() {
+      saveCurrentAnswer();
+      if (currentStep < TOTAL_STEPS - 1) {
+        loadQuestion(currentStep + 1);
+      } else {
+        compileAndShowResult();
+      }
+    }
+
+    function goBack() {
+      saveCurrentAnswer();
+      if (currentStep > 0) {
+        loadQuestion(currentStep - 1);
+      }
+    }
+
+    function toggleSkip() {
+      if (skipped[currentStep]) {
+        skipped[currentStep] = false;
+        skipBtn.textContent = '⏭️ Skip for now';
+      } else {
+        skipped[currentStep] = true;
+        answers[currentStep] = '';
+        answerInput.value = '';
+        skipBtn.textContent = '↩️ Un-skip';
+      }
+      updateProgress(currentStep);
+      updateCharCount();
+    }
+
+    // ============ COMPILATION ============
+    function getAnsweredCount() {
+      var count = 0;
+      for (var i = 0; i < TOTAL_STEPS; i++) {
+        if (answers[i].trim() !== '') count++;
+      }
+      return count;
+    }
+
+    function getSkippedCount() {
+      var count = 0;
+      for (var i = 0; i < TOTAL_STEPS; i++) {
+        if (skipped[i]) count++;
+      }
+      return count;
+    }
+
+    function compilePlainText() {
+      var sections = [];
+      for (var i = 0; i < TOTAL_STEPS; i++) {
+        var answer = answers[i].trim();
+        if (answer === '') {
+          answer = '[Skipped — not answered]';
+        }
+        sections.push(
+          '◆ ' + questions[i].title.toUpperCase() + '\n' +
+          '──────────────────────────────\n' +
+          answer + '\n'
+        );
+      }
+      var text = '';
+      text += 'PRODUCT DESCRIPTION BRIEF\n';
+      text += '══════════════════════════════\n';
+      text += 'Generated by PageCraft AI Interview Assistant\n';
+      text += 'Answered: ' + getAnsweredCount() + '/' + TOTAL_STEPS + ' | Skipped: ' + getSkippedCount() + '\n';
+      text += '══════════════════════════════\n\n';
+      text += sections.join('\n');
+      text += '══════════════════════════════\n';
+      text += 'END OF BRIEF — Ready to paste into your AI page builder';
+      return text;
+    }
+
+    function compileFormattedHTML() {
+      var html = '';
+      html += '<div style="font-family:Inter,sans-serif;color:#F0EBFF;line-height:1.7;">';
+      html += '<h2 style="color:#C084FC;margin-bottom:0.5rem;">📋 Product Description Brief</h2>';
+      html += '<p style="color:#8A7FB5;font-size:0.85rem;margin-bottom:1rem;">Answered: ' + getAnsweredCount() + '/' + TOTAL_STEPS + ' | Skipped: ' + getSkippedCount() + '</p>';
+      html += '<hr style="border-color:#2D2547;margin-bottom:1rem;">';
+      for (var i = 0; i < TOTAL_STEPS; i++) {
+        var answer = answers[i].trim() || '<span style="color:#5A5078;font-style:italic;">[Skipped]</span>';
+        html += '<p><strong style="color:#A78BFA;">◆ ' + questions[i].title.toUpperCase() + '</strong></p>';
+        html += '<p style="margin-bottom:1rem;color:#B9AED9;">' + answer.replace(/\n/g, '<br>') + '</p>';
+      }
+      html += '<hr style="border-color:#2D2547;margin-top:1rem;">';
+      html += '<p style="color:#8A7FB5;font-size:0.8rem;">Generated by PageCraft AI Interview Assistant</p>';
+      html += '</div>';
+      return html;
+    }
+
+    function renderCompiledOutput() {
+      var text = compilePlainText();
+      var html = text
+        .replace(/◆ ([A-Z &]+)/g, '<span class="section-label">◆ $1</span>')
+        .replace(/──────/g, '<span style="color:#5A5078;">──────</span>')
+        .replace(/══════/g, '<span style="color:#7C3AED;">══════</span>')
+        .replace(/\[Skipped[^\]]*\]/g, '<span class="empty-answer">$&</span>')
+        .replace(/\n/g, '<br>');
+      compiledOutput.innerHTML = html;
+
+      completionStats.innerHTML =
+        '<span>✅ ' + getAnsweredCount() + ' answered</span>' +
+        '<span>⏭️ ' + getSkippedCount() + ' skipped</span>' +
+        '<span>📝 ' + (TOTAL_STEPS - getAnsweredCount() - getSkippedCount()) + ' empty</span>';
+    }
+
+    function compileAndShowResult() {
+      saveCurrentAnswer();
+      renderCompiledOutput();
+      updateProgress(TOTAL_STEPS);
+      switchScreen(resultScreen);
+      progressArch.classList.add('hidden');
+    }
+
+    // ============ COPY ============
+    function copyToClipboard(text, btnEl) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          handleCopySuccess(btnEl);
+        }).catch(function() {
+          fallbackCopy(text, btnEl);
+        });
+      } else {
+        fallbackCopy(text, btnEl);
+      }
+    }
+
+    function fallbackCopy(text, btnEl) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        handleCopySuccess(btnEl);
+      } catch (e) {
+        showToast();
+      }
+      document.body.removeChild(ta);
+    }
+
+    function handleCopySuccess(btnEl) {
+      if (btnEl) {
+        btnEl.classList.add('btn-copied');
+        var orig = btnEl.innerHTML;
+        btnEl.innerHTML = '✓ Copied!';
+        setTimeout(function() {
+          btnEl.classList.remove('btn-copied');
+          btnEl.innerHTML = orig;
+        }, 2000);
+      }
+      showToast();
+    }
+
+    function showToast() {
+      if (toastTimer) clearTimeout(toastTimer);
+      copyToast.classList.add('show');
+      toastTimer = setTimeout(function() {
+        copyToast.classList.remove('show');
+      }, 2000);
+    }
+
+    // ============ EVENT LISTENERS ============
+    document.getElementById('startBtn').addEventListener('click', function() {
+      loadQuestion(0);
+    });
+
+    nextBtn.addEventListener('click', goNext);
+    backBtn.addEventListener('click', goBack);
+    skipBtn.addEventListener('click', toggleSkip);
+
+    answerInput.addEventListener('input', function() {
+      updateCharCount();
+      // Auto-save as user types
+      if (currentStep < TOTAL_STEPS) {
+        answers[currentStep] = answerInput.value;
+        if (answers[currentStep].trim() !== '') {
+          skipped[currentStep] = false;
+          skipBtn.textContent = '⏭️ Skip for now';
+        }
+      }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (questionScreen.classList.contains('active')) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          goNext();
+        }
+        if (e.key === 'ArrowRight' && e.altKey) {
+          e.preventDefault();
+          goNext();
+        }
+        if (e.key === 'ArrowLeft' && e.altKey) {
+          e.preventDefault();
+          goBack();
+        }
+        if (e.key === 's' && e.altKey) {
+          e.preventDefault();
+          toggleSkip();
+        }
+      }
+    });
+
+    // Result screen buttons
+    document.getElementById('copyFormattedBtn').addEventListener('click', function() {
+      var htmlContent = compileFormattedHTML();
+      copyToClipboard(htmlContent, this);
+    });
+
+    document.getElementById('copyPlainBtn').addEventListener('click', function() {
+      var plainText = compilePlainText();
+      copyToClipboard(plainText, this);
+    });
+
+    document.getElementById('editBtn').addEventListener('click', function() {
+      progressArch.classList.remove('hidden');
+      loadQuestion(0);
+    });
+
+    document.getElementById('retakeBtn').addEventListener('click', function() {
+      for (var i = 0; i < TOTAL_STEPS; i++) {
+        answers[i] = '';
+        skipped[i] = false;
+      }
+      progressArch.classList.remove('hidden');
+      loadQuestion(0);
+    });
+
+    // ============ INIT ============
+    updateProgress(0);
+    switchScreen(introScreen);
+    progressArch.classList.remove('hidden');
+
+    console.log('✅ Product Description Interview Assistant Pro initialized!');
+    console.log('💡 Features: 9 guided questions, skip/return, mini navigator, auto-save');
+    console.log('⌨️ Shortcuts: Ctrl+Enter = Next | Alt+→ = Next | Alt+← = Back | Alt+S = Skip');
+    console.log('📋 Two export formats: Formatted HTML and Plain Text');
+  })();
+</script>
+</body>
+</html>
