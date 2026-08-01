@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Subscription Tier Pricing Calculator · Prompts That Pay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #FAF7F2;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1A1A1A;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.8rem;
+      background-image: radial-gradient(circle at 18% 28%, rgba(108,79,209,0.025) 0%, transparent 55%);
+    }
+    .dashboard {
+      max-width: 1400px;
+      width: 100%;
+      background: #FFFFFF;
+      border: 1px solid #E2D9CD;
+      border-radius: 26px;
+      box-shadow: 0 22px 52px rgba(0,0,0,0.06), 0 6px 18px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .dash-header {
+      padding: 2.2rem 2.4rem 1.3rem;
+      border-bottom: 2px solid #E8E0D5;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .dash-header h1 {
+      font-family: 'Lora', 'Times New Roman', serif;
+      font-weight: 700;
+      font-size: 2.1rem;
+      letter-spacing: -0.5px;
+      color: #1A1A1A;
+    }
+    .accent-line {
+      width: 64px;
+      height: 4px;
+      background: linear-gradient(90deg, #6C4FD1, #9B84EE);
+      border-radius: 4px;
+      margin: 0.4rem 0 0.6rem;
+    }
+    .guide-toggle {
+      background: #F4F0FF;
+      border: 1px solid #DDD4F5;
+      border-radius: 24px;
+      padding: 0.5rem 1.3rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #4A3A8C;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: 0.2s;
+      white-space: nowrap;
+    }
+    .guide-toggle:hover {
+      background: #E9E1FF;
+      border-color: #6C4FD1;
+    }
+    .guide-panel {
+      background: #FDFBFF;
+      border: 1px solid #E2DBF5;
+      border-radius: 14px;
+      padding: 1.2rem;
+      font-size: 0.82rem;
+      color: #2E284A;
+      display: none;
+      line-height: 1.7;
+      margin-top: 0.8rem;
+      width: 100%;
+    }
+    .guide-panel.visible {
+      display: block;
+    }
+    .main-layout {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .input-panel {
+      width: 400px;
+      padding: 2rem 2rem 2rem 2.2rem;
+      background: #FDFBF7;
+      border-right: 1px solid #E8E0D5;
+      display: flex;
+      flex-direction: column;
+      gap: 1.3rem;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .input-group label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #4A4238;
+    }
+    .input-group input {
+      font-family: 'Inter', sans-serif;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid #DDD3C4;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      background: #FFFFFF;
+      width: 100%;
+      transition: 0.15s;
+    }
+    .input-group input:focus {
+      outline: none;
+      border-color: #6C4FD1;
+      box-shadow: 0 0 0 4px rgba(108,79,209,0.08);
+    }
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .slider-group input[type="range"] {
+      flex: 1;
+      accent-color: #6C4FD1;
+    }
+    .slider-value {
+      font-weight: 700;
+      color: #6C4FD1;
+      min-width: 55px;
+      text-align: right;
+      background: #F4F0FF;
+      padding: 0.2rem 0.6rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+    }
+    button {
+      background: #6C4FD1;
+      border: 1px solid #6C4FD1;
+      padding: 0.8rem 1.6rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: white;
+      letter-spacing: 0.3px;
+    }
+    button:hover {
+      background: #5A3DB5;
+      border-color: #5A3DB5;
+      box-shadow: 0 6px 18px rgba(108,79,209,0.22);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px dashed #C4B8E8;
+      color: #6C4FD1;
+    }
+    .btn-outline:hover {
+      background: #F4F0FF;
+      border-style: solid;
+    }
+    .info-box {
+      background: #F4EFE6;
+      border-left: 4px solid #6C4FD1;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: #3A342C;
+      font-style: italic;
+    }
+    .scenario-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.3rem;
+    }
+    .scenario-chip {
+      background: #F4F0FF;
+      border: 1px solid #DDD4F5;
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: 0.15s;
+      color: #3C2A8C;
+      font-weight: 500;
+    }
+    .scenario-chip:hover {
+      background: #E9E1FF;
+      border-color: #6C4FD1;
+    }
+    .results-panel {
+      flex: 1;
+      padding: 2rem 2.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+      overflow-y: auto;
+      max-height: 85vh;
+    }
+    .kpi-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .kpi-card {
+      background: #FFFFFF;
+      border: 1px solid #E2D9CD;
+      border-radius: 14px;
+      padding: 1.2rem;
+      flex: 1;
+      min-width: 130px;
+      text-align: center;
+    }
+    .kpi-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7A6F62;
+    }
+    .kpi-value {
+      font-family: 'Lora', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1A1A1A;
+    }
+    .recommendation-card {
+      background: #FDFBFF;
+      border: 2px solid #6C4FD1;
+      border-radius: 18px;
+      padding: 1.8rem;
+      box-shadow: 0 10px 30px rgba(108,79,209,0.1);
+      animation: fadeSlide 0.5s ease;
+    }
+    @keyframes fadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .rec-tier {
+      font-family: 'Lora', serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: #6C4FD1;
+    }
+    .rec-reason {
+      font-size: 0.95rem;
+      color: #2E284A;
+      margin-top: 0.5rem;
+      line-height: 1.6;
+    }
+    .tabs {
+      display: flex;
+      gap: 0.3rem;
+      border-bottom: 2px solid #E8E0D5;
+      margin-bottom: 0.5rem;
+    }
+    .tab {
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.82rem;
+      color: #7A6F62;
+      border-bottom: 3px solid transparent;
+      transition: 0.15s;
+    }
+    .tab.active {
+      color: #6C4FD1;
+      border-bottom-color: #6C4FD1;
+    }
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid #E2D9CD;
+      border-radius: 14px;
+      display: none;
+    }
+    .table-container.active {
+      display: block;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.83rem;
+      min-width: 700px;
+    }
+    th {
+      background: #F9F6F0;
+      font-weight: 700;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0.8rem 0.5rem;
+      border-bottom: 2px solid #DDD3C4;
+      cursor: pointer;
+    }
+    th:hover {
+      color: #6C4FD1;
+    }
+    td {
+      padding: 0.65rem 0.5rem;
+      border-bottom: 1px solid #EFE9DE;
+      text-align: center;
+    }
+    .badge-rec {
+      background: #D9F0E1;
+      color: #1C5432;
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.68rem;
+    }
+    .badge-expensive {
+      background: #FFE0E0;
+      color: #9B2C2C;
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.68rem;
+    }
+    .badge-starter {
+      background: #FFF0CA;
+      color: #6B4F10;
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.68rem;
+    }
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+    .chart-card {
+      background: #FFFFFF;
+      border: 1px solid #E2D9CD;
+      border-radius: 16px;
+      padding: 1.4rem;
+    }
+    .breakeven-card {
+      background: #FFF9EA;
+      border: 1px solid #F0E0B0;
+      border-radius: 14px;
+      padding: 1.2rem;
+    }
+    .disclaimer {
+      font-size: 0.7rem;
+      color: #999;
+      margin-top: 0.3rem;
+    }
+    @media (max-width: 900px) {
+      .main-layout {
+        flex-direction: column;
+      }
+      .input-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #E8E0D5;
+      }
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="dash-header">
+    <div>
+      <h1>💰 Subscription Tier Pricing Calculator</h1>
+      <div class="accent-line"></div>
+      <p class="subtitle" style="font-size:0.9rem;color:#5B5248;">Find your optimal PromptBase subscription tier — unlimited scenario modeling.</p>
+    </div>
+    <button class="guide-toggle" id="guideToggle">📘 How to use ▾</button>
+    <div class="guide-panel" id="guidePanel">
+      <strong>✨ Full Guide</strong><br>
+      • <strong>Enter your numbers</strong> — avg price, prompts/month, target subscribers.<br>
+      • <strong>Use sliders</strong> for quick scenario testing.<br>
+      • <strong>Preset scenarios</strong> — click "Sticker Seller" or "Power Creator" to load examples.<br>
+      • <strong>Recommendation logic:</strong> tiers at 40‑70% of individual buy cost = "genuine deal".<br>
+      • <strong>Net income</strong> uses PromptBase's real 15% subscription fee (vs. 20% one‑off).<br>
+      • <strong>Breakeven analysis</strong> shows how many subscribers you need to match one‑off revenue.<br>
+      • <strong>Charts:</strong> net income per tier + savings % vs. buying individually.<br>
+      • <strong>Sort table</strong> by clicking column headers.<br>
+      • <strong>Copy report</strong> to share or save your analysis.
+    </div>
+  </div>
+  <div class="main-layout">
+    <div class="input-panel">
+      <div class="input-group">
+        <label>📊 Average Prompt Price ($)</label>
+        <div class="slider-group">
+          <input type="range" id="avgPriceSlider" min="1.99" max="19.99" step="0.01" value="3.99">
+          <span class="slider-value" id="avgPriceValue">$3.99</span>
+        </div>
+        <input type="number" id="avgPrice" value="3.99" step="0.01" min="0.01">
+      </div>
+      <div class="input-group">
+        <label>📦 New Prompts Per Month</label>
+        <div class="slider-group">
+          <input type="range" id="promptsSlider" min="2" max="50" step="1" value="10">
+          <span class="slider-value" id="promptsValue">10</span>
+        </div>
+        <input type="number" id="promptsPerMonth" value="10" step="1" min="1">
+      </div>
+      <div class="input-group">
+        <label>👥 Target Subscribers</label>
+        <div class="slider-group">
+          <input type="range" id="subsSlider" min="1" max="200" step="1" value="10">
+          <span class="slider-value" id="subsValue">10</span>
+        </div>
+        <input type="number" id="subscriberCount" value="10" step="1" min="1">
+      </div>
+      <button id="calculateBtn">📈 Calculate My Ideal Tier</button>
+      <button id="copyReportBtn" class="btn-outline">📋 Copy Full Report</button>
+      <div style="font-size:0.7rem;color:#888;">📌 Preset scenarios:</div>
+      <div class="scenario-chips">
+        <span class="scenario-chip" data-scenario="sticker">Sticker Seller</span>
+        <span class="scenario-chip" data-scenario="coloring">Coloring Page Creator</span>
+        <span class="scenario-chip" data-scenario="power">Power Creator</span>
+        <span class="scenario-chip" data-scenario="premium">Premium Portfolio</span>
+        <span class="scenario-chip" data-scenario="beginner">Beginner</span>
+      </div>
+      <div class="info-box">
+        💡 <strong>Instant Free Items:</strong> Set to <strong>10</strong> — generosity kills hesitation. <em>[Prompts That Pay]</em>
+      </div>
+      <div class="info-box" style="border-left-color:#F5B042;">
+        📌 Subscriptions use <strong>15% fee</strong> (vs. 20% one‑off). All net income reflects this.
+      </div>
+    </div>
+
+    <div class="results-panel" id="resultsPanel">
+      <div style="text-align:center;color:#999;padding:3rem;" id="placeholderResults">
+        👈 <strong>Adjust your numbers</strong> — results update automatically.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var avgPriceInput = document.getElementById('avgPrice');
+    var avgPriceSlider = document.getElementById('avgPriceSlider');
+    var avgPriceValue = document.getElementById('avgPriceValue');
+    var promptsPerMonthInput = document.getElementById('promptsPerMonth');
+    var promptsSlider = document.getElementById('promptsSlider');
+    var promptsValue = document.getElementById('promptsValue');
+    var subscriberCountInput = document.getElementById('subscriberCount');
+    var subsSlider = document.getElementById('subsSlider');
+    var subsValue = document.getElementById('subsValue');
+    var calculateBtn = document.getElementById('calculateBtn');
+    var copyReportBtn = document.getElementById('copyReportBtn');
+    var resultsPanel = document.getElementById('resultsPanel');
+    var guideToggle = document.getElementById('guideToggle');
+    var guidePanel = document.getElementById('guidePanel');
+
+    var allTiers = [7, 9, 14, 19, 29, 39, 49, 59, 69, 79, 89, 99];
+    var SUBSCRIPTION_FEE = 0.15;
+    var ONEOFF_FEE = 0.20;
+    var currentData = null;
+    var sortCol = 'tier';
+    var sortAsc = true;
+
+    guideToggle.addEventListener('click', function() {
+      guidePanel.classList.toggle('visible');
+      guideToggle.innerHTML = guidePanel.classList.contains('visible') ? '📘 Hide guide ▴' : '📘 How to use ▾';
+    });
+
+    function syncInputs() {
+      avgPriceInput.value = parseFloat(avgPriceSlider.value).toFixed(2);
+      avgPriceValue.textContent = '$' + parseFloat(avgPriceSlider.value).toFixed(2);
+      promptsPerMonthInput.value = promptsSlider.value;
+      promptsValue.textContent = promptsSlider.value;
+      subscriberCountInput.value = subsSlider.value;
+      subsValue.textContent = subsSlider.value;
+      handleCalculate();
+    }
+
+    avgPriceSlider.addEventListener('input', syncInputs);
+    promptsSlider.addEventListener('input', syncInputs);
+    subsSlider.addEventListener('input', syncInputs);
+    avgPriceInput.addEventListener('change', function() {
+      avgPriceSlider.value = avgPriceInput.value;
+      avgPriceValue.textContent = '$' + parseFloat(avgPriceInput.value).toFixed(2);
+      handleCalculate();
+    });
+    promptsPerMonthInput.addEventListener('change', function() {
+      promptsSlider.value = promptsPerMonthInput.value;
+      promptsValue.textContent = promptsPerMonthInput.value;
+      handleCalculate();
+    });
+    subscriberCountInput.addEventListener('change', function() {
+      subsSlider.value = subscriberCountInput.value;
+      subsValue.textContent = subscriberCountInput.value;
+      handleCalculate();
+    });
+    calculateBtn.addEventListener('click', handleCalculate);
+
+    var scenarioChips = document.querySelectorAll('.scenario-chip');
+    for (var s = 0; s < scenarioChips.length; s++) {
+      scenarioChips[s].addEventListener('click', function() {
+        var scenario = this.getAttribute('data-scenario');
+        var presets = {
+          sticker: { price: 2.99, prompts: 15, subs: 15 },
+          coloring: { price: 4.99, prompts: 8, subs: 20 },
+          power: { price: 6.99, prompts: 20, subs: 30 },
+          premium: { price: 9.99, prompts: 5, subs: 10 },
+          beginner: { price: 2.99, prompts: 10, subs: 5 }
+        };
+        var p = presets[scenario];
+        if (p) {
+          avgPriceSlider.value = p.price;
+          avgPriceInput.value = p.price;
+          avgPriceValue.textContent = '$' + p.price.toFixed(2);
+          promptsSlider.value = p.prompts;
+          promptsPerMonthInput.value = p.prompts;
+          promptsValue.textContent = p.prompts;
+          subsSlider.value = p.subs;
+          subscriberCountInput.value = p.subs;
+          subsValue.textContent = p.subs;
+          handleCalculate();
+        }
+      });
+    }
+
+    function calculateResults(avgPrice, promptsPerMonth, subscriberCount) {
+      var individualBuyCost = avgPrice * promptsPerMonth;
+      var results = [];
+      for (var i = 0; i < allTiers.length; i++) {
+        var tierPrice = allTiers[i];
+        var percentOfIndividual = (tierPrice / individualBuyCost) * 100;
+        var netIncome = tierPrice * (1 - SUBSCRIPTION_FEE);
+        var savingsPercent = individualBuyCost > 0 ? Math.round((1 - tierPrice / individualBuyCost) * 100) : 0;
+        var verdict = '';
+        var verdictClass = '';
+        if (percentOfIndividual >= 40 && percentOfIndividual <= 70) {
+          verdict = '✅ Recommended';
+          verdictClass = 'badge-rec';
+        } else if (tierPrice > individualBuyCost) {
+          verdict = '⚠️ Too Expensive';
+          verdictClass = 'badge-expensive';
+        } else if (percentOfIndividual < 30) {
+          verdict = '💡 Starter Tier';
+          verdictClass = 'badge-starter';
+        } else if (percentOfIndividual > 70 && tierPrice <= individualBuyCost) {
+          verdict = '⚖️ Acceptable';
+          verdictClass = 'badge-starter';
+        } else { verdict = '—';
+          verdictClass = ''; }
+        results.push({
+          tierPrice: tierPrice,
+          percentOfIndividual: percentOfIndividual,
+          netIncome: netIncome,
+          savingsPercent: savingsPercent,
+          verdict: verdict,
+          verdictClass: verdictClass,
+          isRecommended: (percentOfIndividual >= 40 && percentOfIndividual <= 70),
+          projectedMRR: netIncome * subscriberCount,
+          projectedARR: netIncome * subscriberCount * 12
+        });
+      }
+      var recommendedTiers = results.filter(function(r) { return r.isRecommended; });
+      var primaryRecommendation = null;
+      if (recommendedTiers.length > 0) {
+        var bestDiff = Infinity;
+        for (var r = 0; r < recommendedTiers.length; r++) {
+          var diff = Math.abs(recommendedTiers[r].percentOfIndividual - 55);
+          if (diff < bestDiff) { bestDiff = diff;
+            primaryRecommendation = recommendedTiers[r]; }
+        }
+      }
+      if (!primaryRecommendation) {
+        var closestTier = null;
+        var closestDiff = Infinity;
+        for (var j = 0; j < results.length; j++) {
+          if (results[j].tierPrice <= individualBuyCost) {
+            var d = Math.abs(results[j].percentOfIndividual - 55);
+            if (d < closestDiff) { closestDiff = d;
+              closestTier = results[j]; }
+          }
+        }
+        if (closestTier) { closestTier.isRecommended = true;
+          closestTier.verdict = '✅ Best Available';
+          closestTier.verdictClass = 'badge-rec';
+          primaryRecommendation = closestTier; }
+      }
+      var breakevenSubs = primaryRecommendation ? Math.ceil((avgPrice * promptsPerMonth * ONEOFF_FEE) / primaryRecommendation
+        .netIncome) : 0;
+      return {
+        individualBuyCost: individualBuyCost,
+        results: results,
+        primaryRecommendation: primaryRecommendation,
+        subscriberCount: subscriberCount,
+        breakevenSubs: breakevenSubs,
+        avgPrice: avgPrice,
+        promptsPerMonth: promptsPerMonth
+      };
+    }
+
+    function sortResults(results, col, asc) {
+      return results.slice().sort(function(a, b) {
+        var valA, valB;
+        if (col === 'tier') { valA = a.tierPrice;
+          valB = b.tierPrice; } else if (col === 'percent') { valA = a.percentOfIndividual;
+          valB = b.percentOfIndividual; } else if (col === 'net') { valA = a.netIncome;
+          valB = b.netIncome; } else if (col === 'mrr') { valA = a.projectedMRR;
+          valB = b.projectedMRR; } else if (col === 'verdict') { valA = a.verdict;
+          valB = b.verdict; } else { valA = a.tierPrice;
+          valB = b.tierPrice; }
+        if (typeof valA === 'string') return asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        return asc ? valA - valB : valB - valA;
+      });
+    }
+
+    function renderResults(data) {
+      currentData = data;
+      var html = '';
+      if (data.primaryRecommendation) {
+        var rec = data.primaryRecommendation;
+        html += '<div class="recommendation-card">';
+        html +=
+          '<div style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;color:#6C4FD1;">✅ Recommended Tier</div>';
+        html += '<div class="rec-tier">$' + rec.tierPrice + '<span style="font-size:1rem;">/month</span></div>';
+        html += '<div class="rec-reason">Buying your prompts individually would cost a fan about <strong>$' + data
+          .individualBuyCost.toFixed(2) + '/month</strong>. A <strong>$' + rec.tierPrice +
+          '/month</strong> subscription saves them <strong>' + rec.savingsPercent +
+          '%</strong> — a genuine deal that builds predictable recurring income for you.</div>';
+        html +=
+          '<div style="margin-top:0.6rem;font-size:0.85rem;color:#5B5248;">Net income per subscriber: <strong>$' + rec
+          .netIncome.toFixed(2) + '/month</strong> (after 15% fee)</div>';
+        html += '</div>';
+      }
+      html += '<div class="kpi-row">';
+      html +=
+        '<div class="kpi-card"><div class="kpi-label">Individual Buy Cost</div><div class="kpi-value">$' + data
+        .individualBuyCost.toFixed(2) + '</div><div style="font-size:0.7rem;">per fan/month</div></div>';
+      html += '<div class="kpi-card"><div class="kpi-label">Rec. Net Income</div><div class="kpi-value">$' + (data
+        .primaryRecommendation ? data.primaryRecommendation.netIncome.toFixed(2) : '—') +
+        '</div><div style="font-size:0.7rem;">per sub/month</div></div>';
+      html += '<div class="kpi-card"><div class="kpi-label">Projected MRR</div><div class="kpi-value">$' + (data
+        .primaryRecommendation ? data.primaryRecommendation.projectedMRR.toFixed(2) : '—') +
+        '</div><div style="font-size:0.7rem;">with ' + data.subscriberCount + ' subs</div></div>';
+      html += '<div class="kpi-card"><div class="kpi-label">Breakeven Subs</div><div class="kpi-value">' + data
+        .breakevenSubs + '</div><div style="font-size:0.7rem;">to match one‑off revenue</div></div>';
+      html += '</div>';
+      html += '<div class="breakeven-card">📊 <strong>Breakeven Analysis:</strong> You need <strong>' + data
+        .breakevenSubs + ' subscriber(s)</strong> at the recommended tier to generate more net income than selling ' + data
+        .promptsPerMonth + ' prompts individually at $' + data.avgPrice.toFixed(2) + ' each (after 20% one‑off fee).</div>';
+      html += '<div class="tabs"><span class="tab active" data-tab="table">📋 Tier Comparison Table</span><span class="tab" data-tab="charts">📈 Charts</span></div>';
+      html += '<div class="table-container active" id="tableView">';
+      html += '<table><thead><tr>';
+      html += '<th data-sort="tier">Tier Price</th><th data-sort="percent">% of Indiv.</th><th data-sort="net">Net Income</th><th data-sort="mrr">MRR (' +
+        data.subscriberCount + ' subs)</th><th data-sort="verdict">Verdict</th></tr></thead><tbody>';
+      var sorted = sortResults(data.results, sortCol, sortAsc);
+      for (var i = 0; i < sorted.length; i++) {
+        var row = sorted[i];
+        html += '<tr style="' + (row.isRecommended ? 'background:#FDFBFF;font-weight:600;' : '') + '">';
+        html += '<td>$' + row.tierPrice + '</td>';
+        html += '<td>' + row.percentOfIndividual.toFixed(1) + '%</td>';
+        html += '<td>$' + row.netIncome.toFixed(2) + '</td>';
+        html += '<td>$' + row.projectedMRR.toFixed(2) + '</td>';
+        html += '<td>' + (row.verdictClass ? '<span class="' + row.verdictClass + '">' + row.verdict + '</span>' : row
+          .verdict) + '</td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table></div>';
+      html += '<div class="chart-grid" id="chartView" style="display:none;">';
+      html += '<div class="chart-card"><h3 style="font-family:Lora;margin-bottom:0.6rem;">Net Income Per Subscriber</h3><canvas id="incomeChart"></canvas></div>';
+      html +=
+        '<div class="chart-card"><h3 style="font-family:Lora;margin-bottom:0.6rem;">Savings vs. Individual Buy</h3><canvas id="savingsChart"></canvas></div>';
+      html += '</div>';
+      html +=
+        '<div class="disclaimer">⚠️ Estimates based on your inputs and pricing logic from <em>Prompts That Pay</em>. PromptBase subscription fee: 15% (vs. 20% one‑off). Actual subscriber behavior varies.</div>';
+      resultsPanel.innerHTML = html;
+      resultsPanel.style.animation = 'none';
+      resultsPanel.offsetHeight;
+      resultsPanel.style.animation = 'fadeSlide 0.5s ease';
+      attachListeners(data);
+      setTimeout(function() { renderCharts(data); }, 150);
+    }
+
+    function attachListeners(data) {
+      var tabs = document.querySelectorAll('.tab');
+      for (var t = 0; t < tabs.length; t++) {
+        tabs[t].addEventListener('click', function() {
+          var tabName = this.getAttribute('data-tab');
+          document.querySelectorAll('.tab').forEach(function(tb) { tb.classList.remove('active'); });
+          this.classList.add('active');
+          document.getElementById('tableView').style.display = tabName === 'table' ? 'block' : 'none';
+          document.getElementById('chartView').style.display = tabName === 'charts' ? 'grid' : 'none';
+          if (tabName === 'charts') setTimeout(function() { renderCharts(data); }, 100);
+        });
+      }
+      var headers = document.querySelectorAll('th[data-sort]');
+      for (var h = 0; h < headers.length; h++) {
+        headers[h].addEventListener('click', function() {
+          var col = this.getAttribute('data-sort');
+          if (sortCol === col) sortAsc = !sortAsc;
+          else { sortCol = col;
+            sortAsc = true; }
+          renderResults(data);
+        });
+      }
+    }
+
+    function renderCharts(data) {
+      var incomeCanvas = document.getElementById('incomeChart');
+      var savingsCanvas = document.getElementById('savingsChart');
+      if (!incomeCanvas || !savingsCanvas) return;
+      if (incomeCanvas._chart) incomeCanvas._chart.destroy();
+      if (savingsCanvas._chart) savingsCanvas._chart.destroy();
+      var labels = data.results.map(function(r) { return '$' + r.tierPrice; });
+      var netValues = data.results.map(function(r) { return r.netIncome; });
+      var savingsValues = data.results.map(function(r) { return r.savingsPercent; });
+      var bgColors = data.results.map(function(r) { return r.isRecommended ? 'rgba(108,79,209,0.9)' : 'rgba(200,180,210,0.5)'; });
+      incomeCanvas._chart = new Chart(incomeCanvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{ label: 'Net Income ($)', data: netValues, backgroundColor: bgColors, borderColor: '#6C4FD1',
+            borderWidth: 1, borderRadius: 6 }]
+        },
+        options: { responsive: true, animation: { duration: 500 }, plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, grid: { color: '#E8E0D5' } } } }
+      });
+      savingsCanvas._chart = new Chart(savingsCanvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{ label: 'Savings %', data: savingsValues, backgroundColor: bgColors, borderColor: '#6C4FD1',
+            borderWidth: 1, borderRadius: 6 }]
+        },
+        options: { responsive: true, animation: { duration: 500 }, plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, grid: { color: '#E8E0D5' }, ticks: { callback: function(v) { return v +
+                  '%'; } } } } }
+      });
+    }
+
+    function handleCalculate() {
+      var avgPrice = parseFloat(avgPriceInput.value) || 3.99;
+      var promptsPerMonth = parseInt(promptsPerMonthInput.value) || 10;
+      var subscriberCount = parseInt(subscriberCountInput.value) || 10;
+      if (avgPrice <= 0 || promptsPerMonth <= 0 || subscriberCount <= 0) {
+        resultsPanel.innerHTML =
+          '<div style="text-align:center;color:#C0392B;padding:2rem;">⚠️ Please enter valid positive numbers.</div>';
+        return;
+      }
+      var data = calculateResults(avgPrice, promptsPerMonth, subscriberCount);
+      renderResults(data);
+    }
+
+    copyReportBtn.addEventListener('click', function() {
+      if (!currentData) { alert('Run a calculation first.'); return; }
+      var d = currentData;
+      var text = '=== Subscription Tier Pricing Report ===\n\n';
+      text += 'Avg Price: $' + d.avgPrice.toFixed(2) + ' | Prompts/Month: ' + d.promptsPerMonth + ' | Target Subs: ' + d
+        .subscriberCount + '\n';
+      text += 'Individual Buy Cost: $' + d.individualBuyCost.toFixed(2) + '/month\n';
+      if (d.primaryRecommendation) {
+        text += 'Recommended Tier: $' + d.primaryRecommendation.tierPrice + '/month (' + d.primaryRecommendation
+          .savingsPercent + '% savings)\n';
+        text += 'Net Income/Sub: $' + d.primaryRecommendation.netIncome.toFixed(2) + ' | MRR: $' + d
+          .primaryRecommendation.projectedMRR.toFixed(2) + ' | ARR: $' + d.primaryRecommendation.projectedARR.toFixed(2) +
+          '\n';
+      }
+      text += 'Breakeven Subscribers: ' + d.breakevenSubs + '\n\n';
+      text += 'Tier | % of Indiv. | Net Income | Verdict\n';
+      for (var i = 0; i < d.results.length; i++) {
+        var r = d.results[i];
+        text += '$' + r.tierPrice + ' | ' + r.percentOfIndividual.toFixed(1) + '% | $' + r.netIncome.toFixed(2) + ' | ' + r
+          .verdict + '\n';
+      }
+      navigator.clipboard.writeText(text).then(function() {
+        copyReportBtn.textContent = '✓ Copied!';
+        setTimeout(function() { copyReportBtn.textContent = '📋 Copy Full Report'; }, 2000);
+      });
+    });
+
+    handleCalculate();
+  })();
+</script>
+</body>
+</html>
