@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Pre‑Submit Rejection Simulator · Prompts That Pay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #FAFAFA;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1A1A1A;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.8rem;
+      background-image: radial-gradient(circle at 20% 30%, rgba(108,79,209,0.025) 0%, transparent 55%);
+    }
+
+    .simulator {
+      max-width: 1500px;
+      width: 100%;
+      background: #FFFFFF;
+      border: 1px solid #E8E8E8;
+      border-radius: 26px;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+      min-height: 800px;
+    }
+
+    /* Left panel */
+    .left-panel {
+      width: 500px;
+      background: #FFFFFF;
+      border-right: 1px solid #EEEEEE;
+      padding: 2rem 1.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+
+    .left-header h1 {
+      font-family: 'Sora', sans-serif;
+      font-weight: 700;
+      font-size: 1.6rem;
+      letter-spacing: -0.5px;
+      color: #1A1A1A;
+      margin: 0;
+    }
+
+    .accent-line {
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, #6C4FD1, #9B84EE);
+      border-radius: 4px;
+      margin: 0.3rem 0 0.5rem;
+    }
+
+    .guide-toggle {
+      background: #F4F0FF;
+      border: 1px solid #DDD4F5;
+      border-radius: 24px;
+      padding: 0.5rem 1.3rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #4A3A8C;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      width: fit-content;
+      transition: 0.2s;
+    }
+
+    .guide-toggle:hover {
+      background: #E9E1FF;
+      border-color: #6C4FD1;
+    }
+
+    .guide-panel {
+      background: #FDFBFF;
+      border: 1px solid #E2DBF5;
+      border-radius: 14px;
+      padding: 1.1rem;
+      font-size: 0.82rem;
+      color: #2E284A;
+      display: none;
+      line-height: 1.7;
+    }
+
+    .guide-panel.visible {
+      display: block;
+    }
+
+    textarea {
+      width: 100%;
+      flex: 1;
+      min-height: 260px;
+      padding: 1rem;
+      border: 1px solid #DDD8EB;
+      border-radius: 12px;
+      font-family: 'Inter', monospace;
+      font-size: 0.88rem;
+      resize: vertical;
+      background: #FCFBFF;
+      transition: border 0.15s;
+      line-height: 1.6;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #6C4FD1;
+      box-shadow: 0 0 0 4px rgba(108,79,209,0.08);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #FFFFFF;
+      border: 1px solid #D9D2EC;
+      padding: 0.65rem 1.2rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #2E284A;
+      background: #FAF9FD;
+      letter-spacing: 0.2px;
+    }
+
+    button:hover {
+      background: #F0ECFF;
+      border-color: #6C4FD1;
+      color: #3D2A8C;
+      box-shadow: 0 4px 10px rgba(108,79,209,0.1);
+    }
+
+    .btn-primary {
+      background: #6C4FD1;
+      border: 1px solid #6C4FD1;
+      color: white;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      background: #5A3DB5;
+      border-color: #5A3DB5;
+      color: white;
+    }
+
+    .sample-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .sample-link {
+      color: #6C4FD1;
+      cursor: pointer;
+      text-decoration: underline;
+      background: #F4F0FF;
+      padding: 0.25rem 0.7rem;
+      border-radius: 14px;
+    }
+
+    .stats-mini {
+      display: flex;
+      gap: 0.8rem;
+      font-size: 0.7rem;
+      color: #7A6F82;
+      flex-wrap: wrap;
+    }
+
+    /* Right panel */
+    .right-panel {
+      flex: 1;
+      background: #F9F8FD;
+      padding: 1.8rem 2rem 1.8rem 2rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      max-height: 90vh;
+    }
+
+    .summary-bar {
+      background: #FFFFFF;
+      border: 1px solid #E4DFF2;
+      border-radius: 14px;
+      padding: 1rem 1.4rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+
+    .score-ring {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: conic-gradient(#6C4FD1 var(--score-percent, 0%), #E8E0F5 0%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #3C2A8C;
+    }
+
+    .report-card {
+      background: #FFFFFF;
+      border: 1px solid #EBE7F2;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .report-card:hover {
+      box-shadow: 0 6px 18px rgba(108,79,209,0.06);
+    }
+
+    .card-header {
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      background: #FAFAFC;
+      border-bottom: 1px solid #F0EDF7;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .card-body {
+      padding: 1rem 1.2rem;
+      font-size: 0.85rem;
+      display: none;
+      color: #2E2E2E;
+      line-height: 1.65;
+    }
+
+    .card-body.open {
+      display: block;
+    }
+
+    .badge {
+      padding: 0.25rem 0.8rem;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .badge-pass {
+      background: #D9F0E1;
+      color: #1C5432;
+    }
+    .badge-warn {
+      background: #FFF0CA;
+      color: #6B4F10;
+    }
+    .badge-fail {
+      background: #FFE0E0;
+      color: #9B2C2C;
+    }
+    .badge-manual {
+      background: #E8E0F5;
+      color: #4A3890;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin: 0.5rem 0;
+    }
+
+    .playbook-quote {
+      background: #F4F0FF;
+      border-left: 4px solid #6C4FD1;
+      padding: 0.7rem 0.9rem;
+      border-radius: 8px;
+      font-style: italic;
+      color: #2E2654;
+      margin-top: 0.5rem;
+    }
+
+    .highlight-fix {
+      background: #FFF9EA;
+      border-left: 4px solid #F5B042;
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      margin-top: 0.4rem;
+      font-weight: 500;
+    }
+
+    @media (max-width: 900px) {
+      .simulator {
+        flex-direction: column;
+      }
+      .left-panel {
+        width: 100%;
+        border-right: none;
+        max-height: none;
+      }
+      .right-panel {
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="simulator">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="left-header">
+      <h1>🔬 Rejection Simulator</h1>
+      <div class="accent-line"></div>
+      <button class="guide-toggle" id="guideToggle">📘 How to use this tool ▾</button>
+      <div class="guide-panel" id="guidePanel">
+        <strong>✨ Quick Guide</strong><br>
+        • <strong>Paste</strong> your full ChatGPT Image prompt template (with [BRACKETS]).<br>
+        • <strong>Click "Run Diagnostic"</strong> to scan against 7 official decline reasons.<br>
+        • <strong>Automated checks:</strong> bracket count, style conflicts, Avoid: line, output specs, naming.<br>
+        • <strong>Manual checks:</strong> example similarity, edited outputs, verification, catalog overlap.<br>
+        • <strong>Expand cards</strong> to see exact playbook quotes and fix suggestions.<br>
+        • <strong>Check off</strong> manual items to track your readiness.<br>
+        • <strong>Copy report</strong> to share or save your diagnostic.<br>
+        • <strong>Score ring</strong> shows automated pass rate (not a guarantee — manual checks still needed).
+      </div>
+    </div>
+    <textarea id="promptInput" placeholder="Paste your template here, e.g.:
+A [ANIMAL] in kawaii flat vector illustration style, bold clean outlines, pastel color palette, centered composition, playful mood. Avoid: shading, gradients, drop shadow, scenery. Output: white background, 2:3 aspect ratio, print-ready 300dpi."></textarea>
+    <div class="stats-mini" id="liveStats">
+      Words: 0 | Brackets: 0 | Commas: 0 | Avoid: ✗ | Ratio: ✗
+    </div>
+    <div class="btn-row">
+      <button id="runBtn" class="btn-primary">🔍 Run Diagnostic</button>
+      <button id="copyReportBtn">📋 Copy Report</button>
+      <button id="clearBtn">🗑️ Clear</button>
+    </div>
+    <div class="sample-links">
+      <span class="sample-link" id="sampleGood">✅ Load clean template</span>
+      <span class="sample-link" id="sampleBad">❌ Load problematic template</span>
+      <span class="sample-link" id="sampleConflict">⚠️ Load conflict template</span>
+    </div>
+    <div style="font-size:0.7rem; color:#999; margin-top:0.2rem;">Text‑only heuristics · partial automated pre‑check · not a submission guarantee</div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel" id="reportPanel">
+    <div class="summary-bar" id="summaryBar">
+      <div class="score-ring" id="scoreRing" style="--score-percent:0%;">0%</div>
+      <span id="summaryText">⏳ Ready to scan. Paste a template and click "Run Diagnostic".</span>
+    </div>
+    <div id="reportCards"></div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // DOM
+    var promptInput = document.getElementById('promptInput');
+    var runBtn = document.getElementById('runBtn');
+    var copyReportBtn = document.getElementById('copyReportBtn');
+    var clearBtn = document.getElementById('clearBtn');
+    var sampleGood = document.getElementById('sampleGood');
+    var sampleBad = document.getElementById('sampleBad');
+    var sampleConflict = document.getElementById('sampleConflict');
+    var summaryBar = document.getElementById('summaryBar');
+    var summaryText = document.getElementById('summaryText');
+    var scoreRing = document.getElementById('scoreRing');
+    var reportCards = document.getElementById('reportCards');
+    var liveStats = document.getElementById('liveStats');
+    var guideToggle = document.getElementById('guideToggle');
+    var guidePanel = document.getElementById('guidePanel');
+
+    // Guide toggle
+    guideToggle.addEventListener('click', function() {
+      if (guidePanel.classList.contains('visible')) {
+        guidePanel.classList.remove('visible');
+        guideToggle.innerHTML = '📘 How to use this tool ▾';
+      } else {
+        guidePanel.classList.add('visible');
+        guideToggle.innerHTML = '📘 Hide guide ▴';
+      }
+    });
+
+    // Live stats
+    promptInput.addEventListener('input', function() {
+      updateLiveStats();
+    });
+
+    function updateLiveStats() {
+      var text = promptInput.value;
+      var words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      var brackets = (text.match(/\[([^\]]+)\]/g) || []).length;
+      var commas = text.replace(/\[.*?\]/g, '').split(',').length - 1;
+      var hasAvoid = /avoid/i.test(text);
+      var hasRatio = /\d+:\d+/.test(text);
+      liveStats.innerHTML = 'Words: ' + words + ' | Brackets: ' + brackets + ' | Commas: ' + commas +
+        ' | Avoid: ' + (hasAvoid ? '✓' : '✗') + ' | Ratio: ' + (hasRatio ? '✓' : '✗');
+    }
+
+    // Conflict pairs (18+)
+    var conflictPairs = [
+      ["photorealistic", "cartoon"], ["flat", "3d"], ["flat", "three-dimensional"],
+      ["minimalist", "highly detailed"], ["vintage", "futuristic"], ["watercolor", "vector"],
+      ["realistic", "cartoonish"], ["simple", "ornate"], ["black and white", "vibrant rainbow"],
+      ["sketch", "photorealistic"], ["hand-drawn", "digital 3d render"],
+      ["line art", "full shading"], ["retro", "hypermodern"], ["painterly", "flat vector"],
+      ["grainy film", "clean digital"], ["abstract", "hyperrealistic"],
+      ["pencil sketch", "glossy 3d"], ["rough charcoal", "smooth vector"]
+    ];
+
+    // Known weak style phrases
+    var weakStylePhrases = ["beautiful", "nice", "good", "amazing", "cool", "great", "stunning",
+      "wonderful", "fantastic", "awesome", "lovely", "pretty"];
+
+    // ---- Core diagnostic engine ----
+    function runDiagnostic(text) {
+      var results = [];
+      var cleanText = text.trim();
+      var lowerText = cleanText.toLowerCase();
+      var wordCount = cleanText.split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+      var bracketMatches = cleanText.match(/\[([^\]]+)\]/g) || [];
+      var bracketCount = bracketMatches.length;
+      var avoidIndex = lowerText.indexOf('avoid');
+      var textBeforeAvoid = avoidIndex > -1 ? cleanText.substring(0, avoidIndex) : cleanText;
+      var commasOutsideBrackets = textBeforeAvoid.replace(/\[.*?\]/g, '').split(',').length - 1;
+
+      // 1. Too specific / niche
+      var cat1 = { id: 1, title: "1. Too Specific / Niche", status: "pass", detail: "", quote: "", fix: "" };
+      if (bracketCount === 0) {
+        cat1.status = "fail";
+        cat1.detail = "No editable [VARIABLE] found. This appears to be a single-image prompt — these are auto-rejected because they can't be customized by buyers.";
+        cat1.quote = "Every template needs at least one clear [VARIABLE] slot that the buyer swaps to make it their own.";
+        cat1.fix = "Add at least one [VARIABLE] in square brackets where the buyer's subject goes (e.g., [ANIMAL], [HISTORY TOPIC], [FLOWER TYPE]).";
+      } else if (bracketCount >= 3) {
+        cat1.status = "warning";
+        cat1.detail = bracketCount + " [VARIABLES] detected. The playbook allows two brackets only when they build a single scene together. Three or more separate concepts glued together will likely be rejected.";
+        cat1.quote = "Two brackets are fine only when they build a single scene together... three concepts glued together should collapse into one [SUBJECT] or split into separate listings.";
+        cat1.fix = "Consider collapsing into one broader [SUBJECT] bracket, or splitting into multiple separate template listings.";
+      } else {
+        cat1.detail = "Bracket count (" + bracketCount + ") looks reasonable. Ensure each variable represents one clear swappable concept that buyers will intuitively understand.";
+      }
+      if (commasOutsideBrackets > 7 && cat1.status === 'pass') {
+        cat1.status = "warning";
+        cat1.detail += " Additionally, " + commasOutsideBrackets + " descriptive commas detected outside brackets — possible concept stacking.";
+        cat1.quote = "Stack no more than about three ideas into the fixed style.";
+      }
+      results.push(cat1);
+
+      // 2. Examples too similar (manual)
+      results.push({
+        id: 2, title: "2. Examples Too Similar", status: "manual",
+        detail: "This cannot be verified from text alone. You must check your 9 example images: vary the subject, not the style. Nine visibly different subjects in one consistent style = approval.",
+        quote: "Vary the subject, not the style. Nine different subjects in one consistent style = approval.",
+        checklist: ["Did you generate exactly 9 images?", "Are all 9 subjects clearly different from each other?", "Is the artistic style identical across every image?"]
+      });
+
+      // 3. Inconsistent style
+      var cat3 = { id: 3, title: "3. Inconsistent Style", status: "pass", detail: "", quote: "", fix: "" };
+      var foundConflicts = [];
+      for (var i = 0; i < conflictPairs.length; i++) {
+        var pair = conflictPairs[i];
+        if (lowerText.indexOf(pair[0]) !== -1 && lowerText.indexOf(pair[1]) !== -1) {
+          foundConflicts.push(pair);
+        }
+      }
+      if (foundConflicts.length > 0) {
+        cat3.status = "fail";
+        var conflictStr = foundConflicts.map(function(p) { return "'" + p[0] + "' + '" + p[1] + "'"; }).join(', ');
+        cat3.detail = "Fighting descriptor pair(s) detected: " + conflictStr + ". These contradict each other and the model will average them into visually muddled results.";
+        cat3.quote = "The model averages them into mud. Pick one lane per template.";
+        cat3.fix = "Choose ONE clear style direction and remove the opposing descriptor. For example, if you want flat vector, remove all 3D/shading language.";
+      } else {
+        cat3.detail = "No obvious fighting descriptor pairs detected in the style language.";
+      }
+      results.push(cat3);
+
+      // 4. Edited outputs (manual)
+      results.push({
+        id: 4, title: "4. Edited Outputs", status: "manual",
+        detail: "PromptBase requires raw, unedited ChatGPT Image outputs. No cropping, no filters, no added text overlays, no borders added in external software.",
+        quote: "Raw outputs only. No cropping, filters, added text, or borders. Reviewers compare against fresh regenerations.",
+        checklist: ["Are all 9 example images raw ChatGPT outputs with zero post-processing?", "No Photoshop, Canva, or external editing applied?"]
+      });
+
+      // 5. Verification mismatch (manual)
+      results.push({
+        id: 5, title: "5. Verification Mismatch", status: "manual",
+        detail: "Reviewers will regenerate your prompt to verify consistency. If your share link doesn't work, or the model version differs, you'll be rejected.",
+        quote: "Reviewers compare your submission against fresh regenerations from the same chat.",
+        checklist: ["All 9 examples generated in the same ChatGPT chat session?", "Correct ChatGPT Image model version declared on submission form?", "Share link tested in a private/incognito browser window?"]
+      });
+
+      // 6. Matches existing prompt (manual)
+      results.push({
+        id: 6, title: "6. Matches Existing Prompt", status: "manual",
+        detail: "Reviewers check your submission against the entire PromptBase catalog — including your own existing listings. A follow-up must solve a genuinely different buyer job.",
+        quote: "A sequel needs a new job, not a new adjective.",
+        checklist: ["If this is a variation of your existing prompt, does it serve a completely different use case (not just a synonym swap)?"]
+      });
+
+      // 7. Too simple / guessable
+      var cat7 = { id: 7, title: "7. Too Simple / Guessable", status: "pass", detail: "", quote: "", fix: "" };
+      var hasStrongStyle = /style|vector|illustration|engraving|watercolor|oil painting|line art|render|photography/i.test(cleanText);
+      var weakAdjCount = 0;
+      weakStylePhrases.forEach(function(w) {
+        if (lowerText.indexOf(w) !== -1) weakAdjCount++;
+      });
+      if (wordCount < 20 && bracketCount <= 1 && !hasStrongStyle) {
+        cat7.status = "warning";
+        cat7.detail = "This template is very short (" + wordCount + " words) and lacks specific style engineering language. Could a beginner reproduce this by simply asking ChatGPT nicely?";
+        cat7.quote = "Could a beginner get this result by just asking ChatGPT nicely? If yes, this needs more engineered style specificity.";
+        cat7.fix = "Add concrete style descriptors: name a specific medium (e.g., 'vintage botanical engraving'), line quality, color palette, lighting, and composition.";
+      } else if (weakAdjCount >= 3 && !hasStrongStyle) {
+        cat7.status = "warning";
+        cat7.detail = "Template relies on vague adjectives (" + weakAdjCount + " weak descriptors like 'beautiful' or 'nice' detected). These don't guide the model consistently.";
+        cat7.fix = "Replace subjective adjectives with technical style terms: instead of 'beautiful portrait,' use 'soft Rembrandt lighting, warm earth tones, shallow depth of field.'";
+      } else {
+        cat7.detail = "Template length (" + wordCount + " words) and style specificity appear adequate for a non-trivial prompt.";
+      }
+      results.push(cat7);
+
+      // ---- BONUS structural checks ----
+      var bonusResults = [];
+
+      // Avoid: line
+      var avoidCheck = { title: "Bonus: Avoid: Line Present", status: "pass", detail: "", quote: "", fix: "" };
+      if (lowerText.indexOf('avoid') === -1) {
+        avoidCheck.status = "fail";
+        avoidCheck.detail = "No 'Avoid:' line found. Without explicit negative constraints, ChatGPT may add unwanted elements: gray shading on coloring pages, backgrounds on stickers, garbled text on posters.";
+        avoidCheck.quote = "No Avoid: line means gray shading on coloring pages and backgrounds on stickers. Name the exact junk you don't want.";
+        avoidCheck.fix = "Add 'Avoid: [comma-separated list of exactly what you don't want]' — e.g., 'Avoid: shading, gradients, drop shadow, scenery, extra objects.'";
+      } else {
+        avoidCheck.detail = "Avoid: line detected — good practice for constraining unwanted outputs.";
+      }
+      bonusResults.push(avoidCheck);
+
+      // Output specs
+      var specCheck = { title: "Bonus: Output Specs Present", status: "pass", detail: "", quote: "", fix: "" };
+      var hasRatio = /\d+:\d+/.test(cleanText);
+      var hasBg = /background|transparent|white background|solid color|contextual scene/i.test(cleanText);
+      if (!hasRatio && !hasBg) {
+        specCheck.status = "fail";
+        specCheck.detail = "No aspect ratio or background language detected. ChatGPT will default to an opaque 1:1 square — which may not match your intended use case.";
+        specCheck.quote = "Leave background and ratio unstated and ChatGPT defaults to an opaque 1:1 square.";
+        specCheck.fix = "Specify both: 'Output: white background, 2:3 aspect ratio' (or transparent PNG, 1:1, 4:5, 3:2 as appropriate).";
+      } else if (!hasRatio) {
+        specCheck.status = "warning";
+        specCheck.detail = "Aspect ratio not specified. Consider adding 1:1, 2:3, 4:5, or 3:2 to match your product type.";
+        specCheck.fix = "Add aspect ratio: 1:1 for stickers/icons, 2:3 for coloring pages/portraits, 4:5 for product mockups.";
+      } else if (!hasBg) {
+        specCheck.status = "warning";
+        specCheck.detail = "Background not explicitly stated. Specify 'white background,' 'transparent PNG,' or 'contextual scene.'";
+        specCheck.fix = "Add background type: 'white background' for coloring pages, 'transparent PNG' for stickers, 'contextual scene' for posters.";
+      } else {
+        specCheck.detail = "Output specs (ratio + background) detected — buyers will know exactly what format to expect.";
+      }
+      bonusResults.push(specCheck);
+
+      // Bracket naming
+      var bracketNameCheck = { title: "Bonus: Bracket Naming Convention", status: "pass", detail: "", quote: "", fix: "" };
+      var badBrackets = [];
+      for (var b = 0; b < bracketMatches.length; b++) {
+        var inner = bracketMatches[b].replace(/[\[\]]/g, '').trim();
+        if (/^(VAR\d*|X|Y|Z|INPUT|OUTPUT|A|B|C|1|2|3|test|placeholder)$/i.test(inner) || inner.length <= 1) {
+          badBrackets.push(inner);
+        }
+      }
+      if (badBrackets.length > 0) {
+        bracketNameCheck.status = "fail";
+        bracketNameCheck.detail = "Cryptic or unhelpful bracket token(s): " + badBrackets.join(', ') + ". Buyers need to instantly understand what to type here.";
+        bracketNameCheck.quote = "Never cryptic tokens like [X], [VAR1], or [INPUT]. The name should read like an instruction at a glance.";
+        bracketNameCheck.fix = "Rename to plain descriptive words: [ANIMAL], [HISTORY TOPIC], [FLOWER TYPE], [PET BREED], etc.";
+      } else if (bracketCount > 0) {
+        bracketNameCheck.detail = "Bracket names appear readable and buyer-friendly.";
+      } else {
+        bracketNameCheck.detail = "No brackets to evaluate — add at least one [VARIABLE].";
+      }
+      bonusResults.push(bracketNameCheck);
+
+      // Additional: Style anchor strength
+      var styleStrengthCheck = { title: "Bonus: Style Anchor Strength", status: "pass", detail: "", fix: "" };
+      var styleFields = ['medium', 'line', 'color', 'lighting', 'composition', 'mood'];
+      var styleScore = 0;
+      if (/medium|style|vector|illustration|engraving|render|photography|painting/i.test(cleanText)) styleScore++;
+      if (/line|outline|stroke|contour/i.test(cleanText)) styleScore++;
+      if (/color|palette|tone|hue|pastel|vibrant|muted/i.test(cleanText)) styleScore++;
+      if (/light|shadow|lighting|diffused|rim/i.test(cleanText)) styleScore++;
+      if (/composition|centered|framing|layout|white space/i.test(cleanText)) styleScore++;
+      if (/mood|atmosphere|feeling|vibe|playful|serene|dramatic/i.test(cleanText)) styleScore++;
+      if (styleScore <= 1 && bracketCount > 0) {
+        styleStrengthCheck.status = "warning";
+        styleStrengthCheck.detail = "Style anchor appears weak — only " + styleScore + " of 6 style dimensions addressed (medium, line, color, lighting, composition, mood). Strong templates typically cover 3+.";
+        styleStrengthCheck.fix = "Strengthen your style anchor by adding: specific medium name, line/shape quality, color palette, lighting description, composition choice, and mood.";
+      } else {
+        styleStrengthCheck.detail = "Style anchor covers " + styleScore + "/6 dimensions — " + (styleScore >= 4 ? "solid" : "adequate") + " specificity.";
+      }
+      bonusResults.push(styleStrengthCheck);
+
+      return {
+        main: results,
+        bonus: bonusResults,
+        wordCount: wordCount,
+        bracketCount: bracketCount,
+        commasOutside: commasOutsideBrackets
+      };
+    }
+
+    // ---- Render ----
+    function renderReport(diagnosis) {
+      var allCards = diagnosis.main.concat(diagnosis.bonus);
+      var html = '';
+      var autoPass = 0;
+      var autoTotal = 0;
+
+      for (var i = 0; i < allCards.length; i++) {
+        var card = allCards[i];
+        var statusClass = '';
+        var badgeText = '';
+        if (card.status === 'pass') { statusClass = 'badge-pass';
+          badgeText = '✅ Pass';
+          autoPass++;
+          autoTotal++; } else if (card.status === 'warning') { statusClass = 'badge-warn';
+          badgeText = '⚠️ Warning';
+          autoTotal++; } else if (card.status === 'fail') { statusClass = 'badge-fail';
+          badgeText = '❌ Fail';
+          autoTotal++; } else { statusClass = 'badge-manual';
+          badgeText = '📋 Manual Check'; }
+
+        html += '<div class="report-card">';
+        html += '<div class="card-header" data-card="' + i + '">';
+        html += '<span>' + card.title + '</span>';
+        html += '<span class="badge ' + statusClass + '">' + badgeText + '</span>';
+        html += '</div>';
+        html += '<div class="card-body">';
+        html += '<p>' + card.detail + '</p>';
+        if (card.quote) {
+          html += '<div class="playbook-quote">📖 Playbook: "' + card.quote + '"</div>';
+        }
+        if (card.fix) {
+          html += '<div class="highlight-fix">🔧 Suggested fix: ' + card.fix + '</div>';
+        }
+        if (card.checklist && card.checklist.length > 0) {
+          html += '<div style="margin-top:0.6rem;">';
+          for (var c = 0; c < card.checklist.length; c++) {
+            html += '<div class="checklist-item"><input type="checkbox" class="manual-check" data-category="' + card.id +
+              '"> ' + card.checklist[c] + '</div>';
+          }
+          html += '</div>';
+        }
+        html += '</div></div>';
+      }
+
+      reportCards.innerHTML = html;
+
+      // Score ring
+      var percent = autoTotal > 0 ? Math.round((autoPass / autoTotal) * 100) : 0;
+      scoreRing.style.setProperty('--score-percent', percent + '%');
+      scoreRing.textContent = percent + '%';
+
+      var issues = autoTotal - autoPass;
+      if (issues === 0 && autoTotal > 0) {
+        summaryText.innerHTML = '<span style="color:#1C6B3F;">✅ Looking solid — all ' + autoTotal +
+          ' automated checks passed. Complete the manual checklists below before submitting.</span>';
+      } else if (issues > 0) {
+        summaryText.innerHTML = '<span style="color:#C0392B;">⚠️ ' + issues + ' issue(s) found out of ' + autoTotal +
+          ' automated checks. Address flagged items, then confirm all manual checklists.</span>';
+      } else {
+        summaryText.textContent = '⏳ Scan complete. Expand each card to review details.';
+      }
+
+      // Expand/collapse
+      var headers = document.querySelectorAll('.card-header');
+      for (var h = 0; h < headers.length; h++) {
+        headers[h].addEventListener('click', function() {
+          var body = this.nextElementSibling;
+          body.classList.toggle('open');
+        });
+      }
+
+      // Auto-expand fails and warnings
+      var allBodies = document.querySelectorAll('.card-body');
+      for (var j = 0; j < allCards.length; j++) {
+        if (allCards[j].status === 'fail' || allCards[j].status === 'warning') {
+          if (allBodies[j]) allBodies[j].classList.add('open');
+        }
+      }
+    }
+
+    // ---- Event handlers ----
+    runBtn.addEventListener('click', function() {
+      var text = promptInput.value;
+      if (!text.trim()) {
+        alert('Please paste a prompt template first.');
+        return;
+      }
+      var diagnosis = runDiagnostic(text);
+      renderReport(diagnosis);
+    });
+
+    copyReportBtn.addEventListener('click', function() {
+      var reportText = '=== Pre-Submit Rejection Simulator Report ===\n\n';
+      var cards = document.querySelectorAll('.report-card');
+      for (var i = 0; i < cards.length; i++) {
+        var header = cards[i].querySelector('.card-header span').textContent;
+        var badge = cards[i].querySelector('.badge').textContent;
+        var body = cards[i].querySelector('.card-body');
+        var detail = body ? body.querySelector('p').textContent : '';
+        reportText += header + ' — ' + badge + '\n' + detail + '\n\n';
+      }
+      navigator.clipboard.writeText(reportText).then(function() {
+        copyReportBtn.textContent = '✓ Copied!';
+        setTimeout(function() { copyReportBtn.textContent = '📋 Copy Report'; }, 2000);
+      });
+    });
+
+    clearBtn.addEventListener('click', function() {
+      promptInput.value = '';
+      reportCards.innerHTML = '';
+      summaryText.textContent = '⏳ Ready to scan. Paste a template and click "Run Diagnostic".';
+      scoreRing.style.setProperty('--score-percent', '0%');
+      scoreRing.textContent = '0%';
+      updateLiveStats();
+    });
+
+    // Sample templates
+    sampleGood.addEventListener('click', function() {
+      promptInput.value =
+        'A [ANIMAL] in kawaii flat vector illustration style, bold clean outlines, pastel color palette, centered composition, playful mood. Avoid: shading, gradients, drop shadow, scenery, extra objects. Output: white background, 2:3 aspect ratio, print-ready 300dpi.';
+      updateLiveStats();
+    });
+
+    sampleBad.addEventListener('click', function() {
+      promptInput.value =
+        'A beautiful picture of a [VAR1]. It should look really nice and cool.';
+      updateLiveStats();
+    });
+
+    sampleConflict.addEventListener('click', function() {
+      promptInput.value =
+        'A [PORTRAIT SUBJECT] in photorealistic cartoon style, flat 3D render, minimalist yet highly detailed, vintage futuristic vibes. Output: 1:1.';
+      updateLiveStats();
+    });
+
+    // Initial stats
+    updateLiveStats();
+  })();
+</script>
+</body>
+</html>
