@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Niche Lane Price & Gap Finder · Prompts That Pay</title>
+  <!-- Fonts: Lora (serif display) + Inter (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #FAF7F2;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1A1A1A;
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 2rem 1.8rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-image: radial-gradient(circle at 15% 20%, rgba(108,79,209,0.02) 0%, transparent 45%);
+    }
+
+    .dashboard {
+      max-width: 1500px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* Header editoriale */
+    .header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      border-bottom: 2px solid #E8E0D5;
+      padding-bottom: 1.3rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header h1 {
+      font-family: 'Lora', 'Times New Roman', serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      letter-spacing: -0.5px;
+      color: #1A1A1A;
+      margin: 0;
+    }
+
+    .guide-toggle {
+      background: #F4EFE6;
+      border: 1px solid #D6CABA;
+      border-radius: 30px;
+      padding: 0.6rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #3A3228;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #FFFFFF;
+    }
+
+    .guide-toggle:hover {
+      background: #F0E9FF;
+      border-color: #6C4FD1;
+      color: #3C2A8C;
+    }
+
+    .guide-panel {
+      background: #FDFBF7;
+      border: 1px solid #DDD3C4;
+      border-radius: 16px;
+      padding: 1.4rem;
+      margin-top: 0.8rem;
+      display: none;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #2E2820;
+      columns: 2;
+      column-gap: 2rem;
+    }
+
+    .guide-panel.visible {
+      display: block;
+    }
+
+    .guide-panel h3 {
+      font-family: 'Lora', serif;
+      margin-bottom: 0.4rem;
+      column-span: all;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: #5B5248;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .accent-dot {
+      width: 10px;
+      height: 10px;
+      background: #6C4FD1;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .caveat-box {
+      background: #F4EFE6;
+      border-left: 5px solid #6C4FD1;
+      padding: 0.9rem 1.3rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #3A342C;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* KPI cards */
+    .kpi-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .kpi-card {
+      background: #FFFFFF;
+      border: 1px solid #E2D9CD;
+      border-radius: 16px;
+      padding: 1rem 1.4rem;
+      flex: 1;
+      min-width: 140px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+
+    .kpi-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #7A6F62;
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-family: 'Lora', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1A1A1A;
+    }
+
+    /* filter bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.8rem;
+      background: #FFFFFF;
+      border: 1px solid #E2D9CD;
+      border-radius: 18px;
+      padding: 1.2rem 1.8rem;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.03);
+    }
+
+    .price-filter {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .price-filter label {
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #4A4238;
+      text-transform: uppercase;
+    }
+
+    input[type="range"] {
+      width: 150px;
+      accent-color: #6C4FD1;
+    }
+
+    .range-value {
+      font-weight: 700;
+      color: #6C4FD1;
+      min-width: 50px;
+      background: #F4F0FF;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+    }
+
+    .search-box {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .search-box input {
+      padding: 0.5rem 1rem;
+      border: 1px solid #DDD3C4;
+      border-radius: 20px;
+      font-family: 'Inter', sans-serif;
+      width: 200px;
+    }
+
+    .shortlist-summary {
+      background: #F4F0FF;
+      border-radius: 24px;
+      padding: 0.45rem 1.3rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #3C2A8C;
+      cursor: pointer;
+      border: 1px solid #D9CFF5;
+    }
+
+    /* table */
+    .table-container {
+      background: #FFFFFF;
+      border: 1px solid #E2D9CD;
+      border-radius: 20px;
+      overflow-x: auto;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.04);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1000px;
+      font-size: 0.88rem;
+    }
+
+    th {
+      background: #F9F6F0;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #3A3228;
+      padding: 1rem 0.7rem;
+      border-bottom: 2px solid #DDD3C4;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: color 0.15s;
+    }
+
+    th:hover {
+      color: #6C4FD1;
+    }
+
+    th .sort-icon {
+      margin-left: 3px;
+      font-size: 0.7rem;
+    }
+
+    td {
+      padding: 0.9rem 0.7rem;
+      border-bottom: 1px solid #EFE9DE;
+      vertical-align: middle;
+      color: #2E2922;
+    }
+
+    .lane-row {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .lane-row:hover {
+      background: #FCFAF7;
+    }
+
+    .lane-row.expanded {
+      background: #F7F4ED;
+    }
+
+    .gap-badge {
+      display: inline-block;
+      padding: 0.25rem 0.8rem;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.7rem;
+      letter-spacing: 0.3px;
+      text-align: center;
+    }
+
+    .badge-gap {
+      background: #D9F0E1;
+      color: #1C5432;
+    }
+    .badge-moderate {
+      background: #FFF0CA;
+      color: #6B4F10;
+    }
+    .badge-crowded {
+      background: #FFE0E0;
+      color: #9B2C2C;
+    }
+
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: 0.15s;
+      color: #C4B9A8;
+      padding: 0 0.2rem;
+      line-height: 1;
+    }
+
+    .star-btn.active {
+      color: #F5B042;
+      text-shadow: 0 0 8px rgba(245,176,66,0.6);
+    }
+
+    .expand-detail {
+      background: #F4EFE6;
+      padding: 1.2rem 1.4rem;
+      font-size: 0.85rem;
+      color: #2E2820;
+      border-top: 1px dashed #D6CABA;
+    }
+
+    .strategy-text {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .audience-note {
+      font-style: italic;
+      color: #6C4FD1;
+      margin-bottom: 0.3rem;
+    }
+
+    .price-history {
+      font-size: 0.75rem;
+      color: #5B5248;
+      background: #F9F6F0;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    /* insight grid */
+    .insight-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1.8rem;
+      margin-top: 0.3rem;
+    }
+
+    .chart-card {
+      background: #FFFFFF;
+      border: 1px solid #E2D9CD;
+      border-radius: 20px;
+      padding: 1.6rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+    }
+
+    .graveyard-card {
+      background: #FFFFFF;
+      border: 1px solid #E2D9CD;
+      border-radius: 20px;
+      padding: 1.6rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+    }
+
+    .graveyard-card h3 {
+      font-family: 'Lora', serif;
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+    }
+
+    .big-number {
+      font-size: 3rem;
+      font-weight: 800;
+      color: #6C4FD1;
+      font-family: 'Lora', serif;
+      line-height: 1;
+    }
+
+    .shortlist-compare {
+      background: #FFFFFF;
+      border: 1px solid #D9CFF5;
+      border-radius: 18px;
+      padding: 1.2rem;
+      margin-top: 0.3rem;
+      display: none;
+    }
+
+    .shortlist-compare.active {
+      display: block;
+    }
+
+    @media (max-width: 900px) {
+      .insight-grid {
+        grid-template-columns: 1fr;
+      }
+      .header h1 {
+        font-size: 1.8rem;
+      }
+      .guide-panel {
+        columns: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <h1>📊 Niche Lane Price & Gap Finder</h1>
+      <button class="guide-toggle" id="guideToggle">📘 How to use this tool ▾</button>
+    </div>
+    <div class="guide-panel" id="guidePanel">
+      <h3>✨ Quick Guide to the Gap Finder</h3>
+      <strong>🔍 Purpose:</strong> This dashboard maps 209 hand‑counted ChatGPT Image prompts on PromptBase (July 2026 snapshot) into 9 repeatable niche lanes.<br>
+      <strong>📋 Table:</strong> Click any column header to sort. Click a row to expand strategy details.<br>
+      <strong>⭐ Shortlist:</strong> Star up to 3 lanes, then click "Shortlist" badge to compare them side‑by‑side.<br>
+      <strong>💰 Price filter:</strong> Use sliders to see only lanes within your target price band.<br>
+      <strong>🔎 Search:</strong> Filter lanes by keyword (niche or job description).<br>
+      <strong>📈 Chart:</strong> Horizontal bar chart shows shelf count per lane — gaps are purple.<br>
+      <strong>⚠️ Graveyard:</strong> 79 prompts (38%) are one‑off novelties. Avoid those; pick from the table.<br>
+      <strong>💡 Gap Score:</strong> Auto‑calculated from shelf count. 🟢 = biggest opportunity.
+    </div>
+    <div class="subtitle">
+      <span class="accent-dot"></span> Based on real hand‑counted PromptBase snapshot (~209 showcased ChatGPT Image prompts)
+      <span style="margin-left:auto; font-size:0.8rem;">Prompts That Pay · July 2026</span>
+    </div>
+    <div class="caveat-box">
+      ⏳ <span><strong>Data note:</strong> This is a static snapshot from one shelf‑count pass in July 2026 — treat it as a starting map, not gospel. Re‑check the live PromptBase shelf before committing to a niche.</span>
+    </div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-label">Total lanes mapped</div><div class="kpi-value">9</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total prompts counted</div><div class="kpi-value">209</div></div>
+    <div class="kpi-card"><div class="kpi-label">Graveyard (one‑offs)</div><div class="kpi-value">79 <span style="font-size:1rem;">(38%)</span></div></div>
+    <div class="kpi-card"><div class="kpi-label">Biggest gap lane</div><div class="kpi-value" style="font-size:1.4rem;">Journals <span style="font-size:0.9rem;">(3 listings)</span></div></div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="price-filter">
+      <label>💰 Price range:</label>
+      <span class="range-value">$<span id="minPriceLabel">2.99</span></span>
+      <input type="range" id="minPriceSlider" min="2.99" max="9.99" step="0.01" value="2.99">
+      <span class="range-value">$<span id="maxPriceLabel">9.99</span></span>
+      <input type="range" id="maxPriceSlider" min="2.99" max="9.99" step="0.01" value="9.99">
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 Search niche or job...">
+    </div>
+    <div class="shortlist-summary" id="shortlistBadge">
+      ⭐ Shortlist: 0 lanes
+    </div>
+  </div>
+
+  <!-- Shortlist comparison panel -->
+  <div class="shortlist-compare" id="shortlistComparePanel">
+    <strong style="font-family:Lora;">📋 Shortlist comparison</strong>
+    <div id="shortlistCompareContent" style="margin-top:0.6rem; display:flex; gap:1rem; flex-wrap:wrap;"></div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container" id="tableContainer">
+    <table id="laneTable">
+      <thead>
+      <tr>
+        <th data-col="star" style="width:40px;">⭐</th>
+        <th data-col="niche">Niche Lane <span class="sort-icon">⇅</span></th>
+        <th data-col="job">Job Description</th>
+        <th data-col="priceLow">Price Low</th>
+        <th data-col="priceHigh">Price High</th>
+        <th data-col="shelf">Shelf Count</th>
+        <th data-col="gapScore">Gap Score</th>
+        <th data-col="strategy">How You Win</th>
+      </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Chart + Graveyard -->
+  <div class="insight-grid">
+    <div class="chart-card">
+      <h3 style="font-family:Lora; margin-bottom:1rem;">📈 Shelf-space distribution (out of 209 prompts)</h3>
+      <canvas id="shelfChart" width="400" height="280" aria-label="Horizontal bar chart of niche shelf counts"></canvas>
+    </div>
+    <div class="graveyard-card">
+      <h3>⚠️ The Graveyard</h3>
+      <p style="font-size:1.1rem; margin:0.6rem 0;"><span class="big-number">79</span> of 209 cards</p>
+      <p style="font-weight:600;">38% are one‑off novelty styles</p>
+      <p style="color:#5B5248; margin-top:0.5rem;">These fit no repeatable lane. <strong>Pick from the table, not from the graveyard.</strong></p>
+      <p style="font-size:0.8rem; margin-top:0.8rem; color:#7A6F62;">Examples: "single cartoon astronaut", "one specific meme style", "hyper-specific celebrity caricature"</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ---------- REAL PLAYBOOK DATA (9 lanes, exact figures) ----------
+    var lanes = [
+      {
+        id: 1,
+        niche: "Infographics & sketchnotes",
+        job: "Turn any topic into a clear hand-drawn explainer",
+        priceLow: 5.99,
+        priceHigh: 9.99,
+        shelf: 17,
+        strategy: "Own one subject (cooking, finance, history) instead of 'infographics'",
+        audience: "best for sellers who already know one niche topic deeply",
+        priceTrend: "stable, premium tier"
+      },
+      {
+        id: 2,
+        niche: "Posters & wall art",
+        job: "Editorial, retro-travel and typography prints",
+        priceLow: 4.99,
+        priceHigh: 6.99,
+        shelf: 27,
+        strategy: "A named era or technique. 'Mid-century screen-print' sells; 'beautiful poster' drowns",
+        audience: "ideal for visually trained designers who understand era-specific aesthetics",
+        priceTrend: "competitive, mid-range"
+      },
+      {
+        id: 3,
+        niche: "3D & toy styles",
+        job: "Action figures, Pixar-style grids, miniatures, novelty avatars",
+        priceLow: 2.99,
+        priceHigh: 4.99,
+        shelf: 22,
+        strategy: "Ride a trend within days of it starting, expect a short shelf life",
+        audience: "best for fast-moving creators who monitor social media trends daily",
+        priceTrend: "low, trend-driven"
+      },
+      {
+        id: 4,
+        niche: "Coloring pages",
+        job: "Clean black-and-white line art for KDP books, classrooms, kids",
+        priceLow: 2.99,
+        priceHigh: 6.99,
+        shelf: 14,
+        strategy: "Printability is the moat: no gray fill, thick lines, 2:3 print-ready",
+        audience: "anyone who can spot a clean line vs. a shaded one at a glance",
+        priceTrend: "steady, volume-driven"
+      },
+      {
+        id: 5,
+        niche: "Logos & brand mascots",
+        job: "One repeatable mark or character for a new business",
+        priceLow: 2.99,
+        priceHigh: 5.99,
+        shelf: 13,
+        strategy: "Niche the business type: 'bakery logos' beats 'logos'",
+        audience: "great for sellers with branding or graphic design background",
+        priceTrend: "moderate, niche-dependent"
+      },
+      {
+        id: 6,
+        niche: "Portraits & avatars",
+        job: "Profile pictures, pet portraits, caricatures, gifts",
+        priceLow: 3.99,
+        priceHigh: 4.99,
+        shelf: 12,
+        strategy: "One instantly recognizable style beats one more 'realistic'",
+        audience: "perfect for artists who can develop a signature, repeatable style",
+        priceTrend: "consistent, style-driven"
+      },
+      {
+        id: 7,
+        niche: "Product mockups & ad cards",
+        job: "A buyer's design on mugs, shirts, boxes; scroll-stopping ad creatives",
+        priceLow: 4.99,
+        priceHigh: 6.99,
+        shelf: 8,
+        strategy: "Bundle by product type",
+        audience: "strong fit for those who understand e-commerce and product photography",
+        priceTrend: "growing, bundle opportunity"
+      },
+      {
+        id: 8,
+        niche: "Journals & printables",
+        job: "Vintage papers, planners, trackers, ephemera for Etsy and KDP",
+        priceLow: 4.84,
+        priceHigh: 5.99,
+        shelf: 3,
+        strategy: "The gap I'd attack first: barely stocked, yet it sells",
+        audience: "excellent for stationery lovers and Etsy sellers who know paper goods",
+        priceTrend: "undervalued, high potential"
+      },
+      {
+        id: 9,
+        niche: "Covers & thumbnails",
+        job: "KDP book covers, YouTube thumbnails, with readable text",
+        priceLow: 4.99,
+        priceHigh: 6.99,
+        shelf: 10,
+        strategy: "Text accuracy is the moat, ChatGPT Image renders text best",
+        audience: "suited for creators who need polished, text-reliable visuals",
+        priceTrend: "specialized, text-dependent"
+      }
+    ];
+
+    var TOTAL_PROMPTS = 209;
+    var GRAVEYARD_COUNT = 79;
+
+    // State
+    var sortCol = 'shelf';
+    var sortAsc = true;
+    var shortlist = [];
+    var minPrice = 2.99;
+    var maxPrice = 9.99;
+    var expandedRowId = null;
+    var searchQuery = '';
+
+    // DOM
+    var tableBody = document.getElementById('tableBody');
+    var minPriceSlider = document.getElementById('minPriceSlider');
+    var maxPriceSlider = document.getElementById('maxPriceSlider');
+    var minPriceLabel = document.getElementById('minPriceLabel');
+    var maxPriceLabel = document.getElementById('maxPriceLabel');
+    var shortlistBadge = document.getElementById('shortlistBadge');
+    var shortlistComparePanel = document.getElementById('shortlistComparePanel');
+    var shortlistCompareContent = document.getElementById('shortlistCompareContent');
+    var searchInput = document.getElementById('searchInput');
+    var shelfChartCanvas = document.getElementById('shelfChart');
+    var shelfChartInstance = null;
+    var guideToggle = document.getElementById('guideToggle');
+    var guidePanel = document.getElementById('guidePanel');
+
+    // Guide toggle
+    guideToggle.addEventListener('click', function() {
+      if (guidePanel.classList.contains('visible')) {
+        guidePanel.classList.remove('visible');
+        guideToggle.innerHTML = '📘 How to use this tool ▾';
+      } else {
+        guidePanel.classList.add('visible');
+        guideToggle.innerHTML = '📘 Hide guide ▴';
+      }
+    });
+
+    // Gap info calculator
+    function getGapInfo(shelfCount) {
+      var percent = (shelfCount / TOTAL_PROMPTS) * 100;
+      var badge = '';
+      if (shelfCount <= 5) badge = 'badge-gap';
+      else if (shelfCount <= 15) badge = 'badge-moderate';
+      else badge = 'badge-crowded';
+      return {
+        percent: percent.toFixed(1),
+        badgeClass: badge,
+        label: shelfCount <= 5 ? '🟢 Biggest Gap' : (shelfCount <= 15 ? '🟡 Moderate' : '🔴 Most Crowded'),
+        gapScore: (TOTAL_PROMPTS - shelfCount) / TOTAL_PROMPTS * 100
+      };
+    }
+
+    // Multi-filter
+    function filterLanes() {
+      return lanes.filter(function(lane) {
+        var priceMatch = lane.priceLow <= maxPrice && lane.priceHigh >= minPrice;
+        var searchMatch = true;
+        if (searchQuery.trim()) {
+          var q = searchQuery.toLowerCase();
+          searchMatch = lane.niche.toLowerCase().indexOf(q) !== -1 || lane.job.toLowerCase().indexOf(q) !== -1;
+        }
+        return priceMatch && searchMatch;
+      });
+    }
+
+    function sortLanes(filtered) {
+      return filtered.sort(function(a, b) {
+        var valA, valB;
+        if (sortCol === 'niche') { valA = a.niche; valB = b.niche; }
+        else if (sortCol === 'job') { valA = a.job; valB = b.job; }
+        else if (sortCol === 'priceLow') { valA = a.priceLow; valB = b.priceLow; }
+        else if (sortCol === 'priceHigh') { valA = a.priceHigh; valB = b.priceHigh; }
+        else if (sortCol === 'shelf') { valA = a.shelf; valB = b.shelf; }
+        else if (sortCol === 'gapScore') { valA = getGapInfo(a.shelf).gapScore; valB = getGapInfo(b.shelf).gapScore; }
+        else if (sortCol === 'strategy') { valA = a.strategy; valB = b.strategy; }
+        else { valA = a.shelf; valB = b.shelf; }
+
+        if (typeof valA === 'string') {
+          return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+          return sortAsc ? valA - valB : valB - valA;
+        }
+      });
+    }
+
+    function toggleShortlist(laneId) {
+      var index = shortlist.indexOf(laneId);
+      if (index > -1) {
+        shortlist.splice(index, 1);
+      } else {
+        if (shortlist.length < 3) {
+          shortlist.push(laneId);
+        } else {
+          alert('You can shortlist up to 3 lanes for side‑by‑side comparison.');
+          return;
+        }
+      }
+      renderTable();
+      updateShortlistPanel();
+    }
+
+    function updateShortlistPanel() {
+      shortlistBadge.textContent = '⭐ Shortlist: ' + shortlist.length + ' lane' + (shortlist.length !== 1 ? 's' : '');
+      if (shortlist.length > 0) {
+        shortlistComparePanel.classList.add('active');
+        var html = '';
+        shortlist.forEach(function(id) {
+          var lane = lanes.find(function(l){ return l.id === id; });
+          if (lane) {
+            var gap = getGapInfo(lane.shelf);
+            html += '<div style="background:#F9F6F0; border-radius:12px; padding:0.8rem; flex:1; min-width:200px;">';
+            html += '<strong>' + lane.niche + '</strong><br>';
+            html += '💰 $' + lane.priceLow.toFixed(2) + ' – $' + lane.priceHigh.toFixed(2) + '<br>';
+            html += '📦 Shelf: ' + lane.shelf + ' <span class="gap-badge ' + gap.badgeClass + '">' + gap.label + '</span><br>';
+            html += '💡 ' + lane.strategy + '</div>';
+          }
+        });
+        shortlistCompareContent.innerHTML = html;
+      } else {
+        shortlistComparePanel.classList.remove('active');
+      }
+    }
+
+    function renderTable() {
+      var filtered = filterLanes();
+      var sorted = sortLanes(filtered);
+      var html = '';
+      for (var i = 0; i < sorted.length; i++) {
+        var lane = sorted[i];
+        var gap = getGapInfo(lane.shelf);
+        var isStarred = shortlist.indexOf(lane.id) > -1;
+        var isExpanded = (expandedRowId === lane.id);
+        html += '<tr class="lane-row' + (isExpanded ? ' expanded' : '') + '" data-lane-id="' + lane.id + '">';
+        html += '<td><button class="star-btn' + (isStarred ? ' active' : '') + '" data-star="' + lane.id + '">' + (isStarred ? '★' : '☆') + '</button></td>';
+        html += '<td><strong>' + lane.niche + '</strong></td>';
+        html += '<td style="font-size:0.8rem;">' + lane.job + '</td>';
+        html += '<td>$' + lane.priceLow.toFixed(2) + '</td>';
+        html += '<td>$' + lane.priceHigh.toFixed(2) + '</td>';
+        html += '<td><strong>' + lane.shelf + '</strong> / ' + TOTAL_PROMPTS + '</td>';
+        html += '<td><span class="gap-badge ' + gap.badgeClass + '">' + gap.label + ' (' + gap.percent + '%)</span></td>';
+        html += '<td style="font-size:0.8rem;">' + lane.strategy + '</td>';
+        html += '</tr>';
+        if (isExpanded) {
+          html += '<tr class="expand-detail" data-expand="' + lane.id + '"><td colspan="8">';
+          html += '<div class="strategy-text">💡 <strong>Win strategy:</strong> ' + lane.strategy + '</div>';
+          html += '<div class="audience-note">🎯 Best for: ' + lane.audience + '</div>';
+          html += '<div class="price-history">📈 Price trend: ' + lane.priceTrend + '</div>';
+          html += '</td></tr>';
+        }
+      }
+      if (sorted.length === 0) {
+        html = '<tr><td colspan="8" style="text-align:center; padding:2rem;">No lanes match your filters. Try widening the price range or search.</td></tr>';
+      }
+      tableBody.innerHTML = html;
+
+      // Attach listeners
+      var rows = document.querySelectorAll('.lane-row');
+      for (var r = 0; r < rows.length; r++) {
+        rows[r].addEventListener('click', function(e) {
+          if (e.target.tagName === 'BUTTON' || e.target.classList.contains('star-btn')) return;
+          var laneId = parseInt(this.getAttribute('data-lane-id'));
+          expandedRowId = (expandedRowId === laneId) ? null : laneId;
+          renderTable();
+        });
+      }
+
+      var stars = document.querySelectorAll('.star-btn');
+      for (var s = 0; s < stars.length; s++) {
+        stars[s].addEventListener('click', function(e) {
+          e.stopPropagation();
+          var laneId = parseInt(this.getAttribute('data-star'));
+          toggleShortlist(laneId);
+        });
+      }
+    }
+
+    // Chart
+    function renderChart() {
+      var filtered = filterLanes();
+      var sortedForChart = filtered.slice().sort(function(a,b){ return a.shelf - b.shelf; });
+      var labels = sortedForChart.map(function(l){ return l.niche; });
+      var data = sortedForChart.map(function(l){ return l.shelf; });
+
+      if (shelfChartInstance) shelfChartInstance.destroy();
+
+      shelfChartInstance = new Chart(shelfChartCanvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Shelf count',
+            data: data,
+            backgroundColor: data.map(function(val) {
+              return val <= 5 ? 'rgba(108, 79, 209, 0.85)' : (val <= 15 ? 'rgba(108, 79, 209, 0.5)' : 'rgba(200, 180, 220, 0.6)');
+            }),
+            borderColor: '#6C4FD1',
+            borderWidth: 1.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          animation: { duration: 600 },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' listings (' + ((ctx.raw/TOTAL_PROMPTS)*100).toFixed(1) + '%)'; } } }
+          },
+          scales: {
+            x: { beginAtZero: true, max: 30, grid: { color: '#E8E0D5' }, title: { display: true, text: 'Number of listings' } }
+          }
+        }
+      });
+    }
+
+    function setupSortListeners() {
+      var headers = document.querySelectorAll('th[data-col]');
+      for (var i = 0; i < headers.length; i++) {
+        headers[i].onclick = function() {
+          var col = this.getAttribute('data-col');
+          if (col === 'star') return;
+          if (sortCol === col) {
+            sortAsc = !sortAsc;
+          } else {
+            sortCol = col;
+            sortAsc = true;
+          }
+          renderTable();
+          renderChart();
+          setupSortListeners();
+        };
+      }
+    }
+
+    // Slider events
+    minPriceSlider.addEventListener('input', function() {
+      var val = parseFloat(minPriceSlider.value);
+      var maxVal = parseFloat(maxPriceSlider.value);
+      if (val > maxVal) { minPriceSlider.value = maxVal; val = maxVal; }
+      minPrice = val;
+      minPriceLabel.textContent = val.toFixed(2);
+      renderTable();
+      renderChart();
+      setupSortListeners();
+    });
+
+    maxPriceSlider.addEventListener('input', function() {
+      var val = parseFloat(maxPriceSlider.value);
+      var minVal = parseFloat(minPriceSlider.value);
+      if (val < minVal) { maxPriceSlider.value = minVal; val = minVal; }
+      maxPrice = val;
+      maxPriceLabel.textContent = val.toFixed(2);
+      renderTable();
+      renderChart();
+      setupSortListeners();
+    });
+
+    searchInput.addEventListener('input', function() {
+      searchQuery = searchInput.value;
+      renderTable();
+      renderChart();
+      setupSortListeners();
+    });
+
+    shortlistBadge.addEventListener('click', function() {
+      if (shortlist.length > 0) {
+        alert('Shortlisted lanes are shown below the filter bar. You can compare up to 3.');
+      }
+    });
+
+    // Initial
+    renderTable();
+    renderChart();
+    setupSortListeners();
+    updateShortlistPanel();
+  })();
+</script>
+</body>
+</html>
