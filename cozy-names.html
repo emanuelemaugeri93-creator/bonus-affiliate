@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Cozy Mystery Character Engine | Small-Town Cast Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #f5f0eb;
+      --bg-card: #fefcfa;
+      --border: #c4b0a0;
+      --border-light: #d4c4b8;
+      --lavender: #9b7fa8;
+      --lavender-light: #b89cc4;
+      --lavender-dark: #7a5f8a;
+      --plum: #6b3a5e;
+      --plum-light: #8c5278;
+      --rose-gold: #c49b8a;
+      --rose-gold-light: #d8b8a8;
+      --text-primary: #3e2a35;
+      --text-secondary: #5c4550;
+      --text-muted: #8a7a80;
+      --accent: #e8c4a8;
+      --shadow: 0 8px 24px rgba(60,30,40,0.15);
+      --card-radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Lora', 'Georgia', serif;
+      background: #ede4dc;
+      background-image: 
+        radial-gradient(ellipse at 20% 10%, rgba(155,127,168,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(196,155,138,0.14) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 45%, rgba(180,160,150,0.08) 0%, transparent 60%),
+        linear-gradient(175deg, #efe8e0 0%, #e5dcd4 38%, #dbd0c6 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 1.2rem 1.2rem 2rem;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: 
+        repeating-linear-gradient(0deg, rgba(160,140,150,0.025) 0px, rgba(150,130,140,0.018) 2px, transparent 3px),
+        radial-gradient(ellipse at 50% 30%, rgba(200,180,190,0.1) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .brand-watermark {
+      position: fixed;
+      bottom: 14px; right: 20px;
+      font-family: 'Inter', sans-serif;
+      color: rgba(130,110,120,0.3);
+      font-size: 0.7rem;
+      letter-spacing: 1.5px;
+      z-index: 0;
+    }
+
+    .main-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1450px;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+      padding: 0 0.2rem;
+    }
+
+    .logo-svg {
+      flex-shrink: 0;
+      width: 56px; height: 56px;
+      filter: drop-shadow(0 4px 8px rgba(60,30,40,0.25));
+    }
+
+    .header-text h1 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.9rem;
+      letter-spacing: 1.2px;
+      color: #4a2e3d;
+      text-shadow: 1px 1px 0 rgba(255,250,248,0.5);
+      line-height: 1.1;
+    }
+
+    .header-text .subtitle {
+      font-family: 'Lora', 'Georgia', serif;
+      font-style: italic;
+      font-size: 0.82rem;
+      color: #7a5f8a;
+      letter-spacing: 0.8px;
+      margin-top: 2px;
+    }
+
+    .header-text .genre-badge {
+      display: inline-block;
+      background: rgba(155,127,168,0.1);
+      border: 1px solid #b89cc4;
+      color: #6b4a60;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.65rem;
+      padding: 0.15rem 0.7rem;
+      border-radius: 1rem;
+      letter-spacing: 1px;
+      margin-top: 3px;
+    }
+
+    .main-layout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.6rem;
+      width: 100%;
+      align-items: flex-start;
+    }
+
+    .control-panel {
+      flex: 1 1 310px;
+      background: rgba(255,252,248,0.75);
+      backdrop-filter: blur(14px);
+      border-radius: 1.4rem;
+      padding: 1.5rem;
+      box-shadow: 0 12px 28px rgba(60,30,40,0.15), inset 0 1px 8px rgba(180,150,160,0.2);
+      border: 1px solid rgba(180,150,160,0.45);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      position: sticky;
+      top: 1.2rem;
+    }
+
+    .panel-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.35rem;
+      color: #5a3a4e;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.4rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .input-group label {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 0.72rem;
+      color: #7a5f8a;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    select, input[type="text"] {
+      background: #fefcfa;
+      border: 1px solid var(--border-light);
+      border-radius: 1.5rem;
+      padding: 0.6rem 1rem;
+      font-size: 0.88rem;
+      color: #3e2a35;
+      font-family: 'Lora', serif;
+      background-image: linear-gradient(to bottom, #fefcfa, #f7f0ec);
+      box-shadow: inset 0 2px 6px rgba(120,100,110,0.07);
+      transition: all 0.2s;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    select option {
+      background: #fefcfa;
+      color: #3e2a35;
+      font-family: 'Lora', serif;
+    }
+
+    input::placeholder {
+      color: #b0a0a8;
+      font-style: italic;
+      font-size: 0.82rem;
+    }
+
+    select:hover, input:hover { border-color: #b89cc4; }
+    select:focus, input:focus { border-color: var(--lavender); box-shadow: 0 0 10px rgba(155,127,168,0.2); }
+
+    .chip-row {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      flex: 1;
+      min-width: 55px;
+      padding: 0.35rem 0.3rem;
+      text-align: center;
+      border-radius: 1.5rem;
+      background: #f8f2f5;
+      border: 1px solid var(--border-light);
+      color: #6b4a60;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .chip.active {
+      background: #e8d8e4;
+      border-color: var(--lavender);
+      color: #4a2e3d;
+      font-weight: 700;
+      box-shadow: 0 0 12px rgba(155,127,168,0.3);
+    }
+
+    .generate-btn {
+      background: var(--plum);
+      border: none;
+      background-image: linear-gradient(180deg, var(--plum-light) 0%, var(--plum) 100%);
+      color: #fefcfa;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: 1.2px;
+      padding: 0.65rem 1.5rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(107,58,94,0.3), 0 0 0 2px rgba(180,140,170,0.5);
+      transition: all 0.2s;
+      text-transform: uppercase;
+      border: 1px solid #a07090;
+      text-align: center;
+    }
+
+    .generate-btn:hover {
+      background-image: linear-gradient(180deg, #9c6290 0%, #7a4a6e 100%);
+      box-shadow: 0 10px 20px rgba(107,58,94,0.4), 0 0 0 2px #c0a0b8;
+      transform: translateY(-1px);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-row .generate-btn { flex: 2; }
+
+    .btn-row .mini-generate {
+      flex: 1;
+      font-size: 0.9rem;
+      padding: 0.65rem 0.5rem;
+      background-image: linear-gradient(180deg, var(--rose-gold-light) 0%, var(--rose-gold) 100%);
+      border-color: var(--rose-gold);
+      box-shadow: 0 8px 16px rgba(140,110,100,0.3), 0 0 0 2px rgba(200,170,155,0.5);
+      color: #3e2518;
+    }
+
+    .btn-row .mini-generate:hover {
+      background-image: linear-gradient(180deg, #d8b8a8 0%, #b88a78 100%);
+    }
+
+    .counter-text {
+      text-align: center;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+    }
+
+    .display-panel {
+      flex: 2.2 1 700px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .flip-container {
+      perspective: 1200px;
+      width: 100%;
+      min-height: 340px;
+    }
+
+    .flipper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+      min-height: 340px;
+    }
+
+    .flipper.flipped { transform: rotateY(180deg); }
+
+    .flip-front, .flip-back {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      min-height: 340px;
+      backface-visibility: hidden;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+    }
+
+    .flip-front {
+      background: var(--bg-card);
+      background-image: 
+        linear-gradient(0deg, rgba(200,180,190,0.03) 0%, transparent 20%),
+        linear-gradient(180deg, rgba(180,160,170,0.02) 0%, transparent 60%);
+      border: 2px solid var(--border);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 0.8rem;
+      z-index: 2;
+    }
+
+    .flip-front .card-placeholder-icon { font-size: 3rem; opacity: 0.45; }
+    .flip-front .card-placeholder-text {
+      font-family: 'Lora', 'Georgia', serif;
+      font-style: italic;
+      color: #9a8a90;
+      font-size: 0.9rem;
+      letter-spacing: 0.6px;
+      line-height: 1.5;
+    }
+
+    .flip-back {
+      background: var(--bg-card);
+      background-image: 
+        url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d4c4b8' fill-opacity='0.1'%3E%3Ccircle cx='3' cy='3' r='0.7'/%3E%3C/g%3E%3C/svg%3E"),
+        linear-gradient(175deg, #fefcfa 0%, #f8f2ed 28%, #fbf7f2 100%);
+      border: 2px solid var(--border);
+      padding: 1.6rem 1.8rem;
+      transform: rotateY(180deg);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .flip-back::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 26px,
+        rgba(180,160,170,0.06) 26px,
+        rgba(180,160,170,0.06) 27px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .flip-back > * { position: relative; z-index: 2; }
+
+    .card-name {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 2rem;
+      color: #3e2030;
+      letter-spacing: 1px;
+      border-bottom: 2px solid var(--lavender-light);
+      padding-bottom: 0.3rem;
+      margin-bottom: 0.1rem;
+    }
+
+    .card-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.1rem; }
+
+    .card-badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 0.15rem 0.7rem;
+      border-radius: 1rem;
+      background: rgba(155,127,168,0.1);
+      color: #6b4a60;
+      border: 1px solid var(--lavender-light);
+    }
+
+    .card-label {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.62rem;
+      color: #7a5f8a;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 0.2rem;
+    }
+
+    .card-bio {
+      font-family: 'Lora', 'Georgia', serif;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #3e2a35;
+    }
+
+    .card-secret {
+      font-family: 'Lora', 'Georgia', serif;
+      font-size: 0.8rem;
+      color: #6b3a5e;
+      background: rgba(155,127,168,0.07);
+      padding: 0.4rem 0.7rem;
+      border-left: 3px solid var(--plum);
+      border-radius: 0 4px 4px 0;
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .card-detail {
+      font-family: 'Lora', 'Georgia', serif;
+      font-size: 0.8rem;
+      color: #5c4550;
+      line-height: 1.5;
+    }
+
+    .card-quirk {
+      font-family: 'Lora', 'Georgia', serif;
+      font-size: 0.78rem;
+      color: #6b5a60;
+      background: rgba(180,150,160,0.05);
+      padding: 0.25rem 0.6rem;
+      border-radius: 3px;
+      display: inline-block;
+      line-height: 1.5;
+    }
+
+    .card-stamp {
+      position: absolute;
+      bottom: 16px; right: 18px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.56rem;
+      font-weight: 600;
+      color: var(--plum);
+      border: 1.5px solid var(--plum);
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      transform: rotate(-12deg);
+      opacity: 0.6;
+      z-index: 3;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .card-actions-row {
+      position: absolute;
+      bottom: 14px; left: 18px;
+      display: flex;
+      gap: 0.4rem;
+      z-index: 3;
+    }
+
+    .card-action-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(155,127,168,0.15);
+      border: 1px solid var(--lavender-light);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      transition: 0.2s;
+      color: #6b4a60;
+    }
+
+    .card-action-dot:hover {
+      background: rgba(155,127,168,0.3);
+      border-color: var(--lavender);
+    }
+
+    .saved-section {
+      background: rgba(255,252,248,0.68);
+      backdrop-filter: blur(10px);
+      border-radius: 1.2rem;
+      padding: 1.1rem;
+      border: 1px solid rgba(180,150,160,0.35);
+    }
+
+    .saved-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.7rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .saved-header h3 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #5a3a4e;
+    }
+
+    .saved-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+    .mini-btn {
+      background: #f5edf0;
+      border: 1px solid var(--border);
+      color: #5a3a4e;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.68rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 1.5rem;
+      cursor: pointer;
+      transition: 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .mini-btn:hover { background: #e8d8e4; border-color: var(--lavender); }
+
+    .saved-cards-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+    .saved-mini-card {
+      background: #fefcfa;
+      border: 1px solid var(--border-light);
+      border-radius: 5px;
+      padding: 0.5rem 0.75rem;
+      font-family: 'Lora', serif;
+      font-size: 0.68rem;
+      color: #3e2a35;
+      cursor: pointer;
+      transition: 0.15s;
+      max-width: 175px;
+      box-shadow: 0 2px 8px rgba(60,30,40,0.08);
+      position: relative;
+      flex: 1 1 140px;
+    }
+
+    .saved-mini-card:hover {
+      border-color: var(--lavender);
+      box-shadow: 0 4px 12px rgba(60,30,40,0.15);
+    }
+
+    .saved-mini-card .mini-name {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: #3e2030;
+    }
+
+    .saved-mini-card .mini-role {
+      font-size: 0.58rem;
+      color: #7a5f8a;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .saved-mini-card .remove-mini {
+      position: absolute;
+      top: 3px; right: 7px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      color: #a05068;
+      font-weight: bold;
+    }
+
+    .empty-saved {
+      color: #a0929a;
+      font-style: italic;
+      font-family: 'Lora', serif;
+      font-size: 0.78rem;
+      padding: 0.4rem;
+    }
+
+    @media (max-width: 800px) {
+      .control-panel { position: static; flex: 1 1 100%; }
+      .flip-back { padding: 1rem 1.2rem; }
+      .card-name { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="brand-watermark">Cozy Mystery Character Engine</div>
+
+<div class="main-wrapper">
+  <div class="app-header">
+    <div class="logo-svg">
+      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="cardShadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#4a2e3d" flood-opacity="0.25"/></filter>
+        </defs>
+        <rect x="12" y="10" width="56" height="62" rx="6" fill="#fefcfa" stroke="#9b7fa8" stroke-width="2.5" filter="url(#cardShadow)"/>
+        <line x1="22" y1="22" x2="58" y2="22" stroke="#c4b0a0" stroke-width="1.5"/>
+        <line x1="22" y1="30" x2="50" y2="30" stroke="#d4c4b8" stroke-width="1"/>
+        <line x1="22" y1="38" x2="54" y2="38" stroke="#d4c4b8" stroke-width="1"/>
+        <line x1="22" y1="46" x2="46" y2="46" stroke="#d4c4b8" stroke-width="1"/>
+        <line x1="22" y1="54" x2="52" y2="54" stroke="#d4c4b8" stroke-width="1"/>
+        <circle cx="62" cy="60" r="11" fill="#6b3a5e" opacity="0.75"/>
+        <text x="62" y="64" text-anchor="middle" font-size="10" fill="#fefcfa" font-family="serif" font-weight="bold">?</text>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>Character Name & Bio Engine</h1>
+      <div class="subtitle">Lavender Tea Room · Small-Town Cast Builder</div>
+      <span class="genre-badge">🫖 Amateur Sleuths, Bakers & Bookshop Owners</span>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div class="control-panel">
+      <div class="panel-title">🧶 Character Parameters</div>
+      
+      <div class="input-group">
+        <label>Character Role</label>
+        <select id="roleSelect">
+          <option value="Amateur Sleuth">🔎 Amateur Sleuth</option>
+          <option value="Suspect">🧐 Suspect</option>
+          <option value="Best Friend & Sidekick">🫖 Best Friend & Sidekick</option>
+          <option value="Victim">💐 Victim</option>
+          <option value="Quirky Local">🎭 Quirky Local</option>
+          <option value="Red Herring">🐟 Red Herring</option>
+          <option value="Mentor">📚 Mentor</option>
+          <option value="Love Interest">💕 Love Interest</option>
+          <option value="Rival Sleuth">⚔️ Rival Sleuth</option>
+          <option value="Village Authority">🪪 Village Authority</option>
+        </select>
+        <input type="text" id="roleCustom" placeholder="Or type custom role..." value="">
+      </div>
+
+      <div class="input-group">
+        <label>Gender</label>
+        <select id="genderSelect">
+          <option value="Any">⚧ Any</option>
+          <option value="Male">♂️ Male</option>
+          <option value="Female">♀️ Female</option>
+          <option value="Non-binary">🌙 Non-binary</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>Village Vibe</label>
+        <select id="toneSelect">
+          <option value="Tea Room & Bookshop">📖 Tea Room & Bookshop</option>
+          <option value="Garden & Flowers">🌸 Garden & Flowers</option>
+          <option value="Seaside Village">🌊 Seaside Village</option>
+          <option value="Countryside & Pubs">🌿 Countryside & Pubs</option>
+          <option value="Bakery & Crafts">🧁 Bakery & Crafts</option>
+          <option value="Autumnal & Cozy">🍂 Autumnal & Cozy</option>
+          <option value="Holiday Festive">🎄 Holiday Festive</option>
+          <option value="Market Town">🧺 Market Town</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>Backstory Depth</label>
+        <div class="chip-row" id="depthGroup">
+          <div class="chip active" data-depth="brief">Brief</div>
+          <div class="chip" data-depth="standard">Standard</div>
+          <div class="chip" data-depth="detailed">Detailed</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="generate-btn" id="generateBtn">🫖 Brew Character</button>
+        <button class="generate-btn mini-generate" id="quickGenerateBtn">⚡ Quick 5</button>
+      </div>
+      <div class="counter-text" id="genCounter">Characters brewed: 0</div>
+    </div>
+
+    <div class="display-panel">
+      <div class="flip-container" id="flipContainer">
+        <div class="flipper" id="flipper">
+          <div class="flip-front">
+            <div class="card-placeholder-icon">🫖</div>
+            <div class="card-placeholder-text">Your cozy character will materialize here...<br>Choose parameters and click Brew Character.</div>
+          </div>
+          <div class="flip-back" id="cardBack">
+            <div class="card-stamp">VILLAGE RESIDENT</div>
+            <div class="card-name" id="charName">---</div>
+            <div class="card-badges">
+              <span class="card-badge" id="charRoleBadge">---</span>
+              <span class="card-badge" id="charToneBadge">---</span>
+              <span class="card-badge" id="charGenderBadge">---</span>
+            </div>
+            <div class="card-label">Occupation & Backstory</div>
+            <div class="card-bio" id="charBio">---</div>
+            <div class="card-label">Hidden Secret</div>
+            <div class="card-secret" id="charSecret">---</div>
+            <div class="card-label">Physical Description</div>
+            <div class="card-detail" id="charDesc">---</div>
+            <div class="card-label">Defining Quirk</div>
+            <div class="card-quirk" id="charQuirk">---</div>
+            <div class="card-actions-row">
+              <div class="card-action-dot" id="saveFromCardBtn" title="Save to Village">➕</div>
+              <div class="card-action-dot" id="copyCardBtn" title="Copy Card">📋</div>
+              <div class="card-action-dot" id="regenCardBtn" title="Regenerate">🔄</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="saved-section">
+        <div class="saved-header">
+          <h3>📚 Village Residents (<span id="castCount">0</span>)</h3>
+          <div class="saved-actions">
+            <button class="mini-btn" id="saveCurrentBtn">➕ Save Current</button>
+            <button class="mini-btn" id="copyAllSavedBtn">📋 Copy All</button>
+            <button class="mini-btn" id="exportTxtBtn">📄 Export .txt</button>
+            <button class="mini-btn" id="clearAllBtn" style="border-color:#c0a0b0;color:#8b4a60;">🗑 Clear</button>
+          </div>
+        </div>
+        <div class="saved-cards-grid" id="savedGrid">
+          <div class="empty-saved">No villagers saved yet. Generate and save to build your cozy cast.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ---- MULTI-STREAM SEEDED RNG ----
+    var seeds = [4321, 8765, 3456, 7890, 1234];
+    var seedIdx = 0;
+    function setSeed(s) { seeds[seedIdx] = s >>> 0; }
+    function seededRandom() {
+      seeds[seedIdx] = (seeds[seedIdx] * 1664525 + 1013904223) >>> 0;
+      return (seeds[seedIdx] >>> 0) / 4294967296;
+    }
+    function pickStream(i) { seedIdx = i % seeds.length; }
+    function shuffleStream() { seedIdx = Math.floor(Math.random() * seeds.length); }
+
+    var genCounter = 0;
+    var totalGenerated = 0;
+
+    function advanceSeed() {
+      var now = Date.now() % 99999;
+      genCounter = (genCounter + 1) % 1000;
+      pickStream(genCounter % seeds.length);
+      setSeed(now * 13 + genCounter * 41 + 2701);
+      totalGenerated++;
+      document.getElementById("genCounter").textContent = "Characters brewed: " + totalGenerated;
+    }
+
+    // ---- EXPANDED NAME POOLS ----
+    var firstNamesMale = [
+      "Arthur","Barnaby","Cedric","Desmond","Edmund","Felix","George","Henry","Ian","Jasper",
+      "Kieran","Laurence","Malcolm","Nigel","Orson","Percival","Quentin","Rupert","Sebastian","Timothy",
+      "Albert","Basil","Colin","Dominic","Elliot","Francis","Giles","Hugh","Isaac","Jeremy",
+      "Kenneth","Leo","Marcus","Nathaniel","Oliver","Philip","Reginald","Samuel","Thomas","Tobias",
+      "Vincent","Wilfred","Ambrose","Bernard","Clarence","Douglas","Ernest","Frederick","Geoffrey","Humphrey"
+    ];
+    var firstNamesFemale = [
+      "Agatha","Beatrice","Charlotte","Daphne","Eleanor","Florence","Grace","Harriet","Iris","Josephine",
+      "Katherine","Louisa","Margaret","Nancy","Opal","Penelope","Rosemary","Sylvia","Tabitha","Ursula",
+      "Vera","Winifred","Alice","Beryl","Clara","Dorothy","Edith","Fiona","Gwendolyn","Hannah",
+      "Isabel","Julia","Lucinda","Mabel","Nora","Olivia","Prudence","Rhiannon","Susannah","Theodora",
+      "Victoria","Wendy","Eliza","Maud","Cecily","Diana","Elspeth","Frances","Georgina","Henrietta"
+    ];
+    var firstNamesNeutral = [
+      "Alex","Blair","Casey","Drew","Ellis","Finley","Gray","Harper","Indigo","Jordan",
+      "Kelsey","Lennox","Morgan","Nico","Ollie","Piper","Quinn","Riley","Sage","Taylor",
+      "Umber","Val","Wren","Xen","Yael","Zephyr","Ainsley","Bellamy","Cory","Devon"
+    ];
+    var lastNames = [
+      "Ashworth","Bloomfield","Cotton","Dimsdale","Emberly","Fairfax","Greenwood","Honeywell","Ivy","Jessup",
+      "Kettlewell","Lavender","Maplewood","Nettleby","Oakes","Pendleton","Quimby","Rosewood","Sable","Thatcher",
+      "Underwood","Vale","Willoughby","Yarrow","Aldridge","Bramble","Chesterton","Dunham","Elmsworth","Fallow",
+      "Granville","Hawthorne","Inkpen","Juniper","Kensington","Loomis","Merriweather","Nightingale","Osborne","Prynn",
+      "Quarry","Ravenswood","Silverton","Tallow","Upton","Vellum","Wickham","Yew","Appleby","Barrow",
+      "Cranford","Dove","Edgeworth","Fenn","Gosling","Hathersage","Ickleby","Jolly","Kettle","Latchley",
+      "Micklethwaite","Nethercott","Otterby","Puddleduck","Quainton","Rumbelow","Sowerby","Tipple","Umberleigh","Wensleydale"
+    ];
+
+    function getRandomName(gender) {
+      pickStream(0);
+      var firstName = "";
+      if (gender === "Male") firstName = firstNamesMale[Math.floor(seededRandom() * firstNamesMale.length)];
+      else if (gender === "Female") firstName = firstNamesFemale[Math.floor(seededRandom() * firstNamesFemale.length)];
+      else if (gender === "Non-binary") firstName = firstNamesNeutral[Math.floor(seededRandom() * firstNamesNeutral.length)];
+      else {
+        var r = Math.floor(seededRandom() * 3);
+        if (r === 0) firstName = firstNamesMale[Math.floor(seededRandom() * firstNamesMale.length)];
+        else if (r === 1) firstName = firstNamesFemale[Math.floor(seededRandom() * firstNamesFemale.length)];
+        else firstName = firstNamesNeutral[Math.floor(seededRandom() * firstNamesNeutral.length)];
+      }
+      pickStream(1);
+      var lastName = lastNames[Math.floor(seededRandom() * lastNames.length)];
+      if (seededRandom() > 0.75) {
+        var initials = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        return firstName + " " + initials[Math.floor(seededRandom() * 26)] + ". " + lastName;
+      }
+      return firstName + " " + lastName;
+    }
+
+    // ---- BACKSTORY POOLS (identical expanded content) ----
+    var backstories = {
+      "Amateur Sleuth": [
+        "A retired librarian who now runs a charming bookshop, forever stumbling upon mysteries tucked between the pages of village life. Their sharp eye for detail and love of puzzles make them a natural detective.",
+        "Inherited a quaint cottage and tea room from a beloved aunt, only to discover that the village has more secrets than scones. Their warmth and curiosity draw confessions like honey draws bees.",
+        "A former journalist who left the big city for peace and quiet, now running the village newsletter. Unfortunately, peace and quiet are hard to come by when incidents keep occurring.",
+        "A keen gardener whose prize-winning roses are the talk of the county. They overhear the best gossip while weeding, and their knowledge of plants proves unexpectedly useful.",
+        "A retired nurse who has seen it all, now volunteering at the charity shop. Their calm demeanor and medical knowledge make them an invaluable asset when things take a dark turn.",
+        "The village postmistress who reads everything and forgets nothing. Forty years of handling the village's correspondence has given them an encyclopedic knowledge of everyone's business.",
+        "A cat café owner whose feline friends have a knack for sitting on the laps of people with guilty consciences. They've learned to trust the cats' judgment implicitly.",
+        "A watercolor artist who paints village scenes and notices when things are out of place. Their artist's eye catches details others miss entirely."
+      ],
+      "Suspect": [
+        "The charming new owner of the village antique shop, whose arrival coincided with the first mysterious incident. Their collection includes items with questionable provenance.",
+        "The victim's competitive business rival, whose new bakery has been stealing customers. Their sharp tongue and sharper business acumen make them an easy target for suspicion.",
+        "A reclusive author whose moody novels hide a tumultuous past. Their knowledge of chemistry—for research purposes, they claim—raises eyebrows.",
+        "The village's most respected medium, whose predictions have been eerily accurate. But their alibi for the night in question has more holes than a crocheted doily.",
+        "A newcomer with an unverifiable past, who keeps to themselves and asks too many questions about local history. Charming but evasive.",
+        "The victim's disgruntled former business partner who was bought out under suspicious circumstances years ago. They've been nursing a grudge ever since.",
+        "A competitive flower arranger who was publicly humiliated at the village show. Their rivalry with the victim was well-known and increasingly bitter.",
+        "The church organist who knows all the village's secrets through the confessional—or so they claim. Their sanctimonious attitude masks a complicated personal life."
+      ],
+      "Best Friend & Sidekick": [
+        "The sleuth's childhood companion who runs the local bakery. They provide emotional support, fresh scones, and the occasional crucial insight gleaned from overheard café chatter.",
+        "A retired police officer who initially dismissed the sleuth's theories but has since become a reluctant believer and invaluable ally in navigating official channels.",
+        "The sleuth's cousin, a librarian with an encyclopedic knowledge of village genealogy and a talent for finding obscure records in dusty archives.",
+        "A cheerful florist whose arrangements say more than words. They know everyone's secrets—who sends flowers to whom, and who receives them in guilt.",
+        "The post office clerk who sees every letter and parcel that passes through the village. Discreet, observant, and endlessly patient.",
+        "A dog walker who covers every inch of the village daily. Their four-legged companion has a particular dislike for certain people—a judgment that often proves correct.",
+        "The café barista who overhears everything while making lattes. They're quiet, observant, and have an uncanny memory for faces and conversations.",
+        "A young, enthusiastic village history buff who runs the local walking tours. Their energy sometimes leads them into trouble, but their knowledge is invaluable."
+      ],
+      "Victim": [
+        "A well-liked community figure whose sudden passing reveals a hidden life. Behind the friendly smile lay debts, secrets, and connections no one suspected.",
+        "A newcomer who had just begun to make friends in the village. Their mysterious past caught up with them in the most final way possible.",
+        "The keeper of a legendary family recipe that half the village wanted. Their passing may have been about more than just culinary secrets.",
+        "A local historian preparing to publish a book about the village's founding families. Someone clearly wanted certain stories to remain untold.",
+        "A charismatic performer visiting for the annual village fête. Their dramatic final act was not part of the program.",
+        "The chairperson of the village hall committee, whose decisions had made enemies over the years. The booking schedule was particularly contentious.",
+        "A retired solicitor who knew where all the bodies were buried—figuratively speaking. Their old case files contained dynamite.",
+        "A beloved primary school teacher whose past hid a secret that would devastate the community if revealed."
+      ],
+      "Quirky Local": [
+        "A cat-loving eccentric who talks to their fifteen felines more than to people. The cats, however, are excellent witnesses to village comings and goings.",
+        "A retired sea captain who spins yarns taller than any mast. No one quite believes their stories—until one turns out to be true.",
+        "A hedge witch who sells herbal remedies and tells fortunes. Their predictions are vague but unsettlingly accurate.",
+        "The village clockmaker who has maintained the church clock for forty years. They know every mechanism in town—including the ones that tick inside people.",
+        "A beekeeper whose honey is legendary. Their observations about hive behavior often mirror the goings-on in the village.",
+        "An obsessive birdwatcher who has documented every species in the county. Their detailed logs include more than just birds.",
+        "A metal detectorist who has found everything from Roman coins to lost wedding rings. Their latest find is something no one expected.",
+        "The village scarecrow maker whose creations are displayed at every event. Their scarecrows have an uncanny resemblance to certain villagers."
+      ],
+      "Red Herring": [
+        "A traveling salesman whose flashy car and flashier smile make them an instant suspect. Too bad they have a rock-solid alibi and a perfectly innocent reason for being in town.",
+        "A competitive rival who publicly argued with the victim the day before. Their motive is too obvious, and the real culprit is counting on that.",
+        "A nosy journalist researching a salacious story about the village. Their snooping uncovers exactly the wrong clues.",
+        "An eccentric collector of macabre memorabilia whose strange hobbies raise every eyebrow in town—but prove entirely harmless.",
+        "A disgruntled former employee who was heard making threats. But they were at a family wedding in Scotland when the incident occurred.",
+        "A mysterious stranger who checked into the B&B and checked out the same morning. Their odd behavior had a perfectly mundane explanation."
+      ],
+      "Mentor": [
+        "A retired Scotland Yard detective who tends their roses and dispenses cryptic wisdom. They see patterns where others see only chaos.",
+        "A wise old apothecary owner whose knowledge of herbs rivals that of any professor. Their gentle guidance helps the sleuth see the bigger picture.",
+        "A university professor emeritus of folklore who provides historical context for the strange events plaguing the village.",
+        "The sleuth's beloved grandparent, whose quiet wisdom and uncanny intuition have guided the family for generations.",
+        "An elderly nun who has lived in the village convent for sixty years. Her memory is sharp, and her moral compass is unwavering.",
+        "A retired headmistress who taught half the village. She knows exactly what each of her former pupils is capable of."
+      ],
+      "Love Interest": [
+        "A charming newcomer who sweeps the sleuth off their feet—but their mysterious past raises questions that can't be ignored.",
+        "A fellow investigator from a neighboring village. Professional rivalry masks undeniable romantic chemistry.",
+        "The village doctor, whose rational, scientific mind clashes beautifully with the sleuth's intuitive approach.",
+        "A local artisan whose craft requires patience and precision. Their steady presence provides comfort amid chaos.",
+        "A chef who moved from the city to open a restaurant. Their culinary skills are matched only by their ability to listen.",
+        "A landscape architect restoring the manor gardens. Their love of beauty and order complements the sleuth's chaotic investigations."
+      ],
+      "Rival Sleuth": [
+        "A private investigator hired by the victim's family, who views the amateur sleuth as meddlesome competition. Their methods are professional but their conclusions are often wrong.",
+        "A true crime podcaster who arrives to document the case. Their theories are dramatic but rarely accurate, and they have a habit of complicating matters.",
+        "The village gossip who has appointed themself as an unofficial detective. Their information network is impressive, but their deductive skills leave much to be desired.",
+        "A retired police officer who thinks they know better than any amateur. Their by-the-book approach misses the nuances of village life."
+      ],
+      "Village Authority": [
+        "The village constable, more accustomed to lost pets than serious incidents. Well-meaning but out of their depth, they reluctantly accept the sleuth's help.",
+        "A detective inspector sent from the city, initially dismissive of small-town ways but gradually won over by the sleuth's local knowledge.",
+        "The parish council chair who has run the village for thirty years. Their authority is absolute, but their judgment isn't always sound.",
+        "The vicar whose gentle wisdom and knowledge of the parishioners makes them a trusted confidant. They hear more than they let on."
+      ]
+    };
+
+    var detailedAdditions = [
+      " Their cozy cottage is filled with mismatched china, overstuffed bookshelves, and a cat named after a famous detective.",
+      " They keep a journal of village observations, written in a shorthand only they can decipher.",
+      " Their family has lived in this village for generations, and the weight of that legacy shapes every decision.",
+      " A childhood mystery they never solved still haunts them, driving their need to find answers now.",
+      " They write letters to an old friend every Sunday, chronicling the village's secrets in careful, coded language.",
+      " Once a promising academic, they abandoned their career to return home and care for an aging relative.",
+      " Their garden is their sanctuary, and the flowers they grow often find their way into the hands of those who need comfort.",
+      " They have a collection of vintage teacups, each with a story attached to its acquisition.",
+      " Every morning they walk the same route through the village, noticing the smallest changes—a new curtain, a missing flowerpot, an unfamiliar car.",
+      " They are a fixture at every village event, from the spring fair to the Christmas bazaar, always watching and listening.",
+      " Their memory for faces is legendary; they can recall what someone wore to the village fête fifteen years ago.",
+      " They inherited not just a cottage but a reputation—their family name carries weight in the village, for better or worse."
+    ];
+
+    var secretsPool = [
+      "Was present when the incident occurred but fled out of fear, and is now terrified of being wrongly accused.",
+      "Possesses a letter that could change the inheritance of the entire village estate.",
+      "Has been secretly communicating with someone the village believes to be long dead.",
+      "Once caused an accident through carelessness and has been concealing their guilt for decades.",
+      "Is not who they claim to be—they assumed a new identity to escape a scandal.",
+      "Knows the identity of the culprit but is protecting them out of a misplaced sense of loyalty.",
+      "Has been stealing small items from the charity shop and replacing them with inferior versions.",
+      "Is secretly in love with the prime suspect and has been subtly tampering with evidence.",
+      "Was the last person to see the victim alive and adjusted the timeline to avoid suspicion.",
+      "Possesses a gift they've hidden from everyone, fearing ridicule in the skeptical village.",
+      "Is actually an undercover investigator from a neighboring county.",
+      "Has a twin who is the real troublemaker, and they've been providing a false alibi out of family loyalty.",
+      "Discovered the body hours before alerting anyone and tidied up the scene.",
+      "Has been receiving anonymous threatening letters they haven't shared with anyone.",
+      "Was blackmailing the victim over a secret that would destroy a respected family's reputation.",
+      "Has been living under an assumed name and fears exposure more than anything.",
+      "Secretly practices herbalism that some in the village would call old-fashioned witchcraft.",
+      "Is the illegitimate child of the village's wealthiest family.",
+      "Overheard a crucial conversation but is afraid to come forward.",
+      "Has a photographic memory and noticed a detail that implicates someone powerful.",
+      "Is deeply in debt and made a choice they now regret.",
+      "Has been using their position to read everyone's correspondence.",
+      "Knows the location of a hidden room in the victim's house.",
+      "Was having a secret relationship with the victim's spouse.",
+      "Faked their references to get their job and lives in fear of discovery.",
+      "Has been sleepwalking and fears they may have done something terrible unconsciously.",
+      "Possesses a diary that reveals damaging secrets about half the village.",
+      "Is the true owner of the valuable heirloom at the center of the dispute.",
+      "Has been leaving anonymous tips for the sleuth, trying to guide the investigation from the shadows.",
+      "Is secretly related to the sleuth by a family connection no one knows about.",
+      "Witnessed a key event while hiding somewhere they shouldn't have been.",
+      "Has been exaggerating their credentials for years.",
+      "Knows that the victim was planning to leave everything behind and start anew.",
+      "Took a souvenir from the scene and now can't admit it.",
+      "Has been receiving messages tucked into their newspaper each morning.",
+      "Is allergic to the very thing that supposedly caused the incident.",
+      "Knew the victim under a different name in another town.",
+      "Believes they were the intended target, not the actual victim.",
+      "Has a secret tunnel connecting their shop to the scene of the incident.",
+      "Won the lottery years ago but told no one, living frugally to avoid suspicion.",
+      "Was responsible for a prank that went terribly wrong years ago and has been paying for it ever since.",
+      "Has been pretending to read the classics but actually only reads romance novels.",
+      "Switched the labels on the prize-winning jam at the village fête ten years ago.",
+      "Has a secret talent they've never revealed to anyone in the village."
+    ];
+
+    var descriptions = [
+      "A comfortable, rosy-cheeked person with twinkling eyes and silver-streaked hair. They favor cardigans with deep pockets and sensible shoes.",
+      "Tall and angular, with ink-stained fingers and spectacles perpetually sliding down their nose. Their hair defies all attempts at tidiness.",
+      "Round and cheerful, with flour-dusted apron strings and warm hands that are never still. Laugh lines crinkle around kind eyes.",
+      "Elegantly dressed in vintage finds, with carefully styled auburn hair and a pearl brooch that was their grandmother's.",
+      "Weathered and sturdy, with gardener's hands and sun-bronzed skin. They smell faintly of lavender and fresh earth.",
+      "Bird-like and alert, with quick movements and bright, inquisitive eyes. Their head tilts when they listen, like a curious sparrow.",
+      "Soft and grandmotherly, with silver curls and the comforting scent of fresh baking. Their hugs could solve half the world's problems.",
+      "Bookish and slightly stooped, with wire-rimmed glasses and a permanent paper cut on their thumb.",
+      "Athletic and restless, always tapping a foot or drumming fingers. Their energy fills whatever room they enter.",
+      "Delicate and precise, with neat handwriting and clothes that are always perfectly pressed. A single strand of pearls completes every outfit.",
+      "Warm and inviting, with a laugh that makes others join in. Their colorful scarves are their signature.",
+      "Quiet and unassuming, the kind of person who fades into the background—which is exactly how they like it.",
+      "Sturdy and dependable, with hands that have mended fences, baked bread, and comforted the grieving. The backbone of the village.",
+      "Fashionably bohemian, with flowing skirts, chunky jewelry, and an ever-present notebook for sketching ideas.",
+      "Neat as a pin, with creases ironed into their trousers and shoes polished to a mirror shine. Everything in its place, always.",
+      "A gentle giant with a booming voice that belies their tender heart. Children and animals adore them instinctively.",
+      "Sharp-featured and intense, with eyes that miss nothing. They have the unnerving habit of finishing other people's sentences.",
+      "Perpetually windswept, with a ruddy complexion and clothes that look like they've just come in from a long walk on the moors.",
+      "Immaculately groomed with silver hair swept into an elegant chignon. They carry an air of quiet authority.",
+      "Youthfully energetic despite their years, with a spring in their step and a mischievous glint in their eye."
+    ];
+
+    var quirks = [
+      "Always stirs their tea exactly thirteen times, no more, no less.",
+      "Collects antique buttons and can tell you the story behind each one.",
+      "Cannot pass a jigsaw puzzle without placing at least one piece.",
+      "Names all the village cats and keeps a chart of their relationships.",
+      "Hums the same lullaby while working, unaware they're doing it.",
+      "Carries a small notebook everywhere and writes down overheard snippets of conversation.",
+      "Arranges their spice rack alphabetically and by cuisine.",
+      "Taps their fingers in Morse code when thinking deeply.",
+      "Always has a fresh flower in their buttonhole, regardless of the season.",
+      "Checks the locks three times before bed—old habits from city living.",
+      "Collects interesting pebbles from every walk they take.",
+      "Talks to their plants, and they thrive magnificently.",
+      "Wears mismatched socks intentionally—claims it's for luck.",
+      "Cannot resist completing half-finished crosswords in discarded newspapers.",
+      "Always enters a room through the door closest to the kitchen.",
+      "Keeps a tin of homemade biscuits in their bag for emergencies.",
+      "Arranges all objects on their desk at perfect right angles.",
+      "Has a signature whistle that announces their arrival at the village shop.",
+      "Bakes for every occasion—joy, sorrow, or simply Tuesday.",
+      "Compares every situation to a plot from a Golden Age mystery novel.",
+      "Compulsively straightens crooked picture frames wherever they go.",
+      "Owns an extensive collection of vintage postcards from places they've never visited.",
+      "Reads the last page of every book first.",
+      "Keeps a detailed weather journal spanning forty years.",
+      "Gives every visitor to their home a guided tour of their garden, regardless of the weather.",
+      "Polishes the church brass every Thursday without fail.",
+      "Feeds the birds at exactly the same time every day, and they arrive punctually.",
+      "Can recite poetry from memory but only when washing dishes.",
+      "Keeps a drawer full of string 'just in case'.",
+      "Always carries an umbrella, even on the sunniest days."
+    ];
+
+    function pickOne(arr) { pickStream(3); return arr[Math.floor(seededRandom() * arr.length)]; }
+
+    var currentCharacter = null;
+
+    function generateCharacter() {
+      advanceSeed();
+      shuffleStream();
+
+      var role = document.getElementById("roleSelect").value;
+      var roleCust = document.getElementById("roleCustom").value.trim();
+      var displayRole = roleCust !== "" ? roleCust : role;
+      var lookupRole = role;
+
+      var gender = document.getElementById("genderSelect").value;
+      var tone = document.getElementById("toneSelect").value;
+      var depth = document.querySelector("#depthGroup .chip.active").dataset.depth;
+
+      var name = getRandomName(gender);
+      var bio = pickOne(backstories[lookupRole] || backstories["Amateur Sleuth"]);
+      if (depth === "detailed") {
+        bio += pickOne(detailedAdditions);
+      } else if (depth === "brief") {
+        bio = bio.split(".")[0] + ".";
+      }
+      var secret = pickOne(secretsPool);
+      var desc = pickOne(descriptions);
+      var quirk = pickOne(quirks);
+
+      if (tone === "Seaside Village") desc = desc.replace("garden","harbour").replace("flowers","shells").replace("lavender","sea salt");
+      else if (tone === "Countryside & Pubs") desc = desc.replace("cardigans","tweed jackets").replace("bakery","pub").replace("tea","ale");
+      else if (tone === "Tea Room & Bookshop") desc = desc.replace("flour","paper").replace("apron","bookmark").replace("biscuits","bookmarks");
+      else if (tone === "Garden & Flowers") desc = desc.replace("bakery","greenhouse").replace("spice rack","seed catalog");
+      else if (tone === "Autumnal & Cozy") desc = desc.replace("rosy-cheeked","wind-flushed").replace("silver curls","copper curls");
+      else if (tone === "Bakery & Crafts") desc = desc.replace("book","recipe").replace("ink","icing sugar");
+      else if (tone === "Holiday Festive") desc = desc.replace("fresh flower","sprig of holly").replace("lavender","cinnamon");
+      else if (tone === "Market Town") desc = desc.replace("garden","market").replace("flowers","produce");
+
+      currentCharacter = {
+        name: name, role: displayRole, gender: gender, tone: tone,
+        bio: bio, secret: secret, desc: desc, quirk: quirk
+      };
+
+      updateCardDisplay(currentCharacter);
+      document.getElementById("flipper").classList.add("flipped");
+    }
+
+    function updateCardDisplay(ch) {
+      document.getElementById("charName").textContent = ch.name;
+      document.getElementById("charBio").textContent = ch.bio;
+      document.getElementById("charSecret").textContent = '"' + ch.secret + '"';
+      document.getElementById("charDesc").textContent = ch.desc;
+      document.getElementById("charQuirk").textContent = ch.quirk;
+      document.getElementById("charRoleBadge").textContent = ch.role;
+      document.getElementById("charToneBadge").textContent = ch.tone;
+      document.getElementById("charGenderBadge").textContent = ch.gender;
+    }
+
+    function regenerateCurrent() {
+      document.getElementById("flipper").classList.remove("flipped");
+      setTimeout(generateCharacter, 150);
+    }
+
+    function copyCardContent() {
+      if (!currentCharacter) return;
+      var text = currentCharacter.name + "\n" +
+        "Role: " + currentCharacter.role + " | Gender: " + currentCharacter.gender + " | Vibe: " + currentCharacter.tone + "\n" +
+        "Occupation & Backstory: " + currentCharacter.bio + "\n" +
+        "Secret: " + currentCharacter.secret + "\n" +
+        "Description: " + currentCharacter.desc + "\n" +
+        "Quirk: " + currentCharacter.quirk;
+      navigator.clipboard.writeText(text).then(function() {
+        var btn = document.getElementById("copyCardBtn");
+        btn.textContent = "✓"; setTimeout(function(){ btn.textContent = "📋"; }, 1200);
+      }).catch(function() {});
+    }
+
+    var savedCast = [];
+
+    function renderSavedCast() {
+      var grid = document.getElementById("savedGrid");
+      document.getElementById("castCount").textContent = savedCast.length;
+      if (savedCast.length === 0) {
+        grid.innerHTML = '<div class="empty-saved">No villagers saved yet. Generate and save to build your cozy cast.</div>';
+        return;
+      }
+      var html = "";
+      for (var i = 0; i < savedCast.length; i++) {
+        var ch = savedCast[i];
+        html += "<div class='saved-mini-card' data-index='" + i + "'>";
+        html += "<span class='remove-mini' data-index='" + i + "'>✕</span>";
+        html += "<div class='mini-name'>" + escapeHTML(ch.name) + "</div>";
+        html += "<div class='mini-role'>" + escapeHTML(ch.role) + " · " + escapeHTML(ch.tone) + "</div>";
+        html += "</div>";
+      }
+      grid.innerHTML = html;
+
+      var miniCards = grid.querySelectorAll('.saved-mini-card');
+      for (var m = 0; m < miniCards.length; m++) {
+        miniCards[m].addEventListener('click', function(e) {
+          if (e.target.classList.contains('remove-mini')) return;
+          viewSavedCharacter(parseInt(this.dataset.index));
+        });
+      }
+
+      var removeBtns = grid.querySelectorAll('.remove-mini');
+      for (var r = 0; r < removeBtns.length; r++) {
+        removeBtns[r].addEventListener('click', function(e) {
+          e.stopPropagation();
+          removeSavedChar(parseInt(this.dataset.index));
+        });
+      }
+    }
+
+    function viewSavedCharacter(index) {
+      var ch = savedCast[index];
+      if (!ch) return;
+      currentCharacter = ch;
+      updateCardDisplay(ch);
+      document.getElementById("flipper").classList.add("flipped");
+    }
+
+    function removeSavedChar(index) { savedCast.splice(index, 1); renderSavedCast(); }
+
+    function saveCurrent() {
+      if (!currentCharacter) { alert("Brew a character first!"); return; }
+      savedCast.push({
+        name: currentCharacter.name, role: currentCharacter.role,
+        gender: currentCharacter.gender, tone: currentCharacter.tone,
+        bio: currentCharacter.bio, secret: currentCharacter.secret,
+        desc: currentCharacter.desc, quirk: currentCharacter.quirk
+      });
+      renderSavedCast();
+    }
+
+    function copyAllSaved() {
+      if (savedCast.length === 0) { alert("No villagers saved yet!"); return; }
+      var text = "=== COZY MYSTERY VILLAGE CAST ===\nGenerated by Cozy Mystery Character Engine\n\n";
+      for (var i = 0; i < savedCast.length; i++) {
+        var c = savedCast[i];
+        text += "--- " + c.name + " ---\n";
+        text += "Role: " + c.role + " | Gender: " + c.gender + " | Vibe: " + c.tone + "\n";
+        text += "Occupation & Backstory: " + c.bio + "\n";
+        text += "Secret: " + c.secret + "\n";
+        text += "Description: " + c.desc + "\n";
+        text += "Quirk: " + c.quirk + "\n\n";
+      }
+      navigator.clipboard.writeText(text.trim()).then(function() {
+        var btn = document.getElementById("copyAllSavedBtn");
+        btn.textContent = "✓ Copied!"; setTimeout(function(){ btn.textContent = "📋 Copy All"; }, 1800);
+      }).catch(function(){ alert("Copy failed."); });
+    }
+
+    function exportTxt() {
+      if (savedCast.length === 0) { alert("No villagers saved yet!"); return; }
+      var text = "=== COZY MYSTERY VILLAGE CAST ===\nGenerated by Cozy Mystery Character Engine\n\n";
+      for (var i = 0; i < savedCast.length; i++) {
+        var c = savedCast[i];
+        text += "--- " + c.name + " ---\n";
+        text += "Role: " + c.role + " | Gender: " + c.gender + " | Vibe: " + c.tone + "\n";
+        text += "Occupation & Backstory: " + c.bio + "\n";
+        text += "Secret: " + c.secret + "\n";
+        text += "Description: " + c.desc + "\n";
+        text += "Quirk: " + c.quirk + "\n\n";
+      }
+      var blob = new Blob([text], {type: 'text/plain'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'cozy-village-cast-' + new Date().toISOString().slice(0,10) + '.txt';
+      a.click(); URL.revokeObjectURL(url);
+    }
+
+    function clearAllSaved() {
+      if (savedCast.length === 0) return;
+      if (confirm("Clear all " + savedCast.length + " saved villagers?")) { savedCast = []; renderSavedCast(); }
+    }
+
+    function quickGenerate5() {
+      document.getElementById("flipper").classList.remove("flipped");
+      var roles = ["Amateur Sleuth","Best Friend & Sidekick","Suspect","Victim","Quirky Local"];
+      var genders = ["Any","Any","Any","Any","Any"];
+      var tones = document.getElementById("toneSelect").value;
+      for (var i = 0; i < 5; i++) {
+        advanceSeed(); shuffleStream();
+        var name = getRandomName(genders[i]);
+        var bio = pickOne(backstories[roles[i]] || backstories["Amateur Sleuth"]);
+        var secret = pickOne(secretsPool);
+        var desc = pickOne(descriptions);
+        var quirk = pickOne(quirks);
+        savedCast.push({
+          name: name, role: roles[i], gender: genders[i], tone: tones,
+          bio: bio, secret: secret, desc: desc, quirk: quirk
+        });
+      }
+      renderSavedCast();
+      if (savedCast.length >= 5) {
+        currentCharacter = savedCast[savedCast.length - 5];
+        updateCardDisplay(currentCharacter);
+        document.getElementById("flipper").classList.add("flipped");
+      }
+    }
+
+    function escapeHTML(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    document.getElementById("generateBtn").addEventListener("click", function() {
+      document.getElementById("flipper").classList.remove("flipped");
+      setTimeout(generateCharacter, 150);
+    });
+
+    document.getElementById("quickGenerateBtn").addEventListener("click", quickGenerate5);
+    document.getElementById("saveCurrentBtn").addEventListener("click", saveCurrent);
+    document.getElementById("copyAllSavedBtn").addEventListener("click", copyAllSaved);
+    document.getElementById("exportTxtBtn").addEventListener("click", exportTxt);
+    document.getElementById("clearAllBtn").addEventListener("click", clearAllSaved);
+
+    document.getElementById("saveFromCardBtn").addEventListener("click", saveCurrent);
+    document.getElementById("copyCardBtn").addEventListener("click", copyCardContent);
+    document.getElementById("regenCardBtn").addEventListener("click", regenerateCurrent);
+
+    var depthChips = document.querySelectorAll("#depthGroup .chip");
+    for (var d = 0; d < depthChips.length; d++) {
+      depthChips[d].addEventListener("click", function() {
+        for (var j = 0; j < depthChips.length; j++) depthChips[j].classList.remove("active");
+        this.classList.add("active");
+      });
+    }
+
+    window.addEventListener("load", function() {
+      setTimeout(generateCharacter, 300);
+    });
+  })();
+</script>
+</body>
+</html>
