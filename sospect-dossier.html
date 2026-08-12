@@ -1,0 +1,1121 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suspect Dossier Book Creator — ClueCraft Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Courier+Prime:wght@400;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#8b2e2e; --accent-d:#6b1f1f; --accentSoft:#f2e6e2;
+  --bg:#ede8e0; --panel:#ffffff; --panel2:#f7f4ee;
+  --ink:#241f1a; --ink2:#4a4038; --muted:#8a8074; --line:#ddd5c5;
+  --r:10px; --sh:0 6px 22px rgba(30,20,10,.12); --sh2:0 2px 8px rgba(30,20,10,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Courier Prime', monospace; font-size:14px;
+  height:100vh; overflow:hidden;
+}
+button{font-family:'Courier Prime',monospace}
+
+/* ============ TOP BAR ============ */
+.topbar{
+  height:58px; display:flex; align-items:center; gap:14px;
+  padding:0 18px; background:var(--panel); border-bottom:1px solid var(--line);
+  box-shadow:var(--sh2); position:relative; z-index:20;
+}
+.topbar .logo{
+  width:34px;height:34px;border-radius:8px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;
+  transform:rotate(-4deg); box-shadow:var(--sh2);
+}
+.topbar h1{
+  font-family:'Playfair Display',serif;font-weight:700;font-size:19px;margin:0;
+  letter-spacing:.3px;
+}
+.topbar .sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-family:'Oswald',sans-serif}
+.topbar .spacer{flex:1}
+.btn{
+  border:1px solid var(--line); background:var(--panel2); color:var(--ink2);
+  padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px;
+  transition:all .15s ease;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent-d);color:#fff}
+.btn.primary:hover{background:var(--accent-d);color:#fff}
+
+/* ============ THREE-PANEL LAYOUT ============ */
+.wrap{display:flex; height:calc(100vh - 58px);}
+.panel-l{
+  width:284px; flex:0 0 auto; background:var(--panel);
+  border-right:1px solid var(--line); overflow-y:auto;
+}
+.panel-r{
+  width:284px; flex:0 0 auto; background:var(--panel);
+  border-left:1px solid var(--line); overflow-y:auto;
+}
+.panel-title{
+  padding:14px 16px 10px; font-family:'Oswald',sans-serif; font-weight:700;
+  font-size:12px; letter-spacing:3px; color:var(--muted); text-transform:uppercase;
+}
+.page-area{
+  flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg);
+}
+.canvasbar{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;
+  border-bottom:1px solid var(--line);background:var(--panel2);
+}
+.canvasbar .zlab{font-size:12px;color:var(--muted);min-width:44px;text-align:center}
+.canvasbar .zbtn{
+  min-width:26px;height:26px;border:1px solid var(--line);background:var(--panel);
+  border-radius:6px;cursor:pointer;color:var(--ink2);font-size:13px;line-height:1;
+  padding:0 6px;
+}
+.canvasbar .zbtn:hover{border-color:var(--accent);color:var(--accent)}
+.canvasbar .pglab{margin-left:auto;font-size:12px;color:var(--muted);font-family:'Oswald',sans-serif;letter-spacing:1px}
+.canvasbar .seg{width:170px;flex:0 0 auto}
+.canvasbar .vlab{font-size:10px;color:var(--muted);font-family:'Oswald',sans-serif;letter-spacing:2px;text-transform:uppercase}
+.canvas{
+  flex:1; overflow:auto; display:flex; justify-content:center; align-items:flex-start;
+  padding:34px 30px;
+}
+.strip{
+  display:flex; gap:10px; padding:12px 16px; overflow-x:auto;
+  border-top:1px solid var(--line); background:var(--panel2); flex:0 0 auto;
+}
+.thumb{
+  flex:0 0 auto; cursor:pointer; border:2px solid var(--line); border-radius:4px;
+  overflow:hidden; background:#fff; position:relative; box-shadow:var(--sh2);
+  transition:border-color .15s ease;
+}
+.thumb:hover{border-color:var(--muted)}
+.thumb.cur{border-color:var(--accent)}
+.thumb.inspread{border-color:#c98a7a}
+.thumb .t-in{transform-origin:top left; pointer-events:none}
+.thumb .t-num{
+  position:absolute;right:3px;bottom:2px;font-size:9px;color:var(--muted);
+  background:rgba(255,255,255,.85);padding:0 3px;border-radius:2px;font-family:'Oswald',sans-serif;
+}
+
+/* ============ ACCORDION SECTIONS ============ */
+.sec{border-bottom:1px solid var(--line)}
+.sec-h{
+  display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;
+  font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;
+  color:var(--ink2);user-select:none;text-transform:uppercase;
+}
+.sec-h:hover{color:var(--accent)}
+.sec-h .chev{margin-left:auto;font-size:11px;color:var(--muted);transition:transform .2s ease}
+.sec.open .sec-h .chev{transform:rotate(90deg)}
+.bdg{
+  width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+  font-family:'Oswald',sans-serif;flex:0 0 auto;
+}
+.sec .body{display:none;padding:2px 16px 16px}
+.sec.open .body{display:block}
+
+/* ============ FORM CONTROLS ============ */
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;font-family:'Oswald',sans-serif}
+.inp,.sel{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel2);color:var(--ink);font-family:'Courier Prime',monospace;font-size:13px;
+  outline:none;
+}
+.inp:focus,.sel:focus{border-color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{
+  flex:1;padding:8px 4px;border:none;background:var(--panel2);color:var(--ink2);
+  cursor:pointer;font-size:12px;border-right:1px solid var(--line);
+}
+.seg button:last-child{border-right:none}
+.seg button.on{background:var(--accent);color:#fff}
+.tog{
+  display:flex;align-items:center;gap:9px;padding:7px 0;cursor:pointer;font-size:13px;color:var(--ink2);
+}
+.tog input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.gen-btn{
+  width:100%;padding:11px;border:none;border-radius:8px;background:var(--accent);
+  color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;
+  box-shadow:var(--sh2);transition:background .15s ease;
+}
+.gen-btn:hover{background:var(--accent-d)}
+.color-row{display:flex;gap:10px}
+.color-row .fld{flex:1}
+.clr{
+  width:100%;height:36px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);
+  cursor:pointer;padding:3px;
+}
+.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:6px}
+
+/* ============ TOAST ============ */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#f4efe6;padding:10px 20px;border-radius:8px;
+  font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;
+  opacity:0;transition:opacity .3s ease;pointer-events:none;z-index:99;box-shadow:var(--sh);
+}
+.toast.show{opacity:1}
+
+/* ============ BOOK PAGE ============ */
+.page{
+  background:#fff; box-shadow:var(--sh); position:relative; flex:0 0 auto;
+  overflow:hidden;
+  font-family:var(--bf,'Courier Prime'),monospace; color:var(--ink,#241f1a);
+}
+.page-scale{transform-origin:top center; flex:0 0 auto;}
+
+/* --- spread (double page) --- */
+.spread-wrap{display:flex; align-items:stretch; flex:0 0 auto;}
+.spread-wrap .page{box-shadow:var(--sh)}
+.page.gut-l{box-shadow:var(--sh), inset -26px 0 34px -26px rgba(30,20,10,.35); border-right:1px solid #d8d0c0;}
+.page.gut-r{box-shadow:var(--sh), inset 26px 0 34px -26px rgba(30,20,10,.35);}
+
+.pg-frame{
+  position:absolute; top:14px; left:14px; right:14px; bottom:14px;
+  border:2px solid var(--ac,#8b2e2e); pointer-events:none;
+}
+.pg-frame:after{
+  content:''; position:absolute; top:4px; left:4px; right:4px; bottom:4px;
+  border:1px solid var(--ac,#8b2e2e); opacity:.45;
+}
+.page.no-frame .pg-frame{display:none}
+.pg-pad{position:absolute; inset:0; padding:52px 58px; display:flex; flex-direction:column}
+.page.gut-l .pg-pad{padding-right:66px}
+.page.gut-r .pg-pad{padding-left:66px}
+.pg-head{
+  display:flex; justify-content:space-between; align-items:center;
+  font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:3px;
+  color:var(--ac,#8b2e2e); text-transform:uppercase;
+  border-bottom:1px solid var(--ac,#8b2e2e); padding-bottom:8px; margin-bottom:22px;
+  opacity:.85;
+}
+.pg-foot{
+  margin-top:auto; padding-top:10px; display:flex; justify-content:space-between;
+  font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:2px; color:#9a9086;
+  text-transform:uppercase;
+}
+[contenteditable="true"]{outline:none; border-radius:3px; transition:background .15s ease; cursor:text}
+[contenteditable="true"]:hover{background:rgba(139,46,46,.06)}
+[contenteditable="true"]:focus{background:rgba(139,46,46,.09); box-shadow:0 0 0 1px var(--ac,#8b2e2e)}
+
+/* --- stamps --- */
+.stamp{
+  display:inline-block; font-family:'Oswald',sans-serif; font-weight:700;
+  border:3px double var(--ac,#8b2e2e); color:var(--ac,#8b2e2e);
+  padding:8px 18px; letter-spacing:5px; text-transform:uppercase;
+  transform:rotate(-7deg); border-radius:4px; opacity:.85;
+}
+.stamp-sm{
+  display:inline-block; font-family:'Oswald',sans-serif; font-weight:700;
+  border:2px solid; padding:3px 10px; letter-spacing:2px; font-size:11px;
+  text-transform:uppercase; transform:rotate(-3deg); border-radius:3px; opacity:.9;
+  cursor:pointer; user-select:none;
+}
+.stamp-sm:hover{opacity:1; filter:brightness(1.1)}
+.susp-low{color:#4a6b4a;border-color:#4a6b4a}
+.susp-med{color:#a06a1f;border-color:#a06a1f}
+.susp-high{color:#8b2e2e;border-color:#8b2e2e}
+
+/* --- reroll button --- */
+.rr{
+  border:1px solid #c9c0b0;background:#fff;color:#8a8074;border-radius:4px;
+  font-size:11px;cursor:pointer;padding:1px 6px;margin-left:8px;vertical-align:middle;
+}
+.rr:hover{border-color:var(--ac,#8b2e2e);color:var(--ac,#8b2e2e)}
+
+/* --- cover --- */
+.cov{display:flex;flex-direction:column;align-items:center;text-align:center;height:100%}
+.cov-file{margin-top:26px}
+.cov-rule{width:120px;height:2px;background:var(--ac,#8b2e2e);margin:30px 0 22px;position:relative}
+.cov-rule:before,.cov-rule:after{content:'';position:absolute;top:4px;left:0;right:0;height:1px;background:var(--ac,#8b2e2e);opacity:.5}
+.cov-title{
+  font-family:var(--tf,'Playfair Display'),serif; font-weight:700; font-size:54px;
+  line-height:1.12; color:var(--ink,#241f1a); margin:0 0 14px; max-width:100%;
+}
+.cov-sub{
+  font-family:var(--tf,'Playfair Display'),serif; font-weight:500; font-size:19px;
+  color:var(--ink2,#4a4038); font-style:italic; max-width:88%;
+}
+.cov-theme{
+  margin-top:26px; font-family:'Oswald',sans-serif; font-size:12px; letter-spacing:4px;
+  color:var(--ac,#8b2e2e); text-transform:uppercase;
+  border-top:1px solid var(--ac,#8b2e2e); border-bottom:1px solid var(--ac,#8b2e2e);
+  padding:6px 4px;
+}
+.cov-author{margin-top:auto; font-size:15px; color:var(--ink2,#4a4038)}
+.cov-author .by{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:#9a9086;text-transform:uppercase;display:block;margin-bottom:5px}
+.cov-belongs{
+  margin-top:26px; font-size:13px; color:var(--ink2,#4a4038); width:100%;
+}
+.cov-belongs .line{display:inline-block;min-width:280px;border-bottom:1px solid var(--ink2,#4a4038);height:18px}
+
+/* --- copyright --- */
+.cpy{font-size:12.5px;line-height:1.9;color:var(--ink2,#4a4038);margin-top:auto;margin-bottom:auto}
+.cpy p{margin:0 0 14px}
+.cpy .cmark{font-size:15px;color:var(--ink,#241f1a);font-weight:700}
+.cpy .note{
+  border-left:3px solid var(--ac,#8b2e2e); padding:10px 14px; background:rgba(139,46,46,.05);
+  font-style:italic; margin-top:20px;
+}
+.cpy .cp-title{font-family:var(--tf,'Playfair Display'),serif;font-size:20px;font-weight:700;color:var(--ink,#241f1a);margin-bottom:4px}
+
+/* --- how-to --- */
+.ht-title{font-family:var(--tf,'Playfair Display'),serif;font-size:34px;font-weight:700;margin:6px 0 8px;color:var(--ink,#241f1a)}
+.ht-sub{font-style:italic;color:var(--ink2,#4a4038);margin-bottom:26px;font-size:14px}
+.ht-card{display:flex;gap:16px;margin-bottom:18px;align-items:flex-start}
+.ht-card .n{
+  width:34px;height:34px;border-radius:50%;background:var(--ac,#8b2e2e);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;
+  font-weight:700;font-size:16px;flex:0 0 auto;box-shadow:0 2px 6px rgba(30,20,10,.2);
+}
+.ht-card h4{
+  margin:2px 0 5px;font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--ink,#241f1a);
+}
+.ht-card p{margin:0;font-size:13px;line-height:1.65;color:var(--ink2,#4a4038)}
+
+/* --- suspect profile --- */
+.sus-card{flex:1;display:flex;flex-direction:column;margin-bottom:6px}
+.sus-card + .sus-card{border-top:1px dashed #c9c0b0;padding-top:18px;margin-top:6px}
+.sus-top{display:flex;gap:22px;margin-bottom:16px}
+.photo{
+  width:132px;height:156px;flex:0 0 auto;border:1px solid var(--ac,#8b2e2e);
+  position:relative;overflow:hidden;background:#f4efe6;border-radius:2px;
+}
+.photo .ph-tag{
+  position:absolute;bottom:0;left:0;right:0;font-family:'Oswald',sans-serif;font-size:8px;
+  letter-spacing:2px;text-align:center;padding:3px 0;background:rgba(255,255,255,.8);
+  color:var(--muted,#8a8074);text-transform:uppercase;
+}
+.photo-sil svg{position:absolute;inset:0;width:100%;height:100%}
+.photo-blur .b1{position:absolute;inset:0;background:linear-gradient(160deg,#d8cfc0,#b3a894 55%,#8f8474);filter:blur(2px)}
+.photo-blur .b2{position:absolute;inset:18px 26px 30px;border-radius:50% 50% 40% 40%;background:radial-gradient(circle at 50% 32%,#6e6455,#4a4038 70%);filter:blur(7px);opacity:.75}
+.photo-redact{background:#f4efe6}
+.photo-redact .r1{
+  position:absolute;top:34px;left:16px;right:16px;height:56px;background:#1c1712;
+  display:flex;align-items:center;justify-content:center;
+}
+.photo-redact .r1 span{
+  font-family:'Oswald',sans-serif;color:#f4efe6;font-size:11px;letter-spacing:4px;font-weight:700;
+  transform:rotate(-4deg);
+}
+.photo-redact .r2{position:absolute;top:104px;left:34px;right:34px;height:12px;background:#1c1712;opacity:.85}
+.sus-id{flex:1;min-width:0;padding-top:4px}
+.sus-name{
+  font-family:var(--tf,'Playfair Display'),serif;font-weight:700;font-size:29px;line-height:1.15;
+  color:var(--ink,#241f1a);margin-bottom:5px;
+}
+.sus-role{
+  font-size:14.5px;font-style:italic;color:var(--ac,#8b2e2e);margin-bottom:12px;
+}
+.sus-file{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:2px;color:#9a9086;text-transform:uppercase;margin-bottom:10px}
+.clue{
+  border:1px solid #cfc6b4;border-left:4px solid var(--ac,#8b2e2e);
+  background:rgba(139,46,46,.035);padding:9px 13px;margin-bottom:9px;border-radius:0 4px 4px 0;
+}
+.clue-l{
+  font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.5px;
+  color:var(--ac,#8b2e2e);text-transform:uppercase;margin-bottom:3px;
+}
+.clue-t{font-size:13.5px;line-height:1.55;color:var(--ink,#241f1a)}
+.sus-2col .sus-name{font-size:22px}
+.sus-2col .photo{width:96px;height:116px}
+.sus-2col .clue-t{font-size:12px}
+.sus-2col .sus-role{font-size:12.5px}
+
+/* --- index --- */
+.idx-title{font-family:var(--tf,'Playfair Display'),serif;font-size:32px;font-weight:700;margin:6px 0 4px;color:var(--ink,#241f1a)}
+.idx-sub{font-style:italic;color:var(--ink2,#4a4038);font-size:13px;margin-bottom:24px}
+.idx-row{display:flex;align-items:baseline;gap:8px;margin-bottom:9px;font-size:14px}
+.idx-row .nm{font-weight:700;color:var(--ink,#241f1a)}
+.idx-row .rl{color:var(--ink2,#4a4038);font-style:italic;font-size:12px}
+.idx-row .dots{flex:1;border-bottom:2px dotted #c9c0b0;transform:translateY(-3px)}
+.idx-row .pg{font-family:'Oswald',sans-serif;color:var(--ac,#8b2e2e);font-weight:700}
+.idx-cols{columns:2;column-gap:36px}
+.idx-cols .idx-row{break-inside:avoid}
+
+/* --- print --- */
+#printRoot{display:none}
+@media print{
+  body{height:auto;overflow:visible;background:#fff}
+  .topbar,.wrap,.toast{display:none !important}
+  #printRoot{display:block}
+  #printRoot .page{box-shadow:none;margin:0;page-break-after:always;break-after:page}
+  #printRoot .page:last-child{page-break-after:auto;break-after:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">SD</div>
+  <div>
+    <h1>Suspect Dossier Book Creator</h1>
+    <div class="sub">ClueCraft Companion Tool</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn primary" onclick="exportPDF()">⬇ Export PDF</button>
+  <button class="btn" onclick="exportImages('png')">Export All PNG</button>
+  <button class="btn" onclick="exportImages('jpg')">Export All JPG</button>
+</header>
+
+<div class="wrap">
+
+  <!-- ================= LEFT PANEL ================= -->
+  <aside class="panel-l">
+    <div class="panel-title">Book Setup</div>
+
+    <div class="sec open">
+      <div class="sec-h" onclick="toggleSec(this)"><span class="bdg">1</span>Book Details<span class="chev">▶</span></div>
+      <div class="body">
+        <div class="fld"><label>Title</label>
+          <input class="inp" id="inTitle" value="The Blackwood Suspect Dossier" oninput="STATE.title=this.value;renderAll()"></div>
+        <div class="fld"><label>Subtitle</label>
+          <input class="inp" id="inSubtitle" value="A ClueCraft Companion Book of Persons of Interest" oninput="STATE.subtitle=this.value;renderAll()"></div>
+        <div class="fld"><label>Author / Byline</label>
+          <input class="inp" id="inAuthor" value="The Case Master" oninput="STATE.author=this.value;renderAll()"></div>
+        <div class="fld"><label>Mystery Theme</label>
+          <select class="sel" id="inTheme" onchange="STATE.theme=this.value;generateSuspects()"></select></div>
+      </div>
+    </div>
+
+    <div class="sec open">
+      <div class="sec-h" onclick="toggleSec(this)"><span class="bdg">2</span>Dossier Count<span class="chev">▶</span></div>
+      <div class="body">
+        <div class="fld"><label>Suspect Profiles (5–30)</label>
+          <input class="inp" type="number" id="inCount" min="5" max="30" value="12"
+            onchange="this.value=Math.max(5,Math.min(30,+this.value||12));STATE.count=+this.value;generateSuspects()"></div>
+        <div class="fld"><label>Suspects Per Page</label>
+          <div class="seg" id="perPageSeg">
+            <button class="on" onclick="setPerPage('auto',this)">Auto</button>
+            <button onclick="setPerPage('one',this)">One</button>
+            <button onclick="setPerPage('two',this)">Two</button>
+          </div></div>
+        <button class="gen-btn" onclick="generateSuspects()">🎲 Generate Suspects</button>
+        <div class="hint">Assembles unique profiles from the active theme's case banks. No name repeats within one book. Tip: click the ↻ button on a dossier to re-roll just that suspect, or click the suspicion stamp to change it.</div>
+      </div>
+    </div>
+
+    <div class="sec open">
+      <div class="sec-h" onclick="toggleSec(this)"><span class="bdg">3</span>Paper Size<span class="chev">▶</span></div>
+      <div class="body">
+        <div class="seg" id="paperSeg">
+          <button class="on" onclick="setPaper('letter',this)">US Letter</button>
+          <button onclick="setPaper('square',this)">Square</button>
+          <button onclick="setPaper('a4',this)">A4</button>
+        </div>
+        <div class="hint">US Letter 8.5×11in · Square 8.5×8.5in · A4 210×297mm</div>
+      </div>
+    </div>
+
+    <div class="sec open">
+      <div class="sec-h" onclick="toggleSec(this)"><span class="bdg">4</span>Include Sections<span class="chev">▶</span></div>
+      <div class="body">
+        <label class="tog"><input type="checkbox" checked onchange="STATE.inc.cover=this.checked;renderAll()">Cover</label>
+        <label class="tog"><input type="checkbox" checked onchange="STATE.inc.copyright=this.checked;renderAll()">Copyright Page</label>
+        <label class="tog"><input type="checkbox" checked onchange="STATE.inc.howto=this.checked;renderAll()">How to Use This Dossier</label>
+        <label class="tog"><input type="checkbox" checked onchange="STATE.inc.suspects=this.checked;renderAll()">Suspect Profile Pages</label>
+        <label class="tog"><input type="checkbox" checked onchange="STATE.inc.index=this.checked;renderAll()">Index / Cross-Reference</label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= CENTER ================= -->
+  <main class="page-area" id="pageArea">
+    <div class="canvasbar">
+      <button class="zbtn" onclick="navPage(-1)" title="Previous (←)">◀</button>
+      <button class="zbtn" onclick="navPage(1)" title="Next (→)">▶</button>
+      <span class="vlab">View</span>
+      <div class="seg" id="viewSeg">
+        <button class="on" onclick="setView('single',this)">Single</button>
+        <button onclick="setView('spread',this)">📖 Spread</button>
+      </div>
+      <button class="zbtn" onclick="zoomStep(-0.1)">−</button>
+      <div class="zlab" id="zlab">Fit</div>
+      <button class="zbtn" onclick="zoomStep(0.1)">+</button>
+      <button class="zbtn" style="font-size:11px" onclick="STATE.zoom=null;renderCanvas()">Fit</button>
+      <div class="pglab" id="pglab"></div>
+    </div>
+    <div class="canvas" id="canvas"></div>
+    <div class="strip" id="strip"></div>
+  </main>
+
+  <!-- ================= RIGHT PANEL ================= -->
+  <aside class="panel-r">
+    <div class="panel-title">Design Controls</div>
+
+    <div class="sec open">
+      <div class="sec-h" onclick="toggleSec(this)"><span class="bdg">A</span>Typography<span class="chev">▶</span></div>
+      <div class="body">
+        <div class="fld"><label>Title Font</label>
+          <select class="sel" onchange="STATE.titleFont=this.value;renderAll()">
+            <option>Playfair Display</option><option>Oswald</option><option>Courier Prime</option>
+          </select></div>
+        <div class="fld"><label>Body Font</label>
+          <select class="sel" onchange="STATE.bodyFont=this.value;renderAll()">
+            <option>Courier Prime</option><option>Playfair Display</option><option>Oswald</option>
+          </select></div>
+      </div>
+    </div>
+
+    <div class="sec open">
+      <div class="sec-h" onclick="toggleSec(this)"><span class="bdg">B</span>Ink &amp; Accent<span class="chev">▶</span></div>
+      <div class="body">
+        <div class="color-row">
+          <div class="fld"><label>Ink Color</label>
+            <input type="color" class="clr" value="#241f1a" oninput="STATE.ink=this.value;renderAll()"></div>
+          <div class="fld"><label>Accent Color</label>
+            <input type="color" class="clr" value="#8b2e2e" oninput="STATE.accent=this.value;renderAll()"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec open">
+      <div class="sec-h" onclick="toggleSec(this)"><span class="bdg">C</span>Page Style<span class="chev">▶</span></div>
+      <div class="body">
+        <label class="tog"><input type="checkbox" checked onchange="STATE.borders=this.checked;renderAll()">Double-rule page frame</label>
+        <div class="fld" style="margin-top:10px"><label>Photo Placeholder Style</label>
+          <select class="sel" onchange="STATE.photoStyle=this.value;renderAll()">
+            <option value="silhouette">Silhouette Outline</option>
+            <option value="blurred">Blurred Frame</option>
+            <option value="redacted">Redacted Black Box</option>
+          </select></div>
+        <div class="hint">No real photographs are generated — each dossier uses a stylized evidence-placeholder treatment.</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="printRoot"></div>
+<style id="pageSizeStyle"></style>
+
+<script>
+/* ================================================================
+   STATE
+================================================================ */
+var PAPERS = {
+  letter:{w:816, h:1056, css:'8.5in 11in',  label:'US Letter'},
+  square:{w:816, h:816,  css:'8.5in 8.5in', label:'Square'},
+  a4:    {w:794, h:1123, css:'210mm 297mm', label:'A4'}
+};
+
+var STATE = {
+  title:'The Blackwood Suspect Dossier',
+  subtitle:'A ClueCraft Companion Book of Persons of Interest',
+  author:'The Case Master',
+  theme:'cozy',
+  count:12,
+  perPage:'auto',
+  paper:'letter',
+  view:'single',
+  zoom:null,
+  inc:{cover:true, copyright:true, howto:true, suspects:true, index:true},
+  titleFont:'Playfair Display',
+  bodyFont:'Courier Prime',
+  ink:'#241f1a',
+  accent:'#8b2e2e',
+  borders:true,
+  photoStyle:'silhouette',
+  suspects:[],
+  page:0
+};
+
+/* ================================================================
+   CONTENT BANKS — 9 THEMES × 5 CATEGORIES
+================================================================ */
+var THEMES = {
+
+cozy:{ label:'Cozy Mysteries',
+names:["Margaret Hollowell","Bartholomew Finch","Dorothy Prewitt","Hazel Thornbury","Edwin Calloway","Prudence Merriweather","Cecil Goodwin","Agnes Plumley","Walter Brixton","Florence Haddock","Norman Tewkes","Beatrice Lomax","Harold Pennyfeather","Mabel Crumb","Reginald Ashworth","Ivy Underwood"],
+roles:["the bakery owner","the retired librarian","the village postmistress","the church organist","the beekeeper","the tea room proprietor","the antique shop dealer","the gardening club president","the pub landlord","the seamstress","the clock repairer","the vicar's housekeeper","the allotment keeper","the traveling wool salesman","the cat shelter volunteer","the amateur watercolorist"],
+traits:["always smells faintly of lavender polish","knits whenever nervous — and the needles never lie","wears gloves indoors, even in summer","quotes scripture at odd moments","keeps a thermos of tea within arm's reach","laughs a half-beat too late at every joke","polishes the same spectacles three times an hour","never sits with their back to the door of the tea room","hums hymn tunes while lying","carries peppermints but is never seen eating one","writes everything in green ink","flinches at the sound of bicycle bells","has a different hat for every day of the week","counts the silverware before and after every meal","talks to the village cats by name"],
+motives:["recently cut from the victim's will","the victim threatened to expose a forty-year-old secret","a bridge club debt that quietly doubled","the victim planned to sell the building housing their shop","a rejected romance from decades past","the victim's prize marrow beat theirs at the fête — again","blackmail payments that grew every quarter","the victim knew about the forged signature in the parish accounts","a long-disputed property boundary","the victim was about to reveal the recipe was stolen","jealousy over the choirmaster's favor","the victim's dog destroyed their entry for the flower show","an inheritance contingent on the victim's good opinion","the victim refused to sell a family heirloom back","a promise made to a dying friend"],
+alibis:["claims to have been at choir practice, but the rehearsal was cancelled","says they were deadheading roses, though the beds were untouched","insists they were home with a crossword — finished suspiciously early","claims a long telephone call with a sister who denies it","says they walked the dog on the common, but the dog's paws were dry","reports being at the jumble sale, where no one recalls them","claims to have napped through the whole affair","says the kettle was on all afternoon, yet the pot was cold","insists they posted a parcel, but the post office closed early","claims to have watched the evening serial, describing the wrong episode","says they were jam-making, though no jars were sealed","reports a visit to the lending library, closed that day for fumigation","claims to have fed the vicar's cat, which was found unfed","says they took the 4:15 bus, which never ran that day","insists they were at the whist drive, having left before it began"]},
+
+detective:{ label:'Detective Cases',
+names:["Frank Delgado","Vera Kowalski","Marcus Bell","Lorraine Castellano","Eddie Rourke","Salome Ferro","Tommy Ichiro","Nadine Barlow","Gus Pappas","Rita Marchetti","Coleman Drew","Elsa Brandt","Mickey Sorensen","Paula Vance","Hector Luna","Bernie Ash"],
+roles:["the precinct desk sergeant","the nightclub singer","the bail bondsman","the crime scene photographer","the deputy coroner","the pawnshop owner","the defense attorney","the court stenographer","the dockyard foreman","the police dispatcher","the private investigator","the evidence clerk","the cab driver on the night shift","the newspaper crime reporter","the motel night manager","the prosecutor's investigator"],
+traits:["chain-smokes but never finishes a cigarette","keeps a rolled racing form in the coat pocket","answers questions with questions","has a scar that aches before rain","checks the exits first in every room","wears a wedding band though long divorced","talks to the photograph in their wallet","never removes the sunglasses, even indoors","taps a code on the table when thinking","carries two wallets and pays from the wrong one","flinches at sirens but not at gunshots","remembers every face and forgets every name","drinks coffee black and lies the same way","keeps the radio tuned between stations","folds every receipt into perfect squares"],
+motives:["the victim was about to talk to Internal Affairs","a case from years ago was about to be reopened","the victim held the mortgage on their bar","hush money that stopped coming","the victim's testimony put their brother away","a gambling debt the victim bought up cheap","the victim knew the confession was coerced","an affair the victim photographed","the victim was cutting them out of the skim","a promotion the victim blocked","the victim's ledger named names","evidence that went missing on their watch","the victim was about to recant","a badge taken away because of the victim's report","the victim owned the only copy of the negatives"],
+alibis:["claims to have been on stakeout, but the log page is missing","says they were at the fights, naming the wrong winner","insists they drove the night shift, though the cab was in the shop","reports being at the all-night diner, where the waitress doesn't know them","claims a poker game that broke up early","says they were developing film, but the darkroom was locked","insists they were home asleep, with the phone off the hook","says they walked the beat, though the call sheets show otherwise","claims to have been at the pictures, describing a film not yet released","reports a late meeting with a client who was out of town","says they were at the gym, which closes at ten","insists they took the last ferry, cancelled for fog","claims to have been booking a prisoner who was never processed","says they were on the phone with the desk, but the switchboard has no record","reports being at church bingo, two towns over, on the wrong night"]},
+
+spy:{ label:'Spy Missions',
+names:["Viktor Halden","Anya Sorokina","Emil Brandt","Claude Verlaine","Nadia Kessler","Anton Reyes","Marguerite Duval","Stefan Wolff","Ingrid Halvorsen","Dmitri Kovac","Selene Marsh","Piotr Lazlo","Yuki Tanabe","Roland Fitch","Caterina Bellini","Oskar Lindqvist"],
+roles:["the embassy attaché","the arms dealer's accountant","the cipher clerk","the cultural liaison officer","the diplomatic courier","the signals intercept analyst","the deep-cover asset","the safe house keeper","the forger of travel documents","the military intelligence liaison","the double agent's handler","the trade mission translator","the surveillance photographer","the codebreaker on loan","the nightclub owner with foreign backers","the disgraced station chief"],
+traits:["always checks the exits first","wears gloves indoors, even in summer","lights cigarettes with a lighter that isn't theirs","speaks five languages and slips in a sixth","never photographs well and never tries to","carries a newspaper two days old","folds maps against the grain","answers the phone with a number instead of a name","has calluses inconsistent with their cover","tips exactly fifteen percent in every currency","hums a folk song from a country they deny visiting","keeps a train timetable memorized to the minute","wears a watch set to another time zone","never sleeps on planes","signs the register in a different hand each time"],
+motives:["a defection that went wrong and needed burying","the victim held the real identity of a mole","payment in a currency that doesn't officially exist","a sibling held in a foreign prison","the victim was about to burn their network","ideology curdled into grievance","a promotion denied after a blown operation","the victim's memoir would name the living","a debt to a handler who collects in favors","the microfilm was supposed to be destroyed","a lover compromised on the victim's word","the victim sold the same secret twice","orders from a desk that doesn't officially exist","the extraction that never came","the victim recognized them from Vienna"],
+alibis:["claims to have attended the embassy reception, remembered by no one","says they were at the opera, in a box that sat empty","insists they crossed the border a day later than the stamps suggest","reports a quiet night at the safe house, which was under watch","claims to have cabled home at nine, though the office was dark","says they dined alone, at a restaurant closed for renovation","insists they were on the night train, in a berth never sold","reports a meeting with a contact who denies knowing them","claims to have been photographing the harbor, with no film in the camera","says they were debriefing in another city, a day early","insists they were ill in the hotel, though the doctor's visit is unrecorded","claims a late walk along the river, in a storm that kept everyone in","says they were at the chess club, playing an opponent who wasn't there","reports sleeping through an alarm that never rang","insists they were on a flight that landed without them"]},
+
+school:{ label:'School & Campus',
+names:["Prudence Halloran","Dexter Whitfield","Marisol Vega","Theo Barnaby","Cressida Vane","Milo Fenwick","Harriet Bloom","Jasper Quill","Nina Okafor","Rupert Smedley","Tabitha Grey","Felix Marlowe","Dinah Prescott","Oscar Wendell","Camille Roget","Lila Sanderson"],
+roles:["the head prefect","the chemistry lab assistant","the school librarian","the groundskeeper","the drama club director","the scholarship student","the deputy head's secretary","the fencing coach","the dining hall cook","the school newspaper editor","the caretaker of the clock tower","the exchange student","the alumni office clerk","the music master","the debating society president","the school nurse"],
+traits:["annotates library books in faint pencil","carries a hall pass from a term that ended","always sits in the same seat in the dining hall","collects lost property that was never reported lost","speaks in quotations from the school motto","keeps a ledger of small debts owed in sweets","never looks up from a book when a teacher passes","whistles the school song off-key on purpose","has a key ring with more keys than doors they may open","corrects the notice board at midnight","wears last year's uniform out of principle","knows every shortcut behind the paneling","takes minutes for meetings that don't exist","feeds the ravens on the chapel roof","blushes only when telling the truth"],
+motives:["the victim threatened to reveal the exam papers were copied","a scholarship hanging on the victim's report","the victim was going to cancel the play","an expulsion letter already typed","the victim caught them in the records office after hours","a family name the victim mocked in assembly","the victim's donation came with conditions","a place on the team the victim's word decided","the victim knew the midnight feasts' true purpose","a confession in the diary the victim found","the victim was selling answers and raising prices","a prank that went too far and was about to be confessed","the victim's history project named a local scandal","a promise to a friend the victim broke","the trophy the victim was going to have re-engraved"],
+alibis:["claims to have been in the library, signed in an hour late","says they were at orchestra practice, which was moved to Thursday","insists they were in the dormitory, though the bed was unslept in","reports a detention that was never given","claims to have been marking papers, in a classroom found locked","says they walked the boundary path, in shoes without mud","insists they were at the swimming gala, in the wrong building","reports being in the sanatorium, with no entry in the nurse's book","claims a rehearsal that ended before the incident","says they were in the darkroom, which was out of chemicals","insists they attended the lecture, describing one from last term","claims to have been on the roof watching stars, on a cloudy night","says they were helping in the kitchens, which closed early","reports a telephone call home that the switchboard didn't place","insists they were in chapel, in a pew seen empty"]},
+
+fantasy:{ label:'Fantasy Investigations',
+names:["Brynn Thorncastle","Aldous Vexley","Mira Fenwhistle","Corvin Blackfeather","Elira Dawnsong","Thorne Ashgar","Wren Halloway","Garrick Stonehelm","Isolde Marrowgate","Fenwick Puddifoot","Sable Nightingale","Rowan Emberfell","Lyra Quillfeather","Dain Coppervein","Morwen Thistledown","Cassian Vale"],
+roles:["the royal apothecary","the keeper of the menagerie","the court astrologer","the guild master of locksmiths","the hedge witch from the marsh","the disgraced knight-errant","the archivist of forbidden scrolls","the dragon-scale merchant","the temple bell-ringer","the fae-touched minstrel","the gravedigger of heroes' field","the alchemist's apprentice","the warden of the north gate","the candlemaker to the cathedral","the beast-speaker at the fair","the steward of the dead lord's estate"],
+traits:["shadows fall a moment late behind them","refuses to step over thresholds uninvited","carries salt in every pocket","speaks to a raven that answers","their reflection lags in mirrors","wears iron at the wrist and calls it fashion","counts doors aloud when nervous","never dreams and says so proudly","smells of rain even in drought","keeps a dried flower that never crumbles","answers to two names depending on the moon","avoids the temple bells' hour","has a scar in the shape of a sigil","bargains in exact change, always","hums a lullaby in a dead tongue"],
+motives:["a blood-debt owed to the victim's house","the victim held the true name of their beloved","a prophecy naming the victim their doom","the victim bought their family's bond-papers","a curse the victim refused to lift","the victim's expedition woke something in the deep wood","a promised apprenticeship revoked","the victim's tithe beggared the village","a stolen grimoire traced to the victim's library","the victim's marriage pact erased an older vow","a familiar slain by the victim's hounds","the victim taxed the last of the star-iron","an oath sworn over the victim's grave-to-be","the victim's mirror showed what they hid","the crown's pardon the victim blocked"],
+alibis:["claims to have been gathering moonwort, out of season","says they were at the shrine vigil, seen by a witness since turned to stone","insists they were beyond the veil, on a night the veil was sealed","reports reading the stars, from a tower under cloud","claims to have been mending nets by the river, where the river had risen","says they were at the guildhall feast, unremembered by the steward","insists a vision kept them abed, a vision no seer will confirm","reports tending the lighthouse flame, which burned untended","claims to have been in the undermarket, on its closed day","says they rode the night road, on a horse found stabled and cool","insists they were warding the gate, a post another held","reports communing with the ancestors, who decline to testify","claims to have been brewing a remedy, with a cold hearth","says they were at the harper's contest, a round they never entered","insists the dream-road took them elsewhere, as the dream-roads were closed"]},
+
+scifi:{ label:'Sci-Fi & Cyberpunk',
+names:["Kael Voss-7","Dr. Rin Achara","Juno Marrek","Silas Okonkwo","Vega Lindt","Cassian Dray","Nyx Calder","Emiko Sato-Prime","Dario Kestrel","Ilya Sorren","Mireille Vann","Tamsin Qureshi","Orin Pahl","Zeph Aldane","Reza Kho","Lena Marlowe-IX"],
+roles:["the station's life-support engineer","the black-market memory broker","the corporate fixer","the synth-rights activist","the cargo pilot on the rim run","the gene-clinic technician","the drone swarm operator","the ice hauler's first mate","the neural-lace surgeon","the casino's odds auditor","the terraforming surveyor","the AI ethics auditor","the smuggler of unregistered seeds","the habitat's water rights clerk","the pit fighter with chrome to hide","the archivist of deleted data"],
+traits:["blinks in a pattern that might be code","never removes the interface gloves","speaks to three voices only they can hear","their reflection arrives late on camera feeds","carries a paper notebook in a paperless world","the left eye is a generation newer than the right","pays in untraceable scrip and exact change","static follows them through every doorway","dreams in diagnostic readouts","has a handshake calibrated too precisely","keeps a plant alive against station regulations","never appears in two cameras at once","hums in frequencies that trip the sensors","their shadow has better resolution than they do","answers before questions are finished"],
+motives:["the victim owned the deed to their memories","a debt of oxygen minutes that kept compounding","the victim was about to shut down their sibling-AI","blackmail backed up off-world","the victim's patent erased their life's work","a body loan the victim was calling in","the victim knew the cargo was people","an upgrade they could never afford but couldn't refuse","the victim's audit would void the habitat's charter","revenge for a mind-wipe signed by the victim","the victim sold their genetic sequence twice","a promised berth on the colony ship, revoked","the victim's kill-switch covered their whole crew","evidence of the station's failing core the victim buried","the victim remembered who they used to be"],
+alibis:["claims to have been in cryo, though the pod logs are wiped","says they were on the rim run, a route with no beacon records","insists they were jacked into the deep net, untraceable by design","reports a shift in the reactor ring, where cameras loop old footage","claims to have been in the clinic, under anesthesia unlogged","says they were docked at the waystation, which denies the berth","insists they were in the sim parlor, on a rig down for repair","reports calibrating drones, drones that never left the rack","claims to have been at the fight, in a crowd of masked thousands","says they were in quarantine, released an hour early","insists their implant was offline for a service no technician performed","reports a spacewalk, in a suit that shows no wear","claims to have been asleep in the stack, a bunk double-booked","says they were off-station entirely, on a shuttle that returned empty","insists the backup of their mind was elsewhere, as backups are"]},
+
+historical:{ label:'Historical Mysteries',
+names:["Lord Ashby Winterton","Constance Pemberton","Silas Grindle","Honoria Fenchurch","Barnabas Quince","Euphemia Starling","Josiah Crabbe","Lavinia Hartwell","Thaddeus Moorcroft","Adelaide Blythe","Cornelius Vane","Dr. Ambrose Pell","Rosalind Trevelyan","Ebenezer Stock","Genevieve Lovelace","Mortimer Hesketh"],
+roles:["the family solicitor","the lady's maid","the consulting physician","the curate with debts","the governess","the gamekeeper","the housekeeper of twenty years","the dissolute heir","the American cousin","the spirit medium","the man of business","the village constable","the upstairs cook","the railway speculator","the naturalist with a collection","the widowed sister-in-law"],
+traits:["wears mourning long past the customary year","keeps a handkerchief pressed to the lips when lying","carries a pocket watch that has stopped","reads the agony columns with a magnifying glass","never removes their hat in church","smells of carbolic and peppermint","startles at the telephone bell","addresses the servants by their predecessors' names","keeps the blinds drawn at noon","has a military bearing and no record of service","writes letters they never post","counts the stairs aloud","dines at eight precisely, alone or not","collects moths and pins them with unusual care","warms their hands even by a summer fire"],
+motives:["the entail that passed them over","a marriage settlement the victim refused to sign","the victim knew of the forged codicil","debts of honor called in","a scandal in the colonies the victim witnessed","the victim's new will favored the charity hospital","an engagement broken on the victim's advice","the victim's pamphlet would expose the sanatorium","a promise to a dying parent unkept","the victim held the mortgage on the estate","a child sent away on the victim's word","the victim's memoir threatened the family name","an inheritance in jewels that went missing","the victim's testimony at the inquest","a position at court the victim's letter destroyed"],
+alibis:["claims to have been at the opera, in a box seen empty","says they took the air in the garden, in shoes without dew","insists they were at their club, unsigned in the visitors' book","reports retiring early with a headache, the lamp burning till dawn","claims to have been at evening service, on a night service was cancelled","says they were reading in the library, the book found dusty","insists they walked to the village, unseen on the only road","reports a telegram sent, which the office never received","claims to have been dressing for dinner, though dinner was refused","says they were in the nursery, where the children were boarded out","insists they were at the card party, a rubber short of players","reports feeding the pheasants, in a storm that kept the birds in","claims to have been writing letters, with ink long dry","says they were at the Turkish baths, closed for the day","insists they were in London, on a train that never ran"]},
+
+treasure:{ label:'Treasure Hunts',
+names:["Cordelia Vance","Silas Rook","Annika Reyes","Beauregard Fontaine","Dr. Imogen Hale","Cassius Drake","Paloma Herrera","Ezra Whitlock","Delphine Moreau","Gideon Salt","Octavia Crowe","Rufus Teague","Seraphina Locke","Ambrose Kidd","Tallulah Reeves","Cornelius Ashe"],
+roles:["the salvage diver","the antiquities dealer","the cartographer of old coasts","the museum's underfunded curator","the expedition financier","the rival treasure hunter","the lighthouse keeper","the auction house appraiser","the cryptographer of riddles","the boat captain for hire","the local historian","the insurance investigator","the forger of provenance papers","the dive shop owner","the heir to the lost expedition","the customs officer who looks away"],
+traits:["wears a compass that doesn't point north","folds charts into squares small enough to swallow","never says the name of the ship aloud","has a diver's watch tan line on both wrists","quotes the dead captain's log from memory","keeps sand from a dozen beaches in labeled vials","checks the tide tables before the news","carries a key that opens nothing anyone has found","photographs every map they see","speaks of the wreck as 'she'","never gambles except on weather","has a scar shaped like a coastline","pays harbor fees a year in advance","smells of brine on the driest days","counts steps between landmarks out of habit"],
+motives:["the victim's claim jumped theirs by a day","a share of the find promised and denied","the victim's book called their life's work a fraud","the map was theirs before the victim bought it","a partner lost on the victim's last expedition","the victim was selling the find piecemeal abroad","a family name tied to the wreck the victim mocked","the victim's permit was about to be revoked — and reissued","salvage rights worth more than the gold","the victim knew the provenance was forged","a wager made in front of witnesses","the victim cut them out of the documentary","the museum's acquisition the victim blocked","a debt secured against the treasure itself","the victim was going to donate it all to a rival institution"],
+alibis:["claims to have been diving the reef, on a day the boats stayed in","says they were at the auction, outbid before the lot in question","insists they were charting the coves, in fog that grounded the fleet","reports a night at the maritime library, closed for the regatta","claims to have been mending nets, with nets already dry","says they were aboard their own vessel, anchored in a harbor that logs no such boat","insists they were at the assay office, which keeps no record","reports a telephone call to a buyer who denies it","claims to have been photographing the cliffs, with a camera found empty","says they walked the tide line, leaving no footprints on the only path","insists they were at the chandler's, an hour after closing","reports a meeting with the harbor master, who was at sea","claims to have been decoding the cipher, in a room with no light","says they were visiting the museum, on its closed day","insists they were at the shipwright's, a yard that shut last winter"]},
+
+custom:{ label:'Custom',
+names:["Alex Mercer","Jordan Hale","Robin Ashford","Casey Delaney","Morgan Pryce","Taylor Wren","Sam Hollis","Jamie Voss","Avery Quinn","Drew Harlan","Riley Donovan","Ellis Gray","Cameron Frost","Harper Sloane","Finley Marsh","Rowan Keats"],
+roles:["the business partner","the next-door neighbor","the estranged sibling","the personal assistant","the old college friend","the financial advisor","the landlord","the former employee","the rival in the same trade","the family physician","the house sitter","the ex-spouse","the club secretary","the delivery driver on the route","the insurance agent","the anonymous benefactor's representative"],
+traits:["always checks the exits first","never answers a question directly","keeps receipts for everything","arrives early and leaves through the back","remembers everyone's birthday and no one's confidences","wears a key on a chain around the neck","laughs at the wrong moments","never finishes a drink","takes notes in a private shorthand","has a story for every occasion and a detail wrong in each","avoids being photographed","keeps the car running during visits","speaks of the victim in the present tense","apologizes before lying","collects other people's secrets like stamps"],
+motives:["money owed and denied","a secret the victim threatened to tell","a partnership dissolved in anger","an inheritance at stake","a promotion the victim blocked","an affair about to surface","a business the victim was about to expose","an old betrayal never forgiven","blackmail that escalated","a reputation the victim was destroying","a property line in dispute","a loan called in at the worst moment","a secret identity at risk","a promise broken one time too many","the only copy of a letter"],
+alibis:["claims to have been home alone, with no one to confirm","says they were driving, on a road with no cameras","insists they were at the gym, signed in an hour late","reports being on a call, from a number now disconnected","claims to have been shopping, with no bags to show","says they were asleep, though the lights were seen on","insists they were out of town, a day early returning","reports a meeting that was cancelled","claims to have been at the cinema, for a film not yet showing","says they walked the dog, which was seen at home","insists they were working late, in an office found dark","reports a dinner with a friend who can't be reached","claims to have been at the library, on a closed day","says they were stuck in traffic, on a road that was clear","insists they were on the train, a service cancelled that evening"]}
+};
+
+/* ================================================================
+   HELPERS
+================================================================ */
+function esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function shuffle(a){
+  var c=a.slice(), i, j, t;
+  for(i=c.length-1;i>0;i--){ j=Math.floor(Math.random()*(i+1)); t=c[i]; c[i]=c[j]; c[j]=t; }
+  return c;
+}
+var toastTimer=null;
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show';
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.className='toast'; },2200);
+}
+function styleStr(){
+  return "--tf:'"+STATE.titleFont+"';--bf:'"+STATE.bodyFont+"';--ink:"+STATE.ink+
+         ";--ink2:"+STATE.ink+";--ac:"+STATE.accent+";";
+}
+function pageOpen(){
+  var p=PAPERS[STATE.paper];
+  var cls='page'+(STATE.borders?'':' no-frame');
+  return '<div class="'+cls+'" style="width:'+p.w+'px;height:'+p.h+'px;'+styleStr()+'">'+
+         '<div class="pg-frame"></div><div class="pg-pad">';
+}
+function pageClose(n, label){
+  return '<div class="pg-foot"><span>'+esc(label||'Suspect Dossier')+'</span><span>Page '+n+'</span></div>'+
+         '</div></div>';
+}
+function suspBadge(level, si){
+  var map={Low:['susp-low','LOW SUSPICION'],Medium:['susp-med','PERSON OF INTEREST'],High:['susp-high','PRIME SUSPECT']};
+  var m=map[level];
+  return '<span class="stamp-sm '+m[0]+'" title="Click to change suspicion level" onclick="cycleSusp(event,'+si+')">'+m[1]+'</span>';
+}
+function photoHTML(){
+  var s=STATE.photoStyle;
+  if(s==='blurred'){
+    return '<div class="photo photo-blur"><div class="b1"></div><div class="b2"></div><div class="ph-tag">Exhibit — Awaiting Photo</div></div>';
+  }
+  if(s==='redacted'){
+    return '<div class="photo photo-redact"><div class="r1"><span>REDACTED</span></div><div class="r2"></div><div class="ph-tag">Exhibit — Sealed Record</div></div>';
+  }
+  return '<div class="photo photo-sil"><svg viewBox="0 0 132 156" xmlns="http://www.w3.org/2000/svg">'+
+    '<rect width="132" height="156" fill="#f4efe6"/>'+
+    '<circle cx="66" cy="58" r="26" fill="none" stroke="#8a8074" stroke-width="2" stroke-dasharray="5 4"/>'+
+    '<path d="M22 150 C22 112 44 98 66 98 C88 98 110 112 110 150" fill="none" stroke="#8a8074" stroke-width="2" stroke-dasharray="5 4"/>'+
+    '<line x1="10" y1="10" x2="30" y2="10" stroke="#c9c0b0" stroke-width="1"/><line x1="10" y1="10" x2="10" y2="30" stroke="#c9c0b0" stroke-width="1"/>'+
+    '<line x1="122" y1="146" x2="102" y2="146" stroke="#c9c0b0" stroke-width="1"/><line x1="122" y1="146" x2="122" y2="126" stroke="#c9c0b0" stroke-width="1"/>'+
+    '</svg><div class="ph-tag">Exhibit — No Photo on File</div></div>';
+}
+
+/* ================================================================
+   GENERATION
+================================================================ */
+function buildNamePool(bank, n){
+  var pool=shuffle(bank.names);
+  if(n<=pool.length) return pool.slice(0,n);
+  var firsts=[], lasts=[], i, parts;
+  for(i=0;i<bank.names.length;i++){
+    parts=bank.names[i].split(' ');
+    if(parts.length>1){ firsts.push(parts.slice(0,-1).join(' ')); lasts.push(parts[parts.length-1]); }
+  }
+  var used={}, out=pool.slice();
+  for(i=0;i<out.length;i++) used[out[i]]=1;
+  var guard=0;
+  while(out.length<n && guard<2000){
+    guard++;
+    var cand=pick(firsts)+' '+pick(lasts);
+    if(!used[cand]){ used[cand]=1; out.push(cand); }
+  }
+  return out.slice(0,n);
+}
+function generateSuspects(){
+  var bank=THEMES[STATE.theme];
+  var n=Math.max(5,Math.min(30,STATE.count));
+  var names=buildNamePool(bank,n);
+  var levels=['Low','Medium','High'];
+  STATE.suspects=[];
+  for(var i=0;i<n;i++){
+    STATE.suspects.push({
+      name:names[i],
+      role:pick(bank.roles),
+      trait:pick(bank.traits),
+      motive:pick(bank.motives),
+      alibi:pick(bank.alibis),
+      level:levels[Math.floor(Math.random()*3)],
+      fileNo:String(100+Math.floor(Math.random()*900))
+    });
+  }
+  STATE.page=0;
+  renderAll();
+  toast(n+' suspect dossiers generated — '+THEMES[STATE.theme].label);
+}
+function rerollSuspect(ev, si){
+  ev.stopPropagation();
+  var bank=THEMES[STATE.theme], s=STATE.suspects[si];
+  s.role=pick(bank.roles); s.trait=pick(bank.traits);
+  s.motive=pick(bank.motives); s.alibi=pick(bank.alibis);
+  s.fileNo=String(100+Math.floor(Math.random()*900));
+  renderCanvas(); renderThumbs();
+  toast('Dossier re-rolled: '+s.name);
+}
+function cycleSusp(ev, si){
+  ev.stopPropagation();
+  var order=['Low','Medium','High'];
+  var s=STATE.suspects[si];
+  s.level=order[(order.indexOf(s.level)+1)%3];
+  renderCanvas(); renderThumbs();
+}
+
+/* ================================================================
+   PAGE CONSTRUCTION
+================================================================ */
+function perPageCount(){
+  if(STATE.perPage==='one') return 1;
+  if(STATE.perPage==='two') return 2;
+  return STATE.suspects.length>12?2:1;
+}
+function buildPages(){
+  var pages=[];
+  if(STATE.inc.cover) pages.push({t:'cover'});
+  if(STATE.inc.copyright) pages.push({t:'copyright'});
+  if(STATE.inc.howto) pages.push({t:'howto'});
+  if(STATE.inc.suspects && STATE.suspects.length){
+    var per=perPageCount();
+    for(var i=0;i<STATE.suspects.length;i+=per){
+      var items=[];
+      for(var j=i;j<Math.min(i+per,STATE.suspects.length);j++) items.push(j);
+      pages.push({t:'suspects', items:items, per:per});
+    }
+  }
+  if(STATE.inc.index && STATE.suspects.length) pages.push({t:'index'});
+  return pages;
+}
+function suspectPageMap(pages){
+  var map={}, p, i;
+  for(p=0;p<pages.length;p++){
+    if(pages[p].t==='suspects'){
+      for(i=0;i<pages[p].items.length;i++) map[pages[p].items[i]]=p+1;
+    }
+  }
+  return map;
+}
+
+function renderCover(n){
+  return pageOpen()+
+    '<div class="cov">'+
+      '<div class="stamp cov-file">Case File</div>'+
+      '<div class="cov-rule"></div>'+
+      '<div class="cov-title" contenteditable="true" data-edit="title">'+esc(STATE.title)+'</div>'+
+      '<div class="cov-sub" contenteditable="true" data-edit="subtitle">'+esc(STATE.subtitle)+'</div>'+
+      '<div class="cov-theme">'+esc(THEMES[STATE.theme].label)+' · '+STATE.suspects.length+' Dossiers</div>'+
+      '<div class="cov-author"><span class="by">Compiled By</span>'+
+        '<span contenteditable="true" data-edit="author">'+esc(STATE.author)+'</span></div>'+
+      '<div class="cov-belongs">This Dossier Belongs To<br><span class="line"></span></div>'+
+    '</div>'+
+  pageClose(n);
+}
+
+function renderCopyright(n){
+  var yr=new Date().getFullYear();
+  return pageOpen()+
+    '<div class="cpy">'+
+      '<div class="cp-title">'+esc(STATE.title)+'</div>'+
+      '<p class="cmark">Copyright © '+yr+' '+esc(STATE.author)+'</p>'+
+      '<p>All rights reserved. No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the publisher, except in the case of brief quotations embodied in critical reviews and certain other noncommercial uses permitted by copyright law.</p>'+
+      '<p>This is a work of interactive fiction support material. It is intended for personal, educational, and game-mastering use alongside your mystery case books.</p>'+
+      '<div class="note">Every suspect profile in this dossier was generated to support your ClueCraft mystery cases. Names, professions, and details are fictional. Any resemblance to actual persons, living or dead, is purely coincidental — and a little suspicious.</div>'+
+      '<p style="margin-top:20px;color:#9a9086">Printed for the case files of '+esc(STATE.author)+' · '+yr+'</p>'+
+    '</div>'+
+  pageClose(n);
+}
+
+function renderHowTo(n){
+  var steps=[
+    ['Match a Profile','Match a Dossier profile to a suspect named in your ClueCraft case. Each file stands alone, so any profile can be assigned to any name your case requires.'],
+    ['Read the Trait Aloud','Use the Distinguishing Trait as a read-aloud clue. Drop it into narration when solvers interview or observe that suspect — it rewards attention without giving the game away.'],
+    ['Reveal the Motive','Keep the Motive sealed until solvers earn it — a successful search, a trusted witness, or a clever deduction should unlock it.'],
+    ['Test the Alibi','Check the Alibi Claim against the timeline in your ClueCraft case book. Every alibi is written with a crack in it; let your solvers find the flaw.'],
+    ['Clear the Field','Cross off cleared suspects directly on the page as your solvers narrow the field. The Index at the back keeps the whole investigation organized.']
+  ];
+  var h=pageOpen()+
+    '<div class="ht-title">How to Use This Dossier</div>'+
+    '<div class="ht-sub">A field manual for running these suspects alongside your ClueCraft case books.</div>';
+  for(var i=0;i<steps.length;i++){
+    h+='<div class="ht-card"><div class="n">'+(i+1)+'</div><div><h4>'+steps[i][0]+'</h4><p>'+steps[i][1]+'</p></div></div>';
+  }
+  h+='<div class="ht-card" style="margin-top:6px"><div class="n" style="background:transparent;border:2px solid var(--ac);color:var(--ac)">✓</div><div><h4>Case Master\u2019s Note</h4><p>Every page is editable — click any text in this tool to hand-tune names, motives, or alibis before printing, so the dossier fits your case perfectly.</p></div></div>';
+  return h+pageClose(n);
+}
+
+function renderSuspectsPage(pg, n){
+  var two=pg.per===2;
+  var h=pageOpen();
+  var nums=[], i;
+  for(i=0;i<pg.items.length;i++) nums.push('File No. '+STATE.suspects[pg.items[i]].fileNo);
+  h+='<div class="pg-head"><span>Suspect Dossier</span><span>'+nums.join(' · ')+'</span></div>';
+  for(i=0;i<pg.items.length;i++){
+    var si=pg.items[i], s=STATE.suspects[si];
+    h+='<div class="sus-card'+(two?' sus-2col':'')+'">'+
+      '<div class="sus-top">'+
+        photoHTML()+
+        '<div class="sus-id">'+
+          '<div class="sus-file">Confidential · '+esc(THEMES[STATE.theme].label)+
+            '<button class="rr" title="Re-roll this suspect" onclick="rerollSuspect(event,'+si+')">↻</button></div>'+
+          '<div class="sus-name" contenteditable="true" data-si="'+si+'" data-f="name">'+esc(s.name)+'</div>'+
+          '<div class="sus-role" contenteditable="true" data-si="'+si+'" data-f="role">'+esc(s.role)+'</div>'+
+          suspBadge(s.level, si)+
+        '</div>'+
+      '</div>'+
+      '<div class="clue"><div class="clue-l">Distinguishing Trait</div><div class="clue-t" contenteditable="true" data-si="'+si+'" data-f="trait">'+esc(s.trait)+'</div></div>'+
+      '<div class="clue"><div class="clue-l">Motive</div><div class="clue-t" contenteditable="true" data-si="'+si+'" data-f="motive">'+esc(s.motive)+'</div></div>'+
+      '<div class="clue"><div class="clue-l">Alibi Claim</div><div class="clue-t" contenteditable="true" data-si="'+si+'" data-f="alibi">'+esc(s.alibi)+'</div></div>'+
+    '</div>';
+  }
+  return h+pageClose(n);
+}
+
+function renderIndex(n, pages){
+  var map=suspectPageMap(pages);
+  var rows=STATE.suspects.map(function(s,i){return {s:s,i:i};});
+  rows.sort(function(a,b){
+    var an=a.s.name.split(' ').pop(), bn=b.s.name.split(' ').pop();
+    return an===bn ? a.s.name.localeCompare(b.s.name) : an.localeCompare(bn);
+  });
+  var h=pageOpen()+
+    '<div class="idx-title">Index of Suspects</div>'+
+    '<div class="idx-sub">Cross-reference of all persons of interest, alphabetized by surname.</div>'+
+    '<div class="'+(rows.length>10?'idx-cols':'')+'">';
+  for(var i=0;i<rows.length;i++){
+    var s=rows[i].s, pg=map[rows[i].i]||'—';
+    h+='<div class="idx-row"><span><span class="nm">'+esc(s.name)+'</span> <span class="rl">'+esc(s.role)+'</span></span><span class="dots"></span><span class="pg">'+pg+'</span></div>';
+  }
+  h+='</div>'+pageClose(n);
+}
+
+function renderPageHTML(pg, n, pages){
+  if(pg.t==='cover') return renderCover(n);
+  if(pg.t==='copyright') return renderCopyright(n);
+  if(pg.t==='howto') return renderHowTo(n);
+  if(pg.t==='suspects') return renderSuspectsPage(pg, n);
+  if(pg.t==='index') return renderIndex(n, pages);
+  return '';
+}
+
+/* ================================================================
+   RENDERING / NAVIGATION
+================================================================ */
+var canvas=document.getElementById('canvas');
+var strip=document.getElementById('strip');
+var pglab=document.getElementById('pglab');
+var zlab=document.getElementById('zlab');
+var PAGES=[];
+
+function spreadBase(i){
+  return i%2===0 ? i : i-1;
+}
+function spreadPages(){
+  var base=spreadBase(STATE.page);
+  if(base<0) base=0;
+  var out=[base];
+  if(base+1<PAGES.length) out.push(base+1);
+  return out;
+}
+function currentZoom(){
+  var p=PAPERS[STATE.paper];
+  if(STATE.zoom) return STATE.zoom;
+  var area=document.getElementById('pageArea');
+  var aw=area.clientWidth-90, ah=area.clientHeight-170;
+  var w=(STATE.view==='spread') ? p.w*2 : p.w;
+  var z=Math.min(aw/w, ah/p.h);
+  return Math.max(.15, Math.min(1.4, z));
+}
+function renderCanvas(){
+  if(!PAGES.length){ canvas.innerHTML=''; pglab.textContent=''; return; }
+  STATE.page=Math.max(0,Math.min(STATE.page,PAGES.length-1));
+  var z=currentZoom();
+  zlab.textContent=Math.round(z*100)+'%';
+
+  if(STATE.view==='spread'){
+    var pgs=spreadPages();
+    pglab.textContent='Pages '+(pgs[0]+1)+(pgs.length>1?'–'+(pgs[pgs.length-1]+1):'')+' of '+PAGES.length;
+    var inner='<div class="spread-wrap">';
+    for(var k=0;k<pgs.length;k++){
+      var idx=pgs[k];
+      var gcls=pgs.length===2 ? (k===0?' gut-l':' gut-r') : '';
+      var html=renderPageHTML(PAGES[idx], idx+1, PAGES);
+      if(gcls) html=html.replace('class="page', 'class="page'+gcls);
+      inner+=html;
+    }
+    inner+='</div>';
+    canvas.innerHTML='<div class="page-scale" style="transform:scale('+z+')">'+inner+'</div>';
+  } else {
+    pglab.textContent='Page '+(STATE.page+1)+' of '+PAGES.length;
+    canvas.innerHTML='<div class="page-scale" style="transform:scale('+z+')">'+
+      renderPageHTML(PAGES[STATE.page], STATE.page+1, PAGES)+'</div>';
+  }
+}
+function renderThumbs(){
+  var p=PAPERS[STATE.paper];
+  var tw=104, th=Math.round(tw*p.h/p.w), z=tw/p.w;
+  var inSpread={};
+  if(STATE.view==='spread'){
+    var pgs=spreadPages();
+    for(var k=0;k<pgs.length;k++) inSpread[pgs[k]]=1;
+  }
+  var h='';
+  for(var i=0;i<PAGES.length;i++){
+    var cls='thumb';
+    if(i===STATE.page) cls+=' cur';
+    else if(inSpread[i]) cls+=' inspread';
+    h+='<div class="'+cls+'" style="width:'+(tw+4)+'px;height:'+(th+4)+'px" onclick="goPage('+i+')">'+
+      '<div class="t-in" style="transform:scale('+z+');width:'+p.w+'px;height:'+p.h+'px">'+
+      renderPageHTML(PAGES[i], i+1, PAGES)+'</div>'+
+      '<div class="t-num">'+(i+1)+'</div></div>';
+  }
+  strip.innerHTML=h;
+  var cur=strip.children[STATE.page];
+  if(cur && cur.scrollIntoView){
+    try{ cur.scrollIntoView({block:'nearest', inline:'nearest'}); }catch(e){}
+  }
+}
+function renderAll(){
+  PAGES=buildPages();
+  renderCanvas();
+  renderThumbs();
+}
+function goPage(i){
+  STATE.page=i;
+  renderCanvas(); renderThumbs();
+}
+function navPage(dir){
+  if(!PAGES.length) return;
+  var step=(STATE.view==='spread')?2:1;
+  var np=STATE.page+dir*step;
+  np=Math.max(0, Math.min(PAGES.length-1, np));
+  if(STATE.view==='spread') np=spreadBase(np);
+  STATE.page=np;
+  renderCanvas(); renderThumbs();
+}
+function setView(v, btn){
+  STATE.view=v; STATE.zoom=null;
+  var bs=document.getElementById('viewSeg').children, i;
+  for(i=0;i<bs.length;i++) bs[i].className=bs[i]===btn?'on':'';
+  if(v==='spread') STATE.page=spreadBase(STATE.page);
+  renderCanvas(); renderThumbs();
+  toast(v==='spread'?'Spread view — open book':'Single page view');
+}
+function setPerPage(v, btn){
+  STATE.perPage=v;
+  var bs=document.getElementById('perPageSeg').children, i;
+  for(i=0;i<bs.length;i++) bs[i].className=bs[i]===btn?'on':'';
+  renderAll();
+}
+function zoomStep(d){
+  STATE.zoom=Math.max(.15,Math.min(2,currentZoom()+d));
+  renderCanvas();
+}
+function setPaper(v,btn){
+  STATE.paper=v; STATE.zoom=null;
+  var bs=document.getElementById('paperSeg').children, i;
+  for(i=0;i<bs.length;i++) bs[i].className=bs[i]===btn?'on':'';
+  renderAll();
+}
+function toggleSec(h){ h.parentNode.className=h.parentNode.className==='sec open'?'sec':'sec open'; }
+
+/* --- keyboard navigation --- */
+document.addEventListener('keydown', function(e){
+  var ae=document.activeElement;
+  if(ae && ae.getAttribute && ae.getAttribute('contenteditable')==='true') return;
+  if(ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) return;
+  if(e.key==='ArrowLeft'){ e.preventDefault(); navPage(-1); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); navPage(1); }
+});
+
+/* --- inline editing: persist edits back to STATE without re-render --- */
+canvas.addEventListener('input', function(e){
+  var t=e.target;
+  var k=t.getAttribute('data-edit');
+  if(k){ STATE[k]=t.innerText; }
+  var si=t.getAttribute('data-si');
+  if(si!==null && si!==undefined && si!==''){
+    var f=t.getAttribute('data-f');
+    if(f && STATE.suspects[+si]) STATE.suspects[+si][f]=t.innerText;
+  }
+});
+canvas.addEventListener('blur', function(e){
+  if(e.target && e.target.getAttribute && (e.target.getAttribute('data-edit')||e.target.getAttribute('data-si')!==null)){
+    renderThumbs();
+  }
+}, true);
+canvas.addEventListener('keydown', function(e){
+  if(e.target && e.target.getAttribute && e.target.getAttribute('contenteditable')==='true' && e.key==='Enter'){
+    e.preventDefault();
+    e.target.blur();
+  }
+});
+window.addEventListener('resize', function(){ if(!STATE.zoom) renderCanvas(); });
+
+/* ================================================================
+   EXPORT — PDF (print pipeline)
+================================================================ */
+function exportPDF(){
+  var root=document.getElementById('printRoot');
+  var h='';
+  for(var i=0;i<PAGES.length;i++) h+=renderPageHTML(PAGES[i], i+1, PAGES);
+  root.innerHTML=h;
+  document.getElementById('pageSizeStyle').textContent='@page{size:'+PAPERS[STATE.paper].css+';margin:0}';
+  toast('Preparing PDF…');
+  setTimeout(function(){ window.print(); }, 60);
+}
+
+/* ================================================================
+   EXPORT — PNG / JPG (SVG foreignObject → canvas)
+================================================================ */
+var fontCSSCache=null;
+function b64FromBuffer(buf){
+  var bytes=new Uint8Array(buf), bin='', chunk=0x8000, i;
+  for(i=0;i<bytes.length;i+=chunk){
+    bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+chunk));
+  }
+  return btoa(bin);
+}
+function embedFonts(cb){
+  if(fontCSSCache!==null){ cb(fontCSSCache); return; }
+  var url='https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Courier+Prime:wght@400;700&family=Oswald:wght@500;700&display=swap';
+  fetch(url).then(function(r){return r.text();}).then(function(css){
+    var urls=css.match(/url\(https:[^)]+\)/g)||[];
+    if(!urls.length){ fontCSSCache=css; cb(css); return; }
+    var pending=urls.length;
+    urls.forEach(function(m){
+      var u=m.slice(4,-1);
+      fetch(u).then(function(r){return r.arrayBuffer();}).then(function(buf){
+        css=css.split(u).join('data:font/woff2;base64,'+b64FromBuffer(buf));
+      }).catch(function(){}).then(function(){
+        if(--pending===0){ fontCSSCache=css; cb(css); }
+      });
+    });
+  }).catch(function(){ fontCSSCache=''; cb(''); });
+}
+function collectCSS(){
+  var out='', st=document.querySelectorAll('style'), i;
+  for(i=0;i<st.length;i++){
+    if(st[i].id==='pageSizeStyle') continue;
+    out+=st[i].textContent+'\n';
+  }
+  return out;
+}
+function pageToImage(html, fontCSS, kind, filename, done){
+  var p=PAPERS[STATE.paper], scale=2;
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+p.w+'" height="'+p.h+'">'+
+    '<foreignObject width="100%" height="100%">'+
+    '<div xmlns="http://www.w3.org/1999/xhtml"><style>'+fontCSS+'\n'+collectCSS()+'</style>'+
+    html+'</div></foreignObject></svg>';
+  var blob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var img=new Image();
+  img.onload=function(){
+    var c=document.createElement('canvas');
+    c.width=p.w*scale; c.height=p.h*scale;
+    var ctx=c.getContext('2d');
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.scale(scale,scale);
+    ctx.drawImage(img,0,0);
+    URL.revokeObjectURL(url);
+    c.toBlob(function(b){
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(b);
+      a.download=filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },400);
+      if(done) done(true);
+    }, kind==='jpg'?'image/jpeg':'image/png', .95);
+  };
+  img.onerror=function(){
+    toast('Image export failed — try PDF export');
+    if(done) done(false);
+  };
+  img.src=url;
+}
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'dossier'; }
+function exportImages(kind){
+  toast('Embedding fonts for export…');
+  embedFonts(function(fontCSS){
+    var base=slug(STATE.title), i=0;
+    function next(){
+      if(i>=PAGES.length){ toast('Export complete — '+PAGES.length+' pages'); return; }
+      var n=i+1;
+      toast('Exporting page '+n+' of '+PAGES.length+'…');
+      var html=renderPageHTML(PAGES[i], n, PAGES);
+      var fn=base+'-page-'+(n<10?'0'+n:n)+'.'+kind;
+      pageToImage(html, fontCSS, kind, fn, function(){
+        i++;
+        setTimeout(next, 450);
+      });
+    }
+    next();
+  });
+}
+
+/* ================================================================
+   INIT
+================================================================ */
+(function init(){
+  var sel=document.getElementById('inTheme'), k, o;
+  for(k in THEMES){
+    o=document.createElement('option');
+    o.value=k; o.textContent=THEMES[k].label;
+    sel.appendChild(o);
+  }
+  sel.value=STATE.theme;
+  generateSuspects();
+})();
+</script>
+</body>
+</html>
