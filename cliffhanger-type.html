@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cliffhanger Type Rotator — Plot Device Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;0,900;1,500&family=IBM+Plex+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink: #1a1a2e; --ink2: #3a3a5c; --muted: #7a7a9a; --line: #d0d0e0;
+  --bg: #e8e8f0; --panel: #f8f8ff; --panel2: #f0f0f8;
+  --accent: #4a2e8b; --accent-d: #3a1f6b; --accentSoft: #e8e0f5;
+  --highlight: #c8a83e; --highlightSoft: #f5edd0;
+  --r: 12px; --sh: 0 8px 24px rgba(20,20,40,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'IBM Plex Mono', 'Courier New', monospace;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.5;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(40,40,80,.025) 0 2px, transparent 2px 28px),
+    radial-gradient(ellipse at 15% 10%, rgba(74,46,139,.06), transparent 55%),
+    radial-gradient(ellipse at 90% 85%, rgba(200,168,62,.08), transparent 50%);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,.serif{font-family:'Cormorant Garamond', Georgia, serif}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  background:linear-gradient(180deg,#1a1a2e,#12121f);
+  color:#e8e8f0;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  border-bottom:4px solid var(--highlight);
+  box-shadow:var(--sh);
+  position:sticky;
+  top:0;
+  z-index:50;
+  flex-wrap:wrap;
+}
+.logo-container{display:flex;align-items:center;flex-shrink:0}
+.logo-container svg{width:44px;height:44px;filter:drop-shadow(0 2px 6px rgba(200,168,62,.4))}
+.brand{flex:1 1 auto;min-width:200px}
+.brand h1{font-size:22px;font-weight:900;letter-spacing:.5px;color:#f0e6c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .tagline{font-size:11px;color:#a89868;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.case-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.case-tools label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#a89868;white-space:nowrap}
+.case-tools select{background:#f0f0f8;border:1px solid #6a6a8a;border-radius:8px;padding:6px 8px;font-size:12px;max-width:140px;min-width:80px;color:#1a1a2e}
+.btn{border:none;border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;transition:all .15s ease;white-space:nowrap;letter-spacing:.3px}
+.btn:active{transform:translateY(1px)}
+.btn-accent{background:var(--accent);color:#f0e6c8}
+.btn-accent:hover{background:var(--accent-d);box-shadow:0 4px 12px rgba(74,46,139,.3)}
+.btn-ghost{background:transparent;color:#e8e8f0;border:1px solid #6a6a8a}
+.btn-ghost:hover{background:rgba(255,255,255,.08);border-color:#a89868}
+.btn-highlight{background:var(--highlight);color:#1a1a2e}
+.btn-highlight:hover{background:#b89830;box-shadow:0 4px 12px rgba(200,168,62,.3)}
+.btn-small{padding:6px 10px;font-size:10px}
+select,input,textarea,button{font-family:inherit;font-size:14px;color:var(--ink)}
+
+/* ---------- Layout ---------- */
+.layout{display:grid;grid-template-columns:340px 1fr;gap:22px;padding:22px;max-width:1800px;margin:0 auto;align-items:start}
+.sidebar{display:flex;flex-direction:column;gap:18px;position:sticky;top:86px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px;position:relative;background-image:repeating-linear-gradient(0deg, transparent 0 26px, rgba(74,46,139,.04) 26px 27px)}
+.panel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--accent),var(--highlight));border-radius:var(--r) 0 0 var(--r);opacity:.9}
+.panel h2{font-size:18px;font-weight:700;color:var(--accent-d);border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:14px;letter-spacing:.4px;overflow:hidden}
+.panel h2 .stamp{float:right;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);border:1px solid var(--muted);border-radius:4px;padding:2px 6px;transform:rotate(2deg);margin-top:2px;text-transform:uppercase;white-space:nowrap}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink2);margin-bottom:4px;font-weight:700}
+.field input[type=text],.field select,.field textarea{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;outline:none;transition:all .15s ease}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentSoft)}
+.field textarea{resize:vertical;min-height:60px}
+.form-actions{display:flex;gap:10px;margin-top:6px}
+.form-actions .btn{flex:1}
+
+/* ---------- Tone Selector ---------- */
+.tone-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tone-btn{padding:8px 6px;border:2px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;text-align:center;font-size:11px;line-height:1.3;transition:all .12s ease;font-weight:700;color:var(--ink2)}
+.tone-btn small{display:block;font-size:9px;color:var(--muted);font-weight:400;margin-top:2px}
+.tone-btn.active{border-color:var(--highlight);background:var(--highlightSoft);color:var(--ink)}
+.tone-btn:hover{border-color:var(--accent);background:var(--accentSoft)}
+
+/* ---------- Supporting Bank ---------- */
+.bank-section{margin-top:10px}
+.bank-section summary{cursor:pointer;font-size:12px;color:var(--accent-d);font-weight:700;padding:6px 0;letter-spacing:.5px}
+.bank-section summary:hover{color:var(--highlight)}
+.bank-input{margin-bottom:8px}
+.bank-input input{width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:12px}
+
+/* ---------- Canvas ---------- */
+.canvas{display:flex;flex-direction:column;gap:20px;min-width:0}
+.plan-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:0 6px}
+.plan-head h2{font-size:24px;color:var(--ink);font-weight:900;letter-spacing:.5px}
+.plan-head .case-meta{font-size:12px;color:var(--muted);font-style:italic}
+.plan-grid{display:grid;grid-template-columns:repeat(3, minmax(240px,1fr));gap:16px;align-items:start}
+.letter-card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:18px;position:relative;min-width:0;overflow:hidden;transition:all .2s ease}
+.letter-card:hover{box-shadow:0 12px 28px rgba(20,20,40,.2);transform:translateY(-2px)}
+.letter-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--highlight),var(--accent));border-radius:var(--r) 0 0 var(--r);opacity:.9}
+.letter-card header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.letter-card .letter-num{font-family:'Cormorant Garamond',serif;font-weight:900;font-size:24px;color:var(--accent-d);min-width:42px;letter-spacing:-1px}
+.letter-card .type-select{flex:1;font-size:11px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;min-width:0;color:var(--ink2)}
+.letter-card .type-name{font-size:14px;font-weight:700;color:var(--accent-d);margin-bottom:6px;letter-spacing:.3px;font-family:'Cormorant Garamond',serif;font-size:16px}
+.letter-card .craft-note{font-size:10.5px;color:var(--muted);font-style:italic;margin-bottom:10px;line-height:1.5;border-left:2px solid var(--highlight);padding-left:8px}
+.letter-card .example-line{font-size:12.5px;line-height:1.6;background:#fff;border-left:4px solid var(--highlight);padding:12px 14px;border-radius:6px;word-break:break-word;overflow-wrap:break-word;margin-bottom:10px;min-height:70px;box-shadow:inset 0 1px 3px rgba(0,0,0,.03)}
+.letter-card .card-actions{display:flex;gap:8px;align-items:center;border-top:1px dotted var(--line);padding-top:10px;flex-wrap:wrap}
+.btn-reroll{background:transparent;border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:10px;color:var(--ink2);transition:all .12s ease;white-space:nowrap;font-weight:700}
+.btn-reroll:hover{background:var(--accentSoft);border-color:var(--accent);color:var(--accent-d)}
+.rotate-warning{font-size:10px;color:#c0392b;font-weight:700;margin-top:6px;display:none;padding:4px 8px;background:#fde8e8;border-radius:4px}
+.rotate-warning.active{display:block}
+
+/* ---------- Pattern Library ---------- */
+.pattern-strip{background:linear-gradient(135deg,#1a1a2e 0%,#2a2a45 100%);color:#e8e8f0;border-radius:var(--r);box-shadow:var(--sh);border:1px solid #3a3a5c;border-left:6px solid var(--highlight);padding:16px 18px}
+.pattern-strip h2{font-size:16px;color:#f0e6c8;letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:'Cormorant Garamond',serif;font-size:18px}
+.pattern-strip .pattern-dot{width:9px;height:9px;border-radius:50%;background:var(--highlight);display:inline-block;box-shadow:0 0 10px var(--highlight);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pattern-summary{font-size:12px;color:#a89868;margin:6px 0 12px}
+.pattern-items{display:flex;flex-direction:column;gap:8px}
+.pattern-item{border-radius:8px;padding:10px 14px;font-size:12.5px;display:flex;gap:10px;align-items:flex-start;border:1px solid transparent}
+.pattern-item .pi-icon{flex:0 0 auto;margin-top:1px}
+.pattern-item.ok{background:rgba(200,168,62,.08);border-color:rgba(200,168,62,.3);color:#f0e6c8}
+.pattern-item.warn{background:rgba(230,126,34,.1);border-color:rgba(230,126,34,.4);color:#fad7b5}
+.pattern-item.alert{background:rgba(192,57,43,.12);border-color:rgba(192,57,43,.5);color:#f5c6c6}
+.pattern-item b{color:inherit}
+.pattern-item .pi-detail{display:block;font-size:11px;opacity:.85;margin-top:3px}
+
+/* ---------- Toast ---------- */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a2e;color:#f0e6c8;padding:12px 24px;border-radius:10px;font-size:13px;box-shadow:0 8px 24px rgba(20,20,40,.4);opacity:0;transition:all .3s ease;z-index:200;pointer-events:none;border-left:4px solid var(--highlight);max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+.footer-note{text-align:center;color:var(--muted);font-size:11px;font-style:italic;padding:6px 0 28px}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1400px){.plan-grid{grid-template-columns:repeat(2, minmax(240px,1fr))}}
+@media (max-width:1024px){.layout{grid-template-columns:1fr}.sidebar{position:static}}
+@media (max-width:768px){.plan-grid{grid-template-columns:1fr}.topbar{flex-direction:column;align-items:flex-start}.case-tools{margin-left:0}.tone-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-container">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bookGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#4a2e8b;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#3a1f6b;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#c8a83e;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#b89830;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <!-- Open Book -->
+      <path d="M 15,40 Q 50,25 85,40 L 85,70 Q 50,55 15,70 Z" fill="url(#bookGrad)" stroke="#1a1a2e" stroke-width="2"/>
+      <path d="M 50,25 Q 50,55 50,70" fill="none" stroke="url(#goldGrad)" stroke-width="2.5"/>
+      <!-- Bookmark -->
+      <path d="M 62,40 L 68,40 L 65,55 Z" fill="url(#goldGrad)" stroke="#1a1a2e" stroke-width="1"/>
+      <!-- Question Mark -->
+      <text x="35" y="52" font-family="serif" font-size="22" font-weight="bold" fill="#f0e6c8" text-anchor="middle">?</text>
+      <!-- Stars -->
+      <circle cx="80" cy="20" r="2" fill="#c8a83e"/>
+      <circle cx="88" cy="15" r="1.5" fill="#c8a83e"/>
+      <circle cx="15" cy="18" r="1.5" fill="#c8a83e"/>
+    </svg>
+  </div>
+  <div class="brand">
+    <h1>Cliffhanger Type Rotator</h1>
+    <div class="tagline">Plot Device Studio — Seven cliffhanger types, one per letter, zero repetition</div>
+  </div>
+  <div class="case-tools">
+    <label for="caseSelect">📂 Case</label>
+    <select id="caseSelect" onchange="onCaseSelect()"></select>
+    <button class="btn btn-ghost btn-small" onclick="saveAsNewCase()">💾 Save</button>
+    <button class="btn btn-ghost btn-small" onclick="deleteCurrentCase()">🗑️ Delete</button>
+    <button class="btn btn-highlight btn-small" onclick="exportPlan()">📋 Export</button>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <section class="panel">
+      <h2>Case Setup <span class="stamp">Plan File</span></h2>
+      <div class="field">
+        <label for="caseTitle">Case Title</label>
+        <input type="text" id="caseTitle" placeholder="e.g. The Nettlecombe Letters" oninput="onMetaChange()">
+      </div>
+      <div class="field">
+        <label for="caseGenre">Genre Pack</label>
+        <select id="caseGenre" onchange="onMetaChange()">
+          <option value="Cozy Mystery">Cozy Mystery</option>
+          <option value="Classic Detective">Classic Detective</option>
+          <option value="Heist">Heist</option>
+          <option value="Romance-Mystery Hybrid">Romance-Mystery Hybrid</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="casePremise">Case Premise</label>
+        <textarea id="casePremise" placeholder="One-line premise..." oninput="onMetaChange()"></textarea>
+      </div>
+      <div class="field">
+        <label>Emotional Tone</label>
+        <div class="tone-grid">
+          <div class="tone-btn active" id="toneTense" onclick="setTone('tense')">Tense<small>Nail-biting</small></div>
+          <div class="tone-btn" id="toneWitty" onclick="setTone('witty')">Witty<small>Ironic</small></div>
+          <div class="tone-btn" id="toneMelancholy" onclick="setTone('melancholy')">Melancholy<small>Bittersweet</small></div>
+          <div class="tone-btn" id="toneRomantic" onclick="setTone('romantic')">Romantic<small>Yearning</small></div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-accent" onclick="generatePlan()">🎲 Generate Plan</button>
+      </div>
+      <div class="form-actions" style="margin-top:6px">
+        <button class="btn btn-ghost btn-small" onclick="rerollAll()">🎲 Reroll All</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Supporting Bank <span class="stamp">Custom</span></h2>
+      <details class="bank-section" open>
+        <summary>👤 Character Names</summary>
+        <div class="bank-input"><input type="text" id="bankCharacters" value="Eleanor, Marcus, Reverend Ashby, Mrs. Thistle, Dr. Vane" oninput="onBankChange()"></div>
+      </details>
+      <details class="bank-section" open>
+        <summary>🔑 Objects</summary>
+        <div class="bank-input"><input type="text" id="bankObjects" value="locket, railway ticket, letter opener, key, photograph" oninput="onBankChange()"></div>
+      </details>
+      <details class="bank-section" open>
+        <summary>📍 Locations</summary>
+        <div class="bank-input"><input type="text" id="bankLocations" value="the vicarage, the train station, the library, the garden shed, the drawing room" oninput="onBankChange()"></div>
+      </details>
+    </section>
+  </aside>
+
+  <main class="canvas">
+    <section class="pattern-strip" id="patternStrip">
+      <h2><span class="pattern-dot"></span> Rotation Pattern — Live</h2>
+      <div class="pattern-summary" id="patternSummary"></div>
+      <div class="pattern-items" id="patternItems"></div>
+    </section>
+
+    <div class="plan-head">
+      <h2 id="planTitle">Cliffhanger Plan</h2>
+      <div class="case-meta" id="planMeta"></div>
+    </div>
+
+    <section class="plan-grid" id="planGrid"></section>
+
+    <div class="footer-note">"The right cliffhanger makes the next letter feel like an appointment, not an interruption."</div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   CLIFFHANGER TYPE ROTATOR — Enhanced Edition
+   ES5 only, localStorage-backed, tone-aware generation
+   ========================================================= */
+
+var LS_KEY = 'cliffhangerRotator_v2';
+var GENRES = ['Cozy Mystery','Classic Detective','Heist','Romance-Mystery Hybrid'];
+var TONES = ['tense','witty','melancholy','romantic'];
+var currentTone = 'tense';
+
+/* ---------- CLIFFHANGER TYPES TAXONOMY ---------- */
+var CLIFFHANGER_TYPES = [
+  {id:'unanswered', name:'The Unanswered Question', short:'Unanswered Question',
+   desc:'Letter ends mid-inquiry, a question posed directly to the reader.',
+   craftNotes:{1:'Plant the central mystery as a personal question. Reader should feel it was asked by someone in the letter, not by you.',
+     2:'The question should reframe a detail already given — making the reader want to re-read.',
+     3:'Use a question that offers two equally plausible but incompatible answers.',
+     4:'The question should feel like a natural trap: the reader thought they knew, now they wonder.',
+     5:'Pose the question to imply the answer will name the culprit — but leave wording unresolved.',
+     6:'A final question should feel almost rhetorical, as if only the epilogue can answer it.'}
+  },
+  {id:'interrupted', name:'The Interrupted Discovery', short:'Interrupted Discovery',
+   desc:'Narrator about to reveal something critical when the letter cuts off.',
+   craftNotes:{1:'The discovery should be tangible — an object, diary, photograph.',
+     2:'Use the physical interruption itself as a clue. A torn edge, smudge, knock.',
+     3:'Let reader see the shape of what was about to be found, but not the content.',
+     4:'The interruption should feel like it came from the world of the case — not the author.',
+     5:'By Letter 5, the interrupted discovery should feel like delay of inevitability.',
+     6:'In Letter 6, interruption should be of final proof — and the very last moment before resolution.'}
+  },
+  {id:'reversal', name:'The Reversal', short:'Reversal',
+   desc:'A fact the reader trusted all letter is suddenly called into question.',
+   craftNotes:{1:'Reversal works best targeting something accepted without question early in the letter.',
+     2:'Keep the reversal small but consequential — a name misheard, time misremembered.',
+     3:'Should make reader feel clever for noticing something they dismissed.',
+     4:'By Letter 4, can reframe entire case — but only if connected to earlier detail.',
+     5:'In Letter 5, should point toward culprit while still hiding motive.',
+     6:'Use in Letter 6 only to correct lingering misconception, not introduce new suspect.'}
+  },
+  {id:'new_arrival', name:'The New Arrival', short:'New Arrival',
+   desc:'A new character, object, or evidence appears with no context.',
+   craftNotes:{1:'Arrival should feel both surprising and inevitable — missing piece reader didn\'t know was missing.',
+     2:'Describe effect on other characters before revealing what it is.',
+     3:'New object should have history — worn edges, familiar scent, name scratched out.',
+     4:'By Letter 4, should complicate existing suspect pool, not expand it.',
+     5:'Letter 5 arrivals should feel like final piece — but make picture more complex.',
+     6:'In Letter 6, new arrival should be the solution itself — not a new problem.'}
+  },
+  {id:'deadline', name:'The Deadline Drop', short:'Deadline Drop',
+   desc:'Narrator reveals a ticking clock that will occur before next letter.',
+   craftNotes:{1:'Deadline must feel external and immovable — a train, wedding, warrant.',
+     2:'Pair with specific consequence. What happens if clock runs out?',
+     3:'By Letter 3, deadline should be revealed as trap set by culprit.',
+     4:'Letter 4 deadline should force narrator to choose between two tasks.',
+     5:'Letter 5 deadlines should be personal — someone reader cares about is running out of time.',
+     6:'EXCLUDED from Letter 6 — a deadline at end of case is denial of resolution.'}
+  },
+  {id:'confession', name:'The Confession Fragment', short:'Confession Fragment',
+   desc:'Someone begins to confess or explain, then is stopped.',
+   craftNotes:{1:'Confession should begin with most damning phrase, not build to it.',
+     2:'Interruption should feel violent or final — gunshot, scream, vase shattering.',
+     3:'By Letter 3, confession should be from character reader trusted.',
+     4:'Letter 4 confession should implicate someone else entirely.',
+     5:'Letter 5 confessions should be from actual culprit, stopped before naming motive.',
+     6:'In Letter 6, confession should be complete except for one final word.'}
+  },
+  {id:'object_left', name:'The Object Left Behind', short:'Object Left Behind',
+   desc:'Letter ends with a physical object handed to narrator, significance unexplained.',
+   craftNotes:{1:'Object should be described with precision — weight, temperature, texture.',
+     2:'Should be personal to someone specific. Power from implied ownership.',
+     3:'By Letter 3, object should be second instance of earlier object — pattern.',
+     4:'Letter 4 objects should be deliberate messages, not accidental losses.',
+     5:'In Letter 5, object should be key to case — but requires final piece.',
+     6:'In Letter 6, object should be returned to rightful owner — resolution through restoration.'}
+  }
+];
+
+/* ---------- TONE MODIFIERS ---------- */
+var TONE_PREFIXES = {
+  tense: ['The clock ticked louder.', 'Every shadow seemed to move.', 'The silence stretched, unbearable.', 'Someone was holding their breath.'],
+  witty: ['As if on cue, the universe laughed.', 'It would have been funny, if not for the murder.', 'Well, this was awkward.', 'And that\'s when things got interesting.'],
+  melancholy: ['The rain had stopped, but the sadness lingered.', 'Somewhere, a door closed softly.', 'The memory hung in the air like smoke.', 'It was the kind of silence that remembers.'],
+  romantic: ['Her hand found mine in the dark.', 'The candle flickered between us.', 'He looked at me as if seeing me for the first time.', 'The space between us grew smaller, then vanished.']
+};
+
+/* ---------- EXAMPLE LINE BANKS (Expanded) ---------- */
+var TYPE_BANKS = {};
+
+function buildBank(typeId){
+  var banks = {};
+  for(var g=0; g<GENRES.length; g++) banks[GENRES[g]] = [];
+  var t = typeId;
+
+  /* Cozy Mystery */
+  if(t === 'unanswered'){
+    banks['Cozy Mystery'] = [
+      '"But if the vicar was in the garden all evening," [CHARACTER] asked quietly, "then who was it I saw lighting a candle in the library window at half past nine?"',
+      '"One question troubles me more than any other," [CHARACTER] said, turning the [OBJECT] over. "If everyone in [LOCATION] heard the shot at eight, why did no one check whether the clock was fast?"',
+      'The tea was still warm, the knitting needles laid down mid-row. [CHARACTER] looked over her spectacles. "And why would someone leave their own door locked from the inside if they meant to go out?"'
+    ];
+  }
+  if(t === 'interrupted'){
+    banks['Cozy Mystery'] = [
+      '"But that\'s just it, you see," [CHARACTER] said, reaching into her cardigan. "I found this tucked inside the [OBJECT] — " The clock struck ten, and breaking glass from [LOCATION] cut her words clean in half.',
+      'The next page of the diary was torn out. [CHARACTER] handed me the [OBJECT]. "If we hold this to the light, we can read what someone tried to—" A knock, sharp and sudden, silenced us both.'
+    ];
+  }
+  if(t === 'reversal'){
+    banks['Cozy Mystery'] = [
+      'I had always believed the [OBJECT] belonged to [CHARACTER]. But now I saw initials scratched into the back — not hers at all. It had belonged to the victim. And [CHARACTER] had been holding it for a long time.',
+      'The alibi was perfect. Times matched, witnesses agreed. But the [OBJECT] on the table told a different story. Its clock had stopped at 8:47 — forty-five minutes before the crime was supposed to have happened.'
+    ];
+  }
+  if(t === 'new_arrival'){
+    banks['Cozy Mystery'] = [
+      'The front door of [LOCATION] opened, and a woman none of us had ever seen stepped inside, shaking rain from her umbrella. She looked at [CHARACTER], then at the [OBJECT]. "I see you\'ve found it," she said quietly.',
+      'Someone left a [OBJECT] on the windowsill of [LOCATION]. Old, worn, smelling of lavender. [CHARACTER] turned it over, face white. "This belonged to someone I thought was dead," she whispered.'
+    ];
+  }
+  if(t === 'deadline'){
+    banks['Cozy Mystery'] = [
+      '"The fête is in three days," [CHARACTER] said, voice tight. "If we haven\'t found the [OBJECT] by then, the culprit will have left [LOCATION] for good."',
+      '"There\'s a train leaving for the continent at six tomorrow morning," she said. "If our killer is on it, they\'ll be beyond reach before the next letter arrives. We have until dawn."'
+    ];
+  }
+  if(t === 'confession'){
+    banks['Cozy Mystery'] = [
+      '"I must tell you something," [CHARACTER] whispered. "About the night of the storm. The [OBJECT] in [LOCATION]. I didn\'t just find it there. I put it there. And that\'s not the worst of—" The door burst open. The vicar stood there, breathless.',
+      '"I\'ve been lying to you since the beginning," [CHARACTER] said, tears streaming. "The [OBJECT] was never lost. It was hidden. Hidden by me. And the reason I hid it—" A scream from [LOCATION] cut through, and the confession was lost.'
+    ];
+  }
+  if(t === 'object_left'){
+    banks['Cozy Mystery'] = [
+      'The [OBJECT] sat on the kitchen table, still warm from someone\'s hand. It had not been there an hour ago. Pinned to it, a note in a neat, familiar hand: "You\'re looking in the wrong place."',
+      '[CHARACTER] held out the [OBJECT] with both hands. "I was told to give this to you," she said. "By someone who knew you\'d be in [LOCATION] today. They said you\'d understand."'
+    ];
+  }
+
+  /* Classic Detective */
+  if(t === 'unanswered'){
+    banks['Classic Detective'] = [
+      '"The only thing I cannot explain," [CHARACTER] said, tapping his pipe, "is why the [OBJECT] was found in [LOCATION] when it should have been destroyed in the fire. Perhaps you can tell me what the killer forgot to account for."',
+      'They reconstructed the crime down to the minute. But when [CHARACTER] held the [OBJECT] to the light, he frowned. "This isn\'t the same [OBJECT]. Someone has switched them. Why would a guilty man want us to find the wrong one?"'
+    ];
+  }
+  if(t === 'interrupted'){
+    banks['Classic Detective'] = [
+      '"Look here," [CHARACTER] said, pointing to dust on the windowsill of [LOCATION]. "There\'s a second set of prints. Smaller, lighter. And if we follow the direction—" The telegram arrived then, and he fell silent.',
+      'The envelope was still sealed. [CHARACTER] slit it open, unfolding the single sheet. "Dear God," he said. "So it was—" A knock, three times, and the letter fell before he could finish.'
+    ];
+  }
+  if(t === 'reversal'){
+    banks['Classic Detective'] = [
+      '"I have made an error," [CHARACTER] said, voice flat. "A profound one. The [OBJECT] was not found in [LOCATION] at all. It was found somewhere far more incriminating. And the person who told us otherwise—" He turned to face the only person who hadn\'t spoken.',
+      'They built the entire case on the assumption the victim died before midnight. But the [OBJECT] told a different story. Its date read the following morning. Someone had changed the clocks. Someone had changed everything.'
+    ];
+  }
+  if(t === 'new_arrival'){
+    banks['Classic Detective'] = [
+      'A cab drew up outside [LOCATION], and from it emerged a man whose face was known to everyone in the city — but not from this case. He was the one person who could never have been there. And yet he walked straight toward the door.',
+      'The [OBJECT] appeared on [CHARACTER]\'s desk sometime between midnight and dawn. No one entered. No one passed the guards. But there it sat, still warm, as if just set down by an invisible hand.'
+    ];
+  }
+  if(t === 'deadline'){
+    banks['Classic Detective'] = [
+      '"The execution is scheduled for Monday," [CHARACTER] said, grim. "Unless I can produce the [OBJECT] and prove its significance, an innocent person will hang. I have four days."',
+      '"The ship sails with the tide," [CHARACTER] said. "And the [OBJECT] will be on it. If I cannot stop that ship before it leaves harbor, every chance of justice departs with it."'
+    ];
+  }
+  if(t === 'confession'){
+    banks['Classic Detective'] = [
+      '"I\'ve been a fool," [CHARACTER] said, staring into the fire. "The evidence was in front of me from the first. The [OBJECT], the letter, the key to [LOCATION]. And I ignored it because I could not believe the person responsible was—" A knock, heavy and urgent, silenced him.',
+      '"I did not come forward because I was afraid," she said. "But I can be silent no longer. The [OBJECT] belonged to my brother. He gave it to me the night he died. And the man who killed him—" The lights flickered. She never named him.'
+    ];
+  }
+  if(t === 'object_left'){
+    banks['Classic Detective'] = [
+      'The [OBJECT] was delivered at ten o\'clock. Plain box, no return address. Inside, a note: "You said you wanted proof. Here it is." But the [OBJECT] was not what [CHARACTER] expected. It was far, far worse.',
+      '[CHARACTER] placed the [OBJECT] on the desk. "This was found in the victim\'s hand," he said. "But it did not belong to the victim. It belonged to someone else. Someone still in this room."'
+    ];
+  }
+
+  /* Heist */
+  if(t === 'unanswered'){
+    banks['Heist'] = [
+      'The vault was empty. The crew was clean. The take was secured. But as [CHARACTER] counted the bills, the smile faded. "If we took three hundred thousand," he said slowly, "then why does the manifest say four?"',
+      '"Someone knew the schedule," [CHARACTER] said. "Someone knew the codes, the guards, the route. But most importantly — someone knew we\'d be in [LOCATION] at exactly 3am. Who else had that intel?"'
+    ];
+  }
+  if(t === 'interrupted'){
+    banks['Heist'] = [
+      '"We\'ve been set up," [CHARACTER] said, spreading blueprints across [LOCATION]. "The vault code, the patrol route, the camera blind spots — all of it leads to—" The phone rang once. Then again. He never finished.',
+      'She held the [OBJECT] to the light. "There\'s a serial number etched underneath. If we run it, we can trace the buyer, maybe even the—" The table flipped. The door splintered. Then the room was full of guns.'
+    ];
+  }
+  if(t === 'reversal'){
+    banks['Heist'] = [
+      '"We trusted him because he said he had nothing to gain," [CHARACTER] said. "But look at this [OBJECT]. The markings. It\'s not from the vault. It\'s from the evidence room. He wasn\'t with us that night. He was with them."',
+      'The score was supposed to be cash. That\'s what the informant said. But when [CHARACTER] cracked the [OBJECT], what spilled out wasn\'t money. It was photographs. Photographs of us, taken months ago, in [LOCATION].'
+    ];
+  }
+  if(t === 'new_arrival'){
+    banks['Heist'] = [
+      'The drop was supposed to be dead. But there was a [OBJECT] waiting on the table in [LOCATION] — one we hadn\'t put there. Underneath, a note: "Nice work. But you forgot the real prize."',
+      'She stepped out of the shadows in [LOCATION], holding a [OBJECT] we\'d never seen. "You didn\'t think you were the only ones working this angle, did you?" she said. The room went very still.'
+    ];
+  }
+  if(t === 'deadline'){
+    banks['Heist'] = [
+      '"The buyer lands at noon Thursday," [CHARACTER] said. "If we don\'t move the [OBJECT] before then, we\'ll have both the feds and the client to deal with. Less than 48 hours, and we\'re already short on trust."',
+      '"The alarm resets at 6am," she said. "After that, the [OBJECT] gets locked in the vault for another month. We go tonight, or we don\'t go at all."'
+    ];
+  }
+  if(t === 'confession'){
+    banks['Heist'] = [
+      '"I\'m the one who talked," [CHARACTER] said, the [OBJECT] shaking in his hand. "I didn\'t mean to. They had something on me. But it\'s not what you think—" The window shattered, and he dropped before the sentence ended.',
+      'The [OBJECT] wasn\'t in the vault when we broke in," [CHARACTER] said. "I knew it wasn\'t. Because I\'d already moved it. But I didn\'t do it for the money. I did it to protect—" The phone rang. He stared. He didn\'t answer.'
+    ];
+  }
+  if(t === 'object_left'){
+    banks['Heist'] = [
+      'The [OBJECT] was waiting in the getaway car, placed on the driver\'s seat like a gift. No note. No explanation. But the message was clear: someone knew our escape route, and they wanted us to know they could have taken everything.',
+      'The [OBJECT] was in the safe-deposit box we\'d already cleaned out. Not on the manifest. Not part of the score. But there it sat, placed deliberately. The question was — by whom, and what did it mean?'
+    ];
+  }
+
+  /* Romance-Mystery Hybrid */
+  if(t === 'unanswered'){
+    banks['Romance-Mystery Hybrid'] = [
+      '"You said you loved me," [CHARACTER] whispered, the [OBJECT] trembling in her hands. "But if you loved me, then why did you book passage from [LOCATION] the very morning after the murder?"',
+      'He found the letter in [LOCATION], folded inside the [OBJECT] she had given him years ago. "My darling," it began. But the next line was smudged beyond reading. Who had tried to erase it?'
+    ];
+  }
+  if(t === 'interrupted'){
+    banks['Romance-Mystery Hybrid'] = [
+      '"I have to tell you something," [CHARACTER] said, taking my hand, leading me to [LOCATION]. "About the night of the party. What I saw in the garden. The [OBJECT] I found—" But then she stopped. Someone was already there, waiting in the shadows.',
+      'The letter in her hand was unfinished. "I will always love you, but I cannot protect you from—" The ink stopped there. A smudge, a tear. But the [OBJECT] inside the envelope told a different story.'
+    ];
+  }
+  if(t === 'reversal'){
+    banks['Romance-Mystery Hybrid'] = [
+      '"I thought you were protecting me," [CHARACTER] said, holding the [OBJECT] up. "But this isn\'t protection. It\'s evidence. Evidence proving you were in [LOCATION] that night — not because you loved me, but because you were there."',
+      'He always said he was at the club. Doorman remembered him, receipts matched. But the [OBJECT] in his drawer was cold and dry — not touched in weeks. But the night of the murder, there had been rain. Heavy rain.'
+    ];
+  }
+  if(t === 'new_arrival'){
+    banks['Romance-Mystery Hybrid'] = [
+      'A [OBJECT] was delivered to [LOCATION], wrapped in silk, tied with black ribbon. A card inside read only: "For the one I almost told." No signature. But [CHARACTER] knew immediately who had sent it.',
+      'He stood at the end of the lane when she arrived, holding a [OBJECT] she had last seen years ago. The one thrown into the river. "You kept it," she said. "You kept everything."'
+    ];
+  }
+  if(t === 'deadline'){
+    banks['Romance-Mystery Hybrid'] = [
+      '"The wedding is on Saturday," [CHARACTER] said, hands trembling. "If we don\'t find the [OBJECT] before then, I\'ll be married to the wrong person. And the truth will be lost with the vows."',
+      '"He\'s leaving on the evening train," she whispered. "If I don\'t tell him before he boards, I may never see him again. I have until seven o\'clock."'
+    ];
+  }
+  if(t === 'confession'){
+    banks['Romance-Mystery Hybrid'] = [
+      '"I have to tell you the truth," [CHARACTER] said, taking my hands. "The [OBJECT] in [LOCATION] — it wasn\'t a clue. It was a gift. From me. But I never meant for you to find it that way. If you\'ll let me explain—" The door opened, and she pulled away.',
+      '"I loved him once," she said. "Before you. The [OBJECT] is his. He said he\'d come back for it. He said he\'d come back for me. And the night of the murder, I was on my way to meet him when—" A car honked. She never finished.'
+    ];
+  }
+  if(t === 'object_left'){
+    banks['Romance-Mystery Hybrid'] = [
+      'The [OBJECT] was on her pillow when she woke. She knew it instantly — the one lost years ago, the one he gave her. And with it, a single line in his handwriting: "I\'ve been waiting."',
+      '[CHARACTER] pressed the [OBJECT] into my palm, closing my fingers around it. "Keep this safe," she whispered. "It\'s the only thing that matters. It\'s the only proof."'
+    ];
+  }
+
+  return banks;
+}
+
+for(var b=0; b<CLIFFHANGER_TYPES.length; b++){
+  TYPE_BANKS[CLIFFHANGER_TYPES[b].id] = buildBank(CLIFFHANGER_TYPES[b].id);
+}
+
+/* ---------- STATE ---------- */
+var store = null;
+var currentPlan = [];
+
+function blankPlan(){
+  var p = [];
+  for(var i=1; i<=6; i++) p.push({letter:i, typeId:null, example:''});
+  return p;
+}
+function newCaseObj(name){
+  return {
+    name: name, title: '', genre: 'Cozy Mystery', premise: '', tone: 'tense',
+    characters: 'Eleanor, Marcus, Reverend Ashby, Mrs. Thistle, Dr. Vane',
+    objects: 'locket, railway ticket, letter opener, key, photograph',
+    locations: 'the vicarage, the train station, the library, the garden shed, the drawing room',
+    plan: blankPlan(), created: new Date().getTime()
+  };
+}
+function loadStore(){
+  var raw = null;
+  try { raw = localStorage.getItem(LS_KEY); } catch(e){ raw = null; }
+  if(raw){
+    try { store = JSON.parse(raw); if(!store || !store.cases) throw 'bad'; } catch(e){ store = null; }
+  }
+  if(!store){
+    var id = 'case_' + new Date().getTime();
+    store = { cases: {}, order: [id], activeId: id };
+    store.cases[id] = newCaseObj('Case One');
+    persist();
+  }
+  if(!store.activeId || !store.cases[store.activeId]){
+    store.activeId = store.order[0];
+  }
+}
+function persist(){ try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch(e){} }
+function cur(){ return store.cases[store.activeId]; }
+function esc(s){ s = String(s==null?'':s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function el(id){ return document.getElementById(id); }
+function trim(s){ return String(s||'').replace(/^\s+|\s+$/g,''); }
+var toastTimer = null;
+function toast(msg){ var t=el('toast'); t.innerHTML=msg; t.className='toast show'; if(toastTimer) clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.className='toast';},2600); }
+
+/* ---------- HELPERS ---------- */
+function getBankArray(field){
+  var val = cur()[field];
+  if(!val) return [];
+  return val.split(',').map(function(s){return trim(s);}).filter(function(s){return s.length>0;});
+}
+function getRandomItem(arr){ if(!arr||arr.length===0) return ''; return arr[Math.floor(Math.random()*arr.length)]; }
+function getTypeById(id){ for(var i=0;i<CLIFFHANGER_TYPES.length;i++){ if(CLIFFHANGER_TYPES[i].id===id) return CLIFFHANGER_TYPES[i]; } return null; }
+function getLetterExcludedTypes(letter){ var excluded=[]; if(letter===6) excluded.push('deadline'); return excluded; }
+function getAvailableTypes(letter, usedTypes){
+  var excluded = getLetterExcludedTypes(letter);
+  var available = [];
+  for(var i=0;i<CLIFFHANGER_TYPES.length;i++){
+    var t = CLIFFHANGER_TYPES[i];
+    if(excluded.indexOf(t.id)!==-1) continue;
+    if(usedTypes.indexOf(t.id)!==-1) continue;
+    available.push(t.id);
+  }
+  return available;
+}
+function fillTemplate(template, genre){
+  var chars = getBankArray('characters');
+  var objs = getBankArray('objects');
+  var locs = getBankArray('locations');
+  var dChars = ['Eleanor','Marcus','the inspector','Mrs. Peabody','Dr. Vane'];
+  var dObjs = ['locket','letter','key','photograph','note'];
+  var dLocs = ['the drawing room','the station','the library','the garden','the study'];
+  var ch = chars.length ? getRandomItem(chars) : getRandomItem(dChars);
+  var ob = objs.length ? getRandomItem(objs) : getRandomItem(dObjs);
+  var lo = locs.length ? getRandomItem(locs) : getRandomItem(dLocs);
+  var s = template;
+  s = s.replace(/\[CHARACTER\]/g, ch).replace(/\[OBJECT\]/g, ob).replace(/\[LOCATION\]/g, lo);
+  /* Add tone prefix 50% of the time */
+  if(Math.random() > 0.5){
+    var tonePrefixes = TONE_PREFIXES[currentTone] || TONE_PREFIXES.tense;
+    var prefix = getRandomItem(tonePrefixes);
+    s = prefix + ' ' + s;
+  }
+  return s;
+}
+function generateExample(letter, typeId){
+  var genre = cur().genre;
+  var bank = TYPE_BANKS[typeId];
+  if(!bank) return '';
+  var genreBank = bank[genre] || bank[GENRES[0]];
+  if(!genreBank || genreBank.length===0) return '';
+  var template = getRandomItem(genreBank);
+  return fillTemplate(template, genre);
+}
+
+/* ---------- GENERATION ---------- */
+function generatePlan(){
+  var used = [];
+  var newPlan = [];
+  for(var i=1; i<=6; i++){
+    var available = getAvailableTypes(i, used);
+    if(available.length===0){
+      available = [];
+      for(var j=0;j<CLIFFHANGER_TYPES.length;j++){
+        var t = CLIFFHANGER_TYPES[j];
+        if(getLetterExcludedTypes(i).indexOf(t.id)===-1) available.push(t.id);
+      }
+    }
+    var typeId = getRandomItem(available);
+    used.push(typeId);
+    var example = generateExample(i, typeId);
+    newPlan.push({letter:i, typeId:typeId, example:example});
+  }
+  cur().plan = newPlan;
+  persist();
+  renderAll();
+  toast('🎲 New plan generated with rotation integrity.');
+}
+function rerollAll(){ generatePlan(); }
+function rerollLetter(letter){
+  var plan = cur().plan;
+  var idx = letter - 1;
+  if(idx < 0 || idx >= plan.length) return;
+  var used = [];
+  for(var i=0;i<plan.length;i++){
+    if(i !== idx && plan[i].typeId) used.push(plan[i].typeId);
+  }
+  var available = getAvailableTypes(letter, used);
+  if(available.length===0){
+    available = [];
+    for(var j=0;j<CLIFFHANGER_TYPES.length;j++){
+      var t = CLIFFHANGER_TYPES[j];
+      if(getLetterExcludedTypes(letter).indexOf(t.id)===-1) available.push(t.id);
+    }
+  }
+  var newType = getRandomItem(available);
+  plan[idx].typeId = newType;
+  plan[idx].example = generateExample(letter, newType);
+  persist();
+  renderAll();
+  toast('🎲 Letter ' + letter + ' rerolled with ' + getTypeById(newType).name + '.');
+}
+function onTypeChange(letter, selectEl){
+  var idx = letter - 1;
+  if(idx < 0 || idx >= cur().plan.length) return;
+  var typeId = selectEl.value;
+  cur().plan[idx].typeId = typeId;
+  cur().plan[idx].example = generateExample(letter, typeId);
+  persist();
+  renderAll();
+  checkRotationIntegrity();
+}
+
+/* ---------- ROTATION INTEGRITY ---------- */
+function checkRotationIntegrity(){
+  var plan = cur().plan;
+  var typeCount = {};
+  var duplicates = [];
+  for(var i=0;i<plan.length;i++){
+    if(plan[i].typeId){
+      if(typeCount[plan[i].typeId]) typeCount[plan[i].typeId]++;
+      else typeCount[plan[i].typeId] = 1;
+    }
+  }
+  for(var tid in typeCount){ if(typeCount[tid] > 1) duplicates.push(tid); }
+  for(var j=1;j<=6;j++){
+    var warnEl = el('rotateWarn' + j);
+    if(warnEl){
+      var card = plan[j-1];
+      if(card.typeId && duplicates.indexOf(card.typeId) !== -1){
+        warnEl.classList.add('active');
+        var tn = getTypeById(card.typeId) ? getTypeById(card.typeId).name : card.typeId;
+        warnEl.textContent = '⚠️ Duplicate: ' + tn;
+      } else {
+        warnEl.classList.remove('active');
+        warnEl.textContent = '';
+      }
+    }
+  }
+}
+
+/* ---------- PATTERN ANALYSIS ---------- */
+function renderPatternStrip(){
+  var plan = cur().plan;
+  var typeSequence = [];
+  var usedTypes = {};
+  var hasAll = true;
+  for(var i=0;i<plan.length;i++){
+    if(plan[i].typeId){
+      typeSequence.push(getTypeById(plan[i].typeId).short);
+      if(usedTypes[plan[i].typeId]) usedTypes[plan[i].typeId]++;
+      else usedTypes[plan[i].typeId] = 1;
+    }
+  }
+  var summary = '6 letters • ' + typeSequence.length + ' types assigned';
+  var itemsHtml = '';
+  /* Check rotation */
+  var duplicates = [];
+  for(var tid in usedTypes){ if(usedTypes[tid] > 1) duplicates.push(tid); }
+  if(duplicates.length === 0){
+    itemsHtml += '<div class="pattern-item ok"><span class="pi-icon">✅</span><span><b>Rotation intact</b> — all 6 letters use different cliffhanger types.<span class="pi-detail">The "never repeat a structural device" rule holds.</span></span></div>';
+  } else {
+    itemsHtml += '<div class="pattern-item alert"><span class="pi-icon">⚠️</span><span><b>Duplicate detected</b> — ' + duplicates.length + ' type(s) used more than once.<span class="pi-detail">Consider rerolling for better variation.</span></span></div>';
+  }
+  /* Check Letter 6 */
+  var letter6 = plan[5];
+  if(letter6 && letter6.typeId === 'deadline'){
+    itemsHtml += '<div class="pattern-item alert"><span class="pi-icon">🚫</span><span><b>Letter 6 violation</b> — Deadline Drop assigned to final letter.<span class="pi-detail">This delays resolution at the point where the case must close.</span></span></div>';
+  } else if(letter6 && letter6.typeId){
+    itemsHtml += '<div class="pattern-item ok"><span class="pi-icon">✅</span><span><b>Letter 6 appropriate</b> — resolves rather than delays.</span></div>';
+  }
+  /* Check tone */
+  itemsHtml += '<div class="pattern-item warn"><span class="pi-icon">🎭</span><span><b>Tone active</b> — ' + currentTone + ' modifiers applied to examples.<span class="pi-detail">Change tone in sidebar to shift emotional register.</span></span></div>';
+  el('patternSummary').textContent = summary;
+  el('patternItems').innerHTML = itemsHtml;
+}
+
+/* ---------- RENDER ---------- */
+function renderCaseDropdown(){
+  var sel = el('caseSelect');
+  var html = '';
+  for(var i=0;i<store.order.length;i++){
+    var c = store.cases[store.order[i]];
+    if(c) html += '<option value="' + esc(store.order[i]) + '"' + (store.order[i]===store.activeId?' selected':'') + '>' + esc(c.name) + '</option>';
+  }
+  sel.innerHTML = html;
+}
+function renderMeta(){
+  var c = cur();
+  el('caseTitle').value = c.title || '';
+  el('caseGenre').value = c.genre || 'Cozy Mystery';
+  el('casePremise').value = c.premise || '';
+  el('bankCharacters').value = c.characters || '';
+  el('bankObjects').value = c.objects || '';
+  el('bankLocations').value = c.locations || '';
+  currentTone = c.tone || 'tense';
+  updateToneButtons();
+  el('planTitle').textContent = trim(c.title) || 'Cliffhanger Plan';
+  el('planMeta').textContent = esc(c.genre) + ' • ' + c.plan.length + ' cliffhangers • ' + currentTone;
+}
+function updateToneButtons(){
+  var tones = ['tense','witty','melancholy','romantic'];
+  for(var i=0;i<tones.length;i++){
+    var btn = el('tone' + tones[i].charAt(0).toUpperCase() + tones[i].slice(1));
+    if(btn){
+      if(tones[i] === currentTone) btn.className = 'tone-btn active';
+      else btn.className = 'tone-btn';
+    }
+  }
+}
+function renderPlan(){
+  var grid = el('planGrid');
+  var html = '';
+  for(var i=0;i<cur().plan.length;i++){
+    var card = cur().plan[i];
+    var typeObj = getTypeById(card.typeId);
+    var typeName = typeObj ? typeObj.name : 'Unassigned';
+    var craftNote = typeObj ? (typeObj.craftNotes[card.letter] || '') : 'Choose a type.';
+    var example = card.example || 'No example generated yet.';
+    var options = '<option value="">— Select —</option>';
+    for(var j=0;j<CLIFFHANGER_TYPES.length;j++){
+      var t = CLIFFHANGER_TYPES[j];
+      var sel = (card.typeId === t.id) ? ' selected' : '';
+      options += '<option value="' + t.id + '"' + sel + '>' + t.name + '</option>';
+    }
+    html += '<div class="letter-card">'
+      + '<header><span class="letter-num">L' + card.letter + '</span>'
+      + '<select class="type-select" onchange="onTypeChange(' + card.letter + ', this)">' + options + '</select></header>'
+      + '<div class="type-name">' + esc(typeName) + '</div>'
+      + '<div class="craft-note">' + esc(craftNote) + '</div>'
+      + '<div class="example-line">' + esc(example) + '</div>'
+      + '<div class="card-actions"><button class="btn-reroll" onclick="rerollLetter(' + card.letter + ')">🎲 Reroll</button></div>'
+      + '<div class="rotate-warning" id="rotateWarn' + card.letter + '"></div>'
+      + '</div>';
+  }
+  grid.innerHTML = html;
+  checkRotationIntegrity();
+}
+function renderAll(){
+  renderCaseDropdown();
+  renderMeta();
+  renderPlan();
+  renderPatternStrip();
+}
+function onMetaChange(){
+  var c = cur();
+  c.title = el('caseTitle').value;
+  c.genre = el('caseGenre').value;
+  c.premise = el('casePremise').value;
+  persist();
+  renderMeta();
+  renderPatternStrip();
+}
+function onBankChange(){
+  var c = cur();
+  c.characters = el('bankCharacters').value;
+  c.objects = el('bankObjects').value;
+  c.locations = el('bankLocations').value;
+  persist();
+}
+function setTone(tone){
+  currentTone = tone;
+  cur().tone = tone;
+  persist();
+  updateToneButtons();
+  renderPatternStrip();
+  toast('🎭 Tone set to ' + tone + '. Regenerate examples to apply.');
+}
+
+/* ---------- CASE MANAGEMENT ---------- */
+function saveAsNewCase(){
+  var name = window.prompt('Name this plan:');
+  name = trim(name);
+  if(!name) return;
+  var id = 'case_' + new Date().getTime();
+  var c = newCaseObj(name);
+  store.cases[id] = c;
+  store.order.push(id);
+  store.activeId = id;
+  persist();
+  renderAll();
+  toast('💾 New plan: <b>' + esc(name) + '</b>');
+}
+function onCaseSelect(){
+  var id = el('caseSelect').value;
+  if(store.cases[id]){
+    store.activeId = id;
+    persist();
+    renderAll();
+    toast('📂 Loaded: <b>' + esc(store.cases[id].name) + '</b>');
+  }
+}
+function deleteCurrentCase(){
+  if(store.order.length <= 1){ toast('🚫 Keep at least one plan.'); return; }
+  var c = cur();
+  if(!window.confirm('Delete "' + c.name + '"?')) return;
+  delete store.cases[store.activeId];
+  var idx = -1;
+  for(var i=0;i<store.order.length;i++){ if(store.order[i]===store.activeId){ idx=i; break; } }
+  if(idx > -1) store.order.splice(idx,1);
+  store.activeId = store.order[0];
+  persist();
+  renderAll();
+  toast('🗑️ Deleted.');
+}
+
+/* ---------- EXPORT ---------- */
+function exportPlan(){
+  var c = cur();
+  var lines = [];
+  var now = new Date();
+  var ds = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2);
+  lines.push('==============================================================');
+  lines.push('CLIFFHANGER PLAN — SIX-LETTER CASE CONTINUITY');
+  lines.push('==============================================================');
+  lines.push('Case: ' + (trim(c.title) || '(untitled)'));
+  lines.push('Genre: ' + c.genre);
+  lines.push('Premise: ' + (trim(c.premise) || '(none)'));
+  lines.push('Tone: ' + currentTone);
+  lines.push('Exported: ' + ds);
+  lines.push('');
+  lines.push('SUPPORTING BANK');
+  lines.push('Characters: ' + (c.characters || '(none)'));
+  lines.push('Objects: ' + (c.objects || '(none)'));
+  lines.push('Locations: ' + (c.locations || '(none)'));
+  lines.push('');
+  for(var i=0;i<c.plan.length;i++){
+    var card = c.plan[i];
+    var typeObj = getTypeById(card.typeId);
+    lines.push('LETTER ' + card.letter);
+    lines.push('Type: ' + (typeObj ? typeObj.name : 'Unassigned'));
+    lines.push('Craft: ' + (typeObj ? (typeObj.craftNotes[card.letter] || '') : ''));
+    lines.push('Example: ' + (card.example || 'No example.'));
+    lines.push('');
+  }
+  lines.push('==============================================================');
+  lines.push('INSTRUCTION: Treat assignments as fixed. Do not repeat a type.');
+  lines.push('==============================================================');
+  var text = lines.join('\n');
+  copyText(text);
+}
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast('📋 Copied.'); }, function(){ legacyCopy(text); });
+  } else { legacyCopy(text); }
+}
+function legacyCopy(text){
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  var ok = false; try { ok = document.execCommand('copy'); } catch(e){ ok = false; }
+  document.body.removeChild(ta);
+  if(ok) toast('📋 Copied.'); else window.prompt('Copy manually:', text);
+}
+
+/* ---------- BOOT ---------- */
+loadStore();
+if(!cur().plan || cur().plan.length !== 6){
+  cur().plan = blankPlan();
+  persist();
+}
+currentTone = cur().tone || 'tense';
+renderAll();
+</script>
+</body>
+</html>
