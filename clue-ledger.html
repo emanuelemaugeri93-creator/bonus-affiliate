@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clue Ledger Tracker Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink: #241f1a; --ink2: #4a4038; --muted: #8a8074; --line: #ddd5c5;
+  --bg: #ede8e0; --panel: #fdfaf3; --panel2: #f7f2e8;
+  --accent: #8b2e2e; --accent-d: #6b1f1f; --accentSoft: #f2e6e2;
+  --lock1: #2f6b4f; --lock2: #8b2e2e;
+  --r: 10px; --sh: 0 6px 22px rgba(30,20,10,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Courier Prime', 'Courier New', monospace;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.45;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(120,100,70,.028) 0 2px, transparent 2px 26px),
+    radial-gradient(ellipse at 20% 10%, rgba(139,46,46,.04), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(47,107,79,.05), transparent 50%);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,.serif{font-family:'Playfair Display', Georgia, serif}
+
+/* ---------- Top bar ---------- */
+.topbar{
+  background:linear-gradient(180deg,#2a241e,#241f1a);
+  color:#efe7d8;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  border-bottom:4px solid var(--accent);
+  box-shadow:var(--sh);
+  position:sticky;
+  top:0;
+  z-index:50;
+  flex-wrap:nowrap;
+  min-height:60px;
+}
+.logo-container{
+  display:flex;
+  align-items:center;
+  flex-shrink:0;
+}
+.logo-container svg{
+  width:40px;
+  height:40px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.3));
+}
+.brand{
+  flex:0 1 auto;
+  min-width:0;
+}
+.brand h1{
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:.5px;
+  color:#f5edd9;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.brand .tagline{
+  font-size:10.5px;
+  color:#b8ab93;
+  font-style:italic;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.case-tools{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-left:auto;
+  flex-shrink:0;
+  flex-wrap:nowrap;
+}
+.case-tools label{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:#b8ab93;
+  white-space:nowrap;
+}
+.case-tools select{
+  background:#f7f2e8;
+  border:1px solid #6b5f4d;
+  border-radius:6px;
+  padding:5px 6px;
+  font-size:12px;
+  max-width:120px;
+  min-width:80px;
+}
+.btn{
+  border:none;
+  border-radius:7px;
+  padding:7px 10px;
+  cursor:pointer;
+  font-family:'Courier Prime',monospace;
+  font-weight:700;
+  font-size:11px;
+  transition:transform .08s ease, box-shadow .08s ease, background .15s ease;
+  white-space:nowrap;
+}
+.btn:active{transform:translateY(1px)}
+.btn-accent{background:var(--accent);color:#fdf6ec}
+.btn-accent:hover{background:var(--accent-d)}
+.btn-ghost{background:transparent;color:#efe7d8;border:1px solid #6b5f4d}
+.btn-ghost:hover{background:rgba(255,255,255,.08)}
+.btn-green{background:var(--lock1);color:#f2f7f3}
+.btn-green:hover{background:#245540}
+.btn-small{padding:5px 8px;font-size:10px}
+
+select,input,textarea,button{font-family:inherit;font-size:14px;color:var(--ink)}
+
+/* ---------- Layout ---------- */
+.layout{
+  display:grid;
+  grid-template-columns:330px 1fr;
+  gap:20px;
+  padding:20px;
+  max-width:1720px;
+  margin:0 auto;
+  align-items:start;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar{display:flex;flex-direction:column;gap:18px;position:sticky;top:86px}
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  box-shadow:var(--sh);
+  padding:18px;
+  position:relative;
+  background-image:repeating-linear-gradient(0deg, transparent 0 25px, rgba(139,46,46,.05) 25px 26px);
+}
+.panel::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:var(--accent);border-radius:var(--r) 0 0 var(--r);opacity:.85;
+}
+.panel h2{
+  font-size:17px;font-weight:700;color:var(--accent-d);
+  border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:12px;
+  letter-spacing:.4px;
+  overflow:hidden;
+}
+.panel h2 .stamp{
+  float:right;font-family:'Courier Prime',monospace;font-size:9px;letter-spacing:2px;
+  color:var(--muted);border:1px solid var(--muted);border-radius:3px;padding:2px 5px;
+  transform:rotate(3deg);margin-top:2px;text-transform:uppercase;
+  white-space:nowrap;
+}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink2);margin-bottom:4px;font-weight:700}
+.field input[type=text],.field select,.field textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+  background:#fffdf8;outline:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accentSoft)}
+.field textarea{resize:vertical;min-height:56px}
+
+.lock-group{display:flex;gap:8px}
+.lock-btn{
+  flex:1;padding:9px 6px;border:2px solid var(--line);border-radius:8px;background:#fffdf8;
+  cursor:pointer;text-align:center;font-size:12px;line-height:1.3;transition:all .12s ease;
+}
+.lock-btn small{display:block;font-size:10px;color:var(--muted);font-style:italic}
+.lock-btn.active-l1{border-color:var(--lock1);background:#e9f2ec;color:var(--lock1);font-weight:700}
+.lock-btn.active-l2{border-color:var(--lock2);background:var(--accentSoft);color:var(--lock2);font-weight:700}
+
+.form-actions{display:flex;gap:8px;margin-top:4px}
+.form-actions .btn{flex:1}
+
+/* Suspects */
+.suspect-slot{
+  border:1px dashed var(--line);border-radius:8px;padding:10px;margin-bottom:10px;background:rgba(255,253,248,.7);
+}
+.suspect-slot .slot-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.suspect-slot .slot-num{
+  font-family:'Playfair Display',serif;font-weight:900;color:var(--accent);font-size:15px;min-width:18px;
+}
+.suspect-slot input{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:#fffdf8;font-size:13px}
+.suspect-slot input.sus-name{font-weight:700}
+.suspect-slot .slot-row{margin-top:5px}
+.suspect-slot .slot-row input{font-size:12px;color:var(--ink2)}
+.suspect-slot .cov{
+  font-size:10px;margin-top:5px;display:inline-block;padding:2px 7px;border-radius:10px;letter-spacing:.5px;
+}
+.cov.ok{background:#e9f2ec;color:var(--lock1);border:1px solid var(--lock1)}
+.cov.bad{background:var(--accentSoft);color:var(--lock2);border:1px solid var(--lock2)}
+
+/* ---------- Canvas ---------- */
+.canvas{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+/* Audit strip */
+.audit-strip{
+  background:linear-gradient(135deg,#2a241e 0%,#33291f 100%);
+  color:#efe7d8;border-radius:var(--r);box-shadow:var(--sh);
+  border:1px solid #4a4038;border-left:6px solid var(--accent);
+  padding:16px 18px;
+}
+.audit-strip h2{font-size:16px;color:#f5edd9;letter-spacing:.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.audit-strip h2 .live-dot{
+  width:9px;height:9px;border-radius:50%;background:#7fc79a;display:inline-block;
+  box-shadow:0 0 8px #7fc79a;animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.audit-summary{font-size:12px;color:#b8ab93;margin:4px 0 10px}
+.audit-items{display:flex;flex-direction:column;gap:7px}
+.audit-item{
+  border-radius:7px;padding:8px 12px;font-size:13px;display:flex;gap:9px;align-items:flex-start;
+  border:1px solid transparent;
+}
+.audit-item .ai-icon{flex:0 0 auto;margin-top:1px}
+.audit-item.ok{background:rgba(127,199,154,.10);border-color:rgba(127,199,154,.35);color:#cfe8d8}
+.audit-item.warn{background:rgba(232,184,75,.12);border-color:rgba(232,184,75,.45);color:#f0dfae}
+.audit-item.alert{background:rgba(196,74,74,.16);border-color:rgba(196,74,74,.55);color:#f3c3c3}
+.audit-item b{color:inherit}
+.audit-item .ai-detail{display:block;font-size:11.5px;opacity:.85;margin-top:2px}
+
+/* Ledger grid */
+.ledger-head{
+  display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  padding:0 4px;
+}
+.ledger-head h2{font-size:20px;color:var(--ink);font-weight:900}
+.ledger-head .case-meta{font-size:12px;color:var(--muted);font-style:italic}
+.ledger-grid{
+  display:grid;
+  grid-template-columns:repeat(6, minmax(180px,1fr));
+  gap:14px;
+  align-items:start;
+}
+.letter-col{
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  box-shadow:var(--sh);
+  min-height:220px;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  min-width:0;
+}
+.letter-col header{
+  background:linear-gradient(180deg,#f1e9d8,#e9e0cc);
+  border-bottom:2px solid var(--line);
+  padding:10px 12px 8px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.letter-col header::after{
+  content:"";position:absolute;left:12%;right:12%;bottom:4px;height:1px;background:rgba(139,46,46,.25);
+}
+.letter-col header h3{
+  font-size:14.5px;font-weight:700;letter-spacing:1.5px;color:var(--accent-d);text-transform:uppercase;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.letter-col header .col-stats{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.5px}
+.col-body{
+  padding:10px;display:flex;flex-direction:column;gap:9px;flex:1;
+  background-image:repeating-linear-gradient(0deg, transparent 0 23px, rgba(74,64,56,.07) 23px 24px);
+}
+.col-empty{
+  font-size:11px;color:var(--muted);font-style:italic;text-align:center;padding:14px 6px;
+  border:1px dashed var(--line);border-radius:7px;background:rgba(255,255,255,.35);
+}
+
+/* Clue card — index card */
+.clue-card{
+  background:#fffdf6;
+  border:1px solid var(--line);
+  border-left:5px solid var(--muted);
+  border-radius:7px;
+  box-shadow:0 3px 10px rgba(30,20,10,.10);
+  padding:9px 10px 8px;
+  font-size:12.5px;
+  position:relative;
+  background-image:repeating-linear-gradient(0deg, transparent 0 19px, rgba(139,46,46,.08) 19px 20px);
+  transition:transform .1s ease, box-shadow .1s ease;
+  word-break:break-word;
+  overflow-wrap:break-word;
+  min-width:0;
+}
+.clue-card:hover{transform:translateY(-2px);box-shadow:0 7px 16px rgba(30,20,10,.16)}
+.clue-card.l1{border-left-color:var(--lock1)}
+.clue-card.l2{border-left-color:var(--lock2)}
+.clue-card.contra{background:#fbf0ec;border-color:#d8a99f;border-left-color:var(--accent)}
+.clue-top{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+.clue-cat{font-size:14px}
+.lock-chip{
+  font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 6px;border-radius:9px;text-transform:uppercase;
+  white-space:nowrap;
+}
+.lock-chip.l1{background:#e9f2ec;color:var(--lock1);border:1px solid var(--lock1)}
+.lock-chip.l2{background:var(--accentSoft);color:var(--lock2);border:1px solid var(--lock2)}
+.clue-desc{line-height:1.4;word-wrap:break-word;overflow-wrap:break-word}
+.clue-meta{margin-top:6px;font-size:11px;color:var(--ink2);display:flex;flex-direction:column;gap:3px;word-break:break-word}
+.clue-meta .sm-suspect b{color:var(--accent-d)}
+.contra-badge{
+  display:inline-block;background:var(--accent);color:#fdf6ec;font-size:10px;font-weight:700;
+  padding:2px 7px;border-radius:9px;letter-spacing:.5px;margin-top:4px;
+  animation:pulse 1.6s infinite;
+}
+.clue-actions{display:flex;gap:6px;margin-top:7px;align-items:center;border-top:1px dotted var(--line);padding-top:6px}
+.clue-actions select{
+  flex:1;font-size:10.5px;padding:3px 4px;border:1px solid var(--line);border-radius:5px;background:#fffdf8;
+  min-width:0;
+}
+.clue-del{
+  background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:4px;
+  flex-shrink:0;
+}
+.clue-del:hover{color:var(--accent);background:var(--accentSoft)}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--ink);color:#f5edd9;padding:11px 22px;border-radius:8px;font-size:13px;
+  box-shadow:var(--sh);opacity:0;transition:all .3s ease;z-index:200;pointer-events:none;
+  border-left:4px solid var(--lock1);max-width:90vw;text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+.footer-note{
+  text-align:center;color:var(--muted);font-size:11px;font-style:italic;padding:6px 0 26px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1600px){
+  .ledger-grid{grid-template-columns:repeat(3, minmax(180px,1fr));}
+}
+@media (max-width:1200px){
+  .topbar{flex-wrap:wrap;}
+  .brand{flex:1 1 100%;}
+  .case-tools{margin-left:0;}
+}
+@media (max-width:1024px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{position:static;}
+  .ledger-grid{grid-template-columns:repeat(2, minmax(190px,1fr));}
+}
+@media (max-width:768px){
+  .case-tools{flex-wrap:wrap;}
+  .case-tools select{max-width:100%;}
+  .btn{font-size:10px;padding:6px 8px;}
+}
+@media (max-width:620px){
+  .ledger-grid{grid-template-columns:1fr;}
+  .topbar{padding:10px 12px}
+  .layout{padding:14px}
+  .lock-group{flex-direction:column}
+  .logo-container svg{width:32px;height:32px}
+  .brand h1{font-size:18px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-container">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- Detective Hat Logo -->
+      <defs>
+        <linearGradient id="hatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#8b2e2e;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#6b1f1f;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="bandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#2f6b4f;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#1f4a36;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <!-- Hat Brim -->
+      <ellipse cx="50" cy="65" rx="42" ry="10" fill="url(#hatGrad)" stroke="#241f1a" stroke-width="2"/>
+      <!-- Hat Crown -->
+      <path d="M 25,65 Q 25,40 50,30 Q 75,40 75,65 Z" fill="url(#hatGrad)" stroke="#241f1a" stroke-width="2"/>
+      <!-- Hat Band -->
+      <path d="M 25,60 Q 50,52 75,60 L 75,65 Q 50,57 25,65 Z" fill="url(#bandGrad)" stroke="#241f1a" stroke-width="1"/>
+      <!-- Magnifying Glass -->
+      <circle cx="72" cy="75" r="12" fill="none" stroke="#f5edd9" stroke-width="3"/>
+      <line x1="80" y1="83" x2="92" y2="95" stroke="#f5edd9" stroke-width="3" stroke-linecap="round"/>
+      <!-- Small detail lines on hat -->
+      <path d="M 40,45 Q 50,40 60,45" fill="none" stroke="#f5edd9" stroke-width="1.5" opacity="0.6"/>
+    </svg>
+  </div>
+  <div class="brand">
+    <h1>Clue Ledger Tracker Studio</h1>
+    <div class="tagline">A detective's case ledger for the Six-Letter Case Engine</div>
+  </div>
+  <div class="case-tools">
+    <label for="caseSelect">📂</label>
+    <select id="caseSelect" onchange="onCaseSelect()"></select>
+    <button class="btn btn-ghost btn-small" onclick="saveAsNewCase()">💾 Save</button>
+    <button class="btn btn-ghost btn-small" onclick="deleteCurrentCase()">🗑️ Delete</button>
+    <button class="btn btn-green btn-small" onclick="exportLedger()">📋 Export</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+
+    <section class="panel">
+      <h2>Case Setup <span class="stamp">File No. 01</span></h2>
+      <div class="field">
+        <label for="caseTitle">Case Title</label>
+        <input type="text" id="caseTitle" placeholder="e.g. The Nettlecombe Letters" oninput="onMetaChange()">
+      </div>
+      <div class="field">
+        <label for="caseGenre">Genre Pack</label>
+        <select id="caseGenre" onchange="onMetaChange()">
+          <option value="Cozy Mystery">Cozy Mystery</option>
+          <option value="Classic Detective">Classic Detective</option>
+          <option value="Heist">Heist</option>
+          <option value="Romance-Mystery Hybrid">Romance-Mystery Hybrid</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Add Clue <span class="stamp">Evidence</span></h2>
+      <div class="field">
+        <label for="clueDesc">Clue Description</label>
+        <textarea id="clueDesc" placeholder="e.g. A torn railway ticket stub dated the night of the disappearance, found in the vicar's study..."></textarea>
+      </div>
+      <div class="field">
+        <label for="clueLetter">Assigned Letter</label>
+        <select id="clueLetter">
+          <option value="1">Letter 1</option>
+          <option value="2">Letter 2</option>
+          <option value="3">Letter 3</option>
+          <option value="4">Letter 4</option>
+          <option value="5">Letter 5</option>
+          <option value="6">Letter 6</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Lock Type</label>
+        <div class="lock-group">
+          <div class="lock-btn active-l1" id="lockBtnOne" onclick="setLockType('one')">
+            🔓 Lock One<small>WHO / HOW — fair-play</small>
+          </div>
+          <div class="lock-btn" id="lockBtnTwo" onclick="setLockType('two')">
+            🔒 Lock Two<small>WHY / PROOF — withheld</small>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="clueCategory">Clue Category</label>
+        <select id="clueCategory">
+          <option value="Physical Evidence">🔍 Physical Evidence</option>
+          <option value="Testimony/Statement">🗣️ Testimony / Statement</option>
+          <option value="Document/Written Record">📄 Document / Written Record</option>
+          <option value="Behavioral Detail">👁️ Behavioral Detail</option>
+          <option value="Red Herring">🎭 Red Herring</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="clueSuspect">Related Suspect</label>
+        <input type="text" id="clueSuspect" list="suspectList" placeholder="Start typing a suspect name...">
+        <datalist id="suspectList"></datalist>
+      </div>
+      <div class="field">
+        <label for="clueStatus">Status</label>
+        <select id="clueStatus">
+          <option value="Planted">Planted</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Contradicted">Contradicted ⚠️</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-accent" onclick="addClue()">📌 Pin to Ledger</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Suspect Roster <span class="stamp">5 Slots</span></h2>
+      <div id="suspectSlots"></div>
+    </section>
+
+  </aside>
+
+  <!-- ============ CANVAS ============ -->
+  <main class="canvas">
+
+    <section class="audit-strip" id="auditStrip">
+      <h2><span class="live-dot"></span> Continuity Audit — Live</h2>
+      <div class="audit-summary" id="auditSummary"></div>
+      <div class="audit-items" id="auditItems"></div>
+    </section>
+
+    <div class="ledger-head">
+      <h2 id="ledgerTitle">The Ledger</h2>
+      <div class="case-meta" id="ledgerMeta"></div>
+    </div>
+
+    <section class="ledger-grid" id="ledgerGrid"></section>
+
+    <div class="footer-note">
+      "You'll have everything you need to name a suspect by letter five. You will not have everything you need to prove it until letter six."
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   CLUE LEDGER TRACKER STUDIO — ES5 only, localStorage-backed
+   ========================================================= */
+
+var LS_KEY = 'clueLedgerStudio_v1';
+var LETTER_NAMES = ['','LETTER ONE','LETTER TWO','LETTER THREE','LETTER FOUR','LETTER FIVE','LETTER SIX'];
+var CAT_ICONS = {
+  'Physical Evidence': '🔍',
+  'Testimony/Statement': '🗣️',
+  'Document/Written Record': '📄',
+  'Behavioral Detail': '👁️',
+  'Red Herring': '🎭'
+};
+var STATUSES = ['Planted','Confirmed','Contradicted'];
+var pendingLockType = 'one';
+var store = null;
+
+/* ---------- storage ---------- */
+
+function blankSuspects(){
+  var s = [], i;
+  for(i=0;i<5;i++){ s.push({name:'', motive:'', alibi:''}); }
+  return s;
+}
+function newCaseObj(name){
+  return {
+    name: name,
+    title: '',
+    genre: 'Cozy Mystery',
+    clues: [],
+    suspects: blankSuspects(),
+    created: new Date().getTime()
+  };
+}
+function loadStore(){
+  var raw = null;
+  try { raw = localStorage.getItem(LS_KEY); } catch(e){ raw = null; }
+  if(raw){
+    try {
+      store = JSON.parse(raw);
+      if(!store || !store.cases){ throw 'bad'; }
+    } catch(e){
+      store = null;
+    }
+  }
+  if(!store){
+    var id = 'case_' + new Date().getTime();
+    store = { cases: {}, order: [id], activeId: id };
+    store.cases[id] = newCaseObj('Case One');
+    persist();
+  }
+  if(!store.activeId || !store.cases[store.activeId]){
+    store.activeId = store.order[0];
+  }
+}
+function persist(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch(e){}
+}
+function cur(){
+  return store.cases[store.activeId];
+}
+function uid(){
+  return 'c' + new Date().getTime() + '_' + Math.floor(Math.random()*100000);
+}
+
+/* ---------- helpers ---------- */
+
+function esc(s){
+  s = String(s == null ? '' : s);
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function el(id){ return document.getElementById(id); }
+function trim(s){ return String(s||'').replace(/^\s+|\s+$/g,''); }
+
+var toastTimer = null;
+function toast(msg){
+  var t = el('toast');
+  t.innerHTML = msg;
+  t.className = 'toast show';
+  if(toastTimer){ clearTimeout(toastTimer); }
+  toastTimer = setTimeout(function(){ t.className = 'toast'; }, 2600);
+}
+
+/* ---------- form: lock type toggle ---------- */
+
+function setLockType(t){
+  pendingLockType = t;
+  var b1 = el('lockBtnOne'), b2 = el('lockBtnTwo');
+  b1.className = 'lock-btn' + (t==='one' ? ' active-l1' : '');
+  b2.className = 'lock-btn' + (t==='two' ? ' active-l2' : '');
+}
+
+/* ---------- clue CRUD ---------- */
+
+function addClue(){
+  var desc = trim(el('clueDesc').value);
+  if(!desc){
+    toast('✍️ Write a clue description first.');
+    el('clueDesc').focus();
+    return;
+  }
+  var clue = {
+    id: uid(),
+    desc: desc,
+    letter: parseInt(el('clueLetter').value, 10),
+    lock: pendingLockType,
+    category: el('clueCategory').value,
+    suspect: trim(el('clueSuspect').value),
+    status: el('clueStatus').value
+  };
+  cur().clues.push(clue);
+  persist();
+  el('clueDesc').value = '';
+  el('clueSuspect').value = '';
+  el('clueStatus').value = 'Planted';
+  renderAll();
+  toast('📌 Clue pinned to ' + LETTER_NAMES[clue.letter] + '.');
+}
+
+function deleteClue(id){
+  var clues = cur().clues, i;
+  for(i=0;i<clues.length;i++){
+    if(clues[i].id === id){
+      clues.splice(i,1);
+      break;
+    }
+  }
+  persist();
+  renderAll();
+  toast('🗑️ Clue removed from the ledger.');
+}
+
+function onCardStatus(id, val){
+  var clues = cur().clues, i;
+  for(i=0;i<clues.length;i++){
+    if(clues[i].id === id){
+      clues[i].status = val;
+      break;
+    }
+  }
+  persist();
+  renderAll();
+  if(val === 'Contradicted'){
+    toast('⚠️ Marked as Contradicted — resolve before the next letter ships.');
+  }
+}
+
+/* ---------- case meta ---------- */
+
+function onMetaChange(){
+  var c = cur();
+  c.title = el('caseTitle').value;
+  c.genre = el('caseGenre').value;
+  persist();
+  renderLedgerHead();
+}
+
+/* ---------- suspects ---------- */
+
+function onSuspectChange(){
+  var c = cur(), i;
+  for(i=0;i<5;i++){
+    c.suspects[i].name   = trim(el('susName'+i).value);
+    c.suspects[i].motive = trim(el('susMotive'+i).value);
+    c.suspects[i].alibi  = trim(el('susAlibi'+i).value);
+  }
+  persist();
+  renderLedger();
+  renderAudit();
+  renderDatalist();
+  renderSuspectCoverage();
+}
+
+function suspectHasClues(name){
+  var n = trim(name).toLowerCase();
+  if(!n){ return true; }
+  var clues = cur().clues, i;
+  for(i=0;i<clues.length;i++){
+    if(trim(clues[i].suspect).toLowerCase() === n){ return true; }
+  }
+  return false;
+}
+
+/* ---------- case management ---------- */
+
+function saveAsNewCase(){
+  var name = window.prompt('Name this case ledger (e.g. "Case Two — The Hollow Heist"):');
+  name = trim(name);
+  if(!name){ return; }
+  var id = 'case_' + new Date().getTime();
+  var c = newCaseObj(name);
+  /* carry over nothing — a fresh production starts clean */
+  store.cases[id] = c;
+  store.order.push(id);
+  store.activeId = id;
+  persist();
+  renderAll();
+  toast('💾 New case ledger opened: <b>' + esc(name) + '</b>');
+}
+
+function onCaseSelect(){
+  var id = el('caseSelect').value;
+  if(store.cases[id]){
+    store.activeId = id;
+    persist();
+    renderAll();
+    toast('📂 Loaded ledger: <b>' + esc(store.cases[id].name) + '</b>');
+  }
+}
+
+function deleteCurrentCase(){
+  if(store.order.length <= 1){
+    toast('🚫 You must keep at least one case ledger.');
+    return;
+  }
+  var c = cur();
+  if(!window.confirm('Delete the ledger "' + c.name + '" and all its clues? This cannot be undone.')){
+    return;
+  }
+  delete store.cases[store.activeId];
+  var idx = -1, i;
+  for(i=0;i<store.order.length;i++){
+    if(store.order[i] === store.activeId){ idx = i; break; }
+  }
+  if(idx > -1){ store.order.splice(idx,1); }
+  store.activeId = store.order[0];
+  persist();
+  renderAll();
+  toast('🗑️ Case ledger deleted.');
+}
+
+/* =========================================================
+   CONTINUITY AUDIT — the five working checks
+   ========================================================= */
+
+var STOPWORDS = {
+  'the':1,'a':1,'an':1,'and':1,'or':1,'of':1,'in':1,'on':1,'at':1,'to':1,'for':1,'with':1,'was':1,'is':1,'were':1,
+  'by':1,'from':1,'that':1,'this':1,'it':1,'its':1,'his':1,'her':1,'their':1,'he':1,'she':1,'they':1,'had':1,
+  'has':1,'have':1,'been':1,'found':1,'near':1,'into':1,'about':1,'after':1,'before':1,'under':1,'over':1,
+  'but':1,'not':1,'who':1,'how':1,'why':1,'what':1,'when':1,'which':1,'there':1,'here':1,'night':1
+};
+
+function sigWords(text){
+  /* significant keywords: lowercase, alpha only, len>3, not stopword, deduped */
+  var words = String(text||'').toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/);
+  var seen = {}, out = [], i, w;
+  for(i=0;i<words.length;i++){
+    w = words[i];
+    if(w.length > 3 && !STOPWORDS[w] && !seen[w]){
+      seen[w] = 1;
+      out.push(w);
+    }
+  }
+  return out;
+}
+
+function herringsSimilar(a, b){
+  /* keyword-overlap heuristic: >=2 shared significant words, or >=40% overlap of the smaller set */
+  var wa = sigWords(a), wb = sigWords(b);
+  if(!wa.length || !wb.length){ return false; }
+  var setB = {}, shared = 0, i;
+  for(i=0;i<wb.length;i++){ setB[wb[i]] = 1; }
+  for(i=0;i<wa.length;i++){ if(setB[wa[i]]){ shared++; } }
+  if(shared >= 2){ return true; }
+  var smaller = wa.length < wb.length ? wa.length : wb.length;
+  if(smaller > 0 && (shared / smaller) >= 0.4 && shared >= 1){ return true; }
+  return false;
+}
+
+function runAudit(){
+  var c = cur();
+  var clues = c.clues;
+  var results = [];
+  var i, j;
+
+  /* ---- Check 1: Lock Balance (fair by letter 5) ---- */
+  var l1to5 = 0, total1to5 = 0;
+  for(i=0;i<clues.length;i++){
+    if(clues[i].letter <= 5){
+      total1to5++;
+      if(clues[i].lock === 'one'){ l1to5++; }
+    }
+  }
+  if(total1to5 === 0){
+    results.push({
+      level:'warn',
+      icon:'🔓',
+      title:'Lock Balance — no clues yet',
+      msg:'No clues planted in Letters 1–5 so far. Lock One (WHO/HOW) material must accumulate there.',
+      detail:''
+    });
+  } else {
+    var pct = Math.round((l1to5 / total1to5) * 100);
+    if(pct < 60){
+      results.push({
+        level:'alert',
+        icon:'🔓',
+        title:'Lock Balance Warning — ' + pct + '% Lock One',
+        msg:'Lock One clues are thin — a sharp reader needs enough here to genuinely name the culprit by Letter 5.',
+        detail: l1to5 + ' of ' + total1to5 + ' clues in Letters 1–5 are Lock One (' + pct + '% — target is 60%+).'
+      });
+    } else {
+      results.push({
+        level:'ok',
+        icon:'🔓',
+        title:'Lock Balance — ' + pct + '% Lock One',
+        msg:'Fair-play coverage holds: enough WHO/HOW material is planted across Letters 1–5.',
+        detail: l1to5 + ' of ' + total1to5 + ' clues in Letters 1–5 are Lock One.'
+      });
+    }
+  }
+
+  /* ---- Check 2: Premature Lock Two reveal ---- */
+  var premature = [];
+  for(i=0;i<clues.length;i++){
+    if(clues[i].lock === 'two' && clues[i].letter <= 4){
+      premature.push(clues[i]);
+    }
+  }
+  if(premature.length){
+    var pDetail = [];
+    for(i=0;i<premature.length;i++){
+      pDetail.push('Letter ' + premature[i].letter + ': "' + premature[i].desc.substring(0,60) + (premature[i].desc.length>60?'…':'') + '"');
+    }
+    results.push({
+      level:'alert',
+      icon:'🔒',
+      title:'Premature Lock Two Reveal — ' + premature.length + ' clue' + (premature.length>1?'s':''),
+      msg:'This WHY/PROOF clue appears before Letter 5 — check this doesn\'t collapse your Two-Lock structure early.',
+      detail: pDetail.join(' • ')
+    });
+  } else {
+    results.push({
+      level:'ok',
+      icon:'🔒',
+      title:'Lock Two Seal Intact',
+      msg:'No WHY/PROOF clue leaks before Letter 5. The withheld half of the ending stays withheld.',
+      detail:''
+    });
+  }
+
+  /* ---- Check 3: Red Herring rotation (keyword-overlap clustering) ---- */
+  var herrings = [];
+  for(i=0;i<clues.length;i++){
+    if(clues[i].category === 'Red Herring'){ herrings.push(clues[i]); }
+  }
+  /* union-find over similar pairs */
+  var parent = [], k;
+  function find(x){ while(parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+  for(i=0;i<herrings.length;i++){ parent[i] = i; }
+  for(i=0;i<herrings.length;i++){
+    for(j=i+1;j<herrings.length;j++){
+      if(herringsSimilar(herrings[i].desc, herrings[j].desc)){
+        parent[find(i)] = find(j);
+      }
+    }
+  }
+  var clusters = {}, root;
+  for(i=0;i<herrings.length;i++){
+    root = find(i);
+    if(!clusters[root]){ clusters[root] = []; }
+    clusters[root].push(herrings[i]);
+  }
+  var bigCluster = null;
+  for(k in clusters){
+    if(clusters.hasOwnProperty(k)){
+      if(clusters[k].length > 2 && (!bigCluster || clusters[k].length > bigCluster.length)){
+        bigCluster = clusters[k];
+      }
+    }
+  }
+  if(bigCluster){
+    var hDetail = [];
+    for(i=0;i<bigCluster.length;i++){
+      hDetail.push('Letter ' + bigCluster[i].letter + ': "' + bigCluster[i].desc.substring(0,50) + (bigCluster[i].desc.length>50?'…':'') + '"');
+    }
+    results.push({
+      level:'warn',
+      icon:'🎭',
+      title:'Red Herring Rotation — ' + bigCluster.length + ' near-identical false hints',
+      msg:'The product\'s own rule: rotate through the four false-hint types so you never write an obvious red herring twice.',
+      detail: hDetail.join(' • ')
+    });
+  } else {
+    results.push({
+      level:'ok',
+      icon:'🎭',
+      title:'Red Herring Rotation — clean',
+      msg: herrings.length ? herrings.length + ' red herring' + (herrings.length>1?'s':'') + ' planted, no repetitive pattern detected.' : 'No red herrings planted yet — remember to rotate the four false-hint types.',
+      detail:''
+    });
+  }
+
+  /* ---- Check 4: Suspect coverage ---- */
+  var unclued = [];
+  for(i=0;i<c.suspects.length;i++){
+    var nm = trim(c.suspects[i].name);
+    if(nm && !suspectHasClues(nm)){
+      unclued.push(nm);
+    }
+  }
+  if(unclued.length){
+    results.push({
+      level:'warn',
+      icon:'👤',
+      title:'Suspect Coverage — ' + unclued.length + ' unclued',
+      msg:'This suspect has no clues yet — an unclued suspect weakens fair-play.',
+      detail:'Unclued: ' + unclued.join(', ')
+    });
+  } else {
+    var namedCount = 0;
+    for(i=0;i<c.suspects.length;i++){ if(trim(c.suspects[i].name)){ namedCount++; } }
+    results.push({
+      level:'ok',
+      icon:'👤',
+      title:'Suspect Coverage — complete',
+      msg: namedCount ? 'Every named suspect has at least one clue pointing at them.' : 'Fill in the Suspect Roster to activate coverage tracking.',
+      detail:''
+    });
+  }
+
+  /* ---- Check 5: Contradiction flags ---- */
+  var contra = [];
+  for(i=0;i<clues.length;i++){
+    if(clues[i].status === 'Contradicted'){ contra.push(clues[i]); }
+  }
+  if(contra.length){
+    var cDetail = [];
+    for(i=0;i<contra.length;i++){
+      cDetail.push('Letter ' + contra[i].letter + ': "' + contra[i].desc.substring(0,50) + (contra[i].desc.length>50?'…':'') + '"');
+    }
+    results.push({
+      level:'alert',
+      icon:'⚠️',
+      title:'Contradictions Open — ' + contra.length + ' unresolved',
+      msg:'Clues marked Contradicted must be resolved or re-planted before the next letter ships.',
+      detail: cDetail.join(' • ')
+    });
+  } else {
+    results.push({
+      level:'ok',
+      icon:'✅',
+      title:'No Open Contradictions',
+      msg:'The repetition firewall holds — nothing in the ledger currently fights itself.',
+      detail:''
+    });
+  }
+
+  return results;
+}
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+
+function renderCaseDropdown(){
+  var sel = el('caseSelect');
+  var html = '', i, c;
+  for(i=0;i<store.order.length;i++){
+    c = store.cases[store.order[i]];
+    if(c){
+      html += '<option value="' + esc(store.order[i]) + '"' + (store.order[i]===store.activeId?' selected':'') + '>' + esc(c.name) + '</option>';
+    }
+  }
+  sel.innerHTML = html;
+}
+
+function renderLedgerHead(){
+  var c = cur();
+  var t = trim(c.title);
+  el('ledgerTitle').innerHTML = t ? esc(t) : 'The Ledger';
+  var total = c.clues.length;
+  el('ledgerMeta').innerHTML = esc(c.genre) + ' &nbsp;•&nbsp; ' + total + ' clue' + (total===1?'':'s') + ' on file &nbsp;•&nbsp; autosaved locally';
+}
+
+function renderDatalist(){
+  var c = cur();
+  var html = '', i, nm;
+  for(i=0;i<c.suspects.length;i++){
+    nm = trim(c.suspects[i].name);
+    if(nm){ html += '<option value="' + esc(nm) + '">'; }
+  }
+  el('suspectList').innerHTML = html;
+}
+
+function renderSuspects(){
+  var c = cur();
+  var html = '', i, s;
+  for(i=0;i<5;i++){
+    s = c.suspects[i];
+    html += '<div class="suspect-slot">'
+      + '<div class="slot-head"><span class="slot-num">' + (i+1) + '.</span>'
+      + '<input type="text" class="sus-name" id="susName' + i + '" placeholder="Suspect name" value="' + esc(s.name) + '" oninput="onSuspectChange()"></div>'
+      + '<div class="slot-row"><input type="text" id="susMotive' + i + '" placeholder="Motive — one line" value="' + esc(s.motive) + '" oninput="onSuspectChange()"></div>'
+      + '<div class="slot-row"><input type="text" id="susAlibi' + i + '" placeholder="Alibi — one line" value="' + esc(s.alibi) + '" oninput="onSuspectChange()"></div>'
+      + '<span class="cov" id="susCov' + i + '"></span>'
+      + '</div>';
+  }
+  el('suspectSlots').innerHTML = html;
+  renderSuspectCoverage();
+}
+
+function renderSuspectCoverage(){
+  var c = cur(), i, nm, badge, covered;
+  for(i=0;i<5;i++){
+    badge = el('susCov'+i);
+    if(!badge){ continue; }
+    nm = trim(c.suspects[i].name);
+    if(!nm){
+      badge.className = 'cov';
+      badge.style.display = 'none';
+      continue;
+    }
+    badge.style.display = 'inline-block';
+    covered = suspectHasClues(nm);
+    badge.className = 'cov ' + (covered ? 'ok' : 'bad');
+    badge.innerHTML = covered ? '✓ clued' : '✗ no clues yet';
+  }
+}
+
+function statusOptions(current){
+  var html = '', i;
+  for(i=0;i<STATUSES.length;i++){
+    html += '<option value="' + STATUSES[i] + '"' + (STATUSES[i]===current?' selected':'') + '>' + STATUSES[i] + '</option>';
+  }
+  return html;
+}
+
+function renderLedger(){
+  var c = cur();
+  var grid = el('ledgerGrid');
+  var byLetter = [[],[],[],[],[],[],[]];
+  var i, clue;
+  for(i=0;i<c.clues.length;i++){
+    clue = c.clues[i];
+    if(clue.letter >= 1 && clue.letter <= 6){
+      byLetter[clue.letter].push(clue);
+    }
+  }
+  var html = '', L, j, l1, l2;
+  for(L=1;L<=6;L++){
+    l1 = 0; l2 = 0;
+    for(j=0;j<byLetter[L].length;j++){
+      if(byLetter[L][j].lock === 'one'){ l1++; } else { l2++; }
+    }
+    html += '<div class="letter-col">'
+      + '<header><h3>' + LETTER_NAMES[L] + '</h3>'
+      + '<div class="col-stats">' + byLetter[L].length + ' clue' + (byLetter[L].length===1?'':'s')
+      + ' &nbsp;·&nbsp; <span style="color:var(--lock1)">L1:' + l1 + '</span>'
+      + ' <span style="color:var(--lock2)">L2:' + l2 + '</span></div>'
+      + '</header><div class="col-body">';
+    if(!byLetter[L].length){
+      html += '<div class="col-empty">No clues pinned to this letter yet.</div>';
+    }
+    for(j=0;j<byLetter[L].length;j++){
+      clue = byLetter[L][j];
+      var contra = (clue.status === 'Contradicted');
+      html += '<div class="clue-card ' + (clue.lock==='one'?'l1':'l2') + (contra?' contra':'') + '">'
+        + '<div class="clue-top">'
+        + '<span class="clue-cat" title="' + esc(clue.category) + '">' + (CAT_ICONS[clue.category]||'📎') + '</span>'
+        + '<span class="lock-chip ' + (clue.lock==='one'?'l1':'l2') + '">' + (clue.lock==='one'?'Lock One':'Lock Two') + '</span>'
+        + '</div>'
+        + '<div class="clue-desc">' + esc(clue.desc) + '</div>'
+        + '<div class="clue-meta">'
+        + '<span>' + esc(clue.category) + '</span>'
+        + (trim(clue.suspect) ? '<span class="sm-suspect">Suspect: <b>' + esc(clue.suspect) + '</b></span>' : '')
+        + '</div>'
+        + (contra ? '<span class="contra-badge">⚠️ Needs resolution</span>' : '')
+        + '<div class="clue-actions">'
+        + '<select onchange="onCardStatus(\'' + clue.id + '\', this.value)">' + statusOptions(clue.status) + '</select>'
+        + '<button class="clue-del" title="Remove clue" onclick="deleteClue(\'' + clue.id + '\')">✕</button>'
+        + '</div>'
+        + '</div>';
+    }
+    html += '</div></div>';
+  }
+  grid.innerHTML = html;
+}
+
+function renderAudit(){
+  var results = runAudit();
+  var c = cur();
+  var warnCount = 0, alertCount = 0, i;
+  for(i=0;i<results.length;i++){
+    if(results[i].level === 'warn'){ warnCount++; }
+    if(results[i].level === 'alert'){ alertCount++; }
+  }
+  var summary = c.clues.length + ' clue' + (c.clues.length===1?'':'s') + ' audited across six letters — ';
+  if(alertCount){ summary += alertCount + ' alert' + (alertCount>1?'s':'') + ', ' + warnCount + ' warning' + (warnCount===1?'':'s') + '.'; }
+  else if(warnCount){ summary += warnCount + ' warning' + (warnCount>1?'s':'') + ', no alerts.'; }
+  else { summary += 'all five checks green. The ledger holds.'; }
+  el('auditSummary').innerHTML = esc(summary);
+
+  var html = '';
+  for(i=0;i<results.length;i++){
+    var r = results[i];
+    html += '<div class="audit-item ' + r.level + '">'
+      + '<span class="ai-icon">' + r.icon + '</span>'
+      + '<span><b>' + esc(r.title) + '</b> — ' + esc(r.msg)
+      + (r.detail ? '<span class="ai-detail">' + esc(r.detail) + '</span>' : '')
+      + '</span></div>';
+  }
+  el('auditItems').innerHTML = html;
+}
+
+function renderAll(){
+  var c = cur();
+  el('caseTitle').value = c.title;
+  el('caseGenre').value = c.genre;
+  renderCaseDropdown();
+  renderLedgerHead();
+  renderDatalist();
+  renderSuspects();
+  renderLedger();
+  renderAudit();
+}
+
+/* =========================================================
+   EXPORT — portable memory for the Case Engine chat
+   ========================================================= */
+
+function exportLedger(){
+  var c = cur();
+  var i, j, clue;
+  var lines = [];
+  var now = new Date();
+  var dateStr = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2);
+
+  lines.push('==============================================================');
+  lines.push('CLUE LEDGER — CONTINUITY CONTEXT FOR THE SIX-LETTER CASE ENGINE');
+  lines.push('==============================================================');
+  lines.push('Case: ' + (trim(c.title) || '(untitled)') + '   |   Ledger: ' + c.name);
+  lines.push('Genre Pack: ' + c.genre + '   |   Exported: ' + dateStr);
+  lines.push('Structure: Two-Lock Ending — Lock One (WHO/HOW, fair-play, solvable');
+  lines.push('by Letter 5) / Lock Two (WHY + PROOF, withheld until Letter 6).');
+  lines.push('');
+
+  lines.push('--- SUSPECT ROSTER ------------------------------------------');
+  var anySuspect = false;
+  for(i=0;i<c.suspects.length;i++){
+    var s = c.suspects[i];
+    if(trim(s.name)){
+      anySuspect = true;
+      lines.push((i+1) + '. ' + trim(s.name));
+      lines.push('   Motive: ' + (trim(s.motive) || '—'));
+      lines.push('   Alibi:  ' + (trim(s.alibi) || '—'));
+    }
+  }
+  if(!anySuspect){ lines.push('(roster empty)'); }
+  lines.push('');
+
+  var totalL1 = 0, totalL2 = 0;
+  for(i=0;i<c.clues.length;i++){
+    if(c.clues[i].lock === 'one'){ totalL1++; } else { totalL2++; }
+  }
+
+  for(i=1;i<=6;i++){
+    lines.push('--- ' + LETTER_NAMES[i] + ' ' + repeatChar('-', 52 - LETTER_NAMES[i].length));
+    var found = false, n = 0;
+    for(j=0;j<c.clues.length;j++){
+      clue = c.clues[j];
+      if(clue.letter === i){
+        found = true; n++;
+        lines.push(n + '. [' + (clue.lock==='one'?'LOCK ONE — WHO/HOW':'LOCK TWO — WHY/PROOF') + ' | ' + clue.category + ']');
+        lines.push('   ' + clue.desc);
+        var metaBits = [];
+        if(trim(clue.suspect)){ metaBits.push('Suspect: ' + trim(clue.suspect)); }
+        metaBits.push('Status: ' + clue.status);
+        lines.push('   (' + metaBits.join(' | ') + ')');
+      }
+    }
+    if(!found){ lines.push('(no clues assigned yet)'); }
+    lines.push('');
+  }
+
+  lines.push('--- LEDGER SUMMARY ------------------------------------------');
+  lines.push('Total clues: ' + c.clues.length + '  (Lock One: ' + totalL1 + ' / Lock Two: ' + totalL2 + ')');
+  var l1to5 = 0, t1to5 = 0;
+  for(i=0;i<c.clues.length;i++){
+    if(c.clues[i].letter <= 5){
+      t1to5++;
+      if(c.clues[i].lock === 'one'){ l1to5++; }
+    }
+  }
+  if(t1to5){
+    lines.push('Lock One share across Letters 1–5: ' + Math.round((l1to5/t1to5)*100) + '% (fair-play target: 60%+)');
+  }
+  var contra = 0;
+  for(i=0;i<c.clues.length;i++){ if(c.clues[i].status === 'Contradicted'){ contra++; } }
+  lines.push('Open contradictions: ' + contra);
+  lines.push('');
+  lines.push('INSTRUCTION TO THE CASE ENGINE: treat every entry above as fixed');
+  lines.push('continuity. Do not contradict planted clues; honour the Two-Lock');
+  lines.push('structure when writing the next letter.');
+  lines.push('==============================================================');
+
+  var text = lines.join('\n');
+  copyText(text);
+}
+
+function repeatChar(ch, n){
+  var s = '';
+  for(var i=0;i<n;i++){ s += ch; }
+  return s;
+}
+
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      toast('📋 Full ledger copied — paste it into the Case Engine chat as continuity context.');
+    }, function(){
+      legacyCopy(text);
+    });
+  } else {
+    legacyCopy(text);
+  }
+}
+
+function legacyCopy(text){
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch(e){ ok = false; }
+  document.body.removeChild(ta);
+  if(ok){
+    toast('📋 Full ledger copied — paste it into the Case Engine chat as continuity context.');
+  } else {
+    window.prompt('Copy the ledger manually (Ctrl+C / Cmd+C):', text);
+  }
+}
+
+/* ---------- boot ---------- */
+
+loadStore();
+renderAll();
+</script>
+</body>
+</html>
