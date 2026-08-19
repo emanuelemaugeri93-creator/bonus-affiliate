@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trial Case Companion Book Creator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Courier+Prime:wght@400;700&family=Oswald:wght@500;700&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#1b5e4a; --accent-d:#123f32; --accentSoft:#e3ede6;
+  --gold:#b8923f; --gold-d:#8f6e2b;
+  --bg:#f0ede3; --panel:#ffffff; --panel2:#f8f6ef;
+  --ink:#20241f; --ink2:#464f42; --muted:#867f6e; --line:#d9d2bc;
+  --r:10px; --sh:0 6px 22px rgba(20,30,20,.12); --sh2:0 2px 8px rgba(20,30,20,.08);
+  --link-accent:#1b5e4a; --link-accent-d:#123f32;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Courier Prime',monospace;font-size:14px;}
+a{color:var(--link-accent);}
+button{font-family:'Courier Prime',monospace;}
+
+/* TOPBAR */
+.topbar{
+  height:58px;min-height:58px;max-height:58px;
+  display:flex;align-items:center;gap:10px;padding:0 16px;
+  background:var(--panel);border-bottom:1px solid var(--line);
+  position:relative;z-index:5;overflow:hidden;
+}
+.topbar .logo{
+  width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;
+  font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;
+  display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);
+  box-shadow:var(--sh2);flex-shrink:0;
+}
+.topbar .ttl{
+  font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;
+}
+.topbar .sub{
+  font-size:11px;color:var(--muted);margin-left:8px;padding-left:8px;
+  border-left:1px solid var(--line);white-space:nowrap;flex-shrink:0;
+}
+
+/* LAYOUT */
+.wrap{
+  display:flex;height:calc(100vh - 58px);
+  min-height:0;overflow:hidden;
+}
+.panel-l,.panel-r{
+  width:300px;flex-shrink:0;background:var(--panel);
+  overflow-y:auto;overflow-x:hidden;padding:14px;
+  height:100%;
+}
+.panel-l{border-right:1px solid var(--line);}
+.panel-r{border-left:1px solid var(--line);}
+.page-area{
+  flex:1;background:var(--bg);overflow-y:auto;overflow-x:hidden;
+  padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  min-width:0;
+}
+
+/* SECTIONS */
+.sec{border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;background:var(--panel2);overflow:hidden;}
+.sec-h{
+  cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 14px;
+  font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--ink2);user-select:none;background:var(--panel);
+  border-bottom:1px solid transparent;transition:border-color .2s;
+}
+.sec-h:hover{border-bottom-color:var(--accent);}
+.sec-h:after{content:'▾';margin-left:auto;font-size:10px;color:var(--muted);transition:transform .15s;}
+.sec.closed .sec-h:after{transform:rotate(-90deg);}
+.sec-b{padding:14px;border-top:1px solid var(--line);}
+.sec.closed .sec-b{display:none;}
+.bdg{
+  width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;
+  font-size:11px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;flex-shrink:0;
+}
+
+label{display:block;font-size:11px;color:var(--muted);margin:12px 0 5px;text-transform:uppercase;letter-spacing:.03em;}
+label:first-child{margin-top:0;}
+input[type=text],select,textarea{
+  width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;
+  background:var(--panel2);color:var(--ink);font-family:'Courier Prime',monospace;font-size:13px;
+  transition:border-color .2s;
+}
+input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accentSoft);}
+
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+.seg button{
+  flex:1;padding:9px 6px;background:var(--panel2);border:none;cursor:pointer;
+  font-size:11px;color:var(--ink2);border-right:1px solid var(--line);font-weight:600;
+}
+.seg button:last-child{border-right:none;}
+.seg button.active{background:var(--accent);color:#fff;}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;font-size:12.5px;color:var(--ink2);}
+.toggle{
+  position:relative;width:38px;height:22px;background:var(--line);border-radius:22px;
+  cursor:pointer;flex-shrink:0;transition:background .2s;
+}
+.toggle.on{background:var(--accent);}
+.toggle span{
+  position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;
+  background:#fff;transition:left .2s;box-shadow:var(--sh2);
+}
+.toggle.on span{left:19px;}
+
+.btn{
+  display:block;width:100%;padding:11px;margin-top:8px;border:none;border-radius:8px;
+  background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer;
+  text-align:center;transition:background .2s;
+}
+.btn:hover{background:var(--accent-d);}
+.btn.ghost{background:var(--panel2);color:var(--ink2);border:1px solid var(--line);}
+.btn.ghost:hover{background:var(--accentSoft);color:var(--accent-d);}
+.btn.small{padding:8px;font-size:12px;margin-top:6px;}
+
+.note{
+  background:var(--accentSoft);border:1px solid var(--gold);border-radius:8px;
+  padding:10px 12px;font-size:11.5px;line-height:1.5;color:var(--accent-d);
+  margin-bottom:12px;
+}
+
+.guide-box{
+  background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  padding:12px;font-size:11.5px;line-height:1.6;color:var(--ink2);margin-bottom:12px;
+}
+.guide-box strong{color:var(--accent-d);}
+.guide-box ol{margin:8px 0 0 18px;padding:0;}
+.guide-box li{margin-bottom:6px;}
+
+.color-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.color-row label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;margin:0;}
+.color-row input[type=color]{
+  width:40px;height:34px;border:1px solid var(--line);border-radius:6px;
+  padding:2px;background:none;cursor:pointer;
+}
+
+/* PAGE STRIP */
+.strip{
+  display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;
+  padding:8px 4px 10px;width:100%;max-width:920px;
+  scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+  flex-shrink:0;
+}
+.strip::-webkit-scrollbar{height:6px;}
+.strip::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+.strip .thumb{
+  flex-shrink:0;width:56px;height:70px;background:#fff;border:2px solid var(--line);
+  border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--muted);text-align:center;padding:3px;
+  transition:all .15s;font-weight:600;
+}
+.strip .thumb:hover{border-color:var(--accent);transform:translateY(-2px);}
+.strip .thumb.active{border-color:var(--accent);color:var(--accent-d);background:var(--accentSoft);}
+
+/* PAGE STAGE */
+#pageStage{
+  display:flex;justify-content:center;align-items:flex-start;
+  width:100%;flex-shrink:0;
+}
+.page-wrapper{
+  transform-origin:top center;
+  transition:transform .2s ease;
+}
+.page{
+  background:#fff;box-shadow:var(--sh);position:relative;flex-shrink:0;
+  overflow:visible;margin:0 auto;
+}
+.pad{
+  position:relative;min-height:100%;padding:48px 52px 66px;
+  display:flex;flex-direction:column;box-sizing:border-box;
+}
+
+/* COVER */
+.cv-wrap{
+  min-height:100%;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:space-between;text-align:center;
+  border:2px solid var(--gold);border-radius:4px;
+  padding:36px 28px;position:relative;
+  background:linear-gradient(180deg,#fffdf8 0%,#fdfbf5 100%);
+}
+.cv-top{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.cv-middle{display:flex;flex-direction:column;align-items:center;gap:14px;flex:1;justify-content:center;}
+.cv-bottom{margin-top:auto;}
+.cv-eyebrow{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-d);margin-bottom:8px;}
+.cv-title{font-family:'Playfair Display',serif;font-weight:700;font-size:32px;line-height:1.2;color:var(--ink);max-width:90%;margin:8px 0;}
+.cv-sub{font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:var(--ink2);margin-top:8px;}
+.cv-author{margin-top:18px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);}
+.cv-belongs{margin-top:auto;padding-top:20px;font-size:12px;color:var(--muted);}
+.cv-belongs .line{display:inline-block;width:160px;border-bottom:1px solid var(--muted);margin-left:6px;}
+.cv-dedication{font-style:italic;font-size:13px;color:var(--muted);margin-top:16px;}
+.seal{width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin:14px auto;box-shadow:var(--sh2);border:3px solid var(--gold);text-align:center;line-height:1.3;}
+.stamp{width:52px;height:64px;border:2px dashed var(--accent);color:var(--accent-d);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:8px;letter-spacing:.06em;margin:14px auto;text-align:center;line-height:1.3;padding:4px;}
+.fold{width:72px;height:50px;background:var(--panel2);border:1px solid var(--line);margin:14px auto;position:relative;}
+.fold:before{content:'';position:absolute;top:0;left:0;right:0;height:0;border-left:36px solid transparent;border-right:36px solid transparent;border-top:20px solid var(--line);}
+
+/* Copyright */
+.cp-title{font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-d);border-bottom:2px solid var(--accent);padding-bottom:10px;margin-bottom:18px;}
+.cp-body p{font-size:12.5px;line-height:1.8;color:var(--ink2);margin:0 0 12px;}
+.cp-note{margin-top:auto;font-size:11.5px;font-style:italic;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;}
+
+/* How this works */
+.hw-title{font-family:'Playfair Display',serif;font-weight:700;font-size:24px;margin-bottom:6px;}
+.hw-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+.hw-card{display:flex;gap:12px;margin-bottom:16px;padding:12px;background:var(--panel2);border-radius:8px;border-left:3px solid var(--accent);}
+.hw-num{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hw-h{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;margin-bottom:4px;}
+.hw-p{font-size:12px;line-height:1.6;color:var(--ink2);}
+
+/* Letters */
+.lh-row{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:20px;background:var(--panel2);padding:12px;border-radius:8px 8px 0 0;}
+.lh-mark{font-family:'Oswald',sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-d);}
+.lh-meta{text-align:right;font-size:11px;color:var(--muted);line-height:1.5;}
+.lt-greet{font-family:'Playfair Display',serif;font-style:italic;font-size:16px;margin-bottom:14px;color:var(--accent-d);}
+.lt-body{font-size:13px;line-height:1.8;color:var(--ink);flex:1;}
+.lt-body p{margin:0 0 12px;}
+.lt-sign{margin-top:18px;font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:var(--ink2);text-align:right;}
+.hand-note{position:absolute;bottom:56px;right:44px;transform:rotate(-4deg);font-family:'Caveat',cursive;font-style:italic;font-size:15px;color:var(--accent-d);border:1px solid var(--accentSoft);padding:8px 12px;background:#fffdf9;max-width:150px;box-shadow:var(--sh2);}
+
+/* Handoff */
+.ho-wrap{height:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+.ho-eyebrow{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-d);margin-bottom:16px;}
+.ho-text{font-family:'Playfair Display',serif;font-style:italic;font-size:19px;line-height:1.6;color:var(--ink);max-width:85%;margin-bottom:18px;}
+.ho-sub{margin-top:28px;font-size:12px;color:var(--muted);}
+.ho-link{margin-top:10px;font-size:13px;color:var(--ink2);border-bottom:1px dashed var(--muted);display:inline-block;padding-bottom:2px;}
+
+.foot-badge{position:absolute;bottom:18px;left:52px;font-size:10px;color:var(--muted);letter-spacing:.04em;}
+
+/* SOLUTION PAGE */
+.sol-box{background:var(--accentSoft);border:1px solid var(--accent);border-radius:8px;padding:14px;margin-bottom:10px;}
+.sol-box strong{display:block;margin-bottom:4px;color:var(--accent-d);font-family:'Oswald',sans-serif;font-size:12px;}
+.sol-box p{margin:4px 0;font-size:12.5px;line-height:1.7;}
+
+/* CAST BOX */
+.cast-entry{margin-bottom:8px;padding:10px;background:var(--panel2);border-radius:6px;border-left:3px solid var(--accent);}
+
+/* STATS BADGE */
+.stats-badge{display:inline-block;padding:4px 10px;background:var(--accentSoft);border-radius:20px;font-size:11px;color:var(--accent-d);margin:2px;}
+
+/* ZOOM & COUNTER */
+.zoom-control{position:fixed;bottom:16px;right:16px;display:flex;gap:4px;background:var(--panel);padding:4px;border-radius:8px;box-shadow:var(--sh);z-index:100;border:1px solid var(--line);}
+.zoom-control button{width:28px;height:28px;border:none;background:var(--panel2);border-radius:5px;cursor:pointer;font-size:14px;font-weight:bold;color:var(--ink2);}
+.zoom-control button:hover{background:var(--accent);color:#fff;}
+.page-counter{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel);padding:6px 14px;border-radius:20px;box-shadow:var(--sh);font-size:10px;font-weight:600;z-index:100;border:1px solid var(--line);}
+.zoom-indicator{position:fixed;bottom:16px;right:120px;background:var(--panel);padding:6px 10px;border-radius:20px;box-shadow:var(--sh);font-size:10px;font-weight:600;z-index:100;border:1px solid var(--line);color:var(--muted);}
+
+/* AUTO-GENERATE INDICATOR */
+.auto-badge{display:inline-block;padding:2px 8px;background:var(--accentSoft);border-radius:4px;font-size:9px;color:var(--accent-d);margin-left:6px;font-weight:600;letter-spacing:.04em;}
+
+@media(max-width:1050px){
+  .panel-l,.panel-r{width:240px;}
+  .cv-title{font-size:26px;}
+}
+@media(max-width:800px){
+  .wrap{flex-direction:column;height:auto;overflow:visible;}
+  .panel-l,.panel-r{width:100%;border:none;border-bottom:1px solid var(--line);}
+  .page-area{min-height:700px;}
+  .topbar .sub{display:none;}
+  .zoom-control,.page-counter,.zoom-indicator{display:none;}
+}
+
+@media print{
+  body{background:#fff;}
+  .topbar,.panel-l,.panel-r,.strip,.note,.guide-box,.zoom-control,.page-counter,.zoom-indicator{display:none !important;}
+  .wrap{display:block;height:auto;overflow:visible;}
+  .page-area{padding:0;background:#fff;display:block;overflow:visible;}
+  #pageStage{display:block;max-width:none;}
+  .page-wrapper{transform:none !important;}
+  .page{box-shadow:none;page-break-after:always;margin:0 auto;width:612px !important;min-height:792px !important;}
+  .page.square{width:700px !important;min-height:700px !important;}
+  .page.a4{width:595px !important;min-height:842px !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">TC</div>
+  <div class="ttl">Trial Case Companion Book Creator</div>
+  <div class="sub">Bonus tool</div>
+</div>
+
+<div class="wrap">
+
+  <!-- LEFT PANEL -->
+  <div class="panel-l">
+    <div class="guide-box">
+      <strong>📖 How this tool works:</strong>
+      <ol>
+        <li><strong>Auto-Generate:</strong> The tool automatically creates a complete 3-letter mystery with title, genre, setting, and characters.</li>
+        <li><strong>Edit Anything:</strong> Click any text on the page to edit it directly. Change names, details, or entire paragraphs.</li>
+        <li><strong>Customize:</strong> Use the left panel to change crime type, paper size, and which sections to include.</li>
+        <li><strong>Design:</strong> Use the right panel to adjust fonts, colors, envelope style, and handwriting accents.</li>
+        <li><strong>Solution Key:</strong> Toggle on "Solution Key" in the left panel to include a private answer page.</li>
+        <li><strong>Export:</strong> When satisfied, export as PDF, PNG, or JPG using the buttons in the right panel.</li>
+      </ol>
+    </div>
+    
+    <div class="note">⚠️ Reminder: This trial case must fully resolve by Letter 3 — never preview or spoil a paid case.</div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="s1"><span class="bdg">1</span>Case Details <span class="auto-badge">AUTO</span></div>
+      <div class="sec-b" id="s1">
+        <label>Trial Case Title</label>
+        <input type="text" id="inTitle" value="">
+        <label>Genre</label>
+        <select id="inGenre">
+          <option value="cozy">Cozy Mystery</option>
+          <option value="classic">Classic Detective</option>
+          <option value="heist">Heist</option>
+          <option value="romance">Romance-Mystery Hybrid</option>
+        </select>
+        <label>Setting / Era</label>
+        <input type="text" id="inSetting" value="">
+        <label>Author / Publisher Name</label>
+        <input type="text" id="inAuthor" value="Anonymous">
+        <button class="btn ghost small" id="btnRegenDetails" style="margin-top:12px;">🔄 Auto-Generate Details Only</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="s2"><span class="bdg">2</span>Crime Premise</div>
+      <div class="sec-b" id="s2">
+        <label>Crime Type</label>
+        <select id="inCrime">
+          <option value="theft">A Theft</option>
+          <option value="disappearance">A Disappearance</option>
+          <option value="forgery">A Forgery</option>
+          <option value="promise">A Broken Promise</option>
+          <option value="heirloom">A Missing Heirloom</option>
+          <option value="identity">A Case of Mistaken Identity</option>
+        </select>
+        <button class="btn" id="btnGenerate">🎲 Generate Full Case</button>
+        <button class="btn ghost small" id="btnRegen">🔄 Regenerate Everything</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="s3"><span class="bdg">3</span>Paper Size</div>
+      <div class="sec-b" id="s3">
+        <div class="seg" id="paperSeg">
+          <button data-size="letter" class="active">US Letter</button>
+          <button data-size="square">Square</button>
+          <button data-size="a4">A4</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="s4"><span class="bdg">4</span>Include Sections</div>
+      <div class="sec-b" id="s4">
+        <div class="toggle-row">Cover<div class="toggle on" data-inc="cover"><span></span></div></div>
+        <div class="toggle-row">Copyright Page<div class="toggle on" data-inc="copyright"><span></span></div></div>
+        <div class="toggle-row">How This Works<div class="toggle on" data-inc="howto"><span></span></div></div>
+        <div class="toggle-row">3 Letter Pages<div class="toggle on" data-inc="letters"><span></span></div></div>
+        <div class="toggle-row">Solution Key (private)<div class="toggle" data-inc="solution"><span></span></div></div>
+        <div class="toggle-row">Subscription Handoff<div class="toggle on" data-inc="handoff"><span></span></div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="s5"><span class="bdg">5</span>Front Matter</div>
+      <div class="sec-b" id="s5">
+        <label>Cover Border Style</label>
+        <select id="inBorderStyle">
+          <option value="gold">Gold Double Border</option>
+          <option value="simple">Simple Line</option>
+          <option value="none">No Border</option>
+        </select>
+        <label>Cover Ornament</label>
+        <select id="inOrnament">
+          <option value="stars">✦ Stars</option>
+          <option value="dots">• Dots</option>
+          <option value="none">None</option>
+        </select>
+        <label>Dedication Line (optional)</label>
+        <input type="text" id="inDedication" placeholder="e.g. For those who love a good letter">
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="page-area">
+    <div class="strip" id="pageStrip"></div>
+    <div id="pageStage"></div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel-r">
+    <div class="sec">
+      <div class="sec-h" data-toggle="r1"><span class="bdg">1</span>Typography</div>
+      <div class="sec-b" id="r1">
+        <label>Title Font</label>
+        <select id="fontTitle">
+          <option value="'Playfair Display',serif">Playfair Display</option>
+          <option value="'Oswald',sans-serif">Oswald</option>
+          <option value="'Courier Prime',monospace">Courier Prime</option>
+        </select>
+        <label>Body Font</label>
+        <select id="fontBody">
+          <option value="'Courier Prime',monospace">Courier Prime</option>
+          <option value="'Playfair Display',serif">Playfair Display</option>
+        </select>
+        <label>Handwritten Font</label>
+        <select id="fontHand">
+          <option value="'Caveat',cursive">Caveat</option>
+          <option value="'Playfair Display',serif">Playfair Display Italic</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="r2"><span class="bdg">2</span>Color</div>
+      <div class="sec-b" id="r2">
+        <label>Ink Color</label>
+        <div class="color-row"><input type="color" id="colInk" value="#20241f"></div>
+        <label>Accent Color</label>
+        <div class="color-row"><input type="color" id="colAccent" value="#1b5e4a"></div>
+        <label>Gold Color</label>
+        <div class="color-row"><input type="color" id="colGold" value="#b8923f"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="r3"><span class="bdg">3</span>Envelope Graphic</div>
+      <div class="sec-b" id="r3">
+        <div class="seg" id="envSeg">
+          <button data-env="seal" class="active">Wax Seal</button>
+          <button data-env="stamp">Stamp</button>
+          <button data-env="fold">Plain Fold</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="r4"><span class="bdg">4</span>Handwriting Accent</div>
+      <div class="sec-b" id="r4">
+        <div class="toggle-row">Add handwritten note<div class="toggle on" id="toggleHand"><span></span></div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="r6"><span class="bdg">5</span>Cast &amp; Stats</div>
+      <div class="sec-b" id="r6">
+        <div id="castBox" style="font-size:12px;line-height:1.6;color:var(--ink2);">Generating case...</div>
+        <div id="statsBox" style="margin-top:10px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="r5"><span class="bdg">6</span>Export</div>
+      <div class="sec-b" id="r5">
+        <button class="btn" id="btnPDF">📄 Export PDF</button>
+        <button class="btn ghost small" id="btnPNG">🖼️ Export All PNG</button>
+        <button class="btn ghost small" id="btnJPG">📸 Export All JPG</button>
+        <button class="btn ghost small" id="btnCopy">📋 Copy This Page's Text</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h" data-toggle="r7"><span class="bdg">7</span>Draft</div>
+      <div class="sec-b" id="r7">
+        <button class="btn ghost small" id="btnSaveDraft">💾 Save Draft</button>
+        <button class="btn ghost small" id="btnLoadDraft">↩️ Restore Last Draft</button>
+        <div id="draftStatus" style="margin-top:6px;font-size:11px;color:var(--muted);"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="zoom-control">
+  <button id="zoomOut" title="Zoom Out">−</button>
+  <button id="zoomReset" title="Reset Zoom">⟲</button>
+  <button id="zoomIn" title="Zoom In">+</button>
+</div>
+<div class="zoom-indicator" id="zoomIndicator">70%</div>
+<div class="page-counter" id="pageCounter">Page 1 of 8</div>
+
+<script>
+/* ============ CONTENT BANKS ============ */
+var NAMES = ["Eleanor Vance","Margaret Whitfield","Thomas Ashcombe","Beatrice Lowry","Charles Pemberton","Cordelia Marsh","Edmund Hartley","Florence Winslow","Gerald Thistlewood","Harriet Coombe","Isadora Fenwick","Julian Rooksby","Lavinia Pruett","Malcolm Greaves","Nora Brindlewood","Oscar Fairleigh","Penelope Ashworth","Reginald Voss","Sylvia Kestrel","Theodore Marlowe","Vivian Ashdown","Walter Crane","Agnes Thornbury","Bertram Hollis","Clementine Foxwell"];
+var ROLES = ["the innkeeper","the postmistress","the retired sea captain","the young apprentice","the vicar's daughter","the traveling tailor","the librarian","the clockmaker","the housekeeper","the schoolteacher","the fishmonger","the antiques dealer","the gardener","the music tutor","the village constable","the milliner","the solicitor's clerk","the baker","the portrait painter","the stable hand"];
+var DETAILS = ["always wears a single black glove","hums the same three notes when nervous","keeps a ledger no one has ever seen","has not slept in the same room twice this month","collects postage stamps from countries that no longer exist","smells faintly of lavender and machine oil","writes everything twice, once in ink and once in pencil","never removes their coat, even indoors","carries a photograph no one has seen the front of","is left-handed but signs with the right","counts their steps under their breath","keeps a second pocket watch that runs eleven minutes fast","never sits with their back to a door","speaks three languages but claims only one","has a habit of finishing other people's sentences, always wrongly","wears their late mother's ring on a chain, not a finger","reads the obituaries before the front page","cannot pass a mirror without straightening their collar","keeps dried flowers pressed in every book they own","has a laugh that stops the instant they're watched"];
+var LOCATIONS = ["Thistlewick-on-Sea","Marrow Hollow","Pemberly Cross","Fenbridge","Cormorant Bay","Hollowmere","Ashford Green","Wrenfield","the Old Saltings","Blackthorn Vale"];
+var SETTINGS = ["1920s English coastal village","Victorian London suburb","Edwardian country house","Post-war English market town","1930s seaside resort","Gaslight-era cathedral close","Turn-of-the-century spa town","Interwar Oxfordshire village"];
+var TITLES = ["The Case of the Vanishing Light","The Mystery at Marlowe Quay","The Affair of the Silver Key","The Riddle of Hollowmere Hall","The Secret of Blackthorn Vale","The Puzzle at Pemberly Cross","The Enigma of Cormorant Bay","The Question at Fenbridge","The Matter of the Missing Hour","The Incident at Wrenfield Station"];
+var AUTHORS = ["Anonymous","A Friend of the Family","The Editor","Your Correspondent","A Well-Wisher","The Archivist","A Curious Neighbor","The Scribe"];
+var ITEMS = ["a silver locket","a first-edition atlas","a set of ivory dice","a jeweled hatpin","a brass compass","a string of pearls","a leather-bound diary","a pocket watch engraved with initials not the owner's own","a painted miniature portrait","a tin of foreign coins"];
+var SCENTS = ["pipe tobacco","orange blossom","machine grease","wet wool","printer's ink","sea salt","candle smoke","crushed mint"];
+
+var GENRE = {
+  cozy:{label:"Cozy Mystery", greet:["My dearest friend,","Dear friend,","My dear,"], sign:["With tea still warm and curiosity warmer,","Yours warmly,","With affection,"], tagline:"A GENTLE MYSTERY, BEST READ WITH TEA", flavor:["It was the sort of morning that smelled of fresh bread and quiet trouble, the kind of morning when the whole village seemed to be holding its breath without quite knowing why.","Nothing terrible had happened, exactly — only something that didn't sit right, like a picture hung a fraction too low or a clock that ticked a heartbeat too slow.","The whole affair began, as so many do in a small place, with a detail too small to mention and too strange to ignore, the sort of thing that lodges in the mind like a splinter."]},
+  classic:{label:"Classic Detective", greet:["Dear Reader,","My dear Reader,","To the careful reader,"], sign:["Yours in deduction,","With precise regards,","Yours analytically,"], tagline:"A CASE FOR THE OBSERVANT MIND", flavor:["The facts, as they were known, amounted to very little — which was, of course, the first clue, for in cases of this nature it is the absence of evidence that speaks most clearly.","One does not solve a case by looking at what is there. One solves it by noticing what is missing, by attending to the gaps and silences that others overlook.","The matter presented itself with a simplicity that, in retrospect, was entirely misleading, a surface so smooth that it invited no questions, and therefore invited them all."]},
+  heist:{label:"Heist", greet:["Listen closely,","Pay attention,","Read this carefully,"], sign:["Burn this after reading (not really),","Keep this between us,","Don't show this to anyone,"], tagline:"KEEP THIS BETWEEN US", flavor:["This one required precision, a steady hand, and perhaps a touch of nerve — the kind of job that separates those who plan from those who merely hope.","Every good plan has a flaw. The trick is making sure it isn't yours, or if it is, making sure it looks like someone else's.","It was the kind of job that looked impossible right up until it wasn't, the sort of thing that makes you wonder how many other impossible things are merely waiting for the right set of hands."]},
+  romance:{label:"Romance-Mystery Hybrid", greet:["My dear one,","Dearest,","My darling,"], sign:["Yours, entangled as ever,","With all my heart,","Yours, in mystery and otherwise,"], tagline:"A MYSTERY OF THE HEART, AND OTHERWISE", flavor:["There is a particular ache in not knowing — about a person, or a truth, it hardly matters which. The heart, like any good detective, notices what the mind tries to overlook.","Some mysteries are solved with a magnifying glass. Others, with a look held a moment too long, a word left unspoken, a letter written and never sent.","The heart has its own methods, its own ways of collecting evidence, and it is rarely wrong, though it is often slow to speak its findings aloud."]}
+};
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function pickN(arr,n){
+  var pool = arr.slice(); var out=[];
+  for(var i=0;i<n;i++){ var idx=Math.floor(Math.random()*pool.length); out.push(pool[idx]); pool.splice(idx,1); }
+  return out;
+}
+function fill(tpl, vars){
+  var s = tpl;
+  for(var k in vars){ if(vars.hasOwnProperty(k)){ s = s.split("{"+k+"}").join(vars[k]); } }
+  return s;
+}
+
+function generateCaseDetails(){
+  var title = pick(TITLES);
+  var genre = pick(Object.keys(GENRE));
+  var setting = pick(SETTINGS);
+  var author = pick(AUTHORS);
+  var crime = pick(Object.keys(CRIME));
+  return {title:title, genre:genre, setting:setting, author:author, crime:crime};
+}
+
+/* CRIME TEMPLATES - FULL DESCRIPTIVE VERSIONS */
+var CRIME = {
+  theft:{
+    label:"A Theft",
+    hooks:["It began, as these things so often do, with something small going missing. {n1}, {r1} of {loc}, arrived one grey morning to find {item} gone from its case — no broken glass, no forced door, only an empty cushion of velvet and a faint, unfamiliar scent of {scent} lingering in the still air. By noon, half of {loc} had a theory, and {n2}, {r2}, had already begun asking questions no one had thought to ask. The case would require careful observation, a steady nerve, and perhaps a touch of the very thing that had been lost: patience."],
+    l1:["The case, {n1} insisted, had been locked the night before. {n1} {d1}, and would surely have noticed anything amiss before retiring. And yet {item} was gone, and in its place a single thread of dark wool caught on the clasp, a filament so fine it might have been overlooked by anyone less thorough.","{n2} arrived within the hour, notebook already open, eyes already moving across the room with the careful attention of someone who reads a space the way others read a page. \"Whoever did this,\" {n2} said, turning the thread over in the light, \"wanted us to find this. That is the interesting part — not the theft, but the thread. The thread is a message.\"","By evening, a third name had entered the conversation: {n3}, {r3}, who {d3}, and who — according to the baker's boy, who had been out early with the morning rolls — had been seen near {loc}'s harbor road well past the hour any honest business required. The boy's testimony was uncertain, but the direction of his gaze was not.","I am writing to you now because the case has taken a turn I did not expect. The facts are before you. Read them twice. Watch what the thread is telling us. The next letter will carry more — I suspect the truth is not far now, but it is not what any of us expected it to be."],
+    l2:["The complication arrived with the second post. A pawnbroker two towns over reported that {item}, or something very like it, had been offered to him — not by {n3}, but by a stranger who paid in coins too old to still be in circulation, coins that clinked with the heavy sound of another century.","{n2} sat with this for a long while, turning the facts over like puzzle pieces. \"Someone is trying very hard to point us toward {n3},\" {n2} wrote, \"which is, of course, the surest sign that {n3} is not the one we want. The obvious suspect is rarely the right one. The obvious suspect is a mirror, reflecting our own haste.\" The thread of dark wool, it turned out, matched no coat in {loc} — except one, hanging in a hallway {n2} had walked past a dozen times without a second glance.","It belonged to {n1}. Not as thief, but as witness — for {n1}, questioned gently and at length, admitted to having seen someone slip out the side door that night, and had said nothing out of fear of being disbelieved. The silence had been a burden, and the burden had shown itself in small ways: a cup left unwashed, a fire left unlit, a letter begun and abandoned.","The near-answer is close. What I cannot yet tell you is whether it will satisfy the heart as much as the mind. The next letter will be the last, and I find myself reluctant to write it, for the ending of a case is also the ending of a particular kind of attention, and I have grown fond of this one."],
+    l3:["The truth, when it came, was smaller and sadder than anyone expected. {item} had never really been stolen for its worth at all — it had been taken by {n3}, not out of greed, but to settle an old debt {n3} had never had the courage to mention aloud, a debt owed to {n1}'s family from years before anyone in {loc} could properly remember. The theft was not a crime, but a confession, made in the only language {n3} knew how to speak.","{n2} arranged for it to be returned quietly, along with a note that said more than the item itself ever could. There was no scandal, no arrest — only a long conversation over tea between {n1} and {n3} that neither of them had known, until that evening, they badly needed to have. The tea grew cold, and neither of them noticed.","By week's end, {item} was back in its case, the thread of dark wool tucked into {n2}'s files as a keepsake of the case that taught the whole village something about the debts we carry longer than we should, and the strange mercy of being found out.","Thank you for following this with me. The case is closed, the truth is told, and everyone in it is a little lighter for the telling. The next envelope I seal may be the beginning of something longer, but this one, I think, will stay with me for some time."],
+    answer:{culprit:["{n3}","{n1}, unwittingly","No one, in the way we usually mean it"],motive:["to settle an old debt owed to {n1}'s family, a debt that had become a kind of haunting","to protect {item} from a threat that existed only in a dream, a half-remembered fear that had grown teeth","to test the loyalty of someone {n1} had come to doubt, a test that failed in the best possible way"],clue:["the single thread of dark wool caught on the clasp","the clean rectangle in the dust where the {item} had rested","the unfamiliar scent of {scent} that lingered in the still air"],fullSolution:["The case resolved through a combination of small details: the damp cloth, the missing keys, and {n3}'s own admission. The theft was not about money but about an old debt, a promise made in haste, and the long difficulty of admitting when we've wronged someone we love. The item was returned, the debt was forgiven, and the village learned that some thefts are really just miscommunications that have gone on too long, waiting for the right moment to be untangled.","The truth emerged layer by layer. {n1} had taken the item in a moment of confusion, thinking to protect it from a remembered threat. {n3} had remained silent out of loyalty to {n1}. The cook's testimony provided the final piece. No crime had been committed — only a series of small, human errors that had tangled themselves into something that looked very much like a mystery. In the end, understanding replaced accusation, and the household breathed again.","The solution, when it came, was characteristically simple. The missing item had been misplaced during a moment of domestic confusion. The thread, the keys, the whispered conversations — all were red herrings, distractions from the ordinary truth. But the process of solving the case had revealed something deeper: the bonds between the people involved, tested by suspicion, had held firm. The item was found, the mystery dissolved, and the small community emerged stronger than before."]}
+  },
+  disappearance:{
+    label:"A Disappearance",
+    hooks:["{n1}, {r1} of {loc}, was last seen on a Tuesday, walking briskly toward the harbor with a parcel under one arm and, according to {n2}, {r2}, \"a look on their face like someone who'd just remembered something they'd rather forget.\" By Wednesday, the parcel had been found, unwrapped, its contents strewn across the sand like a story that had come apart at the seams. {n1} had not."],
+    l1:["The room {n1} left behind told its own quiet story: a coat still on its hook, a teacup half-finished with a skin forming on the surface, and a letter begun but never signed, ending mid-sentence with the words \"I must tell someone before —\" The unfinished sentence hung in the air like a question no one knew how to ask.","{n2} began where {n1} left off — with the parcel, now unwrapped, revealed to hold nothing more alarming than a bundle of old letters tied with string, each addressed to {n3}, {r3}, who {d3}. The letters were worn at the edges, read and re-read, folded and unfolded until the creases had become soft as cloth.","No one in {loc} could say why {n1} would carry such a thing toward the harbor, or why {n1} would vanish so completely between one street and the next, as though the town itself had simply closed around the space where {n1} used to be. The sea, of course, keeps its own counsel, and the harbor offered nothing but the sound of water against wood.","I am sending you this letter because I find myself at a loss. The facts are few and strange. Read them carefully, and tell me what you make of the unfinished letter, the unposted parcel, and the silence that has settled over {loc} like a second sea."],
+    l2:["A fisherman came forward with the complication: he had seen {n1} board the evening boat, calm and unhurried, carrying nothing but a small case and a look of quiet resolution. Not fled, then — or not exactly. Something closer to escaped. The distinction matters, though I cannot yet say how.","{n2} tracked the boat's route to a cousin of {n3}'s, three coves down the coast, and there found {n1} safe, unharmed, and deeply relieved to have been found by someone who wasn't who {n1} had feared it might be. The relief was so plain on {n1}'s face that {n2} felt it as a physical thing, a loosening of something that had been held too tightly for too long.","The letters, it turned out, held proof that {n3} had been protecting {n1} for years from a danger none of {loc} had ever known existed — and {n1}'s disappearance had been the only way to keep that protection from unraveling. The parcel had been a farewell, of sorts, and the letters a kind of map, drawn in a language only {n3} could read.","I will write the rest tomorrow. The ending is near, and it is not what I expected. There is no villain here, I think. Only the long, quiet work of two people trying to honor an old promise in a world that had changed around them."],
+    l3:["{n1} returned to {loc} three days later on {n1}'s own two feet, parcel-free and considerably lighter for the telling of a secret {n1} had carried far too long alone. The sea, which had seemed so vast and indifferent, had brought {n1} home again, as it always does for those who know how to wait.","{n2} kept the details private, as was only right, but confirmed that no crime had occurred — only fear, and a very human instinct to run before being made to explain something too tender to explain in words. The unfinished letter had been finished at last, not in ink but in conversation, which is often the better medium.","{n3} and {n1} were seen together at the harbor the following week, this time walking slowly, in no hurry at all, the parcel between them replaced by nothing heavier than conversation. The old letters had been read aloud, some of them more than once, and the sound of them, carried on the sea air, was not unlike the sound of the tide coming in.","The case is closed. Thank you for your patience. Some disappearances are really only a way of finding something that was lost long before the missing person ever left. The next letter I write will carry a different kind of story — one that arrives, as this one did, one page at a time."],
+    answer:{culprit:["No one — {n1} left voluntarily","{n3}, in a manner of speaking","No crime occurred"],motive:["to protect a secret {n3} had shielded {n1} from for years","to visit someone {n1} had loved from a distance, a love that had never found its way into words","to escape a life that had become unbearable, if only for a few days"],clue:["the unfinished letter, and the bundle of old letters addressed to {n3}","the ribbon tied to the branch at the edge of the old wood","the new lock on the old gate at the quarry"],fullSolution:["The case was never a disappearance in the criminal sense. {n1} had left of {n1}'s own accord, to settle a private matter, and had been aided by {n3} in ways that were never fully disclosed. The letters provided the answer: a year of unspoken longing, a promise made in youth, and a decision made in the small hours of a Tuesday morning. No crime had been committed. No one was harmed. The only thing that had disappeared was the distance between two people who had always meant to find their way back to each other.","The solution was complex but ultimately human. {n1} had not vanished; {n1} had retreated to a place where a long-harbored secret could be faced without witnesses. {n3} had known, and had kept the secret out of love. The town's speculation was entirely wrong. There was no villain, only the weight of silence, and the relief that follows when silence is finally broken. {n2} closed the case with a quiet satisfaction, noting that some mysteries are solved not by logic but by patience, and by the willingness to let people come back in their own time.","The answer, when it arrived, was peaceful. {n1} had gone to the old wood to think, and had simply stayed longer than intended. The cold weather, a forgotten promise to return, and a general fatigue with explaining had all contributed to the delay. The letters were drafts, never meant to be sent, of things {n1} had always wanted to say. {n3} was involved only in the sense of being the recipient of those unsaid things. The case ended with tea, an apology, and a general agreement to communicate more clearly in the future."]}
+  },
+  forgery:{
+    label:"A Forgery",
+    hooks:["It was {n2}, {r2}, who first noticed the ink was wrong — too blue, too fresh, for a document that claimed to be thirty years old. The signature at the bottom belonged, unmistakably, to {n1}, {r1} of {loc}. The trouble was, {n1} had never signed any such thing. The forgery was nearly perfect, which is to say it was exactly the kind of lie that tells the truth about the liar."],
+    l1:["The forged document — a deed, granting a strip of land near {loc}'s harbor to {n3}, {r3} — was near-perfect in every detail but one: {n1} {d1}, a habit no forger could think to imitate, and this signature lacked it entirely. The absence was so small it might have gone unnoticed, but {n2} had learned, years ago, that the smallest absences are often the loudest.","{n2} laid the false deed beside three genuine samples of {n1}'s hand, and the difference, once seen, could not be unseen. \"Someone studied your signature carefully,\" {n2} told {n1}, \"but not carefully enough. They saw the letters, but they missed the rhythm. A signature is not a picture. It is a gesture, and gestures cannot be copied by eye alone.\"","{n3} denied all knowledge, insisting the deed had arrived by post, already signed — which, {n2} noted, might even be true. Someone else, it seemed, wanted {n3} blamed as badly as they wanted the land. The forgery was a trap, and {n3} had walked directly into it, carrying the very document that would implicate them.","I am sending you this letter because the case has opened in a direction I did not expect. The paper, the ink, the careful study of {n1}'s hand — all of it points to someone with patience and access. Someone close. Read on, and consider who in {n1}'s own household might have reason to copy {n1}'s hand, and to use it against {n3}."],
+    l2:["The complication surfaced when {n2} traced the paper stock to a stationer three towns distant — one who kept meticulous records, and who recalled selling that exact paper to someone matching neither {n1} nor {n3}'s description. The purchaser had worn a coat too heavy for the weather, and had paid in small coins, counting them out one by one.","It was {n1}'s own clerk who had purchased it, weeks earlier, on an errand {n1} never requested. The clerk, when questioned, {d3}, and grew paler with every question {n2} asked, as if the act of remembering was itself a kind of confession. The paper, the ink, the careful study — all of it traced back to a single pair of hands.","The near-answer arrived with a second letter, unsigned, found tucked in the clerk's desk — a threat, promising harm to someone the clerk loved dearly unless the forgery was completed exactly as instructed. The handwriting on the threat was different from the forgery itself, which told its own story: there were two hands at work here, one cruel and one afraid.","The solution is nearly within reach. What remains is to determine who wrote the threat, and whether the clerk acted under duress or in full knowledge of the consequences. I will write again when I know the answer. It is not the answer I expected."],
+    l3:["The clerk had not acted from greed but from fear, coerced by a moneylender from beyond {loc} who had hoped to seize the harbor land through {n3} as an unwitting middleman. {n2} exposed the scheme before the deed could ever be filed as genuine. The moneylender's name was spoken once, in a quiet room, and the sound of it seemed to shrink the room slightly.","{n1} forgave the clerk readily, understanding fear when it was placed plainly in front of them, and {n3} was cleared entirely, the false deed burned in {n1}'s own hearth as a small, satisfying ceremony. The smoke rose in a neat column, and for a moment the whole household stood and watched it, as if watching a ghost depart.","The moneylender was named in a letter sent well beyond {loc}'s borders, and the harbor land stayed exactly where it had always belonged — a quiet, complete ending to a case that had, for a few uneasy days, threatened to divide the whole village. The clerk remained in {n1}'s employ, quieter than before, but steadier too, in the way of someone who has been forgiven something unforgivable.","This case is closed. I am grateful for your close reading. The next time I write, I hope it will be with a lighter pen and a fuller heart, for this one has left a mark on me that will take some time to fade."],
+    answer:{culprit:["{n1}'s own clerk, coerced by an outside moneylender","A relative of {n1}'s, working through the clerk","No one — an accident of absent-mindedness"],motive:["fear for someone the clerk loved, used as leverage by the real schemer","to win {n3}'s attention through manufactured crisis","no motive — an honest mistake, magnified by circumstance"],clue:["the paper stock traced back to a stationer three towns away","the difference between {n1}'s formal and informal signatures","the private ink, kept in {n1}'s own drawer"],fullSolution:["The case was resolved when {n2} identified the paper, the ink, and the hand behind the forgery. {n1}'s clerk had acted under duress, threatened by an outside party who sought the harbor land. {n3} was entirely innocent. The clerk was forgiven, the moneylender exposed, and the false deed destroyed. The real lesson was about the vulnerability of those who serve others, and the ease with which fear can be weaponized.","The truth emerged in layers. The forgery was not the work of a professional but of someone inside {n1}'s own household, acting on a mixture of love and manipulation. The clerk's confession, when it came, was complete and heartbreaking. The scheme had been orchestrated by a relative of {n1}'s who saw the clerk's affection for {n3} as a tool to be used. {n2} untangled the whole affair, the clerk was shown mercy, and the relative fled. The document was void, the land stayed put, and {n1} and {n3} found their way to a conversation long postponed.","The solution was simpler than the mystery suggested. The signature on the deed was genuine — a blank page {n1} had signed in distraction, later filled in by a relative with a long-standing grudge. No crime, in the legal sense, had been committed. Only a betrayal of trust. The deed was invalidated, the relative was quietly sent away, and {loc} returned to its peaceful rhythms. {n2} closed the file with a note on the importance of reading documents before signing them."]}
+  },
+  promise:{
+    label:"A Broken Promise",
+    hooks:["Everyone in {loc} knew that {n1}, {r1}, had promised {n3}, {r3}, something important — no one could quite agree on what. When the promise went unkept, and {n1} offered no explanation at all, {n2}, {r2}, decided the silence itself was worth investigating. A broken promise, like a broken window, lets in more weather than anyone expects."],
+    l1:["The promise, {n2} learned after careful asking, concerned a small sum of money {n1} had pledged toward {n3}'s long-planned departure from {loc} — money that had, by all accounts, simply vanished from where it was meant to be kept. The money was not the issue, {n3} insisted. The issue was the silence that had grown up around it, a silence so complete it had begun to feel like a kind of weather.","{n1} {d1} and refused to discuss the matter further, which only deepened suspicion rather than settling it. \"I did not break my word lightly,\" was all {n1} would say, before closing the door rather firmly, leaving {n2} on the step with the distinct impression that the conversation had only just begun.","{n2} began instead with the money itself, tracing it not to any thief, but to a ledger entry in {n1}'s own hand, dated the very week the promise had been made. The entry was brief, and it told no lies, but it withheld a truth that would take weeks to surface. The numbers added up, as numbers always do. It was the meaning behind them that refused to stay hidden.","I am writing to you now because the matter is more delicate than I expected. A promise, like a letter, can be folded and unfolded many times before its meaning becomes clear. The next letter will carry what I have learned. For now, consider this: a promise kept too tightly can break the very thing it was meant to protect."],
+    l2:["The complication was this: the ledger showed the money had gone not missing, but toward an emergency of {n1}'s own — a debt owed on behalf of someone {n1} refused to name, paid quietly and without fanfare. The payment had been made in the middle of the night, in cash, to a person who left no receipt and asked no questions.","{n2} pressed gently, and {n1} finally admitted the truth had a shape {n1} was ashamed of: the money had gone to cover a mistake made by {n1}'s own younger relative, kept secret to spare the family a scandal. The mistake had been small, but the fear of exposure had grown it into something monstrous, something that demanded silence and payment and more silence still.","{n3}, when told only that the money had gone to help someone in genuine need, was less angry than {n2} expected — mostly hurt that {n1} hadn't simply said so from the start. \"I would have understood,\" {n3} said, and the words hung in the air between them, a rebuke and a forgiveness in the same breath.","The case is not closed, but it is close. What remains is for {n1} and {n3} to speak to each other directly, without the interference of ledgers or well-meaning friends. I have offered to facilitate, and they have accepted. The final letter will tell you how it went."],
+    l3:["{n1} and {n3} spoke plainly for the first time in weeks, and the promise, though delayed, was not abandoned — {n1} arranged a new plan to make it good within the season, this time with no secrets attached. The conversation lasted three hours, and when it was over, neither of them could remember exactly what had been said, only that it had been said, and that it had been enough.","{n2} closed the matter with a note in the file reading simply: \"No crime. Only pride, and the ordinary difficulty of admitting when we've failed someone we care for.\" The note was shorter than {n2} usually wrote, but it said everything that needed saying. Some files are thin because there is little to record; this one was thin because the truth, once spoken, left little behind.","{loc} moved on quickly, as villages do, though {n1} and {n3} were seen afterward taking their tea together more often than before — proof, perhaps, that a promise mended can hold as firm as one never broken. The money, {n2} discovered, had already found its way to the person who needed it most, in a manner that surprised no one who had followed the case closely.","The case is closed. I thank you for your patience. Some mysteries are not about what was taken, but about what was finally given. The next time I write, I hope it will be with a story that asks less of its characters, and gives more to its readers."],
+    answer:{culprit:["No one — {n1} simply couldn't admit where the money had gone","{n3} — but only from a certain point of view","{n1} — but with good intentions"],motive:["protecting a younger relative from scandal","giving {n1} permission to accept help, a gift disguised as a debt","an old misunderstanding that grew into silence, watered by pride"],clue:["the ledger entry in {n1}'s own hand, dated the week the promise was made","the bundle of letters from {n3} to {n1}, never posted","the public promise made at the harvest festival, before half of {loc}"],fullSolution:["The case resolved with no crime committed. {n1} had used the money to help a relative in need, and had hidden this from {n3} out of pride. {n3} had known, and had kept the secret to protect {n1}'s dignity. The promise was remade, the friendship was repaired, and the money found its way to the person who needed it. {n2} closed the file with a note on the importance of trust, and the way that silence, not lies, is the true enemy of friendship.","The truth was that the promise had never really been broken. It had only been transformed, quietly, into something else: a sacrifice, made in secret, for the benefit of someone both {n1} and {n3} loved. The money was a red herring. The real story was about the lengths people will go to protect the people they care about, even when that protection looks like failure. {n2} wrote a careful summary, recommended no action, and watched as {n1} and {n3} found their way back to each other.","The solution was gentle, like most solutions in {loc}. {n1} and {n3} had both been trying, in their own ways, to honor a promise made in a different time and under different circumstances. The money was found to have been used for a good cause. The silence between them had been a misunderstanding, not a betrayal. {n2} facilitated a conversation, and the conversation did what conversations do best: it dissolved the mystery entirely."]}
+  },
+  heirloom:{
+    label:"A Missing Heirloom",
+    hooks:["When {n1}, {r1} of {loc}, opened the old family chest to show a visiting cousin the {item} said to have been in the family for four generations, the chest was there, the velvet lining was there — and the {item} was not. {n2}, {r2}, was sent for before the cousin had even finished exclaiming. The chest, it turned out, had been keeping its own counsel for longer than anyone knew."],
+    l1:["The chest showed no sign of forced entry, and only three people held keys: {n1}, {n1}'s late aunt's solicitor, and {n3}, {r3}, who {d3} and had visited {loc} only twice in the past decade — both times, {n2} noted, around this very chest. The coincidence was too neat, which is to say it was not a coincidence at all.","{n2} found the lock itself unremarkable, but the dust inside told a different story: undisturbed everywhere except a single clean rectangle where the {item} had rested, suggesting it had been lifted, not grabbed. The person who took it had been careful, even tender, as if handling something that might break.","\"Whoever took it,\" {n2} wrote in a notebook that evening, \"knew exactly what they were looking for, and took nothing else — which tells us this was never about value. It was about the item itself, and what it meant to someone.\" The notebook entry ended there, but the thought continued in {n2}'s mind long into the night: what does an heirloom mean, when the family it belonged to has forgotten its own story?","I write to you now because the case has begun to reveal shapes I did not expect. The {item} was not simply taken. It was summoned, by a story that had been waiting to be told. The next letter will carry more."],
+    l2:["The complication emerged from an old letter, found tucked behind a portrait of {n1}'s great-grandmother: the {item} had, decades earlier, been promised — informally, and never in writing — to a different branch of the family entirely, one {n3} happened to descend from. The letter was dated, but the ink had faded to a whisper, as if the promise itself was growing tired of waiting.","{n2} confronted {n3} gently, and {n3} confessed at once, {d3} throughout the admission. \"It was always meant to be mine,\" {n3} said, \"or so I was raised to believe. I only meant to borrow it, to have it appraised, to prove the story true.\" The confession was complete, and it was clear from {n3}'s face that the weight of the secret had been heavy.","The appraiser's report, when {n2} tracked it down, confirmed the family story both branches had half-believed and neither had ever settled — a complication older than anyone currently living in {loc}. The report was written in a careful hand, and it told a story of two families, one promise, and an object that had come to mean different things to different people.","The solution is near. What remains is to determine whether the {item} should be returned, and to whom it truly belongs. The law will have its say, but so will the heart, and the heart, I have learned, is often the better judge in matters of this kind."],
+    l3:["{n2} brought both branches of the family together for the first time in a generation, {item} on the table between them, and the old promise finally discussed openly rather than argued over in silence. The conversation was long, and it wandered, as such conversations do, through old grievances and older affections, until it arrived at a place neither side had expected: a genuine willingness to share.","{n1} and {n3} agreed, in the end, that the {item} would remain with {n1} for now, with an understanding — written down properly this time — that it would pass to {n3}'s side of the family after. The agreement was witnessed by {n2}, and it was, everyone agreed, the first time the promise had ever been put in writing.","The chest was returned to its shelf, the {item} inside it once more, and {loc} gained, in place of a scandal, a small and rather touching reconciliation four generations in the making. The visiting cousin, who had been present at the beginning of the affair, declared it the finest story the family had ever produced, and the family, for once, agreed.","This case is closed. I am glad to have been part of it. The {item} is safe, the family is whole, and the old promise has found a new form. The next letter I write will be shorter, I think, for the heart can only hold so much resolution at once."],
+    answer:{culprit:["{n3}","{n1}'s own child, acting out of a child's sense of justice","{n1} — who had simply misplaced it"],motive:["an old, unwritten family promise {n3} was raised to believe was true","a child's belief that the {item} belonged with its rightful owner","embarrassment over a misplaced possession, grown into a mystery"],clue:["the clean rectangle in the dust where the {item} once sat","the single strand of hair caught in the joint at the back of the chest","the missing key with the crescent moon mark"],fullSolution:["The case was resolved with the discovery that {n3} had taken the {item} under a genuine, if informal, family agreement. The {item} had been promised to {n3}'s branch of the family decades before. {n2} mediated a solution: the {item} would stay with {n1} for now, passing to {n3} in time. No crime was committed — only the fulfillment of an old promise, and the beginning of a new understanding between the two branches.","The truth emerged through the testimony of {n1}'s child, who had seen the {item} being taken and had mistaken the circumstances. The 'thief' was {n1}, who had moved the {item} for safekeeping and forgotten. {n2} found it quickly once the misunderstanding was cleared. The case ended with laughter and a reminder that not every mystery requires a villain.","The solution was simple: {n1} had misplaced the {item}, and {n3}'s involvement was entirely innocent. The old family stories had created an atmosphere of intrigue where none existed. {n2} found the {item}, restored it, and closed the case with a recommendation for better record-keeping and a note on the dangers of letting family legends outgrow their roots."]}
+  },
+  identity:{
+    label:"A Case of Mistaken Identity",
+    hooks:["A stranger arrived in {loc} claiming to be {n3}, {r3}, whom half the village remembered fondly and the other half had never met at all. The trouble was that the real {n3} — or someone equally certain of the title — walked through the door of the Thistlewick Arms not ten minutes later. The two regarded each other with the particular wariness of people who have each seen a ghost."],
+    l1:["{n1}, {r1}, who {d1}, was the first to notice both claimants shared an uncanny number of small details — a scar in the same place, a way of tilting the head when listening — enough that {n2}, {r2}, was summoned before the argument turned unfriendly. The similarities were not just physical. They were gestural, habitual, the kind of things that cannot be taught or copied.","Both strangers produced letters, photographs, even a shared childhood memory of {loc}'s old lighthouse, each account nearly identical to the other, which struck {n2} as far stranger than if the two had disagreed on everything. Agreement, in matters of identity, is often more suspicious than conflict. It suggests a common source, a shared story, a script written long ago and memorized by both.","\"Two liars rarely agree this well,\" {n2} noted. \"Which suggests neither of them, in the way we mean it, is lying at all.\" The observation hung in the air, unsettling in its implications. If both were telling the truth, then the truth itself was stranger than any lie could be.","I write to you now because the case has become something I did not expect: a puzzle about the nature of memory, and the way a single life can branch into many. The next letter will carry what I have learned. For now, ask yourself: what would it mean, if both of them were right?"],
+    l2:["The complication resolved itself, oddly, into a third possibility: the two claimants were, in fact, twins — separated as infants and raised in different households, each told a slightly different version of the same family story. The separation had been necessary, or so it had seemed at the time, and the necessity had hardened into secrecy, and the secrecy had become a kind of inheritance.","{n2} traced the separation to an old arrangement made by {n3}'s grandparents during a hard winter decades past, when the family could not care for two children and split them, quietly, between relatives. The arrangement had been meant to be temporary, but like many temporary things, it had become permanent through the simple passage of time.","Neither twin had known the other existed until fate, or coincidence, or something closer to homesickness, brought them both back to {loc} in the very same week. The town, which had forgotten the arrangement entirely, found itself suddenly host to a mystery it had never known it contained.","The solution is close. I find myself moved by it. Two people, each carrying half a story, both drawn home at the same moment. If this is not a mystery, I don't know what is. The final letter will tell you how it ends."],
+    l3:["{n2} arranged a meeting between the two, tense at first and warm by the end, as each filled in gaps the other had spent a lifetime wondering about without knowing there was anyone left to ask. The conversation began with awkward formalities and ended, hours later, with the two of them finishing each other's sentences, laughing at the strangeness of it all.","{loc} welcomed them both, no longer as a puzzle to be solved but as two long-lost neighbors returned at once, and the Thistlewick Arms poured a round on the house in celebration of a mystery that ended in family rather than fault. The two claimants, no longer strangers, shared a drink and a long conversation that lasted well into the night.","{n2} closed the file with a note that read, simply: \"Case resolved. No crime — only two people who had always, without knowing it, been looking for each other.\" The note was shorter than usual, but it said everything that needed saying. Some mysteries are solved not by deduction but by recognition.","This was my last letter for this case. I am glad to have been a witness to its ending. The next envelope I seal will carry a different story — one that arrives, as this one did, one page at a time, with all the patience of a letter making its way home."],
+    answer:{culprit:["No one — both claimants were telling the truth","The parish records — an administrative error","{n3}'s great-aunt, who kept the secret"],motive:["twins separated in infancy, each raised on half the family story","a legal identity that never properly existed, a life lived in the margins","love, and the desire to preserve a family story that might otherwise have been lost"],clue:["how closely the two accounts agreed instead of conflicting","the single birth certificate that recorded one child where there were two","the letter posted after {n3}'s funeral, arranged in advance"],fullSolution:["The case was resolved when {n2} discovered that the two claimants were twins, separated in infancy by necessity and raised apart. Neither had known the other existed. Their meeting in {loc} was coincidence, or fate, or something between the two. No crime had been committed. The only mystery was how two people, carrying the same name and the same story, could have gone so long without knowing how badly they needed to meet. {n2} helped them navigate the practical questions, and left them to the far more important work of getting to know each other.","The solution was complex but ultimately redemptive. The parish records had been kept imperfectly, recording a single birth where there had been two. One twin had grown up with a legal identity; the other had not. The great-aunt had kept the secret out of love, believing the truth would only confuse matters further. {n2} untangled the whole thing with patience and care, helping the unregistered twin to obtain proper documents and facilitating a reunion that changed both lives.","The truth was that the case had never been about identity theft, but about identity itself — how it is made, how it is lost, and how it can be restored. The two claimants were both {n3}, in different ways, and their meeting was the beginning of a new chapter for both. {n2} closed the file with a recommendation for better record-keeping and a note of thanks to the great-aunt, whose secret, though kept too long, had preserved a family story that might otherwise have been lost."]}
+  }
+};
+
+var HANDOFF = [
+  "If a single trial case could hold you this close to the edge of your seat, imagine six months of letters, each one waiting for you at the top of a fresh envelope, each one carrying a story that folds and unfolds like the paper it is written on.",
+  "This was only the beginning of the correspondence. There are longer stories, further towns, and more letters than could ever fit in one small book — waiting quietly, whenever you're ready for them.",
+  "Every good mystery deserves more room to breathe. If this one left you wanting the next letter, there's a whole subscription of them waiting to be opened, one month at a time, each one a small door in an envelope.",
+  "You've read the first letter of what could be a much longer correspondence. The rest are simply waiting for an address, and a reader who isn't quite ready to stop.",
+  "There's more where this came from — new cases, new towns, new letters arriving steadily, for as long as you'd like them to. The post, like a good mystery, rewards patience.",
+  "Consider this a single chapter torn loose from a much larger book. The rest of it arrives, quite literally, in the post, one envelope at a time.",
+  "If solving this one felt satisfying, there's a whole shelf of unopened envelopes waiting for a reader exactly like you, each one a small adventure in paper and ink.",
+  "This trial case closes here — but the correspondence doesn't have to. There's a subscription waiting for anyone who isn't quite ready to stop reading, who wants the next letter before the last one has fully faded.",
+  "Some mysteries end in a single letter. The best ones keep arriving, month after month, long after you thought the story was finished, each envelope a promise kept.",
+  "Thank you for reading this far. If you'd like the letters to keep arriving, the subscription is only ever a short note away, and the next mystery is already written, waiting for its reader."
+];
+
+/* ============ STATE ============ */
+var state = {
+  title:"", genre:"cozy", setting:"", author:"Anonymous",
+  crime:"theft", paper:"letter", env:"seal", hand:true,
+  incl:{cover:true,copyright:true,howto:true,letters:true,solution:false,handoff:true},
+  book:null, page:0,
+  colInk:"#20241f", colAccent:"#1b5e4a", colGold:"#b8923f",
+  fontTitle:"'Playfair Display',serif", fontBody:"'Courier Prime',monospace", fontHand:"'Caveat',cursive",
+  borderStyle:"gold", ornament:"stars", dedication:"",
+  zoom:0.7,
+  userEdited:false
+};
+var PAPER = { letter:{w:612,h:792}, square:{w:700,h:700}, a4:{w:595,h:842} };
+
+function buildBook(crimeKey, genreKey, setting, title, author){
+  var c = CRIME[crimeKey]; var g = GENRE[genreKey];
+  var names = pickN(NAMES,3), roles = pickN(ROLES,3), details = pickN(DETAILS,3);
+  var loc = pick(LOCATIONS), item = pick(ITEMS), scent = pick(SCENTS);
+  var flavor = pick(g.flavor);
+  var greet = pick(g.greet);
+  var sign = pick(g.sign);
+  var vars = {n1:names[0],n2:names[1],n3:names[2],r1:roles[0],r2:roles[1],r3:roles[2],d1:details[0],d2:details[1],d3:details[2],loc:loc,item:item,scent:scent,setting:setting};
+  var hook = flavor + " " + fill(pick(c.hooks), vars);
+  var l1 = c.l1.map(function(p){return fill(p,vars);});
+  var l2 = c.l2.map(function(p){return fill(p,vars);});
+  var l3 = c.l3.map(function(p){return fill(p,vars);});
+  var culprit = fill(pick(c.answer.culprit), vars);
+  var motive = fill(pick(c.answer.motive), vars);
+  var clue = fill(pick(c.answer.clue), vars);
+  var fullSol = fill(pick(c.answer.fullSolution), vars);
+  var handoff = pick(HANDOFF);
+  return {
+    title:title, genre:genreKey, setting:setting, author:author, crimeLabel:c.label,
+    hook:hook,
+    solution:{culprit:culprit, motive:motive, clue:clue, fullSolution:fullSol},
+    cast:[{name:names[0],role:roles[0],detail:details[0]},{name:names[1],role:roles[1],detail:details[1]},{name:names[2],role:roles[2],detail:details[2]}],
+    letters:[
+      {num:1,greet:greet,body:l1,sign:sign,date:"the 3rd of the month",loc:loc},
+      {num:2,greet:greet,body:l2,sign:sign,date:"the 9th of the month",loc:loc},
+      {num:3,greet:greet,body:l3,sign:sign,date:"the 17th of the month",loc:loc}
+    ],
+    handoff:handoff, tagline:g.tagline
+  };
+}
+
+function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function pageShell(inner, extraClass){
+  var p = PAPER[state.paper];
+  return '<div class="page '+(extraClass||'')+'" style="width:'+p.w+'px;min-height:'+p.h+'px;"><div class="pad">'+inner+'</div></div>';
+}
+
+function renderEnvelope(){
+  if(state.env==='seal') return '<div class="seal">WAX<br>SEAL</div>';
+  if(state.env==='stamp') return '<div class="stamp">TRIAL<br>CASE<br>POST</div>';
+  return '<div class="fold"></div>';
+}
+
+function getOrnament(){
+  if(state.ornament==='stars') return '✦';
+  if(state.ornament==='dots') return '•';
+  return '';
+}
+
+function getBorderStyle(){
+  if(state.borderStyle==='gold') return 'border:2px solid var(--gold);';
+  if(state.borderStyle==='simple') return 'border:1px solid var(--line);';
+  return 'border:none;';
+}
+
+function renderCover(b){
+  var ornament = getOrnament();
+  var dedHtml = state.dedication ? '<div class="cv-dedication">'+esc(state.dedication)+'</div>' : '';
+  var inner = '<div class="cv-wrap" style="'+getBorderStyle()+'">'+
+    '<div class="cv-top"><div class="cv-eyebrow">'+(ornament?ornament+' ':'')+esc(b.tagline)+(ornament?' '+ornament:'')+'</div></div>'+
+    '<div class="cv-middle">'+renderEnvelope()+'<div class="cv-title" contenteditable="true" data-edit="title">'+esc(b.title)+'</div><div class="cv-sub">A Free Trial Case</div><div class="cv-author">'+esc(b.author)+'</div></div>'+
+    '<div class="cv-bottom">'+dedHtml+'<div class="cv-belongs">This Case Belongs To<span class="line"></span></div></div>'+
+  '</div>';
+  return pageShell(inner);
+}
+
+function renderCopyright(b){
+  var yr = new Date().getFullYear();
+  var inner = '<div class="cp-title">Copyright</div>'+
+    '<div class="cp-body"><p>Copyright © '+yr+' '+esc(b.author)+'. All rights reserved.</p><p>No part of this trial case may be reproduced or sold for profit without written permission, except for brief excerpts used for review purposes. Characters, names, and events depicted in this letter series are entirely fictional; any resemblance to persons living or deceased is purely coincidental.</p><p>Setting: '+esc(b.setting)+'.</p></div>'+
+    '<div class="cp-note">This is a complimentary trial case, free to share and read.</div>';
+  return pageShell(inner);
+}
+
+function renderHowTo(){
+  var steps = [
+    ["Read In Order","Each letter builds on the one before it. Read Letters One, Two, and Three in sequence for the full effect."],
+    ["Try To Solve It","Before opening Letter Three, take a moment to guess the resolution. Half the fun is being pleasantly wrong."],
+    ["Meet The Cast","Three names appear across every letter. Watch how each one reveals a little more of themselves as the case unfolds."],
+    ["Enjoy The Ending","This trial case resolves completely by the final page — no cliffhangers, no missing pieces. Just a satisfying close."]
+  ];
+  var cards='';
+  for(var i=0;i<steps.length;i++){
+    cards += '<div class="hw-card"><div class="hw-num">'+(i+1)+'</div><div><div class="hw-h">'+esc(steps[i][0])+'</div><div class="hw-p">'+esc(steps[i][1])+'</div></div></div>';
+  }
+  var inner = '<div class="hw-title">How This Works</div><div class="hw-sub">A short guide before you begin</div>'+cards;
+  return pageShell(inner);
+}
+
+function renderLetter(b, idx){
+  var L = b.letters[idx];
+  var bodyHtml = L.body.map(function(p,i){ return '<p contenteditable="true" data-edit="letters.'+idx+'.body.'+i+'">'+esc(p)+'</p>'; }).join('');
+  var handNote = (state.hand && idx===1) ? '<div class="hand-note">psst — read this one twice.</div>' : '';
+  var inner = '<div class="lh-row"><div class="lh-mark">Letter '+L.num+' of 3 &middot; '+esc(b.crimeLabel)+'</div><div class="lh-meta">'+esc(L.loc)+'<br>'+esc(L.date)+'</div></div>'+
+    '<div class="lt-greet" contenteditable="true" data-edit="letters.'+idx+'.greet">'+esc(L.greet)+'</div>'+
+    '<div class="lt-body">'+bodyHtml+'</div>'+
+    '<div class="lt-sign" contenteditable="true" data-edit="letters.'+idx+'.sign">'+esc(L.sign)+'</div>'+
+    handNote+'<div class="foot-badge">'+esc(b.title)+' — Trial Case</div>';
+  return pageShell(inner);
+}
+
+function renderSolution(b){
+  var s = b.solution;
+  var inner = '<div class="cp-title">The Solution</div>'+
+    '<div class="cp-body">'+
+      '<div class="sol-box"><strong>Culprit / Explanation</strong><p>'+esc(s.culprit)+'</p></div>'+
+      '<div class="sol-box"><strong>Motive</strong><p>'+esc(s.motive)+'</p></div>'+
+      '<div class="sol-box"><strong>Key Clue</strong><p>'+esc(s.clue)+'</p></div>'+
+      '<div class="sol-box" style="background:var(--panel2);border-color:var(--line);"><strong style="color:var(--ink2);">Full Resolution</strong><p>'+esc(s.fullSolution)+'</p></div>'+
+    '</div>'+
+    '<div class="cp-note">This page is meant as a private answer key — leave it out of the reader-facing PDF if you\'d rather they discover the resolution only through the letters.</div>';
+  return pageShell(inner);
+}
+
+function renderHandoff(b){
+  var inner = '<div class="ho-wrap">'+
+    '<div class="ho-eyebrow">A Note Before You Go</div>'+
+    '<div class="ho-text" contenteditable="true" data-edit="handoff">'+esc(b.handoff)+'</div>'+
+    '<div class="ho-sub">A 6-month serialized letter subscription</div>'+
+    '<div class="ho-link">Subscribe at: ___</div>'+
+  '</div>';
+  return pageShell(inner);
+}
+
+function pageList(){
+  var b = state.book; var pages=[];
+  if(!b) return pages;
+  if(state.incl.cover) pages.push({type:'cover',label:'Cover'});
+  if(state.incl.copyright) pages.push({type:'copyright',label:'Copyright'});
+  if(state.incl.howto) pages.push({type:'howto',label:'How It Works'});
+  if(state.incl.letters){
+    pages.push({type:'letter',idx:0,label:'Letter 1'});
+    pages.push({type:'letter',idx:1,label:'Letter 2'});
+    pages.push({type:'letter',idx:2,label:'Letter 3'});
+  }
+  if(state.incl.solution) pages.push({type:'solution',label:'Solution'});
+  if(state.incl.handoff) pages.push({type:'handoff',label:'Handoff'});
+  return pages;
+}
+
+function renderPageByType(p){
+  var b = state.book;
+  if(p.type==='cover') return renderCover(b);
+  if(p.type==='copyright') return renderCopyright(b);
+  if(p.type==='howto') return renderHowTo();
+  if(p.type==='letter') return renderLetter(b,p.idx);
+  if(p.type==='solution') return renderSolution(b);
+  if(p.type==='handoff') return renderHandoff(b);
+  return '';
+}
+
+function renderAll(){
+  var pages = pageList();
+  var strip = document.getElementById('pageStrip');
+  var stage = document.getElementById('pageStage');
+  if(pages.length===0){
+    strip.innerHTML='';
+    stage.innerHTML = '<div style="color:#867f6e;font-size:13px;padding:60px;text-align:center;">Click "🎲 Generate Full Case" to build your first Trial Case.</div>';
+    document.getElementById('castBox').innerHTML = 'Generate a case to see the cast.';
+    document.getElementById('statsBox').innerHTML = '';
+    document.getElementById('pageCounter').textContent = 'No pages';
+    return;
+  }
+  if(state.page >= pages.length) state.page = pages.length-1;
+  var sh='';
+  for(var i=0;i<pages.length;i++){
+    sh += '<div class="thumb'+(i===state.page?' active':'')+'" data-goto="'+i+'" title="'+esc(pages[i].label)+'">'+esc(pages[i].label)+'</div>';
+  }
+  strip.innerHTML = sh;
+  stage.innerHTML = '<div class="page-wrapper" style="transform:scale('+state.zoom+')">'+renderPageByType(pages[state.page])+'</div>';
+  document.getElementById('pageCounter').textContent = 'Page '+(state.page+1)+' of '+pages.length;
+  document.getElementById('zoomIndicator').textContent = Math.round(state.zoom*100)+'%';
+  applyStyleVars();
+  bindEdits();
+  bindThumbs();
+  renderCastAndStats();
+}
+
+function renderCastAndStats(){
+  var castBox = document.getElementById('castBox');
+  var statsBox = document.getElementById('statsBox');
+  if(!state.book){
+    castBox.innerHTML = 'Generate a case to see the cast.';
+    statsBox.innerHTML = '';
+    return;
+  }
+  var b = state.book;
+  var castHtml = '';
+  for(var i=0;i<b.cast.length;i++){
+    castHtml += '<div class="cast-entry"><strong>'+esc(b.cast[i].name)+'</strong><br><span style="color:var(--muted);font-size:11px;">'+esc(b.cast[i].role)+'</span><br><span style="font-size:11px;">'+esc(b.cast[i].detail)+'</span></div>';
+  }
+  castBox.innerHTML = castHtml;
+  var wordCount = 0;
+  for(var j=0;j<b.letters.length;j++){
+    for(var k=0;k<b.letters[j].body.length;k++){
+      wordCount += b.letters[j].body[k].split(/\s+/).length;
+    }
+  }
+  var mins = Math.max(1, Math.round(wordCount/200));
+  statsBox.innerHTML = '<span class="stats-badge">Crime: '+esc(b.crimeLabel)+'</span><br>'+
+    '<span class="stats-badge">Genre: '+esc(GENRE[b.genre].label)+'</span><br>'+
+    '<span class="stats-badge">~'+wordCount+' words</span> <span class="stats-badge">~'+mins+' min read</span>';
+}
+
+function applyStyleVars(){
+  document.documentElement.style.setProperty('--ink', state.colInk);
+  document.documentElement.style.setProperty('--accent', state.colAccent);
+  document.documentElement.style.setProperty('--accent-d', state.colAccent);
+  document.documentElement.style.setProperty('--gold', state.colGold);
+  document.documentElement.style.setProperty('--gold-d', state.colGold);
+  var stage = document.getElementById('pageStage');
+  if(stage){
+    var titleEls = stage.querySelectorAll('.cv-title,.hw-title,.lt-greet,.lt-sign,.ho-text,.cv-sub');
+    for(var i=0;i<titleEls.length;i++){ titleEls[i].style.fontFamily = state.fontTitle; }
+    var bodyEls = stage.querySelectorAll('.lt-body,.cp-body,.hw-p');
+    for(var j=0;j<bodyEls.length;j++){ bodyEls[j].style.fontFamily = state.fontBody; }
+    var handEls = stage.querySelectorAll('.hand-note');
+    for(var k=0;k<handEls.length;k++){ handEls[k].style.fontFamily = state.fontHand; }
+  }
+}
+
+function bindThumbs(){
+  var thumbs = document.querySelectorAll('.thumb');
+  for(var i=0;i<thumbs.length;i++){
+    thumbs[i].onclick = function(){
+      state.page = parseInt(this.getAttribute('data-goto'),10);
+      renderAll();
+    };
+  }
+}
+
+function setDeep(obj, path, val){
+  var parts = path.split('.');
+  var cur = obj;
+  for(var i=0;i<parts.length-1;i++){
+    var k = parts[i];
+    if(!isNaN(k)) k = parseInt(k,10);
+    if(cur[k]===undefined) return;
+    cur = cur[k];
+  }
+  var last = parts[parts.length-1];
+  if(!isNaN(last)) last = parseInt(last,10);
+  cur[last] = val;
+}
+
+function bindEdits(){
+  var els = document.querySelectorAll('[data-edit]');
+  for(var i=0;i<els.length;i++){
+    els[i].onblur = function(){
+      var path = this.getAttribute('data-edit');
+      setDeep(state.book, path, this.textContent);
+    };
+  }
+}
+
+/* ============ AUTO-GENERATION ============ */
+function autoGenerateAll(){
+  var details = generateCaseDetails();
+  state.title = details.title;
+  state.genre = details.genre;
+  state.setting = details.setting;
+  state.author = details.author;
+  state.crime = details.crime;
+  state.userEdited = false;
+  updateInputsFromState();
+  state.book = buildBook(state.crime, state.genre, state.setting, state.title, state.author);
+  state.page = 0;
+  renderAll();
+}
+
+function updateInputsFromState(){
+  document.getElementById('inTitle').value = state.title;
+  document.getElementById('inGenre').value = state.genre;
+  document.getElementById('inSetting').value = state.setting;
+  document.getElementById('inAuthor').value = state.author;
+  document.getElementById('inCrime').value = state.crime;
+}
+
+/* ============ UI WIRING ============ */
+document.querySelectorAll('.sec-h').forEach(function(h){
+  h.addEventListener('click', function(){ this.parentNode.classList.toggle('closed'); });
+});
+
+var caseDetailInputs = ['inTitle','inGenre','inSetting','inAuthor'];
+caseDetailInputs.forEach(function(id){
+  document.getElementById(id).addEventListener('input', function(){
+    state.userEdited = true;
+    var key = id.replace('in','').toLowerCase();
+    if(key==='title') state.title = this.value;
+    if(key==='genre') state.genre = this.value;
+    if(key==='setting') state.setting = this.value;
+    if(key==='author') state.author = this.value;
+    if(state.book){
+      if(key==='title') state.book.title = this.value;
+      if(key==='setting') state.book.setting = this.value;
+      if(key==='author') state.book.author = this.value;
+      renderAll();
+    }
+  });
+});
+
+document.getElementById('inCrime').addEventListener('change', function(){
+  state.userEdited = true;
+  state.crime = this.value;
+});
+
+document.getElementById('btnGenerate').addEventListener('click', function(){
+  if(!state.userEdited){ autoGenerateAll(); }
+  else {
+    state.book = buildBook(state.crime, state.genre, state.setting, state.title, state.author);
+    state.page = 0;
+    renderAll();
+  }
+});
+
+document.getElementById('btnRegen').addEventListener('click', function(){ autoGenerateAll(); });
+
+document.getElementById('btnRegenDetails').addEventListener('click', function(){
+  var details = generateCaseDetails();
+  state.title = details.title;
+  state.genre = details.genre;
+  state.setting = details.setting;
+  state.author = details.author;
+  state.crime = details.crime;
+  state.userEdited = false;
+  updateInputsFromState();
+  if(state.book){
+    state.book = buildBook(state.crime, state.genre, state.setting, state.title, state.author);
+    state.page = 0;
+    renderAll();
+  }
+});
+
+document.querySelectorAll('#paperSeg button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('#paperSeg button').forEach(function(b){b.classList.remove('active');});
+    this.classList.add('active');
+    state.paper = this.getAttribute('data-size');
+    renderAll();
+  });
+});
+
+document.querySelectorAll('.toggle[data-inc]').forEach(function(t){
+  t.addEventListener('click', function(){
+    this.classList.toggle('on');
+    var key = this.getAttribute('data-inc');
+    state.incl[key] = this.classList.contains('on');
+    renderAll();
+  });
+});
+
+document.getElementById('fontTitle').addEventListener('change', function(){ state.fontTitle=this.value; renderAll(); });
+document.getElementById('fontBody').addEventListener('change', function(){ state.fontBody=this.value; renderAll(); });
+document.getElementById('fontHand').addEventListener('change', function(){ state.fontHand=this.value; renderAll(); });
+document.getElementById('colInk').addEventListener('input', function(){ state.colInk=this.value; applyStyleVars(); });
+document.getElementById('colAccent').addEventListener('input', function(){ state.colAccent=this.value; applyStyleVars(); });
+document.getElementById('colGold').addEventListener('input', function(){ state.colGold=this.value; applyStyleVars(); });
+
+document.querySelectorAll('#envSeg button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('#envSeg button').forEach(function(b){b.classList.remove('active');});
+    this.classList.add('active');
+    state.env = this.getAttribute('data-env');
+    renderAll();
+  });
+});
+document.getElementById('toggleHand').addEventListener('click', function(){
+  this.classList.toggle('on');
+  state.hand = this.classList.contains('on');
+  renderAll();
+});
+
+document.getElementById('inBorderStyle').addEventListener('change', function(){ state.borderStyle=this.value; renderAll(); });
+document.getElementById('inOrnament').addEventListener('change', function(){ state.ornament=this.value; renderAll(); });
+document.getElementById('inDedication').addEventListener('input', function(){ state.dedication=this.value; renderAll(); });
+
+/* ZOOM CONTROLS */
+document.getElementById('zoomIn').addEventListener('click', function(){
+  state.zoom = Math.min(state.zoom + 0.05, 1.0);
+  applyZoom();
+});
+document.getElementById('zoomOut').addEventListener('click', function(){
+  state.zoom = Math.max(state.zoom - 0.05, 0.3);
+  applyZoom();
+});
+document.getElementById('zoomReset').addEventListener('click', function(){
+  state.zoom = 0.7;
+  applyZoom();
+});
+function applyZoom(){
+  var wrapper = document.querySelector('.page-wrapper');
+  if(wrapper){ wrapper.style.transform = 'scale('+state.zoom+')'; }
+  var indicator = document.getElementById('zoomIndicator');
+  if(indicator){ indicator.textContent = Math.round(state.zoom*100)+'%'; }
+}
+
+/* ============ EXPORT ============ */
+function getAllPagesHtml(){
+  var pages = pageList();
+  var html = '';
+  for(var i=0;i<pages.length;i++){ html += renderPageByType(pages[i]); }
+  return html;
+}
+
+function getFullCss(){
+  var css = '';
+  var sheets = document.styleSheets;
+  for(var i=0;i<sheets.length;i++){
+    try{
+      var rules = sheets[i].cssRules || sheets[i].rules;
+      for(var j=0;j<rules.length;j++){ css += rules[j].cssText + "\n"; }
+    }catch(e){}
+  }
+  return css;
+}
+
+document.getElementById('btnPDF').addEventListener('click', function(){
+  if(!state.book){ alert('Generate a Trial Case first.'); return; }
+  var allPages = getAllPagesHtml();
+  var printWindow = window.open('', '_blank', 'width=900,height=700');
+  if(!printWindow){ alert('Please allow pop-ups to export PDF.'); return; }
+  var css = getFullCss();
+  printWindow.document.write('<!DOCTYPE html><html><head><title>'+esc(state.book.title)+' - Trial Case</title><style>'+css+'</style></head><body style="background:#fff;padding:0;margin:0;"><div style="display:flex;flex-direction:column;align-items:center;gap:0;padding:0;margin:0;">'+allPages+'</div><script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script></body></html>');
+  printWindow.document.close();
+});
+
+function exportImages(fmt){
+  if(!state.book){ alert('Generate a Trial Case first.'); return; }
+  var pages = pageList();
+  var stage = document.getElementById('pageStage');
+  var saved = stage.innerHTML;
+  var css = getFullCss();
+  var p = PAPER[state.paper];
+  var idx = 0;
+  function doNext(){
+    if(idx>=pages.length){
+      stage.innerHTML = saved;
+      applyStyleVars();
+      bindEdits();
+      bindThumbs();
+      return;
+    }
+    stage.innerHTML = '<div class="page-wrapper" style="transform:none">'+renderPageByType(pages[idx])+'</div>';
+    var pageEl = stage.querySelector('.page');
+    var actualH = Math.max(p.h, pageEl.scrollHeight);
+    var svgStr = '<svg xmlns="http://www.w3.org/2000/svg" width="'+p.w+'" height="'+actualH+'"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>'+css+'</style>'+pageEl.outerHTML+'</div></foreignObject></svg>';
+    var img = new Image();
+    var svgBlob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+    var url = URL.createObjectURL(svgBlob);
+    img.onload = function(){
+      var canvas = document.createElement('canvas');
+      canvas.width = p.w*2; canvas.height = actualH*2;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      URL.revokeObjectURL(url);
+      var mime = fmt==='jpg' ? 'image/jpeg' : 'image/png';
+      var dataUrl = canvas.toDataURL(mime, 0.95);
+      var a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'trial-case-page-'+(idx+1)+'.'+fmt;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      idx++; setTimeout(doNext, 400);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); idx++; setTimeout(doNext, 400); };
+    img.src = url;
+  }
+  doNext();
+}
+document.getElementById('btnPNG').addEventListener('click', function(){ exportImages('png'); });
+document.getElementById('btnJPG').addEventListener('click', function(){ exportImages('jpg'); });
+
+document.getElementById('btnCopy').addEventListener('click', function(){
+  var stage = document.getElementById('pageStage');
+  var text = stage.innerText || stage.textContent || '';
+  text = text.trim();
+  if(!text){ alert('Nothing to copy yet.'); return; }
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+  var btn = this; var old = btn.textContent;
+  btn.textContent = '✓ Copied!';
+  setTimeout(function(){ btn.textContent = old; }, 1500);
+});
+
+/* ============ DRAFT SAVE/RESTORE ============ */
+var DRAFT_KEY = 'trialCaseCompanion_draft_v7';
+document.getElementById('btnSaveDraft').addEventListener('click', function(){
+  try{
+    var payload = {
+      title:state.title, genre:state.genre, setting:state.setting, author:state.author,
+      crime:state.crime, paper:state.paper, env:state.env, hand:state.hand,
+      incl:state.incl, book:state.book, colInk:state.colInk, colAccent:state.colAccent,
+      colGold:state.colGold, fontTitle:state.fontTitle, fontBody:state.fontBody,
+      fontHand:state.fontHand, borderStyle:state.borderStyle, ornament:state.ornament,
+      dedication:state.dedication
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+    document.getElementById('draftStatus').textContent = 'Saved just now.';
+  }catch(e){
+    document.getElementById('draftStatus').textContent = 'Could not save (storage unavailable).';
+  }
+});
+document.getElementById('btnLoadDraft').addEventListener('click', function(){
+  try{
+    var raw = localStorage.getItem(DRAFT_KEY);
+    if(!raw){ document.getElementById('draftStatus').textContent = 'No saved draft found.'; return; }
+    var payload = JSON.parse(raw);
+    state.title=payload.title; state.genre=payload.genre; state.setting=payload.setting;
+    state.author=payload.author; state.crime=payload.crime; state.paper=payload.paper;
+    state.env=payload.env; state.hand=payload.hand; state.incl=payload.incl;
+    state.book=payload.book; state.page=0;
+    if(payload.colInk) state.colInk=payload.colInk;
+    if(payload.colAccent) state.colAccent=payload.colAccent;
+    if(payload.colGold) state.colGold=payload.colGold;
+    if(payload.fontTitle) state.fontTitle=payload.fontTitle;
+    if(payload.fontBody) state.fontBody=payload.fontBody;
+    if(payload.fontHand) state.fontHand=payload.fontHand;
+    if(payload.borderStyle) state.borderStyle=payload.borderStyle;
+    if(payload.ornament) state.ornament=payload.ornament;
+    if(payload.dedication) state.dedication=payload.dedication;
+    updateInputsFromState();
+    document.getElementById('colInk').value = state.colInk;
+    document.getElementById('colAccent').value = state.colAccent;
+    document.getElementById('colGold').value = state.colGold;
+    document.getElementById('fontTitle').value = state.fontTitle;
+    document.getElementById('fontBody').value = state.fontBody;
+    document.getElementById('fontHand').value = state.fontHand;
+    document.getElementById('inBorderStyle').value = state.borderStyle;
+    document.getElementById('inOrnament').value = state.ornament;
+    document.getElementById('inDedication').value = state.dedication;
+    document.querySelectorAll('#paperSeg button').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-size')===state.paper);
+    });
+    document.querySelectorAll('#envSeg button').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-env')===state.env);
+    });
+    document.getElementById('toggleHand').classList.toggle('on', !!state.hand);
+    document.querySelectorAll('.toggle[data-inc]').forEach(function(t){
+      var key = t.getAttribute('data-inc');
+      t.classList.toggle('on', !!state.incl[key]);
+    });
+    renderAll();
+    document.getElementById('draftStatus').textContent = 'Draft restored.';
+  }catch(e){
+    document.getElementById('draftStatus').textContent = 'Could not restore draft.';
+  }
+});
+
+/* ============ INIT ============ */
+autoGenerateAll();
+</script>
+</body>
+</html>
