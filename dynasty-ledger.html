@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynasty Ledger Visual Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#7a5c3e; --accent-d:#5c4530; --accentSoft:#efe4d4;
+  --bg:#f6f2ea; --panel:#fffdf8; --panel2:#faf6ee;
+  --ink:#241f19; --ink2:#4a4032; --muted:#8f8270; --line:#e3d9c4;
+  --branch1:#7a5c3e; --branch2:#4a6b5e; --branch3:#8b4a4a; --branch4:#4a5c8b;
+  --secretLow:#c9a227; --secretMed:#c9702c; --secretHigh:#8b2e2e;
+  --r:10px; --sh:0 6px 22px rgba(60,40,10,.10); --sh2:0 2px 8px rgba(60,40,10,.06);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Source Sans Pro',sans-serif;}
+body{overflow:hidden;}
+button{font-family:'Source Sans Pro',sans-serif;cursor:pointer;}
+input,select,textarea{font-family:'Source Sans Pro',sans-serif;}
+h1,h2,h3{font-family:'Cormorant Garamond',serif;}
+
+/* ===== TOP BAR ===== */
+.topbar{height:58px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:var(--sh2);position:relative;z-index:50;flex-shrink:0;}
+.logo-badge{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-d));display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
+.brand-text{display:flex;flex-direction:column;line-height:1.1;}
+.brand-text .b1{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--ink);}
+.brand-text .b2{font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}
+.topbar-spacer{flex:1;}
+.tb-btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink2);padding:8px 13px;border-radius:8px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap;}
+.tb-btn:hover{background:var(--accentSoft);border-color:var(--accent);color:var(--accent-d);}
+.tb-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent-d);}
+.tb-btn.primary:hover{background:var(--accent-d);}
+.saga-select{border:1px solid var(--line);background:#fff;color:var(--ink2);padding:8px 10px;border-radius:8px;font-size:12.5px;font-weight:600;}
+
+.help-menu{position:relative;}
+.help-btn{border:1px solid var(--line);background:var(--panel2);padding:8px 13px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:6px;transition:.15s;}
+.help-btn:hover{background:var(--accentSoft);border-color:var(--accent);color:var(--accent-d);}
+.help-dropdown{position:absolute;top:100%;right:0;margin-top:8px;width:400px;max-height:75vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(36,31,25,.25);display:none;z-index:100;}
+.help-dropdown.show{display:block;}
+.help-header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.help-header h4{margin:0;font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--ink);}
+.help-close{border:none;background:transparent;font-size:16px;color:var(--muted);padding:0;width:26px;height:26px;border-radius:6px;}
+.help-close:hover{background:var(--accentSoft);color:var(--accent-d);}
+.help-body{padding:14px 16px;}
+.help-section{margin-bottom:15px;}
+.help-section:last-child{margin-bottom:0;}
+.help-section h5{margin:0 0 7px;font-size:11.5px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.05em;}
+.help-section p,.help-section li{margin:0;font-size:12px;color:var(--ink2);line-height:1.6;}
+.help-section ul{margin:6px 0 0 16px;padding:0;}
+.help-section li{margin-bottom:4px;}
+.help-section code{background:var(--panel2);padding:2px 6px;border-radius:4px;font-size:11px;color:var(--accent-d);font-family:monospace;}
+.help-key{display:inline-block;background:var(--panel2);border:1px solid var(--line);padding:2px 6px;border-radius:4px;font-size:10.5px;font-weight:600;color:var(--ink2);}
+
+/* ===== LAYOUT ===== */
+.app-body{display:flex;height:calc(100% - 58px);min-height:0;}
+.sidebar{width:330px;background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:14px;flex-shrink:0;}
+.sidebar::-webkit-scrollbar{width:9px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;}
+.canvas-wrap{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg);}
+
+.panel-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--ink);margin:2px 0 12px;}
+
+.sec{border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden;background:var(--panel2);}
+.sec-head{display:flex;align-items:center;gap:9px;padding:10px 12px;cursor:pointer;user-select:none;}
+.bdg{width:19px;height:19px;border-radius:5px;background:var(--accent);color:#fff;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sec-title{font-size:12.5px;font-weight:700;color:var(--ink);flex:1;}
+.sec-chevron{color:var(--muted);font-size:10px;transition:transform .18s;}
+.sec.open .sec-chevron{transform:rotate(180deg);}
+.sec-body{padding:0 12px 13px;display:none;}
+.sec.open .sec-body{display:block;}
+
+.field-label{font-size:10.5px;font-weight:700;color:var(--ink2);margin:9px 0 5px;text-transform:uppercase;letter-spacing:.04em;}
+.field-label:first-child{margin-top:0;}
+.ipt{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;background:#fff;color:var(--ink);outline:none;transition:.15s;}
+.ipt:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentSoft);}
+textarea.ipt{resize:vertical;min-height:150px;font-family:monospace;font-size:11.5px;line-height:1.5;}
+select.ipt{appearance:none;cursor:pointer;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%238f8270"/></svg>');background-repeat:no-repeat;background-position:right 10px center;padding-right:26px;}
+
+.hint{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:5px;}
+.mini-btn-row{display:flex;gap:6px;margin-top:8px;}
+.mini-btn{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 6px;font-size:11px;font-weight:700;color:var(--ink2);transition:.15s;}
+.mini-btn:hover{border-color:var(--accent);color:var(--accent-d);background:var(--accentSoft);}
+.gen-btn{width:100%;padding:11px;border:none;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-d));color:#fff;font-size:13px;font-weight:700;margin-top:4px;box-shadow:0 4px 12px rgba(92,69,48,.3);}
+.gen-btn:hover{filter:brightness(1.06);}
+
+.parse-status{font-size:11.5px;border-radius:8px;padding:9px 11px;margin-top:9px;line-height:1.6;}
+.parse-status.ok{background:#e7f2e5;color:#356b30;border:1px solid #c3ddbf;}
+.parse-status.warn{background:#fbf1de;color:#8a5a12;border:1px solid #eed7ab;}
+
+.branch-row{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line);}
+.branch-row:last-child{border-bottom:none;}
+.branch-swatch{width:14px;height:14px;border-radius:4px;flex-shrink:0;}
+.branch-row input[type=text]{flex:1;border:none;background:transparent;font-size:12px;color:var(--ink2);font-weight:600;padding:2px 4px;}
+.branch-row input[type=text]:focus{outline:1px solid var(--accent);border-radius:4px;}
+
+.filter-row{display:flex;align-items:center;justify-content:space-between;padding:7px 2px;border-bottom:1px solid var(--line);gap:8px;}
+.filter-row:last-child{border-bottom:none;}
+.filter-label{font-size:12px;color:var(--ink2);font-weight:600;}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;cursor:pointer;inset:0;background:#e3d9c4;border-radius:20px;transition:.2s;}
+.slider:before{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+.switch input:checked + .slider{background:var(--accent);}
+.switch input:checked + .slider:before{transform:translateX(16px);}
+.range-row{display:flex;align-items:center;gap:8px;}
+input[type=range]{flex:1;accent-color:var(--accent);}
+.range-val{font-size:11px;font-weight:700;color:var(--accent-d);width:22px;text-align:center;flex-shrink:0;}
+.branch-check-row{display:flex;align-items:center;gap:8px;padding:6px 2px;}
+.branch-check-row input{accent-color:var(--accent);}
+.branch-check-row label{font-size:12px;color:var(--ink2);font-weight:600;}
+
+.form-row{margin-bottom:8px;}
+.form-row .field-label{margin:6px 0 4px;}
+
+/* ===== CANVAS AREA ===== */
+.view-tabs{display:flex;gap:8px;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;}
+.view-tab{border:1.5px solid var(--line);background:#fff;color:var(--ink2);padding:9px 16px;border-radius:9px;font-size:13px;font-weight:700;transition:.15s;}
+.view-tab:hover{border-color:var(--accent);}
+.view-tab.active{background:var(--accent);color:#fff;border-color:var(--accent-d);}
+.canvas-toolbar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--panel2);border-bottom:1px solid var(--line);flex-shrink:0;}
+.canvas-toolbar .spacer{flex:1;}
+.zoom-group{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:2px;background:#fff;}
+.zoom-group button{border:none;background:transparent;width:24px;height:24px;border-radius:6px;font-size:13px;color:var(--ink2);font-weight:700;}
+.zoom-group button:hover{background:var(--accentSoft);color:var(--accent-d);}
+
+.view-container{flex:1;min-height:0;position:relative;overflow:hidden;background:
+  repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(122,92,62,.04) 40px),
+  repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(122,92,62,.04) 40px), var(--bg);}
+.view-pane{display:none;width:100%;height:100%;position:relative;overflow:hidden;}
+.view-pane.active{display:block;}
+.tree-svg-host{width:100%;height:100%;cursor:grab;}
+.tree-svg-host.dragging{cursor:grabbing;}
+
+.timeline-scroll{width:100%;height:100%;overflow:auto;}
+
+.empty-state{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--muted);text-align:center;padding:30px;}
+.empty-state h3{font-size:20px;color:var(--ink2);margin:0;}
+.empty-state p{font-size:13px;max-width:340px;margin:0;line-height:1.6;}
+
+.detail-panel{position:absolute;top:14px;right:14px;width:290px;max-height:calc(100% - 28px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(60,40,10,.18);padding:16px;display:none;z-index:20;}
+.detail-panel.show{display:block;}
+.detail-close{position:absolute;top:10px;right:10px;border:none;background:transparent;font-size:16px;color:var(--muted);width:24px;height:24px;border-radius:6px;}
+.detail-close:hover{background:var(--accentSoft);color:var(--accent-d);}
+.detail-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:var(--ink);margin-bottom:2px;padding-right:20px;}
+.detail-years{font-size:11.5px;color:var(--muted);margin-bottom:10px;}
+.detail-field{margin-bottom:10px;}
+.detail-field-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--accent-d);margin-bottom:3px;}
+.detail-field-value{font-size:12.5px;color:var(--ink2);line-height:1.55;}
+.severity-select{margin-top:4px;width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:11.5px;}
+
+.tt-tooltip{position:absolute;background:var(--ink);color:#fff;font-size:11.5px;padding:8px 11px;border-radius:8px;max-width:260px;line-height:1.5;pointer-events:none;z-index:30;box-shadow:0 6px 18px rgba(0,0,0,.25);display:none;}
+
+@media print{
+  .topbar,.sidebar,.view-tabs,.canvas-toolbar,.detail-panel,.tt-tooltip,.help-dropdown{display:none !important;}
+  .canvas-wrap,.view-container{position:static !important;overflow:visible !important;}
+  .view-pane{display:none !important;}
+  .view-pane.printing{display:block !important;position:static !important;width:100% !important;height:auto !important;}
+  body{overflow:visible !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-badge">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M12 3v6M12 9L6 14M12 9l6 5M6 14v5M18 14v5"/><circle cx="12" cy="9" r="2"/><circle cx="6" cy="16" r="2"/><circle cx="18" cy="16" r="2"/></svg>
+  </div>
+  <div class="brand-text">
+    <div class="b1">Dynasty Ledger</div>
+    <div class="b2">Visual Explorer</div>
+  </div>
+  <div class="topbar-spacer"></div>
+  <select class="saga-select" id="sagaSelect" onchange="onSagaSelectChange()">
+    <option value="">-- Load Saga --</option>
+  </select>
+  <button class="tb-btn" id="saveSagaBtn" onclick="saveAsNewSaga()">💾 Save as New Saga</button>
+  <button class="tb-btn primary" id="printBtn" onclick="printCurrentView()">🖨️ Print</button>
+  <div class="help-menu">
+    <button class="help-btn" id="helpBtn" onclick="toggleHelp()">? Help</button>
+    <div class="help-dropdown" id="helpDropdown">
+      <div class="help-header">
+        <h4>How to Use This Tool</h4>
+        <button class="help-close" onclick="toggleHelp()">X</button>
+      </div>
+      <div class="help-body">
+        <div class="help-section">
+          <h5>Quick Start</h5>
+          <p>1. Paste the text of your Dynasty_Ledger.md file into the <b>Import Ledger</b> box on the left (or click <code>Load Sample Ledger</code> to try it instantly).<br>
+             2. Click <code>Parse Ledger</code> - you'll see a confirmation of how many characters, secrets, and timeline events were found.<br>
+             3. Switch between the three views using the tabs above the canvas.<br>
+             4. Click any node in any view to see its full details in the side panel.</p>
+        </div>
+        <div class="help-section">
+          <h5>What Gets Parsed</h5>
+          <ul>
+            <li><b>Family Tree section:</b> lines like "Name (1802-1871), role; married Spouse (birth-death) in Year; Branch Name." Branch headers (e.g. "Nathaniel Branch - The Ironwood Branch") set the default branch for characters that don't state one explicitly.</li>
+            <li><b>Secrets Ledger section:</b> blocks starting with <code>**S1 - Title**</code> followed by <code>**Buried choice:**</code>, <code>**Knows:**</code>, <code>**Suspects:**</code>, <code>**Surface cost:**</code>, and <code>**Status:**</code> lines.</li>
+            <li><b>Era Timeline section:</b> period headers like "Founding and First Division, 1855-1934" followed by lines like "1861 - Event description."</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h5>If Something Doesn't Parse</h5>
+          <p>Lines that don't match the expected pattern are listed under the parse status as warnings, so you can fix the formatting and re-paste, or add that character/secret manually using <b>Manual Entry Fallback</b> in the left panel.</p>
+        </div>
+        <div class="help-section">
+          <h5>The Three Views</h5>
+          <ul>
+            <li><b>🌳 Family Tree:</b> generations stack top to bottom; married couples sit side by side with a connecting line; deceased characters show a † mark. Drag to pan, use the +/- buttons to zoom, click a node for details.</li>
+            <li><b>📅 Era Timeline:</b> events plotted left to right by year, grouped into colored era bands; character lifespans appear as bars beneath the axis, colored by branch. Click an event marker for its full description. Scroll horizontally for long timelines.</li>
+            <li><b>🔒 Secrets Map:</b> each secret sits in the top grid, colored by severity (auto-guessed from its Surface Cost text, editable per secret). Solid lines connect to characters who "Know" it, dashed lines to those who "Suspect" it.</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h5>Filters</h5>
+          <p>Use the Generation Range slider, the Show Deceased toggle, and the Branch Visibility checklist in the left sidebar to focus on part of a large tree - handy once a saga reaches 15+ characters.</p>
+        </div>
+        <div class="help-section">
+          <h5>Saving Multiple Sagas</h5>
+          <p>Click <b>💾 Save as New Saga</b> to name and store the current data. Use the dropdown next to it to switch between sagas you've already saved - everything persists in this browser automatically.</p>
+        </div>
+        <div class="help-section">
+          <h5>Printing</h5>
+          <p>The <b>🖨️ Print</b> button prints whichever view is currently active, with the sidebar and controls hidden - handy as a physical reference to pin up while writing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <div class="sidebar">
+    <div class="panel-title">Ledger Data</div>
+
+    <div class="sec open" data-sec="import">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="bdg">1</div><div class="sec-title">Import Ledger</div>
+        <div class="sec-chevron">v</div>
+      </div>
+      <div class="sec-body">
+        <div class="field-label">Paste Dynasty_Ledger.md text</div>
+        <textarea class="ipt" id="ledgerInput" placeholder="Paste the Family Tree, Secrets Ledger, and/or Era Timeline sections here..."></textarea>
+        <button class="gen-btn" id="parseBtn" onclick="handleParse()">Parse Ledger</button>
+        <div class="mini-btn-row">
+          <button class="mini-btn" onclick="loadSampleLedger()">Load Sample Ledger</button>
+          <button class="mini-btn" onclick="clearLedger()">Clear All Data</button>
+        </div>
+        <div id="parseStatus"></div>
+      </div>
+    </div>
+
+    <div class="sec" data-sec="manual">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="bdg">2</div><div class="sec-title">Manual Entry Fallback</div>
+        <div class="sec-chevron">v</div>
+      </div>
+      <div class="sec-body">
+        <div class="field-label">Add Character</div>
+        <div class="form-row"><input class="ipt" id="mcName" placeholder="Name"></div>
+        <div class="form-row" style="display:flex;gap:6px;">
+          <input class="ipt" id="mcBirth" placeholder="Birth year">
+          <input class="ipt" id="mcDeath" placeholder="Death year (blank if living)">
+        </div>
+        <div class="form-row"><input class="ipt" id="mcBranch" placeholder="Branch name"></div>
+        <div class="form-row"><input class="ipt" id="mcParents" placeholder="Parent(s), comma separated"></div>
+        <div class="form-row"><input class="ipt" id="mcSpouse" placeholder="Spouse name (optional)"></div>
+        <div class="form-row"><input class="ipt" id="mcRole" placeholder="Role / description"></div>
+        <button class="mini-btn" style="width:100%;" onclick="addManualCharacter()">+ Add Character</button>
+
+        <div class="field-label" style="margin-top:16px;">Add Secret</div>
+        <div class="form-row"><input class="ipt" id="msTitle" placeholder="Secret title"></div>
+        <div class="form-row"><input class="ipt" id="msBuried" placeholder="Buried choice"></div>
+        <div class="form-row"><input class="ipt" id="msKnows" placeholder="Knows (comma separated names)"></div>
+        <div class="form-row"><input class="ipt" id="msSuspects" placeholder="Suspects (comma separated names)"></div>
+        <div class="form-row"><input class="ipt" id="msCost" placeholder="Surface cost"></div>
+        <div class="form-row"><input class="ipt" id="msStatus" placeholder="Status"></div>
+        <button class="mini-btn" style="width:100%;" onclick="addManualSecret()">+ Add Secret</button>
+      </div>
+    </div>
+
+    <div class="sec" data-sec="branches">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="bdg">3</div><div class="sec-title">Branch Color Key</div>
+        <div class="sec-chevron">v</div>
+      </div>
+      <div class="sec-body" id="branchKeyBody">
+        <div class="hint">Branches are auto-detected once you parse a ledger.</div>
+      </div>
+    </div>
+
+    <div class="sec open" data-sec="filters">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="bdg">4</div><div class="sec-title">Filter Controls</div>
+        <div class="sec-chevron">v</div>
+      </div>
+      <div class="sec-body">
+        <div class="field-label">Generation Range</div>
+        <div class="range-row">
+          <span style="font-size:10.5px;color:var(--muted);">From</span>
+          <input type="range" id="genFrom" min="0" max="0" value="0" oninput="onGenRangeChange()">
+          <div class="range-val" id="genFromVal">0</div>
+        </div>
+        <div class="range-row">
+          <span style="font-size:10.5px;color:var(--muted);">To</span>
+          <input type="range" id="genTo" min="0" max="0" value="0" oninput="onGenRangeChange()">
+          <div class="range-val" id="genToVal">0</div>
+        </div>
+        <div class="filter-row" style="margin-top:8px;">
+          <span class="filter-label">Show Deceased</span>
+          <label class="switch"><input type="checkbox" id="showDeceased" checked onchange="renderActiveView()"><span class="slider"></span></label>
+        </div>
+        <div class="field-label" style="margin-top:10px;">Branch Visibility</div>
+        <div id="branchCheckBody"><div class="hint">No branches detected yet.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="canvas-wrap">
+    <div class="view-tabs">
+      <button class="view-tab active" id="tabTree" onclick="switchView('tree')">🌳 Family Tree View</button>
+      <button class="view-tab" id="tabTimeline" onclick="switchView('timeline')">📅 Era Timeline View</button>
+      <button class="view-tab" id="tabSecrets" onclick="switchView('secrets')">🔒 Secrets Map View</button>
+    </div>
+    <div class="canvas-toolbar">
+      <span id="canvasStatusLabel" style="font-size:12px;color:var(--muted);font-weight:600;">No data loaded yet</span>
+      <div class="spacer"></div>
+      <div class="zoom-group" id="zoomGroup">
+        <button onclick="zoomTree(-1)">-</button>
+        <span style="font-size:11px;color:var(--muted);width:40px;text-align:center;" id="zoomLabel">100%</span>
+        <button onclick="zoomTree(1)">+</button>
+        <button onclick="resetTreeView()" style="width:auto;padding:0 8px;">Reset</button>
+      </div>
+    </div>
+    <div class="view-container">
+
+      <div class="view-pane active" id="paneTree">
+        <div class="tree-svg-host" id="treeHost">
+          <svg id="treeSvg" width="100%" height="100%"></svg>
+        </div>
+        <div class="empty-state" id="treeEmpty">
+          <h3>No family tree yet</h3>
+          <p>Paste your Dynasty_Ledger.md text on the left and click Parse Ledger, or try Load Sample Ledger to see the tool in action.</p>
+        </div>
+      </div>
+
+      <div class="view-pane" id="paneTimeline">
+        <div class="timeline-scroll" id="timelineScroll">
+          <svg id="timelineSvg" width="100%" height="100%"></svg>
+        </div>
+        <div class="empty-state" id="timelineEmpty">
+          <h3>No timeline events yet</h3>
+          <p>Parse a ledger containing an Era Timeline section to see events plotted here.</p>
+        </div>
+      </div>
+
+      <div class="view-pane" id="paneSecrets">
+        <div class="timeline-scroll" id="secretsScroll">
+          <svg id="secretsSvg" width="100%" height="100%"></svg>
+        </div>
+        <div class="empty-state" id="secretsEmpty">
+          <h3>No secrets yet</h3>
+          <p>Parse a ledger containing a Secrets Ledger section to see the secrets map here.</p>
+        </div>
+      </div>
+
+      <div class="detail-panel" id="detailPanel">
+        <button class="detail-close" onclick="closeDetailPanel()">X</button>
+        <div id="detailPanelBody"></div>
+      </div>
+      <div class="tt-tooltip" id="ttTooltip"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   DATA MODEL
+   ============================================================ */
+var BRANCH_COLORS = ['var(--branch1)','var(--branch2)','var(--branch3)','var(--branch4)'];
+var BRANCH_COLOR_HEX = ['#7a5c3e','#4a6b5e','#8b4a4a','#4a5c8b'];
+
+var appData = {
+  characters: [],
+  secrets: [],
+  timelineEvents: [],
+  branches: [],
+  warnings: []
+};
+
+var currentView = 'tree';
+var currentSagaName = '';
+var treeZoom = { scale: 1, panX: 0, panY: 0 };
+var genFilter = { from: 0, to: 0 };
+
+function $(id){ return document.getElementById(id); }
+
+/* ============================================================
+   PARSER  (pure logic - no DOM access, testable standalone)
+   ============================================================ */
+function findCharacterByName(rawName, characters){
+  if (!rawName) return null;
+  var target = rawName.trim().toLowerCase().replace(/[.,;]+$/,'');
+  if (!target) return null;
+  var i;
+  for (i=0;i<characters.length;i++){
+    if (characters[i].name.toLowerCase() === target) return characters[i];
+  }
+  var matches = [];
+  for (i=0;i<characters.length;i++){
+    var n = characters[i].name.toLowerCase();
+    if (n.indexOf(target) === 0 || target.indexOf(n) === 0 || n.indexOf(target) !== -1 || target.indexOf(n) !== -1){
+      matches.push(characters[i]);
+    }
+  }
+  if (matches.length >= 1) return matches[0];
+  return null;
+}
+
+function cleanBranchHeader(headerText){
+  var t = headerText.replace(/^#+\s*/, '').trim();
+  var dashMatch = t.match(/[—\-]\s*(.+)$/);
+  if (dashMatch && dashMatch[1].length > 2){
+    t = dashMatch[1].trim();
+  }
+  t = t.replace(/^\s*the\s+/i, '').trim();
+  t = t.replace(/\bbranch\b/i, '').trim();
+  if (!t) t = headerText.replace(/^#+\s*/, '').trim();
+  return t + ' Branch';
+}
+
+function extractRelations(rest){
+  var out = { role:'', spouseName:null, spouseBirth:null, spouseDeath:null, marriageYear:null, parentNames:[], branch:null };
+  if (!rest) return out;
+
+  var spouseMatch = rest.match(/married\s+([A-Z][A-Za-z.'\u2019\-]+(?:\s+[A-Z][A-Za-z.'\u2019\-]+)*)\s*\(\s*(?:born\s+)?(\d{3,4})(?:\s*[–\-]\s*(\d{3,4}))?\s*\)(?:\s*in\s*(\d{3,4}))?/);
+  if (spouseMatch){
+    out.spouseName = spouseMatch[1].trim();
+    out.spouseBirth = spouseMatch[2];
+    out.spouseDeath = spouseMatch[3] || null;
+    out.marriageYear = spouseMatch[4] || null;
+  }
+
+  var parentMatch = rest.match(/(?:son|daughter|child)\s+of\s+([A-Z][A-Za-z.'\u2019\-]+(?:\s+[A-Z][A-Za-z.'\u2019\-]+)*)(?:\s+and\s+([A-Z][A-Za-z.'\u2019\-]+(?:\s+[A-Z][A-Za-z.'\u2019\-]+)*))?/);
+  if (parentMatch){
+    out.parentNames.push(parentMatch[1].trim());
+    if (parentMatch[2]) out.parentNames.push(parentMatch[2].trim());
+  }
+  var possMatch = rest.match(/\[?([A-Z][A-Za-z.'\u2019\-]+(?:\s+[A-Z][A-Za-z.'\u2019\-]+)*)\]?'s\s+child/i);
+  if (possMatch && out.parentNames.length===0){
+    out.parentNames.push(possMatch[1].trim());
+  }
+
+  var branchMatch = rest.match(/([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)?\s+Branch)\b/);
+  if (branchMatch){
+    out.branch = branchMatch[1].trim();
+  }
+
+  var role = rest.split(';')[0].trim();
+  role = role.replace(/\.$/, '').trim();
+  out.role = role;
+
+  return out;
+}
+
+function parseCharacterLine(line, currentBranch){
+  var re = /^([A-Z][A-Za-z.'\u2019\-]+(?:\s+[A-Z][A-Za-z.'\u2019\-]+)*)\s*\(\s*(?:born\s+)?(\d{3,4})(?:\s*[–\-]\s*(\d{3,4}))?\s*\)\s*,?\s*(.*)$/;
+  var m = line.match(re);
+  if (!m) return null;
+  var name = m[1].trim();
+  var birth = m[2];
+  var death = m[3] || null;
+  var rest = m[4] || '';
+  var rel = extractRelations(rest);
+  return {
+    id: 'c_' + name.replace(/[^a-zA-Z0-9]/g,'_') + '_' + birth,
+    name: name,
+    birthYear: parseInt(birth,10),
+    deathYear: death ? parseInt(death,10) : null,
+    isLiving: !death,
+    role: rel.role,
+    branch: rel.branch || currentBranch || 'Unassigned Branch',
+    parentNames: rel.parentNames,
+    spouseName: rel.spouseName,
+    spouseBirth: rel.spouseBirth,
+    spouseDeath: rel.spouseDeath,
+    marriageYear: rel.marriageYear,
+    rawLine: line
+  };
+}
+
+function parseLedger(text){
+  var characters = [];
+  var secrets = [];
+  var timelineEvents = [];
+  var warnings = [];
+
+  var lines = text.replace(/\r\n/g,'\n').split('\n');
+  var section = null;
+  var currentBranch = null;
+  var currentEra = null;
+  var currentSecret = null;
+
+  function flushSecret(){
+    if (currentSecret){
+      secrets.push(currentSecret);
+      currentSecret = null;
+    }
+  }
+
+  for (var i=0;i<lines.length;i++){
+    var raw = lines[i];
+    var line = raw.trim();
+    if (!line) continue;
+
+    var headerMatch = line.match(/^#{1,4}\s*(.+)$/);
+    if (headerMatch){
+      var headerText = headerMatch[1].trim();
+      if (/family\s+tree/i.test(headerText)){
+        section = 'tree'; currentBranch = null; continue;
+      }
+      if (/secrets?\s+ledger/i.test(headerText)){
+        flushSecret();
+        section = 'secrets'; currentSecret = null; continue;
+      }
+      if (/era\s+timeline|^timeline$/i.test(headerText)){
+        section = 'timeline'; currentEra = null; continue;
+      }
+      if (section === 'tree'){
+        currentBranch = cleanBranchHeader(headerText);
+        continue;
+      }
+      if (section === 'timeline'){
+        var eraMatch = headerText.match(/^(.+?),\s*(\d{3,4})\s*[–\-]\s*(\d{3,4})\s*$/);
+        if (eraMatch){
+          currentEra = { name: eraMatch[1].trim(), start: parseInt(eraMatch[2],10), end: parseInt(eraMatch[3],10) };
+        } else {
+          currentEra = { name: headerText, start: null, end: null };
+        }
+        continue;
+      }
+      continue;
+    }
+
+    if (section === 'tree'){
+      var ch = parseCharacterLine(line, currentBranch);
+      if (ch){
+        characters.push(ch);
+      } else if (/\(\s*(?:born\s+)?\d{3,4}/.test(line)){
+        warnings.push('Family Tree: could not parse "' + line + '"');
+      }
+      continue;
+    }
+
+    if (section === 'secrets'){
+      var secHeadMatch = line.match(/^\*\*\s*S(\d+)\s*[—\-]\s*(.+?)\*\*/);
+      if (secHeadMatch){
+        flushSecret();
+        currentSecret = {
+          id: 'S' + secHeadMatch[1],
+          num: parseInt(secHeadMatch[1],10),
+          title: secHeadMatch[2].trim(),
+          buriedChoice: '',
+          knowsRaw: [],
+          suspectsRaw: [],
+          surfaceCost: '',
+          status: '',
+          severityOverride: null
+        };
+        continue;
+      }
+      if (currentSecret){
+        var buriedM = line.match(/^\*\*\s*Buried choice:\*\*\s*(.+)$/i);
+        var knowsM = line.match(/^\*\*\s*Knows:\*\*\s*(.+)$/i);
+        var suspectsM = line.match(/^\*\*\s*Suspects:\*\*\s*(.+)$/i);
+        var costM = line.match(/^\*\*\s*Surface cost:\*\*\s*(.+)$/i);
+        var statusM = line.match(/^\*\*\s*Status:\*\*\s*(.+)$/i);
+        if (buriedM){ currentSecret.buriedChoice = buriedM[1].trim(); }
+        else if (knowsM){ currentSecret.knowsRaw = knowsM[1].split(',').map(function(s){return s.trim();}).filter(Boolean); }
+        else if (suspectsM){ currentSecret.suspectsRaw = suspectsM[1].split(',').map(function(s){return s.trim();}).filter(Boolean); }
+        else if (costM){ currentSecret.surfaceCost = costM[1].trim(); }
+        else if (statusM){ currentSecret.status = statusM[1].trim(); }
+        else if (!/^\*\*/.test(line)){
+          warnings.push('Secrets Ledger: unrecognized line under ' + currentSecret.id + ': "' + line + '"');
+        }
+      } else {
+        warnings.push('Secrets Ledger: line found before any secret header: "' + line + '"');
+      }
+      continue;
+    }
+
+    if (section === 'timeline'){
+      var evMatch = line.match(/^\*{0,2}(\d{3,4})(?:\s*[–\-]\s*(\d{3,4}))?\*{0,2}\s*[—\-:]\s*(.+)$/);
+      if (evMatch){
+        timelineEvents.push({
+          era: currentEra ? currentEra.name : 'Unspecified Era',
+          year: parseInt(evMatch[1],10),
+          yearEnd: evMatch[2] ? parseInt(evMatch[2],10) : null,
+          desc: evMatch[3].trim()
+        });
+      } else if (/\d{3,4}/.test(line)){
+        warnings.push('Era Timeline: could not parse "' + line + '"');
+      }
+      continue;
+    }
+  }
+  flushSecret();
+
+  for (var s=0;s<secrets.length;s++){
+    secrets[s].knows = [];
+    secrets[s].suspects = [];
+    for (var k=0;k<secrets[s].knowsRaw.length;k++){
+      var kc = findCharacterByName(secrets[s].knowsRaw[k], characters);
+      secrets[s].knows.push({ raw: secrets[s].knowsRaw[k], charId: kc ? kc.id : null, name: kc ? kc.name : secrets[s].knowsRaw[k] });
+    }
+    for (var su=0;su<secrets[s].suspectsRaw.length;su++){
+      var sc = findCharacterByName(secrets[s].suspectsRaw[su], characters);
+      secrets[s].suspects.push({ raw: secrets[s].suspectsRaw[su], charId: sc ? sc.id : null, name: sc ? sc.name : secrets[s].suspectsRaw[su] });
+    }
+    secrets[s].severity = guessSeverity(secrets[s].surfaceCost);
+  }
+
+  var branchSet = {};
+  var branchOrder = [];
+  for (var b=0;b<characters.length;b++){
+    var bn = characters[b].branch;
+    if (!branchSet[bn]){ branchSet[bn] = true; branchOrder.push(bn); }
+  }
+
+  return { characters: characters, secrets: secrets, timelineEvents: timelineEvents, warnings: warnings, branches: branchOrder };
+}
+
+function guessSeverity(text){
+  if (!text) return 'low';
+  var t = text.toLowerCase();
+  var high = ['foreclosure','collapse','exile','ruin','disinherit','scandal','prison','murder','death','disgraced publicly','bankrupt'];
+  var med = ['debt','disgrace','estrange','rift','lawsuit','divorce','fraud','affair'];
+  var i;
+  for (i=0;i<high.length;i++){ if (t.indexOf(high[i]) !== -1) return 'high'; }
+  for (i=0;i<med.length;i++){ if (t.indexOf(med[i]) !== -1) return 'medium'; }
+  return 'low';
+}
+
+/* ============================================================
+   TREE LAYOUT ALGORITHM (pure logic - testable standalone)
+   ============================================================ */
+var TREE_NODE_W = 168, TREE_NODE_H = 60, TREE_SIB_GAP = 30, TREE_SPOUSE_GAP = 14, TREE_ROW_GAP = 130, TREE_TOP_PAD = 60, TREE_LEFT_PAD = 60;
+
+function computeGenerations(characters){
+  var byId = {};
+  var i;
+  for (i=0;i<characters.length;i++){ byId[characters[i].id] = characters[i]; }
+  for (i=0;i<characters.length;i++){
+    var c = characters[i];
+    c.parentRefs = [];
+    for (var p=0;p<c.parentNames.length;p++){
+      var ref = findCharacterByName(c.parentNames[p], characters);
+      if (ref && ref.id !== c.id) c.parentRefs.push(ref);
+    }
+    c.spouseRef = c.spouseName ? findCharacterByName(c.spouseName, characters) : null;
+    if (c.spouseRef && c.spouseRef.id === c.id) c.spouseRef = null;
+  }
+
+  var depthCache = {};
+  function getDepth(c, visiting){
+    if (depthCache.hasOwnProperty(c.id)) return depthCache[c.id];
+    if (visiting[c.id]) return 0;
+    visiting[c.id] = true;
+    var d;
+    if (!c.parentRefs || c.parentRefs.length === 0){
+      d = 0;
+    } else {
+      var maxP = 0;
+      for (var p2=0;p2<c.parentRefs.length;p2++){
+        maxP = Math.max(maxP, getDepth(c.parentRefs[p2], visiting) + 1);
+      }
+      d = maxP;
+    }
+    delete visiting[c.id];
+    depthCache[c.id] = d;
+    return d;
+  }
+  for (i=0;i<characters.length;i++){
+    characters[i].generation = getDepth(characters[i], {});
+  }
+  for (i=0;i<characters.length;i++){
+    var ch = characters[i];
+    if (ch.spouseRef){
+      var g = Math.max(ch.generation, ch.spouseRef.generation);
+      ch.generation = g;
+      ch.spouseRef.generation = g;
+    }
+  }
+}
+
+function unitAnchorX(u){
+  var xs = [];
+  for (var i=0;i<u.length;i++){
+    var m = u[i];
+    if (m.parentRefs && m.parentRefs.length){
+      for (var p=0;p<m.parentRefs.length;p++){
+        if (typeof m.parentRefs[p].x === 'number') xs.push(m.parentRefs[p].x + TREE_NODE_W/2);
+      }
+    }
+  }
+  if (!xs.length) return null;
+  var sum = 0;
+  for (var j=0;j<xs.length;j++){ sum += xs[j]; }
+  return sum / xs.length;
+}
+
+function layoutTree(characters){
+  if (!characters.length) return { maxGen:0, canvasWidth:400, canvasHeight:300 };
+  computeGenerations(characters);
+  var maxGen = 0;
+  var i;
+  for (i=0;i<characters.length;i++){ maxGen = Math.max(maxGen, characters[i].generation); }
+  var rows = [];
+  for (var g=0; g<=maxGen; g++) rows.push([]);
+  for (i=0;i<characters.length;i++){ rows[characters[i].generation].push(characters[i]); }
+
+  var placedIds = {};
+  var rowUnits = [];
+  for (g=0; g<=maxGen; g++){
+    var row = rows[g];
+    var units = [];
+    for (i=0;i<row.length;i++){
+      var c = row[i];
+      if (placedIds[c.id]) continue;
+      if (c.spouseRef && c.spouseRef.generation === g && !placedIds[c.spouseRef.id]){
+        units.push([c, c.spouseRef]);
+        placedIds[c.id] = true; placedIds[c.spouseRef.id] = true;
+      } else {
+        units.push([c]);
+        placedIds[c.id] = true;
+      }
+    }
+    rowUnits.push(units);
+  }
+
+  var maxRowWidth = 0;
+  var rowWidths = [];
+  for (g=0; g<=maxGen; g++){
+    var units2 = rowUnits[g];
+    for (i=0;i<units2.length;i++){ units2[i]._origIndex = i; }
+    units2.sort(function(u1,u2){
+      var a1 = unitAnchorX(u1), a2 = unitAnchorX(u2);
+      if (a1===null && a2===null) return u1._origIndex - u2._origIndex;
+      if (a1===null) return 1;
+      if (a2===null) return -1;
+      return a1 - a2;
+    });
+    var curX = TREE_LEFT_PAD;
+    for (i=0;i<units2.length;i++){
+      var u = units2[i];
+      var anchor = unitAnchorX(u);
+      var unitWidth = u.length === 2 ? (TREE_NODE_W*2 + TREE_SPOUSE_GAP) : TREE_NODE_W;
+      var desiredLeft = anchor !== null ? anchor - unitWidth/2 : curX;
+      var left = Math.max(curX, desiredLeft);
+      var y = TREE_TOP_PAD + g*(TREE_NODE_H + TREE_ROW_GAP);
+      if (u.length === 2){
+        u[0].x = left; u[0].y = y;
+        u[1].x = left + TREE_NODE_W + TREE_SPOUSE_GAP; u[1].y = y;
+      } else {
+        u[0].x = left; u[0].y = y;
+      }
+      curX = left + unitWidth + TREE_SIB_GAP;
+    }
+    var rowW = curX - TREE_SIB_GAP - TREE_LEFT_PAD + TREE_NODE_W;
+    rowWidths[g] = rowW;
+    maxRowWidth = Math.max(maxRowWidth, rowW);
+  }
+  for (g=0; g<=maxGen; g++){
+    var offset = (maxRowWidth - rowWidths[g]) / 2;
+    for (i=0;i<rows[g].length;i++){ rows[g][i].x += offset; }
+  }
+
+  return {
+    maxGen: maxGen,
+    canvasWidth: maxRowWidth + TREE_LEFT_PAD*2,
+    canvasHeight: TREE_TOP_PAD*2 + (maxGen+1)*(TREE_NODE_H + TREE_ROW_GAP)
+  };
+}
+
+/* ============================================================
+   SAMPLE LEDGER TEXT
+   ============================================================ */
+var SAMPLE_LEDGER =
+"## Family Tree\n" +
+"\n" +
+"### Nathaniel Branch — The Ironwood Branch\n" +
+"Nathaniel Ashford (1802–1871), founder of the family shipping empire; married Constance Wren (1808–1879) in 1826.\n" +
+"Eleanor Ashford (1827–1901), heir apparent; daughter of Nathaniel and Constance; married Thaddeus Rook (1823–1888) in 1848; Ironwood Branch.\n" +
+"Marcus Ashford (1830–1902), estate manager; son of Nathaniel and Constance; married Delphine Foy (1834–1910) in 1852; Harrow Branch.\n" +
+"Cordelia Ashford (1833–1889), family archivist; daughter of Nathaniel and Constance; Ironwood Branch.\n" +
+"\n" +
+"### Harrow Branch — The Harrow Branch\n" +
+"Josiah Rook (1849–1915), shipping magnate; son of Eleanor and Thaddeus; married Beatrice Vane (1852–1920) in 1871; Ironwood Branch.\n" +
+"Augustina Rook (1852–1930), founder of the family charitable trust; daughter of Eleanor and Thaddeus; Ironwood Branch.\n" +
+"Reginald Ashford (1853–1919), estate lawyer; son of Marcus and Delphine; married Prudence Hale (1856–1925) in 1876; Harrow Branch.\n" +
+"Vivienne Ashford (1856–1940), portrait painter; daughter of Marcus and Delphine; Harrow Branch.\n" +
+"\n" +
+"### Wren Branch — The Wren Branch\n" +
+"Nathaniel Rook II (born 1872), current head of shipping operations; son of Josiah and Beatrice; married Iris Calder (born 1876) in 1898; Ironwood Branch.\n" +
+"Mara Calder (born 1875), suffragist and pamphleteer; daughter of Josiah and Beatrice; Ironwood Branch.\n" +
+"Percival Ashford (1877–1952), railway investor; son of Reginald and Prudence; married Odette Marchand (1880–1958) in 1901; Harrow Branch.\n" +
+"Harriet Ashford (born 1880), family physician; daughter of Reginald and Prudence; Harrow Branch.\n" +
+"\n" +
+"### Present Generation — The Calder Branch\n" +
+"Wendell Rook (born 1899), reluctant heir to the shipping fortune; son of Nathaniel Rook II and Iris; Wren Branch.\n" +
+"Clara Rook (born 1902), aviator; daughter of Nathaniel Rook II and Iris; married Desmond Fairweather (born 1898) in 1924; Wren Branch.\n" +
+"Julian Ashford (born 1903), war correspondent; son of Percival and Odette; Wren Branch.\n" +
+"Rosalind Ashford (born 1906), estranged from the family trust; daughter of Percival and Odette; Wren Branch.\n" +
+"\n" +
+"## Secrets Ledger\n" +
+"\n" +
+"**S1 — The First Ledger**\n" +
+"**Buried choice:** Nathaniel Ashford falsified the manifest on the ship that sank in 1859, hiding the true cause of the disaster.\n" +
+"**Knows:** Nathaniel Ashford, Cordelia Ashford\n" +
+"**Suspects:** Marcus Ashford, Eleanor Ashford\n" +
+"**Surface cost:** If revealed, the family's founding fortune would face total collapse and public scandal.\n" +
+"**Status:** Buried in the family archive; referenced obliquely in Cordelia's private journals.\n" +
+"\n" +
+"**S2 — The Rook Inheritance**\n" +
+"**Buried choice:** Josiah Rook quietly disinherited his younger brother after a bitter business dispute.\n" +
+"**Knows:** Josiah Rook, Beatrice Vane\n" +
+"**Suspects:** Augustina Rook\n" +
+"**Surface cost:** Public disgrace for the Rook name and a costly lawsuit if challenged in court.\n" +
+"**Status:** Sealed in a lawyer's private files; unknown to the current generation.\n" +
+"\n" +
+"**S3 — Mara's Correspondence**\n" +
+"**Buried choice:** Mara Calder has been secretly funding the suffragist movement using family trust money.\n" +
+"**Knows:** Mara Calder\n" +
+"**Suspects:** Nathaniel Rook II, Wendell Rook\n" +
+"**Surface cost:** Estrangement from the more conservative branches of the family if discovered.\n" +
+"**Status:** Ongoing; letters are hidden in a locked writing desk.\n" +
+"\n" +
+"**S4 — The Fairweather Affair**\n" +
+"**Buried choice:** Clara Rook's marriage to Desmond Fairweather was arranged to quietly cover a family debt.\n" +
+"**Knows:** Clara Rook, Desmond Fairweather\n" +
+"**Suspects:** Wendell Rook, Julian Ashford\n" +
+"**Surface cost:** A messy and embarrassing divorce case, minor social disgrace.\n" +
+"**Status:** Known only to the couple; carefully maintained in public.\n" +
+"\n" +
+"## Era Timeline\n" +
+"\n" +
+"### Founding and First Division, 1802–1871\n" +
+"1826 — Nathaniel Ashford marries Constance Wren and founds the family shipping company.\n" +
+"1859 — A ship sinks under suspicious circumstances; the true cause is buried.\n" +
+"1871 — Nathaniel Ashford dies; the estate splits into the Ironwood and Harrow branches.\n" +
+"\n" +
+"### Consolidation and Expansion, 1871–1930\n" +
+"1876 — Reginald Ashford marries Prudence Hale, consolidating the Harrow branch's legal influence.\n" +
+"1898 — Nathaniel Rook II takes formal control of shipping operations.\n" +
+"1915 — Josiah Rook dies; his disinheritance of his younger brother remains sealed.\n" +
+"1924 — Clara Rook marries Desmond Fairweather in a arrangement that quietly settles family debt.\n" +
+"\n" +
+"### Present Saga, 1930–1955\n" +
+"1930 — Augustina Rook's charitable trust becomes the family's public face.\n" +
+"1940 — Vivienne Ashford's portraits of the family are exhibited, drawing renewed public attention.\n" +
+"1952 — Percival Ashford's railway investments collapse, straining the Wren branch's finances.\n";
+
+/* ============================================================
+   UI - SECTIONS / TOGGLES
+   ============================================================ */
+function toggleSec(headEl){
+  headEl.parentNode.classList.toggle('open');
+}
+
+function toggleHelp(){
+  $('helpDropdown').classList.toggle('show');
+}
+
+document.addEventListener('click', function(e){
+  var helpMenu = $('helpDropdown');
+  var helpBtn = $('helpBtn');
+  if (helpMenu && helpMenu.classList.contains('show')){
+    if (!helpMenu.contains(e.target) && !helpBtn.contains(e.target)){
+      helpMenu.classList.remove('show');
+    }
+  }
+});
+
+document.addEventListener('keydown', function(e){
+  if ((e.key === 'h' || e.key === 'H') && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT'){
+    toggleHelp();
+  }
+});
+
+function switchView(view){
+  currentView = view;
+  $('tabTree').classList.toggle('active', view==='tree');
+  $('tabTimeline').classList.toggle('active', view==='timeline');
+  $('tabSecrets').classList.toggle('active', view==='secrets');
+  $('paneTree').classList.toggle('active', view==='tree');
+  $('paneTimeline').classList.toggle('active', view==='timeline');
+  $('paneSecrets').classList.toggle('active', view==='secrets');
+  $('zoomGroup').style.display = view==='tree' ? 'flex' : 'none';
+  closeDetailPanel();
+  renderActiveView();
+}
+
+/* ============================================================
+   PARSE / LOAD FLOW
+   ============================================================ */
+function handleParse(){
+  var text = $('ledgerInput').value;
+  if (!text || !text.trim()){
+    showParseStatus(false, 'Please paste some ledger text first.');
+    return;
+  }
+  var result = parseLedger(text);
+  appData.characters = result.characters;
+  appData.secrets = result.secrets;
+  appData.timelineEvents = result.timelineEvents;
+  appData.warnings = result.warnings;
+  appData.branches = result.branches;
+
+  layoutTree(appData.characters);
+
+  var msg = 'Parsed: ' + appData.characters.length + ' characters, ' + appData.secrets.length + ' secrets, ' + appData.timelineEvents.length + ' timeline events';
+  showParseStatus(appData.warnings.length === 0, msg, appData.warnings);
+
+  renderBranchKey();
+  renderBranchFilters();
+  setupGenerationFilter();
+  updateCanvasStatus();
+  renderActiveView();
+  persistCurrentData();
+}
+
+function showParseStatus(ok, msg, warnings){
+  var el = $('parseStatus');
+  var html = '<div class="parse-status ' + (ok ? 'ok' : 'warn') + '">';
+  html += (ok ? '✅ ' : '⚠️ ') + escapeHtml(msg);
+  if (warnings && warnings.length){
+    html += '<div style="margin-top:6px;font-weight:700;">Could not parse ' + warnings.length + ' line(s):</div>';
+    html += '<ul style="margin:4px 0 0 16px;padding:0;">';
+    for (var i=0;i<Math.min(warnings.length,8);i++){
+      html += '<li style="margin-bottom:3px;">' + escapeHtml(warnings[i]) + '</li>';
+    }
+    if (warnings.length > 8) html += '<li>...and ' + (warnings.length-8) + ' more</li>';
+    html += '</ul>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function loadSampleLedger(){
+  $('ledgerInput').value = SAMPLE_LEDGER;
+  handleParse();
+}
+
+function clearLedger(){
+  appData = { characters:[], secrets:[], timelineEvents:[], branches:[], warnings:[] };
+  $('ledgerInput').value = '';
+  $('parseStatus').innerHTML = '';
+  renderBranchKey();
+  renderBranchFilters();
+  setupGenerationFilter();
+  updateCanvasStatus();
+  renderActiveView();
+}
+
+/* ============================================================
+   MANUAL ENTRY
+   ============================================================ */
+function addManualCharacter(){
+  var name = $('mcName').value.trim();
+  var birth = $('mcBirth').value.trim();
+  if (!name || !birth){ alert('Name and birth year are required.'); return; }
+  var death = $('mcDeath').value.trim();
+  var branch = $('mcBranch').value.trim() || 'Unassigned Branch';
+  var parents = $('mcParents').value.trim();
+  var spouse = $('mcSpouse').value.trim();
+  var role = $('mcRole').value.trim();
+
+  var ch = {
+    id: 'c_' + name.replace(/[^a-zA-Z0-9]/g,'_') + '_' + birth + '_' + Date.now(),
+    name: name,
+    birthYear: parseInt(birth,10),
+    deathYear: death ? parseInt(death,10) : null,
+    isLiving: !death,
+    role: role,
+    branch: branch,
+    parentNames: parents ? parents.split(',').map(function(s){return s.trim();}).filter(Boolean) : [],
+    spouseName: spouse || null,
+    spouseBirth: null, spouseDeath: null, marriageYear: null,
+    rawLine: '(manual entry)'
+  };
+  appData.characters.push(ch);
+  if (appData.branches.indexOf(branch) === -1) appData.branches.push(branch);
+
+  layoutTree(appData.characters);
+  renderBranchKey();
+  renderBranchFilters();
+  setupGenerationFilter();
+  updateCanvasStatus();
+  renderActiveView();
+  persistCurrentData();
+
+  $('mcName').value=''; $('mcBirth').value=''; $('mcDeath').value=''; $('mcBranch').value='';
+  $('mcParents').value=''; $('mcSpouse').value=''; $('mcRole').value='';
+}
+
+function addManualSecret(){
+  var title = $('msTitle').value.trim();
+  if (!title){ alert('Secret title is required.'); return; }
+  var buried = $('msBuried').value.trim();
+  var knows = $('msKnows').value.trim();
+  var suspects = $('msSuspects').value.trim();
+  var cost = $('msCost').value.trim();
+  var status = $('msStatus').value.trim();
+
+  var num = appData.secrets.length + 1;
+  var sec = {
+    id: 'S' + num + '_' + Date.now(),
+    num: num,
+    title: title,
+    buriedChoice: buried,
+    knowsRaw: knows ? knows.split(',').map(function(s){return s.trim();}).filter(Boolean) : [],
+    suspectsRaw: suspects ? suspects.split(',').map(function(s){return s.trim();}).filter(Boolean) : [],
+    surfaceCost: cost,
+    status: status,
+    severityOverride: null
+  };
+  sec.knows = [];
+  sec.suspects = [];
+  for (var k=0;k<sec.knowsRaw.length;k++){
+    var kc = findCharacterByName(sec.knowsRaw[k], appData.characters);
+    sec.knows.push({ raw: sec.knowsRaw[k], charId: kc ? kc.id : null, name: kc ? kc.name : sec.knowsRaw[k] });
+  }
+  for (var su=0;su<sec.suspectsRaw.length;su++){
+    var sc = findCharacterByName(sec.suspectsRaw[su], appData.characters);
+    sec.suspects.push({ raw: sec.suspectsRaw[su], charId: sc ? sc.id : null, name: sc ? sc.name : sec.suspectsRaw[su] });
+  }
+  sec.severity = guessSeverity(sec.surfaceCost);
+  appData.secrets.push(sec);
+
+  updateCanvasStatus();
+  renderActiveView();
+  persistCurrentData();
+
+  $('msTitle').value=''; $('msBuried').value=''; $('msKnows').value=''; $('msSuspects').value='';
+  $('msCost').value=''; $('msStatus').value='';
+}
+
+/* ============================================================
+   BRANCH KEY / FILTERS
+   ============================================================ */
+function branchColorFor(branchName){
+  var idx = appData.branches.indexOf(branchName);
+  if (idx === -1) idx = 0;
+  return BRANCH_COLOR_HEX[idx % BRANCH_COLOR_HEX.length];
+}
+
+function renderBranchKey(){
+  var body = $('branchKeyBody');
+  if (!appData.branches.length){
+    body.innerHTML = '<div class="hint">Branches are auto-detected once you parse a ledger.</div>';
+    return;
+  }
+  var html = '';
+  for (var i=0;i<appData.branches.length;i++){
+    var color = BRANCH_COLOR_HEX[i % BRANCH_COLOR_HEX.length];
+    html += '<div class="branch-row"><div class="branch-swatch" style="background:' + color + ';"></div>';
+    html += '<input type="text" value="' + escapeHtmlAttr(appData.branches[i]) + '" data-branch-idx="' + i + '" onchange="renameBranch(' + i + ', this.value)"></div>';
+  }
+  body.innerHTML = html;
+}
+
+function renameBranch(idx, newName){
+  var oldName = appData.branches[idx];
+  newName = newName.trim() || oldName;
+  appData.branches[idx] = newName;
+  for (var i=0;i<appData.characters.length;i++){
+    if (appData.characters[i].branch === oldName) appData.characters[i].branch = newName;
+  }
+  renderBranchFilters();
+  renderActiveView();
+  persistCurrentData();
+}
+
+function renderBranchFilters(){
+  var body = $('branchCheckBody');
+  if (!appData.branches.length){
+    body.innerHTML = '<div class="hint">No branches detected yet.</div>';
+    return;
+  }
+  var html = '';
+  for (var i=0;i<appData.branches.length;i++){
+    var color = BRANCH_COLOR_HEX[i % BRANCH_COLOR_HEX.length];
+    html += '<div class="branch-check-row"><input type="checkbox" checked data-branch-name="' + escapeHtmlAttr(appData.branches[i]) + '" onchange="renderActiveView()">';
+    html += '<div class="branch-swatch" style="background:' + color + ';width:11px;height:11px;"></div>';
+    html += '<label>' + escapeHtml(appData.branches[i]) + '</label></div>';
+  }
+  body.innerHTML = html;
+}
+
+function getVisibleBranches(){
+  var checks = document.querySelectorAll('#branchCheckBody input[type=checkbox]');
+  if (!checks.length) return null;
+  var visible = {};
+  for (var i=0;i<checks.length;i++){
+    if (checks[i].checked) visible[checks[i].getAttribute('data-branch-name')] = true;
+  }
+  return visible;
+}
+
+function setupGenerationFilter(){
+  var maxGen = 0;
+  for (var i=0;i<appData.characters.length;i++){ maxGen = Math.max(maxGen, appData.characters[i].generation || 0); }
+  $('genFrom').min = 0; $('genFrom').max = maxGen; $('genFrom').value = 0;
+  $('genTo').min = 0; $('genTo').max = maxGen; $('genTo').value = maxGen;
+  genFilter.from = 0; genFilter.to = maxGen;
+  $('genFromVal').innerText = 0;
+  $('genToVal').innerText = maxGen;
+}
+
+function onGenRangeChange(){
+  var f = parseInt($('genFrom').value,10);
+  var t = parseInt($('genTo').value,10);
+  if (f > t){ var tmp=f; f=t; t=tmp; }
+  genFilter.from = f; genFilter.to = t;
+  $('genFromVal').innerText = f;
+  $('genToVal').innerText = t;
+  renderActiveView();
+}
+
+function getFilteredCharacters(){
+  var showDeceased = $('showDeceased').checked;
+  var visibleBranches = getVisibleBranches();
+  return appData.characters.filter(function(c){
+    if (!showDeceased && c.deathYear) return false;
+    if (visibleBranches && !visibleBranches[c.branch]) return false;
+    if (typeof c.generation === 'number' && (c.generation < genFilter.from || c.generation > genFilter.to)) return false;
+    return true;
+  });
+}
+
+function updateCanvasStatus(){
+  var label = $('canvasStatusLabel');
+  if (!appData.characters.length && !appData.secrets.length && !appData.timelineEvents.length){
+    label.innerText = 'No data loaded yet';
+  } else {
+    label.innerText = appData.characters.length + ' characters · ' + appData.secrets.length + ' secrets · ' + appData.timelineEvents.length + ' events';
+  }
+}
+
+/* ============================================================
+   RENDER DISPATCH
+   ============================================================ */
+function renderActiveView(){
+  if (currentView === 'tree') renderTreeView();
+  else if (currentView === 'timeline') renderTimelineView();
+  else if (currentView === 'secrets') renderSecretsView();
+}
+
+function escapeHtml(str){
+  if (str===undefined||str===null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escapeHtmlAttr(str){ return escapeHtml(str).replace(/'/g,'&#39;'); }
+
+function svgEl(tag, attrs){
+  var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (var k in attrs){ if (attrs.hasOwnProperty(k)) el.setAttribute(k, attrs[k]); }
+  return el;
+}
+
+/* ============================================================
+   TREE VIEW RENDERING
+   ============================================================ */
+function renderTreeView(){
+  var svg = $('treeSvg');
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  var visibleChars = getFilteredCharacters();
+  $('treeEmpty').style.display = appData.characters.length ? 'none' : 'flex';
+  if (!appData.characters.length) return;
+
+  var dims = layoutTree(appData.characters);
+  var visibleIds = {};
+  for (var i=0;i<visibleChars.length;i++){ visibleIds[visibleChars[i].id] = true; }
+
+  svg.setAttribute('viewBox', '0 0 ' + dims.canvasWidth + ' ' + dims.canvasHeight);
+
+  var linesGroup = svgEl('g', {});
+  var nodesGroup = svgEl('g', {});
+
+  for (i=0;i<appData.characters.length;i++){
+    var c = appData.characters[i];
+    if (!visibleIds[c.id]) continue;
+    for (var p=0;p<(c.parentRefs||[]).length;p++){
+      var parent = c.parentRefs[p];
+      if (!visibleIds[parent.id]) continue;
+    }
+    var parentsVisible = (c.parentRefs||[]).filter(function(pr){ return visibleIds[pr.id]; });
+    if (parentsVisible.length){
+      var px, py;
+      if (parentsVisible.length === 2){
+        px = (parentsVisible[0].x + parentsVisible[1].x)/2 + TREE_NODE_W/2;
+        py = parentsVisible[0].y + TREE_NODE_H;
+      } else {
+        px = parentsVisible[0].x + TREE_NODE_W/2;
+        py = parentsVisible[0].y + TREE_NODE_H;
+      }
+      var cx = c.x + TREE_NODE_W/2, cy = c.y;
+      var midY = (py+cy)/2;
+      var path = 'M' + px + ',' + py + ' C' + px + ',' + midY + ' ' + cx + ',' + midY + ' ' + cx + ',' + cy;
+      linesGroup.appendChild(svgEl('path', { d:path, fill:'none', stroke:'#c9bda2', 'stroke-width':'1.6' }));
+    }
+    if (c.spouseRef && visibleIds[c.spouseRef.id] && c.x < c.spouseRef.x){
+      var y1 = c.y + TREE_NODE_H/2;
+      linesGroup.appendChild(svgEl('line', { x1:c.x+TREE_NODE_W, y1:y1, x2:c.spouseRef.x, y2:y1, stroke:'#b8a988', 'stroke-width':'2' }));
+      if (c.marriageYear){
+        var midX = (c.x+TREE_NODE_W + c.spouseRef.x)/2;
+        var lbl = svgEl('text', { x:midX, y:y1-6, 'text-anchor':'middle', 'font-size':'10', fill:'#8f8270', 'font-family':'Source Sans Pro, sans-serif' });
+        lbl.textContent = 'm. ' + c.marriageYear;
+        linesGroup.appendChild(lbl);
+      }
+    }
+  }
+
+  for (i=0;i<visibleChars.length;i++){
+    nodesGroup.appendChild(buildCharacterNode(visibleChars[i]));
+  }
+
+  svg.appendChild(linesGroup);
+  svg.appendChild(nodesGroup);
+
+  applyTreeTransform();
+}
+
+function buildCharacterNode(c){
+  var g = svgEl('g', { 'class':'char-node', 'data-char-id':c.id, style:'cursor:pointer;' });
+  var color = branchColorFor(c.branch);
+  var rect = svgEl('rect', { x:c.x, y:c.y, width:TREE_NODE_W, height:TREE_NODE_H, rx:8, fill:'#fffdf8', stroke:'#e3d9c4', 'stroke-width':'1.4' });
+  g.appendChild(rect);
+  var stripe = svgEl('rect', { x:c.x, y:c.y, width:5, height:TREE_NODE_H, fill: c.isLiving ? color : '#a89b84', rx:2 });
+  g.appendChild(stripe);
+
+  var nameText = svgEl('text', { x:c.x+14, y:c.y+24, 'font-size':'13.5', 'font-weight':'700', fill:'#241f19', 'font-family':'Cormorant Garamond, serif' });
+  nameText.textContent = c.name + (c.deathYear ? ' †' : '');
+  g.appendChild(nameText);
+
+  var yearsText = svgEl('text', { x:c.x+14, y:c.y+40, 'font-size':'10.5', fill:'#8f8270', 'font-family':'Source Sans Pro, sans-serif' });
+  yearsText.textContent = c.deathYear ? (c.birthYear + '–' + c.deathYear) : ('b. ' + c.birthYear);
+  g.appendChild(yearsText);
+
+  if (c.role){
+    var roleText = svgEl('text', { x:c.x+14, y:c.y+53, 'font-size':'9.5', fill:'#8f8270', 'font-family':'Source Sans Pro, sans-serif' });
+    var roleStr = c.role.length > 26 ? (c.role.substring(0,24)+'…') : c.role;
+    roleText.textContent = roleStr;
+    g.appendChild(roleText);
+  }
+
+  g.addEventListener('click', function(charId){
+    return function(){ showCharacterDetail(charId); };
+  }(c.id));
+
+  return g;
+}
+
+function showCharacterDetail(charId){
+  var c = null;
+  for (var i=0;i<appData.characters.length;i++){ if (appData.characters[i].id === charId){ c = appData.characters[i]; break; } }
+  if (!c) return;
+  var html = '<div class="detail-name">' + escapeHtml(c.name) + (c.deathYear ? ' †' : '') + '</div>';
+  html += '<div class="detail-years">' + (c.deathYear ? (c.birthYear+'–'+c.deathYear) : ('born '+c.birthYear)) + ' &middot; ' + escapeHtml(c.branch) + '</div>';
+  if (c.role){
+    html += '<div class="detail-field"><div class="detail-field-label">Role</div><div class="detail-field-value">' + escapeHtml(c.role) + '</div></div>';
+  }
+  if (c.parentNames && c.parentNames.length){
+    html += '<div class="detail-field"><div class="detail-field-label">Parents</div><div class="detail-field-value">' + escapeHtml(c.parentNames.join(', ')) + '</div></div>';
+  }
+  if (c.spouseName){
+    html += '<div class="detail-field"><div class="detail-field-label">Spouse</div><div class="detail-field-value">' + escapeHtml(c.spouseName) + (c.marriageYear ? (' (m. '+c.marriageYear+')') : '') + '</div></div>';
+  }
+  html += '<div class="detail-field"><div class="detail-field-label">Source Line</div><div class="detail-field-value" style="font-family:monospace;font-size:11px;">' + escapeHtml(c.rawLine) + '</div></div>';
+  $('detailPanelBody').innerHTML = html;
+  $('detailPanel').classList.add('show');
+}
+
+function closeDetailPanel(){
+  $('detailPanel').classList.remove('show');
+}
+
+/* Pan / zoom for tree */
+function applyTreeTransform(){
+  var svg = $('treeSvg');
+  var g1 = svg.querySelectorAll('g');
+  var transform = 'translate(' + treeZoom.panX + ',' + treeZoom.panY + ') scale(' + treeZoom.scale + ')';
+  for (var i=0;i<g1.length;i++){
+    if (g1[i].parentNode === svg){ g1[i].setAttribute('transform', transform); }
+  }
+}
+
+function zoomTree(dir){
+  treeZoom.scale = Math.max(0.3, Math.min(2.5, treeZoom.scale + dir*0.15));
+  $('zoomLabel').innerText = Math.round(treeZoom.scale*100) + '%';
+  applyTreeTransform();
+}
+
+function resetTreeView(){
+  treeZoom = { scale:1, panX:0, panY:0 };
+  $('zoomLabel').innerText = '100%';
+  applyTreeTransform();
+}
+
+(function setupTreeDrag(){
+  var host = document.getElementById('treeHost');
+  var dragging = false, lastX=0, lastY=0;
+  host.addEventListener('mousedown', function(e){
+    if (e.target.closest && e.target.closest('.char-node')) return;
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    host.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', function(e){
+    if (!dragging) return;
+    treeZoom.panX += (e.clientX - lastX);
+    treeZoom.panY += (e.clientY - lastY);
+    lastX = e.clientX; lastY = e.clientY;
+    applyTreeTransform();
+  });
+  window.addEventListener('mouseup', function(){
+    dragging = false;
+    host.classList.remove('dragging');
+  });
+})();
+
+/* ============================================================
+   TIMELINE VIEW RENDERING
+   ============================================================ */
+function renderTimelineView(){
+  var svg = $('timelineSvg');
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  $('timelineEmpty').style.display = appData.timelineEvents.length ? 'none' : 'flex';
+  if (!appData.timelineEvents.length && !appData.characters.length) return;
+
+  var visibleChars = getFilteredCharacters();
+  var years = [];
+  for (var i=0;i<appData.timelineEvents.length;i++){
+    years.push(appData.timelineEvents[i].year);
+    if (appData.timelineEvents[i].yearEnd) years.push(appData.timelineEvents[i].yearEnd);
+  }
+  for (i=0;i<visibleChars.length;i++){
+    years.push(visibleChars[i].birthYear);
+    years.push(visibleChars[i].deathYear || (visibleChars[i].birthYear+80));
+  }
+  if (!years.length) return;
+  var minYear = Math.min.apply(null, years);
+  var maxYear = Math.max.apply(null, years);
+  minYear = Math.floor(minYear/10)*10 - 10;
+  maxYear = Math.ceil(maxYear/10)*10 + 10;
+
+  var PX_PER_YEAR = 6;
+  var LEFT_PAD = 40, TOP_PAD = 30;
+  var width = (maxYear-minYear)*PX_PER_YEAR + LEFT_PAD*2;
+
+  var eras = [];
+  var eraMap = {};
+  for (i=0;i<appData.timelineEvents.length;i++){
+    var ev = appData.timelineEvents[i];
+    if (!eraMap[ev.era]){ eraMap[ev.era] = { name: ev.era, minY: ev.year, maxY: ev.yearEnd || ev.year }; eras.push(eraMap[ev.era]); }
+    else {
+      eraMap[ev.era].minY = Math.min(eraMap[ev.era].minY, ev.year);
+      eraMap[ev.era].maxY = Math.max(eraMap[ev.era].maxY, ev.yearEnd || ev.year);
+    }
+  }
+
+  var ERA_BAND_Y = TOP_PAD, ERA_BAND_H = 30;
+  var AXIS_Y = ERA_BAND_Y + ERA_BAND_H + 40;
+  var EVENTS_Y = AXIS_Y;
+  var LIFESPAN_START_Y = AXIS_Y + 60;
+  var LIFESPAN_ROW_H = 22;
+  var height = LIFESPAN_START_Y + visibleChars.length*LIFESPAN_ROW_H + 60;
+
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+
+  function xForYear(y){ return LEFT_PAD + (y-minYear)*PX_PER_YEAR; }
+
+  var eraColors = ['#efe4d4','#e3ede5','#efdada','#dde3ef'];
+  for (i=0;i<eras.length;i++){
+    var e = eras[i];
+    var ex = xForYear(e.minY), ex2 = xForYear(e.maxY);
+    svg.appendChild(svgEl('rect', { x:ex, y:ERA_BAND_Y, width:Math.max(ex2-ex,4), height:ERA_BAND_H, fill:eraColors[i%eraColors.length], stroke:'#e3d9c4' }));
+    var elbl = svgEl('text', { x:ex+6, y:ERA_BAND_Y+19, 'font-size':'11', 'font-weight':'700', fill:'#5c4530', 'font-family':'Source Sans Pro, sans-serif' });
+    elbl.textContent = e.name;
+    svg.appendChild(elbl);
+  }
+
+  svg.appendChild(svgEl('line', { x1:LEFT_PAD, y1:AXIS_Y, x2:width-LEFT_PAD, y2:AXIS_Y, stroke:'#c9bda2', 'stroke-width':'1.6' }));
+  for (var yr=Math.ceil(minYear/20)*20; yr<=maxYear; yr+=20){
+    var gx = xForYear(yr);
+    svg.appendChild(svgEl('line', { x1:gx, y1:AXIS_Y-4, x2:gx, y2:AXIS_Y+4, stroke:'#8f8270', 'stroke-width':'1' }));
+    var yrLbl = svgEl('text', { x:gx, y:AXIS_Y+18, 'text-anchor':'middle', 'font-size':'9.5', fill:'#8f8270', 'font-family':'Source Sans Pro, sans-serif' });
+    yrLbl.textContent = yr;
+    svg.appendChild(yrLbl);
+  }
+
+  for (i=0;i<appData.timelineEvents.length;i++){
+    var ev2 = appData.timelineEvents[i];
+    var evx = xForYear(ev2.year);
+    var marker = svgEl('circle', { cx:evx, cy:EVENTS_Y, r:6, fill:'#7a5c3e', stroke:'#fffdf8', 'stroke-width':'2', style:'cursor:pointer;' });
+    marker.addEventListener('click', (function(evObj){ return function(){ showEventDetail(evObj); }; })(ev2));
+    svg.appendChild(marker);
+    svg.appendChild(svgEl('line', { x1:evx, y1:EVENTS_Y+6, x2:evx, y2:EVENTS_Y+16, stroke:'#c9bda2', 'stroke-width':'1' }));
+  }
+
+  for (i=0;i<visibleChars.length;i++){
+    var c = visibleChars[i];
+    var rowY = LIFESPAN_START_Y + i*LIFESPAN_ROW_H;
+    var startX = xForYear(c.birthYear);
+    var endX = xForYear(c.deathYear || maxYear);
+    var color = branchColorFor(c.branch);
+    svg.appendChild(svgEl('rect', { x:startX, y:rowY, width:Math.max(endX-startX,3), height:10, rx:4, fill:color, opacity: c.isLiving ? '0.9':'0.55' }));
+    var nameLbl = svgEl('text', { x:startX, y:rowY-3, 'font-size':'9', fill:'#4a4032', 'font-family':'Source Sans Pro, sans-serif' });
+    nameLbl.textContent = c.name;
+    svg.appendChild(nameLbl);
+  }
+}
+
+function showEventDetail(ev){
+  var html = '<div class="detail-name">' + escapeHtml(ev.year + (ev.yearEnd ? ('–'+ev.yearEnd) : '')) + '</div>';
+  html += '<div class="detail-years">' + escapeHtml(ev.era) + '</div>';
+  html += '<div class="detail-field"><div class="detail-field-value">' + escapeHtml(ev.desc) + '</div></div>';
+  $('detailPanelBody').innerHTML = html;
+  $('detailPanel').classList.add('show');
+}
+
+/* ============================================================
+   SECRETS MAP RENDERING
+   ============================================================ */
+function severityColor(sev){
+  if (sev==='high') return '#8b2e2e';
+  if (sev==='medium') return '#c9702c';
+  return '#c9a227';
+}
+
+function renderSecretsView(){
+  var svg = $('secretsSvg');
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  $('secretsEmpty').style.display = appData.secrets.length ? 'none' : 'flex';
+  if (!appData.secrets.length) return;
+
+  var visibleIds = {};
+  var vc = getFilteredCharacters();
+  for (var i=0;i<vc.length;i++){ visibleIds[vc[i].id] = true; }
+
+  var charSet = {};
+  var charList = [];
+  for (i=0;i<appData.secrets.length;i++){
+    var sec = appData.secrets[i];
+    var all = sec.knows.concat(sec.suspects);
+    for (var j=0;j<all.length;j++){
+      var key = all[j].charId || ('name_'+all[j].name);
+      if (!charSet[key]){ charSet[key] = all[j]; charList.push(all[j]); }
+    }
+  }
+
+  var SEC_COLS = 4, SEC_W = 190, SEC_H = 74, SEC_GAP_X = 30, SEC_GAP_Y = 26, SEC_TOP = 30, SEC_LEFT = 30;
+  var secPositions = {};
+  for (i=0;i<appData.secrets.length;i++){
+    var row = Math.floor(i/SEC_COLS), col = i%SEC_COLS;
+    secPositions[appData.secrets[i].id] = { x: SEC_LEFT + col*(SEC_W+SEC_GAP_X), y: SEC_TOP + row*(SEC_H+SEC_GAP_Y) };
+  }
+  var secRows = Math.ceil(appData.secrets.length/SEC_COLS);
+  var secAreaBottom = SEC_TOP + secRows*(SEC_H+SEC_GAP_Y) + 40;
+
+  var CHAR_COLS = 6, CHAR_W = 140, CHAR_H = 46, CHAR_GAP_X = 20, CHAR_GAP_Y = 20, CHAR_TOP = secAreaBottom, CHAR_LEFT = 30;
+  var charPositions = {};
+  for (i=0;i<charList.length;i++){
+    var row2 = Math.floor(i/CHAR_COLS), col2 = i%CHAR_COLS;
+    var key2 = charList[i].charId || ('name_'+charList[i].name);
+    charPositions[key2] = { x: CHAR_LEFT + col2*(CHAR_W+CHAR_GAP_X), y: CHAR_TOP + row2*(CHAR_H+CHAR_GAP_Y) };
+  }
+  var charRows = Math.ceil(charList.length/CHAR_COLS);
+  var totalHeight = CHAR_TOP + charRows*(CHAR_H+CHAR_GAP_Y) + 40;
+  var totalWidth = Math.max(SEC_LEFT + SEC_COLS*(SEC_W+SEC_GAP_X), CHAR_LEFT + CHAR_COLS*(CHAR_W+CHAR_GAP_X)) + 30;
+
+  svg.setAttribute('width', totalWidth);
+  svg.setAttribute('height', totalHeight);
+  svg.setAttribute('viewBox', '0 0 ' + totalWidth + ' ' + totalHeight);
+
+  var linesG = svgEl('g', {});
+  for (i=0;i<appData.secrets.length;i++){
+    var s = appData.secrets[i];
+    var sp = secPositions[s.id];
+    var scx = sp.x + SEC_W/2, scy = sp.y + SEC_H;
+    for (var k=0;k<s.knows.length;k++){
+      var key3 = s.knows[k].charId || ('name_'+s.knows[k].name);
+      var cp = charPositions[key3];
+      if (!cp) continue;
+      linesG.appendChild(svgEl('line', { x1:scx, y1:scy, x2:cp.x+CHAR_W/2, y2:cp.y, stroke:severityColor(s.severityOverride||s.severity), 'stroke-width':'1.6', opacity:'0.65' }));
+    }
+    for (var su=0;su<s.suspects.length;su++){
+      var key4 = s.suspects[su].charId || ('name_'+s.suspects[su].name);
+      var cp2 = charPositions[key4];
+      if (!cp2) continue;
+      linesG.appendChild(svgEl('line', { x1:scx, y1:scy, x2:cp2.x+CHAR_W/2, y2:cp2.y, stroke:severityColor(s.severityOverride||s.severity), 'stroke-width':'1.4', opacity:'0.5', 'stroke-dasharray':'5,4' }));
+    }
+  }
+  svg.appendChild(linesG);
+
+  for (i=0;i<appData.secrets.length;i++){
+    svg.appendChild(buildSecretNode(appData.secrets[i], secPositions[appData.secrets[i].id], SEC_W, SEC_H));
+  }
+  for (i=0;i<charList.length;i++){
+    var key5 = charList[i].charId || ('name_'+charList[i].name);
+    svg.appendChild(buildSecretCharNode(charList[i], charPositions[key5], CHAR_W, CHAR_H));
+  }
+}
+
+function buildSecretNode(sec, pos, w, h){
+  var g = svgEl('g', { style:'cursor:pointer;' });
+  var color = severityColor(sec.severityOverride||sec.severity);
+  var rect = svgEl('rect', { x:pos.x, y:pos.y, width:w, height:h, rx:9, fill:'#fffdf8', stroke:color, 'stroke-width':'2' });
+  g.appendChild(rect);
+  var lockBadge = svgEl('circle', { cx:pos.x+16, cy:pos.y+18, r:10, fill:color });
+  g.appendChild(lockBadge);
+  var lockTxt = svgEl('text', { x:pos.x+16, y:pos.y+22, 'text-anchor':'middle', 'font-size':'11', fill:'#fff' });
+  lockTxt.textContent = '🔒';
+  g.appendChild(lockTxt);
+  var title = svgEl('text', { x:pos.x+32, y:pos.y+16, 'font-size':'10', 'font-weight':'700', fill:'#8f8270', 'font-family':'Source Sans Pro, sans-serif' });
+  title.textContent = sec.id;
+  g.appendChild(title);
+  var titleFull = svgEl('text', { x:pos.x+32, y:pos.y+30, 'font-size':'11', 'font-weight':'700', fill:'#241f19', 'font-family':'Cormorant Garamond, serif' });
+  var tstr = sec.title.length > 22 ? (sec.title.substring(0,20)+'…') : sec.title;
+  titleFull.textContent = tstr;
+  g.appendChild(titleFull);
+  var statusTxt = svgEl('text', { x:pos.x+10, y:pos.y+h-10, 'font-size':'9', fill:'#8f8270', 'font-family':'Source Sans Pro, sans-serif' });
+  var sstr = (sec.status||'').length > 30 ? (sec.status.substring(0,28)+'…') : (sec.status||'');
+  statusTxt.textContent = sstr;
+  g.appendChild(statusTxt);
+  g.addEventListener('click', function(){ showSecretDetail(sec.id); });
+  return g;
+}
+
+function buildSecretCharNode(charRef, pos, w, h){
+  var g = svgEl('g', {});
+  var ch = charRef.charId ? findById(appData.characters, charRef.charId) : null;
+  var color = ch ? branchColorFor(ch.branch) : '#948aa8';
+  var rect = svgEl('rect', { x:pos.x, y:pos.y, width:w, height:h, rx:8, fill:'#faf6ee', stroke:'#e3d9c4', 'stroke-width':'1.2' });
+  g.appendChild(rect);
+  var stripe = svgEl('rect', { x:pos.x, y:pos.y, width:4, height:h, fill:color, rx:2 });
+  g.appendChild(stripe);
+  var nameTxt = svgEl('text', { x:pos.x+11, y:pos.y+h/2+4, 'font-size':'10.5', 'font-weight':'700', fill:'#241f19', 'font-family':'Source Sans Pro, sans-serif' });
+  var nstr = charRef.name.length > 17 ? (charRef.name.substring(0,15)+'…') : charRef.name;
+  nameTxt.textContent = nstr;
+  g.appendChild(nameTxt);
+  return g;
+}
+
+function findById(arr, id){
+  for (var i=0;i<arr.length;i++){ if (arr[i].id===id) return arr[i]; }
+  return null;
+}
+
+function showSecretDetail(secId){
+  var sec = findById(appData.secrets, secId);
+  if (!sec) return;
+  var html = '<div class="detail-name">' + escapeHtml(sec.id) + ' — ' + escapeHtml(sec.title) + '</div>';
+  html += '<div class="detail-field"><div class="detail-field-label">Buried Choice</div><div class="detail-field-value">' + escapeHtml(sec.buriedChoice) + '</div></div>';
+  html += '<div class="detail-field"><div class="detail-field-label">Knows</div><div class="detail-field-value">' + escapeHtml(sec.knows.map(function(k){return k.name;}).join(', ') || '—') + '</div></div>';
+  html += '<div class="detail-field"><div class="detail-field-label">Suspects</div><div class="detail-field-value">' + escapeHtml(sec.suspects.map(function(k){return k.name;}).join(', ') || '—') + '</div></div>';
+  html += '<div class="detail-field"><div class="detail-field-label">Surface Cost</div><div class="detail-field-value">' + escapeHtml(sec.surfaceCost) + '</div></div>';
+  html += '<div class="detail-field"><div class="detail-field-label">Status</div><div class="detail-field-value">' + escapeHtml(sec.status) + '</div></div>';
+  html += '<div class="detail-field"><div class="detail-field-label">Severity</div>';
+  html += '<select class="severity-select" onchange="setSeverityOverride(\'' + secId + '\', this.value)">';
+  var opts = ['low','medium','high'];
+  for (var i=0;i<opts.length;i++){
+    var sel = (sec.severityOverride||sec.severity)===opts[i] ? ' selected' : '';
+    html += '<option value="' + opts[i] + '"' + sel + '>' + opts[i].charAt(0).toUpperCase()+opts[i].slice(1) + '</option>';
+  }
+  html += '</select></div>';
+  $('detailPanelBody').innerHTML = html;
+  $('detailPanel').classList.add('show');
+}
+
+function setSeverityOverride(secId, val){
+  var sec = findById(appData.secrets, secId);
+  if (!sec) return;
+  sec.severityOverride = val;
+  renderActiveView();
+  persistCurrentData();
+}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+function printCurrentView(){
+  var panes = ['paneTree','paneTimeline','paneSecrets'];
+  for (var i=0;i<panes.length;i++){ $(panes[i]).classList.remove('printing'); }
+  var activeId = currentView==='tree' ? 'paneTree' : (currentView==='timeline' ? 'paneTimeline' : 'paneSecrets');
+  $(activeId).classList.add('printing');
+  window.print();
+  setTimeout(function(){ $(activeId).classList.remove('printing'); }, 500);
+}
+
+/* ============================================================
+   PERSISTENCE (localStorage, multi-saga)
+   ============================================================ */
+var STORAGE_KEY = 'dynasty_ledger_explorer_v1';
+
+function loadAllSagas(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { sagas:{}, current:'' };
+    return JSON.parse(raw);
+  } catch(e){ return { sagas:{}, current:'' }; }
+}
+
+function saveAllSagas(store){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch(e){}
+}
+
+function persistCurrentData(){
+  var store = loadAllSagas();
+  var name = currentSagaName || 'Untitled Saga';
+  store.sagas[name] = {
+    ledgerText: $('ledgerInput').value,
+    characters: appData.characters,
+    secrets: appData.secrets,
+    timelineEvents: appData.timelineEvents,
+    branches: appData.branches
+  };
+  store.current = name;
+  currentSagaName = name;
+  saveAllSagas(store);
+  refreshSagaDropdown();
+}
+
+function saveAsNewSaga(){
+  var name = prompt('Name this saga:', currentSagaName || 'My Family Saga');
+  if (!name) return;
+  currentSagaName = name.trim();
+  persistCurrentData();
+  showParseStatus(true, 'Saved as "' + currentSagaName + '"');
+}
+
+function refreshSagaDropdown(){
+  var store = loadAllSagas();
+  var sel = $('sagaSelect');
+  var names = Object.keys(store.sagas);
+  var html = '<option value="">-- Load Saga --</option>';
+  for (var i=0;i<names.length;i++){
+    html += '<option value="' + escapeHtmlAttr(names[i]) + '"' + (names[i]===currentSagaName?' selected':'') + '>' + escapeHtml(names[i]) + '</option>';
+  }
+  sel.innerHTML = html;
+}
+
+function onSagaSelectChange(){
+  var name = $('sagaSelect').value;
+  if (!name) return;
+  var store = loadAllSagas();
+  var saga = store.sagas[name];
+  if (!saga) return;
+  currentSagaName = name;
+  appData.characters = saga.characters || [];
+  appData.secrets = saga.secrets || [];
+  appData.timelineEvents = saga.timelineEvents || [];
+  appData.branches = saga.branches || [];
+  appData.warnings = [];
+  $('ledgerInput').value = saga.ledgerText || '';
+  layoutTree(appData.characters);
+  renderBranchKey();
+  renderBranchFilters();
+  setupGenerationFilter();
+  updateCanvasStatus();
+  renderActiveView();
+  showParseStatus(true, 'Loaded saga "' + name + '"');
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(function init(){
+  refreshSagaDropdown();
+  var store = loadAllSagas();
+  if (store.current && store.sagas[store.current]){
+    currentSagaName = store.current;
+    var saga = store.sagas[store.current];
+    appData.characters = saga.characters || [];
+    appData.secrets = saga.secrets || [];
+    appData.timelineEvents = saga.timelineEvents || [];
+    appData.branches = saga.branches || [];
+    $('ledgerInput').value = saga.ledgerText || '';
+    layoutTree(appData.characters);
+  }
+  renderBranchKey();
+  renderBranchFilters();
+  setupGenerationFilter();
+  updateCanvasStatus();
+  renderActiveView();
+})();
+</script>
+</body>
+</html>
