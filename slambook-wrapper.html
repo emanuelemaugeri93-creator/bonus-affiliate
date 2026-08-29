@@ -1,0 +1,1077 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slambook Front/Back Matter & Series Wrapper Creator — SlamBook Forge Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@600;700&family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=Patrick+Hand&family=Work+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --r:16px; --sh:0 8px 26px rgba(0,0,0,.10); --bg:#faf8f5; --panel:#ffffff; --ink:#2e2a26; --muted:#948c80; --line:#f0e8dc; --accent:#f4a6c1; --accent2:#a8d8d8; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Work Sans',sans-serif;-webkit-font-smoothing:antialiased}
+button{font-family:'Work Sans',sans-serif}
+.topbar{height:64px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:30;box-shadow:0 1px 0 var(--line)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo-badge{width:42px;height:42px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;box-shadow:0 4px 14px rgba(0,0,0,.12);flex-shrink:0}
+.logo-badge span{filter:drop-shadow(0 1px 0 rgba(0,0,0,.15))}
+.brand-title{font-family:'Fraunces',serif;font-weight:800;font-size:15px;letter-spacing:-.01em;line-height:1}
+.brand-sub{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.2px;margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 13px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh)}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn.small{padding:7px 11px;font-size:12px}
+.btn.block{width:100%;justify-content:center}
+.workspace{display:flex;min-height:calc(100vh - 64px)}
+.sidebar{width:368px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);padding:16px;overflow-y:auto;max-height:calc(100vh - 64px)}
+.canvas-area{flex:1;min-width:0;background:var(--bg);padding:18px 18px 28px;overflow:auto}
+.section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(46,42,38,.04)}
+.section h3{margin:0 0 10px;font-family:'Fraunces',serif;font-weight:800;font-size:12px;letter-spacing:.3px;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:8px}
+.section h3:before{content:'';width:14px;height:3px;background:var(--accent);border-radius:999px;display:block}
+.section h3 span.badge{margin-left:auto;background:var(--accent);color:#fff;font-family:'Work Sans',sans-serif;font-size:9px;font-weight:800;padding:3px 7px;border-radius:999px;letter-spacing:.4px}
+.label{font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink);margin:12px 0 6px;display:block}
+.label:first-of-type{margin-top:0}
+.hint{font-size:11px;color:var(--muted);line-height:1.45;margin:8px 0 0}
+.hint b{color:var(--ink)}
+input[type="text"], select, textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-family:'Work Sans',sans-serif;font-size:13px;font-weight:500;color:var(--ink);background:#fff;outline:none;transition:.15s}
+input[type="text"]:focus, select:focus, textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(244,166,193,.18)}
+textarea{resize:vertical;min-height:64px}
+.style-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+.style-card{border:2px solid var(--line);border-radius:14px;padding:10px;cursor:pointer;background:var(--panel);transition:.15s;position:relative;overflow:hidden;text-align:left}
+.style-card:hover{transform:translateY(-1px);box-shadow:var(--sh);border-color:var(--accent)}
+.style-card.active{border-color:var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.08);background:linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%)}
+.style-card.active:after{content:'✓';position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.swatch{height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:.3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.swatch.pastel{background:linear-gradient(135deg,#f4a6c1 0%,#a8d8d8 100%)}
+.swatch.chibi{background:linear-gradient(135deg,#ff8fab 0%,#ffd93d 100%);color:#2e2a26}
+.swatch.storybook{background:linear-gradient(135deg,#c17f59 0%,#7fa87f 100%)}
+.swatch.crayon{background:linear-gradient(135deg,#e8734a 0%,#5b9bd5 100%)}
+.style-name{font-weight:800;font-size:11px;letter-spacing:.2px;margin-top:7px;line-height:1.1}
+.style-desc{font-size:10px;color:var(--muted);line-height:1.3;margin-top:2px}
+.seg{display:flex;gap:4px;background:#faf6f0;padding:4px;border-radius:999px;border:1px solid var(--line)}
+.seg button{flex:1;border:none;background:transparent;padding:7px 8px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);transition:.15s}
+.seg button.active{background:var(--ink);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;background:#fffaf5;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;cursor:pointer}
+.toggle-row input{accent-color:var(--accent);width:16px;height:16px}
+.toggle-label{font-size:12px;font-weight:600;flex:1}
+.repeat-list{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.repeat-item{display:flex;gap:6px;align-items:center}
+.repeat-item input{flex:1}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+.thumb-strip{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 6px;scroll-snap-type:x mandatory}
+.thumb{flex:0 0 86px;scroll-snap-align:start;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;transition:.15s;position:relative}
+.thumb:hover{transform:translateY(-1px);box-shadow:var(--sh)}
+.thumb.active{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.08);outline:2px solid var(--accent);outline-offset:-1px}
+.thumb-preview{height:64px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.thumb-label{padding:6px 6px 7px;text-align:center;font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--ink);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pages-wrap{display:flex;justify-content:center;padding:16px 0 10px}
+.page{width:100%;max-width:640px;min-height:780px;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);overflow:hidden;position:relative;display:none;flex-direction:column}
+.page.active{display:flex}
+.page-inner{padding:28px 28px 24px;flex:1;display:flex;flex-direction:column;position:relative}
+.paper-letter{max-width:640px;aspect-ratio:0.77}
+.paper-square{max-width:640px;aspect-ratio:1}
+.paper-a4{max-width:620px;aspect-ratio:0.707}
+/* Decorations */
+.deco-cloud{position:absolute;width:90px;height:46px;background:var(--accent2);border-radius:40px;opacity:.18;filter:blur(.2px)}
+.deco-star{position:absolute;color:var(--accent);font-size:18px;opacity:.9}
+.deco-sparkle{position:absolute;width:14px;height:14px;transform:rotate(45deg);background:var(--accent2);opacity:.9;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.deco-flourish{position:absolute;width:64px;height:64px;border:2px solid var(--accent);border-radius:4px;opacity:.22}
+.deco-flourish:before{content:'';position:absolute;inset:8px;border:1px solid var(--accent2);border-radius:3px}
+.deco-scribble{position:absolute;height:6px;background:repeating-linear-gradient(90deg, var(--accent) 0 8px, transparent 8px 12px);opacity:.18;border-radius:999px;transform:rotate(-2deg)}
+.cover-bg{position:absolute;inset:0;background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 14%, #fff) 0%, color-mix(in srgb, var(--accent2) 16%, #fff) 100%);pointer-events:none}
+.cover-border{position:absolute;inset:14px;border:2px solid color-mix(in srgb, var(--accent) 30%, transparent);border-radius:14px;pointer-events:none}
+.cover-border:before{content:'';position:absolute;inset:6px;border:1px dashed color-mix(in srgb, var(--accent) 22%, transparent);border-radius:10px}
+.cover-title{font-size:44px;line-height:.9;letter-spacing:-.02em;text-align:center;margin:0;font-weight:800}
+.cover-title.pastel{font-family:'Baloo 2',sans-serif}
+.cover-title.chibi{font-family:'Fredoka',sans-serif}
+.cover-title.storybook{font-family:'Fraunces',serif}
+.cover-title.crayon{font-family:'Patrick Hand',cursive;letter-spacing:.01em}
+.cover-tagline{margin:10px auto 0;max-width:420px;text-align:center;font-size:13px;line-height:1.45;font-weight:600;color:var(--ink);background:rgba(255,255,255,.88);border:1px solid var(--line);padding:8px 12px;border-radius:999px;display:inline-block}
+.cover-meta{margin-top:18px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.meta-pill{background:#fff;border:1px solid var(--line);padding:8px 14px;border-radius:999px;font-size:12px;font-weight:700;min-width:260px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.meta-pill b{color:var(--accent)}
+.ownership-frame{border:2px solid var(--accent);border-radius:16px;padding:22px;position:relative;background:color-mix(in srgb, var(--accent) 6%, #fff)}
+.ownership-frame:before{content:'';position:absolute;inset:6px;border:1px dashed color-mix(in srgb, var(--accent) 18%, transparent);border-radius:12px;pointer-events:none}
+.ownership-title{font-family:'Fraunces',serif;font-weight:800;font-size:22px;text-align:center;margin:0}
+.ownership-line{margin-top:14px;border-bottom:2px dotted var(--line);padding:8px 4px 10px;font-size:13px;display:flex;gap:8px}
+.ownership-line b{white-space:nowrap}
+.ownership-line span{flex:1;border-bottom:1px solid transparent;outline:none;min-width:40px}
+.ownership-line span:empty:before{content:'\00a0'}
+.howto-steps{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.howto-step{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.step-num{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;box-shadow:0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent)}
+.step-text{flex:1}
+.step-text b{display:block;font-size:13px;margin-bottom:4px}
+.step-text span{font-size:12px;line-height:1.5;color:var(--ink)}
+.placeholder-card{border:2px dashed var(--accent);background:color-mix(in srgb, var(--accent) 7%, #fff);border-radius:14px;padding:18px;text-align:center}
+.placeholder-icon{width:54px;height:54px;border-radius:14px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 10px;box-shadow:var(--sh)}
+.collection-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.mini-cover{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;flex-direction:column;min-height:110px;position:relative}
+.mini-top{height:56px;display:flex;align-items:center;justify-content:center;font-size:20px;position:relative}
+.mini-top:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg, transparent, rgba(0,0,0,.06))}
+.mini-label{padding:8px 6px;text-align:center;font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;line-height:1.2;flex:1;display:flex;align-items:center;justify-content:center}
+.mini-current{outline:2px solid var(--accent);outline-offset:2px}
+.export-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.guide-dropdown{position:absolute;right:0;top:calc(100% + 8px);width:360px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 40px rgba(46,42,38,.16);padding:14px;display:none;z-index:50;text-align:left}
+.guide-dropdown.open{display:block}
+@media(max-width:980px){.workspace{flex-direction:column}.sidebar{width:100%;max-height:none;border-right:none;border-bottom:1px solid var(--line)}.page{min-height:620px}.collection-grid{grid-template-columns:repeat(2,1fr)}}
+@media print{
+  .topbar,.sidebar,.thumb-strip,.export-bar,.guide-dropdown,#filmstripWrap,#exportDiagnostic{display:none !important}
+  .canvas-area{padding:0 !important;background:#fff !important}
+  .pages-wrap{padding:0 !important;display:block !important}
+  #filmstripWrap{display:none !important}
+  .page{box-shadow:none !important;border:none !important;border-radius:0 !important;max-width:none !important;width:100% !important;min-height:100vh !important;page-break-after:always !important;page-break-inside:avoid !important;display:flex !important;opacity:1 !important}
+  .page:last-child{page-break-after:auto !important}
+  @page{ margin:0.4in; size: letter portrait; }
+}
+.filmstrip-wrap{display:none;gap:14px;overflow-x:auto;padding:14px 4px 10px;scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch}
+.filmstrip-wrap.active{display:flex}
+.filmstrip-card{flex:0 0 260px;scroll-snap-align:start;transform:scale(0.92);transform-origin:top left;pointer-events:none;opacity:.96}
+.filmstrip-card .page{transform:scale(0.92);transform-origin:top left;width:283px}
+.comparison-strip{display:flex;gap:8px;margin:8px 0 10px;overflow-x:auto;padding-bottom:4px}
+.comparison-swatch{flex:0 0 86px;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;transition:.15s}
+.comparison-swatch:hover{transform:translateY(-1px);box-shadow:var(--sh);border-color:var(--accent)}
+.comparison-swatch.active{border-color:var(--accent);box-shadow:0 4px 12px rgba(0,0,0,.08);outline:2px solid var(--accent);outline-offset:-1px}
+.comparison-preview{height:48px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;letter-spacing:.2px}
+.comparison-label{padding:5px 4px;text-align:center;font-size:8px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;line-height:1.1}
+#exportDiagnostic{font-family:monospace;font-size:10px;background:#1f1d1a;color:#f5f1e8;padding:8px 10px;border-radius:8px;margin-top:8px;display:none;white-space:pre-wrap;word-break:break-all}
+.gear-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.gear-btn.active{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 12%, #fff)}
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-badge" aria-hidden="true"><span>♡</span></div>
+    <div>
+      <div class="brand-title">Slambook Wrapper Creator</div>
+      <div class="brand-sub">Cover • Instructions • Collection Back Matter — for SlamBook Forge 12-page interiors</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div style="position:relative">
+      <button class="btn ghost small" id="guideToggle">📖 Guide ▾</button>
+      <div id="guideDropdown" class="guide-dropdown">
+        <div style="font-family:'Fraunces',serif;font-weight:800;font-size:13px;margin-bottom:8px">How to use — 4 steps</div>
+        <ol style="margin:0 0 10px 18px;padding:0;font-size:12px;line-height:1.6;color:var(--ink)">
+          <li><b>Pick a style</b> — 4 packages match SlamBook Forge exactly (Pastel / Chibi / Storybook / Crayon).</li>
+          <li><b>Fill details</b> — title, theme, child's name &amp; compiled by. Add other themes you own for the back matter.</li>
+          <li><b>Choose paper &amp; pages</b> — US Letter / Square / A4, toggle which pages to include.</li>
+          <li><b>Export</b> — PDF for print, PNG/JPG for preview. Insert your 12 Forge pages between the wrapper pages.</li>
+        </ol>
+        <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:11px;line-height:1.5;color:var(--muted)"><b>Tip:</b> The <b>Collect the Whole Set</b> back page is your most screenshot-worthy upsell — enable the Series toggle and list 3–6 themes to show a growing collection.</div>
+        <button class="btn primary small" style="width:100%;margin-top:10px" id="guideClose">Got it — start creating</button>
+      </div>
+    </div>
+    <button class="btn small" id="regenBtn">↻ Regenerate</button>
+    <button class="btn accent small" id="printBtn">🖨️ Print / Save PDF</button>
+    <button class="gear-btn" id="diagnosticToggle" title="Test Export diagnostics" style="width:32px;height:32px">⚙</button>
+  </div>
+</div>
+
+<div class="workspace">
+  <aside class="sidebar">
+    <div class="section">
+      <h3>Illustration Style <span class="badge">4 MATCHED</span></h3>
+      <div class="comparison-strip" id="comparisonStrip"></div>
+      <div class="style-grid" id="styleGrid"></div>
+      <p class="hint">Each package swaps colors, fonts &amp; doodle borders to mirror SlamBook Forge's own 4 styles for visual continuity.</p>
+    </div>
+
+    <div class="section">
+      <h3>Slambook Details</h3>
+      <label class="label">Title</label>
+      <input type="text" id="titleInput" value="My Dinosaur Friendship Book" maxlength="48">
+      <label class="label">Theme</label>
+      <select id="themeSelect">
+        <option value="dinosaurs">Dinosaurs</option>
+        <option value="wild">Wild Animals</option>
+        <option value="underwater">Underwater Animals</option>
+        <option value="insects">Insects &amp; Bugs</option>
+        <option value="birds">Birds</option>
+        <option value="fruits">Fruits</option>
+        <option value="custom">Custom</option>
+      </select>
+      <input type="text" id="customThemeInput" placeholder="Custom theme name (e.g. Space, Unicorns)" style="display:none;margin-top:7px">
+      <label class="label">Child's Name / "For"</label>
+      <input type="text" id="forInput" value="Ava" maxlength="32">
+      <label class="label">Compiled By</label>
+      <input type="text" id="byInput" value="Ms. Rivera's Class" maxlength="32">
+    </div>
+
+    <div class="section">
+      <h3>Series Collection</h3>
+      <label class="toggle-row" for="seriesToggle" style="margin-top:0">
+        <span class="toggle-label">Part of a Growing Collection?</span>
+        <input type="checkbox" id="seriesToggle" checked>
+      </label>
+      <div id="seriesFields">
+        <label class="label">Other Themes Owned <span style="text-transform:none;font-weight:500;color:var(--muted)">— feeds the back matter grid</span></label>
+        <div class="repeat-list" id="otherList"></div>
+        <button class="btn ghost small" id="addThemeBtn" style="margin-top:8px">＋ Add Theme</button>
+        <p class="hint">Current theme + these become mini-covers on the “Collect the Whole Set!” page.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Paper Size</h3>
+      <div class="seg" id="paperSeg">
+        <button data-paper="letter" class="active">US Letter</button>
+        <button data-paper="square">Square</button>
+        <button data-paper="a4">A4</button>
+      </div>
+      <p class="hint">Matches SlamBook Forge's US Letter Portrait, plus Square &amp; A4 for flexibility.</p>
+    </div>
+
+    <div class="section">
+      <h3>Include Sections</h3>
+      <div id="includeList"></div>
+      <p class="hint">Toggle pages to match how you'll assemble the final book.</p>
+    </div>
+  </aside>
+
+  <main class="canvas-area">
+    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px">
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn small" id="viewSingleBtn" style="background:var(--ink);color:#fff;border-color:var(--ink)">📄 Single Page</button>
+        <button class="btn small" id="viewFilmstripBtn">🎞 Filmstrip View</button>
+        <span style="font-size:11px;color:var(--muted);font-weight:600">— most screenshot-worthy</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn small" id="exportFilmstripBtn">📥 Export Filmstrip as One PNG</button>
+      </div>
+    </div>
+    <div id="exportDiagnostic" style="display:none"></div>
+    <div class="thumb-strip" id="thumbStrip"></div>
+    <div id="filmstripWrap" class="filmstrip-wrap"></div>
+    <div class="pages-wrap" id="pagesWrap">
+      <div id="pages"></div>
+    </div>
+    <div class="export-bar" id="exportBar">
+      <button class="btn primary" id="exportPdfBtn">📄 Export PDF (Print)</button>
+      <button class="btn" id="exportPngBtn">🖼️ Export PNG (Current Page)</button>
+      <button class="btn" id="exportJpgBtn">☀️ Export JPG (Current Page)</button>
+      <button class="btn accent" id="exportAllBtn">📥 Export All Pages (Sequential Download)</button>
+      <span id="paperInfo" style="font-size:11px;font-weight:700;color:var(--muted);align-self:center;margin-left:4px">US Letter • 8.5×11" • 816×1056</span>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">Inline edit any text directly on the pages — click to type.</div>
+  </main>
+</div>
+
+<script>
+var STYLE_PACKS = {
+  pastel: {label:'Cute Pastel Cartoon', accent:'#f4a6c1', accent2:'#a8d8d8', bg:'#fef6f9', font:'"Baloo 2",sans-serif', deco:'cloud'},
+  chibi: {label:'Chibi / Anime Cute', accent:'#ff8fab', accent2:'#ffd93d', bg:'#fff7d6', font:'"Fredoka",sans-serif', deco:'sparkle'},
+  storybook: {label:'Storybook Illustration', accent:'#c17f59', accent2:'#7fa87f', bg:'#fdf6f0', font:'"Fraunces",serif', deco:'flourish'},
+  crayon: {label:'Colored Pencil / Crayon', accent:'#e8734a', accent2:'#5b9bd5', bg:'#fff8f0', font:'"Patrick Hand",cursive', deco:'scribble'}
+};
+
+var THEME_BANK = {
+  dinosaurs: {
+    taglines: ['Roar-some Friends & Prehistoric Fun!','Stomp, Chomp & Share with Friends!','Dino-Mite Memories in the Making!','From T-Rex to Triceratops — Your Dino Crew!'],
+    instructions: [
+      'How to use: Pass your Slambook to a friend and let them answer the prompts on their page. They can draw, write, and decorate their answers. When everyone has filled a page, read them together, laugh, and keep it safe — this is your friendship time capsule!',
+      'Share the roar! Give this book to a friend. They choose a page, answer the fun dino prompts, and add doodles or stickers. Return it to you, then pass it to the next friend. In a week you will have a whole herd of memories to treasure.',
+      'This is your slam, your rules. Hand the book to someone special. They fill in their favorites, draw their dino, and sign their name. Collect all 12, then read them aloud. Keep it on your shelf — you will love looking back.'
+    ],
+    motif: 'dino', decoHint: 'fern'
+  },
+  wild: {
+    taglines: ['Wild Hearts, Wild Friends!','Into the Wild — Your Animal Adventure!','Paws, Claws & Best Friends Forever!','Safari of Friendship Starts Here!'],
+    instructions: [
+      'How to use: Each page asks about a favorite wild animal or friendship moment. Pass the book around — each friend gets their own page to complete with words and drawings. No wrong answers, just wild imagination!',
+      'Go wild! Let a friend pick any page. They answer the prompts about lions, elephants, monkeys and more, then draw their favorite. Gather all 12 pages and you have a zoo of friendships to keep.',
+      'Your wild adventure begins. Find a friend, let them slam their answers onto a page, decorate with paw prints, and sign. Collect every page — it is a safari you can hold.'
+    ],
+    motif: 'paw', decoHint: 'paw'
+  },
+  underwater: {
+    taglines: ['Dive Into Friendship Bubbles!','Splash, Splish & Sea Friends!','Under the Sea — Your Friendship Reef!','Bubbles, Waves & Best Mates!'],
+    instructions: [
+      'Dive in! Hand this book to a friend. They answer the underwater prompts about fish, turtles, and mermaids, then draw and color. Dry it, pass it on, and soon your book will be an ocean of memories.',
+      'How to use: Each spread is a little tide pool of questions. A friend fills one page with their favorites and a sea doodle. Collect all 12, then read together — just like finding treasure under the sea.',
+      'Splash it around. Give the book to someone you like. They fill a page, add bubbles or shells, and give it back. When all pages are full, you have a reef full of friends to keep forever.'
+    ],
+    motif: 'bubble', decoHint: 'bubble'
+  },
+  insects: {
+    taglines: ['Buzzing with Best Buddies!','Tiny Wings, Big Friendships!','Flutter, Buzz & Be Friends!','Bugs, Butterflies & Belonging!'],
+    instructions: [
+      'Buzz around! Pass your Slambook to a friend. They answer the buggy prompts about butterflies, ladybugs, and beetles, then draw their favorite tiny friend. Collect them all and you have a garden of friendships.',
+      'How to use: Each page is a little meadow. A friend chooses a page, fills in their answers, and draws. Share it with 12 friends and your book will flutter with memories.',
+      'Let it buzz. Hand the book to a friend, let them slam their page with colors and doodles, then pass it on. Keep the finished book safe — it is your bug collection of friends.'
+    ],
+    motif: 'flower', decoHint: 'flower'
+  },
+  birds: {
+    taglines: ['Tweet Hearts & Feathered Friends!','Spread Your Wings Together!','Chirp, Tweet & True Friends!','Sky-High Friendship Notes!'],
+    instructions: [
+      'Take flight! Give this book to a friend. They answer the bird prompts about feathers, nests, and favorite songs, then draw their bird. Gather all pages and your friendship will soar.',
+      'How to use: Each page is a nest of questions. A friend fills one page with their favorites and a feather doodle. Collect 12 nests and you have a whole sky of friends.',
+      'Chirp it forward. Let a friend fill a page, add wings or clouds, and sign their name. When every page is full, read them together — your flock is forever.'
+    ],
+    motif: 'feather', decoHint: 'feather'
+  },
+  fruits: {
+    taglines: ['Juicy Friends & Fruity Fun!','Sweet, Tart & Totally You!','Peel, Slice & Share the Love!','A Basket Full of Besties!'],
+    instructions: [
+      'Stay fruity! Pass the book to a friend. They answer the juicy prompts about apples, berries, and tropical treats, then draw and color. Collect all 12 and you have a fruit salad of friendships.',
+      'How to use: Each page is a fruity question basket. A friend picks a page, fills it with favorites and doodles, then returns it. Soon your book will be ripe with memories.',
+      'Slice and share. Hand the book to someone sweet. They fill a page, add fruity doodles, and sign. Keep the finished book — it only gets sweeter with time.'
+    ],
+    motif: 'fruit', decoHint: 'fruit'
+  },
+  space: {
+    taglines: ['Blast Off with Best Buddies!','Stars, Planets & Friendship Power!','To Infinity and Beyond — Together!','Your Cosmic Crew Awaits!'],
+    instructions: [
+      'How to use: Pass your Slambook to a friend and let them answer the starry prompts about planets, rockets, and aliens. They can draw constellations and decorate. When all 12 pages are filled, read them under the night sky together!',
+      '3-2-1 launch! Give this book to a friend. They choose a space page, answer the cosmic questions, and add glittery stars. Collect all 12 and you will have a galaxy of memories to treasure.',
+      'Your mission is friendship. Hand the book to someone special. They fill in their favorites, draw their astronaut, and sign. Gather every page — your friendship is truly out of this world.'
+    ],
+    motif: 'star', decoHint: 'star'
+  },
+  fairy: {
+    taglines: ['Sprinkle Fairy Dust & Friendship!','Once Upon a Best Friend!','Twinkle, Sparkle & Share!','Your Fairy Tale Crew!'],
+    instructions: [
+      'How to use: Pass your Slambook to a friend and let them answer the magical prompts about castles, wands, and wishes. They can draw tiaras and glitter. When everyone has filled a page, read them together like a storybook!',
+      'Bibbidi-bobbidi-boo! Give this book to a friend. They pick a fairy page, answer the sparkly questions, and add doodles. Collect all 12 and you will have an enchanted keepsake forever.',
+      'Make some magic. Hand the book to someone special. They fill in their favorites, draw their fairy, and sign their name. Keep it safe — your fairy tale friendship will last happily ever after.'
+    ],
+    motif: 'star', decoHint: 'star'
+  },
+  superheroes: {
+    taglines: ['Pow! Bam! Best Friends Forever!','Heroes Unite — Your Squad!','Capes, Masks & Mighty Memories!','Super Friends Assemble!'],
+    instructions: [
+      'How to use: Pass your Slambook to a friend and let them answer the heroic prompts about powers, costumes, and secret identities. They can draw their superhero self. When all 12 pages are filled, your squad is complete!',
+      'To the rescue! Give this book to a friend. They choose a super page, answer the action questions, and add comic-style doodles. Gather every page and you have a league of friends to treasure.',
+      'Your superpower is friendship. Hand the book to someone brave. They fill in their favorites, design their emblem, and sign. Collect all 12 — your friendship will save the day.'
+    ],
+    motif: 'star', decoHint: 'star'
+  },
+  farm: {
+    taglines: ['Barnyard Buddies & Hay Day Fun!','Moo, Baa & Best Friends!','Down on the Farm — Friendship Grows!','Tractors, Hay & Happy Hearts!'],
+    instructions: [
+      'How to use: Pass your Slambook to a friend and let them answer the farm prompts about cows, pigs, horses, and barns. They can draw their favorite animal and decorate. When all 12 pages are filled, you have a barnyard of memories!',
+      'Howdy partner! Give this book to a friend. They pick a farm page, answer the cozy questions, and add doodles. Collect every page and your friendship will grow like a harvest.',
+      'Life on the farm is better with friends. Hand the book to someone special. They fill in their favorites, draw their animal, and sign. Keep it safe in the barn — your friendship is ripe for keeps.'
+    ],
+    motif: 'leaf', decoHint: 'leaf'
+  },
+  sports: {
+    taglines: ['Team Spirit & True Friends!','Play Hard, Cheer Louder — Together!','Goal! Score! Best Friends Forever!','Game On — Your Crew!'],
+    instructions: [
+      'How to use: Pass your Slambook to a friend and let them answer the sporty prompts about games, teams, and favorite moves. They can draw jerseys and trophies. When all 12 pages are filled, your team is complete!',
+      'Ready, set, slam! Give this book to a friend. They choose a sports page, answer the energetic questions, and add doodles. Gather every page and you have a championship of friendships.',
+      'You are all MVPs. Hand the book to a teammate. They fill in their favorites, design their team badge, and sign. Keep it safe — your friendship wins every game.'
+    ],
+    motif: 'star', decoHint: 'star'
+  },
+  music: {
+    taglines: ['Sing, Dance & Shine Together!','Your Friendship Playlist!','Notes, Beats & Besties!','Rhythm & Friendship Forever!'],
+    instructions: [
+      'How to use: Pass your Slambook to a friend and let them answer the musical prompts about songs, instruments, and dance moves. They can draw notes and microphones. When all 12 pages are filled, you have a concert of memories!',
+      'Hit the right note! Give this book to a friend. They pick a music page, answer the groovy questions, and add doodles. Collect every page and your friendship will be a hit parade.',
+      'Keep the beat. Hand the book to someone special. They fill in their favorites, draw their instrument, and sign. When every page is full, read them aloud — your friendship is music to the ears.'
+    ],
+    motif: 'star', decoHint: 'star'
+  },
+  custom: {
+    taglines: ['Your Friends, Your Story!','Fill It, Share It, Keep It Forever!','12 Pages of You & Your Crew!','Make It Yours — One Page at a Time!'],
+    instructions: [
+      'How to use: This is your personal Slambook. Pass it to 12 friends — each one gets a page to answer fun prompts, draw, and sign. No rules, just be you. When it is full, read it together and treasure it.',
+      'Your slam, your style. Give the book to a friend, let them fill a page with their favorites and artwork, then pass it on. Collect all 12 and you have a keepsake of this exact moment in time.',
+      'Share the fun. Each page asks light, silly, and sweet questions. A friend fills one, decorates it, and gives it back. Keep the finished book safe — you will love opening it again.'
+    ],
+    motif: 'star', decoHint: 'star'
+  }
+};
+
+var state = {
+  style: 'pastel',
+  title: 'My Dinosaur Friendship Book',
+  theme: 'dinosaurs',
+  customTheme: '',
+  forName: 'Ava',
+  byName: "Ms. Rivera's Class",
+  seriesOn: true,
+  otherThemes: ['Wild Animals','Underwater Animals','Insects & Bugs'],
+  paper: 'letter',
+  include: {cover:true, title:true, howto:true, placeholder:true, back:true},
+  activePage: 'cover',
+  taglineIdx: 0,
+  howtoIdx: 0
+};
+
+var THEME_KEY_MAP = {dinosaurs:'dinosaurs', wild:'wild', underwater:'underwater', insects:'insects', birds:'birds', fruits:'fruits', space:'space', fairy:'fairy', superheroes:'superheroes', farm:'farm', sports:'sports', music:'music', custom:'custom'};
+
+function getThemeKey(){
+  var t=document.getElementById('themeSelect');
+  var v=t ? t.value : state.theme;
+  return THEME_KEY_MAP[v] || 'custom';
+}
+function getThemeBank(){
+  var k=getThemeKey();
+  var bank=THEME_BANK[k];
+  if(bank) return bank;
+  // Custom fallback: generate warm generic with custom name injected
+  var customName=getDisplayThemeName();
+  var base=THEME_BANK.custom;
+  // Clone and inject custom name into taglines/instructions
+  var injected={
+    taglines: base.taglines.map(function(t){ return t.replace('Your Friends', customName+' Friends').replace('Your ', customName+' '); }),
+    instructions: base.instructions.map(function(t){ return t.replace(/personal Slambook/g, customName+' Slambook').replace(/This is your/g, 'This '+customName+' is your'); }),
+    motif: 'star', decoHint: 'star'
+  };
+  // Ensure at least one tagline explicitly mentions custom theme
+  if(injected.taglines[0].indexOf(customName)===-1) injected.taglines[0]=customName+' Friends & Fun — Your '+customName+' Crew!';
+  return injected;
+}
+function getDisplayThemeName(){
+  var sel=document.getElementById('themeSelect');
+  var v=sel ? sel.value : state.theme;
+  if(v==='custom'){
+    var c=document.getElementById('customThemeInput');
+    var cv=c && c.value ? c.value.trim() : '';
+    return cv || 'Custom';
+  }
+  var opt=sel ? sel.options[sel.selectedIndex] : null;
+  return opt ? opt.text : v;
+}
+
+function applyStyle(styleKey){
+  var pack=STYLE_PACKS[styleKey] || STYLE_PACKS.pastel;
+  var r=document.documentElement;
+  r.style.setProperty('--accent', pack.accent);
+  r.style.setProperty('--accent2', pack.accent2);
+  r.style.setProperty('--bg', pack.bg);
+  state.style=styleKey;
+  var cards=document.querySelectorAll('.style-card');
+  for(var i=0;i<cards.length;i++){
+    if(cards[i].getAttribute('data-style')===styleKey) cards[i].classList.add('active');
+    else cards[i].classList.remove('active');
+  }
+  renderAll();
+}
+
+function buildStyleGrid(){
+  var grid=document.getElementById('styleGrid');
+  grid.innerHTML='';
+  var keys=['pastel','chibi','storybook','crayon'];
+  var descs={
+    pastel:'Baloo 2 • cloud/star • soft & huggable',
+    chibi:'Fredoka • sparkle/heart • kawaii pop',
+    storybook:'Fraunces • flourishes • heirloom',
+    crayon:'Patrick Hand • scribble • handmade'
+  };
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i];
+    var pack=STYLE_PACKS[k];
+    var card=document.createElement('div');
+    card.className='style-card' + (state.style===k?' active':'');
+    card.setAttribute('data-style',k);
+    var swatchClass=k==='pastel'?'pastel':k==='chibi'?'chibi':k==='storybook'?'storybook':'crayon';
+    card.innerHTML='<div class="swatch '+swatchClass+'">'+pack.label.split(' ')[0]+'</div><div class="style-name">'+pack.label+'</div><div class="style-desc">'+descs[k]+'</div>';
+    (function(key){ card.addEventListener('click', function(){ applyStyle(key); }); })(k);
+    grid.appendChild(card);
+  }
+}
+
+function buildOtherList(){
+  var list=document.getElementById('otherList');
+  list.innerHTML='';
+  for(var i=0;i<state.otherThemes.length;i++){
+    var row=document.createElement('div');
+    row.className='repeat-item';
+    var input=document.createElement('input');
+    input.type='text';
+    input.value=state.otherThemes[i];
+    input.placeholder='Theme name';
+    (function(idx){ input.addEventListener('input', function(){ state.otherThemes[idx]=this.value; renderBackMatter(); renderThumbs(); }); })(i);
+    var btn=document.createElement('button');
+    btn.className='icon-btn';
+    btn.textContent='×';
+    btn.title='Remove';
+    (function(idx){ btn.addEventListener('click', function(){ state.otherThemes.splice(idx,1); buildOtherList(); renderBackMatter(); renderThumbs(); }); })(i);
+    row.appendChild(input);
+    row.appendChild(btn);
+    list.appendChild(row);
+  }
+}
+
+function buildIncludeList(){
+  var container=document.getElementById('includeList');
+  var defs=[
+    {key:'cover', label:'Cover'},
+    {key:'title', label:'Title / Ownership Page'},
+    {key:'howto', label:'How to Use This Slambook'},
+    {key:'placeholder', label:'12-Page Insert Placeholder'},
+    {key:'back', label:'Series Collection Back Matter'}
+  ];
+  container.innerHTML='';
+  for(var i=0;i<defs.length;i++){
+    var d=defs[i];
+    var row=document.createElement('label');
+    row.className='toggle-row';
+    row.innerHTML='<span class="toggle-label">'+d.label+'</span><input type="checkbox" '+(state.include[d.key]?'checked':'')+' data-key="'+d.key+'">';
+    (function(key){
+      var inp=row.querySelector('input');
+      inp.addEventListener('change', function(){ state.include[key]=this.checked; renderPages(); renderThumbs(); });
+    })(d.key);
+    container.appendChild(row);
+  }
+}
+
+function getPaperInfo(){
+  if(state.paper==='letter') return {label:'US Letter • 8.5×11" • 816×1056', cls:'paper-letter'};
+  if(state.paper==='square') return {label:'Square • 8.5×8.5" • 816×816', cls:'paper-square'};
+  return {label:'A4 • 8.27×11.69" • 794×1123', cls:'paper-a4'};
+}
+
+function motifIcon(motif){
+  var map={
+    dino:'🦕', paw:'🐾', bubble:'🫧', flower:'🌸', feather:'🪶', fruit:'🍓', star:'⭐', leaf:'🍃', bone:'🦴', shell:'🐚', cloud:'☁️', wave:'〰️'
+  };
+  return map[motif] || '✦';
+}
+function decoForStyle(style){
+  if(style==='pastel') return '<div class="deco-cloud" style="top:12px;left:12px"></div><div class="deco-cloud" style="top:18px;right:16px;width:64px;height:32px;background:var(--accent)"></div><div class="deco-star" style="top:22px;right:52px">★</div><div class="deco-star" style="bottom:18px;left:18px;font-size:14px">★</div>';
+  if(style==='chibi') return '<div class="deco-sparkle" style="top:14px;left:14px"></div><div class="deco-sparkle" style="top:16px;right:18px;background:var(--accent)"></div><div class="deco-star" style="top:20px;right:44px">♥</div><div class="deco-star" style="bottom:16px;left:20px">✦</div><div class="deco-star" style="bottom:22px;right:20px">♥</div>';
+  if(style==='storybook') return '<div class="deco-flourish" style="top:10px;left:10px"></div><div class="deco-flourish" style="top:10px;right:10px;transform:rotate(90deg)"></div><div class="deco-flourish" style="bottom:10px;left:10px;transform:rotate(-90deg)"></div><div class="deco-flourish" style="bottom:10px;right:10px;transform:rotate(180deg)"></div>';
+  return '<div class="deco-scribble" style="top:16px;left:14px;width:64px"></div><div class="deco-scribble" style="top:20px;right:16px;width:48px;background:var(--accent2)"></div><div class="deco-scribble" style="bottom:18px;left:18px;width:54px"></div>';
+}
+
+function pageVisible(key){
+  return !!state.include[key];
+}
+
+function renderPages(){
+  var pagesEl=document.getElementById('pages');
+  pagesEl.innerHTML='';
+  var bank=getThemeBank();
+  var taglines=bank.taglines;
+  var tagline=taglines[state.taglineIdx % taglines.length];
+  var howtos=bank.instructions;
+  var howto=howtos[state.howtoIdx % howtos.length];
+  var themeName=getDisplayThemeName();
+  var paper=getPaperInfo();
+  document.getElementById('paperInfo').textContent=paper.label;
+
+  var order=[
+    {key:'cover', render:renderCover},
+    {key:'title', render:renderTitle},
+    {key:'howto', render:renderHowto},
+    {key:'placeholder', render:renderPlaceholder},
+    {key:'back', render:renderBack}
+  ];
+  var visibleCount=0;
+  for(var i=0;i<order.length;i++){
+    var o=order[i];
+    var isBack=o.key==='back' && !state.seriesOn;
+    if(!pageVisible(o.key) || isBack) continue;
+    visibleCount++;
+    var page=document.createElement('div');
+    page.className='page '+paper.cls + (state.activePage===o.key?' active':'');
+    page.setAttribute('data-page', o.key);
+    page.id='page-'+o.key;
+    var inner=document.createElement('div');
+    inner.className='page-inner';
+    // allow per-page background deco
+    if(o.key==='cover' || o.key==='back' || o.key==='title'){
+      inner.style.background='linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, #fff) 0%, #fff 55%)';
+    }
+    o.render(inner, {tagline:tagline, howto:howto, themeName:themeName, bank:bank});
+    page.appendChild(inner);
+    // make editable
+    var editables=inner.querySelectorAll('[data-edit]');
+    for(var e=0;e<editables.length;e++){
+      (function(el){
+        el.setAttribute('contenteditable','true');
+        el.addEventListener('blur', function(){
+          var field=el.getAttribute('data-edit');
+          if(field==='title') state.title=el.textContent.trim() || state.title;
+          if(field==='tagline') { /* keep in bank index, but also allow custom */ }
+          if(field==='forName') state.forName=el.textContent.trim();
+          if(field==='byName') state.byName=el.textContent.trim();
+          if(field==='howto') { /* custom howto */ }
+        });
+      })(editables[e]);
+    }
+    pagesEl.appendChild(page);
+  }
+  if(visibleCount===0){
+    var empty=document.createElement('div');
+    empty.className='page active paper-letter';
+    empty.innerHTML='<div class="page-inner" style="align-items:center;justify-content:center;text-align:center;color:var(--muted)"><div style="font-size:14px;font-weight:700">No pages selected</div><div style="font-size:12px;margin-top:6px">Toggle sections on in the left panel.</div></div>';
+    pagesEl.appendChild(empty);
+  }
+  // ensure activePage is visible, else switch to first visible
+  var hasActive=false;
+  var pages=pagesEl.querySelectorAll('.page');
+  for(var p=0;p<pages.length;p++) if(pages[p].getAttribute('data-page')===state.activePage) hasActive=true;
+  if(!hasActive && pages.length>0){
+    state.activePage=pages[0].getAttribute('data-page');
+    for(var q=0;q<pages.length;q++) pages[q].classList.toggle('active', pages[q].getAttribute('data-page')===state.activePage);
+    renderThumbs();
+  }
+}
+
+function renderCover(inner, ctx){
+  var pack=STYLE_PACKS[state.style];
+  inner.innerHTML=
+    '<div class="cover-bg"></div>'+
+    '<div class="cover-border"></div>'+
+    decoForStyle(state.style)+
+    '<div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:24px 18px 18px">'+
+      '<div style="background:var(--accent);color:#fff;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:5px 10px;border-radius:999px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08)">'+escapeHtml(ctx.themeName)+' • 12 Prompts Inside</div>'+
+      '<h1 class="cover-title '+state.style+'" data-edit="title" style="color:var(--ink);max-width:520px">'+escapeHtml(state.title)+'</h1>'+
+      '<div class="cover-tagline" data-edit="tagline">'+escapeHtml(ctx.tagline)+'</div>'+
+      '<div class="cover-meta">'+
+        '<div class="meta-pill">For: <b data-edit="forName">'+escapeHtml(state.forName||'Your Best Friend')+'</b></div>'+
+        '<div class="meta-pill" style="background:var(--accent2);border-color:var(--accent2);color:#2e2a26">Compiled By: <b data-edit="byName">'+escapeHtml(state.byName||'You')+'</b></div>'+
+        '<div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-top:4px">A keepsake to pass, fill &amp; treasure — ages 6–10</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="position:relative;z-index:1;text-align:center;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);padding:8px 0 2px">SlamBook Forge • '+escapeHtml(StyleLabel())+' Edition</div>';
+}
+
+function StyleLabel(){
+  var m={pastel:'Cute Pastel Cartoon', chibi:'Chibi / Anime Cute', storybook:'Storybook Illustration', crayon:'Colored Pencil / Crayon'};
+  return m[state.style] || m.pastel;
+}
+
+function renderTitle(inner, ctx){
+  inner.innerHTML=
+    decoForStyle(state.style)+
+    '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px 10px 0">'+
+      '<div style="width:100%;max-width:420px">'+
+        '<div class="ownership-frame">'+
+          '<div class="ownership-title" style="font-family:'+STYLE_PACKS[state.style].font+'">This Slambook Belongs To</div>'+
+          '<div style="margin-top:10px;height:42px;border:2px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fff"><span data-edit="forName" style="font-family:'+STYLE_PACKS[state.style].font+';font-size:20px;font-weight:700;min-width:120px;display:inline-block">'+escapeHtml(state.forName||'________________')+'</span></div>'+
+          '<div class="ownership-line"><b>Theme:</b> <span>'+escapeHtml(ctx.themeName)+'</span></div>'+
+          '<div class="ownership-line"><b>Compiled By:</b> <span data-edit="byName">'+escapeHtml(state.byName||'________________')+'</span></div>'+
+          '<div class="ownership-line"><b>Date Started:</b> <span contenteditable="true">____ / ____ / ____</span></div>'+
+          '<div style="margin-top:12px;font-size:11px;line-height:1.5;color:var(--muted)">Write your name proudly. This book will travel from friend to friend and come back full of love.</div>'+
+        '</div>'+
+        '<div style="margin-top:14px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)">Keep me safe — I hold your friendships!</div>'+
+      '</div>'+
+    '</div>';
+}
+
+function renderHowto(inner, ctx){
+  var steps=[
+    {t:'Pass It On', d:'Hand the book to a friend. They pick any prompt page they like.'},
+    {t:'Slam It', d:'They answer, draw, and decorate. No wrong answers — just heart!'},
+    {t:'Sign & Return', d:'They sign their name and give the book back to you.'},
+    {t:'Collect & Treasure', d:'Gather all 12 pages, read together, and keep it forever.'}
+  ];
+  var howtoHtml='';
+  for(var i=0;i<steps.length;i++){
+    howtoHtml+='<div class="howto-step"><div class="step-num">'+(i+1)+'</div><div class="step-text"><b>'+steps[i].t+'</b><span>'+steps[i].d+'</span></div></div>';
+  }
+  inner.innerHTML=
+    decoForStyle(state.style)+
+    '<div style="text-align:center;margin-bottom:6px"><div style="display:inline-block;background:var(--accent);color:#fff;font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;padding:5px 10px;border-radius:999px">How to Use This Slambook</div></div>'+
+    '<h2 style="font-family:'+STYLE_PACKS[state.style].font+';font-size:22px;line-height:1.1;text-align:center;margin:6px 0 8px">Fill, Share &amp; Keep Forever</h2>'+
+    '<div data-edit="howto" style="background:color-mix(in srgb, var(--accent2) 14%, #fff);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12px;line-height:1.6;color:var(--ink);outline:none">'+escapeHtml(ctx.howto)+'</div>'+
+    '<div class="howto-steps">'+howtoHtml+'</div>'+
+    '<div style="margin-top:12px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)">Tip for grown-ups: Set a 1-week “slam” deadline — it keeps the excitement high!</div>';
+}
+
+function renderPlaceholder(inner, ctx){
+  inner.innerHTML=
+    '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px">'+
+      '<div class="placeholder-card" style="max-width:460px;width:100%">'+
+        '<div class="placeholder-icon">📎</div>'+
+        '<div style="font-family:'+STYLE_PACKS[state.style].font+';font-size:18px;font-weight:800;line-height:1.2">Insert your 12 generated SlamBook Forge pages here</div>'+
+        '<div style="font-size:12px;line-height:1.6;color:var(--ink);margin-top:8px">Print your 12 interior prompts from SlamBook Forge (US Letter Portrait) and place them in order — from <b>Front Cover</b> through <b>Back Cover</b> — between the wrapper pages you are designing now.</div>'+
+        '<div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">'+
+          '<span style="background:var(--accent);color:#fff;font-size:10px;font-weight:800;letter-spacing:.5px;padding:6px 10px;border-radius:999px">1 → Front Cover</span>'+
+          '<span style="background:var(--accent2);color:var(--ink);font-size:10px;font-weight:800;letter-spacing:.5px;padding:6px 10px;border-radius:999px">2–11 → Prompts</span>'+
+          '<span style="background:var(--ink);color:#fff;font-size:10px;font-weight:800;letter-spacing:.5px;padding:6px 10px;border-radius:999px">12 → Back Cover</span>'+
+        '</div>'+
+        '<div style="margin-top:12px;font-size:11px;color:var(--muted)">This placeholder will not print if you toggle it off. It is just your workflow connector.</div>'+
+      '</div>'+
+      '<div style="margin-top:14px;width:100%;max-width:460px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;opacity:.9">'+
+        (function(){ var h=''; for(var i=1;i<=12;i++) h+='<div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 4px;text-align:center;font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)">Pg '+i+'<br><span style="font-size:14px;display:block;margin-top:2px">'+(i===1?'🌟':i===12?'🎀':'✎')+'</span></div>'; return h; })()+
+      '</div>'+
+    '</div>';
+}
+
+function renderBack(inner, ctx){
+  var allThemes=[ctx.themeName].concat(state.otherThemes.filter(function(t){ return t && t.trim().length>0; }));
+  // dedupe case-insensitive
+  var seen={}; var uniq=[];
+  for(var i=0;i<allThemes.length;i++){
+    var key=allThemes[i].trim().toLowerCase();
+    if(!seen[key]){ seen[key]=true; uniq.push(allThemes[i].trim()); }
+  }
+  var gridHtml='';
+  for(var j=0;j<uniq.length;j++){
+    var th=uniq[j];
+    var bankKey=th.toLowerCase();
+    var motif='star';
+    if(bankKey.indexOf('dino')!==-1) motif='🦕';
+    else if(bankKey.indexOf('wild')!==-1) motif='🐾';
+    else if(bankKey.indexOf('underwater')!==-1 || bankKey.indexOf('ocean')!==-1 || bankKey.indexOf('sea')!==-1) motif='🫧';
+    else if(bankKey.indexOf('insect')!==-1 || bankKey.indexOf('bug')!==-1) motif='🌸';
+    else if(bankKey.indexOf('bird')!==-1) motif='🪶';
+    else if(bankKey.indexOf('fruit')!==-1) motif='🍓';
+    else if(bankKey.indexOf('space')!==-1) motif='🚀';
+    else if(bankKey.indexOf('unicorn')!==-1) motif='🦄';
+    else motif='⭐';
+    var isCurrent=j===0;
+    gridHtml+='<div class="mini-cover '+(isCurrent?'mini-current':'')+'"><div class="mini-top" style="background:linear-gradient(135deg, color-mix(in srgb, var(--accent) '+(isCurrent?'22%':'10%')+', #fff) 0%, color-mix(in srgb, var(--accent2) '+(isCurrent?'20%':'12%')+', #fff) 100%)"><span style="font-size:22px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.06))">'+motif+'</span>'+(isCurrent?'<span style="position:absolute;top:6px;right:6px;background:var(--accent);color:#fff;font-size:8px;font-weight:800;padding:3px 6px;border-radius:999px">YOU HAVE THIS</span>':'')+'</div><div class="mini-label">'+escapeHtml(th)+'</div></div>';
+  }
+  if(uniq.length===1){
+    gridHtml+='<div class="mini-cover" style="border-style:dashed;opacity:.7"><div class="mini-top" style="background:var(--bg)"><span style="font-size:18px">＋</span></div><div class="mini-label" style="color:var(--muted)">Add themes in the left panel to grow the grid</div></div>';
+  }
+  inner.innerHTML=
+    decoForStyle(state.style)+
+    '<div style="text-align:center;margin-bottom:10px"><div style="display:inline-block;background:var(--accent2);color:var(--ink);font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid var(--line)">The Collection Keeps Growing</div></div>'+
+    '<h2 style="font-family:'+STYLE_PACKS[state.style].font+';font-size:24px;line-height:1.05;text-align:center;margin:0">Collect the Whole Set!</h2>'+
+    '<p style="text-align:center;font-size:12px;line-height:1.6;color:var(--muted);max-width:520px;margin:8px auto 0">You have started with <b style="color:var(--ink)">'+escapeHtml(ctx.themeName)+'</b>. Each Slambook is 12 fresh prompts. Collect them, stack them, and watch your friendship library grow.</p>'+
+    '<div class="collection-grid">'+gridHtml+'</div>'+
+    '<div style="margin-top:14px;background:color-mix(in srgb, var(--accent2) 12%, #fff);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">'+
+      '<div style="font-size:12px;line-height:1.5"><b>What\'s inside every Slambook?</b><br><span style="color:var(--muted)">12 prompts • Draw &amp; write • Pass to friends • Keepsake forever</span></div>'+
+      '<div style="background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700">Ages 6–10 • '+escapeHtml(StyleLabel())+'</div>'+
+    '</div>'+
+    '<div style="text-align:center;margin-top:12px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)">More themes are added to SlamBook Forge every season — keep collecting!</div>';
+}
+
+function renderThumbs(){
+  var strip=document.getElementById('thumbStrip');
+  strip.innerHTML='';
+  var pages=document.querySelectorAll('#pages .page');
+  for(var i=0;i<pages.length;i++){
+    var key=pages[i].getAttribute('data-page');
+    var labelMap={cover:'Cover', title:'Belongs To', howto:'How to Use', placeholder:'12 Pages', back:'Collect Set'};
+    var thumb=document.createElement('div');
+    thumb.className='thumb' + (state.activePage===key?' active':'');
+    thumb.setAttribute('data-page', key);
+    var iconMap={cover:'🌟', title:'👑', howto:'📖', placeholder:'📎', back:'🎀'};
+    thumb.innerHTML='<div class="thumb-preview" style="background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, #fff), #fff)"><span style="font-size:18px">'+(iconMap[key]||'•')+'</span></div><div class="thumb-label">'+(labelMap[key]||key)+'</div>';
+    (function(k){ thumb.addEventListener('click', function(){ state.activePage=k; var pages=document.querySelectorAll('#pages .page'); for(var pi=0;pi<pages.length;pi++) pages[pi].classList.toggle('active', pages[pi].getAttribute('data-page')===k); var thumbs=document.querySelectorAll('.thumb'); for(var ti=0;ti<thumbs.length;ti++) thumbs[ti].classList.toggle('active', thumbs[ti].getAttribute('data-page')===k); }); })(key);
+    strip.appendChild(thumb);
+  }
+}
+
+function renderAll(){
+  renderPages();
+  renderThumbs();
+  buildComparisonStrip();
+  // keep filmstrip in sync if active
+  var fw=document.getElementById('filmstripWrap');
+  if(fw && fw.classList.contains('active')) renderFilmstrip();
+}
+
+function escapeHtml(s){
+  var d=document.createElement('div');
+  d.appendChild(document.createTextNode(s));
+  return d.innerHTML;
+}
+function showToast(msg, isError){
+  var t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:9999;max-width:90%;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.background=isError ? '#b91c1c' : 'var(--ink)';
+  t.style.display='block';
+  clearTimeout(t._hide);
+  t._hide=setTimeout(function(){ t.style.display='none'; }, 4000);
+}
+function inlineAllStyles(source, clone){
+  var sNodes=source.querySelectorAll('*');
+  var cNodes=clone.querySelectorAll('*');
+  // include root
+  var allS=[source].concat(Array.prototype.slice.call(sNodes));
+  var allC=[clone].concat(Array.prototype.slice.call(cNodes));
+  for(var i=0;i<allS.length;i++){
+    var comp=window.getComputedStyle(allS[i]);
+    var styleStr='';
+    for(var j=0;j<comp.length;j++){
+      var prop=comp[j];
+      var val=comp.getPropertyValue(prop);
+      // skip some problematic
+      if(val && prop.indexOf('animation')===-1 && prop.indexOf('transition')===-1){
+        styleStr+= prop+':'+val+';';
+      }
+    }
+    allC[i].setAttribute('style', styleStr);
+  }
+}
+function downloadViaCanvas(pageEl, fileName, mime){
+  var scale=2;
+  var rect=pageEl.getBoundingClientRect();
+  var w=Math.round(rect.width);
+  var h=Math.round(rect.height);
+  if(w===0 || h===0){
+    w=pageEl.offsetWidth || 640;
+    h=pageEl.offsetHeight || 800;
+  }
+  // Font-loading guard with 3s timeout
+  var fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  var timeout = new Promise(function(res){ setTimeout(res, 3000); });
+  Promise.race([fontsReady, timeout]).then(function(){
+    var canvas=document.createElement('canvas');
+    canvas.width=w*scale;
+    canvas.height=h*scale;
+    var ctx=canvas.getContext('2d');
+    ctx.scale(scale,scale);
+    // Clone and inline styles robustly
+    var clone=pageEl.cloneNode(true);
+    // remove contenteditable outlines for export
+    var editables=clone.querySelectorAll('[contenteditable]');
+    for(var i=0;i<editables.length;i++) editables[i].removeAttribute('contenteditable');
+    // inline all computed styles
+    try{ inlineAllStyles(pageEl, clone); }catch(e){ console.warn('inline styles failed', e); }
+    // Build SVG with proper xmlns
+    var styleText='';
+    var styles=document.querySelectorAll('style');
+    for(var s=0;s<styles.length;s++) styleText+='<style>'+styles[s].textContent+'</style>';
+    var htmlContent=clone.outerHTML;
+    var svgStr='<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><foreignObject xmlns="http://www.w3.org/1999/xhtml" width="'+w+'" height="'+h+'" x="0" y="0"><div xmlns="http://www.w3.org/1999/xhtml" style="width:'+w+'px;height:'+h+'px;background:#fff">'+ styleText + htmlContent +'</div></foreignObject></svg>';
+    var svgEncoded=encodeURIComponent(svgStr);
+    var dataUri='data:image/svg+xml;charset=utf-8,'+svgEncoded;
+    var img=new Image();
+    var diagnostic=document.getElementById('exportDiagnostic');
+    if(diagnostic && diagnostic.style.display!=='none'){
+      diagnostic.textContent='SVG len: '+svgEncoded.length+' • '+w+'×'+h+' @'+scale+'x • loading…';
+    }
+    img.onload=function(){
+      ctx.fillStyle='#ffffff';
+      ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img,0,0,w,h);
+      try{
+        var url=canvas.toDataURL(mime || 'image/png');
+        var a=document.createElement('a');
+        a.href=url;
+        a.download=fileName;
+        a.click();
+        if(diagnostic && diagnostic.style.display!=='none'){
+          diagnostic.textContent='SVG len: '+svgEncoded.length+' • '+w+'×'+h+' @'+scale+'x • OK • PNG '+(Math.round(url.length/1024))+'KB';
+        }
+      }catch(e){
+        console.error('toDataURL failed', e);
+        showToast('⚠️ PNG export couldn\'t render this page. Try \'Export PDF (Print)\' instead, or reload and try again.', true);
+      }
+    };
+    img.onerror=function(e){
+      console.error('SVG foreignObject image failed to load', e, 'svg length', svgEncoded.length);
+      showToast('⚠️ PNG export couldn\'t render this page. Try \'Export PDF (Print)\' instead, or reload and try again.', true);
+      if(diagnostic && diagnostic.style.display!=='none'){
+        diagnostic.textContent='SVG load ERROR • len '+svgEncoded.length+' • '+w+'×'+h;
+      }
+    };
+    img.src=dataUri;
+  });
+}
+
+function exportCurrentAs(mime, ext){
+  var active=document.querySelector('#pages .page.active');
+  if(!active){
+    var first=document.querySelector('#pages .page');
+    if(first) active=first;
+  }
+  if(!active) return;
+  var base=(state.title || 'Slambook').replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'');
+  var pageKey=active.getAttribute('data-page') || 'page';
+  var fileName=base+'_'+pageKey+'.'+ext;
+  downloadViaCanvas(active, fileName, mime);
+}
+function exportAllPages(){
+  var pages=document.querySelectorAll('#pages .page');
+  if(pages.length===0) return;
+  var base=(state.title || 'Slambook').replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'');
+  var idx=0;
+  function next(){
+    if(idx>=pages.length) return;
+    var page=pages[idx];
+    var key=page.getAttribute('data-page') || ('page'+(idx+1));
+    var fileName=base+'_'+key+'.png';
+    // Use robust pipeline for each
+    downloadViaCanvas(page, fileName, 'image/png');
+    idx++;
+    if(idx<pages.length) setTimeout(next, 350);
+  }
+  next();
+  showToast('⏳ Exporting '+pages.length+' pages — check your downloads bar', false);
+}
+function exportFilmstrip(){
+  var wrap=document.getElementById('filmstripWrap');
+  var pagesWrap=document.getElementById('pagesWrap');
+  // Ensure filmstrip is populated
+  renderFilmstrip();
+  var target=wrap;
+  // If filmstrip not active, use pagesWrap as fallback but filmstrip is the hero
+  if(!wrap.classList.contains('active') || wrap.children.length===0){
+    // Force filmstrip active for capture
+    wrap.classList.add('active');
+    document.getElementById('pagesWrap').style.display='none';
+  }
+  var base=(state.title || 'Slambook').replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'');
+  downloadViaCanvas(target, base+'_filmstrip.png', 'image/png');
+  showToast('🎞 Filmstrip exported — one image, full wrap view', false);
+}
+function renderFilmstrip(){
+  var wrap=document.getElementById('filmstripWrap');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  var pages=document.querySelectorAll('#pages .page');
+  for(var i=0;i<pages.length;i++){
+    var clone=pages[i].cloneNode(true);
+    // Remove contenteditable for clean clone
+    var eds=clone.querySelectorAll('[contenteditable]');
+    for(var e=0;e<eds.length;e++) eds[e].removeAttribute('contenteditable');
+    // Scale down for filmstrip
+    var card=document.createElement('div');
+    card.className='filmstrip-card';
+    // Force paper size to fit filmstrip
+    clone.style.display='flex';
+    clone.style.minHeight='420px';
+    clone.style.maxWidth='260px';
+    clone.classList.remove('active');
+    // Keep style
+    card.appendChild(clone);
+    // Make inner not active display flex
+    clone.style.display='flex';
+    wrap.appendChild(card);
+  }
+  if(pages.length===0){
+    wrap.innerHTML='<div style="padding:18px;color:var(--muted);font-size:13px">No pages to show — enable sections in the left panel.</div>';
+  }
+}
+function buildComparisonStrip(){
+  var strip=document.getElementById('comparisonStrip');
+  if(!strip) return;
+  strip.innerHTML='';
+  var keys=['pastel','chibi','storybook','crayon'];
+  var labels={pastel:'Pastel', chibi:'Chibi', storybook:'Story', crayon:'Crayon'};
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i];
+    var pack=STYLE_PACKS[k];
+    var sw=document.createElement('div');
+    sw.className='comparison-swatch' + (state.style===k?' active':'');
+    sw.setAttribute('data-style', k);
+    sw.innerHTML='<div class="comparison-preview" style="background:linear-gradient(135deg,'+pack.accent+' 0%, '+pack.accent2+' 100%);color:'+(k==='chibi'?'#2e2a26':'#fff')+'">'+pack.label.split(' ')[0]+'</div><div class="comparison-label" style="font-family:'+pack.font+'">'+labels[k]+'</div>';
+    (function(key){ sw.addEventListener('click', function(){ applyStyle(key); buildComparisonStrip(); }); })(k);
+    strip.appendChild(sw);
+  }
+}
+
+
+function init(){
+  buildStyleGrid();
+  buildComparisonStrip();
+  buildOtherList();
+  buildIncludeList();
+  applyStyle(state.style);
+  // Events
+  document.getElementById('titleInput').addEventListener('input', function(){ state.title=this.value; renderAll(); });
+  document.getElementById('themeSelect').addEventListener('change', function(){
+    state.theme=this.value;
+    var custom=document.getElementById('customThemeInput');
+    if(this.value==='custom') custom.style.display='block';
+    else custom.style.display='none';
+    // pick new random tagline/howto for variety
+    state.taglineIdx=Math.floor(Math.random()*3);
+    state.howtoIdx=Math.floor(Math.random()*3);
+    renderAll();
+  });
+  document.getElementById('customThemeInput').addEventListener('input', function(){ state.customTheme=this.value; renderAll(); });
+  document.getElementById('forInput').addEventListener('input', function(){ state.forName=this.value; renderAll(); });
+  document.getElementById('byInput').addEventListener('input', function(){ state.byName=this.value; renderAll(); });
+  document.getElementById('seriesToggle').addEventListener('change', function(){ state.seriesOn=this.checked; document.getElementById('seriesFields').style.display=this.checked?'block':'none'; renderAll(); });
+  document.getElementById('addThemeBtn').addEventListener('click', function(){ state.otherThemes.push('New Theme'); buildOtherList(); renderAll(); });
+  var paperBtns=document.querySelectorAll('#paperSeg button');
+  for(var i=0;i<paperBtns.length;i++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        for(var j=0;j<paperBtns.length;j++) paperBtns[j].classList.remove('active');
+        btn.classList.add('active');
+        state.paper=btn.getAttribute('data-paper');
+        renderAll();
+      });
+    })(paperBtns[i]);
+  }
+  document.getElementById('regenBtn').addEventListener('click', function(){
+    state.taglineIdx=Math.floor(Math.random()*10);
+    state.howtoIdx=Math.floor(Math.random()*10);
+    renderAll();
+    renderFilmstrip();
+  });
+  var vsBtn=document.getElementById('viewSingleBtn');
+  var vfBtn=document.getElementById('viewFilmstripBtn');
+  var filmWrap=document.getElementById('filmstripWrap');
+  var pagesWrapEl=document.getElementById('pagesWrap');
+  var thumbStripEl=document.getElementById('thumbStrip');
+  var exportBarEl=document.getElementById('exportBar');
+  if(vsBtn && vfBtn){
+    vsBtn.addEventListener('click', function(){
+      vsBtn.style.background='var(--ink)'; vsBtn.style.color='#fff'; vsBtn.style.borderColor='var(--ink)';
+      vfBtn.style.background='#fff'; vfBtn.style.color='var(--ink)'; vfBtn.style.borderColor='var(--line)';
+      filmWrap.classList.remove('active');
+      filmWrap.style.display='none';
+      pagesWrapEl.style.display='flex';
+      thumbStripEl.style.display='flex';
+      exportBarEl.style.display='flex';
+    });
+    vfBtn.addEventListener('click', function(){
+      vfBtn.style.background='var(--ink)'; vfBtn.style.color='#fff'; vfBtn.style.borderColor='var(--ink)';
+      vsBtn.style.background='#fff'; vsBtn.style.color='var(--ink)'; vsBtn.style.borderColor='var(--line)';
+      renderFilmstrip();
+      filmWrap.classList.add('active');
+      filmWrap.style.display='flex';
+      pagesWrapEl.style.display='none';
+      thumbStripEl.style.display='none';
+      exportBarEl.style.display='none';
+    });
+  }
+  var diagToggle=document.getElementById('diagnosticToggle');
+  var diagPanel=document.getElementById('exportDiagnostic');
+  if(diagToggle){
+    diagToggle.addEventListener('click', function(){
+      var isHidden = diagPanel.style.display==='none' || diagPanel.style.display==='';
+      diagPanel.style.display = isHidden ? 'block' : 'none';
+      diagToggle.classList.toggle('active', isHidden);
+      if(isHidden){
+        diagPanel.textContent='Diagnostic ON — next PNG export will show SVG len + dimensions + status here.';
+      }
+    });
+  }
+  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+  document.getElementById('exportPngBtn').addEventListener('click', function(){ exportCurrentAs('image/png','png'); });
+  document.getElementById('exportJpgBtn').addEventListener('click', function(){ exportCurrentAs('image/jpeg','jpg'); });
+  document.getElementById('exportPdfBtn').addEventListener('click', function(){ window.print(); });
+  var allBtn=document.getElementById('exportAllBtn');
+  if(allBtn) allBtn.addEventListener('click', exportAllPages);
+  var filmBtn=document.getElementById('exportFilmstripBtn');
+  if(filmBtn) filmBtn.addEventListener('click', exportFilmstrip);
+  document.getElementById('guideToggle').addEventListener('click', function(e){
+    e.stopPropagation();
+    var dd=document.getElementById('guideDropdown');
+    dd.classList.toggle('open');
+  });
+  document.getElementById('guideClose').addEventListener('click', function(){ document.getElementById('guideDropdown').classList.remove('open'); });
+  document.addEventListener('click', function(e){
+    var dd=document.getElementById('guideDropdown');
+    var btn=document.getElementById('guideToggle');
+    if(!dd.contains(e.target) && e.target!==btn) dd.classList.remove('open');
+  });
+  // initial seriesFields visibility
+  document.getElementById('seriesFields').style.display=state.seriesOn?'block':'none';
+  renderAll();
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>
