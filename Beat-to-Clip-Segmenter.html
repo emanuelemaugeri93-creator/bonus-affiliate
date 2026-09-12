@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Micro Drama Beat-to-Clip Segmenter</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#ff4d2e; --accent-d:#c22e12; --accentSoft:#ffd9cd;
+  --secondary:#8b93a7; --secondarySoft:#e2e5ec;
+  --bg:#101014; --panel:#181820; --panel2:#20202c;
+  --ink:#f5f3ef; --ink2:#cfc9bd; --muted:#8f8a7d; --line:#35333f;
+  --r:14px; --sh:0 8px 28px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1100px 480px at 85% -10%,#3a1a10 0%,var(--bg) 55%) fixed,var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.6}
+h1,h2,h3,.bb{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px}
+.wrap{display:flex;min-height:100vh}
+aside{width:350px;flex:0 0 350px;background:var(--panel);border-right:1px solid var(--line);padding:22px 18px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{text-align:center;margin-bottom:18px}
+.brand .kicker{font-size:11px;letter-spacing:3px;color:var(--accent);font-weight:800}
+.brand h1{font-size:29px;line-height:1.05;margin:6px 0;color:#fff}
+.brand h1 span{color:var(--accent)}
+.brand p{font-size:12.5px;color:var(--muted)}
+.sec{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.sec h3{font-size:19px;letter-spacing:2px;color:var(--ink2);margin-bottom:10px}
+.sec h3 b{color:var(--accent)}
+label.f{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin:10px 0 4px}
+input[type=text],input[type=number],select,textarea{width:100%;background:#0e0e13;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:14px}
+textarea{resize:vertical;min-height:76px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.badge9{display:inline-block;background:var(--accent);color:#101014;font-weight:800;font-size:12px;border-radius:8px;padding:4px 12px;letter-spacing:1px;margin-top:8px}
+.genbtn{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent-d));border:none;color:#fff;font-family:inherit;font-weight:800;font-size:16px;border-radius:var(--r);padding:14px;cursor:pointer;box-shadow:var(--sh)}
+.genbtn:hover{filter:brightness(1.12)}
+main{flex:1;padding:26px 28px;max-width:1200px}
+.strip{display:flex;gap:0;align-items:stretch;margin-bottom:18px;flex-wrap:wrap}
+.clip{flex:1 1 220px;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:16px;position:relative;min-width:220px}
+.clip .seg{font-family:'Bebas Neue';font-size:19px;letter-spacing:1px;color:var(--accent)}
+.clip .ts{font-size:11.5px;font-weight:800;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
+.clip .pbox{background:#0c0c11;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.65;color:#e8e4dc;white-space:pre-wrap;margin-bottom:10px}
+.arrow{align-self:center;font-size:22px;color:var(--accent);padding:0 6px;font-weight:800}
+.guide{background:var(--panel);border:1px dashed var(--accent);border-radius:var(--r);padding:12px 18px;margin-bottom:18px;font-size:13.5px}
+.guide summary{cursor:pointer;font-family:'Bebas Neue';font-size:19px;letter-spacing:2px;color:var(--accent);list-style:none}
+.guide summary::-webkit-details-marker{display:none}
+.guide ol{margin:8px 0 4px 20px}
+.guide li{margin-bottom:5px}
+.guide b{color:#fff}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:3px 12px;font-weight:700;color:var(--ink2);font-size:12px}
+.pill.hot{border-color:var(--accent);color:var(--accent)}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.btn{background:#0e0e13;border:1px solid var(--accent);color:var(--accentSoft);border-radius:10px;padding:10px 16px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer}
+.btn:hover{background:var(--accent);color:#fff}
+.btn.ghost{border-color:var(--line);color:var(--ink2)}
+.btn.ghost:hover{border-color:var(--accent);color:#fff;background:#2a1c14}
+.prog{height:12px;background:#0e0e13;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0 16px}
+.prog div{height:100%;background:linear-gradient(90deg,var(--accent-d),var(--accent));width:0%}
+.lib h3{font-size:24px;color:#fff;margin-bottom:4px}
+.lib .sub{font-size:13px;color:var(--muted);margin-bottom:12px}
+.libitem{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+.libitem b{color:#fff;font-size:15px}
+.libitem .tags{font-size:11.5px;color:var(--muted);margin:2px 0 6px}
+.libitem .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.mini{background:#0e0e13;border:1px solid var(--line);color:var(--ink2);border-radius:8px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.mini:hover{border-color:var(--accent);color:#fff}
+.mini.danger:hover{border-color:#ff5d5d;color:#ff8d8d}
+.empty{color:var(--muted);font-size:13.5px;border:1px dashed var(--line);border-radius:var(--r);padding:16px;text-align:center}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent-d);color:#fff;font-weight:800;border-radius:10px;padding:11px 24px;display:none;box-shadow:var(--sh);z-index:50}
+@media(max-width:900px){.wrap{flex-direction:column}aside{width:100%;position:static;height:auto}.arrow{transform:rotate(90deg);padding:6px 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside>
+  <div class="brand">
+    <div class="kicker">MICRO DRAMA EMPIRE COMPANION</div>
+    <h1>Beat-to-Clip <span>Segmenter</span></h1>
+    <p>One 60-second beat → four 15-second video prompts. Step 3, automated.</p>
+  </div>
+  <div class="sec">
+    <h3><b>01 ·</b> EPISODE DETAILS</h3>
+    <label class="f" for="inEp">Episode Number (1–30)</label>
+    <input type="number" id="inEp" value="12" min="1" max="30">
+    <label class="f" for="inBeat">Episode Beat (paste from Trope Engine)</label>
+    <textarea id="inBeat" placeholder="e.g. She slaps him across the face at the gala and storms out into the rain">She slaps him across the face at the gala and storms out into the rain</textarea>
+  </div>
+  <div class="sec">
+    <h3><b>02 ·</b> CAST CONTEXT</h3>
+    <label class="f" for="epCast">Who's in This Episode (names, comma separated)</label>
+    <input type="text" id="epCast" value="" placeholder="e.g. Aria, Kael">
+    <label class="f" for="castRef">📋 Full Cast Reference (paste once, kept for all 30)</label>
+    <textarea id="castRef" placeholder="Paste full cast list from Face-Lock Forge — saved automatically"></textarea>
+  </div>
+  <div class="sec">
+    <h3><b>03 ·</b> VISUAL STYLE LOCK</h3>
+    <label class="f" for="inStyle">Style (matches Face-Lock Forge)</label>
+    <select id="inStyle"></select>
+    <span class="badge9">⬛ 9:16 VERTICAL — LOCKED</span>
+  </div>
+  <button class="genbtn" id="btnGen">🎬 Segment Into 4 Clips</button>
+</aside>
+<main>
+  <div class="btnrow" id="clipTools" style="display:none">
+    <span class="pill hot" id="epInfo"></span>
+    <button class="btn" id="btnCopyAll">📋 Copy All 4 Prompts in Sequence</button>
+    <button class="btn ghost" id="btnSave">💾 Save This Episode's Clips</button>
+    <button class="btn ghost" id="btnAlt">🔀 Alternate Cut</button>
+    <button class="btn ghost" id="btnMore">🔄 Regenerate Segments</button>
+  </div>
+  <details class="guide">
+    <summary>📖 HOW TO USE THIS TOOL (60-SECOND READ)</summary>
+    <div>
+    <ol>
+      <li><b>Paste ONE episode beat</b> — a single sentence from your Trope Engine series (or your own), e.g. <i>She slaps him across the face at the gala</i>.</li>
+      <li><b>Set the cast ONCE</b> — paste the full cast list in Full Cast Reference (it auto-saves); per episode, just list who's in the scene.</li>
+      <li><b>Lock the style</b> — use the SAME style value as Face-Lock Forge so faces and footage match. 9:16 vertical is always locked.</li>
+      <li><b>Hit Segment</b> — you get 4 ordered 15-second prompts: Establish → Develop → Escalate → Cliffhanger.</li>
+      <li><b>Copy top-to-bottom</b> into your video generator (Step 4 workflow), one clip at a time, in sequence.</li>
+      <li><b>Save every episode</b> — work to 30/30 on the progress bar, then Copy Full Season for all 120 prompts.</li>
+    </ol>
+    <b>Pro tips:</b> 🔀 Alternate Cut re-shoots the same beat with all-new coverage (great for A/B picks). Keep character name spelling IDENTICAL everywhere or continuity breaks. The Cliffhanger clip sells the NEXT episode — reroll until the Escalate clip feels biggest.
+    </div>
+  </details>
+  <div class="strip" id="strip"></div>
+  <div class="lib">
+    <h3 class="bb">📚 Episode Library — Season Progress</h3>
+    <div class="sub" id="progSub">0 of 30 episodes segmented</div>
+    <div class="prog"><div id="progBar"></div></div>
+    <div id="libZone"></div>
+    <div class="btnrow" id="libBtns" style="display:none">
+      <button class="btn" id="btnCopySeason">📋 Copy Full Season (All Episodes)</button>
+    </div>
+  </div>
+</main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var STYLES=[
+ {k:'cine',t:'Cinematic Realistic',c:'cinematic photorealism, 85mm lens, shallow depth of field, film-still quality'},
+ {k:'gloss',t:'K-Drama / C-Drama Glossy',c:'flawless glossy K-drama aesthetic, luminous skin, soft beauty lighting, high-end production still'},
+ {k:'rom',t:'Soft Romantic Glow',c:'soft romantic glow, warm golden tones, dreamy bokeh, gentle radiance'},
+ {k:'moody',t:'High-Contrast Moody Drama',c:'high-contrast moody lighting, deep shadows, dramatic rim light, noir intensity'},
+ {k:'comm',t:'Bright Commercial Clean',c:'bright clean commercial photography, crisp even lighting, vibrant true color'}
+];
+var SEGS=[
+ {k:'est',t:'Segment 1 — Establish',ts:'0:00–0:15'},
+ {k:'dev',t:'Segment 2 — Develop',ts:'0:15–0:30'},
+ {k:'esc',t:'Segment 3 — Escalate',ts:'0:30–0:45'},
+ {k:'cliff',t:'Segment 4 — Cliffhanger',ts:'0:45–0:60'}
+];
+var DIR={est:[],dev:[],esc:[],cliff:[]};
+DIR.est=["wide establishing shot of {LOC}, soft ambient lighting, {WHO} enters frame — {STYLE}","slow push-in on {LOC} at dusk, {WHO} standing near the center, calm before the storm — {STYLE}","aerial-style sweep down into {LOC}, settling on {WHO}, everyday rhythm, quiet detail — {STYLE}","long static wide shot holding {LOC}, {WHO} small in frame, low-key unease underneath — {STYLE}","tracking shot gliding through {LOC} toward {WHO}, morning light, ordinary moment — {STYLE}","establishing two-shot in {LOC}, {WHO} framed against depth, soft focus background — {STYLE}","slow lateral dolly across {LOC} revealing {WHO} mid-routine, natural light — {STYLE}","overhead wide shot of {LOC} with {WHO} crossing frame, sense of place first — {STYLE}","gentle handheld wide of {LOC}, {WHO} arriving, ambient sound up — {STYLE}","locked-off establishing frame of {LOC}, {WHO} enters from edge, unhurried — {STYLE}","warm interior wide of {LOC}, {WHO} settled in routine, deceptive calm — {STYLE}","night exterior wide of {LOC}, practical lights glowing, {WHO} approaching — {STYLE}","slow crane-down into {LOC} landing on {WHO}, scale then intimacy — {STYLE}","360-degree slow orbit opener around {WHO} in {LOC}, world-building first — {STYLE}","window-framed wide shot of {LOC}, {WHO} observed from outside, voyeur calm — {STYLE}","mirror-shot opener: {WHO} reflected in {LOC}, doubled image, quiet tension — {STYLE}"];
+DIR.est.push("crane-up reveal of {LOC} with {WHO} center frame, {EMO} humming underneath — {STYLE}","POV approach shot walking into {LOC} as {WHO}, seeing what they see — {STYLE}","split-screen diptych: {WHO} and {WHO2} in separate spaces of {LOC}, parallel calm — {STYLE}","time-lapse compression of {LOC} settling as {WHO} waits, clouds racing — {STYLE}","through-the-crowd steadicam finding {WHO} in {LOC}, one face among many — {STYLE}","extreme wide of {LOC} at blue hour, {WHO} a silhouette in the door — {STYLE}","macro-to-wide pull: a telling object, then {WHO} holding it in {LOC} — {STYLE}","single-take walk-and-talk through {LOC} as {WHO} sets the day in motion — {STYLE}");
+DIR.dev=["medium tracking shot following {WHO} as {ACT} begins to unfold, {EMO} rising — {STYLE}","over-the-shoulder shot as {WHO} confronts what {ACT} sets in motion, pace quickening — {STYLE}","handheld medium shot circling {WHO} while {ACT} escalates, {EMO} building — {STYLE}","two-shot with slow push-in as {WHO} and {WHO2} collide over {ACT}, voices rising — {STYLE}","insert-heavy sequence: hands, eyes, the object at the heart of {ACT}, {EMO} mounting — {STYLE}","steadicam follow of {WHO} through {LOC} as {ACT} spirals, background blurring — {STYLE}","shot-reverse-shot volley between {WHO} and {WHO2}, each line sharper, {EMO} crackling — {STYLE}","low-angle medium shot empowering {WHO} as {ACT} turns in their favor — {STYLE}","whip-pan between faces as {ACT} lands, {EMO} spiking, no one blinking — {STYLE}","slow-motion beat inside {ACT}: a glass tips, a breath catches, {EMO} suspended — {STYLE}","doorway-framed medium shot as {WHO} blocks {WHO2}, {ACT} reaching point of no return — {STYLE}","mirror-and-window layering as {WHO} processes {ACT}, {EMO} doubling — {STYLE}","rising crane shot lifting over {WHO} amid {ACT}, stakes widening visibly — {STYLE}","rapid intercutting between {WHO} acting and {WHO2} reacting, {EMO} ratcheting — {STYLE}","close tracking on hands during {ACT}: signing, grabbing, trembling — {EMO} in the fingers — {STYLE}","dutch-angle medium shot as {LOC} tilts with {ACT}, control slipping — {STYLE}"];
+DIR.dev.push("POV handheld rush with {WHO} toward {ACT}, breath and footsteps up — {STYLE}","elevator-interior two-shot as {ACT} unfolds between floors, {EMO} trapped — {STYLE}","staircase chase grammar: up, down, landing, {WHO} gaining on {ACT} — {STYLE}","car-interior coverage of {WHO} processing {ACT}, city smearing past — {STYLE}","kitchen-sink realism: {WHO} mid-chore when {ACT} interrupts, {EMO} domestic then not — {STYLE}","phone-call split screen as {WHO} learns of {ACT}, face falling in real time — {STYLE}","crowd-parting slow-mo as {WHO} crosses {LOC} toward {ACT} — {STYLE}","security-footage aesthetic capturing {ACT}, timestamped, damning — {STYLE}");
+DIR.esc=["sweeping crane shot over {LOC} as {ACT} detonates, {EMO} at full volume — {STYLE}","tight close-up on {WHO} mid-{ACT}, every muscle taut, {EMO} peaking — {STYLE}","chaotic handheld coverage of {ACT} erupting between {WHO} and {WHO2} — {STYLE}","slow-motion centerpiece: the exact second {ACT} becomes irreversible, {EMO} frozen — {STYLE}","whip-zoom into {WHO}'s eyes as {ACT} lands its hardest hit — {STYLE}","overhead plunge shot as {LOC} becomes an arena for {ACT} — {STYLE}","rapid-fire montage: three angles of {ACT} in four seconds, {EMO} overwhelming — {STYLE}","silhouette shot against blown-out windows as {WHO} delivers the peak line of {ACT} — {STYLE}","floor-level shot looking up as {WHO} rises through {ACT}, power shifting — {STYLE}","rain-or-shatter practical effect beat punctuating {ACT}, {WHO} center frame — {STYLE}","spinning 360 shot around {WHO} and {WHO2} locked in {ACT}, world blurring — {STYLE}","extreme wide-to-tight crash zoom on {LOC} as {ACT} explodes — {STYLE}","split-focus shot: {WHO} sharp, {WHO2} blurred, {ACT} tearing between them — {STYLE}","strobe-cut sequence fragmenting {ACT} into strobing images, {EMO} unbearable — {STYLE}","low tracking shot rushing with {WHO} through {LOC} mid-{ACT}, breathless — {STYLE}","table-flip tableau: everything airborne in {LOC} as {ACT} peaks, {WHO} still — {STYLE}"];
+DIR.esc.push("chandelier-drop wide as {LOC} erupts over {ACT}, {WHO} unmoving center — {STYLE}","underwater-slow drift through {ACT}, sound dropping out for {WHO} — {STYLE}","mirror-maze fragmentation of {WHO} mid-{ACT}, selves multiplying — {STYLE}","fire-alarm red wash over {LOC} as {ACT} peaks, {WHO} shouting through it — {STYLE}","vertigo dolly-zoom on {WHO} realizing {ACT}, background stretching — {STYLE}","fistfight grammar without contact: shoves, grabs, near-misses of {ACT} — {STYLE}","glass-wall separation: {WHO} pounding through to {ACT}, sound muffled — {STYLE}","confetti-or-ash slow fall over {LOC} as {ACT} detonates, {WHO} laughing or screaming — {STYLE}");
+DIR.cliff=["extreme close-up on {WHO}'s face, shock and realization dawning, camera holds for a dramatic pause — {STYLE}","freeze-frame on {WHO} mid-reaction to {ACT}, {EMO} written everywhere, cut to black — {STYLE}","door-slam cliffhanger: {WHO} turning away as {WHO2} calls their name, held two beats — {STYLE}","object reveal cliffhanger: slow push-in on the damning thing {ACT} left behind — {STYLE}","interrupted-action freeze: {WHO}'s hand mid-reach, {WHO2} mid-gasp, everything stops — {STYLE}","over-the-shoulder reveal: what {WHO} sees (but we barely glimpse), {EMO} spiking — {STYLE}","phone-screen insert: the message about {ACT} glowing, {WHO}'s thumb hovering — {STYLE}","mirror cliffhanger: {WHO} staring at their own reflection after {ACT}, unrecognizable — {STYLE}","footsteps-and-door audio cliffhanger over {WHO}'s widening eyes, cut on the knock — {STYLE}","slow zoom out abandoning {WHO} small and alone in {LOC} after {ACT} — {STYLE}","match-cut tease: {WHO}'s face morphing into next episode's threat, blink and miss it — {STYLE}","whispered-line cliffhanger: {WHO2} mouthing words we almost hear about {ACT} — {STYLE}","silhouette-in-doorway reveal ending: a new figure backlit in {LOC}, {WHO} frozen — {STYLE}","ticking-clock insert over {WHO}'s panic: the deadline of {ACT}, three seconds, black — {STYLE}","tear-drop macro cliffhanger on {WHO} as {ACT} lands its final meaning — {STYLE}","smile-that-isn't cliffhanger: {WHO} grinning through {EMO}, camera pushes in, ends — {STYLE}"];
+DIR.cliff.push("elevator-doors-closing split: {WHO} inside, {WHO2} outside, {ACT} between them — {STYLE}","birthday-candle blowout black: wish made over {ACT}, darkness answers — {STYLE}","rearview-mirror reveal: {WHO2} in the back seat behind {WHO}, {EMO} iced — {STYLE}","curtain-call freeze: all players tableau in {LOC}, {WHO} center, lights cut — {STYLE}","voicemail cliffhanger: {WHO2}'s voice confessing {ACT}, {WHO} listening, still — {STYLE}","ink-in-water transition swallowing {WHO} after {ACT}, hold on the cloud — {STYLE}","applause-cut: cheering crowd, {WHO}'s devastated face, {ACT} unheard — {STYLE}","last-frame photo flash: the picture of {ACT} that changes everything, white-out — {STYLE}");
+var MODS=["Shot on a 24mm lens with subtle barrel distortion.","Captured in 120fps slow motion, then ramped to real time.","A whip-pan transition slams into the next beat.","Shallow focus pulls from foreground to face mid-shot.","Gimbal-smooth push-in, no shake, all intent.","Snap-zoom punch-in on the key reaction.","360-degree orbit completed in four seconds.","Drone-style top-down descent into the scene.","Dutch tilt grows 5 degrees across the shot.","Rack focus between the two faces, twice.","Stutter-cut edit: three jump cuts in two seconds.","Letterboxed within vertical for a filmic wink, then full-bleed."];
+var LIGHTS=["Practical lamps only, warm pools in darkness.","Neon spill from off-screen signage.","Single candle flicker as key light.","Cold moonlight through blinds.","Golden-hour backlight, faces in glow.","Red emergency wash, low and pulsing.","Soft overcast daylight, shadowless.","Chandelier sparkle bokeh behind.","Phone-screen glow lighting the face.","Dawn blue creeping through windows."];
+var LOCS=["gala","ballroom","penthouse","office","mansion","hospital","church","rooftop","car","courtroom","kitchen","bedroom","street","club","chapel","garden","pool","elevator","restaurant","school","ball","wedding","trial","dock","casino","hotel","lobby","terrace","study","vault","stage","altar","rain","storm"];
+var VERBS=["runs","run","kisses","kiss","slaps","slap","reveals","reveal","confronts","confront","collapses","collapse","discovers","discover","confesses","confess","proposes","propose","arrests","arrest","shoots","shoot","signs","sign","burns","burn","falls","fall","grabs","grab","opens","open","closes","close","shouts","shout","whispers","whisper","leaves","leave","arrives","arrive","storms","storm","cries","cry","laughs","laugh","kneels","kneel","points","point","throws","throw","catches","catch","stops","stop","pushes","push","pulls","pull","hugs","hug","shoots","exposes","expose","accuses","accuse","denies","deny","admits","admit","threatens","threaten","begs","beg","faints","faint","wakes","wake","remembers","remember","forgets","forget","lies","lie","hides","hide","finds","find","loses","lose","wins","win","quits","quit","returns","return","flees","flee","chases","chase","rescues","rescue","attacks","attack","defends","defend","shoots"];
+var EMOS=["shock","shocked","tears","crying","rage","furious","joy","joyful","fear","afraid","guilt","guilty","love","hate","panic","panicked","relief","relieved","despair","heartbreak","triumph","triumphant","jealousy","jealous","shame","ashamed","hope","hopeful","dread","dreaded","surprise","surprised","anger","angry","sadness","sad","tension","tense","passion","passionate","grief","grieving"];
+var state={clips:[],seen:{},ep:12};
+function $(id){return document.getElementById(id);}
+function toast(msg){var t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(function(){t.style.display='none';},2200);}
+function shuffle(a){var r=a.slice(),i,j,t;for(i=r.length-1;i>0;i--){j=Math.floor(Math.random()*(i+1));t=r[i];r[i]=r[j];r[j]=t;}return r;}
+function pickR(a){return a[Math.floor(Math.random()*a.length)];}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function styleClause(k){for(var i=0;i<STYLES.length;i++)if(STYLES[i].k===k)return STYLES[i].c;return STYLES[0].c;}
+function words(s){return String(s).toLowerCase().replace(/[^a-z0-9\s']/g,' ').split(/\s+/).filter(function(w){return w.length>1;});}
+function parseCast(){var raw=($('epCast').value.trim()||$('castRef').value.trim());if(!raw)return [];return raw.split(/[,;\n]+/).map(function(x){return x.trim();}).filter(function(x){return x.length>0;}).slice(0,4);}
+function cleanName(n){return String(n).replace(/\(.*?\)/g,'').trim()||n;}
+function extract(beat){var ws=words(beat);var loc='',i;for(i=0;i<ws.length;i++){if(LOCS.indexOf(ws[i])>=0){loc=ws[i];break;}}if(!loc)loc="the scene's key location";var act='';for(i=0;i<ws.length;i++){if(VERBS.indexOf(ws[i])>=0){act=ws.slice(i,Math.min(ws.length,i+4)).join(' ');break;}}if(!act)act='the confrontation';var emo='';for(i=0;i<ws.length;i++){if(EMOS.indexOf(ws[i])>=0){emo=ws[i];break;}}return {loc:loc,act:act,emo:emo};}
+function whoFor(cast,seg){var names=cast.map(cleanName).filter(function(n){return n;});if(!names.length)return {a:'the lead character',b:'the lead character'};if(names.length===1)return {a:names[0],b:names[0]};if(seg==='est')return {a:names.join(' and '),b:names[0]};if(seg==='dev')return {a:names[0],b:names[1]};if(seg==='esc')return {a:names[1],b:names[0]};return {a:names[0],b:names[1]};}
+function fillD(s,ex,who,style,lockNames){return String(s).split('{WHO}').join(who.a).split('{WHO2}').join(who.b).split('{LOC}').join(ex.loc).split('{ACT}').join(ex.act).split('{EMO}').join(ex.emo||'rising tension').split('{STYLE}').join(style).split('{LOCK}').join(lockNames);}
+function sigPick(bank,key){if(!state.seen[key])state.seen[key]={};var fresh=[];var i;for(i=0;i<bank.length;i++){if(!state.seen[key][i])fresh.push(i);}if(!fresh.length){state.seen[key]={};for(i=0;i<bank.length;i++)fresh.push(i);}fresh=shuffle(fresh);var idx=fresh[0];state.seen[key][idx]=true;return bank[idx];}
+function pickDirIdx(k,exclude){var bank=DIR[k];var sk='dir|'+k;if(!state.seen[sk])state.seen[sk]={};var fresh=[];var i;for(i=0;i<bank.length;i++){if(!state.seen[sk][i]&&i!==exclude)fresh.push(i);}if(!fresh.length){for(i=0;i<bank.length;i++){if(i!==exclude)fresh.push(i);}if(!fresh.length)fresh.push(exclude);}fresh=shuffle(fresh);var idx=fresh[0];state.seen[sk][idx]=true;return idx;}
+function buildClip(i,ex,cast,style,lock,ep,exclude){var k=SEGS[i].k;var who=whoFor(cast,k);var emos=['low-key tension','rising tension','high tension','peak shock'];if(ex.emo){emos[2]=ex.emo;emos[3]=ex.emo;}var exk={loc:ex.loc,act:ex.act,emo:emos[i]};var di=pickDirIdx(k,exclude);var dir=fillD(DIR[k][di],exk,who,style,lock);if((i===1||i===2)&&Math.random()<0.6)dir+=' '+pickR(MODS);if((i===0||i===3)&&Math.random()<0.5)dir+=' Light: '+pickR(LIGHTS)+'.';var prompt='['+SEGS[i].t.toUpperCase()+' ('+SEGS[i].ts+') — EPISODE '+ep+']\n'+dir+'\nStyle: '+style+'\nFormat: vertical 9:16 aspect ratio.\nContinuity: '+lock+'.';return {seg:SEGS[i].t,ts:SEGS[i].ts,text:prompt,di:di};}
+function alternateCut(){if(!state.clips.length||!state.lastEx)return;var clips=[];for(var i=0;i<SEGS.length;i++){clips.push(buildClip(i,state.lastEx,state.lastCast,state.lastStyle,state.lastLock,state.ep,state.clips[i].di));}state.clips=clips;renderAll();toast('🔀 Alternate cut — all-new coverage!');}
+function lockNote(cast){var names=cast.map(cleanName).filter(function(n){return n;}).slice(0,2);if(!names.length)return "maintain the characters' established appearance as previously generated";if(names.length===1)return 'maintain '+names[0]+'’s established appearance as previously generated';return 'maintain '+names[0]+'’s and '+names[1]+'’s established appearance as previously generated';}
+function segment(){var ep=parseInt($('inEp').value,10);if(isNaN(ep)||ep<1)ep=1;if(ep>30)ep=30;state.ep=ep;var beat=$('inBeat').value.trim();if(!beat){toast('Paste an episode beat first.');return;}var cast=parseCast();var ex=extract(beat);var style=styleClause($('inStyle').value);var lock=lockNote(cast);var clips=[];for(var i=0;i<SEGS.length;i++){clips.push(buildClip(i,ex,cast,style,lock,ep));}state.clips=clips;state.lastEx=ex;state.lastCast=cast;state.lastStyle=style;state.lastLock=lock;state.beat=beat;state.castRaw=$('epCast').value.trim()||$('castRef').value.trim();state.styleKey=$('inStyle').value;renderAll();}
+function renderAll(){renderStrip();renderLib();}
+function renderStrip(){var s=$('strip');var t=$('clipTools');if(!state.clips.length){t.style.display='none';s.innerHTML='<div class="empty">Paste an episode beat, set cast + style, then hit <b>🎬 Segment Into 4 Clips</b>.</div>';return;}t.style.display='flex';$('epInfo').textContent='Episode '+state.ep+' · 4 clips · 60 seconds';var h='';for(var i=0;i<state.clips.length;i++){var c=state.clips[i];h+='<div class="clip"><div class="seg">'+esc(c.seg)+'</div><div class="ts">⏱ '+esc(c.ts)+'</div><div class="pbox">'+esc(c.text)+'</div><div class="btnrow" style="margin:0"><button class="btn" data-cp="'+i+'">📋 Copy</button></div></div>';if(i<state.clips.length-1)h+='<div class="arrow">→</div>';}s.innerHTML=h;var btns=s.querySelectorAll('button');for(var j=0;j<btns.length;j++){(function(b){b.addEventListener('click',function(){var c2=state.clips[parseInt(b.getAttribute('data-cp'),10)];copyText(c2.text,'📋 Clip copied!');});})(btns[j]);}}
+function copyText(t,msg){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){ok=false;}document.body.removeChild(ta);toast(ok?(msg||'Copied!'):'Copy failed — select and copy manually.');}
+function lib(){var raw=null;try{raw=localStorage.getItem('mds_episodes');}catch(e){raw=null;}if(!raw)return {};try{return JSON.parse(raw)||{};}catch(e){return {};};}
+function libSave(o){try{localStorage.setItem('mds_episodes',JSON.stringify(o));}catch(e){toast('Storage unavailable.');}}
+function saveEp(){if(!state.clips.length)return;var o=lib();o[String(state.ep)]={beat:state.beat,cast:state.castRaw,style:state.styleKey,clips:state.clips.map(function(c){return c.text;})};libSave(o);renderLib();toast('💾 Episode '+state.ep+' saved! ('+Object.keys(o).length+' of 30)');}
+function renderLib(){var z=$('libZone');var o=lib();var keys=Object.keys(o).sort(function(a,b){return parseInt(a,10)-parseInt(b,10);});$('progSub').textContent=keys.length+' of 30 episodes segmented';$('progBar').style.width=Math.round(keys.length/30*100)+'%';$('libBtns').style.display=keys.length?'flex':'none';if(!keys.length){z.innerHTML='<div class="empty">No episodes saved yet. Segment Episode 1 and hit <b>💾 Save</b> to start your season.</div>';return;}z.innerHTML='';for(var i=0;i<keys.length;i++){(function(ep){var it=o[ep];var d=document.createElement('div');d.className='libitem';var b=document.createElement('b');b.textContent='Episode '+ep;var tg=document.createElement('div');tg.className='tags';tg.textContent=it.beat.slice(0,90)+(it.beat.length>90?'...':'');var row=document.createElement('div');row.className='row';var ld=document.createElement('button');ld.className='mini';ld.textContent='↩ Load';ld.addEventListener('click',function(){loadEp(ep);});var cp=document.createElement('button');cp.className='mini';cp.textContent='📋 Copy 4 clips';cp.addEventListener('click',function(){copyText(it.clips.join('\n\n---\n\n'),'📋 Episode copied!');});var del=document.createElement('button');del.className='mini danger';del.textContent='✕';del.addEventListener('click',function(){var x=lib();delete x[ep];libSave(x);renderLib();});row.appendChild(ld);row.appendChild(cp);row.appendChild(del);d.appendChild(b);d.appendChild(tg);d.appendChild(row);z.appendChild(d);})(keys[i]);}}
+function loadEp(ep){var it=lib()[String(ep)];if(!it)return;$('inEp').value=ep;$('inBeat').value=it.beat;$('epCast').value=it.cast||'';if(it.style)$('inStyle').value=it.style;segment();}
+function copySeason(){var o=lib();var keys=Object.keys(o).sort(function(a,b){return parseInt(a,10)-parseInt(b,10);});if(!keys.length)return;var out='FULL SEASON — 120 CLIP PROMPTS ('+keys.length+'/30 episodes)\n\n';for(var i=0;i<keys.length;i++){out+='=== EPISODE '+keys[i]+' ===\n'+o[keys[i]].beat+'\n\n'+o[keys[i]].clips.join('\n\n')+'\n\n\n';}copyText(out,'📋 Full season copied!');}
+function init(){var s=$('inStyle');for(var i=0;i<STYLES.length;i++){var o=document.createElement('option');o.value=STYLES[i].k;o.textContent=STYLES[i].t;s.appendChild(o);}try{var cr=localStorage.getItem('mds_castref');if(cr)$('castRef').value=cr;}catch(e){}$('castRef').addEventListener('input',function(){try{localStorage.setItem('mds_castref',$('castRef').value);}catch(e){}});renderStrip();renderLib();$('btnGen').addEventListener('click',segment);$('btnMore').addEventListener('click',segment);$('btnSave').addEventListener('click',saveEp);$('btnAlt').addEventListener('click',alternateCut);$('btnCopyAll').addEventListener('click',function(){if(state.clips.length)copyText(state.clips.map(function(c){return c.text;}).join('\n\n---\n\n'),'📋 All 4 prompts copied in sequence!');});$('btnCopySeason').addEventListener('click',copySeason);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+</script>
+</body>
+</html>
