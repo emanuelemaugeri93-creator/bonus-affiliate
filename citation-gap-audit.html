@@ -1,0 +1,995 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competitor Citation Gap Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#7c3aed; --accent-d:#5f28bf; --accentSoft:#ede4fc;
+  --bg:#faf9fc; --panel:#ffffff; --panel2:#fbfaff;
+  --ink:#1e1b2e; --ink2:#453f58; --muted:#8a80a0; --line:#e6e0f2;
+  --you:#2563eb; --youSoft:#dbeafe; --them:#ea580c; --themSoft:#ffedd5;
+  --gap:#dc2626; --gapSoft:#fee2e2; --strength:#16a34a; --strengthSoft:#dcfce7;
+  --r:10px; --sh:0 6px 20px rgba(30,20,60,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.55;min-height:100vh}
+h1,h2,h3,.sora{font-family:'Sora',sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding:24px 20px 60px}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);box-shadow:var(--sh)}
+.badge .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 26px;box-shadow:var(--sh);margin-bottom:18px;border-top:4px solid var(--accent)}
+.hero h1{font-size:28px;font-weight:800}
+.hero h1 span{color:var(--accent)}
+.hero p{color:var(--ink2);max-width:880px;margin-top:6px}
+.hero p strong{color:var(--ink)}
+.honest{margin-top:12px;background:var(--accentSoft);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--ink2)}
+.main{display:grid;grid-template-columns:1fr 280px;gap:18px;align-items:start}
+@media(max-width:980px){.main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--sh)}
+.prog{height:10px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-bottom:6px}
+.prog>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--you));transition:width .3s}
+.progmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:18px}
+.step-tag{display:inline-block;background:var(--accentSoft);color:var(--accent-d);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;padding:5px 13px;margin-bottom:10px}
+.card h2{font-size:22px;margin-bottom:8px}
+.instr{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--ink2);margin-bottom:18px}
+.instr b{color:var(--ink)}
+.instr code{font-family:ui-monospace,monospace;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.duo{grid-template-columns:1fr}}
+.side-card{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.side-card .hd{padding:10px 14px;font-weight:800;font-size:13px;color:#fff}
+.side-card.you .hd{background:var(--you)}
+.side-card.them .hd{background:var(--them)}
+.side-card .bd{padding:12px 14px}
+.side-card.you .bd{background:linear-gradient(180deg,var(--youSoft),#fff)}
+.side-card.them .bd{background:linear-gradient(180deg,var(--themSoft),#fff)}
+.crit{padding:10px 0;border-bottom:1px dashed var(--line)}
+.crit:last-child{border-bottom:none}
+.crit .q{font-size:12.5px;font-weight:600;margin-bottom:8px}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;padding:7px 0;cursor:pointer;color:var(--muted)}
+.seg button.on-y{background:var(--strength);border-color:var(--strength);color:#fff}
+.seg button.on-n{background:var(--gap);border-color:var(--gap);color:#fff}
+.seg button.on-u{background:#fff;border-color:var(--accent);color:var(--accent-d);box-shadow:0 0 0 2px var(--accentSoft)}
+.minibar{height:8px;background:#fff;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-top:12px}
+.minibar>div{height:100%;transition:width .25s}
+.you .minibar>div{background:var(--you)}
+.them .minibar>div{background:var(--them)}
+.score-line{font-size:12px;font-weight:800;margin-top:6px}
+.tally{display:flex;align-items:center;gap:12px;justify-content:center;padding:8px 0}
+.tally button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:18px;font-weight:800;cursor:pointer;color:var(--ink)}
+.tally button:hover{border-color:var(--accent)}
+.tally .n{font-family:'Sora',sans-serif;font-size:30px;font-weight:800;min-width:60px;text-align:center}
+.nav{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.btn{border:none;border-radius:10px;padding:12px 20px;font-family:'Inter',sans-serif;font-weight:800;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{background:var(--accent-d)}
+.btn-g{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+.btn-g:hover{border-color:var(--accent)}
+.btn-save{background:#fff;color:var(--ink2);border:1px dashed var(--muted)}
+input[type="text"],input[type="url"],input[type="number"],select{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;outline:none;margin-bottom:10px}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentSoft)}
+.flabel{font-size:11px;color:var(--muted);margin:-6px 0 10px}
+.board{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);position:sticky;top:16px;overflow:hidden}
+.board .bhd{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--ink);color:#fff;font-family:'Sora',sans-serif;font-size:13px;font-weight:700}
+.board .bhd button{background:none;border:none;color:#fff;font-size:15px;cursor:pointer}
+.board .bbd{padding:12px 14px}
+.brow{margin-bottom:12px}
+.brow .bn{font-size:11.5px;font-weight:700;display:flex;justify-content:space-between;margin-bottom:4px}
+.bbar{height:7px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-bottom:3px;position:relative}
+.bbar.yb>div{background:var(--you)}
+.bbar.tb>div{background:var(--them)}
+table.rep{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+table.rep th{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:2px solid var(--line)}
+table.rep td{padding:10px;border-bottom:1px solid var(--line)}
+table.rep tr.big td{background:var(--gapSoft);font-weight:800}
+.pill{display:inline-block;border-radius:999px;font-size:12px;font-weight:800;padding:3px 12px}
+.pill.y{background:var(--youSoft);color:var(--you)}
+.pill.t{background:var(--themSoft);color:var(--them)}
+.callout{border:2px solid var(--gap);background:var(--gapSoft);border-radius:12px;padding:16px 18px;margin:16px 0}
+.callout .k{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gap)}
+.callout p{font-size:14.5px;margin-top:6px}
+.prio{display:grid;gap:8px;margin-top:10px}
+.prio-item{display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:13px}
+.prio-item .rk{flex:0 0 28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.prio-item.first{border-color:var(--gap);background:#fff}
+.prio-item.first .rk{background:var(--gap)}
+.savedrow{display:flex;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:13px}
+.savedrow .nm{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.savedrow .dt{font-size:11px;color:var(--muted)}
+.mini-btn{background:#fff;border:1px solid var(--line);color:var(--ink2);border-radius:8px;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;font-family:'Inter',sans-serif}
+.mini-btn:hover{border-color:var(--accent)}
+.mini-btn.danger:hover{border-color:var(--gap);color:var(--gap)}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:12.5px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;border-radius:999px;padding:11px 20px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.footer{margin-top:22px;text-align:center;color:var(--muted);font-size:12px}
+.hidden{display:none!important}
+button,select,a,label,input[type="checkbox"]{cursor:pointer}
+.guide{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px;box-shadow:var(--sh);margin-bottom:18px}
+.guide h3{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;margin-bottom:4px}
+.guide .gsub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.guide select{margin-bottom:4px}
+.guide{padding:0!important;overflow:hidden}
+.ghead{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(90deg,#1e1b2e,#453d63);color:#fff;border:none;padding:13px 18px;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:left}
+.ghead .chev{transition:transform .2s;font-size:12px}
+.guide.open .ghead .chev{transform:rotate(180deg)}
+.gcoll{display:none;padding:16px 18px 18px}
+.guide.open .gcoll{display:block}
+.guide-body{font-size:13px;color:var(--ink2)}
+.guide-body h4{font-size:13.5px;color:var(--ink);margin:12px 0 6px}
+.guide-body h4:first-child{margin-top:10px}
+.guide-body p{margin-bottom:8px}
+.guide-body ol,.guide-body ul{margin:0 0 8px 20px}
+.guide-body li{margin-bottom:5px}
+.guide-body code{font-family:ui-monospace,monospace;font-size:11.5px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.guide-body .tip{margin-top:10px;background:var(--accentSoft);border-radius:8px;padding:10px 12px;font-size:12.5px}
+.evwrap{margin-top:10px}
+.evlab{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+textarea.evIn{width:100%;min-height:52px;background:#fff;border:1px solid var(--line);border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;resize:vertical}
+textarea.evIn:focus{border-color:var(--accent);outline:none}
+.ruwrap{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px}
+.rurow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:6px}
+.rurow input[type="text"]{margin-bottom:0;padding:7px 9px;font-size:12px}
+.rurow label{font-size:11px;font-weight:800;display:flex;align-items:center;gap:4px;cursor:pointer}
+.rurow .rx{border:none;background:none;color:var(--muted);cursor:pointer;font-size:13px}
+.rurow .rx:hover{color:var(--gap)}
+.sharedbox{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.sharedbox .qrow{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;margin-bottom:6px}
+.sharedbox .qn{font-weight:800;font-size:12px;color:var(--accent-d)}
+.sharedbox input[type="text"]{margin-bottom:0}
+.mx-eng{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin:8px 0 6px}
+.mx-row{display:flex;gap:6px;margin-bottom:6px}
+.mx-pill{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:11.5px;font-weight:700;padding:7px 4px;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif}
+.mx-pill.on{background:var(--strength);border-color:var(--strength);color:#fff}
+select.engsel{width:auto;display:inline-block;margin-bottom:0;padding:7px 10px;font-size:12px}
+.pct{font-size:11px;color:var(--muted);font-weight:600}
+.evlog{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px;font-size:12.5px}
+.evlog h4{font-size:12px;margin-bottom:6px}
+.evlog .evline{margin-bottom:6px}
+.evlog code{font-family:ui-monospace,monospace;font-size:11px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:0 5px}
+table.hist{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+table.hist th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:2px solid var(--line)}
+table.hist td{padding:7px 8px;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar"><div class="badge"><span class="dot"></span> AI Search Domination &bull; Companion Bonus Tool</div></div>
+      <div class="guide" id="guideBox">
+        <button class="ghead" id="guideToggle" type="button"><span>📖 Quick-Start Guide — run an audit that means something</span><span class="chev">▾</span></button>
+        <div class="gcoll">
+          <div class="gsub">Pick a topic from the menu before you start researching.</div>
+          <select id="guideSel">
+            <option value="g1">1 · How the audit works (the honest manual method)</option>
+            <option value="g2">2 · How to score fairly (Yes / No / ?)</option>
+            <option value="g3">3 · Where to research each pillar</option>
+            <option value="g4">4 · Understanding your gap report</option>
+            <option value="g5">5 · Tracking progress month after month</option>
+            <option value="g6">6 · Common mistakes that ruin audits</option>
+          </select>
+          <div class="guide-body" id="guideBody"></div>
+        </div>
+      </div>
+  <div class="hero">
+    <h1>Competitor Citation <span>Gap Audit</span></h1>
+    <p>Find out <strong>why the AI names them and not you</strong> — a guided, step-by-step research audit across the 6 citation pillars. Score both products side by side and get a prioritized gap report.</p>
+    <div class="honest">🔍 <strong>Honest tool, honest results:</strong> this is a <b>guided manual audit</b>, not an auto-scanner — no tool can query AI engines for you. The value is the structure: it tells you exactly what to search, what to look for, and how to score it, in about 15–20 minutes.</div>
+  </div>
+  <div class="main">
+    <div>
+      <div class="card hidden" id="scrSetup">
+        <span class="step-tag">Setup</span>
+        <h2>Who are we auditing?</h2>
+        <p style="color:var(--ink2);font-size:13.5px;margin-bottom:14px">Have the competitor's listing open in another tab. You will research both products pillar by pillar — you can save and resume anytime.</p>
+        <div class="duo">
+          <div><input type="text" id="youName" maxlength="80" placeholder="Your product name *"><input type="url" id="youUrl" maxlength="300" placeholder="Your product/listing URL"></div>
+          <div><input type="text" id="themName" maxlength="80" placeholder="Competitor product name *"><input type="url" id="themUrl" maxlength="300" placeholder="Competitor URL"></div>
+        </div>
+        <div class="nav">
+          <button class="btn btn-p" id="startBtn" type="button">Start the Audit →</button>
+        </div>
+        <h3 class="sora" style="font-size:15px;margin:20px 0 10px">📂 Saved audits</h3>
+        <div id="savedList"></div>
+      </div>
+      <div class="card hidden" id="scrWizard">
+        <div class="prog"><div id="progFill"></div></div>
+        <div class="progmeta"><span id="progLabel"></span><span id="progPct"></span></div>
+        <span class="step-tag" id="stepTag"></span>
+        <h2 id="stepTitle"></h2>
+        <div class="instr" id="stepInstr"></div>
+        <div id="sharedCtl"></div>
+        <div class="duo">
+          <div class="side-card you"><div class="hd" id="youHd">Your Product</div><div class="bd" id="youBd"></div></div>
+          <div class="side-card them"><div class="hd" id="themHd">Their Product</div><div class="bd" id="themBd"></div></div>
+        </div>
+        <div class="nav">
+          <button class="btn btn-g" id="backBtn" type="button">← Back</button>
+          <button class="btn btn-p" id="nextBtn" type="button">Next →</button>
+          <button class="btn btn-save" id="saveBtn" type="button">💾 Save &amp; Continue Later</button>
+        </div>
+      </div>
+      <div class="card hidden" id="scrReport">
+        <span class="step-tag">Gap Report</span>
+        <h2 id="repTitle">Your Gap Report</h2>
+        <div id="repBody"></div>
+        <div class="nav">
+          <button class="btn btn-p" id="copyRep" type="button">📋 Copy Full Gap Report</button>
+          <button class="btn btn-g" id="snapBtn" type="button">📸 Save Snapshot</button>
+          <button class="btn btn-g" id="editBtn" type="button">← Back to Audit</button>
+          <button class="btn btn-save" id="newBtn" type="button">＋ New Audit</button>
+        </div>
+      </div>
+    </div>
+    <div class="board" id="board">
+      <div class="bhd"><span>◉ Live Scoreboard</span><button id="boardToggle" type="button">–</button></div>
+      <div class="bbd" id="boardBody"></div>
+    </div>
+  </div>
+  <div class="footer">Companion bonus tool &bull; 100% client-side, your research stays in your browser.</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* Competitor Citation Gap Audit — ES5 only (var/function) */
+var LIB_KEY = "mdccga_audits_v2";
+var VALS = { yes: 1, unsure: 0.5, no: 0 };
+
+var PILLARS = [
+{ id: "entity", name: "Entity Clarity", max: 6,
+  instr: "Open <b>ChatGPT</b> (or Perplexity) in one tab and the competitor's listing in another. Type exactly, with no extra context — ask cold, like a buyer would: <code>What is [Competitor Name] and who makes it?</code> Check every claimed fact against the real listing: does the AI get the product, the maker and the purpose right, with nothing invented? Now repeat with <b>your own product name</b>, character for character. Score each side below.",
+  criteria: ["AI correctly identifies the product type", "AI correctly identifies the creator or brand", "AI correctly states the core purpose or benefit", "No hallucinated or incorrect details appeared", "Product name is consistent everywhere you searched", "AI answer matches across ChatGPT AND a second engine"] },
+{ id: "listing", name: "AI-Readable Listing", max: 6,
+  instr: "Open <b>both listings side by side</b>. Read <b>only the first 40–60 words</b> of each: could a stranger answer “what is this and who is it for”? Then scan the rest of each page: is any heading phrased as a buyer question (<code>Who / What / How / Is it…?</code>)? Highlight every <b>specific number</b> (pages, size, minutes, pieces, level). Score both sides.",
+  criteria: ["First 40–60 words directly answer “what is this, who is it for”", "At least one question-shaped heading on the page", "Specific numbers present (pages, size, time, pieces…)", "Plain concrete language — no vague hype", "Key facts match the rest of the web (no contradictions)", "Visible social proof: 50+ ratings (products) or 10+ (books)"] },
+{ id: "lists", name: "Third-Party Lists", max: 5,
+  instr: "In <b>Google AND in one AI engine</b>, search <code>best [your product category]</code> — e.g. <code>best cozy mystery series</code> or <code>best Notion planner template</code>. Open the <b>first 5 roundups/lists</b>. Use Ctrl/Cmd+F for the competitor's name, then yours. Count: how many lists name them? Is any list on a site buyers actually trust? Does the mention include real details or just the name? Also check for <code>X vs Y</code> comparison posts — and log every roundup URL you find in the collector below, it becomes part of your report.",
+  criteria: ["Appears in at least 1 roundup / list article", "Appears in 3+ roundup / list articles", "Appears in a roundup on a well-known, trusted site", "Roundup mentions specific differentiating details, not just the name", "Appears in a comparison / alternatives article (X vs Y)"] },
+{ id: "community", name: "Community Signals", max: 5,
+  instr: "On <b>Reddit</b> (Google <code>site:reddit.com [your category]</code>, or Reddit's own search) and <b>Quora</b>, search your <b>category first — not the product names</b>. Open the 3 busiest threads. Is either product named by a real user? A detailed mention, a drive-by name-drop, or genuine praise? Then search <b>each product name directly</b> to catch review-style threads. Finally, tally descriptive text reviews on open-web platforms (Goodreads, Trustpilot, Capterra… — not just Amazon): 50+ is the bar. Score what you actually found.",
+  criteria: ["Named in at least one real discussion thread", "Mentioned with genuine detail, not a bare name-drop", "Mentioned positively or explicitly recommended", "Appears in review-style or recommendation content", "50+ descriptive text reviews on open-web platforms (not just Amazon)"] },
+{ id: "video", name: "Video & Visual", max: 5,
+  instr: "On <b>YouTube</b>, search <code>[your category] review</code> and <code>best [your category]</code>, sorted by view count. Does any video feature or name either product? Open the description: does it name the product <b>in text</b> an AI can read? Then check <b>Pinterest</b> for the category: does either product have pins with keyword-rich titles and descriptions that link back? Finally open <b>Google Images</b> for the category: do either product's pins or images surface?",
+  criteria: ["Named or featured in at least one YouTube video", "Video title/description names it in readable text", "Has Pinterest (or other visual) assets for the category", "Visuals use keyword-rich, AI-readable descriptions", "Pins or images surface in Google Images for the category"] },
+{ id: "baseline", name: "Measure & Iterate (Baseline)", max: 9, tally: true,
+  instr: "Write down <b>3 questions a real buyer would ask an AI</b> — e.g. <code>What's the best __ for __?</code>, <code>What should I read after __?</code>, <code>Is __ worth it?</code> Ask all 3 in <b>ChatGPT</b>, then all 3 in <b>Perplexity</b>, then all 3 in a <b>third engine</b> (Gemini, Claude or Copilot). Use the matrix below: tick <b>every engine × question cell</b> where each product was named — 9 cells per side. The score is the named count." }
+];
+
+/* ---------- state ---------- */
+var step = -1; /* -1 setup, 0..5 pillars, 6 report */
+var youName = "", youUrl = "", themName = "", themUrl = "";
+var answers = {};
+function blankAnswers() {
+  var a = {}, i, n;
+  for (i = 0; i < PILLARS.length; i++) {
+    var pid = PILLARS[i].id;
+    if (PILLARS[i].tally) {
+      a[pid] = { eng3: "Gemini", q: ["", "", ""], cells: { you: [], them: [] }, ev: { you: "", them: "" } };
+    } else {
+      var y = [], t = [];
+      for (n = 0; n < PILLARS[i].criteria.length; n++) { y.push(null); t.push(null); }
+      a[pid] = { you: y, them: t, ev: { you: "", them: "" }, ru: [] };
+    }
+  }
+  return a;
+}
+answers = blankAnswers();
+
+function $(id) { return document.getElementById(id); }
+function trimStr(s) { return String(s === undefined || s === null ? "" : s).replace(/^\s+|\s+$/g, ""); }
+function escHtml(s) {
+  s = String(s);
+  s = s.split("&").join("&amp;");
+  s = s.split("<").join("&lt;");
+  s = s.split(">").join("&gt;");
+  s = s.split('"').join("&quot;");
+  return s;
+}
+function toast(msg) {
+  var el = $("toast");
+  el.innerHTML = escHtml(msg);
+  el.className = "toast show";
+  setTimeout(function() { el.className = "toast"; }, 2000);
+}
+function copyText(text, okMsg) {
+  function fallback() {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); toast(okMsg || "Copied ✓"); }
+    catch (e) { toast("Copy failed — select manually"); }
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() { toast(okMsg || "Copied ✓"); }, function() { fallback(); });
+  } else { fallback(); }
+}
+function names() {
+  var y = trimStr(youName) === "" ? "Your Product" : trimStr(youName);
+  var t = trimStr(themName) === "" ? "Their Product" : trimStr(themName);
+  return { you: y, them: t };
+}
+
+/* ---------- scoring ---------- */
+function pillarScore(pid, side) {
+  var p = null, i;
+  for (i = 0; i < PILLARS.length; i++) { if (PILLARS[i].id === pid) { p = PILLARS[i]; } }
+  if (p.tally) {
+    var cells = (answers[pid] && answers[pid].cells) ? answers[pid].cells[side] : [];
+    var n = 0, k;
+    for (k = 0; k < cells.length; k++) { if (cells[k]) { n++; } }
+    if (n > p.max) { n = p.max; }
+    return n;
+  }
+  var s = 0;
+  for (i = 0; i < p.criteria.length; i++) {
+    var v2 = answers[pid][side][i];
+    s += (v2 === "yes" ? 1 : v2 === "unsure" ? 0.5 : 0);
+  }
+  return s;
+}
+function pillarMax(pid) {
+  var i;
+  for (i = 0; i < PILLARS.length; i++) { if (PILLARS[i].id === pid) { return PILLARS[i].max; } }
+  return 1;
+}
+function fmtScore(v) { return (Math.round(v * 10) / 10).toString(); }
+
+/* ---------- screens ---------- */
+function show(id) {
+  var ids = ["scrSetup", "scrWizard", "scrReport"], i;
+  for (i = 0; i < ids.length; i++) { $(ids[i]).className = (ids[i] === id) ? "card" : "card hidden"; }
+  renderBoard();
+}
+function renderSetup() {
+  step = -1;
+  $("youName").value = youName;
+  $("youUrl").value = youUrl;
+  $("themName").value = themName;
+  $("themUrl").value = themUrl;
+  show("scrSetup");
+  renderSaved();
+}
+function sideHtml(pid, side, pillar) {
+  var h = "", i, cur, sc;
+  if (pillar.tally) {
+    h += matrixHtml(pid, side);
+  } else {
+    for (i = 0; i < pillar.criteria.length; i++) {
+      cur = answers[pid][side][i];
+      h += '<div class="crit"><div class="q">' + escHtml(pillar.criteria[i]) + "</div>";
+      h += '<div class="seg">';
+      h += '<button type="button" data-cr="' + i + '" data-side="' + side + '" data-v="yes" class="' + (cur === "yes" ? "on-y" : "") + '">Yes</button>';
+      h += '<button type="button" data-cr="' + i + '" data-side="' + side + '" data-v="no" class="' + (cur === "no" ? "on-n" : "") + '">No</button>';
+      h += '<button type="button" data-cr="' + i + '" data-side="' + side + '" data-v="unsure" class="' + (cur === "unsure" ? "on-u" : "") + '">?</button>';
+      h += "</div></div>";
+    }
+  }
+  var ev = (answers[pid] && answers[pid].ev && answers[pid].ev[side]) ? answers[pid].ev[side] : "";
+  h += '<div class="evwrap"><div class="evlab">Evidence notes (URLs, AI quotes — saved &amp; exported)</div><textarea class="evIn" data-side="' + side + '" placeholder="Paste URLs, exact AI quotes…">' + escHtml(ev) + "</textarea></div>";
+  sc = pillarScore(pid, side);
+  h += '<div class="minibar"><div style="width:' + Math.round(sc / pillar.max * 100) + '%"></div></div>';
+  h += '<div class="score-line">Score: ' + fmtScore(sc) + " / " + pillar.max + "</div>";
+  return h;
+}
+function matrixHtml(pid, side) {
+  var st = answers[pid];
+  var eng = ["ChatGPT", "Perplexity", (st.eng3 || "Gemini")];
+  var h = "", e, q, idx, on;
+  for (e = 0; e < 3; e++) {
+    h += '<div class="mx-eng">' + escHtml(eng[e]) + " named…</div>";
+    h += '<div class="mx-row">';
+    for (q = 0; q < 3; q++) {
+      idx = e * 3 + q;
+      on = (st.cells[side][idx]) ? " on" : "";
+      h += '<button type="button" class="mx-pill' + on + '" data-mx="' + idx + '" data-side="' + side + '">Q' + (q + 1) + "</button>";
+    }
+    h += "</div>";
+  }
+  return h;
+}
+function renderShared() {
+  var box = $("sharedCtl");
+  var pillar = PILLARS[step];
+  if (!pillar) { box.innerHTML = ""; return; }
+  if (pillar.tally) {
+    var st = answers[pillar.id];
+    var h = '<div class="sharedbox"><div class="evlab">Your 3 buyer questions (same for both sides)</div>';
+    var q;
+    for (q = 0; q < 3; q++) {
+      h += '<div class="qrow"><span class="qn">Q' + (q + 1) + '</span><input type="text" class="bqIn" data-q="' + q + '" maxlength="140" placeholder="e.g. What is the best __ for __?" value="' + escHtml(st.q[q] || "") + '"></div>';
+    }
+    h += '<div class="evlab" style="margin-top:8px">Third engine</div><select class="engsel" id="eng3Sel">';
+    var opts = ["Gemini", "Claude", "Copilot"], o;
+    for (o = 0; o < opts.length; o++) { h += '<option value="' + opts[o] + '"' + ((st.eng3 || "Gemini") === opts[o] ? " selected" : "") + ">" + opts[o] + "</option>"; }
+    h += "</select></div>";
+    box.innerHTML = h;
+  } else if (pillar.id === "lists") {
+    box.innerHTML = '<div class="sharedbox"><div class="evlab">Roundup URL collector — log every list you checked</div><div id="ruAll"></div><button class="mini-btn" type="button" id="addRu">＋ Add roundup</button></div>';
+    renderRuAll();
+  } else {
+    box.innerHTML = "";
+  }
+}
+function ruCount() {
+  var ru = answers.lists.ru || [], y = 0, t = 0, i;
+  for (i = 0; i < ru.length; i++) {
+    if (ru[i].you) { y++; }
+    if (ru[i].them) { t++; }
+  }
+  return { total: ru.length, you: y, them: t };
+}
+function renderRuAll() {
+  var box = $("ruAll");
+  if (!box) { return; }
+  var ru = answers.lists.ru || [], h = "", i, r;
+  for (i = 0; i < ru.length; i++) {
+    r = ru[i];
+    h += '<div class="rurow"><input type="text" class="ruUrl" data-i="' + i + '" maxlength="300" placeholder="https://… roundup URL" value="' + escHtml(r.url) + '">';
+    h += '<label><input type="checkbox" class="ruCk" data-f="you" data-i="' + i + '"' + (r.you ? " checked" : "") + '> You</label>';
+    h += '<label><input type="checkbox" class="ruCk" data-f="them" data-i="' + i + '"' + (r.them ? " checked" : "") + '> Them</label>';
+    h += '<button class="rx" type="button" data-rmru="' + i + '">✕</button></div>';
+  }
+  box.innerHTML = h;
+  var c = ruCount();
+  var lab = box.parentNode ? box.parentNode.getElementsByClassName("evlab")[0] : null;
+  if (lab) { lab.innerHTML = escHtml("Roundup URL collector — " + c.total + " checked (you: " + c.you + ", them: " + c.them + ")"); }
+  wireRuAll(box);
+}
+function wireRuAll(box) {
+  var i, els = box.getElementsByTagName("input"), btns = box.getElementsByTagName("button");
+  for (i = 0; i < els.length; i++) {
+    if (els[i].className === "ruUrl") {
+      els[i].oninput = (function(el) {
+        return function() { answers.lists.ru[parseInt(el.getAttribute("data-i"), 10)].url = el.value; };
+      })(els[i]);
+    } else {
+      els[i].onchange = (function(el) {
+        return function() {
+          answers.lists.ru[parseInt(el.getAttribute("data-i"), 10)][el.getAttribute("data-f")] = el.checked;
+          renderRuAll();
+        };
+      })(els[i]);
+    }
+  }
+  for (i = 0; i < btns.length; i++) {
+    btns[i].onclick = (function(btn) {
+      return function() {
+        answers.lists.ru.splice(parseInt(btn.getAttribute("data-rmru"), 10), 1);
+        renderRuAll();
+      };
+    })(btns[i]);
+  }
+  var add = $("addRu");
+  if (add) {
+    add.onclick = function() {
+      answers.lists.ru.push({ url: "", you: false, them: false });
+      renderRuAll();
+    };
+  }
+}
+function wireStepButtons() {
+  var btns = document.getElementById("scrWizard").getElementsByTagName("button"), b;
+  for (b = 0; b < btns.length; b++) {
+    if (btns[b].getAttribute("data-cr") !== null) {
+      btns[b].onclick = (function(btn) {
+        return function() {
+          var pid = PILLARS[step].id;
+          answers[pid][btn.getAttribute("data-side")][parseInt(btn.getAttribute("data-cr"), 10)] = btn.getAttribute("data-v");
+          renderStep();
+        };
+      })(btns[b]);
+    }
+    if (btns[b].getAttribute("data-mx") !== null) {
+      btns[b].onclick = (function(btn) {
+        return function() {
+          var pid2 = PILLARS[step].id, side2 = btn.getAttribute("data-side");
+          var idx = parseInt(btn.getAttribute("data-mx"), 10);
+          var arr = answers[pid2].cells[side2];
+          arr[idx] = !arr[idx];
+          renderStep();
+        };
+      })(btns[b]);
+    }
+  }
+}
+function wireSilentInputs(pid) {
+  var wz = $("scrWizard"), i;
+  var evs = wz.getElementsByTagName("textarea");
+  for (i = 0; i < evs.length; i++) {
+    if (evs[i].className === "evIn") {
+      evs[i].oninput = (function(el) {
+        return function() {
+          if (!answers[pid].ev) { answers[pid].ev = { you: "", them: "" }; }
+          answers[pid].ev[el.getAttribute("data-side")] = el.value;
+        };
+      })(evs[i]);
+    }
+  }
+  var ins = wz.getElementsByTagName("input");
+  for (i = 0; i < ins.length; i++) {
+    if (ins[i].className === "bqIn") {
+      ins[i].oninput = (function(el) {
+        return function() { answers[pid].q[parseInt(el.getAttribute("data-q"), 10)] = el.value; };
+      })(ins[i]);
+    }
+  }
+  var sel = $("eng3Sel");
+  if (sel) {
+    sel.onchange = function() {
+      answers[pid].eng3 = sel.options[sel.selectedIndex].value;
+      renderStep();
+    };
+  }
+}
+function renderStep() {
+  var pillar = PILLARS[step], nm = names(), i;
+  var pct = Math.round((step + 1) / 7 * 100);
+  $("progFill").style.width = pct + "%";
+  $("progLabel").innerHTML = escHtml("Step " + (step + 1) + " of 6 — " + pillar.name);
+  $("progPct").innerHTML = escHtml(pct + "%");
+  $("stepTag").innerHTML = escHtml("Pillar " + (step + 1) + " / 6");
+  $("stepTitle").innerHTML = escHtml(pillar.name);
+  $("stepInstr").innerHTML = pillar.instr;
+  $("youHd").innerHTML = escHtml("🔵 " + nm.you);
+  $("themHd").innerHTML = escHtml("🟠 " + nm.them);
+  $("youBd").innerHTML = sideHtml(pillar.id, "you", pillar);
+  $("themBd").innerHTML = sideHtml(pillar.id, "them", pillar);
+  $("backBtn").innerHTML = (step === 0) ? "← Setup" : "← Back";
+  $("nextBtn").innerHTML = (step === 5) ? "See Gap Report →" : "Next →";
+  renderShared();
+  show("scrWizard");
+  wireStepButtons();
+  wireSilentInputs(pillar.id);
+}
+
+/* ---------- scoreboard ---------- */
+function renderBoard() {
+  var box = $("boardBody"), nm = names(), i, h = "";
+  for (i = 0; i < PILLARS.length; i++) {
+    var p = PILLARS[i];
+    var y = pillarScore(p.id, "you"), t = pillarScore(p.id, "them");
+    h += '<div class="brow"><div class="bn"><span>' + escHtml(p.name) + "</span><span>" + fmtScore(y) + "–" + fmtScore(t) + "</span></div>";
+    h += '<div class="bbar yb"><div style="width:' + Math.round(y / p.max * 100) + '%"></div></div>';
+    h += '<div class="bbar tb"><div style="width:' + Math.round(t / p.max * 100) + '%"></div></div></div>';
+  }
+  h += '<div style="font-size:11px;color:var(--muted)"><span style="color:var(--you)">■</span> ' + escHtml(nm.you) + ' &nbsp; <span style="color:var(--them)">■</span> ' + escHtml(nm.them) + "</div>";
+  box.innerHTML = h;
+}
+
+/* ---------- recommendations ---------- */
+function recFor(pid, y, t) {
+  var nm = names();
+  if (pid === "entity") {
+    if (t > y) { return "Make AI describe you correctly: use one exact product name, one creator name and one one-sentence purpose — identical on your listing, site and profiles. Then re-ask the AI cold until it repeats them back."; }
+    return "Your entity is solid — defend it: keep the name, creator and purpose identical everywhere so future crawls don't split you into two people.";
+  }
+  if (pid === "listing") {
+    if (t > y) { return "Rewrite your opening 40–60 words to answer “what is this, who is it for” directly, add one question-shaped heading and 3+ specific numbers. Copy the structure of their listing, not its words."; }
+    return "Your listing reads well for AI — keep the direct opener and numbers, and mirror any new facts onto your site the same week.";
+  }
+  if (pid === "lists") {
+    var t3 = answers.lists.them[1] === "yes", yAny = answers.lists.you[0] === "yes";
+    if (t3 && !yAny) { return "Your competitor appears in 3+ roundups and you appear in none. Pitch 5 “best of” list owners in your category this week — one placement beats ten listing tweaks."; }
+    if (t > y) { return "They are in more roundups than you. Target the exact lists that name them: offer the owner a better quote, fresher data or a comparison angle."; }
+    return "You lead on lists — widen it: get into one more trusted roundup per quarter and keep every mention detail-rich.";
+  }
+  if (pid === "community") {
+    if (t > y) { return "They get talked about and you don't. Answer 5 real category questions on Reddit/Quora this month with genuine help — mention your product only where it truly fits, or risk a ban."; }
+    return "You have community presence — keep it alive with one genuinely helpful answer per week. Never astroturf: removed threads take your citations with them.";
+  }
+  if (pid === "video") {
+    if (t > y) { return "They have video and you don't. Publish one “best / how-to” video naming your product in the title AND the first 3 description lines, plus 3 keyword-rich Pinterest pins."; }
+    return "Your visual footprint leads — refresh it quarterly: new pins each season keep Perplexity's live index citing you.";
+  }
+  if (t > y) { return "They get named by more engines than you. Re-run your 3 buyer questions monthly, log the results, and push hardest on the pillar gaps above — citations compound."; }
+  return "You lead the baseline — protect it: monthly re-tests catch the moment a competitor's new asset starts outranking you.";
+}
+
+/* ---------- report ---------- */
+function gapRows() {
+  var rows = [], i;
+  for (i = 0; i < PILLARS.length; i++) {
+    var p = PILLARS[i];
+    var y = pillarScore(p.id, "you"), t = pillarScore(p.id, "them");
+    var yp = y / p.max * 100, tp = t / p.max * 100;
+    rows.push({ p: p, you: y, them: t, gap: tp - yp, rec: recFor(p.id, y, t) });
+  }
+  rows.sort(function(a, b) {
+    if (b.gap !== a.gap) { return b.gap - a.gap; }
+    return a.you - b.you;
+  });
+  return rows;
+}
+function evLines(pid) {
+  var out = [], st = answers[pid];
+  if (st && st.ev) {
+    if (trimStr(st.ev.you) !== "") { out.push("YOU: " + trimStr(st.ev.you)); }
+    if (trimStr(st.ev.them) !== "") { out.push("THEM: " + trimStr(st.ev.them)); }
+  }
+  return out;
+}
+function renderReport() {
+  step = 6;
+  var nm = names(), rows = gapRows(), i;
+  $("repTitle").innerHTML = escHtml("Gap Report: " + nm.you + " vs " + nm.them);
+  var h = '<table class="rep"><tr><th>Pillar</th><th>' + escHtml(nm.you) + '</th><th>' + escHtml(nm.them) + '</th><th>Gap</th></tr>';
+  for (i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var diff = Math.round((r.them - r.you) * 10) / 10;
+    var gapTxt = (diff > 0 ? "+" + diff : "" + diff) + " them";
+    if (diff < 0) { gapTxt = "+" + (Math.round((r.you - r.them) * 10) / 10) + " you"; }
+    if (diff === 0) { gapTxt = "tied"; }
+    h += "<tr" + (i === 0 ? ' class="big"' : "") + "><td>" + escHtml(r.p.name) + "</td>";
+    h += '<td><span class="pill y">' + fmtScore(r.you) + " / " + r.p.max + '</span><div class="pct">' + Math.round(r.you / r.p.max * 100) + '%</div></td>';
+    h += '<td><span class="pill t">' + fmtScore(r.them) + " / " + r.p.max + '</span><div class="pct">' + Math.round(r.them / r.p.max * 100) + '%</div></td>';
+    h += "<td><b>" + escHtml(gapTxt) + "</b></td></tr>";
+  }
+  h += "</table>";
+  var big = rows[0];
+  var bigLine;
+  if (big.gap > 0) {
+    bigLine = "Your biggest gap is <b>" + escHtml(big.p.name) + "</b> — " + escHtml(nm.them) + " leads " + fmtScore(big.them) + " to " + fmtScore(big.you) + ". Start here.";
+  } else if (big.gap < 0) {
+    bigLine = "You lead everywhere — your biggest strength is <b>" + escHtml(big.p.name) + "</b>. Defend it before expanding.";
+  } else {
+    bigLine = "No gaps found — both products score identically. Re-check the toughest criteria honestly, or pick a stronger competitor.";
+  }
+  h += '<div class="callout"><div class="k">🎯 Priority #1</div><p>' + bigLine + "</p><p>" + escHtml(big.rec) + "</p></div>";
+  h += "<h3 class='sora' style='font-size:15px;margin:14px 0 6px'>Ranked priorities (biggest gap first)</h3>";
+  h += '<div class="prio">';
+  for (i = 0; i < rows.length; i++) {
+    h += '<div class="prio-item' + (i === 0 ? " first" : "") + '"><span class="rk">' + (i + 1) + "</span><span><b>" + escHtml(rows[i].p.name) + "</b> — " + escHtml(rows[i].rec) + "</span></div>";
+  }
+  h += "</div>";
+  h += evidenceHtml();
+  h += historyHtml();
+  $("repBody").innerHTML = h;
+  $("progFill").style.width = "100%";
+  $("progLabel").innerHTML = escHtml("Report complete");
+  $("progPct").innerHTML = escHtml("100%");
+  show("scrReport");
+}
+function evidenceHtml() {
+  var nm = names(), h = "", i, k, lines, ru;
+  for (i = 0; i < PILLARS.length; i++) {
+    lines = evLines(PILLARS[i].id);
+    if (PILLARS[i].id === "lists") {
+      ru = answers.lists.ru || [];
+      for (k = 0; k < ru.length; k++) {
+        if (trimStr(ru[k].url) !== "") {
+          var marks = [];
+          if (ru[k].you) { marks.push("you"); }
+          if (ru[k].them) { marks.push("them"); }
+          lines.push("roundup: " + trimStr(ru[k].url) + " [" + (marks.length > 0 ? marks.join("+") : "neither") + "]");
+        }
+      }
+    }
+    if (lines.length > 0) {
+      h += '<div class="evlog"><h4>' + escHtml(PILLARS[i].name) + " — evidence</h4>";
+      for (k = 0; k < lines.length; k++) { h += '<div class="evline"><code>' + escHtml(lines[k]) + "</code></div>"; }
+      h += "</div>";
+    }
+  }
+  if (h !== "") { h = "<h3 class='sora' style='font-size:15px;margin:16px 0 6px'>Evidence log</h3>" + h; }
+  return h;
+}
+function currentScores() {
+  var s = {}, i;
+  for (i = 0; i < PILLARS.length; i++) {
+    s[PILLARS[i].id] = { you: pillarScore(PILLARS[i].id, "you"), them: pillarScore(PILLARS[i].id, "them") };
+  }
+  return s;
+}
+function historyHtml() {
+  var nm = names();
+  var label = nm.you + " vs " + nm.them;
+  var list = loadLib(), i, entry = null;
+  for (i = 0; i < list.length; i++) { if (list[i].label === label) { entry = list[i]; } }
+  var h = "<h3 class='sora' style='font-size:15px;margin:16px 0 6px'>Progress over time</h3>";
+  if (!entry || !entry.history || entry.history.length === 0) {
+    return h + '<div class="empty">No snapshots yet. Re-run this audit monthly and press “📸 Save Snapshot” to track your climb here.</div>';
+  }
+  var shorts = { entity: "Entity", listing: "Listing", lists: "Lists", community: "Community", video: "Video", baseline: "Base" };
+  h += '<table class="hist"><tr><th>Date</th>';
+  for (i = 0; i < PILLARS.length; i++) { h += "<th>" + shorts[PILLARS[i].id] + "</th>"; }
+  h += "</tr>";
+  for (i = 0; i < entry.history.length; i++) {
+    var sn = entry.history[i], k;
+    h += "<tr><td><b>" + escHtml(sn.date) + "</b></td>";
+    for (k = 0; k < PILLARS.length; k++) {
+      var sc = sn.scores[PILLARS[k].id] || { you: 0, them: 0 };
+      h += "<td>" + fmtScore(sc.you) + "–" + fmtScore(sc.them) + "</td>";
+    }
+    h += "</tr>";
+  }
+  return h + "</table>";
+}
+function saveSnapshot() {
+  var nm = names();
+  var label = nm.you + " vs " + nm.them;
+  var list = loadLib();
+  var d = new Date();
+  var ds = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  var snap = { date: ds, scores: currentScores() };
+  var idx = -1, i;
+  for (i = 0; i < list.length; i++) { if (list[i].label === label) { idx = i; } }
+  if (idx >= 0) {
+    if (!list[idx].history) { list[idx].history = []; }
+    list[idx].history.push(snap);
+    list[idx].snap = snapshot();
+    list[idx].date = ds;
+  } else {
+    list.push({ label: label, date: ds, snap: snapshot(), history: [snap] });
+  }
+  if (list.length > 40) { list = list.slice(list.length - 40); }
+  storeLib(list);
+  toast("Snapshot saved 📸");
+  renderReport();
+}
+function reportText() {
+  var nm = names(), rows = gapRows(), i;
+  var d = new Date();
+  var lines = [];
+  lines.push("COMPETITOR CITATION GAP AUDIT");
+  lines.push(nm.you + "  VS  " + nm.them);
+  lines.push("Date: " + d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2));
+  lines.push("");
+  lines.push("SCORES (you vs them):");
+  for (i = 0; i < rows.length; i++) {
+    var pc = " (you " + Math.round(rows[i].you / rows[i].p.max * 100) + "%, them " + Math.round(rows[i].them / rows[i].p.max * 100) + "%)";
+    lines.push("- " + rows[i].p.name + ": " + fmtScore(rows[i].you) + "/" + rows[i].p.max + " vs " + fmtScore(rows[i].them) + "/" + rows[i].p.max + pc);
+  }
+  lines.push("");
+  var big = rows[0];
+  lines.push("BIGGEST GAP: " + big.p.name + " (" + fmtScore(big.you) + " vs " + fmtScore(big.them) + ")");
+  lines.push("");
+  lines.push("PRIORITY ACTIONS (biggest gap first):");
+  for (i = 0; i < rows.length; i++) {
+    lines.push((i + 1) + ". " + rows[i].p.name + " — " + rows[i].rec);
+  }
+  var anyEv = false, k;
+  for (i = 0; i < PILLARS.length; i++) {
+    var ls = evLines(PILLARS[i].id);
+    if (PILLARS[i].id === "lists") {
+      var ru = answers.lists.ru || [];
+      for (k = 0; k < ru.length; k++) {
+        if (trimStr(ru[k].url) !== "") { ls.push("roundup: " + trimStr(ru[k].url) + " [you:" + (ru[k].you ? "yes" : "no") + " them:" + (ru[k].them ? "yes" : "no") + "]"); }
+      }
+    }
+    if (ls.length > 0) {
+      if (!anyEv) { lines.push(""); lines.push("EVIDENCE LOG:"); anyEv = true; }
+      lines.push("");
+      lines.push(PILLARS[i].name + ":");
+      for (k = 0; k < ls.length; k++) { lines.push("  - " + ls[k]); }
+    }
+  }
+  return lines.join("\n");
+}
+
+/* ---------- save / load ---------- */
+function loadLib() {
+  try {
+    var raw = localStorage.getItem(LIB_KEY);
+    if (!raw) { return []; }
+    var parsed = JSON.parse(raw);
+    if (parsed && parsed.length !== undefined) { return parsed; }
+    return [];
+  } catch (e) { return []; }
+}
+function storeLib(list) {
+  try { localStorage.setItem(LIB_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function snapshot() {
+  return { youName: youName, youUrl: youUrl, themName: themName, themUrl: themUrl, answers: answers, step: step };
+}
+function ensureShape() {
+  var i, n;
+  for (i = 0; i < PILLARS.length; i++) {
+    var pid = PILLARS[i].id;
+    if (PILLARS[i].tally) {
+      if (!answers[pid] || typeof answers[pid] !== "object" || typeof answers[pid].cells === "undefined") {
+        answers[pid] = { eng3: "Gemini", q: ["", "", ""], cells: { you: [], them: [] }, ev: { you: "", them: "" } };
+      } else {
+        if (!answers[pid].ev) { answers[pid].ev = { you: "", them: "" }; }
+        if (!answers[pid].q) { answers[pid].q = ["", "", ""]; }
+        if (!answers[pid].cells) { answers[pid].cells = { you: [], them: [] }; }
+        if (!answers[pid].eng3) { answers[pid].eng3 = "Gemini"; }
+      }
+    } else {
+      if (!answers[pid] || !answers[pid].you) {
+        var y = [], t = [];
+        for (n = 0; n < PILLARS[i].criteria.length; n++) { y.push(null); t.push(null); }
+        answers[pid] = { you: y, them: t, ev: { you: "", them: "" }, ru: [] };
+      } else {
+        while (answers[pid].you.length < PILLARS[i].criteria.length) { answers[pid].you.push(null); }
+        while (answers[pid].them.length < PILLARS[i].criteria.length) { answers[pid].them.push(null); }
+        if (!answers[pid].ev) { answers[pid].ev = { you: "", them: "" }; }
+        if (!answers[pid].ru) { answers[pid].ru = []; }
+      }
+    }
+  }
+}
+function applySnap(s) {
+  youName = s.youName || ""; youUrl = s.youUrl || "";
+  themName = s.themName || ""; themUrl = s.themUrl || "";
+  answers = s.answers || blankAnswers();
+  ensureShape();
+  var st = (typeof s.step === "number") ? s.step : -1;
+  if (st >= 0 && st <= 5) { step = st; renderStep(); }
+  else if (st === 6) { renderReport(); }
+  else { renderSetup(); }
+}
+function saveCurrent(silent) {
+  youName = $("youName") ? trimStr($("youName").value) || youName : youName;
+  var list = loadLib();
+  var label = (trimStr(youName) || "Your Product") + " vs " + (trimStr(themName) || "Competitor");
+  var d = new Date();
+  var found = -1, i;
+  for (i = 0; i < list.length; i++) { if (list[i].label === label) { found = i; } }
+  var entry = { label: label, date: d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2), snap: snapshot() };
+  if (found >= 0) { list[found] = entry; }
+  else { list.push(entry); }
+  if (list.length > 40) { list = list.slice(list.length - 40); }
+  storeLib(list);
+  if (!silent) { toast("Audit saved 💾 — resume anytime"); }
+  if (step === -1) { renderSaved(); }
+}
+function renderSaved() {
+  var list = loadLib();
+  var box = $("savedList");
+  if (list.length === 0) {
+    box.innerHTML = '<div class="empty">No saved audits yet. Your progress saves here.</div>';
+    return;
+  }
+  var html = "", i;
+  for (i = list.length - 1; i >= 0; i--) {
+    html += '<div class="savedrow"><span class="nm">' + escHtml(list[i].label) + '</span><span class="dt">' + escHtml(list[i].date) + '</span>';
+    html += '<button class="mini-btn" type="button" data-resume="' + i + '">Resume →</button>';
+    html += '<button class="mini-btn danger" type="button" data-sdel="' + i + '">✕</button></div>';
+  }
+  box.innerHTML = html;
+  var btns = box.getElementsByTagName("button");
+  for (i = 0; i < btns.length; i++) {
+    btns[i].onclick = (function(btn) {
+      return function() {
+        var cur = loadLib();
+        if (btn.getAttribute("data-resume") !== null) {
+          var idx = parseInt(btn.getAttribute("data-resume"), 10);
+          if (cur[idx]) { applySnap(cur[idx].snap); toast("Resumed ✓"); }
+        } else {
+          var di = parseInt(btn.getAttribute("data-sdel"), 10);
+          cur.splice(di, 1);
+          storeLib(cur);
+          renderSaved();
+          toast("Deleted");
+        }
+      };
+    })(btns[i]);
+  }
+}
+
+/* ---------- built-in guide ---------- */
+var GUIDES = {
+g1: "<h4>How the audit works (the honest manual method)</h4>"
++ "<p>No tool can query AI engines on your behalf — anyone selling you a one-click AI visibility scan is selling theater. This audit works the other way: <b>you do 15–20 minutes of real research per pillar</b>, and the tool gives you the structure, the scoring math and the prioritized report.</p>"
++ "<ol>"
++ "<li>Enter both product names on the setup screen and press Start.</li>"
++ "<li>Work through the 6 pillars in order. Each step tells you <b>exactly what to search and where</b>.</li>"
++ "<li>Score both products side by side as you go — the scoreboard updates live.</li>"
++ "<li>Save anytime with <b>💾 Save &amp; Continue Later</b>; resume from the setup screen.</li>"
++ "<li>Open the <b>Gap Report</b> for your #1 priority and full export.</li>"
++ "</ol>"
++ "<div class='tip'>💡 Keep the competitor's listing open in a second tab for the whole session.</div>",
+g2: "<h4>How to score fairly (Yes / No / ?)</h4>"
++ "<p>Every criterion takes one of three marks: <b>Yes</b> (verified true = full point), <b>No</b> (verified false = zero), <b>?</b> (couldn't verify = half point). The half point is deliberate: it rewards honesty over guessing.</p>"
++ "<ul>"
++ "<li><b>Ask cold.</b> Type product names with zero context, exactly as a buyer would. Never lead with “my book about…” — you are testing what the AI knows unprompted.</li>"
++ "<li><b>Verify every AI claim</b> against the real listing before marking Yes. A confident wrong answer is a No — hallucination is data.</li>"
++ "<li><b>Score what you found, not what you feel.</b> If you couldn't check something, leave ? and move on.</li>"
++ "<li><b>Be harsher on yourself</b> than on the competitor. The audit only helps if your own scores are brutal.</li>"
++ "</ul>"
++ "<div class='tip'>💡 Paste the exact AI quotes into the <b>Evidence notes</b> under each pillar — they become your proof in the exported report.</div>",
+g3: "<h4>Where to research each pillar</h4>"
++ "<ul>"
++ "<li><b>Entity Clarity:</b> ChatGPT + one second engine (Perplexity, Gemini or Claude). Compare the two answers.</li>"
++ "<li><b>AI-Readable Listing:</b> the two listings side by side + a quick Google check that the facts match elsewhere.</li>"
++ "<li><b>Third-Party Lists:</b> Google + one AI engine, query <code>best [category]</code>; log every URL in the built-in collector.</li>"
++ "<li><b>Community Signals:</b> Google <code>site:reddit.com [category]</code>, Reddit search, Quora; plus Goodreads/Trustpilot/Capterra for review counts.</li>"
++ "<li><b>Video &amp; Visual:</b> YouTube sorted by views, Pinterest search, Google Images.</li>"
++ "<li><b>Baseline:</b> ChatGPT, Perplexity + your chosen third engine, same 3 buyer questions everywhere.</li>"
++ "</ul>"
++ "<div class='tip'>💡 Use logged-out or fresh sessions when testing AI answers — your chat history flatters you.</div>",
+g4: "<h4>Understanding your gap report</h4>"
++ "<p>The report ranks pillars by <b>percentage-point gap</b> (fair across different maximums), biggest first. Your <b>#1 priority</b> gets a callout with the exact score split and a concrete first action written from your own answers.</p>"
++ "<ul>"
++ "<li><b>“+2 them”</b> means they lead by 2 raw points on that pillar. <b>“Tied”</b> means identical scores.</li>"
++ "<li>The <b>% figures</b> let you compare a 6-point pillar with a 9-point matrix honestly.</li>"
++ "<li><b>Evidence log</b> collects every note and roundup URL you logged — your paper trail.</li>"
++ "<li><b>📋 Copy Full Gap Report</b> exports everything as plain text for docs, clients or your own planning file.</li>"
++ "</ul>",
+g5: "<h4>Tracking progress month after month</h4>"
++ "<p>One audit is a snapshot; the power is the <b>trend</b>. AI citations compound over 60–90 days, so:</p>"
++ "<ol>"
++ "<li>Finish your first audit and press <b>📸 Save Snapshot</b> on the report screen.</li>"
++ "<li>Work your #1 priority for a month (publish the missing asset type).</li>"
++ "<li>Re-run the audit, save another snapshot — the <b>Progress over time</b> table shows every pillar climbing.</li>"
++ "</ol>"
++ "<div class='tip'>💡 Snapshots live inside the saved audit entry, so one entry holds your whole history. Expect Perplexity movement first; ChatGPT lags 4–8 weeks.</div>",
+g6: "<h4>Common mistakes that ruin audits</h4>"
++ "<ul>"
++ "<li><b>Testing while logged in</b> with history: AI flatters what it knows about you. Go fresh/logged-out.</li>"
++ "<li><b>Marking Yes from memory</b> instead of checking live. If you didn't see it this session, it's a ?.</li>"
++ "<li><b>Counting Amazon-only reviews</b> as open-web signals — external AI can't read Amazon listings.</li>"
++ "<li><b>Astroturfing Reddit/Quora</b> to “fix” community signals: detected fast, banned permanently, citations die with the threads.</li>"
++ "<li><b>Quitting at day 30:</b> most sellers stop one cycle before the second engine catches up. Book the 60-day re-test now.</li>"
++ "<li><b>Auditing a weak competitor:</b> if everything ties at the top, pick the competitor that actually outranks you and audit again.</li>"
++ "</ul>"
+};
+function renderGuide() {
+  var k = $("guideSel").value;
+  if (!GUIDES[k]) { k = "g1"; }
+  $("guideBody").innerHTML = GUIDES[k];
+}
+
+/* ---------- init ---------- */
+function init() {
+  renderSetup();
+  renderGuide();
+  $("guideSel").onchange = function() { renderGuide(); };
+  $("guideToggle").onclick = function() {
+    var g = $("guideBox");
+    g.className = (g.className.indexOf("open") >= 0) ? "guide" : "guide open";
+  };
+  $("startBtn").onclick = function() {
+    youName = trimStr($("youName").value);
+    youUrl = trimStr($("youUrl").value);
+    themName = trimStr($("themName").value);
+    themUrl = trimStr($("themUrl").value);
+    if (youName === "" || themName === "") { toast("Enter both product names first"); return; }
+    answers = blankAnswers();
+    step = 0;
+    renderStep();
+  };
+  $("backBtn").onclick = function() {
+    if (step <= 0) { renderSetup(); }
+    else { step--; renderStep(); }
+  };
+  $("nextBtn").onclick = function() {
+    if (step >= 5) { renderReport(); }
+    else { step++; renderStep(); }
+  };
+  $("saveBtn").onclick = function() { saveCurrent(false); };
+  $("copyRep").onclick = function() { copyText(reportText(), "Gap report copied ✓"); };
+  $("snapBtn").onclick = function() { saveSnapshot(); };
+  $("editBtn").onclick = function() { step = 5; renderStep(); };
+  $("newBtn").onclick = function() {
+    youName = ""; youUrl = ""; themName = ""; themUrl = "";
+    answers = blankAnswers();
+    renderSetup();
+  };
+  $("boardToggle").onclick = function() {
+    var b = $("boardBody");
+    if (b.className === "hidden") { b.className = ""; $("boardToggle").innerHTML = "–"; }
+    else { b.className = "hidden"; $("boardToggle").innerHTML = "+"; }
+  };
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
