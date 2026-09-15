@@ -1,0 +1,660 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Engine Query Variation Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#c026d3; --accent-d:#a21caf; --accentSoft:#fae8ff;
+  --bg:#ffffff; --panel:#ffffff; --panel2:#f6f4fa;
+  --ink:#231d33; --ink2:#4d4563; --muted:#8d87a3; --line:#e8e2f5;
+  --r:8px; --sh:0 4px 16px rgba(60,20,90,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.55;min-height:100vh}
+button,select,a,label,input[type="checkbox"],input[type="range"]{cursor:pointer}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);box-shadow:var(--sh)}
+.badge .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.guide{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);margin-bottom:18px;padding:0!important;overflow:hidden}
+.ghead{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(90deg,#7c3aed,#a78bfa);color:#fff;border:none;padding:13px 18px;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:left}
+.ghead .chev{transition:transform .2s;font-size:12px}
+.guide.open .ghead .chev{transform:rotate(180deg)}
+.gcoll{display:none;padding:16px 18px 18px}
+.guide.open .gcoll{display:block}
+.guide .gsub{font-size:12px;color:var(--muted);margin-bottom:10px}
+.guide-body{font-size:13px;color:var(--ink2)}
+.guide-body h4{font-size:13.5px;color:var(--ink);margin:12px 0 6px}
+.guide-body h4:first-child{margin-top:10px}
+.guide-body p{margin-bottom:8px}
+.guide-body ol,.guide-body ul{margin:0 0 8px 20px}
+.guide-body li{margin-bottom:5px}
+.guide-body code{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.guide-body .tip{margin-top:10px;background:var(--accentSoft);border-radius:8px;padding:10px 12px;font-size:12.5px}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px 26px;box-shadow:var(--sh);margin-bottom:18px;border-top:4px solid var(--accent)}
+.hero h1{font-weight:800;font-size:27px;letter-spacing:-.01em}
+.hero h1 span{color:var(--accent)}
+.hero p{color:var(--ink2);max-width:860px;margin-top:6px}
+.hero p strong{color:var(--ink)}
+.controls{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:var(--sh);margin-bottom:18px}
+.controls h2{font-size:15px;font-weight:800;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+@media(max-width:680px){.grid2{grid-template-columns:1fr}}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+input[type="text"],input[type="number"],select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);color:var(--ink);padding:10px 12px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;outline:none}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentSoft)}
+select option{background:#ffffff}
+input[type="range"]{width:100%;accent-color:var(--accent)}
+.volval{font-size:13px;font-weight:800;color:var(--accent-d)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.btn{border:none;border-radius:var(--r);padding:12px 18px;font-family:'Inter',sans-serif;font-weight:800;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{background:var(--accent-d)}
+.btn-g{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+.btn-g:hover{border-color:var(--accent)}
+.catsec{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);margin-bottom:14px;overflow:hidden}
+.catsec .chd{display:flex;align-items:center;gap:10px;padding:13px 18px;background:var(--panel2);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.catsec .chn{flex:0 0 26px;height:26px;border-radius:8px;background:var(--accent);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.catsec .cht{font-weight:800;font-size:14px;flex:1;min-width:160px}
+.catsec .chc{font-size:11.5px;color:var(--muted);font-weight:600}
+.qrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--line)}
+.qrow:last-child{border-bottom:none}
+.qrow .qt{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink)}
+.eng{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--accentSoft);color:var(--accent-d);border-radius:999px;padding:4px 11px;white-space:nowrap}
+.mini-btn{background:var(--panel2);border:1px solid var(--line);color:var(--ink2);border-radius:7px;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
+.mini-btn:hover{border-color:var(--accent);color:var(--accent-d)}
+.mini-btn.danger:hover{border-color:#dc2626;color:#dc2626}
+.meta-line{font-size:12.5px;color:var(--muted);margin:0 4px 12px}
+.meta-line b{color:var(--accent-d)}
+.lib{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--sh);margin-top:18px}
+.lib h3{font-size:14px;font-weight:800}
+.lib .lsub{font-size:12px;color:var(--muted);margin:2px 0 10px}
+.srow{display:flex;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;flex-wrap:wrap}
+.srow .nm{flex:1;font-size:12.5px;font-weight:700;min-width:140px}
+.srow .dt{font-size:11px;color:var(--muted)}
+.empty{border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--muted);font-size:12.5px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);background:#f4f2ff;color:#17132b;font-size:13px;font-weight:700;border-radius:999px;padding:11px 20px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.qrow.done{background:rgba(167,139,250,.09)}
+.qrow.done .qt{text-decoration:line-through;color:var(--muted)}
+.dbtn{min-width:36px}
+.dbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.newb{font-size:10px;font-weight:800;background:#052e22;color:#6ee7b7;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.tprog{height:8px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden;margin:8px 4px 2px}
+.tprog>div{height:100%;background:var(--accent)}
+.engsum{font-size:11.5px;color:var(--muted);margin:2px 4px 0}
+.footer{margin-top:22px;text-align:center;color:var(--muted);font-size:12px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar"><div class="badge"><span class="dot"></span> AI Search Domination &bull; Companion Bonus Tool</div></div>
+  <div class="guide" id="guideBox">
+    <button class="ghead" id="guideToggle" type="button"><span>📖 Quick-Start Guide — test like a real buyer</span><span class="chev">▾</span></button>
+    <div class="gcoll">
+      <div class="gsub">Pick a topic from the menu before generating your first set.</div>
+      <select id="guideSel">
+        <option value="g1">1 · How this query tool works</option>
+        <option value="g2">2 · Writing inputs that produce natural queries</option>
+        <option value="g3">3 · The 6 intent categories explained</option>
+        <option value="g4">4 · Monthly testing workflow with the Tracker</option>
+          <option value="g5">5 · Common mistakes that waste test runs</option>
+          <option value="g6">6 · Advanced: tracking, NEW badges & engine load</option>
+      </select>
+      <div class="guide-body" id="guideBody"></div>
+    </div>
+  </div>
+  <div class="hero">
+    <h1>Multi-Engine <span>Query Variation Generator</span></h1>
+    <p>Stop testing the same 2–3 phrasings. Generate a <strong>well-distributed set of realistic buyer queries</strong> across 6 intent categories — each pre-assigned to one of the <strong>6 engines</strong> — and get a <strong>genuinely fresh set every month</strong>.</p>
+  </div>
+  <div class="controls">
+    <h2>Your Product</h2>
+    <div class="grid2">
+      <div class="fld"><label>Product Type</label><select id="inType">
+        <option value="book">KDP / Book</option>
+        <option value="etsy">Etsy</option>
+        <option value="digital">Digital Product</option>
+        <option value="software">Software</option>
+        <option value="affiliate">Affiliate</option>
+      </select></div>
+      <div class="fld"><label>Product Category</label><input type="text" id="inCat" maxlength="60" placeholder="e.g. cozy mystery novel"></div>
+      <div class="fld"><label>Audience / Buyer Type</label><input type="text" id="inAud" maxlength="60" placeholder="e.g. busy moms"></div>
+      <div class="fld"><label>Problem It Solves</label><input type="text" id="inProb" maxlength="80" placeholder="e.g. finding relaxing reads for short evenings"></div>
+      <div class="fld"><label>Key Feature Buyers Want</label><input type="text" id="inFeat" maxlength="80" placeholder="e.g. short standalone stories"></div>
+      <div class="fld"><label>Budget Point ($)</label><input type="number" id="inPrice" min="1" max="9999" step="1" value="19"></div>
+      <div class="fld"><label>Compare A (optional)</label><input type="text" id="inAltA" maxlength="60" placeholder="e.g. the premium option"></div>
+      <div class="fld"><label>Compare B (optional)</label><input type="text" id="inAltB" maxlength="60" placeholder="e.g. the budget option"></div>
+    </div>
+    <div class="fld"><label>Query Volume: <span class="volval" id="volVal">12 queries</span></label><input type="range" id="inVol" min="6" max="24" step="1" value="12"></div>
+    <div class="btnrow">
+      <button class="btn btn-p" id="genBtn" type="button">⚡ Generate Query Set</button>
+      <button class="btn btn-g" id="freshBtn" type="button">🔄 Generate This Month's Fresh Set</button>
+      <button class="btn btn-g" id="shufBtn" type="button">🔀 Shuffle Engines</button>
+    </div>
+  </div>
+  <div class="meta-line" id="setMeta"></div>
+  <div id="results"></div>
+  <div class="btnrow" style="margin-top:4px">
+    <button class="btn btn-g" id="saveBtn" type="button">💾 Save This Query Set</button>
+    <button class="btn btn-g" id="exportBtn" type="button">📋 Copy Full Query Set for This Month</button>
+  </div>
+  <div class="lib">
+    <h3>💾 Saved Query Sets</h3>
+    <div class="lsub">Dated snapshots per product — matching the Tracker's convention. Reload any month's set anytime.</div>
+    <div id="libList"></div>
+  </div>
+  <div class="footer">Companion bonus tool &bull; 100% client-side.</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* Multi-Engine Query Variation Generator — ES5 only (var/function) */
+var LIB_KEY = "mdmqv_sets_v1";
+var LAST_KEY = "mdmqv_last_v1";
+var ENGINES = ["ChatGPT", "Perplexity", "Google AI", "Gemini", "Claude", "Copilot"];
+var CATS = [
+  { id: "best", name: 'Direct "Best" Query', hint: "The classic shortlist question" },
+  { id: "compare", name: "Comparison Query", hint: "A vs B, which wins" },
+  { id: "problem", name: "Problem-First Query", hint: "Pain before product" },
+  { id: "budget", name: "Budget-Qualified Query", hint: "Price-constrained ask" },
+  { id: "feature", name: "Feature-Specific Query", hint: "Must-have detail" },
+  { id: "social", name: "Social-Proof Query", hint: "What do people rate" }
+];
+var TPL = {
+best: [
+"What's the best {C} for {A}?",
+"Best {C} for {A}?",
+"Can you recommend the best {C} for {A}?",
+"What is the top-rated {C} for {A} right now?",
+"Which {C} would you suggest for {A}?",
+"I'm {ARTA} {A} — what's the best {C} for me?",
+"Looking for a great {C} for {A}. Any top picks?",
+"What {C} do you recommend for {A}?",
+"Top 5 {C} for {A}?"
+],
+compare: [
+"{ALTA} vs {ALTB} for {C} — which is better for {A}?",
+"Should I get {ALTA} or {ALTB}? I'm {ARTA} {A}.",
+"Compare {ALTA} vs {ALTB} for {A}.",
+"What's the difference between {ALTA} and {ALTB}?",
+"Is {ALTA} worth it over {ALTB} for {A}?",
+"{ALTA} or {ALTB} — which would you pick for {A} and why?",
+"Pros and cons: {ALTA} vs {ALTB}?",
+"I'm torn between {ALTA} and {ALTB}. Which suits {A} better?",
+"For {A} on a budget, {ALTA} or {ALTB}?"
+],
+problem: [
+"I'm looking for something to help with {P} — what do you recommend?",
+"I struggle with {P}. Any {C} that could help?",
+"What's the best way for {A} to deal with {P}?",
+"I need help with {P} — should I get {ARTC} {C}?",
+"{P} is eating all my time. What do {A} usually use?",
+"How do I fix {P}? Looking for a {C} that actually works.",
+"Any recommendations for {A} dealing with {P}?",
+"I keep putting off {P}. What's the easiest {C} to start with?",
+"What's everyone using for {P} these days?"
+],
+budget: [
+"What's the best {C} under ${PR}?",
+"Best budget {C} for {A}?",
+"I can spend up to ${PR} on {ARTC} {C}. What's worth it?",
+"Cheapest good {C} for {A}?",
+"Is there a decent {C} under ${PR}?",
+"Best value {C} for {A} — not the priciest, the smartest buy?",
+"What {C} gives {A} the most for under ${PR}?",
+"I'm on a tight budget. Best {C} for {A} under ${PR}?",
+"Under ${PR}: which {C} do people rate highest?"
+],
+feature: [
+"What {C} has {F}?",
+"Which {C} for {A} includes {F}?",
+"I need {ARTC} {C} with {F}. Any recommendations?",
+"Best {C} with {F} for {A}?",
+"Does any {C} offer {F}? Which one?",
+"Looking for {C} — must have {F}. Suggestions?",
+"What {C} do people love specifically for {F}?",
+"{F} is a must for me. Which {C} should {A} get?",
+"Compare {C} options with {F} — which is best?"
+],
+social: [
+"What {C} do people actually recommend?",
+"Which {C} has the best reviews from {A}?",
+"What {C} are people raving about right now?",
+"Most popular {C} for {A}?",
+"What {C} does everyone on Reddit recommend for {A}?",
+"Is there a {C} that {A} swear by?",
+"What {C} has the happiest customers?",
+"Which {C} for {A} is actually worth the hype?",
+"Real talk: what {C} should {A} avoid, and what should they get instead?"
+]
+};
+var GUIDES = {
+g1: "<h4>How this query tool works</h4>"
++ "<p>The Share-of-Model Tracker asks you to “list the questions your buyers ask” — but most sellers test the same 2–3 obvious phrasings forever. This tool generates a <b>distributed set of 6–24 realistic queries</b> across 6 intent categories, each pre-assigned to one of the 6 engines, so testing stays wide without extra work.</p>"
++ "<ol>"
++ "<li>Fill in category, audience, problem, feature and price (compare A/B optional).</li>"
++ "<li>Set the volume slider, press <b>⚡ Generate Query Set</b>.</li>"
++ "<li>Test each query in its suggested engine, log hits in the Tracker.</li>"
++ "<li>Next month: <b>🔄 Fresh Set</b> for a guaranteed-different combination.</li>"
++ "</ol>",
+g2: "<h4>Writing inputs that produce natural queries</h4>"
++ "<ul>"
++ "<li><b>Category:</b> plural, concrete — <code>cozy mystery novels</code>, not “books”. The more specific, the more natural the query.</li>"
++ "<li><b>Audience:</b> how buyers describe themselves — <code>busy moms</code>, <code>new Etsy sellers</code>. Articles (a/an) are fixed automatically.</li>"
++ "<li><b>Problem:</b> phrase as the pain, gerund-style — <code>finding relaxing reads for short evenings</code>.</li>"
++ "<li><b>Feature:</b> the must-have detail — <code>short standalone stories</code>.</li>"
++ "<li><b>Compare A/B:</b> optional. Leave blank and the tool falls back to “premium vs budget” framings.</li>"
++ "</ul>",
+g3: "<h4>The 6 intent categories explained</h4>"
++ "<ul>"
++ "<li><b>Direct Best</b> — the shortlist question; where most citations happen.</li>"
++ "<li><b>Comparison</b> — A-vs-B asks surface different winners than “best” asks.</li>"
++ "<li><b>Problem-First</b> — pain-led phrasing; catches engines that match on problems, not products.</li>"
++ "<li><b>Budget</b> — price filters change shortlists dramatically.</li>"
++ "<li><b>Feature</b> — must-have details reveal niche winners.</li>"
++ "<li><b>Social proof</b> — review- and community-weighted answers.</li>"
++ "</ul>"
++ "<div class='tip'>💡 Volume is always spread across all six — never stacked on one.</div>",
+g4: "<h4>Monthly testing workflow with the Tracker</h4>"
++ "<ol>"
++ "<li>Generate this month's set and <b>💾 save it</b> (dated snapshot, like the Tracker).</li>"
++ "<li>Test each query <b>only in its suggested engine</b> — the rotation spreads the burden for you.</li>"
++ "<li>Log which queries named you in the Share-of-Model Tracker.</li>"
++ "<li>Next month: <b>🔄 Fresh Set</b> — the tool excludes last set's queries automatically.</li>"
++ "<li>After 2–3 months, compare snapshots: rising hits per category tells you which pillar to push.</li>"
++ "</ol>",
+g5: "<h4>Common mistakes that waste test runs</h4>"
++ "<ul>"
++ "<li><b>Testing the same 3 queries monthly</b> — you measure memory, not progress. Rotate.</li>"
++ "<li><b>Testing everything in ChatGPT only</b> — engines cite different sources; follow the rotation.</li>"
++ "<li><b>Asking while logged in with history</b> — the AI flatters your past chats. Test fresh.</li>"
++ "<li><b>Leading questions</b> (“isn't X the best?”) — they always say yes. Ask cold.</li>"
++ "<li><b>One-and-done testing</b> — engines are non-deterministic; a query missed once may hit next month.</li>"
++ "</ul>",
+g6: "<h4>Advanced: tracking, NEW badges & engine load</h4>"
++ "<ul>"
++ "<li><b>✓ Tested check-offs:</b> tick each query as you test it. The progress bar and the export both track tested vs pending.</li>"
++ "<li><b>🆕 NEW badges</b> mark queries absent from your previous set — test those first, they carry fresh signal.</li>"
++ "<li><b>🔀 Shuffle Engines</b> re-deals engine assignments without touching the queries. Useful when one engine is rate-limiting you.</li>"
++ "<li><b>Per-category copy</b> sits in every section header for pasting one intent block at a time.</li>"
++ "<li>The summary line shows <b>engine load</b> (queries per engine) — rebalance with Shuffle if one engine carries too many.</li>"
++ "</ul>"
++ "<div class='tip'>💡 Saved sets keep your ✓ marks — reload last month and see exactly what remains untested.</div>"
+};
+
+/* ---------- helpers & state ---------- */
+var curSet = null;
+
+function $(id) { return document.getElementById(id); }
+function rand(n) { return Math.floor(Math.random() * n); }
+function trimStr(s) { return String(s === undefined || s === null ? "" : s).replace(/^\s+|\s+$/g, ""); }
+function escHtml(s) {
+  s = String(s);
+  s = s.split("&").join("&amp;");
+  s = s.split("<").join("&lt;");
+  s = s.split(">").join("&gt;");
+  s = s.split('"').join("&quot;");
+  return s;
+}
+function toast(msg) {
+  var el = $("toast");
+  el.innerHTML = escHtml(msg);
+  el.className = "toast show";
+  setTimeout(function() { el.className = "toast"; }, 2000);
+}
+function copyText(text, okMsg) {
+  function fallback() {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); toast(okMsg || "Copied ✓"); }
+    catch (e) { toast("Copy failed — select manually"); }
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() { toast(okMsg || "Copied ✓"); }, function() { fallback(); });
+  } else { fallback(); }
+}
+function shuffle(arr) {
+  var a = arr.slice(0), i, j, t;
+  for (i = a.length - 1; i > 0; i--) { j = rand(i + 1); t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+function artFor(word) {
+  var m = String(word).match(/[a-zA-Z]/);
+  if (!m) { return "a"; }
+  return ("aeiouAEIOU".indexOf(m[0]) >= 0) ? "an" : "a";
+}
+function inputs() {
+  var cat = trimStr($("inCat").value);
+  var aud = trimStr($("inAud").value);
+  var prob = trimStr($("inProb").value);
+  if (prob === "") { prob = "saving time"; }
+  var feat = trimStr($("inFeat").value);
+  if (feat === "") { feat = "great reviews"; }
+  var pr = parseInt($("inPrice").value, 10);
+  if (isNaN(pr) || pr < 1) { pr = 19; }
+  var aA = trimStr($("inAltA").value);
+  if (aA === "") { aA = "a premium " + (cat === "" ? "option" : cat); }
+  var aB = trimStr($("inAltB").value);
+  if (aB === "") { aB = "a budget " + (cat === "" ? "option" : cat); }
+  return {
+    type: $("inType").value, cat: cat, aud: aud, prob: prob, feat: feat,
+    pr: pr, alta: aA, altb: aB,
+    arta: artFor(aud === "" ? "buyer" : aud), artc: artFor(cat === "" ? "product" : cat),
+    vol: parseInt($("inVol").value, 10) || 12
+  };
+}
+function fill(tpl, m) {
+  var out = String(tpl);
+  out = out.split("{C}").join(m.cat);
+  out = out.split("{A}").join(m.aud);
+  out = out.split("{P}").join(m.prob);
+  out = out.split("{PR}").join(String(m.pr));
+  out = out.split("{F}").join(m.feat);
+  out = out.split("{ALTA}").join(m.alta);
+  out = out.split("{ALTB}").join(m.altb);
+  out = out.split("{ARTA}").join(m.arta);
+  out = out.split("{ARTC}").join(m.artc);
+  return out;
+}
+function prodKey(m) {
+  return (m.type + "|" + m.cat + "|" + m.aud).toLowerCase();
+}
+function loadLast() {
+  try {
+    var raw = localStorage.getItem(LAST_KEY);
+    if (!raw) { return {}; }
+    var p = JSON.parse(raw);
+    return p ? p : {};
+  } catch (e) { return {}; }
+}
+function storeLast(map) {
+  try { localStorage.setItem(LAST_KEY, JSON.stringify(map)); } catch (e) {}
+}
+function pickForCat(catId, need, m, excluded) {
+  var bank = TPL[catId];
+  var order = shuffle(bank);
+  var out = [], i, t;
+  for (i = 0; i < order.length && out.length < need; i++) {
+    t = fill(order[i], m);
+    if (!excluded[t]) { out.push(t); excluded[t] = 1; }
+  }
+  for (i = 0; i < order.length && out.length < need; i++) {
+    t = fill(order[i], m);
+    if (out.indexOf(t) < 0) { out.push(t); }
+  }
+  return out;
+}
+function genSet(isFresh) {
+  var m = inputs();
+  if (m.cat === "" || m.aud === "") { toast("Enter Category + Audience first"); return; }
+  var key = prodKey(m);
+  var last = loadLast();
+  var excluded = {};
+  var prev = last[key] || [];
+  var i;
+  for (i = 0; i < prev.length; i++) { excluded[prev[i]] = 1; }
+  var offset = rand(ENGINES.length);
+  var order = [], k;
+  for (k = 0; k < CATS.length; k++) { order.push(CATS[(k + offset) % CATS.length]); }
+  var base = Math.floor(m.vol / CATS.length), rem = m.vol % CATS.length;
+  var queries = [], gi = 0, c, need, picked, q;
+  for (c = 0; c < order.length; c++) {
+    need = base + (c < rem ? 1 : 0);
+    picked = pickForCat(order[c].id, need, m, excluded);
+    for (q = 0; q < picked.length; q++) {
+      queries.push({ text: picked[q], cat: order[c].id, catName: order[c].name, engine: ENGINES[(offset + gi) % ENGINES.length], done: false });
+      gi++;
+    }
+  }
+  var d = new Date();
+  curSet = {
+    key: key, type: m.type, cat: m.cat, aud: m.aud, vol: m.vol,
+    date: d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2),
+    fresh: !!isFresh, queries: queries
+  };
+  var texts = [];
+  for (i = 0; i < queries.length; i++) { texts.push(queries[i].text); }
+  curSet.prev = prev.slice(0);
+  last[key] = texts;
+  storeLast(last);
+  render();
+  toast(isFresh ? "Fresh monthly set ✓ zero repeats" : "Query set generated ✓");
+}
+function isNew(q) {
+  if (!curSet.prev) { return false; }
+  return curSet.prev.indexOf(q.text) < 0;
+}
+function engCounts() {
+  var c = {}, i;
+  for (i = 0; i < ENGINES.length; i++) { c[ENGINES[i]] = 0; }
+  for (i = 0; i < curSet.queries.length; i++) { c[curSet.queries[i].engine]++; }
+  return c;
+}
+function testedCount() {
+  var n = 0, i;
+  for (i = 0; i < curSet.queries.length; i++) { if (curSet.queries[i].done) { n++; } }
+  return n;
+}
+function catName(id) {
+  var i;
+  for (i = 0; i < CATS.length; i++) { if (CATS[i].id === id) { return CATS[i].name; } }
+  return id;
+}
+function render() {
+  var box = $("results");
+  if (!curSet) {
+    box.innerHTML = '<div class="empty">Press Generate — your categorized query set appears here.</div>';
+    $("setMeta").innerHTML = "";
+    return;
+  }
+  var byCat = {}, order = [], i, q;
+  for (i = 0; i < curSet.queries.length; i++) {
+    q = curSet.queries[i];
+    if (!byCat[q.cat]) { byCat[q.cat] = []; order.push(q.cat); }
+    byCat[q.cat].push({ q: q, idx: i });
+  }
+  var h = "", c, j, item, nw = 0;
+  for (c = 0; c < order.length; c++) {
+    h += '<div class="catsec"><div class="chd"><span class="chn">' + (c + 1) + '</span><span class="cht">' + escHtml(catName(order[c])) + '</span><span class="chc">' + byCat[order[c]].length + ' queries</span><button class="mini-btn" type="button" data-cc="' + order[c] + '">📋 Copy section</button></div>';
+    for (j = 0; j < byCat[order[c]].length; j++) {
+      item = byCat[order[c]][j];
+      q = item.q;
+      var fresh = isNew(q);
+      if (fresh) { nw++; }
+      h += '<div class="qrow' + (q.done ? " done" : "") + '"><span class="qt">' + escHtml(q.text) + (fresh ? ' <span class="newb">🆕 NEW</span>' : "") + '</span><span class="eng">' + escHtml(q.engine) + '</span><span style="display:flex;gap:6px"><button class="mini-btn dbtn' + (q.done ? " on" : "") + '" type="button" data-done="' + item.idx + '" title="Mark tested">✓</button><button class="mini-btn" type="button" data-cq="' + item.idx + '">📋</button></span></div>';
+    }
+    h += "</div>";
+  }
+  box.innerHTML = h;
+  var label = curSet.cat + " for " + curSet.aud;
+  var td = testedCount(), total = curSet.queries.length;
+  var ec = engCounts(), parts = [], e;
+  for (e = 0; e < ENGINES.length; e++) { parts.push(ENGINES[e] + " ×" + ec[ENGINES[e]]); }
+  var meta = "Showing: <b>" + escHtml(label) + "</b> — " + total + " queries across 6 intents" + (curSet.fresh ? " • <b>fresh set</b> (" + nw + " new)" : "") + " • " + escHtml(curSet.date);
+  meta += '<div class="tprog"><div style="width:' + Math.round(td / total * 100) + '%"></div></div>';
+  meta += '<div class="engsum">Tested ' + td + "/" + total + " &nbsp;•&nbsp; Engine load: " + escHtml(parts.join(" · ")) + "</div>";
+  $("setMeta").innerHTML = meta;
+  var btns = box.getElementsByTagName("button"), b;
+  for (b = 0; b < btns.length; b++) {
+    if (btns[b].getAttribute("data-cq") !== null) {
+      btns[b].onclick = (function(btn) {
+        return function() {
+          var idx = parseInt(btn.getAttribute("data-cq"), 10);
+          if (curSet && curSet.queries[idx]) { copyText(curSet.queries[idx].text, "Query copied ✓"); }
+        };
+      })(btns[b]);
+    } else if (btns[b].getAttribute("data-done") !== null) {
+      btns[b].onclick = (function(btn) {
+        return function() {
+          var idx2 = parseInt(btn.getAttribute("data-done"), 10);
+          if (curSet && curSet.queries[idx2]) {
+            curSet.queries[idx2].done = !curSet.queries[idx2].done;
+            render();
+          }
+        };
+      })(btns[b]);
+    } else if (btns[b].getAttribute("data-cc") !== null) {
+      btns[b].onclick = (function(btn) {
+        return function() { copyCat(btn.getAttribute("data-cc")); };
+      })(btns[b]);
+    }
+  }
+}
+function copyCat(cat) {
+  if (!curSet) { return; }
+  var L = [], n = 1, i, q;
+  for (i = 0; i < curSet.queries.length; i++) {
+    q = curSet.queries[i];
+    if (q.cat === cat) { L.push(n + ". " + q.text + "  (test in " + q.engine + ")"); n++; }
+  }
+  copyText("[" + catName(cat) + "]\n" + L.join("\n"), "Section copied ✓");
+}
+function shuffleEngines() {
+  if (!curSet || curSet.queries.length === 0) { toast("Generate a set first"); return; }
+  var off = rand(ENGINES.length), i;
+  for (i = 0; i < curSet.queries.length; i++) { curSet.queries[i].engine = ENGINES[(off + i) % ENGINES.length]; }
+  render();
+  toast("Engines reshuffled 🔀");
+}
+function exportText(s) {
+  var L = [];
+  var td = 0, i, q;
+  for (i = 0; i < s.queries.length; i++) { if (s.queries[i].done) { td++; } }
+  L.push("QUERY SET — " + s.cat + " for " + s.aud + " (" + s.date + ", " + s.queries.length + " queries, " + td + " tested)");
+  var prev = s.prev || [];
+  var byCat = {}, order = [], c, j, n = 1;
+  for (i = 0; i < s.queries.length; i++) {
+    q = s.queries[i];
+    if (!byCat[q.cat]) { byCat[q.cat] = []; order.push(q.cat); }
+    byCat[q.cat].push(q);
+  }
+  for (c = 0; c < order.length; c++) {
+    L.push("");
+    L.push("[" + catName(order[c]) + "]");
+    for (j = 0; j < byCat[order[c]].length; j++) {
+      q = byCat[order[c]][j];
+      var mark = q.done ? "[x]" : "[ ]";
+      var nw = (prev.indexOf(q.text) < 0 && prev.length > 0) ? " ★ NEW" : "";
+      L.push(n + ". " + mark + " " + q.text + "  (test in " + q.engine + ")" + nw);
+      n++;
+    }
+  }
+  return L.join("\n");
+}
+/* ---------- library ---------- */
+function loadLib() {
+  try {
+    var raw = localStorage.getItem(LIB_KEY);
+    if (!raw) { return []; }
+    var p = JSON.parse(raw);
+    return (p && p.length !== undefined) ? p : [];
+  } catch (e) { return []; }
+}
+function storeLib(list) {
+  try { localStorage.setItem(LIB_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function renderLib() {
+  var list = loadLib();
+  var box = $("libList");
+  if (list.length === 0) {
+    box.innerHTML = '<div class="empty">No saved sets yet. Generate a set, then 💾 save it as this month\'s snapshot.</div>';
+    return;
+  }
+  var h = "", i;
+  for (i = list.length - 1; i >= 0; i--) {
+    h += '<div class="srow"><span class="nm">' + escHtml(list[i].cat + " for " + list[i].aud) + '</span><span class="dt">' + escHtml(list[i].date + " • " + list[i].queries.length + "q") + '</span>';
+    h += '<button class="mini-btn" type="button" data-load="' + i + '">Load</button>';
+    h += '<button class="mini-btn" type="button" data-copy="' + i + '">📋 Copy</button>';
+    h += '<button class="mini-btn danger" type="button" data-del="' + i + '">✕</button></div>';
+  }
+  box.innerHTML = h;
+  var btns = box.getElementsByTagName("button"), b;
+  for (b = 0; b < btns.length; b++) {
+    btns[b].onclick = (function(btn) {
+      return function() {
+        var cur = loadLib();
+        if (btn.getAttribute("data-load") !== null) {
+          var li = parseInt(btn.getAttribute("data-load"), 10);
+          if (cur[li]) {
+            curSet = { key: cur[li].key, type: cur[li].type, cat: cur[li].cat, aud: cur[li].aud, vol: cur[li].vol, date: cur[li].date, fresh: false, queries: cur[li].queries };
+            render();
+            toast("Set loaded ✓");
+          }
+        } else if (btn.getAttribute("data-copy") !== null) {
+          var ci = parseInt(btn.getAttribute("data-copy"), 10);
+          if (cur[ci]) { copyText(exportText(cur[ci]), "Set copied ✓"); }
+        } else {
+          var di = parseInt(btn.getAttribute("data-del"), 10);
+          cur.splice(di, 1);
+          storeLib(cur);
+          renderLib();
+          toast("Deleted");
+        }
+      };
+    })(btns[b]);
+  }
+}
+function renderGuide() {
+  var k = $("guideSel").value;
+  if (!GUIDES[k]) { k = "g1"; }
+  $("guideBody").innerHTML = GUIDES[k];
+}
+/* ---------- init ---------- */
+function init() {
+  renderGuide();
+  $("guideSel").onchange = function() { renderGuide(); };
+  $("guideToggle").onclick = function() {
+    var g = $("guideBox");
+    g.className = (g.className.indexOf("open") >= 0) ? "guide" : "guide open";
+  };
+  $("inVol").oninput = function() {
+    $("volVal").innerHTML = escHtml($("inVol").value + " queries");
+  };
+  $("genBtn").onclick = function() { genSet(false); };
+  $("freshBtn").onclick = function() { genSet(true); };
+  $("shufBtn").onclick = function() { shuffleEngines(); };
+  $("saveBtn").onclick = function() {
+    if (!curSet || curSet.queries.length === 0) { toast("Generate a set first"); return; }
+    var list = loadLib();
+    list.push({ key: curSet.key, type: curSet.type, cat: curSet.cat, aud: curSet.aud, vol: curSet.vol, date: curSet.date, queries: curSet.queries });
+    if (list.length > 60) { list = list.slice(list.length - 60); }
+    storeLib(list);
+    renderLib();
+    toast("Set saved 💾");
+  };
+  $("exportBtn").onclick = function() {
+    if (!curSet) { toast("Generate a set first"); return; }
+    copyText(exportText(curSet), "Full set copied ✓");
+  };
+  /* demo defaults so buyers see instant value */
+  if (trimStr($("inCat").value) === "") { $("inCat").value = "cozy mystery novels"; }
+  if (trimStr($("inAud").value) === "") { $("inAud").value = "busy moms"; }
+  if (trimStr($("inProb").value) === "") { $("inProb").value = "finding relaxing reads for short evenings"; }
+  if (trimStr($("inFeat").value) === "") { $("inFeat").value = "short standalone stories"; }
+  renderLib();
+  render();
+  genSet(false);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
