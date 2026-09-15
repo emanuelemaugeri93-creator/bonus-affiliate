@@ -1,0 +1,880 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON-LD Schema Code Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#2563eb; --accent-d:#1d4ed8; --accentSoft:#dbeafe;
+  --code:#0f172a; --codePanel:#1e293b; --codeText:#e2e8f0; --codeAccent:#7dd3fc;
+  --bg:#f8fafc; --panel:#ffffff; --panel2:#f1f5f9;
+  --ink:#0f172a; --ink2:#334155; --muted:#94a3b8; --line:#e2e8f0;
+  --valid:#16a34a; --validSoft:#dcfce7; --warn:#d97706; --warnSoft:#fef3c7;
+  --r:8px; --sh:0 4px 16px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+.wrap{max-width:1360px;margin:0 auto;padding:24px 20px 60px}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);box-shadow:var(--sh)}
+.badge .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px 26px;box-shadow:var(--sh);margin-bottom:18px;border-top:4px solid var(--accent)}
+.hero h1{font-weight:800;font-size:30px;letter-spacing:-.01em}
+.hero h1 span{color:var(--accent)}
+.hero p{color:var(--ink2);max-width:860px;margin-top:6px;font-size:14px}
+.hero p strong{color:var(--ink)}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--ink2)}
+.stat b{color:var(--accent)}
+.layout{display:grid;grid-template-columns:390px 1fr;gap:18px;align-items:start}
+@media(max-width:1020px){.layout{grid-template-columns:1fr}}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:var(--sh)}
+.side h2{font-size:15px;font-weight:800;margin-bottom:2px}
+.side .ssub{font-size:12px;color:var(--muted);margin-bottom:14px}
+.fsec{margin-bottom:18px}
+.fsec>label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.fsec>label.blue{color:var(--accent)}
+input[type="text"],input[type="number"],input[type="date"],input[type="url"],select,textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);color:var(--ink);padding:9px 11px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;outline:none;margin-bottom:8px}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentSoft)}
+select option{background:#fff}
+.numgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.flabel{font-size:11px;color:var(--muted);margin:-4px 0 8px}
+.typecards{display:grid;gap:8px}
+.tcard{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font-family:'Inter',sans-serif;cursor:pointer;transition:.12s}
+.tcard b{font-size:13px;display:block}
+.tcard small{font-size:11.5px;color:var(--muted)}
+.tcard.active{border-color:var(--accent);background:var(--accentSoft);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.tcard.active small{color:var(--accent-d)}
+.dynrow{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:10px;margin-bottom:8px}
+.dynrow textarea{min-height:56px}
+.mini-btn{background:var(--panel);border:1px solid var(--line);color:var(--ink2);border-radius:7px;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;font-family:'Inter',sans-serif}
+.mini-btn:hover{border-color:var(--accent);color:var(--accent-d)}
+.mini-btn.danger:hover{border-color:#dc2626;color:#dc2626}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:none;border-radius:var(--r);padding:12px 16px;font-family:'Inter',sans-serif;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{background:var(--accent-d)}
+.btn-g{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+.btn-g:hover{border-color:var(--accent)}
+.canvas{display:flex;flex-direction:column;gap:14px;min-width:0}
+.chips{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--sh)}
+.chips .ct{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;font-size:12px;font-weight:700;padding:5px 8px 5px 13px;margin:0 6px 6px 0}
+.chip.bad{border-color:var(--warn);background:var(--warnSoft)}
+.chip button{border:none;background:var(--panel);border:1px solid var(--line);border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;color:var(--muted);line-height:1}
+.chip button:hover{color:#dc2626;border-color:#dc2626}
+.chip-empty{font-size:12.5px;color:var(--muted)}
+.codepanel{background:var(--code);border-radius:12px;overflow:hidden;box-shadow:var(--sh);border:1px solid #020617}
+.codehead{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--codePanel);flex-wrap:wrap}
+.codehead .fname{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--codeText);flex:1;min-width:140px}
+.cbtn{background:#0b1220;border:1px solid #334155;color:var(--codeText);border-radius:7px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;text-decoration:none;display:inline-block}
+.cbtn:hover{border-color:var(--codeAccent);color:#fff}
+.cbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.cbtn.primary:hover{background:var(--accent-d)}
+.warnbanner{display:none;margin:0;padding:11px 16px;background:var(--warnSoft);border-bottom:1px solid #f5d78e;color:#92400e;font-size:12.5px;font-weight:500}
+.warnbanner.show{display:block}
+.warnbanner code{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:rgba(217,119,6,.15);border-radius:4px;padding:0 5px}
+pre.code{padding:18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;color:var(--codeText);white-space:pre}
+.stag{color:#64748b}
+.jk{color:var(--codeAccent)}
+.js{color:#86efac}
+.jn{color:#fbbf24}
+.jb{color:#f472b6}
+.check{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--sh)}
+.check h3{font-size:13px;font-weight:800;margin-bottom:10px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:7px;font-size:12.5px;margin-bottom:4px}
+.chk.ok{background:var(--validSoft)}
+.chk.warnx{background:var(--warnSoft)}
+.chk.err{background:#fee2e2}
+.chk .ic{flex:0 0 20px;font-weight:800}
+.chk.ok .ic{color:var(--valid)}
+.chk.warnx .ic{color:var(--warn)}
+.chk.err .ic{color:#dc2626}
+.chk code{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:rgba(15,23,42,.07);border-radius:4px;padding:0 5px}
+.chk .note{display:block;font-size:11.5px;color:var(--ink2);margin-top:2px}
+.lib{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--sh)}
+.lib h3{font-size:13px;font-weight:800}
+.lib .lsub{font-size:12px;color:var(--muted);margin:2px 0 10px}
+.srow{display:flex;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.srow .nm{flex:1;font-size:12.5px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .dt{font-size:11px;color:var(--muted)}
+.empty{border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;color:var(--muted);font-size:12.5px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;border-radius:999px;padding:11px 20px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.footer{margin-top:22px;text-align:center;color:var(--muted);font-size:12px}
+.hidden{display:none!important}
+button,select,a,label,input[type="checkbox"]{cursor:pointer}
+.guide{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;box-shadow:var(--sh);margin-top:14px}
+.guide h3{font-size:15px;font-weight:800;margin-bottom:4px}
+.guide .gsub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.guide select{margin-bottom:12px}
+.guide{padding:0!important;overflow:hidden}
+.ghead{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(90deg,#1e1b2e,#453d63);color:#fff;border:none;padding:13px 18px;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;cursor:pointer;text-align:left}
+.ghead .chev{transition:transform .2s;font-size:12px}
+.guide.open .ghead .chev{transform:rotate(180deg)}
+.gcoll{display:none;padding:16px 18px 18px}
+.guide.open .gcoll{display:block}
+.guide-body{font-size:13px;color:var(--ink2)}
+.guide-body h4{font-size:13.5px;color:var(--ink);margin:12px 0 6px}
+.guide-body h4:first-child{margin-top:0}
+.guide-body p{margin-bottom:8px}
+.guide-body ol,.guide-body ul{margin:0 0 8px 20px}
+.guide-body li{margin-bottom:5px}
+.guide-body code{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.guide-body .tip{margin-top:10px;background:var(--accentSoft);border-radius:8px;padding:10px 12px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar"><div class="badge"><span class="dot"></span> AI Search Domination &bull; Companion Bonus Tool</div></div>
+      <div class="guide" id="guideBox">
+        <button class="ghead" id="guideToggle" type="button"><span>📖 Quick-Start Guide — from code to page</span><span class="chev">▾</span></button>
+        <div class="gcoll">
+          <div class="gsub">Pick a topic from the menu: step-by-step on what to do with the generated code.</div>
+          <select id="guideSel">
+            <option value="g1">1 · What schema is — and what it really does</option>
+            <option value="g2">2 · Where to paste the code (WordPress, Shopify, Wix, HTML)</option>
+            <option value="g3">3 · Selling only on Etsy or Amazon? Read this</option>
+            <option value="g4">4 · The golden FAQ rule</option>
+            <option value="g5">5 · How to validate your code (2 minutes)</option>
+            <option value="g6">6 · Common mistakes and how to avoid them</option>
+          </select>
+          <div class="guide-body" id="guideBody"></div>
+        </div>
+      </div>
+  <div class="hero">
+    <h1>JSON-LD <span>Schema Code Generator</span></h1>
+    <p>Turns your product profile into <strong>genuine, valid, ready-to-paste JSON-LD markup</strong> — the structured data behind the <strong>2.3× citation lift</strong>. No AI round-trip: real objects, real spec, live validation.</p>
+    <div class="stats"><div class="stat"><b>4</b> schema types</div><div class="stat"><b>@graph</b> multi-block combining</div><div class="stat"><b>Live</b> spec validation</div></div>
+  </div>
+  <div class="layout">
+    <div class="side">
+      <h2>Product Profile</h2>
+      <div class="ssub">Enter once — reused across every schema type.</div>
+      <div class="fsec">
+        <label>Product Basics</label>
+        <input type="text" id="fName" maxlength="120" placeholder="Product name *">
+        <select id="fType">
+          <option value="book">Book / KDP</option>
+          <option value="etsy">Etsy Listing</option>
+          <option value="digital">Digital Download</option>
+          <option value="software">Software / App</option>
+          <option value="course">Course</option>
+        </select>
+        <input type="text" id="fBrand" maxlength="80" placeholder="Brand / Author name">
+        <textarea id="fDesc" maxlength="2000" placeholder="Description (plain text, 1–3 sentences)"></textarea>
+        <div class="numgrid">
+          <div><input type="text" id="fPrice" maxlength="12" placeholder="Price, e.g. 4.99"><div class="flabel">Price (numbers only)</div></div>
+          <div><input type="text" id="fCurrency" maxlength="3" value="USD" placeholder="USD"><div class="flabel">Currency (ISO)</div></div>
+        </div>
+        <select id="fAvail">
+          <option value="instock">In Stock</option>
+          <option value="preorder">Preorder</option>
+          <option value="digital">Digital Delivery</option>
+        </select>
+        <input type="text" id="fUrl" maxlength="300" placeholder="Product URL (https://…)">
+        <input type="text" id="fImg" maxlength="300" placeholder="Image URL (https://…)">
+      </div>
+      <div class="fsec" id="bookFields">
+        <label class="blue">Book Fields (Book / KDP)</label>
+        <div id="authorList"></div>
+        <button class="mini-btn" id="addAuthor" type="button">＋ Add Author</button>
+        <div style="height:8px"></div>
+        <input type="text" id="bIsbn" maxlength="20" placeholder="ISBN (10 or 13 digits)">
+        <input type="text" id="bPublisher" maxlength="80" placeholder="Publisher">
+        <div class="numgrid">
+          <div><input type="number" id="bPages" min="1" max="10000" placeholder="Pages"><div class="flabel">Num. pages</div></div>
+          <div><select id="bFormat"><option value="paperback">Paperback</option><option value="hardcover">Hardcover</option><option value="ebook">Ebook</option><option value="audiobook">Audiobook</option></select><div class="flabel">Format</div></div>
+        </div>
+      </div>
+      <div class="fsec">
+        <label class="blue">Ratings</label>
+        <div class="numgrid">
+          <div><input type="number" id="rAvg" min="0" max="5" step="0.1" placeholder="4.8"><div class="flabel">Avg rating (0–5)</div></div>
+          <div><input type="number" id="rCount" min="0" max="1000000" step="1" placeholder="137"><div class="flabel">Num. reviews</div></div>
+        </div>
+      </div>
+      <div class="fsec">
+        <label class="blue">Schema Type</label>
+        <div class="typecards" id="typeCards">
+          <button class="tcard active" data-stype="product" type="button"><b>Product Schema</b><small>Product — or Book when type is Book/KDP</small></button>
+          <button class="tcard" data-stype="faq" type="button"><b>FAQPage Schema</b><small>Question + acceptedAnswer list</small></button>
+          <button class="tcard" data-stype="rating" type="button"><b>Review / AggregateRating</b><small>Rating nested in a parent type</small></button>
+          <button class="tcard" data-stype="article" type="button"><b>Article / BlogPosting</b><small>Buying guides &amp; entity pages</small></button>
+        </div>
+      </div>
+      <div class="fsec hidden" id="fsRating">
+        <label class="blue">Review Block Parent</label>
+        <select id="vParent">
+          <option value="Product">Parent: Product</option>
+          <option value="Book">Parent: Book</option>
+          <option value="CreativeWork">Parent: CreativeWork</option>
+        </select>
+        <div class="flabel">Uses name + URL from Product Basics above.</div>
+      </div>
+      <div class="fsec hidden" id="fsFaq">
+        <label class="blue">Questions &amp; Answers (min. 3 recommended)</label>
+        <div id="faqList"></div>
+        <button class="mini-btn" id="addFaq" type="button">＋ Add Question</button>
+      </div>
+      <div class="fsec hidden" id="fsArticle">
+        <label class="blue">Article Fields</label>
+        <select id="aType"><option value="Article">Article</option><option value="BlogPosting">BlogPosting</option></select>
+        <input type="text" id="aHeadline" maxlength="150" placeholder="Headline *">
+        <input type="text" id="aAuthor" maxlength="80" placeholder="Author name *">
+        <input type="date" id="aDate">
+        <div class="flabel">Date published</div>
+        <textarea id="aSummary" maxlength="2000" placeholder="Article body summary (1–3 sentences)"></textarea>
+      </div>
+      <div class="fsec">
+        <div class="btnrow">
+          <button class="btn btn-p" id="addBlock" type="button">➕ Add Another Schema Block</button>
+        </div>
+        <div class="flabel" style="margin-top:6px">Stacks the current tab into one combined output via <b>@graph</b>.</div>
+      </div>
+      <div class="fsec">
+        <label class="blue">Saved Profiles</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" id="profName" maxlength="40" placeholder="Profile name" style="margin-bottom:0">
+          <button class="mini-btn" id="saveProf" type="button" style="flex:0 0 auto">💾</button>
+        </div>
+        <div id="profList"></div>
+      </div>
+    </div>
+    <div class="canvas">
+      <div class="chips">
+        <div class="ct">Output blocks (combined with @graph when 2+)</div>
+        <div id="blockChips"></div>
+      </div>
+      <div class="codepanel">
+        <div class="codehead">
+          <span class="fname" id="codeName">schema.html — live preview</span>
+          <button class="cbtn primary" id="copyBtn" type="button">📋 Copy Full Schema Code</button>
+          <a class="cbtn" href="https://search.google.com/test/rich-results" target="_blank" rel="noopener">🔗 Rich Results Test</a>
+          <a class="cbtn" href="https://validator.schema.org/" target="_blank" rel="noopener">🔗 Schema Validator</a>
+        </div>
+        <div class="warnbanner" id="warnBanner"></div>
+        <pre class="code" id="codeOut"></pre>
+      </div>
+      <div class="check">
+        <h3 id="checkTitle">Validation Checklist — Product</h3>
+        <div id="checkList"></div>
+      </div>
+      <div class="lib">
+        <h3>How to publish</h3>
+        <div class="lsub">Paste the copied block inside your page's <b>&lt;head&gt;</b> or just before <b>&lt;/body&gt;</b>. Then open it in Google's Rich Results Test and paste the code when asked.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">Companion bonus tool &bull; 100% client-side, no data leaves your browser.</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* JSON-LD Schema Code Generator — ES5 only (var/function) */
+
+var LIB_KEY = "mdjsonld_profiles_v1";
+var AVAIL_MAP = { instock: "https://schema.org/InStock", preorder: "https://schema.org/PreOrder", digital: "https://schema.org/InStock" };
+var FORMAT_MAP = { paperback: "https://schema.org/Paperback", hardcover: "https://schema.org/Hardcover", ebook: "https://schema.org/EBook", audiobook: "https://schema.org/AudiobookFormat" };
+var TYPE_LABELS = { product: "Product", faq: "FAQPage", rating: "Review Block", article: "Article" };
+
+var curType = "product";
+var blocks = [];
+var blockSeq = 0;
+
+function $(id) { return document.getElementById(id); }
+function rand(n) { return Math.floor(Math.random() * n); }
+function trimStr(s) { return String(s === undefined || s === null ? "" : s).replace(/^\s+|\s+$/g, ""); }
+function escHtml(s) {
+  s = String(s);
+  s = s.split("&").join("&amp;");
+  s = s.split("<").join("&lt;");
+  s = s.split(">").join("&gt;");
+  return s;
+}
+function toast(msg) {
+  var el = $("toast");
+  el.innerHTML = escHtml(msg);
+  el.className = "toast show";
+  setTimeout(function() { el.className = "toast"; }, 2000);
+}
+function copyText(text, okMsg) {
+  function fallback() {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); toast(okMsg || "Copied ✓"); }
+    catch (e) { toast("Copy failed — select manually"); }
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() { toast(okMsg || "Copied ✓"); }, function() { fallback(); });
+  } else { fallback(); }
+}
+function numOrNull(v) {
+  var n = parseFloat(v);
+  if (isNaN(n)) { return null; }
+  return n;
+}
+function intOrNull(v) {
+  if (trimStr(v) === "") { return null; }
+  var n = parseInt(v, 10);
+  if (isNaN(n)) { return null; }
+  return n;
+}
+
+/* ---------- input collection ---------- */
+function dynValues(containerId, cls) {
+  var box = $(containerId);
+  var els = box.getElementsByClassName(cls);
+  var out = [], i;
+  for (i = 0; i < els.length; i++) {
+    var v = trimStr(els[i].value);
+    if (v !== "") { out.push(v); }
+  }
+  return out;
+}
+function collectProfile() {
+  return {
+    name: trimStr($("fName").value),
+    ptype: $("fType").value,
+    brand: trimStr($("fBrand").value),
+    desc: trimStr($("fDesc").value),
+    price: trimStr($("fPrice").value),
+    currency: trimStr($("fCurrency").value).toUpperCase(),
+    avail: $("fAvail").value,
+    url: trimStr($("fUrl").value),
+    img: trimStr($("fImg").value),
+    isbn: trimStr($("bIsbn").value),
+    authors: dynValues("authorList", "authorIn"),
+    publisher: trimStr($("bPublisher").value),
+    pages: intOrNull($("bPages").value),
+    format: $("bFormat").value,
+    avg: numOrNull($("rAvg").value),
+    count: intOrNull($("rCount").value)
+  };
+}
+function collectFaq() {
+  var box = $("faqList");
+  var rows = box.getElementsByClassName("faqRow");
+  var out = [], i, q, a;
+  for (i = 0; i < rows.length; i++) {
+    q = trimStr(rows[i].getElementsByClassName("faqQ")[0].value);
+    a = trimStr(rows[i].getElementsByClassName("faqA")[0].value);
+    if (q !== "" || a !== "") { out.push({ q: q, a: a }); }
+  }
+  return out;
+}
+function collectArticle() {
+  return {
+    atype: $("aType").value,
+    headline: trimStr($("aHeadline").value),
+    author: trimStr($("aAuthor").value),
+    date: trimStr($("aDate").value),
+    summary: trimStr($("aSummary").value)
+  };
+}
+/* shaped snapshot for a schema type, from live inputs */
+function getSnap(type) {
+  var p = collectProfile();
+  if (type === "product") { return { kind: "product", p: p }; }
+  if (type === "faq") { return { kind: "faq", list: collectFaq() }; }
+  if (type === "rating") { return { kind: "rating", parent: $("vParent").value, name: p.name, url: p.url, avg: p.avg, count: p.count }; }
+  return { kind: "article", a: collectArticle(), url: p.url, img: p.img };
+}
+
+/* ---------- real node builders (no @context here; wrapper adds it) ---------- */
+function aggRating(avg, count) {
+  var r = Math.round(avg * 10) / 10;
+  return { "@type": "AggregateRating", "ratingValue": r, "bestRating": 5, "worstRating": 1, "ratingCount": count, "reviewCount": count };
+}
+function offerNode(p) {
+  var pr = numOrNull(p.price);
+  if (pr === null || pr < 0) { return null; }
+  var o = { "@type": "Offer", "price": String(Math.round(pr * 100) / 100), "priceCurrency": p.currency, "availability": AVAIL_MAP[p.avail] || AVAIL_MAP.instock };
+  if (p.url !== "") { o.url = p.url; }
+  return o;
+}
+function buildProductNode(p) {
+  var node = {};
+  var isBook = (p.ptype === "book");
+  node["@type"] = isBook ? "Book" : "Product";
+  if (p.name !== "") { node.name = p.name; }
+  if (p.img !== "") { node.image = p.img; }
+  if (p.desc !== "") { node.description = p.desc; }
+  if (p.url !== "") { node.url = p.url; }
+  if (isBook) {
+    var i, auths = [];
+    for (i = 0; i < p.authors.length; i++) { auths.push({ "@type": "Person", "name": p.authors[i] }); }
+    if (auths.length === 1) { node.author = auths[0]; }
+    else if (auths.length > 1) { node.author = auths; }
+    if (p.isbn !== "") { node.isbn = p.isbn; }
+    if (p.publisher !== "") { node.publisher = { "@type": "Organization", "name": p.publisher }; }
+    if (p.pages !== null && p.pages > 0) { node.numberOfPages = p.pages; }
+    node.bookFormat = FORMAT_MAP[p.format] || FORMAT_MAP.paperback;
+  } else {
+    if (p.brand !== "") { node.brand = { "@type": "Brand", "name": p.brand }; }
+  }
+  var off = offerNode(p);
+  if (off !== null) { node.offers = off; }
+  if (p.count !== null && p.count > 0 && p.avg !== null && p.avg > 0) { node.aggregateRating = aggRating(p.avg, p.count); }
+  return node;
+}
+function buildFaqNode(list) {
+  var items = [], i;
+  for (i = 0; i < list.length; i++) {
+    if (list[i].q !== "" && list[i].a !== "") {
+      items.push({ "@type": "Question", "name": list[i].q, "acceptedAnswer": { "@type": "Answer", "text": list[i].a } });
+    }
+  }
+  return { "@type": "FAQPage", "mainEntity": items };
+}
+function buildRatingNode(snap) {
+  var node = { "@type": snap.parent };
+  if (snap.name !== "") { node.name = snap.name; }
+  if (snap.url !== "") { node.url = snap.url; }
+  node.aggregateRating = aggRating(snap.avg, snap.count);
+  return node;
+}
+function buildArticleNode(snap) {
+  var a = snap.a;
+  var node = { "@type": a.atype };
+  if (a.headline !== "") { node.headline = a.headline; }
+  if (a.summary !== "") { node.description = a.summary; }
+  if (snap.img !== "") { node.image = snap.img; }
+  if (a.author !== "") { node.author = { "@type": "Person", "name": a.author }; }
+  if (a.date !== "") { node.datePublished = a.date; node.dateModified = a.date; }
+  if (snap.url !== "") { node.mainEntityOfPage = { "@type": "WebPage", "@id": snap.url }; }
+  return node;
+}
+function buildNode(type, snap) {
+  if (type === "product") { return buildProductNode(snap.p); }
+  if (type === "faq") { return buildFaqNode(snap.list); }
+  if (type === "rating") { return buildRatingNode(snap); }
+  return buildArticleNode(snap);
+}
+
+/* ---------- live validation (real Schema.org / Rich Results rules) ---------- */
+function validDate(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }
+function validCurrency(c) { return /^[A-Z]{3}$/.test(c); }
+function validateNode(type, snap) {
+  var errors = [], warns = [];
+  if (type === "product") {
+    var p = snap.p, isBook = (p.ptype === "book");
+    if (p.name === "") { errors.push({ f: "name", msg: "Missing required field: `name`." }); }
+    if (p.img === "") { warns.push({ f: "image", msg: "Add `image`. Google needs it for almost every rich result." }); }
+    if (p.desc === "") { warns.push({ f: "description", msg: "Add `description`. It is what engines quote." }); }
+    if (p.url === "") { warns.push({ f: "url", msg: "Add `url` so the markup points at a real page." }); }
+    if (isBook) {
+      if (p.authors.length === 0) { warns.push({ f: "author", msg: "Add at least one `author` (Person). Books without authors confuse entity resolution." }); }
+      if (p.isbn === "") { warns.push({ f: "isbn", msg: "Add `isbn`. It is the strongest book identifier." }); }
+      if (p.publisher === "") { warns.push({ f: "publisher", msg: "Add `publisher` to complete the Book entity." }); }
+    } else {
+      if (p.brand === "") { warns.push({ f: "brand", msg: "Add `brand` as a nested Brand object." }); }
+    }
+    var pr = numOrNull(p.price);
+    if (pr === null || pr < 0) { warns.push({ f: "offers", msg: "Add a numeric `offers.price`. Without offers there is no price rich result." }); }
+    else if (!validCurrency(p.currency)) { errors.push({ f: "priceCurrency", msg: "Invalid `priceCurrency` — use a 3-letter ISO code (USD, EUR, GBP)." }); }
+    if (!(p.count !== null && p.count > 0 && p.avg !== null && p.avg > 0)) {
+      warns.push({ f: "aggregateRating", msg: "Adding `aggregateRating` increases the chance Google treats this as rich-result eligible." });
+    } else if (p.avg > 5) {
+      errors.push({ f: "ratingValue", msg: "`ratingValue` must be between 0 and 5." });
+    }
+  } else if (type === "faq") {
+    var full = 0, i;
+    for (i = 0; i < snap.list.length; i++) {
+      if (snap.list[i].q !== "" && snap.list[i].a !== "") { full++; }
+    }
+    if (full === 0) { errors.push({ f: "mainEntity", msg: "Missing required content: at least one complete Question + acceptedAnswer." }); }
+    if (full > 0 && full < 3) { warns.push({ f: "mainEntity", msg: "Only " + full + " complete Q&A — 3+ is recommended for a useful FAQ block." }); }
+  } else if (type === "rating") {
+    if (snap.name === "") { errors.push({ f: "name", msg: "Missing required parent `name` (taken from Product Basics)." }); }
+    if (snap.avg === null || snap.avg <= 0 || snap.avg > 5) { errors.push({ f: "ratingValue", msg: "Missing/invalid `ratingValue` — enter an average rating from 0 to 5." }); }
+    if (snap.count === null || snap.count <= 0) { errors.push({ f: "ratingCount", msg: "Missing `ratingCount`/`reviewCount` — enter the number of reviews." }); }
+    if (snap.url === "") { warns.push({ f: "url", msg: "Add the parent `url` so the rating attaches to a real page." }); }
+  } else {
+    var a = snap.a;
+    if (a.headline === "") { errors.push({ f: "headline", msg: "Missing required field: `headline`." }); }
+    if (a.author === "") { errors.push({ f: "author", msg: "Missing required field: `author` (nested Person)." }); }
+    if (!validDate(a.date)) { errors.push({ f: "datePublished", msg: "Missing/invalid `datePublished` — use YYYY-MM-DD." }); }
+    if (a.summary === "") { warns.push({ f: "description", msg: "Add `description` (article summary) for quotable text." }); }
+    if (snap.img === "") { warns.push({ f: "image", msg: "Add `image`. Google's Article rich result requires one." }); }
+    if (snap.url === "") { warns.push({ f: "mainEntityOfPage", msg: "Add the page URL for `mainEntityOfPage`." }); }
+  }
+  return { errors: errors, warns: warns };
+}
+function requiredRows(type) {
+  if (type === "product") { return ["name", "image", "description", "url", "brand/author", "offers", "aggregateRating"]; }
+  if (type === "faq") { return ["mainEntity"]; }
+  if (type === "rating") { return ["name", "ratingValue", "ratingCount", "url"]; }
+  return ["headline", "author", "datePublished", "description", "image", "mainEntityOfPage"];
+}
+function rowState(field, res) {
+  var i;
+  for (i = 0; i < res.errors.length; i++) { if (res.errors[i].f === field || field.indexOf(res.errors[i].f) === 0 || res.errors[i].f.indexOf(field) === 0) { return { cls: "err", ic: "✕", note: res.errors[i].msg }; } }
+  for (i = 0; i < res.warns.length; i++) { if (res.warns[i].f === field || field.indexOf(res.warns[i].f) === 0 || res.warns[i].f.indexOf(field) === 0) { return { cls: "warnx", ic: "⚠", note: res.warns[i].msg }; } }
+  return { cls: "ok", ic: "✓", note: "Present and well-formed." };
+}
+
+/* ---------- syntax highlighting (manual, no library) ---------- */
+function highlightJson(json) {
+  var esc = escHtml(json);
+  return esc.replace(/("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(\.\d+)?([eE][+-]?\d+)?/g, function(m, str, _e, colon, bool) {
+    if (str) {
+      if (colon) { return '<span class="jk">' + str + "</span>" + colon; }
+      return '<span class="js">' + str + "</span>";
+    }
+    if (bool) { return '<span class="jb">' + bool + "</span>"; }
+    return '<span class="jn">' + m + "</span>";
+  });
+}
+
+/* ---------- output assembly ---------- */
+function outputObject() {
+  if (blocks.length === 0) {
+    var snap = getSnap(curType);
+    var node = buildNode(curType, snap);
+    var out = { "@context": "https://schema.org" };
+    var k;
+    for (k in node) { if (node.hasOwnProperty(k)) { out[k] = node[k]; } }
+    return { obj: out, live: true, type: curType, snap: snap };
+  }
+  var graph = [], i;
+  for (i = 0; i < blocks.length; i++) { graph.push(buildNode(blocks[i].type, blocks[i].snap)); }
+  return { obj: { "@context": "https://schema.org", "@graph": graph }, live: false };
+}
+function outputText() {
+  var json = JSON.stringify(outputObject().obj, null, 2);
+  return '<script type="application/ld+json">\n' + json + '\n</scr' + 'ipt>';
+}
+function findBlock(id) {
+  var i;
+  for (i = 0; i < blocks.length; i++) { if (blocks[i].id === id) { return blocks[i]; } }
+  return null;
+}
+function renderAll() {
+  var info = outputObject();
+  var json = JSON.stringify(info.obj, null, 2);
+  $("codeOut").innerHTML = '<span class="stag">&lt;script type="application/ld+json"&gt;</span>\n' + highlightJson(json) + '\n<span class="stag">&lt;/script&gt;</span>';
+  $("codeName").innerHTML = escHtml(blocks.length === 0 ? ("schema-" + curType + ".html — live preview") : ("schema-combined-" + blocks.length + "-blocks.html — @graph output"));
+  /* banner: required-field gaps across everything in the output */
+  var errs = [], i, r, label;
+  if (info.live) {
+    r = validateNode(info.type, info.snap);
+    for (i = 0; i < r.errors.length; i++) { errs.push(r.errors[i].msg); }
+  } else {
+    for (i = 0; i < blocks.length; i++) {
+      r = validateNode(blocks[i].type, blocks[i].snap);
+      var j;
+      for (j = 0; j < r.errors.length; j++) { errs.push("[" + TYPE_LABELS[blocks[i].type] + " block] " + r.errors[j].msg); }
+    }
+  }
+  var banner = $("warnBanner");
+  if (errs.length > 0) {
+    var h = "⚠️ <b>Missing required field" + (errs.length === 1 ? "" : "s") + ".</b> Fix before publishing: " + escHtml(errs[0]);
+    if (errs.length > 1) { h += " (+" + (errs.length - 1) + " more — see checklist per tab)"; }
+    banner.innerHTML = h;
+    banner.className = "warnbanner show";
+  } else {
+    banner.innerHTML = "";
+    banner.className = "warnbanner";
+  }
+  /* checklist for current tab */
+  var snap = getSnap(curType);
+  var res = validateNode(curType, snap);
+  var rows = requiredRows(curType);
+  label = TYPE_LABELS[curType];
+  if (curType === "product") { label = (collectProfile().ptype === "book") ? "Book" : "Product"; }
+  $("checkTitle").innerHTML = escHtml("Validation Checklist — " + label);
+  var html = "", st;
+  for (i = 0; i < rows.length; i++) {
+    st = rowState(rows[i], res);
+    html += '<div class="chk ' + st.cls + '"><span class="ic">' + st.ic + '</span><span><code>' + escHtml(rows[i]) + "</code>" + '<span class="note">' + escHtml(st.note) + "</span></span></div>";
+  }
+  $("checkList").innerHTML = html;
+  /* block chips */
+  var box = $("blockChips");
+  if (blocks.length === 0) {
+    box.innerHTML = '<span class="chip-empty">No stacked blocks — showing live preview of the current tab. Hit “➕ Add Another Schema Block” to stack types.</span>';
+  } else {
+    var ch = "";
+    for (i = 0; i < blocks.length; i++) {
+      var b = blocks[i];
+      var br = validateNode(b.type, b.snap);
+      ch += '<span class="chip' + (br.errors.length > 0 ? " bad" : "") + '">' + (br.errors.length > 0 ? "⚠️ " : "✓ ") + escHtml(TYPE_LABELS[b.type]) + ' <button type="button" data-rm="' + b.id + '" title="Remove">✕</button></span>';
+    }
+    box.innerHTML = ch;
+    var btns = box.getElementsByTagName("button");
+    for (i = 0; i < btns.length; i++) {
+      btns[i].onclick = (function(btn) {
+        return function() {
+          var id = parseInt(btn.getAttribute("data-rm"), 10);
+          var kept = [], k;
+          for (k = 0; k < blocks.length; k++) { if (blocks[k].id !== id) { kept.push(blocks[k]); } }
+          blocks = kept;
+          renderAll();
+        };
+      })(btns[i]);
+    }
+  }
+}
+
+/* ---------- dynamic rows ---------- */
+function addAuthorRow(val) {
+  var div = document.createElement("div");
+  div.className = "dynrow";
+  var inp = document.createElement("input");
+  inp.type = "text";
+  inp.className = "authorIn";
+  inp.maxLength = 80;
+  inp.placeholder = "Author name *";
+  inp.value = val || "";
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "mini-btn danger";
+  btn.innerHTML = "Remove";
+  btn.onclick = function() { div.parentNode.removeChild(div); renderAll(); };
+  div.appendChild(inp);
+  div.appendChild(btn);
+  $("authorList").appendChild(div);
+}
+function addFaqRow(q, a) {
+  var div = document.createElement("div");
+  div.className = "dynrow faqRow";
+  var qi = document.createElement("input");
+  qi.type = "text";
+  qi.className = "faqQ";
+  qi.maxLength = 200;
+  qi.placeholder = "Question * (as buyers ask it)";
+  qi.value = q || "";
+  var ai = document.createElement("textarea");
+  ai.className = "faqA";
+  ai.maxLength = 2000;
+  ai.placeholder = "Answer * (direct answer first, 2–3 sentences)";
+  ai.value = a || "";
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "mini-btn danger";
+  btn.innerHTML = "Remove";
+  btn.onclick = function() { div.parentNode.removeChild(div); renderAll(); };
+  div.appendChild(qi);
+  div.appendChild(ai);
+  div.appendChild(btn);
+  $("faqList").appendChild(div);
+}
+
+/* ---------- profiles (localStorage) ---------- */
+function loadProfiles() {
+  try {
+    var raw = localStorage.getItem(LIB_KEY);
+    if (!raw) { return []; }
+    var parsed = JSON.parse(raw);
+    if (parsed && parsed.length !== undefined) { return parsed; }
+    return [];
+  } catch (e) { return []; }
+}
+function storeProfiles(list) {
+  try { localStorage.setItem(LIB_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function snapshotInputs() {
+  return {
+    fName: $("fName").value, fType: $("fType").value, fBrand: $("fBrand").value,
+    fDesc: $("fDesc").value, fPrice: $("fPrice").value, fCurrency: $("fCurrency").value,
+    fAvail: $("fAvail").value, fUrl: $("fUrl").value, fImg: $("fImg").value,
+    bIsbn: $("bIsbn").value, bPublisher: $("bPublisher").value, bPages: $("bPages").value,
+    bFormat: $("bFormat").value, rAvg: $("rAvg").value, rCount: $("rCount").value,
+    vParent: $("vParent").value, aType: $("aType").value, aHeadline: $("aHeadline").value,
+    aAuthor: $("aAuthor").value, aDate: $("aDate").value, aSummary: $("aSummary").value,
+    authors: dynValues("authorList", "authorIn"), faq: collectFaq()
+  };
+}
+function applyInputs(d) {
+  function set(id, v) { if (v !== undefined && v !== null) { $(id).value = v; } }
+  set("fName", d.fName); set("fType", d.fType); set("fBrand", d.fBrand);
+  set("fDesc", d.fDesc); set("fPrice", d.fPrice); set("fCurrency", d.fCurrency);
+  set("fAvail", d.fAvail); set("fUrl", d.fUrl); set("fImg", d.fImg);
+  set("bIsbn", d.bIsbn); set("bPublisher", d.bPublisher); set("bPages", d.bPages);
+  set("bFormat", d.bFormat); set("rAvg", d.rAvg); set("rCount", d.rCount);
+  set("vParent", d.vParent); set("aType", d.aType); set("aHeadline", d.aHeadline);
+  set("aAuthor", d.aAuthor); set("aDate", d.aDate); set("aSummary", d.aSummary);
+  $("authorList").innerHTML = "";
+  var auths = (d.authors && d.authors.length > 0) ? d.authors : [""];
+  var i;
+  for (i = 0; i < auths.length; i++) { addAuthorRow(auths[i]); }
+  $("faqList").innerHTML = "";
+  var fq = (d.faq && d.faq.length > 0) ? d.faq : [{ q: "", a: "" }, { q: "", a: "" }, { q: "", a: "" }];
+  for (i = 0; i < fq.length; i++) { addFaqRow(fq[i].q, fq[i].a); }
+  syncConditional();
+  renderAll();
+}
+function renderProfiles() {
+  var list = loadProfiles();
+  var box = $("profList");
+  if (list.length === 0) {
+    box.innerHTML = '<div class="empty">No saved profiles yet.</div>';
+    return;
+  }
+  var html = "", i;
+  for (i = list.length - 1; i >= 0; i--) {
+    html += '<div class="srow"><span class="nm">' + escHtml(list[i].name) + '</span><span class="dt">' + escHtml(list[i].date) + '</span>';
+    html += '<button class="mini-btn" type="button" data-load="' + i + '">Load</button>';
+    html += '<button class="mini-btn danger" type="button" data-del="' + i + '">✕</button></div>';
+  }
+  box.innerHTML = html;
+  var btns = box.getElementsByTagName("button");
+  for (i = 0; i < btns.length; i++) {
+    btns[i].onclick = (function(btn) {
+      return function() {
+        var cur = loadProfiles();
+        if (btn.getAttribute("data-load") !== null) {
+          var idx = parseInt(btn.getAttribute("data-load"), 10);
+          if (cur[idx]) { applyInputs(cur[idx].data); toast("Profile loaded ✓"); }
+        } else {
+          var di = parseInt(btn.getAttribute("data-del"), 10);
+          cur.splice(di, 1);
+          storeProfiles(cur);
+          renderProfiles();
+          toast("Deleted");
+        }
+      };
+    })(btns[i]);
+  }
+}
+
+/* ---------- built-in guide (Italian quick-start) ---------- */
+var GUIDES = {
+g1: "<h4>What schema is — and what it really does</h4>"
++ "<p><b>Schema markup</b> (JSON-LD) is invisible code that tells search engines and AIs <b>what</b> your page content is: what the product is, what it costs, how it is rated, which questions it answers.</p>"
++ "<p>Pages with schema earn up to <b>2.3× more AI citations</b>. Not because schema is magic, but because it makes your facts <b>readable and extractable</b>: the AI grasps the facts instantly and cites you with more confidence.</p>"
++ "<div class='tip'>💡 <b>Honest expectations:</b> schema is the prerequisite, not the guarantee. Reviews, third-party lists and fresh content earn the citations — schema makes sure your data is flawless when they do.</div>",
+g2: "<h4>Where to paste the code</h4>"
++ "<p>The code goes into the <b>HTML of the page</b> about that product: inside <code>&lt;head&gt;</code> or just before <code>&lt;/body&gt;</code>. One page = that page's schema.</p>"
++ "<ol>"
++ "<li><b>WordPress:</b> with RankMath/Yoast add a Schema block, or paste the code with the WPCode plugin or a “Custom HTML” block.</li>"
++ "<li><b>Shopify:</b> Online Store → Themes → <code>…</code> → Edit code → <code>theme.liquid</code> file, paste before <code>&lt;/body&gt;</code>.</li>"
++ "<li><b>Wix / Squarespace:</b> Settings → “Custom Code” / “Code Injection” → paste into the site or page header.</li>"
++ "<li><b>Static HTML page:</b> open the file, paste the block, save. Done.</li>"
++ "</ol>"
++ "<div class='tip'>💡 After publishing, always verify the page <b>URL</b> in the Rich Results Test (see step 5).</div>",
+g3: "<h4>Selling only on Etsy or Amazon? Read this</h4>"
++ "<p><b>Honest limit:</b> on Etsy and Amazon <b>you cannot paste code</b> — their pages simply don't allow it.</p>"
++ "<p>And that is exactly the point: schema belongs on pages <b>outside Amazon and Etsy</b> — your author/product home page, your buying guide, your blog post, the page on your own site presenting the book. Those are the pages AI crawlers actually read (they never get inside Amazon).</p>"
++ "<p>Minimum effective setup: <b>one page per product</b> on your own site (free with WordPress.com or Carrd works) + the schema generated here + buy links to Etsy/Amazon.</p>"
++ "<div class='tip'>💡 This is precisely what AI Search Domination teaches with “Entity Home Page” and “Buying Guide”: this tool writes the code for those pages.</div>",
+g4: "<h4>The golden FAQ rule</h4>"
++ "<p>For <code>FAQPage</code> schema there is one strict Google rule: <b>the questions and answers must also be visible as text on the page</b>. Code without visible text = invalid markup.</p>"
++ "<ol>"
++ "<li>Write the Q&A on the page (a “Frequently asked questions” section works perfectly).</li>"
++ "<li>Generate the FAQPage schema here with the <b>exact same</b> questions and answers.</li>"
++ "<li>Paste the code into that same page.</li>"
++ "</ol>"
++ "<div class='tip'>💡 The tool recommends a minimum of <b>3 complete pairs</b>: below that, the checklist warns you in amber.</div>",
+g5: "<h4>How to validate your code (2 minutes)</h4>"
++ "<ol>"
++ "<li>Press <b>📋 Copy Full Schema Code</b> in the tool.</li>"
++ "<li>Open Google's <b>🔗 Rich Results Test</b> → <b>“Code”</b> tab → paste → verify: it should report zero errors.</li>"
++ "<li>Publish the page with the code inside, then go back to the Test → <b>“URL”</b> tab → paste the page address → verify again.</li>"
++ "<li>Optional but recommended: same copy-paste on <b>validator.schema.org</b> for the pure-standards check.</li>"
++ "</ol>"
++ "<div class='tip'>💡 If the Test is red, go back to the tool checklist: it tells you exactly which <code>required</code> field is missing.</div>",
+g6: "<h4>Common mistakes and how to avoid them</h4>"
++ "<ul>"
++ "<li><b>Price with symbols or commas</b> (“€ 4,99”): type numbers with a dot only, e.g. <code>4.99</code> — currency goes in its own field.</li>"
++ "<li><b>Made-up currency:</b> use the 3-letter ISO code (<code>USD</code>, <code>EUR</code>, <code>GBP</code>). The tool flags a wrong one in red.</li>"
++ "<li><b>Random dates:</b> the publish date needs <code>YYYY-MM-DD</code> format (the calendar field does it for you).</li>"
++ "<li><b>URLs without https://</b> or URLs pointing elsewhere: always use the full, matching address.</li>"
++ "<li><b>Invented reviews:</b> if you have no real reviews, leave the fields at zero — the tool omits <code>aggregateRating</code> by itself. Fake reviews = penalties.</li>"
++ "<li><b>One schema per topic:</b> for Product + FAQPage together use <b>➕ Add Another Schema Block</b>: the tool merges them correctly with <code>@graph</code>.</li>"
++ "</ul>"
+};
+function renderGuide() {
+  var k = $("guideSel").value;
+  if (!GUIDES[k]) { k = "g1"; }
+  $("guideBody").innerHTML = GUIDES[k];
+}
+
+/* ---------- tabs + conditional ---------- */
+function syncConditional() {
+  var isBook = ($("fType").value === "book");
+  $("bookFields").className = isBook ? "fsec" : "fsec hidden";
+  $("fsFaq").className = (curType === "faq") ? "fsec" : "fsec hidden";
+  $("fsArticle").className = (curType === "article") ? "fsec" : "fsec hidden";
+  $("fsRating").className = (curType === "rating") ? "fsec" : "fsec hidden";
+}
+function initTabs() {
+  var cards = $("typeCards").getElementsByTagName("button");
+  var i;
+  for (i = 0; i < cards.length; i++) {
+    cards[i].onclick = (function(btn) {
+      return function() {
+        var all = $("typeCards").getElementsByTagName("button"), j;
+        for (j = 0; j < all.length; j++) { all[j].className = "tcard"; }
+        btn.className = "tcard active";
+        curType = btn.getAttribute("data-stype");
+        syncConditional();
+        renderAll();
+      };
+    })(cards[i]);
+  }
+}
+
+/* ---------- init ---------- */
+function init() {
+  addAuthorRow("");
+  addFaqRow("", ""); addFaqRow("", ""); addFaqRow("", "");
+  initTabs();
+  syncConditional();
+  document.addEventListener("input", function(e) {
+    var t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) { renderAll(); }
+  });
+  document.addEventListener("change", function() { syncConditional(); renderAll(); });
+  $("addAuthor").onclick = function() { addAuthorRow(""); renderAll(); };
+  $("addFaq").onclick = function() { addFaqRow("", ""); renderAll(); };
+  $("addBlock").onclick = function() {
+    blockSeq++;
+    blocks.push({ id: blockSeq, type: curType, snap: getSnap(curType) });
+    renderAll();
+    toast("Block added ✓ (" + blocks.length + " in output)");
+  };
+  $("copyBtn").onclick = function() { copyText(outputText(), "Schema code copied ✓"); };
+  /* validator links are plain anchors (target=_blank) — no popup code needed */
+  $("saveProf").onclick = function() {
+    var nm = trimStr($("profName").value);
+    if (nm === "") { nm = trimStr($("fName").value) || "Untitled product"; }
+    var list = loadProfiles();
+    var d = new Date();
+    list.push({ name: nm, data: snapshotInputs(), date: d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2) });
+    if (list.length > 60) { list = list.slice(list.length - 60); }
+    storeProfiles(list);
+    $("profName").value = "";
+    renderProfiles();
+    toast("Profile saved 💾");
+  };
+  renderProfiles();
+  renderGuide();
+  $("guideSel").onchange = function() { renderGuide(); };
+  $("guideToggle").onclick = function() {
+    var g = $("guideBox");
+    g.className = (g.className.indexOf("open") >= 0) ? "guide" : "guide open";
+  };
+  renderAll();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
