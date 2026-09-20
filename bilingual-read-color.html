@@ -1,0 +1,2235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bilingual Read-and-Color Engine | Unlimited Generative Power</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-dark:#132a2e;
+  --bg-sidebar:#0f2124;
+  --bg-card:#193c40;
+  --bg-main:#f4f1ea;
+  --accent:#e9a23b;
+  --accent2:#3aa6a6;
+  --text-light:#eef2f0;
+  --text-muted:#9fb0ae;
+  --text-dark:#20302f;
+  --warn:#e07a5f;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:'Poppins',sans-serif;
+  background:var(--bg-main);
+  color:var(--text-dark);
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+#engineDiag{
+  display:none;
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#b3261e;color:#fff;
+  font-family:'Inter',sans-serif;font-size:13px;
+  padding:10px 16px;
+}
+.layout{display:flex;flex:1;min-height:0;}
+.wizard{
+  width:400px;flex-shrink:0;
+  background:var(--bg-sidebar);
+  color:var(--text-light);
+  overflow-y:auto;
+  padding:1.6rem 1.2rem 2.5rem;
+  border-right:1px solid rgba(159,176,174,0.15);
+}
+.wizard-header{
+  margin-bottom:1.2rem;
+  padding-bottom:1rem;
+  border-bottom:1px solid rgba(159,176,174,0.15);
+}
+.wizard-header h2{
+  font-size:1.3rem;font-weight:800;
+  color:var(--accent);letter-spacing:0.3px;line-height:1.15;
+}
+.wizard-header h2 .accent2{color:var(--accent2);}
+.wizard-header p{
+  font-family:'Inter',sans-serif;
+  font-size:0.78rem;color:var(--text-muted);
+  margin-top:0.35rem;line-height:1.4;
+}
+.step{
+  background:var(--bg-card);
+  border-radius:12px;
+  margin-bottom:10px;
+  border:1px solid rgba(159,176,174,0.18);
+  overflow:hidden;
+}
+.step.done{border-color:rgba(58,166,166,0.4);}
+.step-head{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;cursor:pointer;
+  user-select:none;transition:background .15s;
+}
+.step-head:hover{background:rgba(233,162,59,0.07);}
+.step-num{
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(58,166,166,0.2);
+  border:1.5px solid var(--accent2);
+  color:var(--accent2);
+  font-size:13px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+}
+.step.done .step-num,.step.open .step-num{
+  background:var(--accent);border-color:var(--accent);
+  color:var(--bg-dark);
+}
+.step.open .step-num{box-shadow:0 0 0 4px rgba(233,162,59,0.18);}
+.step-title{font-size:13.5px;font-weight:600;flex:1;line-height:1.25;}
+.step-summary{
+  display:none;
+  font-family:'Inter',sans-serif;
+  font-size:10.5px;color:var(--text-muted);
+  margin-top:3px;font-weight:400;
+  max-width:270px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.step.done.collapsed .step-summary{display:block;}
+.step-chev{
+  width:20px;height:20px;flex-shrink:0;
+  color:var(--text-muted);transition:transform .2s;
+}
+.step.open .step-chev{transform:rotate(180deg);color:var(--accent);}
+.step-body{
+  display:none;padding:4px 15px 16px;
+  border-top:1px solid rgba(159,176,174,0.15);
+}
+.step.open .step-body{display:block;}
+.field{margin-top:12px;}
+.field label{
+  display:block;font-family:'Inter',sans-serif;
+  font-size:10.5px;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.5px;
+  color:var(--text-muted);margin-bottom:6px;
+}
+.field input[type=text],.field select,.field textarea{
+  width:100%;background:var(--bg-sidebar);
+  border:1px solid rgba(159,176,174,0.3);
+  color:var(--text-light);
+  font-family:'Inter',sans-serif;
+  font-size:12.5px;padding:9px 11px;
+  border-radius:8px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.field input:focus,.field select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(233,162,59,0.12);
+}
+.field select{cursor:pointer;}
+.field select option{background:var(--bg-sidebar);}
+.hint{
+  font-family:'Inter',sans-serif;
+  font-size:10.5px;color:var(--text-muted);
+  margin-top:5px;line-height:1.45;
+}
+.two-col{display:flex;gap:8px;}
+.two-col .field{flex:1;min-width:0;}
+.style-grid{display:flex;flex-direction:column;gap:7px;margin-top:6px;}
+.style-card{
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--bg-sidebar);
+  border:1.5px solid rgba(159,176,174,0.25);
+  border-radius:9px;padding:9px 11px;
+  cursor:pointer;transition:all .15s;
+}
+.style-card:hover{border-color:var(--accent2);}
+.style-card.selected{
+  border-color:var(--accent);
+  background:rgba(233,162,59,0.08);
+  box-shadow:0 0 0 3px rgba(233,162,59,0.1);
+}
+.style-dot{
+  width:16px;height:16px;border-radius:50%;
+  margin-top:2px;flex-shrink:0;
+  border:2px solid rgba(255,255,255,0.5);
+}
+.style-card .sname{font-size:12.5px;font-weight:600;color:var(--text-light);}
+.style-card .sdesc{
+  font-family:'Inter',sans-serif;font-size:10.5px;
+  color:var(--text-muted);line-height:1.45;margin-top:2px;
+}
+.format-grid{
+  display:flex;flex-direction:column;gap:7px;margin-top:6px;
+}
+.format-card{
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--bg-sidebar);
+  border:1.5px solid rgba(159,176,174,0.25);
+  border-radius:9px;padding:9px 11px;
+  cursor:pointer;transition:all .15s;
+}
+.format-card:hover{border-color:var(--accent2);}
+.format-card.selected{
+  border-color:var(--accent);
+  background:rgba(233,162,59,0.08);
+  box-shadow:0 0 0 3px rgba(233,162,59,0.1);
+}
+.format-card .fname{font-size:12.5px;font-weight:600;color:var(--text-light);}
+.format-card .fdim{
+  font-family:'Inter',sans-serif;font-size:10px;font-weight:600;
+  color:var(--accent);margin-top:2px;letter-spacing:0.3px;
+}
+.format-card .fnote{
+  font-family:'Inter',sans-serif;font-size:10.5px;
+  color:var(--text-muted);line-height:1.45;margin-top:2px;
+}
+.btn{
+  font-family:'Poppins',sans-serif;font-size:12.5px;
+  font-weight:600;border-radius:9px;cursor:pointer;
+  padding:10px 16px;border:none;
+  transition:filter .15s,transform .1s;
+}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--accent);color:var(--bg-dark);}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-secondary{background:transparent;border:1.5px solid var(--accent2);color:var(--accent2);}
+.btn-secondary:hover{background:rgba(58,166,166,0.12);}
+.btn-ghost{background:transparent;border:1.5px solid rgba(159,176,174,0.4);color:var(--text-muted);}
+.btn-ghost:hover{color:var(--text-light);border-color:var(--text-muted);}
+.btn-big{
+  width:100%;font-size:14px;padding:13px 16px;
+  background:linear-gradient(135deg,var(--accent),#f0b45e);
+  color:var(--bg-dark);
+  box-shadow:0 4px 14px rgba(233,162,59,0.3);
+  margin-top:14px;font-weight:700;letter-spacing:0.3px;
+}
+.btn-mini{font-size:10.5px;padding:6px 10px;font-weight:600;border-radius:7px;}
+.step-nav{margin-top:14px;display:flex;justify-content:flex-end;gap:8px;}
+.toggle-row{
+  display:flex;align-items:center;gap:10px;
+  margin-top:9px;padding:9px 11px;
+  background:var(--bg-sidebar);
+  border:1.5px solid rgba(159,176,174,0.25);
+  border-radius:9px;cursor:pointer;user-select:none;
+  transition:border-color .15s,background .15s;
+}
+.toggle-row:hover{border-color:var(--accent2);}
+.toggle-row.on{border-color:var(--accent);background:rgba(233,162,59,0.06);}
+.toggle-switch{
+  width:36px;height:20px;
+  background:rgba(159,176,174,0.3);
+  border-radius:999px;position:relative;
+  flex-shrink:0;transition:background .15s;
+}
+.toggle-row.on .toggle-switch{background:var(--accent);}
+.toggle-knob{
+  position:absolute;top:2px;left:2px;
+  width:16px;height:16px;background:var(--bg-main);
+  border-radius:50%;transition:left .15s;
+  box-shadow:0 1px 3px rgba(0,0,0,0.3);
+}
+.toggle-row.on .toggle-knob{left:18px;}
+.toggle-text{flex:1;}
+.toggle-label{font-size:12px;font-weight:600;color:var(--text-light);}
+.toggle-desc{
+  font-family:'Inter',sans-serif;font-size:10px;
+  color:var(--text-muted);margin-top:2px;line-height:1.4;
+}
+.chaos-slider-container{display:flex;align-items:center;gap:0.6rem;margin-top:6px;}
+.chaos-slider{flex:1;accent-color:var(--accent);height:6px;cursor:pointer;}
+.chaos-value{color:var(--accent);font-weight:800;min-width:32px;text-align:center;font-size:14px;}
+.page-count-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:7px;margin-top:6px;
+}
+.page-count-btn{
+  background:var(--bg-sidebar);
+  border:1.5px solid rgba(159,176,174,0.25);
+  border-radius:9px;padding:11px 4px;
+  text-align:center;cursor:pointer;
+  transition:all .15s;font-family:'Poppins',sans-serif;
+}
+.page-count-btn:hover{border-color:var(--accent2);}
+.page-count-btn.selected{
+  border-color:var(--accent);
+  background:rgba(233,162,59,0.12);
+  box-shadow:0 0 0 3px rgba(233,162,59,0.15);
+}
+.page-count-btn .num{
+  font-size:19px;font-weight:800;
+  color:var(--accent);line-height:1;
+}
+.page-count-btn.selected .num{color:#f5d78c;}
+.page-count-btn .lbl{
+  font-family:'Inter',sans-serif;
+  font-size:9px;font-weight:600;
+  color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:0.4px;
+  margin-top:3px;
+}
+.author-block{
+  margin-top:10px;padding:11px;
+  background:rgba(233,162,59,0.06);
+  border:1px dashed rgba(233,162,59,0.35);
+  border-radius:9px;
+}
+.author-block .author-title{
+  font-family:'Inter',sans-serif;
+  font-size:10.5px;font-weight:700;
+  letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:7px;
+}
+.author-status{
+  font-family:'Inter',sans-serif;
+  font-size:10.5px;margin-top:6px;line-height:1.4;
+}
+.author-status.provided{color:var(--accent2);}
+.author-status.empty{color:var(--text-muted);font-style:italic;}
+.char-gen-bar{
+  display:flex;gap:6px;align-items:center;
+  margin-top:6px;margin-bottom:4px;
+  padding:8px 10px;
+  background:linear-gradient(135deg, rgba(58,166,166,0.15), rgba(233,162,59,0.1));
+  border:1.5px dashed rgba(58,166,166,0.5);
+  border-radius:9px;
+}
+.char-gen-bar .gen-label{
+  font-family:'Inter',sans-serif;
+  font-size:10.5px;font-weight:700;
+  letter-spacing:0.4px;text-transform:uppercase;
+  color:var(--accent2);flex:1;
+}
+.char-gen-btn{
+  background:linear-gradient(135deg,var(--accent2),#4fbfbf);
+  color:var(--bg-dark);
+  font-family:'Poppins',sans-serif;
+  font-size:11px;font-weight:700;
+  border:none;border-radius:7px;
+  padding:6px 11px;cursor:pointer;
+  white-space:nowrap;
+  transition:filter .15s,transform .1s;
+  display:flex;align-items:center;gap:4px;
+}
+.char-gen-btn:hover{filter:brightness(1.1);}
+.char-gen-btn:active{transform:translateY(1px);}
+.char-gen-btn.helper{
+  background:linear-gradient(135deg,var(--accent),#f0b45e);
+  color:var(--bg-dark);
+}
+.helper-block{
+  margin-top:14px;padding:10px 11px;
+  background:rgba(58,166,166,0.05);
+  border:1px dashed rgba(58,166,166,0.35);
+  border-radius:9px;
+}
+.helper-block-title{
+  font-family:'Inter',sans-serif;
+  font-size:10.5px;font-weight:700;
+  letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--accent2);margin-bottom:6px;
+}
+.idea-row{display:flex;gap:6px;align-items:stretch;margin-top:6px;}
+.idea-row input{flex:1;}
+.idea-btn{
+  background:linear-gradient(135deg,var(--accent2),#4fbfbf);
+  color:var(--bg-dark);font-family:'Poppins',sans-serif;
+  font-size:11.5px;font-weight:700;
+  border:none;border-radius:8px;padding:0 12px;
+  cursor:pointer;white-space:nowrap;
+  transition:filter .15s,transform .1s;
+  display:flex;align-items:center;gap:4px;
+}
+.idea-btn:hover{filter:brightness(1.1);}
+.idea-btn:active{transform:translateY(1px);}
+.idea-meta{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Inter',sans-serif;font-size:10px;
+  color:var(--text-muted);margin-top:5px;gap:8px;
+}
+.idea-chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.idea-chip{
+  font-family:'Inter',sans-serif;font-size:10px;
+  background:rgba(58,166,166,0.12);
+  border:1px solid rgba(58,166,166,0.3);
+  color:var(--accent2);padding:3px 8px;
+  border-radius:999px;cursor:pointer;
+  transition:background .15s;
+}
+.idea-chip:hover{background:rgba(58,166,166,0.25);}
+.title-preview{
+  margin-top:10px;
+  background:rgba(233,162,59,0.08);
+  border:1px dashed rgba(233,162,59,0.4);
+  border-radius:8px;padding:9px 11px;
+}
+.title-preview .label{
+  font-family:'Inter',sans-serif;
+  font-size:9.5px;font-weight:600;
+  letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:4px;
+}
+.title-preview .value{
+  font-family:'Poppins',sans-serif;
+  font-size:12.5px;font-weight:600;
+  color:var(--text-light);line-height:1.35;
+}
+.lang-warning{
+  display:none;
+  margin-top:10px;
+  padding:10px 12px;
+  background:rgba(224,122,95,0.12);
+  border:1.5px solid rgba(224,122,95,0.5);
+  border-radius:9px;
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  color:#f2b8a8;
+  line-height:1.45;
+}
+.lang-warning.show{display:block;}
+.lang-warning strong{color:#ffcdb8;}
+.main-content{
+  flex:1;background:var(--bg-main);
+  padding:1.8rem 2rem 2rem;
+  display:flex;flex-direction:column;
+  gap:1.2rem;overflow-y:auto;
+}
+.prompt-card{
+  background:#fffdf8;border-radius:14px;
+  box-shadow:0 8px 26px rgba(19,42,46,0.08);
+  padding:1.7rem 1.8rem;
+  display:flex;flex-direction:column;
+  gap:1.1rem;
+  border:1px solid rgba(32,48,47,0.1);
+  transition:box-shadow .3s;
+}
+.prompt-card:hover{box-shadow:0 12px 34px rgba(19,42,46,0.12);}
+.card-header{
+  display:flex;justify-content:space-between;
+  align-items:center;flex-wrap:wrap;gap:1rem;
+}
+.card-title{
+  font-size:1rem;font-weight:700;
+  color:var(--text-dark);letter-spacing:0.15px;
+}
+.card-title .sub{
+  font-family:'Inter',sans-serif;
+  font-size:0.72rem;font-weight:500;
+  color:#6b7a78;margin-top:3px;
+}
+.copy-btn{
+  background:var(--accent);border:none;
+  border-radius:9px;padding:0.7rem 1.4rem;
+  font-family:'Poppins',sans-serif;
+  font-weight:700;color:var(--bg-dark);
+  display:flex;align-items:center;gap:0.5rem;
+  cursor:pointer;transition:0.2s;
+  font-size:0.82rem;letter-spacing:0.3px;
+  box-shadow:0 3px 10px rgba(233,162,59,0.25);
+}
+.copy-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.copy-btn.copied{background:#2c5e2e;color:white;}
+.prompt-text{
+  background:#f8f6f0;border-radius:10px;
+  padding:1.5rem 1.7rem;
+  font-family:'Courier New','Fira Code',monospace;
+  font-size:0.78rem;line-height:1.65;
+  white-space:pre-wrap;word-break:break-word;
+  color:var(--text-dark);
+  border:1px solid rgba(32,48,47,0.1);
+  border-left:4px solid var(--accent2);
+  max-height:680px;overflow-y:auto;
+  letter-spacing:0.1px;
+}
+.tags{display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0.2rem;}
+.tag{
+  background:rgba(58,166,166,0.12);
+  color:#2c504f;padding:0.3rem 0.9rem;
+  border-radius:20px;
+  font-family:'Inter',sans-serif;
+  font-size:0.68rem;font-weight:600;
+  letter-spacing:0.3px;
+  border:1px solid rgba(58,166,166,0.25);
+}
+.tag.warn{
+  background:rgba(224,122,95,0.15);
+  color:#8b3d22;
+  border-color:rgba(224,122,95,0.4);
+}
+.tag.gold{
+  background:rgba(233,162,59,0.15);
+  color:#7a5a10;
+  border-color:rgba(233,162,59,0.4);
+}
+.variation-counter{
+  font-family:'Inter',sans-serif;
+  font-size:0.7rem;color:var(--accent2);
+  background:rgba(58,166,166,0.1);
+  padding:0.4rem 0.9rem;border-radius:12px;
+  text-align:center;
+  border:1px solid rgba(58,166,166,0.25);
+  font-weight:600;margin-top:8px;
+}
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--bg-dark);color:var(--text-light);
+  font-family:'Inter',sans-serif;
+  font-size:13px;font-weight:500;
+  padding:12px 18px;border-radius:10px;
+  border-left:4px solid var(--accent);
+  box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+  transform:translateY(8px);z-index:99;
+  max-width:340px;
+}
+.toast.show{opacity:1;transform:translateY(0);}
+@media (max-width:900px){
+  body{flex-direction:column;}
+  .layout{flex-direction:column;}
+  .wizard{width:100%;border-right:none;border-bottom:1px solid rgba(159,176,174,0.15);}
+  .main-content{padding:1.2rem;}
+}
+</style>
+</head>
+<body>
+<div id="engineDiag"></div>
+
+<div class="layout">
+  <aside class="wizard">
+
+    <div class="wizard-header">
+      <h2>📖 Bilingual <span class="accent2">Read-and-Color</span></h2>
+      <p>Build unlimited storybook prompts — English-only or bilingual, any theme</p>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step open" id="step1">
+      <div class="step-head" onclick="toggleStep(1)">
+        <div class="step-num">1</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Language Setup</div>
+          <div class="step-summary" id="sum1"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="toggle-row on" id="toggleSecondary" onclick="toggleSecondaryLang()">
+          <div class="toggle-switch"><div class="toggle-knob"></div></div>
+          <div class="toggle-text">
+            <div class="toggle-label">Add a secondary language</div>
+            <div class="toggle-desc">Turn off to produce an English-only storybook.</div>
+          </div>
+        </div>
+        <div class="field" id="langSecondaryBlock">
+          <label>Secondary Language</label>
+          <select id="selSecondary">
+            <option>Spanish</option><option>French</option><option>Italian</option>
+            <option>Portuguese</option><option>German</option><option>Mandarin Chinese</option>
+            <option>Arabic</option><option>Hindi</option><option>Vietnamese</option>
+            <option>Tagalog</option><option>Japanese</option><option>Korean</option>
+            <option>Russian</option><option>Dutch</option><option>Polish</option>
+            <option>Indonesian</option><option>Greek</option><option>Turkish</option>
+            <option>Swahili</option><option>Ukrainian</option>
+          </select>
+        </div>
+        <div class="lang-warning" id="langWarning">
+          <strong>⚠️ English-only mode is ACTIVE.</strong> Turn ON the "Add a secondary language" toggle if you want a bilingual book.
+        </div>
+        <div class="step-nav"><button class="btn btn-primary" onclick="nextStep(1,2)">Continue →</button></div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step" id="step2">
+      <div class="step-head" onclick="toggleStep(2)">
+        <div class="step-num">2</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Theme &amp; Story</div>
+          <div class="step-summary" id="sum2"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="field">
+          <label>Theme / Idea</label>
+          <div class="idea-row">
+            <input type="text" id="inpTheme" placeholder="e.g. a shy dragon who learns to make friends" maxlength="220">
+            <button class="idea-btn" onclick="generateIdea()">🎲 Idea</button>
+          </div>
+          <div class="idea-meta">
+            <span id="themeCharCount">0 / 220 chars</span>
+            <span id="themeStatus"></span>
+          </div>
+          <div class="idea-chip-row" id="ideaChips"></div>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Age Band</label>
+            <select id="selAge">
+              <option value="3-5">3–5 yrs</option>
+              <option value="4-8" selected>4–8 yrs</option>
+              <option value="6-9">6–9 yrs</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Lesson / Tone</label>
+            <select id="selLesson">
+              <option value="friendship">Friendship</option>
+              <option value="courage">Courage</option>
+              <option value="kindness">Kindness</option>
+              <option value="family">Family</option>
+              <option value="curiosity">Curiosity</option>
+              <option value="change">Change</option>
+              <option value="gratitude">Gratitude</option>
+              <option value="perseverance">Perseverance</option>
+            </select>
+          </div>
+        </div>
+        <div class="title-preview">
+          <div class="label">Title Preview</div>
+          <div class="value" id="titlePreviewValue">—</div>
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="openOnly(1)">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep(2,3)">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step" id="step3">
+      <div class="step-head" onclick="toggleStep(3)">
+        <div class="step-num">3</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Characters</div>
+          <div class="step-summary" id="sum3"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="char-gen-bar">
+          <span class="gen-label">⚡ Auto-Generate</span>
+          <button class="char-gen-btn" onclick="generateBothCharacters()">🎲 Both</button>
+          <button class="char-gen-btn" onclick="generateMainCharacter()">🎲 Main</button>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Character Name</label>
+            <input type="text" id="inpName" placeholder="e.g. Milo">
+          </div>
+          <div class="field">
+            <label>Species / Type</label>
+            <input type="text" id="inpSpecies" value="a human child">
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Hair</label>
+            <input type="text" id="inpHair" value="soft chestnut-brown hair">
+          </div>
+          <div class="field">
+            <label>Eyes / Features</label>
+            <input type="text" id="inpEyes" value="large friendly hazel eyes">
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Skin Tone</label>
+            <input type="text" id="inpSkin" value="warm tan skin">
+          </div>
+          <div class="field">
+            <label>Outfit</label>
+            <input type="text" id="inpOutfit" value="a teal sweater with a mustard-yellow scarf">
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Signature Color</label>
+            <input type="text" id="inpColor" value="warm amber">
+          </div>
+          <div class="field">
+            <label>Signature Prop</label>
+            <input type="text" id="inpProp" value="a small star-shaped satchel">
+          </div>
+        </div>
+        <div class="helper-block">
+          <div class="helper-block-title">Helper Character</div>
+          <div class="two-col">
+            <div class="field" style="margin-top:2px;">
+              <label>Helper Name</label>
+              <input type="text" id="inpHelperName" value="Nina">
+            </div>
+            <div class="field" style="margin-top:2px;">
+              <label>Helper Species</label>
+              <input type="text" id="inpHelperSpecies" value="a small worried owl with soft brown feathers">
+            </div>
+          </div>
+          <button class="char-gen-btn helper" onclick="generateHelperCharacter()" style="width:100%;justify-content:center;margin-top:4px;">🎲 Regenerate Helper</button>
+        </div>
+        <div class="author-block">
+          <div class="author-title">Author Name (Optional)</div>
+          <input type="text" id="inpAuthor" placeholder="Leave blank to publish without author credit" maxlength="80">
+          <div class="author-status empty" id="authorStatus">
+            No author name — will be published without author credit.
+          </div>
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="openOnly(2)">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep(3,4)">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step" id="step4">
+      <div class="step-head" onclick="toggleStep(4)">
+        <div class="step-num">4</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Art Style &amp; Format</div>
+          <div class="step-summary" id="sum4"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="field">
+          <label>🎨 Illustration Style</label>
+          <div class="style-grid" id="styleGrid"></div>
+        </div>
+        <div class="field">
+          <label>📐 Page Format &amp; Size</label>
+          <div class="format-grid" id="formatGrid"></div>
+          <div class="hint">Choose the trim size and page shape for both editions.</div>
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="openOnly(3)">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep(4,5)">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step" id="step5">
+      <div class="step-head" onclick="toggleStep(5)">
+        <div class="step-num">5</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Production Options</div>
+          <div class="step-summary" id="sum5"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="field">
+          <label>📄 Page Count</label>
+          <div class="page-count-grid" id="pageCountGrid">
+            <div class="page-count-btn" data-count="20"><div class="num">20</div><div class="lbl">pages</div></div>
+            <div class="page-count-btn selected" data-count="24"><div class="num">24</div><div class="lbl">pages</div></div>
+            <div class="page-count-btn" data-count="30"><div class="num">30</div><div class="lbl">pages</div></div>
+            <div class="page-count-btn" data-count="40"><div class="num">40</div><div class="lbl">pages</div></div>
+          </div>
+          <div class="hint">24 pages is the classic picture-book length. 20 is compact. 30 and 40 add reflection spreads and bonus scenes.</div>
+        </div>
+        <div class="field">
+          <label>🌀 Creativity Chaos Level <span class="chaos-value" id="chaosDisplay">3</span></label>
+          <div class="chaos-slider-container">
+            <span>😌</span>
+            <input type="range" class="chaos-slider" id="chaosSlider" min="1" max="5" value="3" step="1">
+            <span>🤪</span>
+          </div>
+          <div class="hint">Higher = wilder combinations, unexpected twists, surprise visual elements.</div>
+        </div>
+        <div class="toggle-row" id="toggleTextFree" onclick="toggleTextFree()">
+          <div class="toggle-switch"><div class="toggle-knob"></div></div>
+          <div class="toggle-text">
+            <div class="toggle-label">Text-Free Illustrations</div>
+            <div class="toggle-desc">OFF = title and story text rendered INSIDE the images. ON = text-free artwork for separate typesetting.</div>
+          </div>
+        </div>
+        <div class="hint" style="margin-top:8px;">
+          <strong>Default is now OFF</strong> — the generated prompt requires the title and story text rendered inside every cover and page.
+        </div>
+        <button class="btn btn-big" onclick="generate()">⚡ Generate Blueprint</button>
+        <div class="variation-counter" id="variationCounter">🌀 Variations generated: 0</div>
+        <div class="step-nav" style="margin-top:12px;">
+          <button class="btn btn-ghost" onclick="openOnly(4)">← Back</button>
+          <button class="btn btn-secondary" onclick="newProject()">New Project</button>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <main class="main-content">
+    <div class="prompt-card">
+      <div class="card-header">
+        <div class="card-title">
+          📜 Assembled Production Prompt
+          <div class="sub" id="countChip">0 words · 0 chars · 0 sections</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="copy-btn" id="copyBtn">📋 Copy Full Prompt</button>
+          <button class="btn btn-ghost btn-mini" onclick="regenerate()">↻ Regenerate</button>
+          <button class="btn btn-ghost btn-mini" onclick="exportPrompt()">💾 Export .txt</button>
+        </div>
+      </div>
+      <div class="prompt-text" id="promptDisplay">Fill in the wizard on the left, then press <b>Generate Blueprint</b>.</div>
+      <div class="tags" id="settingsTags"></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+window.onerror = function(msg, src, line, col){
+  try{
+    var b = document.getElementById('engineDiag');
+    if(b){
+      b.style.display = 'block';
+      b.innerHTML = '';
+      b.appendChild(document.createTextNode('Script error: ' + msg + ' (line ' + line + ')'));
+    }
+  }catch(e2){}
+  return false;
+};
+</script>
+<script>
+var STORAGE_KEY = 'brce_v16_project';
+var IDEAS_KEY = 'brce_v16_recent_ideas';
+
+var FORMATS = [
+  { id:'square-85', name:'Square 8.5 × 8.5', dims:'2550 × 2550 px @ 300 DPI', trim:'8.5 × 8.5 in', note:'Classic KDP square. Great for picture books.',
+    canvasW:2550, canvasH:2550, titlePt:120, subtitlePt:42, authorPt:28, textBandPct:22 },
+  { id:'us-letter', name:'US Letter Portrait', dims:'2550 × 3300 px @ 300 DPI', trim:'8.5 × 11 in', note:'Standard US Letter. Best for printables.',
+    canvasW:2550, canvasH:3300, titlePt:120, subtitlePt:42, authorPt:28, textBandPct:20 },
+  { id:'a4', name:'A4 Portrait', dims:'2480 × 3508 px @ 300 DPI', trim:'210 × 297 mm', note:'International standard. Best for EU/UK.',
+    canvasW:2480, canvasH:3508, titlePt:116, subtitlePt:40, authorPt:26, textBandPct:20 },
+  { id:'landscape-letter', name:'US Letter Landscape', dims:'3300 × 2550 px @ 300 DPI', trim:'11 × 8.5 in', note:'Wide landscape. Great for scenes and coloring.',
+    canvasW:3300, canvasH:2550, titlePt:110, subtitlePt:40, authorPt:26, textBandPct:25 },
+  { id:'square-10', name:'Square 10 × 10', dims:'3000 × 3000 px @ 300 DPI', trim:'10 × 10 in', note:'Premium large square. Coffee-table keepsake.',
+    canvasW:3000, canvasH:3000, titlePt:132, subtitlePt:48, authorPt:32, textBandPct:22 },
+  { id:'kdp-7x10', name:'KDP 7 × 10', dims:'2100 × 3000 px @ 300 DPI', trim:'7 × 10 in', note:'Compact KDP portrait trim.',
+    canvasW:2100, canvasH:3000, titlePt:102, subtitlePt:36, authorPt:24, textBandPct:20 },
+  { id:'kdp-6x9', name:'KDP 6 × 9', dims:'1800 × 2700 px @ 300 DPI', trim:'6 × 9 in', note:'Trade paperback size. Travel-journal feel.',
+    canvasW:1800, canvasH:2700, titlePt:90, subtitlePt:32, authorPt:22, textBandPct:20 }
+];
+
+var STYLES = [
+  { name:'Warm Watercolor', dot:'#e8b98a',
+    desc:'soft glowing watercolor washes with gentle bleeding edges',
+    palette:'warm cream, blush pink, golden ochre, sage green, dusty teal, soft cocoa brown',
+    line:'delicate tapered ink linework beneath the washes',
+    bg:'loose watercolor backdrops with untouched white space' },
+  { name:'Bold Flat Vector', dot:'#e05a4e',
+    desc:'clean flat shapes with modern vector minimalism, zero gradients',
+    palette:'coral red, sunflower yellow, cobalt blue, mint green, charcoal, off-white',
+    line:'no outlines — pure shape-on-shape color contrast',
+    bg:'simple geometric backdrops or solid color fields' },
+  { name:'Soft Pastel Crayon', dot:'#f2c4ce',
+    desc:'velvety crayon texture with rounded childlike marks',
+    palette:'butter yellow, peach, powder blue, lilac, mint cream, warm gray',
+    line:'soft blended crayon strokes with rounded tips',
+    bg:'light scribbled pastel washes fading toward the edges' },
+  { name:'Classic Storybook Ink', dot:'#6b4f3a',
+    desc:'timeless pen-and-ink with fine crosshatching and vintage warmth',
+    palette:'sepia ink, forest green, brick red, mustard, parchment, slate blue',
+    line:'variable-weight ink lines with fine crosshatch shading',
+    bg:'detailed ink-drawn backgrounds with clean white space' },
+  { name:'Whimsical Felt-Craft', dot:'#4aa3a3',
+    desc:'cut-felt collage look with visible stitching and layered fabric',
+    palette:'cherry red, turquoise, lime green, cream felt, brown felt, denim blue',
+    line:'dashed stitch-style outlines around every shape',
+    bg:'layered felt swatches with button and thread details' }
+];
+
+var LESSON_BANK = {
+  friendship: { word:'friendship', title:'Friendship', gerund:'Make Friends',
+    lines:[
+      'And that is how {CHAR} learns the very best thing of all: a friend makes everything less scary and twice as fun.',
+      'Some things are hard alone and easy together — that is the quiet magic of friendship.',
+      'Friends do not need you to be perfect. They just need you to be there.',
+      'A friend is someone who finds you when you are hiding behind your wobbly feelings.',
+      'The whole day is brighter now, because {CHAR} and {F} found each other.',
+      'Friendship, {CHAR} discovers, begins with one small hello — and then it grows all on its own.',
+      'Being a good friend is not about being big or brave. It is about noticing, and staying.',
+      'From now on, {CHAR} knows exactly what to do: look for the one who feels alone, and sit beside them.'
+    ]},
+  courage: { word:'courage', title:'Courage', gerund:'Be Brave',
+    lines:[
+      'Being brave, {CHAR} learns, does not mean your heart is quiet. It means you go on even when it is loud.',
+      'Courage is a small thing at first — one breath, one step, one hello.',
+      'The wobbly feeling is still there, but {CHAR} walks with it instead of hiding from it.',
+      'Brave is what you become after you do the scary thing, {CHAR} discovers.',
+      'Sometimes courage looks like asking for help, and that is the bravest kind of all.',
+      '{CHAR} feels something new and warm inside — it turns out courage feels a lot like growing.',
+      'The world did not get smaller. {CHAR} got braver.',
+      'Every hero starts somewhere, and today, {CHAR} started.'
+    ]},
+  kindness: { word:'kindness', title:'Kindness', gerund:'Share Kindness',
+    lines:[
+      'Kindness, {CHAR} discovers, costs nothing at all — and changes everything.',
+      'One small kindness turned into another, and another, until the whole day glowed.',
+      '{CHAR} learns that being gentle is its own kind of strong.',
+      'You never know how big a small kindness will grow, {CHAR} realizes.',
+      'The kindest thing, {CHAR} learns, is often simply noticing someone who needs noticing.',
+      'Kindness is a language everyone understands, in every place, on every page.',
+      'When {CHAR} was kind, the world answered back with kindness of its own.',
+      'A kind heart, it turns out, is the best thing to pack for any adventure.'
+    ]},
+  family: { word:'family', title:'Family', gerund:'Belong',
+    lines:[
+      'Family, {CHAR} learns, is the place where you are loved first and asked questions later.',
+      'Big or small, loud or quiet, family is the people who hold you steady.',
+      '{CHAR} discovers that home is not a place you leave — you carry it with you.',
+      'Family means someone always saves you a spot, {CHAR} realizes, warm to the tips of their toes.',
+      'Being loved is the beginning of every brave thing, {CHAR} decides.',
+      'Families fit together in funny ways, and every piece matters.',
+      'Wherever {CHAR} goes, family is the light left on in the window.',
+      'Love, it turns out, is what families are made of — the rest is decoration.'
+    ]},
+  curiosity: { word:'curiosity', title:'Curiosity', gerund:'Explore',
+    lines:[
+      'Questions, {CHAR} learns, are little keys — and the world is full of doors.',
+      'Being curious means the world never runs out of wonderful.',
+      '{CHAR} discovers that not-knowing is not scary at all. It is the beginning of everything.',
+      'Every big discovery starts with one small wondering, {CHAR} realizes.',
+      'The best explorers, {CHAR} learns, are the ones who keep asking why.',
+      'Curiosity is a lantern, {CHAR} discovers — it makes dark places interesting.',
+      'There is always more to find out, and that, {CHAR} decides, is the best news of all.',
+      'Wonder, it turns out, is free — and there is plenty for everyone.'
+    ]},
+  change: { word:'new beginnings', title:'Change & New Beginnings', gerund:'Begin Again',
+    lines:[
+      'New beginnings, {CHAR} learns, are just adventures that have not made friends with you yet.',
+      'Change can feel like a wobbly bridge — but bridges, {CHAR} discovers, are for walking.',
+      'Every ending is hiding a beginning, {CHAR} realizes, like a seed hiding a flower.',
+      'The old day was good. The new day, {CHAR} decides, will be good too — just differently.',
+      'Different is not worse, {CHAR} learns. Different is just a door that has not opened yet.',
+      'You can keep who you are and still become someone new, {CHAR} discovers.',
+      'First days are brave days, {CHAR} realizes — and brave days become favorite days.',
+      'When everything changes, {CHAR} learns to look for the one good thing and hold on.'
+    ]},
+  gratitude: { word:'gratitude', title:'Gratitude', gerund:'Say Thank You',
+    lines:[
+      'Thank you, {CHAR} learns, is a tiny phrase that makes good things stay.',
+      'Gratitude, {CHAR} discovers, is noticing — really noticing — the good that is already here.',
+      'When {CHAR} counts the good things, the list grows longer than expected.',
+      'Saying thank you out loud makes the warmth bigger, {CHAR} realizes.',
+      'The best gifts, {CHAR} learns, are the ones you almost walked past.',
+      'Being thankful is like watering the good things so they can grow.',
+      '{CHAR} looks around at everything and everyone, and feels full.',
+      'A thankful heart, it turns out, finds treasure everywhere it looks.'
+    ]},
+  perseverance: { word:'perseverance', title:'Perseverance', gerund:'Keep Trying',
+    lines:[
+      'Keep going, {CHAR} learns — because you never know how close the next try is to the one that works.',
+      'Mistakes are not the end of the story, {CHAR} discovers. They are the middle of it.',
+      'Slow steps still take you somewhere, {CHAR} realizes, one foot after the other.',
+      'Hard things get a tiny bit easier every time you try again, {CHAR} learns.',
+      'Not yet, {CHAR} decides, is very different from never.',
+      'The seed does not hurry, and still it becomes a flower, {CHAR} remembers.',
+      '{CHAR} did not give up — and that, more than anything, is why today shines.',
+      'Trying again is the bravest kind of magic there is.'
+    ]}
+};
+
+var CHAR_GEN = {
+  humanNames: ['Milo','Luna','Theo','Nina','Leo','Ivy','Sam','Maya','Kai','Aria','Ezra','Zoe','Rowan','Iris','Nico','Ada','Sofia','Jonah','Ruby','Liam','Elena','Noah','Amara','Eli','Nora','Hugo','Freya','Oscar','Lila','Dylan','Ava','Jasper','Mila','Ravi','Tessa','Kofi','Nadia','Bruno','Juno'],
+  fantasyNames: ['Zephyra','Pip','Blix','Fenn','Quill','Sable','Wren','Aster','Fable','Juniper','Comet','Flint','Sage','Bramble','Moss','Yarrow','Bristle','Puff','Thistle','Pebble','Sprout','Ember','Cinder','Glimmer','Twinkle','Whisper','Rumble','Nimbus','Frost','Dusk'],
+  animalNames: ['Rusty','Mango','Basil','Pepper','Ginger','Coco','Muffin','Pumpkin','Biscuit','Pip','Chip','Doodle','Waffles','Noodle','Skipper','Bubbles','Bramble','Tansy','Mochi','Clover'],
+  humanSpecies: ['a human child','a small human child','a curious human child','a bright-eyed human child','a shy human child'],
+  animalSpecies: ['a small fox cub','a little brown rabbit','a tiny hedgehog','a young deer with tiny antlers','a fluffy owlet','a soft grey kitten','a small corgi puppy','a curious little mouse','a baby badger','a young otter','a tiny elephant calf','a fluffy alpaca cria','a small red panda','a young penguin chick','a curious possum','a small sugar glider','a baby koala','a young raccoon'],
+  fantasySpecies: ['a baby dragon with soft scales','a small friendly monster with fuzzy fur','a gentle forest sprite','a small cloud spirit','a tiny star-being','a young moon rabbit','a soft glowing firefly fairy','a small lantern-carrying gnome','a young phoenix chick','a tiny garden gnome','a small snow sprite','a young forest giant (but very small)','a curious little sea serpent','a gentle unicorn foal','a small moss goblin','a young tide pool mermaid'],
+  humanHair: ['soft chestnut-brown hair','wavy golden-brown hair','curly dark hair with a little cowlick','smooth black hair in two small braids','short sandy-blonde hair','fluffy red hair that will not lie flat','straight dark-brown hair with a bright ribbon','messy ash-blonde hair','copper-auburn hair in a small ponytail','silky black hair with a tiny star clip'],
+  animalFur: ['soft reddish-brown fur','fluffy cream-colored fur','sleek grey fur with a white chest','spotted golden fur','velvety brown fur','fluffy orange fur with a white belly','soft grey fur tipped with silver','warm caramel-colored fur','snowy white fur','dark chocolate fur with a lighter face'],
+  fantasyFur: ['soft iridescent scales that shift in the light','fluffy pastel lavender fur','shimmering pale-blue feathers','velvety moss-green fur','soft silver-white fur that catches the light','tiny pearlescent scales','fluffy cloud-soft fur','delicate moth-wing patterns','feathers the color of sunrise','fur that looks like fresh spring leaves'],
+  eyes: ['large friendly hazel eyes','bright curious green eyes','warm brown eyes with a sparkle','wide sky-blue eyes','gentle grey eyes','mischievous amber eyes','soft dark-brown eyes','wide bright hazel eyes','twinkling deep-blue eyes','warm golden-brown eyes'],
+  fantasyEyes: ['big violet eyes that glow softly','star-bright silver eyes','warm honey-gold eyes','pale mint-green eyes','shimmering rose-gold eyes','deep twilight-blue eyes','big curious amber eyes with tiny star flecks','gentle sea-glass green eyes'],
+  humanSkin: ['warm tan skin','soft peach skin','deep brown skin','light olive skin','golden-bronze skin','fair porcelain skin with light freckles','warm caramel skin','rich cocoa skin','sun-kissed light-brown skin','soft rose-beige skin'],
+  animalFurTone: ['warm brown fur','creamy white fur','soft grey fur','rich amber fur','snowy white fur','golden honey fur','soft cocoa fur','warm sandy fur'],
+  fantasyFurTone: ['shimmering opalescent skin','soft moonlit fur','sun-warmed mossy skin','gentle pastel pink fur','cool seafoam skin','warm golden fur','deep twilight fur','soft rose-gold fur'],
+  outfits: ['a teal sweater with a mustard-yellow scarf','a soft lavender cardigan with tiny star buttons','a hand-knit cream jumper with pockets','a cherry-red raincoat with yellow boots','a navy-blue dress with tiny embroidered flowers','a striped green-and-cream tee with overalls','a warm mustard-yellow hoodie with patch pockets','light-blue dungarees with a soft white shirt','a cozy orange sweater with a hand-knit hat','a soft pink tunic with a little sun emblem'],
+  colors: ['warm amber','soft coral pink','gentle sky blue','sunny marigold','fresh sage green','dusty rose','deep twilight blue','soft butter yellow','warm terracotta','gentle lavender','cool mint green','warm peach'],
+  props: ['a small star-shaped satchel','a tiny hand-knit scarf that never comes off','a little pocket-sized notebook full of doodles','a small brass compass that always points to home','a tiny lantern with a warm glow','a small jar with a captured bit of sunlight','a little wooden flute with a leaf carved on it','a small woven basket of wildflowers','a tiny feather that fell from a friendly bird','a small smooth stone painted with a tiny face','a little pocket telescope','a small ribbon tied in a special way','a tiny bell that rings softly','a small pencil tucked behind one ear'],
+  helperNames: ['Nina','Finn','Olive','Bruno','Hazel','Pip','Juniper','Otto','Wren','Mabel','Ravi','Clover','Sage','Moss','Rowan','Thistle','Tansy','Fern','Basil','Elm','Prim','Ivy','Gus','Opal','Milo','Poppy','Pepper','Ginger','Fig','Nutmeg'],
+  helperSpecies: ['a small worried owl with soft brown feathers and big round eyes','a gentle old tortoise with a mossy shell','a tiny lantern-carrying mouse with a red scarf','a small fuzzy caterpillar who gives wise advice','a young badger with spectacles and a book','a soft grey dormouse who is always sleepy','a little hedgehog with a tiny knitted hat','a small firefly who is quietly brave','a young heron with long graceful legs','a curious red squirrel with a huge bushy tail','a small brown bat who only comes out at dusk','a gentle moth with powdery wings','a young forest deer with silver spots','a small mountain goat with a bell','a tiny bee with very important news']
+};
+
+var IDEA_PARTS = {
+  characters: ['a shy dragon','a tiny elephant','a sleepy sloth','a brave mouse','a curious fox','a gentle giant','a little penguin','a plucky hedgehog','a dreaming octopus','a singing whale','a worried owl','a dancing bear','a young robot','a soft cloud','a lost star','a little acorn','a small snail','a fluffy alpaca','a paper boat','a pocket-sized lion','a shy unicorn','a clumsy giraffe','a thoughtful turtle','a bouncy kangaroo'],
+  traits: ['who is very shy','who is always hungry','who cannot stop sneezing','who is afraid of the dark','who loves to sing','who has lost something important','who has never seen the sea','who is the smallest in the family','who is starting a new school','who just moved to a new town','who is learning to share','who is afraid of making mistakes','who talks to plants','who collects fallen stars','who is the new kid','who has a very loud heartbeat','who cannot find their voice'],
+  goals: ['learns to make friends','discovers the magic of kindness','finds the courage to try','learns to be patient','discovers that being different is a gift','learns to say sorry','finds a lost friend','discovers a hidden garden','learns to share','finds their way home','discovers a secret door','learns to ask for help','finds the perfect gift','discovers a new color','learns to be brave','finds a treasure','discovers the meaning of family'],
+  settings: ['at a new school','in a magical forest','under the sea','in a tiny village','on a snowy mountain','in a bustling city','in a quiet garden','at the edge of a rainbow','inside a giant library','on a pirate ship','in a candy shop','at a farm','in a cozy kitchen','at a train station','in a hot air balloon','on a distant planet','in a hidden valley'],
+  twists: ['and discovers a surprising friend','and learns a lesson from a tiny creature','and finds that the answer was inside them all along','and meets a wise old stranger','and discovers a hidden talent','and learns that being lost is a kind of finding','and finds that the smallest thing matters most','and discovers a secret language','and learns that helping feels like magic','and finds that home is a feeling','and discovers that everyone feels scared sometimes','and learns that small steps count']
+};
+
+var STOP_WORDS = {'a':1,'an':1,'the':1,'and':1,'or':1,'but':1,'of':1,'in':1,'on':1,'at':1,'to':1,'for':1,'with':1,'who':1,'that':1,'this':1,'is':1,'are':1,'was':1,'were':1,'learns':1,'learn':1,'learning':1,'make':1,'makes':1,'making':1,'new':1,'his':1,'her':1,'their':1,'its':1,'she':1,'he':1,'they':1};
+
+var ARCS = [
+{ name:'The Gentle Discovery Arc', beats:[
+  {i:'Open on the ordinary world.', t:'This is {CHAR}. {CHAR} loves {K2P} more than anything in the whole wide world.', s:'This is {CHAR}. {CHAR} loves {K2P} so, so much.', alt:['Say hello to {CHAR}, who loves {K2P} more than anything.']},
+  {i:'Establish the daily routine.', t:'Every morning, {CHAR} packs {PROP} and gets ready for the day.', alt:['Each morning, {CHAR} grabs {PROP} and heads out the door.']},
+  {i:'Show the favorite place.', t:'{CHAR} knows everything about the {K3}, from the big things to the small.'},
+  {i:'Plant the quiet wish.', t:'But {CHAR} keeps a quiet wish, folded up small like a paper star.', alt:['Deep down, {CHAR} keeps one small, secret wish.']},
+  {i:'Name the wish in theme terms.', t:'Today, {CHAR} decides that {K2P} are worth one more brave try.'},
+  {i:'Begin the first attempt.', t:'{CHAR} takes a deep breath and takes one small step forward.'},
+  {i:'Show hesitation.', t:'Oh no. {CHAR}\u2019s heart goes thump, thump, thump.', alt:['{CHAR}\u2019s heart goes thump, thump, thump — oh, it is loud!']},
+  {i:'First attempt fails gently.', t:'The very first try does not go the way {CHAR} hoped.', s:'The first try does not work out.'},
+  {i:'Let the feeling land.', t:'{CHAR} sits down next to {PROP} and feels a little wobbly inside.'},
+  {i:'A helper appears.', t:'That is the exact moment {CHAR} meets {F}.', alt:['And that is when {F} appears, right on time.']},
+  {i:'The helper offers friendship.', t:'\u201cHello,\u201d says {F} with a warm smile. \u201cCan I sit with you?\u201d'},
+  {i:'Share the problem.', t:'{CHAR} tells {F} all about the wobbly, tricky day.', alt:['{CHAR} tells {F} everything — the wish, the wobble, all of it.']},
+  {i:'The helper listens.', t:'{F} listens to every single word.'},
+  {i:'The helper shares wisdom.', t:'\u201cEveryone wobbles sometimes,\u201d says {F}. \u201cWobbles are how we grow.\u201d'},
+  {i:'New understanding dawns.', t:'{CHAR} carries those kind words all the way home.'},
+  {i:'Practice together.', t:'The next day, {CHAR} and {F} practice together until the sun slides low.'},
+  {i:'Small wins stack up.', t:'One small step. Then another. And another one after that!', alt:['Step by step by step — look at {CHAR} go!']},
+  {i:'A moment of doubt returns.', t:'One part feels hard again, but {CHAR} remembers to breathe.'},
+  {i:'The lesson becomes clear.', t:'{LL1}', L:1},
+  {i:'The big moment arrives.', t:'Then comes the moment {CHAR} has been waiting for.'},
+  {i:'The character succeeds.', t:'{CHAR} does it! {CHAR} really and truly does it!', alt:['{CHAR} DID it — really, truly, completely did it!'], s:'{CHAR} did it! Hooray!'},
+  {i:'Celebrate together.', t:'{CHAR} and {F} cheer and dance and laugh out loud.'},
+  {i:'The joy spreads.', t:'Everyone who knows {CHAR} claps, and the whole day sparkles.'},
+  {i:'Reflect on the lesson.', t:'{LL2}', L:1}
+]},
+{ name:'The Brave First Step Arc', beats:[
+  {i:'Open on the morning of a big change.', t:'Today is a big day, and {CHAR} can feel it in the air.', s:'Today is a very big day for {CHAR}.'},
+  {i:'Pack for the new place.', t:'{CHAR} packs {PROP} three times, just to be sure.', alt:['{CHAR} checks {PROP} one time, two times, three times.']},
+  {i:'Arrive somewhere new.', t:'The new place is big, and full of sounds {CHAR} has never heard before.'},
+  {i:'Show the worry.', t:'{CHAR}\u2019s tummy does a little flip-flop.', alt:['Uh-oh. {CHAR}\u2019s tummy flippity-flops.']},
+  {i:'Hold the prop for comfort.', t:'{CHAR} squeezes {PROP} tight and counts to three.'},
+  {i:'Peek inside.', t:'Slowly, slowly, {CHAR} peeks through the door.'},
+  {i:'Everything looks unfamiliar.', t:'So many new faces! So many new places!', s:'So many new faces. So many new places.'},
+  {i:'The character hides.', t:'{CHAR} slips behind the nearest corner and hides.', alt:['Quick as a shadow, {CHAR} hides around the corner.']},
+  {i:'Sit with the feeling.', t:'Maybe this was a mistake, {CHAR} thinks, feeling very small.'},
+  {i:'A friendly voice.', t:'Then a friendly voice whispers, \u201cAre you hiding too?\u201d It is {F}.'},
+  {i:'First small exchange.', t:'\u201cA little,\u201d whispers {CHAR}. \u201cMe too,\u201d says {F}.'},
+  {i:'Discover something shared.', t:'And then {F} shows {CHAR} the very same {PROP}!'},
+  {i:'A tiny spark of brave.', t:'Two friends hiding together feel braver than one friend hiding alone.', s:'Hiding together feels braver than hiding alone.'},
+  {i:'Step out together.', t:'Hand in hand, {CHAR} and {F} step out where everyone can see.', alt:['Together, slowly, {CHAR} and {F} step out into the open.']},
+  {i:'A kind greeting.', t:'Someone waves. Someone smiles. Someone says hello.'},
+  {i:'Try one new thing.', t:'{CHAR} tries one new thing, and then one more.'},
+  {i:'Momentum builds.', t:'Each hello makes the next hello easier.', alt:['Hello gets easier every single time.']},
+  {i:'A wobble, then recovery.', t:'One moment feels tricky, but {CHAR} breathes and keeps going.'},
+  {i:'The lesson becomes clear.', t:'{LL1}', L:1},
+  {i:'The invitation arrives.', t:'\u201cCome and play!\u201d calls a voice from across the way.'},
+  {i:'The character joins in.', t:'And {CHAR} does! {CHAR} runs over, laughing.', alt:['{CHAR} runs over, laughing all the way.'], s:'{CHAR} runs over to play!'},
+  {i:'Full belonging.', t:'By the end of the day, {CHAR} is part of everything.'},
+  {i:'Homeward, happy.', t:'{CHAR} walks home with {F}, telling jokes the whole way.'},
+  {i:'Reflect on the lesson.', t:'{LL2}', L:1}
+]},
+{ name:'The Missing Piece Arc', beats:[
+  {i:'Open with the treasure.', t:'{CHAR} has a favorite thing in all the world: {PROP}.', s:'{CHAR} loves {PROP} best of all.'},
+  {i:'The treasure goes everywhere.', t:'{CHAR} takes {PROP} everywhere — absolutely everywhere.', alt:['{PROP} goes everywhere with {CHAR} — everywhere.']},
+  {i:'The discovery.', t:'But one morning, {PROP} is not where it should be.'},
+  {i:'Search spot one.', t:'{CHAR} looks under the bed. Not there.'},
+  {i:'Search spot two.', t:'{CHAR} looks behind the door. Not there either.', s:'Not there either. Oh dear.'},
+  {i:'Worry grows.', t:'\u201cOh no,\u201d says {CHAR}. \u201cWhere could it be?\u201d'},
+  {i:'The search begins.', t:'{CHAR} decides to search everywhere, near and far.'},
+  {i:'Ask for help.', t:'On the path, {CHAR} meets {F}.'},
+  {i:'The helper agrees.', t:'\u201cWill you help me look?\u201d asks {CHAR}. \u201cOf course!\u201d says {F}.', alt:['\u201cHelp me look?\u201d asks {CHAR}. \u201cAlways!\u201d says {F}.']},
+  {i:'Search location one.', t:'They look everywhere the wind goes whoosh, hunting high and low.'},
+  {i:'Search location two.', t:'They look high, and low, and everything in between.'},
+  {i:'A clue appears.', t:'Then {F} spots something small and shiny in the grass.'},
+  {i:'Excitement over the clue.', t:'\u201cLook!\u201d cries {F}. \u201cA clue!\u201d', s:'\u201cLook! A clue!\u201d cries {F}.'},
+  {i:'Follow the clue.', t:'Step by step, the little clue leads them on.'},
+  {i:'Teamwork beat.', t:'{CHAR} climbs, and {F} peeks, and together they keep going.'},
+  {i:'A wrong turn, hope kept.', t:'One path is a dead end, but nobody gives up.', alt:['One path leads nowhere — but nobody gives up.']},
+  {i:'A near miss.', t:'So close! The next place is not quite right either.'},
+  {i:'Rest and encouragement.', t:'\u201cWe will find it,\u201d says {F}. \u201cWe make a great team.\u201d'},
+  {i:'The lesson becomes clear.', t:'{LL1}', L:1},
+  {i:'The discovery moment.', t:'And there, at last, catching the light: {PROP}!'},
+  {i:'Joy of the find.', t:'{CHAR} hugs {PROP} with the biggest hug in the world.', alt:['{CHAR} hugs {PROP} — the biggest, tightest hug ever.'], s:'{CHAR} hugs {PROP} so tight!'},
+  {i:'Gratitude to the helper.', t:'\u201cThank you,\u201d says {CHAR}. \u201cI could not have done it alone.\u201d'},
+  {i:'Celebrate.', t:'{CHAR} and {F} celebrate with a happy, hopping dance.'},
+  {i:'Reflect on the lesson.', t:'{LL2}', L:1}
+]},
+{ name:'The Storm and the Lantern Arc', beats:[
+  {i:'Set the scene — a change in the weather.', t:'One afternoon, the sky turns gray and grumbly overhead.', s:'One afternoon, the sky turns gray and grumbly.'},
+  {i:'The storm approaches.', t:'{CHAR} watches the clouds roll in, one by one.'},
+  {i:'Worry begins.', t:'A storm is coming, and {CHAR} feels very small.', alt:['A storm is coming. {CHAR} feels smaller than small.']},
+  {i:'Comfort in the prop.', t:'{CHAR} holds {PROP} close and listens to the rain.'},
+  {i:'Someone needs help.', t:'Then {CHAR} hears a tiny voice calling for help.'},
+  {i:'Identify the friend in trouble.', t:'It is {F}, out in the rain and wind!', s:'It is {F}, out in the rain!'},
+  {i:'Decide to act.', t:'{CHAR} takes a big breath and decides to be brave.'},
+  {i:'Declare the intention.', t:'\u201cI will help,\u201d says {CHAR}, loud and clear.', alt:['\u201cI\u2019m coming!\u201d calls {CHAR}, loud and clear.']},
+  {i:'Venture out.', t:'Out into the rain goes {CHAR}, one splashy step at a time.'},
+  {i:'Reach the friend.', t:'{CHAR} reaches {F} and holds out a hand.'},
+  {i:'Reassure the friend.', t:'\u201cI\u2019ve got you,\u201d says {CHAR}. \u201cYou are safe now.\u201d'},
+  {i:'Find shelter together.', t:'Together they hurry to the safest, coziest shelter they know.'},
+  {i:'Others arrive.', t:'Soon, others come too — cold and drippy and glad.'},
+  {i:'Share the warmth.', t:'{CHAR} opens {PROP} and shares every kind thing inside.', alt:['{CHAR} pulls something warm and kind from {PROP} and passes it around.']},
+  {i:'A community forms.', t:'Little by little, the shelter fills up with warm, cozy friends.'},
+  {i:'Pass the time together.', t:'They tell stories while the storm grumbles on outside.', alt:['Inside: stories. Outside: thunder. Guess which is louder?']},
+  {i:'Be the light.', t:'{CHAR} makes the dark feel a little less dark.'},
+  {i:'The storm peaks, then eases.', t:'The very loudest boom comes — and then the storm grows quiet.'},
+  {i:'The lesson becomes clear.', t:'{LL1}', L:1},
+  {i:'The sun returns.', t:'Little by little, the clouds drift away, and the sun peeks out.', s:'The sun peeks out. Hello, sun!'},
+  {i:'Look at what they built.', t:'{CHAR} looks around at all the friends and smiles a big, warm smile.'},
+  {i:'The helper gives thanks.', t:'\u201cThank you for helping me,\u201d says {F}. \u201cYou were so brave.\u201d'},
+  {i:'Walk home together.', t:'Everyone walks home together, drying in the sunshine.'},
+  {i:'Reflect on the lesson.', t:'{LL2}', L:1}
+]},
+{ name:'The Garden of Patience Arc', beats:[
+  {i:'A gift arrives.', t:'{CHAR} finds a tiny seed, small as a button.', s:'{CHAR} finds a tiny seed. Small as a button!'},
+  {i:'A promise is made.', t:'\u201cI will grow you,\u201d {CHAR} whispers to the seed.', alt:['\u201cGrow big and strong,\u201d {CHAR} whispers to the seed.']},
+  {i:'Choose the spot.', t:'{CHAR} chooses the perfect spot — sunny, quiet, and just right.'},
+  {i:'Plant it.', t:'Dig, dig, dig. Pat, pat, pat. In goes the seed.'},
+  {i:'Water and hope.', t:'Every day, {CHAR} waters the spot and waits.'},
+  {i:'Waiting is hard.', t:'But waiting is the hardest part of all.', s:'Waiting is hard. So hard.'},
+  {i:'Check impatiently.', t:'{CHAR} checks the soil one morning, and two, and three.'},
+  {i:'Nothing yet.', t:'Nothing yet. Not even a whisper of green.'},
+  {i:'Doubt creeps in.', t:'\u201cMaybe I did it wrong,\u201d sighs {CHAR}.'},
+  {i:'A helper arrives.', t:'That is when {F} comes by with a watering can.', alt:['Along comes {F}, carrying a little watering can.']},
+  {i:'The helper reassures.', t:'\u201cSeeds take time,\u201d says {F}. \u201cGood things grow slowly.\u201d'},
+  {i:'Learn the rhythm.', t:'So {CHAR} learns the rhythm: water, sunshine, and wait.'},
+  {i:'A small change appears.', t:'One morning — a tiny green sprout!', s:'Look! A tiny green sprout!'},
+  {i:'Joy at the sprout.', t:'\u201cLook, look, LOOK!\u201d {CHAR} calls to {F}.'},
+  {i:'Care continues.', t:'Day by day, the little sprout stretches taller.'},
+  {i:'Protect through weather.', t:'When the wind blows hard, {CHAR} shields the sprout with {PROP}.', alt:['When the wind blows hard, {CHAR} guards the sprout with {PROP}.']},
+  {i:'A setback.', t:'One cold night makes the sprout droop, and {CHAR}\u2019s heart droops too.'},
+  {i:'Try again, gently.', t:'But {F} helps {CHAR} start again — gently, patiently, kindly.'},
+  {i:'The lesson becomes clear.', t:'{LL1}', L:1},
+  {i:'The bloom arrives.', t:'And then, one golden morning, it happens: a bud opens.'},
+  {i:'The reveal.', t:'The flower is more beautiful than {CHAR} ever imagined.', alt:['It is beautiful — more than {CHAR} ever dreamed.'], s:'The flower is SO beautiful.'},
+  {i:'Share the joy.', t:'{CHAR} calls everyone to come and see.'},
+  {i:'The helper\u2019s pride.', t:'\u201cYou did it,\u201d says {F}. \u201cYou never gave up.\u201d'},
+  {i:'Reflect on the lesson.', t:'{LL2}', L:1}
+]},
+{ name:'The Bridge of Hello Arc', beats:[
+  {i:'A new face arrives.', t:'Someone new has arrived today, and everyone is curious.', s:'Someone new is here today.'},
+  {i:'The shy watcher.', t:'{CHAR} peeks from a safe spot, quiet as a mouse.'},
+  {i:'Introduce the newcomer.', t:'The newcomer is {F}, who is also new here.'},
+  {i:'The wish to connect.', t:'{CHAR} would very much like to say hello. Really, truly.'},
+  {i:'But shyness interferes.', t:'But the word \u201chello\u201d hides somewhere deep inside.', alt:['But \u201chello\u201d is hiding. It will not come out.']},
+  {i:'Rehearse alone.', t:'{CHAR} practices in front of the mirror. \u201cHello. Hello? HELLO!\u201d', s:'{CHAR} practices. \u201cHello? HELLO!\u201d'},
+  {i:'A missed chance.', t:'The big moment comes — but {CHAR} freezes.'},
+  {i:'Disappointment.', t:'The moment walks away, and {CHAR} feels fizzy with disappointment.'},
+  {i:'A small kind act.', t:'Then {CHAR} sees {F} drop something important: {PROP}!'},
+  {i:'Act quickly.', t:'Quick as anything, {CHAR} picks it up.'},
+  {i:'Hand it over.', t:'\u201cIs this yours?\u201d {CHAR} asks, holding it out.', alt:['\u201cYou dropped this,\u201d says {CHAR}, holding it out.']},
+  {i:'The smile.', t:'\u201cIt is! Thank you!\u201d says {F}, with the brightest smile.'},
+  {i:'The ice breaks.', t:'And just like that, saying hello is easy.'},
+  {i:'Names are exchanged.', t:'\u201cI\u2019m {CHAR},\u201d says {CHAR}. \u201cI\u2019m {F}!\u201d says {F}.'},
+  {i:'Discover common ground.', t:'They discover they both love {K2P} more than anything.'},
+  {i:'Play together.', t:'They play until the sky turns peach and pink.'},
+  {i:'A misunderstanding.', t:'One mixed-up moment makes {F}\u2019s face fall.'},
+  {i:'Make it right.', t:'But {CHAR} says sorry, and sorry makes everything softer.', alt:['{CHAR} says sorry — and sorry makes things soft again.']},
+  {i:'The lesson becomes clear.', t:'{LL1}', L:1},
+  {i:'The invitation.', t:'\u201cCome back tomorrow?\u201d asks {CHAR}, hopeful.'},
+  {i:'Friendship confirmed.', t:'\u201cEvery day!\u201d laughs {F}.', s:'\u201cEvery day!\u201d laughs {F}.'},
+  {i:'The friendship deepens.', t:'And day by day, the friendship grows stronger.'},
+  {i:'Widen the circle.', t:'Soon {CHAR} and {F} invite everyone they know to join in.'},
+  {i:'Reflect on the lesson.', t:'{LL2}', L:1}
+]}
+];
+
+var lastSections = null;
+var selectedStyle = 0;
+var selectedFormat = 0;
+var textFreeMode = false;
+var secondaryLangEnabled = true;
+var chaosLevel = 3;
+var variationCount = 0;
+var pageCount = 24;
+
+function $(id){ return document.getElementById(id); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function trimTo(s, n){
+  if(!s) return '';
+  if(s.length <= n) return s;
+  return s.substring(0, n-1) + '...';
+}
+function capFirst(s){
+  if(!s) return '';
+  return s.charAt(0).toUpperCase() + s.substring(1);
+}
+
+function generateMainCharacter(){
+  var r = Math.random();
+  var species, hair, eyes, skin, outfit, name;
+  if(r < 0.50){
+    species = pick(CHAR_GEN.humanSpecies);
+    hair = pick(CHAR_GEN.humanHair);
+    eyes = pick(CHAR_GEN.eyes);
+    skin = pick(CHAR_GEN.humanSkin);
+    name = pick(CHAR_GEN.humanNames);
+  } else if(r < 0.85){
+    species = pick(CHAR_GEN.animalSpecies);
+    hair = pick(CHAR_GEN.animalFur);
+    eyes = pick(CHAR_GEN.eyes);
+    skin = pick(CHAR_GEN.animalFurTone);
+    name = pick(CHAR_GEN.animalNames);
+  } else {
+    species = pick(CHAR_GEN.fantasySpecies);
+    hair = pick(CHAR_GEN.fantasyFur);
+    eyes = pick(CHAR_GEN.fantasyEyes);
+    skin = pick(CHAR_GEN.fantasyFurTone);
+    name = pick(CHAR_GEN.fantasyNames);
+  }
+  outfit = pick(CHAR_GEN.outfits);
+  var color = pick(CHAR_GEN.colors);
+  var prop = pick(CHAR_GEN.props);
+
+  $('inpName').value = name;
+  $('inpSpecies').value = species;
+  $('inpHair').value = hair;
+  $('inpEyes').value = eyes;
+  $('inpSkin').value = skin;
+  $('inpOutfit').value = outfit;
+  $('inpColor').value = color;
+  $('inpProp').value = prop;
+
+  flashFields(['inpName','inpSpecies','inpHair','inpEyes','inpSkin','inpOutfit','inpColor','inpProp']);
+  updateTitlePreview();
+  showToast('🎲 New main character: ' + name);
+}
+
+function generateHelperCharacter(){
+  var name = pick(CHAR_GEN.helperNames);
+  var species = pick(CHAR_GEN.helperSpecies);
+  $('inpHelperName').value = name;
+  $('inpHelperSpecies').value = species;
+  flashFields(['inpHelperName','inpHelperSpecies']);
+  showToast('🎲 New helper: ' + name);
+}
+
+function generateBothCharacters(){
+  generateMainCharacter();
+  setTimeout(generateHelperCharacter, 200);
+  showToast('🎲 Fresh main + helper generated!');
+}
+
+function flashFields(ids){
+  for(var i=0; i<ids.length; i++){
+    var el = $(ids[i]);
+    if(!el) continue;
+    el.style.transition = 'background .35s';
+    el.style.background = 'rgba(58,166,166,0.3)';
+    (function(e){ setTimeout(function(){ e.style.background = ''; }, 450); })(el);
+  }
+}
+
+function updateAuthorStatus(){
+  var el = $('authorStatus');
+  var inp = $('inpAuthor');
+  if(!el || !inp) return;
+  var v = inp.value.replace(/^\s+|\s+$/g,'');
+  el.innerHTML = '';
+  if(v){
+    el.className = 'author-status provided';
+    el.appendChild(document.createTextNode('✓ Author: "' + v + '" — cover, title page, copyright page.'));
+  } else {
+    el.className = 'author-status empty';
+    el.appendChild(document.createTextNode('No author name — will be published without author credit.'));
+  }
+}
+
+function updateLangWarning(){
+  var warn = $('langWarning');
+  if(!warn) return;
+  if(secondaryLangEnabled){
+    warn.className = 'lang-warning';
+  } else {
+    warn.className = 'lang-warning show';
+  }
+}
+
+function toggleTextFree(){
+  textFreeMode = !textFreeMode;
+  var t = $('toggleTextFree');
+  if(t){ if(textFreeMode) t.classList.add('on'); else t.classList.remove('on'); }
+  updateTags();
+}
+
+function toggleSecondaryLang(){
+  secondaryLangEnabled = !secondaryLangEnabled;
+  var t = $('toggleSecondary');
+  if(t){ if(secondaryLangEnabled) t.classList.add('on'); else t.classList.remove('on'); }
+  var block = $('langSecondaryBlock');
+  if(block){
+    block.style.opacity = secondaryLangEnabled ? '1' : '0.4';
+    block.style.pointerEvents = secondaryLangEnabled ? 'auto' : 'none';
+  }
+  updateLangWarning();
+  updateTitlePreview();
+  updateTags();
+}
+
+function buildPageCountGrid(){
+  var grid = $('pageCountGrid');
+  if(!grid) return;
+  var btns = grid.querySelectorAll('.page-count-btn');
+  for(var i=0; i<btns.length; i++){
+    (function(btn){
+      btn.onclick = function(){
+        var all = grid.querySelectorAll('.page-count-btn');
+        for(var k=0; k<all.length; k++){ all[k].classList.remove('selected'); }
+        btn.classList.add('selected');
+        pageCount = parseInt(btn.getAttribute('data-count'), 10);
+        updateTags();
+        if($('step5').classList.contains('done')){
+          setSummary(5, (textFreeMode ? 'Text-free: ON' : 'Text-on-image') + ' · ' + pageCount + ' pages');
+        }
+      };
+    })(btns[i]);
+  }
+}
+
+function buildFormatGrid(){
+  var grid = $('formatGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  for(var i=0; i<FORMATS.length; i++){
+    (function(idx){
+      var card = document.createElement('div');
+      card.className = 'format-card' + (idx === selectedFormat ? ' selected' : '');
+      var inner = document.createElement('div');
+      var nm = document.createElement('div');
+      nm.className = 'fname';
+      nm.appendChild(document.createTextNode(FORMATS[idx].name));
+      var dm = document.createElement('div');
+      dm.className = 'fdim';
+      dm.appendChild(document.createTextNode(FORMATS[idx].dims + ' — ' + FORMATS[idx].trim));
+      var nt = document.createElement('div');
+      nt.className = 'fnote';
+      nt.appendChild(document.createTextNode(FORMATS[idx].note));
+      inner.appendChild(nm); inner.appendChild(dm); inner.appendChild(nt);
+      card.appendChild(inner);
+      card.onclick = function(){
+        selectedFormat = idx;
+        var cards = grid.children;
+        for(var c=0; c<cards.length; c++){
+          if(cards[c].classList){ cards[c].classList.remove('selected'); }
+        }
+        card.classList.add('selected');
+        updateTags();
+        if($('step4').classList.contains('done')){
+          setSummary(4, STYLES[selectedStyle].name + ' · ' + FORMATS[selectedFormat].name);
+        }
+      };
+      grid.appendChild(card);
+    })(i);
+  }
+}
+
+function generateIdea(){
+  var character = pick(IDEA_PARTS.characters);
+  var trait = pick(IDEA_PARTS.traits);
+  var goal = pick(IDEA_PARTS.goals);
+  var setting = pick(IDEA_PARTS.settings);
+  var twist = pick(IDEA_PARTS.twists);
+  var idea = capFirst(character + ' ' + trait + ' ' + goal + ' ' + setting + ', ' + twist + '.');
+  var input = $('inpTheme');
+  input.value = idea;
+  input.style.transition = 'background .3s';
+  input.style.background = 'rgba(233,162,59,0.25)';
+  setTimeout(function(){ input.style.background = ''; }, 400);
+  updateThemeMeta();
+  updateTitlePreview();
+  saveRecentIdea(idea);
+  renderIdeaChips();
+  showToast('🎲 New idea generated!');
+}
+
+function saveRecentIdea(idea){
+  try{
+    var recent = [];
+    var raw = window.localStorage.getItem(IDEAS_KEY);
+    if(raw){ try{ recent = JSON.parse(raw) || []; }catch(e){ recent = []; } }
+    recent = recent.filter(function(x){ return x !== idea; });
+    recent.unshift(idea);
+    if(recent.length > 4){ recent = recent.slice(0, 4); }
+    window.localStorage.setItem(IDEAS_KEY, JSON.stringify(recent));
+  }catch(e){}
+}
+
+function loadRecentIdeas(){
+  try{
+    var raw = window.localStorage.getItem(IDEAS_KEY);
+    if(!raw) return [];
+    var arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ return []; }
+}
+
+function renderIdeaChips(){
+  var container = $('ideaChips');
+  if(!container) return;
+  container.innerHTML = '';
+  var recent = loadRecentIdeas();
+  if(recent.length === 0){
+    var defaults = ['a shy dragon who learns to make friends at a new school','a tiny fox who searches for a lost star','a small elephant who cannot fall asleep'];
+    for(var d=0; d<defaults.length; d++){ addChip(container, defaults[d], false); }
+  } else {
+    for(var r=0; r<recent.length; r++){ addChip(container, recent[r], true); }
+  }
+}
+
+function addChip(container, text, isRecent){
+  var chip = document.createElement('span');
+  chip.className = 'idea-chip';
+  chip.appendChild(document.createTextNode((isRecent ? '🕘 ' : '') + trimTo(text, 40)));
+  chip.onclick = function(){
+    $('inpTheme').value = text;
+    updateThemeMeta();
+    updateTitlePreview();
+    showToast('Idea loaded.');
+  };
+  container.appendChild(chip);
+}
+
+function updateThemeMeta(){
+  var val = $('inpTheme').value;
+  var len = val.length;
+  $('themeCharCount').innerHTML = '';
+  $('themeCharCount').appendChild(document.createTextNode(len + ' / 220 chars'));
+  var status = $('themeStatus');
+  if(len === 0){ status.innerHTML = ''; }
+  else if(len < 15){
+    status.innerHTML = '';
+    status.appendChild(document.createTextNode('⚠️ Add details'));
+    status.style.color = '#f0a08a';
+  } else if(len < 60){
+    status.innerHTML = '';
+    status.appendChild(document.createTextNode('✓ Essential'));
+    status.style.color = 'var(--accent)';
+  } else {
+    status.innerHTML = '';
+    status.appendChild(document.createTextNode('★ Rich idea'));
+    status.style.color = 'var(--accent2)';
+  }
+}
+
+function updateTitlePreview(){
+  var el = $('titlePreviewValue');
+  if(!el) return;
+  var theme = $('inpTheme').value.replace(/^\s+|\s+$/g,'');
+  var name = $('inpName').value.replace(/^\s+|\s+$/g,'');
+  if(!theme || theme.length < 4){
+    el.innerHTML = '';
+    el.appendChild(document.createTextNode('— (enter a theme to preview)'));
+    return;
+  }
+  var keys = extractKeywords(theme);
+  var lesson = LESSON_BANK[$('selLesson').value];
+  var charName = name || 'Your Character';
+  var title = makeTitle(charName, keys, lesson);
+  el.innerHTML = '';
+  el.appendChild(document.createTextNode('"' + title + '"'));
+}
+
+function extractKeywords(theme){
+  var words = theme.toLowerCase().replace(/[^a-z0-9\s-]/g,' ').split(/\s+/);
+  var out = [];
+  for(var w=0; w<words.length; w++){
+    var word = words[w];
+    if(word.length > 2 && !STOP_WORDS[word] && out.length < 6){
+      var already = false;
+      for(var o=0; o<out.length; o++){ if(out[o] === word){ already = true; break; } }
+      if(!already) out.push(word);
+    }
+  }
+  while(out.length < 3){ out.push(['adventure','sunny day','happy day'][out.length]); }
+  return out;
+}
+
+function pluralize(w){
+  if(!w) return w;
+  var last = w.charAt(w.length-1);
+  var lastTwo = w.length >= 2 ? w.substring(w.length-2) : '';
+  if(lastTwo === 'ss' || last === 'x' || last === 'z' || lastTwo === 'ch' || lastTwo === 'sh'){ return w + 'es'; }
+  if(last === 's'){ return w; }
+  if(last === 'y' && w.length >= 2 && 'aeiou'.indexOf(w.charAt(w.length-2)) === -1){ return w.substring(0, w.length-1) + 'ies'; }
+  return w + 's';
+}
+
+function replaceTokens(text, ctx){
+  var out = text;
+  out = out.split('{CHAR}').join(ctx.char);
+  out = out.split('{F}').join(ctx.friend);
+  out = out.split('{K1}').join(ctx.k1);
+  out = out.split('{K2P}').join(ctx.k2p);
+  out = out.split('{K2}').join(ctx.k2);
+  out = out.split('{K3}').join(ctx.k3);
+  out = out.split('{PROP}').join(ctx.prop);
+  out = out.split('{COLOR}').join(ctx.color);
+  return out;
+}
+
+function makeTitle(char, keys, lesson){
+  var k1 = capFirst(keys[0]);
+  var k2 = capFirst(keys[1]);
+  var patterns = [
+    char + ' and the ' + k1 + ' Adventure',
+    'The Day ' + char + ' Found ' + k2,
+    char + '\u2019s ' + capFirst(lesson.title) + ' Day',
+    'The Little ' + k1 + ' Who Learned to ' + lesson.gerund,
+    char + ' and the ' + k2 + ' Parade',
+    char + ' Makes a Friend'
+  ];
+  return pick(patterns);
+}
+
+function toggleStep(n){
+  var step = $('step'+n);
+  if(!step) return;
+  var wasOpen = step.classList.contains('open');
+  for(var i=1; i<=5; i++){
+    var s = $('step'+i);
+    if(!s) continue;
+    s.classList.remove('open');
+    if(s.classList.contains('done')){ s.classList.add('collapsed'); }
+  }
+  if(!wasOpen){
+    step.classList.remove('collapsed');
+    step.classList.add('open');
+  }
+}
+
+function openOnly(n){
+  for(var i=1; i<=5; i++){
+    var s = $('step'+i);
+    if(!s) continue;
+    s.classList.remove('open');
+    if(s.classList.contains('done')){ s.classList.add('collapsed'); }
+  }
+  var step = $('step'+n);
+  if(step){
+    step.classList.remove('collapsed');
+    step.classList.add('open');
+    if(step.scrollIntoView){ step.scrollIntoView({behavior:'smooth', block:'start'}); }
+  }
+}
+
+function markDone(n){
+  var s = $('step'+n);
+  if(s && !s.classList.contains('done')){ s.classList.add('done'); }
+}
+
+function setSummary(n, text){
+  var el = $('sum'+n);
+  if(!el) return;
+  el.innerHTML = '';
+  el.appendChild(document.createTextNode(text));
+}
+
+function nextStep(from, to){
+  if(from === 1){
+    markDone(1);
+    setSummary(1, secondaryLangEnabled ? ('English + ' + $('selSecondary').value) : 'English-only');
+  }
+  if(from === 2){
+    var theme = $('inpTheme').value.replace(/^\s+|\s+$/g,'');
+    if(theme.length < 4){ showToast('Please describe your theme first — or press 🎲 Idea.'); return; }
+    markDone(2);
+    setSummary(2, '"' + trimTo(theme, 30) + '" · ages ' + $('selAge').value);
+  }
+  if(from === 3){
+    var nm = $('inpName').value.replace(/^\s+|\s+$/g,'');
+    if(nm.length < 1){ showToast('Please give your character a name — or press 🎲 Main to generate one.'); return; }
+    markDone(3);
+    var authorV = $('inpAuthor').value.replace(/^\s+|\s+$/g,'');
+    setSummary(3, nm + ' + ' + $('inpHelperName').value + (authorV ? (' · by ' + trimTo(authorV, 16)) : ' · no author'));
+  }
+  if(from === 4){
+    markDone(4);
+    setSummary(4, STYLES[selectedStyle].name + ' · ' + FORMATS[selectedFormat].name);
+  }
+  openOnly(to);
+  if(to === 5){
+    setSummary(5, (textFreeMode ? 'Text-free: ON' : 'Text-on-image') + ' · ' + pageCount + ' pages');
+  }
+}
+
+function buildStyleGrid(){
+  var grid = $('styleGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  for(var i=0; i<STYLES.length; i++){
+    (function(idx){
+      var card = document.createElement('div');
+      card.className = 'style-card' + (idx === selectedStyle ? ' selected' : '');
+      var dot = document.createElement('div');
+      dot.className = 'style-dot';
+      dot.style.background = STYLES[idx].dot;
+      var txt = document.createElement('div');
+      var nm = document.createElement('div');
+      nm.className = 'sname';
+      nm.appendChild(document.createTextNode(STYLES[idx].name));
+      var ds = document.createElement('div');
+      ds.className = 'sdesc';
+      ds.appendChild(document.createTextNode(STYLES[idx].desc + '.'));
+      txt.appendChild(nm); txt.appendChild(ds);
+      card.appendChild(dot); card.appendChild(txt);
+      card.onclick = function(){
+        selectedStyle = idx;
+        var cards = grid.children;
+        for(var c=0; c<cards.length; c++){
+          if(cards[c].classList){ cards[c].classList.remove('selected'); }
+        }
+        card.classList.add('selected');
+        updateTags();
+        if($('step4').classList.contains('done')){
+          setSummary(4, STYLES[selectedStyle].name + ' · ' + FORMATS[selectedFormat].name);
+        }
+      };
+      grid.appendChild(card);
+    })(i);
+  }
+}
+
+function readInputs(){
+  var authorV = $('inpAuthor').value.replace(/^\s+|\s+$/g,'');
+  return {
+    bilingual: secondaryLangEnabled,
+    lang: secondaryLangEnabled ? $('selSecondary').value : 'English',
+    age: $('selAge').value,
+    lessonKey: $('selLesson').value,
+    theme: $('inpTheme').value.replace(/^\s+|\s+$/g,''),
+    name: $('inpName').value.replace(/^\s+|\s+$/g,'') || 'Pip',
+    species: $('inpSpecies').value.replace(/^\s+|\s+$/g,'') || 'a human child',
+    hair: $('inpHair').value.replace(/^\s+|\s+$/g,'') || 'soft chestnut-brown hair',
+    eyes: $('inpEyes').value.replace(/^\s+|\s+$/g,'') || 'large friendly hazel eyes',
+    skin: $('inpSkin').value.replace(/^\s+|\s+$/g,'') || 'warm tan skin',
+    outfit: $('inpOutfit').value.replace(/^\s+|\s+$/g,'') || 'a teal sweater with a mustard-yellow scarf',
+    color: $('inpColor').value.replace(/^\s+|\s+$/g,'') || 'warm amber',
+    prop: $('inpProp').value.replace(/^\s+|\s+$/g,'') || 'a small star-shaped satchel',
+    helperName: $('inpHelperName').value.replace(/^\s+|\s+$/g,'') || 'Nina',
+    helperSpecies: $('inpHelperSpecies').value.replace(/^\s+|\s+$/g,'') || 'a small worried owl with soft brown feathers and big round eyes',
+    author: authorV,
+    hasAuthor: authorV.length > 0,
+    textFree: textFreeMode,
+    chaos: chaosLevel,
+    pageCount: pageCount,
+    format: FORMATS[selectedFormat],
+    style: STYLES[selectedStyle]
+  };
+}
+
+function validateInputs(inp){
+  if(!inp.theme || inp.theme.length < 4) return 'Please describe your theme first (Step 2) — or press 🎲 Idea.';
+  if(!$('inpName').value.replace(/^\s+|\s+$/g,'')) return 'Please give your main character a name — or press 🎲 Main to generate.';
+  return null;
+}
+
+function buildStoryPages(inp, ctx){
+  var arc = ctx.arc;
+  var pages = [];
+  var target = inp.pageCount;
+
+  var lessonLines = LESSON_BANK[inp.lessonKey].lines.slice(0);
+  var li1 = Math.floor(Math.random()*lessonLines.length);
+  var li2 = Math.floor(Math.random()*lessonLines.length);
+  if(li2 === li1){ li2 = (li2 + 3) % lessonLines.length; }
+  var ll1 = replaceTokens(lessonLines[li1], ctx);
+  var ll2 = replaceTokens(lessonLines[li2], ctx);
+
+  for(var b=0; b<arc.beats.length; b++){
+    var beat = arc.beats[b];
+    var template = beat.t;
+    if(inp.age === '3-5' && beat.s){ template = beat.s; }
+    else if(beat.alt && Math.random() < 0.5){ template = pick(beat.alt); }
+    var text = replaceTokens(template, ctx);
+    text = text.split('{LL1}').join(ll1);
+    text = text.split('{LL2}').join(ll2);
+    text = text.split('{CHAR}').join(ctx.char);
+    pages.push({ num: b+1, ins: beat.i, text: text });
+  }
+
+  if(target === 24){ return pages; }
+  if(target === 20){ return pages.slice(0, 20); }
+
+  if(target > 24){
+    var expanded = pages.slice(0);
+    var extraNeeded = target - 24;
+    var extras = generateExpansionPages(extraNeeded, inp, ctx);
+    var insertPoints = [];
+    for(var i=0; i<extras.length; i++){
+      var pos = 6 + Math.floor((i + 1) * (24 - 8) / (extras.length + 1));
+      insertPoints.push(pos);
+    }
+    for(var j=extras.length-1; j>=0; j--){
+      expanded.splice(insertPoints[j], 0, extras[j]);
+    }
+    for(var k=0; k<expanded.length; k++){ expanded[k].num = k+1; }
+    return expanded;
+  }
+  return pages;
+}
+
+function generateExpansionPages(count, inp, ctx){
+  var templates = [
+    {i:'Bonus activity spread — reflection page.', t:'{CHAR} pauses and thinks about everything that has happened so far.'},
+    {i:'Bonus activity spread — drawing prompt page.', t:'{CHAR} imagines what the perfect ending would look like.'},
+    {i:'Bonus activity spread — side character moment.', t:'A small friend of {CHAR} has a moment of their own.'},
+    {i:'Bonus activity spread — extra scene page.', t:'{CHAR} discovers something new along the way.'},
+    {i:'Bonus activity spread — feelings check-in page.', t:'{CHAR} notices how {CHAR} feels inside — and that is okay.'},
+    {i:'Bonus activity spread — coloring break page.', t:'A quiet moment for {CHAR} to rest and breathe.'},
+    {i:'Bonus activity spread — encouraging letter page.', t:'Someone writes {CHAR} a small, kind letter.'},
+    {i:'Bonus activity spread — hidden object page.', t:'{CHAR} spots small wonders hidden all around.'},
+    {i:'Bonus activity spread — quiet observation page.', t:'{CHAR} watches the world go by and smiles.'},
+    {i:'Bonus activity spread — celebration page.', t:'A tiny celebration just for {CHAR}.'}
+  ];
+  var out = [];
+  for(var i=0; i<count; i++){
+    var tpl = templates[i % templates.length];
+    var text = replaceTokens(tpl.t, ctx);
+    out.push({ num: 0, ins: tpl.i, text: text, isExpansion: true });
+  }
+  return out;
+}
+
+function buildPrompt(inp){
+  var bilingual = inp.bilingual;
+  var lang = inp.lang;
+  var langLower = lang.toLowerCase();
+  var lesson = LESSON_BANK[inp.lessonKey];
+  var keys = extractKeywords(inp.theme);
+  var style = inp.style;
+  var fmt = inp.format;
+
+  var ctx = {
+    char: inp.name,
+    friend: inp.helperName,
+    k1: keys[0], k2: keys[1], k3: keys[2], k2p: pluralize(keys[1]),
+    prop: inp.prop,
+    color: inp.color,
+    arc: ARCS[Math.floor(Math.random()*ARCS.length)]
+  };
+
+  var pages = buildStoryPages(inp, ctx);
+  var totalPages = pages.length;
+  var title = makeTitle(inp.name, keys, lesson);
+  var subtitle = bilingual
+    ? ('A ' + style.name + ' Read-and-Color Storybook About ' + lesson.title + ' — English / ' + lang)
+    : ('A ' + style.name + ' Read-and-Color Storybook About ' + lesson.title);
+
+  var chaosTwists = '';
+  if(inp.chaos >= 3){
+    var twists = [
+      "Add a hidden object on every page for children to find.",
+      "Include a recurring decorative motif that becomes a running visual joke.",
+      "Add a fold-out map of the story world on the final interior page.",
+      "Add a small decorative banner that changes color across the book.",
+      "Include a subtle puzzle element hidden across the middle pages.",
+      "Add a surprise character cameo on the closing spread.",
+      "Add a 'draw your own ending' bonus page in the back matter."
+    ];
+    var nTwists = Math.min(inp.chaos - 2, 3);
+    for(var t=0; t<nTwists; t++){
+      chaosTwists += '✨ CHAOS TWIST: ' + twists[(t + ctx.arc.name.length) % twists.length] + '\n';
+    }
+  }
+
+  // ---- CHAOS level ----
+  var P_chaos = 'Chaos level: ' + inp.chaos + '/5.\n\n';
+
+  // ---- 1 TITLE (with book format) ----
+  var P_title = '1. PRODUCT TITLE AND SUBTITLE\n';
+  P_title += 'Title: "' + title + '"\n';
+  P_title += 'Subtitle: "' + subtitle + '"\n';
+  P_title += 'Book Format: ' + fmt.name + ' (' + fmt.trim + ') — canvas ' + fmt.dims + '\n';
+  if(bilingual){
+    P_title += 'Title (' + lang + '): natural ' + lang + ' translation of the English title.\n';
+    P_title += 'Subtitle (' + lang + '): natural ' + lang + ' translation of the English subtitle.\n';
+  }
+  P_title += '\n';
+
+  // ---- 2 AUTHOR ----
+  var P_author = '';
+  if(inp.hasAuthor){
+    P_author += '2. AUTHOR CREDIT\n';
+    P_author += 'Author: "' + inp.author + '"\n';
+    P_author += 'This author name appears on the front cover (small type beneath the title), the title page, and the copyright page of both editions.\n\n';
+  }
+
+  // ---- 3 AUDIENCE ----
+  var P_audience = '3. RECOMMENDED AUDIENCE AND USE CASE\n';
+  P_audience += 'Ideal for ' + (bilingual ? 'bilingual families, language learners, and ' : '') + 'parents, teachers, librarians, gift-givers, and children ages ' + inp.age + '. This is a read-aloud picture book and a companion coloring edition. It makes no clinical or educational claims and is intentionally undated for repeated read-aloud use. Can be used as: self-paced read-aloud storybook, coloring activity book, or commercially packaged product for Etsy, Gumroad, KDP.\n\n';
+
+  // ---- 4 PRODUCT DESCRIPTION ----
+  var P_desc = '4. SHORT PRODUCT DESCRIPTION\n';
+  if(bilingual){
+    P_desc += '"' + title + '" is a fully illustrated ' + totalPages + '-page bilingual read-aloud storybook (' + fmt.trim + '). Every page carries the story text in English and ' + lang + ' side by side, with English first and the ' + lang + ' translation directly beneath it. Children follow ' + inp.name + ', ' + inp.species + ', through a gentle story about ' + lesson.title.toLowerCase() + '. The ' + style.name + ' illustrations make this the keepsake reading edition. A matching Coloring Edition presents the same story converted into clean black line art.\n\n';
+  } else {
+    P_desc += '"' + title + '" is a fully illustrated ' + totalPages + '-page read-aloud storybook (' + fmt.trim + '). Every page carries the story text in clear, child-friendly English. Children follow ' + inp.name + ', ' + inp.species + ', through a gentle story about ' + lesson.title.toLowerCase() + '. The ' + style.name + ' illustrations make this the keepsake reading edition. A matching Coloring Edition presents the same story converted into clean black line art.\n\n';
+  }
+
+  // ---- 5 SEO ----
+  var P_seo = '5. 7 SEO KEYWORDS\n';
+  if(bilingual){
+    P_seo += 'bilingual childrens book english ' + langLower + ', dual language ' + langLower + ' english picture book, ';
+  } else {
+    P_seo += 'childrens picture book english, read and color storybook for kids, ';
+  }
+  P_seo += keys[0] + ' ' + keys[1] + ' storybook for kids, ' + keys[0] + ' coloring book for children ages ' + inp.age + ', read and color storybook' + (bilingual ? ' ' + langLower : '') + ', ' + lesson.word + ' books for kids, ' + (bilingual ? 'language learning picture book ' + langLower + ' english' : 'english picture book for kids') + '\n\n';
+
+  // ---- 6 STORY OVERVIEW ----
+  var P_overview = '6. STORY OVERVIEW (LEARNING PATH)\n';
+  P_overview += 'This ' + totalPages + '-page picture book follows ' + inp.name + ', ' + inp.species + ', through a complete emotional journey built on the "' + ctx.arc.name + '" structure: ' + inp.theme + '. Written for readers ages ' + inp.age + ', the story moves from an ordinary day through a real difficulty, a turning point with ' + inp.helperName + ', and a satisfying resolution that lands the lesson of ' + lesson.title.toLowerCase() + ' without preaching it.\n';
+  if(chaosTwists){ P_overview += '\n' + chaosTwists; }
+  P_overview += '\n';
+
+  // ---- 7 CONTENT AND LAYOUT STYLE GUIDE (with full character block) ----
+  var P_style = '7. CONTENT AND LAYOUT STYLE GUIDE\n';
+  P_style += 'Tone: warm, encouraging, child-friendly, read-aloud rhythmic. Chaos level: ' + inp.chaos + '/5.\n\n';
+  P_style += 'BOOK FORMAT:\n';
+  P_style += '- Trim size: ' + fmt.trim + '\n';
+  P_style += '- Canvas: ' + fmt.dims + '\n';
+  P_style += '- Page count: ' + totalPages + ' pages\n';
+  P_style += '- Note: ' + fmt.note + '\n\n';
+  P_style += 'CHARACTER BLOCK (locked — identical on every page and every cover):\n';
+  P_style += '- Main character name: ' + inp.name + '\n';
+  P_style += '- Species / type: ' + inp.species + '\n';
+  P_style += '- Hair: ' + inp.hair + '\n';
+  P_style += '- Eyes / features: ' + inp.eyes + '\n';
+  P_style += '- Skin tone: ' + inp.skin + '\n';
+  P_style += '- Outfit (worn on every page, unchanged): ' + inp.outfit + '\n';
+  P_style += '- Signature color (recurring accent): ' + inp.color + '\n';
+  P_style += '- Signature prop (present on every page): ' + inp.prop + '\n';
+  P_style += '- Helper character name: ' + inp.helperName + '\n';
+  P_style += '- Helper species / type: ' + inp.helperSpecies + '\n';
+  P_style += '- Helper consistency: drawn identically on every page where the helper appears.\n\n';
+  P_style += 'ART DIRECTION BLOCK:\n';
+  P_style += '- Illustration style: ' + style.name + ' — ' + style.desc + '.\n';
+  P_style += '- Palette: ' + style.palette + '. No colors outside this palette.\n';
+  P_style += '- Line weight: ' + style.line + '.\n';
+  P_style += '- Backgrounds: ' + style.bg + '.\n\n';
+  if(bilingual){
+    P_style += 'LANGUAGE LAYOUT:\n';
+    P_style += '- English text in the upper text band, ' + lang + ' translation directly beneath.\n';
+    P_style += '- Translation quality: natural, age-appropriate, never literal word-for-word.\n\n';
+  } else {
+    P_style += 'LANGUAGE LAYOUT:\n';
+    P_style += '- Single English text block in the upper text band, warm and read-aloud friendly.\n\n';
+  }
+  if(inp.textFree){
+    P_style += 'TEXT HANDLING:\n';
+    P_style += '- TEXT-FREE illustrations — reserve the upper text band (top 18–22% of page height) for typesetting in a separate pass.\n\n';
+  } else {
+    P_style += 'TEXT HANDLING:\n';
+    P_style += '- TEXT RENDERED INSIDE THE IMAGES. The title (on covers) and the story line (on interior pages) appear as warm rounded display typography (Fraunces / Baloo 2 / Quicksand Bold / Lora Bold for titles, Nunito / Quicksand / Inter for subtitles and body), in deep cocoa brown #3d2b1f or warm charcoal #4a3a2c, never pure black, centered horizontally in the reserved top text band (top 22% of the canvas).\n\n';
+  }
+  P_style += 'CONSISTENCY RULES:\n';
+  P_style += '- Every page includes footer "[page number]".\n';
+  P_style += '- Every page, cover, and spread uses the exact CHARACTER BLOCK above.\n';
+  P_style += '- Every page and cover uses the exact BOOK FORMAT above.\n';
+  P_style += '- No dense text blocks. Ample white space for the illustration.\n\n';
+
+  // ---- 8 COVER PROMPT (with size + character lock repeated) ----
+  var P_cover = '8. COVER PROMPT (4 covers)\n';
+  P_cover += 'Canvas for all 4 covers: ' + fmt.dims + ' @ 300 DPI (' + fmt.trim + ').\n';
+  P_cover += 'Apply the CHARACTER BLOCK from section 7 exactly on every cover (name, species, hair, eyes, skin, outfit, signature color, signature prop).\n';
+  P_cover += 'Apply the ART DIRECTION BLOCK from section 7 exactly on every cover.\n\n';
+
+  P_cover += 'Cover 1 — Front, Full-Color (' + fmt.dims + ', 300 DPI): ' + inp.name + ' in a hero pose.';
+  if(inp.textFree){
+    P_cover += ' TEXT-FREE artwork (no typography inside the image).';
+  } else if(bilingual){
+    P_cover += ' TEXT RENDERED INSIDE THE IMAGE: English title "' + title + '" dominant at the top, ' + lang + ' title (natural translation) directly beneath, English subtitle "' + subtitle + '" below that, ' + lang + ' subtitle beneath that';
+    if(inp.hasAuthor){ P_cover += ', author credit "Created by ' + inp.author + '" small beneath the subtitle'; }
+    P_cover += '. Layout: centered in the reserved top ' + fmt.textBandPct + '% text band.';
+  } else {
+    P_cover += ' TEXT RENDERED INSIDE THE IMAGE: English title "' + title + '" dominant at the top, subtitle "' + subtitle + '" below';
+    if(inp.hasAuthor){ P_cover += ', author credit "Created by ' + inp.author + '" small beneath the subtitle'; }
+    P_cover += '. Layout: centered in the reserved top ' + fmt.textBandPct + '% text band.';
+  }
+  P_cover += '\n';
+
+  P_cover += 'Cover 2 — Back, Full-Color (' + fmt.dims + ', 300 DPI): ' + inp.name + ' in a smaller relaxed vignette.';
+  if(inp.textFree){
+    P_cover += ' TEXT-FREE.';
+  } else {
+    P_cover += ' Back-cover blurb rendered in the lower part of the cover: "A ' + (bilingual ? 'bilingual ' : '') + 'read-aloud storybook about ' + lesson.title.toLowerCase() + ', illustrated in the ' + style.name + ' style. A matching Coloring Edition is included for hands-on coloring fun."';
+    if(bilingual){ P_cover += ' English blurb first, ' + lang + ' translation directly beneath.'; }
+    if(inp.hasAuthor){ P_cover += ' "Created by ' + inp.author + '" at the bottom.'; }
+  }
+  P_cover += ' Reserve barcode zone bottom-right.\n';
+
+  P_cover += 'Cover 3 — Front, Coloring Edition (' + fmt.dims + ', 300 DPI): line art version of Cover 1.';
+  if(inp.textFree){
+    P_cover += ' TEXT-FREE.';
+  } else {
+    P_cover += ' Same title and subtitle as Cover 1 as bold crisp black lettering on the white line-art background, same position, same font family.';
+  }
+  P_cover += '\n';
+
+  P_cover += 'Cover 4 — Back, Coloring Edition (' + fmt.dims + ', 300 DPI): line art version of Cover 2.';
+  if(inp.textFree){
+    P_cover += ' TEXT-FREE.';
+  } else {
+    P_cover += ' Same back-cover blurb as Cover 2 as bold crisp black lettering on white, same position.';
+  }
+  P_cover += '\n\n';
+
+  // ---- 9 PAGE-BY-PAGE PLAN (with size + character lock inline in each prompt) ----
+  var P_pages = '9. PAGE-BY-PAGE STORY PLAN (' + totalPages + ' pages total)\n';
+  P_pages += 'Canvas for every page: ' + fmt.dims + ' @ 300 DPI (' + fmt.trim + ').\n';
+  P_pages += 'Apply the CHARACTER BLOCK from section 7 exactly on every page (name, species, hair, eyes, skin, outfit, signature color, signature prop).\n';
+  P_pages += 'Apply the ART DIRECTION BLOCK from section 7 exactly on every page.\n\n';
+
+  for(var ip=0; ip<pages.length; ip++){
+    var p2 = pages[ip];
+    var tag = p2.isExpansion ? ' [EXPANSION]' : '';
+    P_pages += 'Page ' + p2.num + tag + ': "' + p2.ins + '" — Purpose: ' + (p2.isExpansion ? 'bonus content spread' : 'story beat ' + p2.num) + '. ';
+    if(bilingual){
+      P_pages += 'Text (render inside image): EN "' + p2.text + '" / ' + lang + ' natural translation. ';
+    } else {
+      P_pages += 'Text (render inside image): "' + p2.text + '". ';
+    }
+    P_pages += 'Image Prompt: "Canvas ' + fmt.dims + ' @ 300 DPI (' + fmt.trim + '). ' + style.name + ' illustration. Character lock applied exactly (name: ' + inp.name + '; species: ' + inp.species + '; hair: ' + inp.hair + '; eyes: ' + inp.eyes + '; skin: ' + inp.skin + '; outfit: ' + inp.outfit + '; signature color: ' + inp.color + '; signature prop: ' + inp.prop + '). Footer [page ' + p2.num + ']';
+    if(inp.textFree){ P_pages += ', text-free — reserve upper text band'; }
+    else { P_pages += ', with the story text rendered in the upper text band'; }
+    P_pages += '."\n';
+  }
+  P_pages += '\n';
+
+  // ---- 10 PRODUCT VERSION SUGGESTIONS ----
+  var P_versions = '10. PRODUCT VERSION SUGGESTIONS\n';
+  P_versions += 'Starter Version (16–20 pages): the opening arc beats, the central conflict and helper introduction, the resolution, and a shortened reflection — a compact read-aloud edition at the same ' + fmt.trim + ' trim.\n';
+  P_versions += 'Standard Version (' + totalPages + ' pages): the full storybook blueprint as described above at the same ' + fmt.trim + ' trim, with the complete arc from opening through reflection and all four covers.\n';
+  P_versions += 'Expanded Version (adds 8–16 pages): additional reflection spreads, a "draw your favorite moment" activity page, a "how I felt" check-in spread, a mini-map or bonus scene spread, and a "next adventure" wish-list page — all kept inside the same Character Block, Art Direction Block, and ' + fmt.trim + ' book format.\n';
+
+  var P = 'CREATE A COMPLETE ' + (bilingual ? 'BILINGUAL ' : '') + 'READ-AND-COLOR STORYBOOK BLUEPRINT following the exact structure below. This is a UNIQUE, HIGH-CREATIVITY variation. ' + P_chaos;
+  P += P_title;
+  P += P_author;
+  P += P_audience;
+  P += P_desc;
+  P += P_seo;
+  P += P_overview;
+  P += P_style;
+  P += P_cover;
+  P += P_pages;
+  P += P_versions;
+
+  return { full: P };
+}
+
+function renderOutput(sections){
+  lastSections = sections;
+  $('promptDisplay').textContent = sections.full;
+  var words = sections.full.split(/\s+/).filter(function(w){return w.length>0;}).length;
+  var chars = sections.full.length;
+  var sectionsCount = (sections.full.match(/^\d+\. /gm) || []).length;
+  $('countChip').textContent = words.toLocaleString() + ' words · ' + chars.toLocaleString() + ' chars · ' + sectionsCount + ' sections';
+  updateTags();
+}
+
+function updateTags(){
+  var langTag;
+  if(secondaryLangEnabled){
+    langTag = '<span class="tag">🌐 EN + ' + $('selSecondary').value + '</span>';
+  } else {
+    langTag = '<span class="tag warn">🇬🇧 English-only</span>';
+  }
+  var textTag = textFreeMode
+    ? '<span class="tag warn">✏️ Text-free</span>'
+    : '<span class="tag gold">📝 Text inside images</span>';
+  var tagsHtml =
+    '<span class="tag">🎯 ' + ($('inpTheme').value.replace(/^\s+|\s+$/g,'') || 'no theme').slice(0,32) + '</span>' +
+    '<span class="tag">👶 ' + $('selAge').value + ' yrs</span>' +
+    '<span class="tag">📄 ' + pageCount + ' pages</span>' +
+    '<span class="tag">🎨 ' + STYLES[selectedStyle].name + '</span>' +
+    '<span class="tag">📐 ' + FORMATS[selectedFormat].name + '</span>' +
+    langTag +
+    textTag +
+    '<span class="tag">🌀 Chaos: ' + chaosLevel + '/5</span>';
+  $('settingsTags').innerHTML = tagsHtml;
+}
+
+function generate(){
+  var inp = readInputs();
+  var err = validateInputs(inp);
+  if(err){ showToast(err); return; }
+  variationCount++;
+  $('variationCounter').textContent = '🌀 Variations generated: ' + variationCount;
+  markDone(4);
+  var sections = buildPrompt(inp);
+  renderOutput(sections);
+  var label = inp.bilingual ? 'bilingual' : 'English-only';
+  var authorLabel = inp.hasAuthor ? ('by ' + inp.author) : 'no author';
+  setSummary(5, 'Built · ' + label + ' · ' + authorLabel + ' · ' + pageCount + ' pages');
+  markDone(5);
+  saveProject(inp);
+  showToast('✦ Prompt assembled — ready to copy!');
+}
+
+function regenerate(){
+  if(!lastSections){ showToast('Generate a prompt first, then regenerate.'); return; }
+  var inp = readInputs();
+  var err = validateInputs(inp);
+  if(err){ showToast(err); return; }
+  variationCount++;
+  $('variationCounter').textContent = '🌀 Variations generated: ' + variationCount;
+  var sections = buildPrompt(inp);
+  renderOutput(sections);
+  saveProject(inp);
+  showToast('↻ Fresh variation — new arc and phrasing.');
+}
+
+function newProject(){
+  if(!window.confirm('Start a new project? This clears the wizard and the current prompt.')){ return; }
+  $('inpTheme').value = '';
+  $('inpName').value = '';
+  $('inpSpecies').value = 'a human child';
+  $('inpHair').value = 'soft chestnut-brown hair';
+  $('inpEyes').value = 'large friendly hazel eyes';
+  $('inpSkin').value = 'warm tan skin';
+  $('inpOutfit').value = 'a teal sweater with a mustard-yellow scarf';
+  $('inpColor').value = 'warm amber';
+  $('inpProp').value = 'a small star-shaped satchel';
+  $('inpHelperName').value = 'Nina';
+  $('inpHelperSpecies').value = 'a small worried owl with soft brown feathers';
+  $('inpAuthor').value = '';
+  $('selSecondary').selectedIndex = 0;
+  $('selAge').selectedIndex = 1;
+  $('selLesson').selectedIndex = 0;
+  selectedStyle = 0;
+  selectedFormat = 0;
+  textFreeMode = false;
+  secondaryLangEnabled = true;
+  chaosLevel = 3;
+  pageCount = 24;
+  variationCount = 0;
+  $('chaosSlider').value = 3;
+  $('chaosDisplay').textContent = '3';
+  $('variationCounter').textContent = '🌀 Variations generated: 0';
+  var tr = $('toggleTextFree'); if(tr) tr.classList.remove('on');
+  var tr2 = $('toggleSecondary'); if(tr2) tr2.classList.add('on');
+  var block = $('langSecondaryBlock'); if(block){ block.style.opacity='1'; block.style.pointerEvents='auto'; }
+  updateLangWarning();
+  updateAuthorStatus();
+  buildStyleGrid();
+  buildFormatGrid();
+  var pcGrid = $('pageCountGrid');
+  if(pcGrid){
+    var btns = pcGrid.querySelectorAll('.page-count-btn');
+    for(var i=0; i<btns.length; i++){
+      btns[i].classList.remove('selected');
+      if(parseInt(btns[i].getAttribute('data-count'),10) === 24){ btns[i].classList.add('selected'); }
+    }
+  }
+  lastSections = null;
+  $('promptDisplay').textContent = 'Fill in the wizard on the left, then press Generate Blueprint.';
+  $('countChip').textContent = '0 words · 0 chars · 0 sections';
+  $('settingsTags').innerHTML = '';
+  for(var j=1; j<=5; j++){
+    var s = $('step'+j);
+    if(s){ s.className = 'step' + (j===1 ? ' open' : ''); }
+    setSummary(j, '');
+  }
+  try{ window.localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  updateThemeMeta();
+  updateTitlePreview();
+  showToast('New project started.');
+}
+
+function copyFull(){
+  if(!lastSections){ showToast('Generate a prompt first.'); return; }
+  var text = lastSections.full;
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); showToast('⧉ Copied to clipboard.'); }
+    catch(e2){ showToast('Copy failed — select manually.'); }
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      showToast('⧉ Copied to clipboard.');
+    }, function(){ fallback(); });
+  } else { fallback(); }
+}
+
+function exportPrompt(){
+  if(!lastSections){ showToast('Generate a prompt first.'); return; }
+  try{
+    var blob = new Blob([lastSections.full], {type:'text/plain;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var name = 'prompt_' + ($('inpName').value.replace(/[^A-Za-z0-9]+/g,'_') || 'book') + '_' + pageCount + 'p_' + FORMATS[selectedFormat].id + (secondaryLangEnabled ? ('_' + $('selSecondary').value.replace(/[^A-Za-z0-9]+/g,'_')) : '_english');
+    a.href = url;
+    a.download = name + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    showToast('💾 Exported as .txt');
+  }catch(e){ showToast('Export not supported.'); }
+}
+
+var toastTimer = null;
+function showToast(msg){
+  var t = $('toast');
+  t.innerHTML = '';
+  t.appendChild(document.createTextNode(msg));
+  t.className = 'toast show';
+  if(toastTimer){ window.clearTimeout(toastTimer); }
+  toastTimer = window.setTimeout(function(){ t.className = 'toast'; }, 2400);
+}
+
+function saveProject(inp){
+  try{
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      v: 16,
+      inp: inp,
+      outputs: lastSections,
+      styleIdx: selectedStyle,
+      formatIdx: selectedFormat,
+      textFree: textFreeMode,
+      secondaryLang: secondaryLangEnabled,
+      author: inp.author,
+      chaos: chaosLevel,
+      pageCount: pageCount,
+      variationCount: variationCount
+    }));
+  }catch(e){}
+}
+
+function loadProject(){
+  var raw = null;
+  try{ raw = window.localStorage.getItem(STORAGE_KEY); }catch(e){}
+  if(!raw) return false;
+  try{
+    var data = JSON.parse(raw);
+    if(!data || !data.inp) return false;
+    var inp = data.inp;
+    if(typeof data.secondaryLang === 'boolean'){
+      secondaryLangEnabled = data.secondaryLang;
+      var tr2 = $('toggleSecondary');
+      if(tr2){ if(secondaryLangEnabled) tr2.classList.add('on'); else tr2.classList.remove('on'); }
+      var block = $('langSecondaryBlock');
+      if(block){ block.style.opacity = secondaryLangEnabled ? '1' : '0.4'; block.style.pointerEvents = secondaryLangEnabled ? 'auto' : 'none'; }
+    }
+    if(typeof data.textFree === 'boolean'){
+      textFreeMode = data.textFree;
+      var tr = $('toggleTextFree');
+      if(tr){ if(textFreeMode) tr.classList.add('on'); else tr.classList.remove('on'); }
+    }
+    if(typeof data.chaos === 'number'){
+      chaosLevel = data.chaos;
+      $('chaosSlider').value = chaosLevel;
+      $('chaosDisplay').textContent = chaosLevel;
+    }
+    if(typeof data.variationCount === 'number'){
+      variationCount = data.variationCount;
+      $('variationCounter').textContent = '🌀 Variations generated: ' + variationCount;
+    }
+    if(typeof data.pageCount === 'number'){
+      pageCount = data.pageCount;
+      var pcGrid = $('pageCountGrid');
+      if(pcGrid){
+        var pcBtns = pcGrid.querySelectorAll('.page-count-btn');
+        for(var pi=0; pi<pcBtns.length; pi++){
+          pcBtns[pi].classList.remove('selected');
+          if(parseInt(pcBtns[pi].getAttribute('data-count'),10) === pageCount){ pcBtns[pi].classList.add('selected'); }
+        }
+      }
+    }
+    if(typeof data.formatIdx === 'number'){
+      selectedFormat = data.formatIdx;
+      buildFormatGrid();
+    }
+    $('selSecondary').value = inp.lang !== 'English' ? inp.lang : 'Spanish';
+    $('inpTheme').value = inp.theme;
+    $('selAge').value = inp.age;
+    $('selLesson').value = inp.lessonKey;
+    $('inpName').value = inp.name;
+    $('inpSpecies').value = inp.species;
+    $('inpHair').value = inp.hair;
+    $('inpEyes').value = inp.eyes;
+    $('inpSkin').value = inp.skin;
+    $('inpOutfit').value = inp.outfit;
+    $('inpColor').value = inp.color;
+    $('inpProp').value = inp.prop;
+    if(inp.helperName) $('inpHelperName').value = inp.helperName;
+    if(inp.helperSpecies) $('inpHelperSpecies').value = inp.helperSpecies;
+    if(inp.author) $('inpAuthor').value = inp.author;
+    updateLangWarning();
+    updateAuthorStatus();
+    if(typeof data.styleIdx === 'number'){
+      selectedStyle = data.styleIdx;
+      buildStyleGrid();
+    }
+    if(data.outputs){
+      lastSections = data.outputs;
+      renderOutput(lastSections);
+    }
+    for(var i=1; i<=4; i++){ markDone(i); }
+    setSummary(1, secondaryLangEnabled ? ('English + ' + $('selSecondary').value) : 'English-only');
+    setSummary(2, '"' + trimTo(inp.theme, 30) + '" · ages ' + inp.age);
+    setSummary(3, inp.name + ' + ' + (inp.helperName || 'helper') + (inp.author ? (' · by ' + trimTo(inp.author, 16)) : ' · no author'));
+    setSummary(4, STYLES[selectedStyle].name + ' · ' + FORMATS[selectedFormat].name);
+    setSummary(5, 'Prompt restored');
+    markDone(5);
+    openOnly(1);
+    updateThemeMeta();
+    updateTitlePreview();
+    return true;
+  }catch(e){ return false; }
+}
+
+function init(){
+  buildStyleGrid();
+  buildFormatGrid();
+  buildPageCountGrid();
+  loadProject();
+  renderIdeaChips();
+  updateThemeMeta();
+  updateTitlePreview();
+  updateLangWarning();
+  updateAuthorStatus();
+
+  $('inpTheme').addEventListener('input', function(){ updateThemeMeta(); updateTitlePreview(); });
+  $('inpName').addEventListener('input', updateTitlePreview);
+  $('selLesson').addEventListener('change', updateTitlePreview);
+  $('inpAuthor').addEventListener('input', updateAuthorStatus);
+  $('selSecondary').addEventListener('change', function(){
+    if($('step1').classList.contains('done')){
+      setSummary(1, secondaryLangEnabled ? ('English + ' + $('selSecondary').value) : 'English-only');
+    }
+    updateTags();
+  });
+
+  $('chaosSlider').addEventListener('input', function(e){
+    chaosLevel = parseInt(e.target.value, 10);
+    $('chaosDisplay').textContent = chaosLevel;
+    updateTags();
+  });
+
+  $('copyBtn').addEventListener('click', function(){
+    copyFull();
+    this.innerHTML = '✓ Copied!';
+    this.classList.add('copied');
+    var self = this;
+    setTimeout(function(){ self.innerHTML = '📋 Copy Full Prompt'; self.classList.remove('copied'); }, 2000);
+  });
+}
+
+window.toggleStep = toggleStep;
+window.openOnly = openOnly;
+window.nextStep = nextStep;
+window.generate = generate;
+window.regenerate = regenerate;
+window.newProject = newProject;
+window.copyFull = copyFull;
+window.exportPrompt = exportPrompt;
+window.generateIdea = generateIdea;
+window.toggleTextFree = toggleTextFree;
+window.toggleSecondaryLang = toggleSecondaryLang;
+window.generateMainCharacter = generateMainCharacter;
+window.generateHelperCharacter = generateHelperCharacter;
+window.generateBothCharacters = generateBothCharacters;
+
+init();
+</script>
+</body>
+</html>
