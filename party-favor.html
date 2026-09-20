@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Party Favor Coloring Pack Engine | Unlimited Generative Power</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-dark:#2b1a3d;
+  --bg-sidebar:#231533;
+  --bg-card:#3a2354;
+  --bg-main:#fff9f0;
+  --accent:#ff4f81;
+  --accent2:#ffc93c;
+  --accent3:#4fd1c5;
+  --text-light:#f6f1fa;
+  --text-muted:#b8a8cc;
+  --text-dark:#2b1a3d;
+  --warn:#e07a5f;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:'Baloo 2',sans-serif;
+  background:var(--bg-main);
+  color:var(--text-dark);
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+#engineDiag{
+  display:none;
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#b3261e;color:#fff;
+  font-family:'Nunito',sans-serif;font-size:13px;
+  padding:10px 16px;
+}
+.layout{display:flex;flex:1;min-height:0;}
+.wizard{
+  width:410px;flex-shrink:0;
+  background:var(--bg-sidebar);
+  color:var(--text-light);
+  overflow-y:auto;
+  padding:1.6rem 1.2rem 2.5rem;
+  border-right:1px solid rgba(184,168,204,0.18);
+}
+.wizard-header{
+  margin-bottom:1.2rem;
+  padding-bottom:1rem;
+  border-bottom:1px solid rgba(184,168,204,0.15);
+}
+.wizard-header h2{
+  font-size:1.3rem;font-weight:800;
+  color:var(--accent);letter-spacing:0.3px;line-height:1.15;
+}
+.wizard-header h2 .gold{color:var(--accent2);}
+.wizard-header h2 .teal{color:var(--accent3);}
+.wizard-header p{
+  font-family:'Nunito',sans-serif;
+  font-size:0.78rem;color:var(--text-muted);
+  margin-top:0.35rem;line-height:1.4;
+}
+.step{
+  background:var(--bg-card);
+  border-radius:12px;
+  margin-bottom:10px;
+  border:1px solid rgba(184,168,204,0.2);
+  overflow:hidden;
+}
+.step.done{border-color:rgba(79,209,197,0.4);}
+.step-head{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;cursor:pointer;
+  user-select:none;transition:background .15s;
+}
+.step-head:hover{background:rgba(255,79,129,0.08);}
+.step-num{
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(255,201,60,0.15);
+  border:1.5px solid var(--accent2);
+  color:var(--accent2);
+  font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+}
+.step.done .step-num,.step.open .step-num{
+  background:var(--accent);border-color:var(--accent);
+  color:#fff;
+}
+.step.open .step-num{box-shadow:0 0 0 4px rgba(255,79,129,0.2);}
+.step-title{font-size:13.5px;font-weight:700;flex:1;line-height:1.25;}
+.step-summary{
+  display:none;
+  font-family:'Nunito',sans-serif;
+  font-size:10.5px;color:var(--text-muted);
+  margin-top:3px;font-weight:500;
+  max-width:270px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.step.done.collapsed .step-summary{display:block;}
+.step-chev{
+  width:20px;height:20px;flex-shrink:0;
+  color:var(--text-muted);transition:transform .2s;
+}
+.step.open .step-chev{transform:rotate(180deg);color:var(--accent);}
+.step-body{
+  display:none;padding:4px 15px 16px;
+  border-top:1px solid rgba(184,168,204,0.15);
+}
+.step.open .step-body{display:block;}
+.field{margin-top:12px;}
+.field label{
+  display:block;font-family:'Nunito',sans-serif;
+  font-size:10.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.5px;
+  color:var(--text-muted);margin-bottom:6px;
+}
+.field input[type=text],.field input[type=number],.field select,.field textarea{
+  width:100%;background:#1a0f28;
+  border:1px solid rgba(184,168,204,0.3);
+  color:var(--text-light);
+  font-family:'Nunito',sans-serif;
+  font-size:12.5px;padding:9px 11px;
+  border-radius:8px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.field input:focus,.field select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(255,79,129,0.15);
+}
+.field select{cursor:pointer;}
+.field select option{background:#1a0f28;}
+.hint{
+  font-family:'Nunito',sans-serif;
+  font-size:10.5px;color:var(--text-muted);
+  margin-top:5px;line-height:1.45;
+}
+.two-col{display:flex;gap:8px;}
+.two-col .field{flex:1;min-width:0;}
+
+.theme-row{
+  display:flex;gap:6px;align-items:stretch;
+  margin-top:6px;
+}
+.theme-row input{flex:1;}
+.theme-btn{
+  background:linear-gradient(135deg,var(--accent3),#7fe0d5);
+  color:#1a0f28;
+  font-family:'Baloo 2',sans-serif;
+  font-size:11.5px;font-weight:800;
+  border:none;border-radius:8px;
+  padding:0 12px;cursor:pointer;
+  white-space:nowrap;
+  transition:filter .15s,transform .1s;
+  display:flex;align-items:center;gap:4px;
+}
+.theme-btn:hover{filter:brightness(1.1);}
+.theme-btn:active{transform:translateY(1px);}
+.theme-meta{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Nunito',sans-serif;font-size:10px;
+  color:var(--text-muted);margin-top:5px;gap:8px;
+}
+.theme-chip-row{
+  display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;
+}
+.theme-chip{
+  font-family:'Nunito',sans-serif;font-size:10px;
+  background:rgba(79,209,197,0.12);
+  border:1px solid rgba(79,209,197,0.3);
+  color:var(--accent3);
+  padding:3px 8px;border-radius:999px;
+  cursor:pointer;
+  transition:background .15s;
+}
+.theme-chip:hover{background:rgba(79,209,197,0.25);}
+
+.style-grid{display:flex;flex-direction:column;gap:7px;margin-top:6px;}
+.style-card{
+  display:flex;align-items:flex-start;gap:10px;
+  background:#1a0f28;
+  border:1.5px solid rgba(184,168,204,0.25);
+  border-radius:9px;padding:9px 11px;
+  cursor:pointer;transition:all .15s;
+}
+.style-card:hover{border-color:var(--accent3);}
+.style-card.selected{
+  border-color:var(--accent2);
+  background:rgba(255,201,60,0.08);
+  box-shadow:0 0 0 3px rgba(255,201,60,0.12);
+}
+.style-dot{
+  width:16px;height:16px;border-radius:50%;
+  margin-top:2px;flex-shrink:0;
+  border:2px solid rgba(255,255,255,0.5);
+}
+.style-card .sname{font-size:12.5px;font-weight:700;color:var(--text-light);}
+.style-card .sdesc{
+  font-family:'Nunito',sans-serif;font-size:10.5px;
+  color:var(--text-muted);line-height:1.45;margin-top:2px;
+}
+.btn{
+  font-family:'Baloo 2',sans-serif;font-size:12.5px;
+  font-weight:700;border-radius:9px;cursor:pointer;
+  padding:10px 16px;border:none;
+  transition:filter .15s,transform .1s;
+}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#ff7aa2);color:#fff;box-shadow:0 3px 10px rgba(255,79,129,0.3);}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-secondary{background:transparent;border:1.5px solid var(--accent3);color:var(--accent3);}
+.btn-secondary:hover{background:rgba(79,209,197,0.12);}
+.btn-ghost{background:transparent;border:1.5px solid rgba(184,168,204,0.4);color:var(--text-muted);}
+.btn-ghost:hover{color:var(--text-light);border-color:var(--text-muted);}
+.btn-big{
+  width:100%;font-size:14px;padding:13px 16px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#231533;
+  box-shadow:0 4px 14px rgba(255,79,129,0.35);
+  margin-top:14px;font-weight:800;letter-spacing:0.3px;
+}
+.btn-mini{font-size:10.5px;padding:6px 10px;font-weight:700;border-radius:7px;}
+.step-nav{margin-top:14px;display:flex;justify-content:flex-end;gap:8px;}
+.toggle-row{
+  display:flex;align-items:center;gap:10px;
+  margin-top:9px;padding:9px 11px;
+  background:#1a0f28;
+  border:1.5px solid rgba(184,168,204,0.25);
+  border-radius:9px;cursor:pointer;user-select:none;
+  transition:border-color .15s,background .15s;
+}
+.toggle-row:hover{border-color:var(--accent3);}
+.toggle-row.on{border-color:var(--accent2);background:rgba(255,201,60,0.06);}
+.toggle-switch{
+  width:36px;height:20px;
+  background:rgba(184,168,204,0.3);
+  border-radius:999px;position:relative;
+  flex-shrink:0;transition:background .15s;
+}
+.toggle-row.on .toggle-switch{background:var(--accent2);}
+.toggle-knob{
+  position:absolute;top:2px;left:2px;
+  width:16px;height:16px;background:var(--bg-main);
+  border-radius:50%;transition:left .15s;
+  box-shadow:0 1px 3px rgba(0,0,0,0.3);
+}
+.toggle-row.on .toggle-knob{left:18px;}
+.toggle-text{flex:1;}
+.toggle-label{font-size:12px;font-weight:700;color:var(--text-light);}
+.toggle-desc{
+  font-family:'Nunito',sans-serif;font-size:10px;
+  color:var(--text-muted);margin-top:2px;line-height:1.4;
+}
+.chaos-slider-container{display:flex;align-items:center;gap:0.6rem;margin-top:6px;}
+.chaos-slider{flex:1;accent-color:var(--accent);height:6px;cursor:pointer;}
+.chaos-value{color:var(--accent2);font-weight:800;min-width:32px;text-align:center;font-size:14px;}
+.page-count-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:7px;margin-top:6px;
+}
+.page-count-btn{
+  background:#1a0f28;
+  border:1.5px solid rgba(184,168,204,0.25);
+  border-radius:9px;padding:11px 4px;
+  text-align:center;cursor:pointer;
+  transition:all .15s;font-family:'Baloo 2',sans-serif;
+}
+.page-count-btn:hover{border-color:var(--accent3);}
+.page-count-btn.selected{
+  border-color:var(--accent2);
+  background:rgba(255,201,60,0.12);
+  box-shadow:0 0 0 3px rgba(255,201,60,0.15);
+}
+.page-count-btn .num{
+  font-size:19px;font-weight:800;
+  color:var(--accent2);line-height:1;
+}
+.page-count-btn.selected .num{color:var(--accent);}
+.page-count-btn .lbl{
+  font-family:'Nunito',sans-serif;
+  font-size:9px;font-weight:700;
+  color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:0.4px;
+  margin-top:3px;
+}
+.check-grid{display:flex;flex-direction:column;gap:7px;margin-top:6px;}
+.check-card{
+  display:flex;align-items:center;gap:10px;
+  background:#1a0f28;
+  border:1.5px solid rgba(184,168,204,0.22);
+  border-radius:9px;padding:9px 11px;
+  cursor:pointer;user-select:none;
+  transition:all .15s;
+}
+.check-card:hover{border-color:var(--accent3);}
+.check-card.checked{
+  border-color:var(--accent3);
+  background:rgba(79,209,197,0.08);
+}
+.check-box{
+  width:18px;height:18px;border-radius:5px;
+  border:2px solid rgba(184,168,204,0.5);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .15s;
+}
+.check-card.checked .check-box{
+  background:var(--accent3);border-color:var(--accent3);
+}
+.check-box svg{display:none;}
+.check-card.checked .check-box svg{display:block;}
+.check-card .clabel{font-size:12px;font-weight:600;}
+.check-card .cdesc{
+  font-family:'Nunito',sans-serif;font-size:10px;
+  color:var(--text-muted);line-height:1.4;margin-top:2px;
+}
+.author-block{
+  margin-top:10px;padding:11px;
+  background:rgba(255,201,60,0.06);
+  border:1px dashed rgba(255,201,60,0.35);
+  border-radius:9px;
+}
+.author-block .author-title{
+  font-family:'Nunito',sans-serif;
+  font-size:10.5px;font-weight:700;
+  letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--accent2);margin-bottom:7px;
+}
+.author-status{
+  font-family:'Nunito',sans-serif;
+  font-size:10.5px;margin-top:6px;line-height:1.4;
+}
+.author-status.provided{color:var(--accent3);}
+.author-status.empty{color:var(--text-muted);font-style:italic;}
+.gen-bar{
+  display:flex;gap:6px;align-items:center;
+  margin-top:6px;margin-bottom:4px;
+  padding:8px 10px;
+  background:linear-gradient(135deg, rgba(79,209,197,0.15), rgba(255,201,60,0.1));
+  border:1.5px dashed rgba(79,209,197,0.5);
+  border-radius:9px;
+}
+.gen-bar .gen-label{
+  font-family:'Nunito',sans-serif;
+  font-size:10.5px;font-weight:700;
+  letter-spacing:0.4px;text-transform:uppercase;
+  color:var(--accent3);flex:1;
+}
+.gen-btn{
+  background:linear-gradient(135deg,var(--accent3),#7fe0d5);
+  color:#1a0f28;
+  font-family:'Baloo 2',sans-serif;
+  font-size:11px;font-weight:800;
+  border:none;border-radius:7px;
+  padding:6px 11px;cursor:pointer;
+  white-space:nowrap;
+  transition:filter .15s,transform .1s;
+  display:flex;align-items:center;gap:4px;
+}
+.gen-btn:hover{filter:brightness(1.1);}
+.gen-btn:active{transform:translateY(1px);}
+.gen-btn.alt{
+  background:linear-gradient(135deg,var(--accent2),#ffe08a);
+  color:#1a0f28;
+}
+.helper-block{
+  margin-top:14px;padding:10px 11px;
+  background:rgba(79,209,197,0.05);
+  border:1px dashed rgba(79,209,197,0.35);
+  border-radius:9px;
+}
+.helper-block-title{
+  font-family:'Nunito',sans-serif;
+  font-size:10.5px;font-weight:700;
+  letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--accent3);margin-bottom:6px;
+}
+.main-content{
+  flex:1;background:var(--bg-main);
+  padding:1.8rem 2rem 2rem;
+  display:flex;flex-direction:column;
+  gap:1.2rem;overflow-y:auto;
+}
+.prompt-card{
+  background:#ffffff;border-radius:14px;
+  box-shadow:0 8px 26px rgba(43,26,61,0.08);
+  padding:1.7rem 1.8rem;
+  display:flex;flex-direction:column;
+  gap:1.1rem;
+  border:1px solid rgba(43,26,61,0.1);
+  transition:box-shadow .3s;
+}
+.prompt-card:hover{box-shadow:0 12px 34px rgba(43,26,61,0.12);}
+.card-header{
+  display:flex;justify-content:space-between;
+  align-items:center;flex-wrap:wrap;gap:1rem;
+}
+.card-title{
+  font-size:1rem;font-weight:700;
+  color:var(--text-dark);letter-spacing:0.15px;
+}
+.card-title .sub{
+  font-family:'Nunito',sans-serif;
+  font-size:0.72rem;font-weight:500;
+  color:#7a6b8e;margin-top:3px;
+}
+.copy-btn{
+  background:linear-gradient(135deg,var(--accent),#ff7aa2);
+  border:none;border-radius:9px;padding:0.7rem 1.4rem;
+  font-family:'Baloo 2',sans-serif;
+  font-weight:800;color:#fff;
+  display:flex;align-items:center;gap:0.5rem;
+  cursor:pointer;transition:0.2s;
+  font-size:0.85rem;letter-spacing:0.3px;
+  box-shadow:0 3px 10px rgba(255,79,129,0.3);
+}
+.copy-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.copy-btn.copied{background:#2c5e2e;color:white;}
+.prompt-text{
+  background:#fbf7ff;border-radius:10px;
+  padding:1.5rem 1.7rem;
+  font-family:'Courier New','Fira Code',monospace;
+  font-size:0.78rem;line-height:1.65;
+  white-space:pre-wrap;word-break:break-word;
+  color:var(--text-dark);
+  border:1px solid rgba(43,26,61,0.1);
+  border-left:5px solid var(--accent);
+  max-height:680px;overflow-y:auto;
+  letter-spacing:0.1px;
+}
+.tags{display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0.2rem;}
+.tag{
+  background:rgba(255,79,129,0.12);
+  color:#8a2952;padding:0.3rem 0.9rem;
+  border-radius:20px;
+  font-family:'Nunito',sans-serif;
+  font-size:0.68rem;font-weight:700;
+  letter-spacing:0.3px;
+  border:1px solid rgba(255,79,129,0.25);
+}
+.tag.warn{
+  background:rgba(224,122,95,0.15);
+  color:#8b3d22;
+  border-color:rgba(224,122,95,0.4);
+}
+.tag.gold{
+  background:rgba(255,201,60,0.15);
+  color:#7a5a10;
+  border-color:rgba(255,201,60,0.4);
+}
+.tag.fp{
+  background:rgba(79,209,197,0.15);
+  color:#2a6a64;
+  border-color:rgba(79,209,197,0.4);
+  font-family:'Courier New',monospace;
+}
+.variation-counter{
+  font-family:'Nunito',sans-serif;
+  font-size:0.7rem;color:var(--accent3);
+  background:rgba(79,209,197,0.1);
+  padding:0.4rem 0.9rem;border-radius:12px;
+  text-align:center;
+  border:1px solid rgba(79,209,197,0.25);
+  font-weight:700;margin-top:8px;
+}
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--bg-dark);color:var(--text-light);
+  font-family:'Nunito',sans-serif;
+  font-size:13px;font-weight:600;
+  padding:12px 18px;border-radius:10px;
+  border-left:4px solid var(--accent2);
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;
+  transform:translateY(8px);z-index:99;
+  max-width:340px;
+}
+.toast.show{opacity:1;transform:translateY(0);}
+@media (max-width:900px){
+  body{flex-direction:column;}
+  .layout{flex-direction:column;}
+  .wizard{width:100%;border-right:none;border-bottom:1px solid rgba(184,168,204,0.15);}
+  .main-content{padding:1.2rem;}
+}
+</style>
+</head>
+<body>
+<div id="engineDiag"></div>
+
+<div class="layout">
+  <aside class="wizard">
+
+    <div class="wizard-header">
+      <h2>🎉 Party Favor <span class="gold">Coloring</span> <span class="teal">Pack</span></h2>
+      <p>Unlimited personalized party packs — any event, any theme</p>
+    </div>
+
+    <div class="step open" id="step1">
+      <div class="step-head" onclick="toggleStep(1)">
+        <div class="step-num">1</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Event</div>
+          <div class="step-summary" id="sum1"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="field">
+          <label>Event Type</label>
+          <select id="selEvent">
+            <option value="Birthday">Birthday</option>
+            <option value="Baby Shower">Baby Shower</option>
+            <option value="Gender Reveal">Gender Reveal</option>
+            <option value="Graduation">Graduation</option>
+            <option value="Holiday Party">Holiday Party</option>
+            <option value="Back-to-School Party">Back-to-School Party</option>
+            <option value="Bridal Shower Kids' Table">Bridal Shower Kids' Table</option>
+            <option value="Retirement Party">Retirement Party</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Party Theme</label>
+          <div class="theme-row">
+            <input type="text" id="inpTheme" placeholder="e.g. under the sea, superheroes, unicorns, dinosaurs" maxlength="80">
+            <button class="theme-btn" onclick="generateTheme()" title="Generate a random party theme">🎲 Theme</button>
+          </div>
+          <div class="theme-meta">
+            <span id="themeCharCount">0 / 80 chars</span>
+            <span id="themeStatus"></span>
+          </div>
+          <div class="theme-chip-row" id="themeChips"></div>
+          <div class="hint">Type your own theme, or press <strong>🎲 Theme</strong> to generate one automatically.</div>
+        </div>
+        <div class="step-nav"><button class="btn btn-primary" onclick="nextStep(1,2)">Continue →</button></div>
+      </div>
+    </div>
+
+    <div class="step" id="step2">
+      <div class="step-head" onclick="toggleStep(2)">
+        <div class="step-num">2</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Guest of Honor</div>
+          <div class="step-summary" id="sum2"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+
+        <div class="gen-bar">
+          <span class="gen-label">⚡ Auto-Generate</span>
+          <button class="gen-btn" onclick="generateGuest()">🎲 Guest</button>
+          <button class="gen-btn alt" onclick="generateHelper()">🎲 Mascot</button>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Guest's Name</label>
+            <input type="text" id="inpName" placeholder="e.g. Mia" maxlength="40">
+          </div>
+          <div class="field">
+            <label>Age Turning</label>
+            <input type="number" id="inpAge" min="1" max="18" value="5">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Likeness Traits (optional)</label>
+          <div class="two-col">
+            <input type="text" id="inpHair" placeholder="Hair">
+            <input type="text" id="inpEyes" placeholder="Eyes">
+          </div>
+          <div class="two-col" style="margin-top:8px;">
+            <input type="text" id="inpSkin" placeholder="Skin tone">
+            <input type="text" id="inpOutfit" placeholder="Outfit">
+          </div>
+          <div class="hint">If blank, the engine builds a THEMED MASCOT / AVATAR Lock instead.</div>
+        </div>
+
+        <div class="helper-block">
+          <div class="helper-block-title">Mascot / Theme Guide</div>
+          <div class="two-col">
+            <div class="field" style="margin-top:2px;">
+              <label>Mascot Name</label>
+              <input type="text" id="inpMascotName" value="Buddy">
+            </div>
+            <div class="field" style="margin-top:2px;">
+              <label>Mascot Type</label>
+              <input type="text" id="inpMascotSpecies" value="a friendly themed mascot">
+            </div>
+          </div>
+          <button class="gen-btn alt" onclick="generateHelper()" style="width:100%;justify-content:center;margin-top:4px;">🎲 Regenerate Mascot</button>
+        </div>
+
+        <div class="author-block">
+          <div class="author-title">Creator / Author Name (Optional)</div>
+          <input type="text" id="inpAuthor" placeholder="Leave blank to publish without creator credit" maxlength="80">
+          <div class="author-status empty" id="authorStatus">
+            No creator name — the pack will be published without creator credit.
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="openOnly(1)">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep(2,3)">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="step3">
+      <div class="step-head" onclick="toggleStep(3)">
+        <div class="step-num">3</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Pack Contents</div>
+          <div class="step-summary" id="sum3"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="field">
+          <label>📄 Page Count</label>
+          <div class="page-count-grid" id="pageCountGrid">
+            <div class="page-count-btn" data-count="8"><div class="num">8</div><div class="lbl">pages</div></div>
+            <div class="page-count-btn selected" data-count="12"><div class="num">12</div><div class="lbl">pages</div></div>
+            <div class="page-count-btn" data-count="16"><div class="num">16</div><div class="lbl">pages</div></div>
+            <div class="page-count-btn" data-count="20"><div class="num">20</div><div class="lbl">pages</div></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Optional Extras</label>
+          <div class="check-grid" id="extrasGrid">
+            <div class="check-card checked" data-extra="thankyou">
+              <div class="check-box"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#231533" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div><div class="clabel">Thank-You Page</div><div class="cdesc">Coloring thank-you note guests take home</div></div>
+            </div>
+            <div class="check-card checked" data-extra="placemat">
+              <div class="check-box"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#231533" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div><div class="clabel">Table Placemat</div><div class="cdesc">Personalized coloring placemat / place card</div></div>
+            </div>
+            <div class="check-card checked" data-extra="designyourown">
+              <div class="check-box"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#231533" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div><div class="clabel">Design-Your-Own Blank Page</div><div class="cdesc">A blank themed template kids fill in</div></div>
+            </div>
+            <div class="check-card" data-extra="keepsake">
+              <div class="check-box"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#231533" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div><div class="clabel">Keepsake Full-Color Cover</div><div class="cdesc">Full-color version of cover + hero page</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Additional Guests / Names (optional)</label>
+          <input type="text" id="inpGuests" placeholder="e.g. Leo, Sofia, Grandma Rose" maxlength="160">
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="openOnly(2)">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep(3,4)">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="step4">
+      <div class="step-head" onclick="toggleStep(4)">
+        <div class="step-num">4</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Art Style</div>
+          <div class="step-summary" id="sum4"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="style-grid" id="styleGrid"></div>
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="openOnly(3)">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep(4,5)">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="step5">
+      <div class="step-head" onclick="toggleStep(5)">
+        <div class="step-num">5</div>
+        <div style="flex:1;min-width:0;">
+          <div class="step-title">Production Options</div>
+          <div class="step-summary" id="sum5"></div>
+        </div>
+        <svg class="step-chev" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="field">
+          <label>🌀 Creativity Chaos Level <span class="chaos-value" id="chaosDisplay">3</span></label>
+          <div class="chaos-slider-container">
+            <span>😌</span>
+            <input type="range" class="chaos-slider" id="chaosSlider" min="1" max="5" value="3" step="1">
+            <span>🤪</span>
+          </div>
+          <div class="hint">Higher = wilder bonus pages, surprise activities, unexpected extras.</div>
+        </div>
+
+        <div class="toggle-row on" id="toggleTextFree" onclick="toggleTextFree()">
+          <div class="toggle-switch"><div class="toggle-knob"></div></div>
+          <div class="toggle-text">
+            <div class="toggle-label">Text-Free Illustrations</div>
+            <div class="toggle-desc">Recommended for crisp KDP/print-quality typography.</div>
+          </div>
+        </div>
+
+        <div class="toggle-row on" id="toggleExtended" onclick="toggleExtended()">
+          <div class="toggle-switch"><div class="toggle-knob"></div></div>
+          <div class="toggle-text">
+            <div class="toggle-label">Extended Activities Pool</div>
+            <div class="toggle-desc">Sblocca 20+ tipi di pagina extra per variazioni illimitate.</div>
+          </div>
+        </div>
+
+        <button class="btn btn-big" onclick="generate()">⚡ Build My Party Pack Prompt</button>
+        <div class="variation-counter" id="variationCounter">🌀 Variations generated: 0</div>
+
+        <div class="step-nav" style="margin-top:12px;">
+          <button class="btn btn-ghost" onclick="openOnly(4)">← Back</button>
+          <button class="btn btn-secondary" onclick="newProject()">New Project</button>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <main class="main-content">
+    <div class="prompt-card">
+      <div class="card-header">
+        <div class="card-title">
+          🎉 Assembled Party Pack Prompt
+          <div class="sub" id="countChip">0 words · 0 chars · 0 sections</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="copy-btn" id="copyBtn">📋 Copy Full Prompt</button>
+          <button class="btn btn-ghost btn-mini" onclick="regenerate()">↻ Regenerate</button>
+          <button class="btn btn-ghost btn-mini" onclick="rerollManifest()" title="Rigenera solo il manifest">🎲 Reroll Manifest</button>
+          <button class="btn btn-ghost btn-mini" onclick="exportPrompt()">💾 Export .txt</button>
+        </div>
+      </div>
+      <div class="prompt-text" id="promptDisplay">Fill in the wizard on the left, then press <b>Build My Party Pack Prompt</b>.</div>
+      <div class="tags" id="settingsTags"></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+window.onerror = function(msg, src, line, col){
+  try{
+    var b = document.getElementById('engineDiag');
+    if(b){
+      b.style.display = 'block';
+      b.innerHTML = '';
+      b.appendChild(document.createTextNode('Script error: ' + msg + ' (line ' + line + ')'));
+    }
+  }catch(e2){}
+  return false;
+};
+</script>
+<script>
+var STORAGE_KEY = 'pfcp_v4_project';
+var THEMES_KEY = 'pfcp_v4_recent_themes';
+
+/* ============================================================
+   STYLE PRESETS
+   ============================================================ */
+var STYLES = [
+  { name:'Bright Cartoon Pop', dot:'#ff4f81',
+    desc:'bold saturated cartoon shapes with thick outlines and playful energy',
+    palette:'confetti pink, party gold, balloon teal, cherry red, sky blue, bright white',
+    line:'bold uniform black outlines, closed shapes with no gaps',
+    bg:'flat bright color fields with scattered confetti dots and simple geometric shapes' },
+  { name:'Pastel Dreamy', dot:'#f7b3d1',
+    desc:'soft pastel washes with gentle gradients and dreamy airy illustration',
+    palette:'baby pink, mint cream, lavender, butter yellow, powder blue, soft white',
+    line:'delicate thin outlines in soft grey, never harsh black',
+    bg:'watercolor-style pastel washes fading toward the page edges' },
+  { name:'Bold Graphic Confetti', dot:'#ffc93c',
+    desc:'modern graphic design energy — bold shapes, confetti bursts, poster-like composition',
+    palette:'hot pink, bright yellow, electric teal, black accents, white',
+    line:'variable-weight modern outlines with graphic punch',
+    bg:'layered geometric shapes, ribbon banners, and confetti scatter' },
+  { name:'Classic Storybook Soft', dot:'#c4a4d8',
+    desc:'warm classic picture-book look with fine linework and timeless charm',
+    palette:'soft rose, warm ochre, dusty teal, cream, cocoa brown, sage green',
+    line:'fine confident ink lines with light crosshatch shading',
+    bg:'detailed illustrated backdrops with plenty of clean white space' }
+];
+
+/* ============================================================
+   THEME VOCAB BANK
+   ============================================================ */
+var THEME_VOCAB_BANK = {
+  dinosaurs: {
+    keywords:['dino','dinosaur','jurassic','rex'],
+    label:'Dinosaur',
+    wordSearch:['DINOSAUR','TREX','FOSSIL','JUNGLE','ROAR','STOMP','VOLCANO','EGG','HATCH','ADVENTURE'],
+    mazeGoal:'a tiny T-Rex trying to reach a big volcano',
+    designYour:'Design Your Own Dinosaur',
+    designPrompt:'an empty dinosaur silhouette with space for scales, spots, and a name tag',
+    motifs:['palm leaves','volcanoes','dinosaur eggs','footprints','ferns','bone shapes'],
+    mascot:'a friendly cartoon dinosaur mascot with a big smile and little arms'
+  },
+  under_the_sea: {
+    keywords:['sea','ocean','underwater','mermaid','fish','reef'],
+    label:'Under-the-Sea',
+    wordSearch:['OCEAN','MERMAID','DOLPHIN','CORAL','SHELL','WAVE','TURTLE','STARFISH','BUBBLE','REEF'],
+    mazeGoal:'a little mermaid trying to reach her shell crown',
+    designYour:'Design Your Own Mermaid Tail',
+    designPrompt:'an empty mermaid tail outline with space for scales, patterns, and a signature color',
+    motifs:['shells','waves','bubbles','coral','sea stars','tiny fish'],
+    mascot:'a friendly little mermaid mascot with flowing hair and a shell tiara'
+  },
+  superheroes: {
+    keywords:['superhero','hero','super','cape','powers'],
+    label:'Superhero',
+    wordSearch:['HERO','CAPE','POWER','FLY','SAVE','MASK','SHIELD','BRAVE','TEAM','ADVENTURE'],
+    mazeGoal:'a young superhero trying to reach the hero headquarters',
+    designYour:'Design Your Own Superhero Cape',
+    designPrompt:'an empty cape and mask template with space for a logo, colors, and a superhero name',
+    motifs:['stars','lightning bolts','shields','capes','masks','city skylines'],
+    mascot:'a friendly cartoon superhero mascot with a flowing cape and a star emblem'
+  },
+  unicorns: {
+    keywords:['unicorn','rainbow','magic','fairy','sparkle'],
+    label:'Unicorn & Rainbow',
+    wordSearch:['UNICORN','RAINBOW','MAGIC','SPARKLE','FAIRY','CLOUD','HORN','DREAM','WISH','GLITTER'],
+    mazeGoal:'a little unicorn trying to reach the end of the rainbow',
+    designYour:'Design Your Own Unicorn',
+    designPrompt:'an empty unicorn outline with space for mane patterns, horn sparkles, and a name banner',
+    motifs:['rainbows','stars','hearts','clouds','flowers','sparkles'],
+    mascot:'a friendly cartoon unicorn mascot with a rainbow mane and a sparkly horn'
+  },
+  space: {
+    keywords:['space','astronaut','rocket','planet','galaxy','moon'],
+    label:'Space',
+    wordSearch:['ROCKET','PLANET','MOON','STAR','ASTRONAUT','GALAXY','ORBIT','COMET','LAUNCH','SPACE'],
+    mazeGoal:'a little astronaut trying to reach the moon',
+    designYour:'Design Your Own Planet',
+    designPrompt:'an empty planet circle with space for rings, craters, colors, and a planet name',
+    motifs:['stars','planets','rockets','moons','comets','constellations'],
+    mascot:'a friendly cartoon astronaut mascot with a big helmet and a tiny rocket'
+  },
+  jungle_safari: {
+    keywords:['jungle','safari','wild','animal','zoo','leopard'],
+    label:'Jungle Safari',
+    wordSearch:['JUNGLE','SAFARI','LION','TIGER','MONKEY','ELEPHANT','PARROT','LEAF','ADVENTURE','WILD'],
+    mazeGoal:'a little explorer trying to reach the hidden waterfall',
+    designYour:'Design Your Own Safari Hat',
+    designPrompt:'an empty safari hat outline with space for badges, patterns, and an explorer name',
+    motifs:['palm leaves','animal tracks','binoculars','leaves','sun rays','parrots'],
+    mascot:'a friendly cartoon lion cub mascot with a safari hat and binoculars'
+  },
+  princess: {
+    keywords:['princess','castle','royal','queen','kingdom','crown'],
+    label:'Princess',
+    wordSearch:['PRINCESS','CASTLE','CROWN','ROYAL','TIARA','BALL','DANCE','WISH','SPARKLE','KINGDOM'],
+    mazeGoal:'a little princess trying to reach the castle ballroom',
+    designYour:'Design Your Own Crown',
+    designPrompt:'an empty crown outline with space for jewels, patterns, and a royal name',
+    motifs:['crowns','hearts','stars','ribbons','flowers','castles'],
+    mascot:'a friendly cartoon princess mascot with a sparkly tiara and a flowing gown'
+  },
+  construction: {
+    keywords:['construction','truck','builder','digger','tools'],
+    label:'Construction',
+    wordSearch:['TRUCK','BUILD','DIGGER','HELMET','TOOLS','CRANE','SITE','DUMP','ENGINEER','HEAVY'],
+    mazeGoal:'a little builder trying to drive to the construction site',
+    designYour:'Design Your Own Construction Truck',
+    designPrompt:'an empty truck outline with space for colors, stripes, tools, and a truck name',
+    motifs:['tools','trucks','helmets','stripes','cones','blueprints'],
+    mascot:'a friendly cartoon builder mascot with a hard hat and a toolbox'
+  },
+  sports: {
+    keywords:['sport','soccer','football','basketball','team','game'],
+    label:'Sports',
+    wordSearch:['TEAM','BALL','GOAL','SCORE','PLAY','COACH','WIN','JERSEY','FIELD','CHAMPION'],
+    mazeGoal:'a little athlete trying to reach the trophy stand',
+    designYour:'Design Your Own Sports Jersey',
+    designPrompt:'an empty jersey outline with space for a number, name, colors, and a team logo',
+    motifs:['balls','stars','jerseys','trophies','whistles','field lines'],
+    mascot:'a friendly cartoon athlete mascot in a bright team jersey'
+  },
+  farm: {
+    keywords:['farm','barn','tractor','cow','chicken','horse'],
+    label:'Farm',
+    wordSearch:['FARM','BARN','TRACTOR','COW','HORSE','CHICKEN','HAY','EGG','FIELD','FRIEND'],
+    mazeGoal:'a little farmer trying to reach the red barn',
+    designYour:'Design Your Own Barn',
+    designPrompt:'an empty barn outline with space for doors, windows, patterns, and a farm name',
+    motifs:['barns','animals','hay bales','tractors','sun rays','flowers'],
+    mascot:'a friendly cartoon farm animal mascot with a little straw hat'
+  },
+  pirates: {
+    keywords:['pirate','treasure','ship','island','map'],
+    label:'Pirate',
+    wordSearch:['PIRATE','TREASURE','SHIP','ISLAND','MAP','GOLD','PARROT','ANCHOR','SAIL','CHEST'],
+    mazeGoal:'a little pirate trying to reach the treasure chest',
+    designYour:'Design Your Own Pirate Ship',
+    designPrompt:'an empty ship outline with space for sails, flags, colors, and a ship name',
+    motifs:['treasure chests','anchors','parrots','maps','compasses','gold coins'],
+    mascot:'a friendly cartoon pirate parrot mascot with a tiny pirate hat'
+  },
+  cats_dogs: {
+    keywords:['cat','kitten','dog','puppy','pet'],
+    label:'Cat & Dog',
+    wordSearch:['KITTEN','PUPPY','PAW','TAIL','MEOW','WOOF','WHISKER','FETCH','CUDDLE','FRIEND'],
+    mazeGoal:'a little kitten trying to reach the ball of yarn',
+    designYour:'Design Your Own Cat Collar',
+    designPrompt:'an empty collar outline with space for patterns, colors, and a pet name tag',
+    motifs:['paws','fish','yarn balls','bones','hearts','kittens','puppies'],
+    mascot:'a friendly cartoon kitten mascot with a little bow'
+  },
+  flowers_garden: {
+    keywords:['flower','garden','butterfly','bee','bloom'],
+    label:'Flower Garden',
+    wordSearch:['FLOWER','GARDEN','BLOOM','BUTTERFLY','BEE','PETAL','SUN','GROW','WATER','SEED'],
+    mazeGoal:'a little butterfly trying to reach the biggest flower',
+    designYour:'Design Your Own Flower',
+    designPrompt:'an empty flower outline with space for petals, colors, and a flower name',
+    motifs:['flowers','butterflies','bees','petals','leaves','watering cans'],
+    mascot:'a friendly cartoon butterfly mascot with rainbow wings'
+  },
+  sweet_treats: {
+    keywords:['candy','cupcake','sweet','donut','ice cream'],
+    label:'Sweet Treats',
+    wordSearch:['CANDY','CUPCAKE','DONUT','SUGAR','SPRINKLE','FROSTING','SWEET','TASTY','YUM','TREAT'],
+    mazeGoal:'a little cupcake trying to reach the frosting swirl',
+    designYour:'Design Your Own Cupcake',
+    designPrompt:'an empty cupcake outline with space for frosting, sprinkles, colors, and a flavor name',
+    motifs:['cupcakes','donuts','ice cream cones','candy','sprinkles','lollipops'],
+    mascot:'a friendly cartoon cupcake mascot with a cherry on top'
+  },
+  generic: {
+    keywords:[],
+    label:'Celebration',
+    wordSearch:['PARTY','FRIEND','CELEBRATE','HAPPY','CAKE','BALLOON','GIFT','CANDLE','SMILE','FUN'],
+    mazeGoal:'a little party friend trying to reach the birthday cake',
+    designYour:'Design Your Own Party Hat',
+    designPrompt:'an empty party hat outline with space for patterns, colors, and a name',
+    motifs:['balloons','stars','hearts','confetti','cupcakes','gifts'],
+    mascot:'a friendly cartoon party mascot with a party hat and a big smile'
+  }
+};
+
+/* ============================================================
+   THEME GENERATOR BANKS
+   ============================================================ */
+var THEME_GEN = {
+  complete: [
+    'under the sea','rainbow unicorns','superheroes','jungle safari',
+    'outer space adventure','magical princesses','construction zone','farm animals',
+    'dinosaur world','sports champions','fairy garden','ocean mermaids',
+    'pirate treasure hunt','circus carnival','sweet treats and candyland',
+    'bugs and butterflies','arctic penguins','jungle monkeys','moon and stars',
+    'rocket ships','cats and kittens','puppies and dogs','horses and ponies',
+    'woodland animals','flower garden','tropical luau','cupcake bakery',
+    'ice cream shop','donut party','taco fiesta','art studio','music and dance',
+    'superhero science lab','robots and gears','magical dragons','kawaii cute animals',
+    'fantasy elves and dwarves','glitter and sparkles','confetti explosion','balloon party'
+  ],
+  adjectives: [
+    'magical','rainbow','sparkly','friendly','cozy','sunny','glittering',
+    'dreamy','whimsical','bubbly','cheerful','enchanting','glowing',
+    'playful','silly','wiggly','cuddly','bouncy','sparkling','shimmering'
+  ],
+  subjects: [
+    'dragons','dinosaurs','robots','unicorns','mermaids','pirates',
+    'astronauts','butterflies','foxes','bunnies','owls','pandas',
+    'tigers','elephants','penguins','kittens','puppies','ponies',
+    'flowers','stars','cupcakes','donuts','moon clouds','rainbows',
+    'trucks','racecars','rockets','planets','castles','treasure chests',
+    'balloons','confetti poppers','suns','moons','oceans','volcanoes',
+    'lighthouses','camping tents','hot air balloons','paper boats'
+  ],
+  settings: [
+    'under the sea','in outer space','in the jungle','in a candy shop',
+    'in a magical forest','at the beach','in the clouds','at a carnival',
+    'in a fairy garden','on a pirate ship','at a farm','in a cozy village',
+    'at a summer camp','on a snowy mountain','at a tropical island',
+    'in a secret garden','at a night party','in the savanna',
+    'in a bakery','at a train station'
+  ],
+  modifiers: [
+    'with a twist','and their friends','and magic','and dancing',
+    'and treats','and a treasure hunt','and a parade','and bedtime stories',
+    'and birthday cake','and new beginnings','and sleepy time',
+    'and a picnic','and a tea party'
+  ]
+};
+
+/* ============================================================
+   GUEST GENERATOR BANKS
+   ============================================================ */
+var GUEST_GEN = {
+  names: [
+    'Mia','Leo','Sofia','Liam','Nora','Theo','Ivy','Kai','Aria','Ezra',
+    'Zoe','Rowan','Iris','Nico','Ada','Jonah','Ruby','Elena','Noah','Amara',
+    'Eli','Hugo','Freya','Oscar','Lila','Dylan','Ava','Jasper','Mila','Ravi',
+    'Tessa','Kofi','Nadia','Bruno','Juno','Sam','Maya','Luna','Finn','Olive'
+  ],
+  humanHair: [
+    'soft chestnut-brown hair','wavy golden-brown hair','curly dark hair with a little cowlick',
+    'smooth black hair in two small braids','short sandy-blonde hair',
+    'fluffy red hair that will not lie flat','straight dark-brown hair with a bright ribbon',
+    'messy ash-blonde hair','copper-auburn hair in a small ponytail','silky black hair with a tiny star clip'
+  ],
+  eyes: [
+    'large friendly hazel eyes','bright curious green eyes','warm brown eyes with a sparkle',
+    'wide sky-blue eyes','gentle grey eyes','mischievous amber eyes','soft dark-brown eyes',
+    'wide bright hazel eyes','twinkling deep-blue eyes','warm golden-brown eyes'
+  ],
+  skin: [
+    'warm tan skin','soft peach skin','deep brown skin','light olive skin','golden-bronze skin',
+    'fair porcelain skin with light freckles','warm caramel skin','rich cocoa skin',
+    'sun-kissed light-brown skin','soft rose-beige skin'
+  ],
+  outfits: [
+    'a teal sweater with a mustard-yellow scarf','a soft lavender cardigan with tiny star buttons',
+    'a cherry-red raincoat with yellow boots','a navy-blue dress with tiny embroidered flowers',
+    'a striped green-and-cream tee with overalls','a warm mustard-yellow hoodie with patch pockets',
+    'light-blue dungarees with a soft white shirt','a cozy orange sweater with a hand-knit hat',
+    'a soft pink tunic with a little sun emblem','a hand-knit cream jumper with pockets'
+  ],
+  mascotNames: [
+    'Buddy','Pip','Peppy','Sparky','Zippy','Sunny','Ginger','Mango','Coco','Nova',
+    'Tux','Jazzy','Fizz','Dazzle','Blip','Bounce','Cheerio','Whoopee','Snappy','Cookie'
+  ],
+  mascotTypes: [
+    'a friendly themed mascot with a big smile and tiny arms',
+    'a happy little star character with rosy cheeks',
+    'a cheerful confetti-sprinkling creature',
+    'a bouncing balloon-shaped friend',
+    'a smiling cupcake character with a cherry on top',
+    'a tiny friendly robot mascot with antenna sparkles',
+    'a playful party-hatted friend',
+    'a giggling cloud spirit with rainbow cheeks',
+    'a snuggly teddy-style companion mascot',
+    'a friendly little puff of confetti-cotton'
+  ]
+};
+
+/* ============================================================
+   VOCABULARY VARIATION BANKS  (Fix Level 1)
+   ============================================================ */
+var WORD_BANK = {
+  /* ---- PAGE TITLE VARIATIONS (5-10 per type) ---- */
+  titles: {
+    cover: ['Welcome to {NAME}\u2019s {THEME} Party!','{NAME}\u2019s {THEME} Coloring Adventure','A {THEME} Party for {NAME}!','{NAME}\u2019s Big {THEME} Celebration'],
+    hero: ['Happy {EVENT}, {NAME}!','Hooray for {NAME}!','{NAME}\u2019s Big Day!','Celebrate {NAME}!','Let\u2019s Party, {NAME}!'],
+    maze: ['{THEME} Maze Adventure','Find Your Way!','The Great Maze Challenge','Path Puzzle','Twisty Trail','The Maze of Wonders','Follow the Path!'],
+    wordSearch: ['{THEME} Word Hunt','Find the Words!','The Big Word Search','Word Detective','Hidden Words Challenge','Search & Find!'],
+    designYourOwn: ['Design Your Own {ITEM}','Create Your Own {ITEM}!','{ITEM} Design Studio','Make It Yours!','Your {ITEM} Masterpiece'],
+    placemat: ['My Coloring Placemat','Party Placemat Fun','Coloring Table Mat','My Special Place Setting','Party Time Placemat'],
+    thankYou: ['Thank You for Coming!','A Big Thank You!','Thanks for Celebrating!','With Thanks!','You Made It Special!'],
+    connectDots: ['Connect the Dots!','Dot-to-Dot Surprise','Follow the Numbers!','What Will It Be?','Dot Detective','The Big Reveal!'],
+    colorByNumber: ['Color by Number','Number Color Fun','Follow the Numbers to Color!','Paint by Numbers','Color Code Challenge'],
+    pattern: ['{THEME} Pattern Party','Colorful Patterns','Design the Pattern!','Pattern Playtime','Repetition Celebration'],
+    miniMatch: ['Match the {THEME} Friends!','Find the Pairs!','Matching Game','Connect the Friends','Pair Them Up!'],
+    portrait: ['A Portrait of {NAME}','{NAME}\u2019s Special Frame','All About {NAME}','A Picture of {NAME}','The Star of the Show: {NAME}'],
+    findCount: ['Find and Count!','How Many Can You Find?','Counting Challenge','Spot & Count!','Number Detective'],
+    scene: ['A {THEME} Celebration','{THEME} Party Scene','Welcome to the {THEME}!','A Day in {THEME} World','{THEME} Wonderland'],
+    iSpy: ['Party I-Spy','Can You Spot Them All?','I Spy Something…','Hidden in Plain Sight','Look Carefully!'],
+    colorTrace: ['Color and Trace!','Trace the Words!','Trace & Color Fun','Following the Dots','Write & Color!'],
+    cakeDecorate: ['Decorate {NAME}\u2019s Cake!','{NAME}\u2019s Dream Cake','The Cake Designer','Sweet Cake Art','Cake Masterpiece'],
+    banner: ['Color the Banner!','Party Bunting Fun','Banner Designer','Celebration Bunting','Colorful Pennants'],
+    /* NEW extended pool */
+    sticker: ['Sticker Sheet Fun!','Cut-Out Stickers','Party Sticker Studio','Make Your Own Stickers','Sticker Party'],
+    bookmark: ['My {THEME} Bookmark','Bookmark Maker','Cut-Out Bookmark','Reading Buddy Bookmark','Design Your Bookmark'],
+    doorHanger: ['My Door Hanger','Do Not Disturb (Partying!)','Door Hanger Designer','Welcome to My Room','Hang It Up!'],
+    bagLabel: ['Party Bag Label','My Favor Bag','Bag Tag Designer','Label It!','Party Bag Name Tag'],
+    crown: ['My Party Crown','Crown Designer','The Royal Crown','King or Queen for a Day','Wear Your Crown!'],
+    photoFrame: ['Picture Perfect!','Photo Frame Fun','Frame Your Memories','The Little Frame','Picture This!'],
+    ticTacToe: ['Tic-Tac-Toe Time!','X\u2019s and O\u2019s','Play and Color!','Game Time!','Draw Your Symbols'],
+    hiddenObject: ['Hidden Treasures!','What\u2019s Hidden?','Secret Picture Hunt','Find the Hidden Items!','Can You Spot It?'],
+    spotDiff: ['Spot the Difference!','Can You Tell?','What Changed?','Detective Time!','Look Closely!'],
+    patternTess: ['Tessellation Fun!','Pattern Master','Fill the Shapes!','Repeating Magic','Design a Pattern'],
+    sequence: ['What Comes Next?','Sequence Fun!','1-2-3!','Finish the Pattern!','Pick the Next'],
+    memoryMatch: ['Memory Match Cards','Cut & Play!','The Matching Game','Make Your Own Memory Cards','Pair Them Up!'],
+    storyStarter: ['Finish the Story!','The Story Begins…','Write Your Own Ending','Once Upon a Time…','Tell a Story!'],
+    fortuneTeller: ['Fortune Teller Fun!','Cootie Catcher','Fold & Play!','What Does It Say?','The Paper Predictor'],
+    fingerPuppet: ['Finger Puppet Fun!','Cut-Out Puppets','Act It Out!','Puppet Show Time!','Your Little Friends'],
+    hatTopper: ['Party Hat Topper','Design Your Topper!','Crown for Your Hat','Top It Off!','Hat Decorating']
+  },
+  /* ---- PAGE INSTRUCTION VARIATIONS (3-5 per type) ---- */
+  instructions: {
+    maze: [
+      'Guide {HERO} through the maze to reach {GOAL}. Walls decorated with {MOTIFS}. Child-friendly difficulty — 8–12 turns max.',
+      'A playful maze path leading {HERO} to {GOAL}. Decorative {MOTIFS} line the walls. Simple turns, plenty of positive space.',
+      'Help {HERO} find the way to {GOAL}! Scattered {MOTIFS} add charm. Simple start and finish markers.'
+    ],
+    wordSearch: [
+      'A 10x10 letter grid containing these words hidden horizontally, vertically, and diagonally: {WORDS}. Decorative {THEME} border.',
+      'A themed word search grid featuring: {WORDS}. Hidden in all directions. Large print for young readers.',
+      'Find these words in the grid: {WORDS}. Some go sideways, some go up, some go diagonal. Kid-friendly.'
+    ],
+    colorByNumber: [
+      'A color-by-number page with 4–6 colors from the {THEME} palette. Numbered regions, color-key legend at the bottom.',
+      'Numbered regions to color using a simple 4–6 color palette. Color-key at the bottom shows each number next to its swatch.',
+      'A playful color-by-number scene with numbered shapes. Legend at the bottom pairs each number with its color.'
+    ],
+    pattern: [
+      'A decorative coloring page made of repeating {THEME} motifs arranged in a tile pattern ({MOTIFS}). Detailed but kid-friendly.',
+      'Repeating {THEME} motifs arranged in a mandala-like tile ({MOTIFS}). Suitable for older kids.',
+      'A mosaic-style pattern of {THEME} motifs ({MOTIFS}) — bold outlines, detailed repetition.'
+    ],
+    portrait: [
+      'A framed portrait-style page: {HERO} inside an ornate {THEME} frame, smiling, with {MOTIFS}. Space beneath for name and date.',
+      'A decorative portrait frame with {HERO} at the center, {MOTIFS} around the edges, and a signature line at the bottom.',
+      'An illustrated portrait of {HERO} in a decorated {THEME} frame. "Colored by ____" line beneath.'
+    ],
+    scene: [
+      'A wide {THEME} celebration scene with {HERO} and small friends, {MOTIFS}, and a banner.',
+      'A panoramic {THEME} scene featuring {HERO}, decorative {MOTIFS}, and lots of open space to color.',
+      'A big illustrated {THEME} party moment with {HERO} at the center, surrounded by {MOTIFS}.'
+    ],
+    connectDots: [
+      'A connect-the-dots puzzle numbered 1 to 20 revealing a large {THEME} shape ({SHAPE}). "Connect the dots from 1 to 20!"',
+      'Numbered dots (1–20) that reveal a {THEME} surprise ({SHAPE}) when connected. Then color it in!',
+      'Follow the numbers 1–20 to reveal a {THEME} surprise. Decorative {MOTIFS} in the corners.'
+    ]
+  },
+  /* ---- PACK SUBTITLE VARIATIONS ---- */
+  subtitles: [
+    'A {EVENT} Coloring Pack for {NAME}',
+    'A Personalized {THEME} Party Favor',
+    'A {THEME} Coloring Adventure for {NAME}\u2019s {EVENT}',
+    'Personalized Coloring Pack — {NAME}\u2019s {EVENT}',
+    'A Party Favor Coloring Pack for {NAME}',
+    'A Coloring Celebration for {NAME}',
+    '{NAME}\u2019s {THEME} Coloring Party Pack'
+  ],
+  /* ---- PRODUCT DESCRIPTION INTROS ---- */
+  productIntros: [
+    'This printable {THEME}-themed coloring pack features {NAME} on {N} celebration activity pages.',
+    'A personalized {THEME} coloring pack starring {NAME} across {N} party-ready activity pages.',
+    'Featuring {NAME} in {N} {THEME}-themed coloring and activity pages, this printable pack is ready for your party.',
+    'Delight your guests with this {N}-page personalized coloring pack — every page featuring {NAME} in the {THEME} theme.',
+    '{N} pages of {THEME}-themed coloring fun — all personalized for {NAME}.'
+  ],
+  /* ---- PAGE-BRIEF OPENING VERBS ---- */
+  briefVerbs: [
+    'A','Generate a','Create a','Illustrate a','Produce a','Draft a'
+  ],
+  /* ---- DESCRIPTION ADJECTIVES ---- */
+  descriptives: [
+    'playful','cheerful','festive','colorful','joyful','charming','whimsical',
+    'bright','kid-friendly','delightful','lovely','merry','spirited','vivid'
+  ],
+  /* ---- SEO POOL (pick 7 from 30) ---- */
+  seoPool: [
+    'personalized {THEME} coloring pack printable',
+    '{EVENT} party favor coloring pages',
+    'custom name coloring book for kids',
+    '{THEME} party activity instant download',
+    'printable kids party favor {NAME}',
+    '{THEME} coloring placemat party',
+    'instant download party coloring book',
+    'personalized birthday coloring pages',
+    'kids coloring activity printable',
+    '{THEME} party printables for kids',
+    'custom party favor download',
+    'coloring pages with child name',
+    'party activity sheets printable',
+    'printable coloring book instant',
+    '{EVENT} coloring pack kids',
+    '{THEME} themed party activity',
+    'DIY party favor coloring',
+    'printable kids activity pack',
+    'personalized party printable',
+    'coloring pages for party favors',
+    'kids birthday coloring pack',
+    'custom name activity book',
+    'kids party coloring download',
+    'themed coloring activity pages',
+    'printable party favors for kids',
+    'instant download kids coloring',
+    '{THEME} printable pack for kids',
+    'party favor activity sheets',
+    'personalized childrens coloring book',
+    'download printable coloring party'
+  ]
+};
+
+/* ============================================================
+   EXTENDED PAGE POOL  (Fix Level 2)
+   Each entry is a function generating {type, title, instruction}
+   ============================================================ */
+function buildExtendedPage(type, ctx, inp, guests){
+  var t = function(key){
+    var arr = WORD_BANK.titles[key];
+    return arr ? pick(arr) : '';
+  };
+  var tmpl = function(s){
+    return s.split('{THEME}').join(ctx.themeLabel).split('{NAME}').join(inp.name);
+  };
+  switch(type){
+    case 'sticker':
+      return { type:'Sticker Sheet', title: tmpl(t('sticker')),
+        instruction:'A sticker sheet containing 6–8 small {THEME} sticker designs ({MOTIFS}), each with a dashed cut-line. Instruction line: "Color, cut, and stick!"'
+          .split('{THEME}').join(ctx.themeLabel).split('{MOTIFS}').join(ctx.motifsList) };
+    case 'bookmark':
+      return { type:'Bookmark', title: tmpl(t('bookmark')),
+        instruction:'A long bookmark layout (2.5 x 8 in equivalent) with a {THEME} motif at the top, a name banner ({NAME}), and space for coloring. Dashed cut-line around the bookmark.'
+          .split('{THEME}').join(ctx.themeLabel).split('{NAME}').join(inp.name) };
+    case 'doorHanger':
+      return { type:'Door Hanger', title: tmpl(t('doorHanger')),
+        instruction:'A door-hanger template (4 x 9 in equivalent) with a round hole marked at the top and a {THEME} motif at the bottom. Decorated with {MOTIFS} around the edges.'
+          .split('{THEME}').join(ctx.themeLabel).split('{MOTIFS}').join(ctx.motifsList) };
+    case 'bagLabel':
+      return { type:'Bag Label', title: tmpl(t('bagLabel')),
+        instruction:'A small rectangular bag-label template (3 x 4 in equivalent) with a {THEME} motif on one side, a name banner ({NAME}), and a line for "Thank you for coming!"'
+          .split('{THEME}').join(ctx.themeLabel).split('{NAME}').join(inp.name) };
+    case 'crown':
+      return { type:'Crown / Hat Template', title: tmpl(t('crown')),
+        instruction:'A printable crown template — a curved band with decorative peaks, sized for a child\u2019s head. Decorated with {MOTIFS} and a name banner ({NAME}). Dashed cut-line for assembly.'
+          .split('{MOTIFS}').join(ctx.motifsList).split('{NAME}').join(inp.name) };
+    case 'photoFrame':
+      return { type:'Photo Frame', title: tmpl(t('photoFrame')),
+        instruction:'A decorated {THEME} photo-frame template with an empty center rectangle (approximately 4 x 5 in) for a photo. {MOTIFS} decorate the frame border.'
+          .split('{THEME}').join(ctx.themeLabel).split('{MOTIFS}').join(ctx.motifsList) };
+    case 'ticTacToe':
+      return { type:'Tic-Tac-Toe Board', title: tmpl(t('ticTacToe')),
+        instruction:'A tic-tac-toe game board inside a {THEME}-themed frame. Two different mini-icons ({MOTIFS} pairs) replace X and O — kids color the icons before playing.'
+          .split('{THEME}').join(ctx.themeLabel).split('{MOTIFS}').join(ctx.motifsList) };
+    case 'hiddenObject':
+      return { type:'Hidden Object Scene', title: tmpl(t('hiddenObject')),
+        instruction:'A detailed {THEME} scene filled with small hidden objects ({MOTIFS}) for the child to find. A small key at the bottom shows which objects to look for. "Can you find them all?"'
+          .split('{THEME}').join(ctx.themeLabel).split('{MOTIFS}').join(ctx.motifsList) };
+    case 'spotDiff':
+      return { type:'Spot the Difference', title: tmpl(t('spotDiff')),
+        instruction:'Two side-by-side versions of a {THEME} scene with 5 small differences (missing motif, extra element, size change, color region swap, position shift). "Find 5 differences!"'
+          .split('{THEME}').join(ctx.themeLabel) };
+    case 'patternTess':
+      return { type:'Tessellation Page', title: tmpl(t('patternTess')),
+        instruction:'A tessellated {THEME} pattern where one motif repeats across the page. Some repeats are pre-colored-in black; the rest are empty for the child to fill. Instruction: "Keep the pattern going!"'
+          .split('{THEME}').join(ctx.themeLabel) };
+    case 'sequence':
+      return { type:'Sequence Activity', title: tmpl(t('sequence')),
+        instruction:'A 1-2-3 pattern of {THEME} motifs where the last position is left blank. Instruction: "What comes next? Draw it in the empty box!" 4 rows of increasing difficulty.'
+          .split('{THEME}').join(ctx.themeLabel) };
+    case 'memoryMatch':
+      return { type:'Memory Match Cards', title: tmpl(t('memoryMatch')),
+        instruction:'A sheet of 12 cards (2 columns x 6 rows) — 6 pairs of {THEME} motifs ({MOTIFS}) that are identical twins. Dashed cut-lines. Instruction: "Color, cut, and play memory!"'
+          .split('{THEME}').join(ctx.themeLabel).split('{MOTIFS}').join(ctx.motifsList) };
+    case 'storyStarter':
+      return { type:'Story Starter', title: tmpl(t('storyStarter')),
+        instruction:'A full-page illustration of {HERO} at the start of a {THEME} story, with 3–4 lined writing spaces beneath. Prompt: "Once upon a {THEME} time…"'
+          .split('{THEME}').join(ctx.themeLabel).split('{HERO}').join(inp.name) };
+    case 'fortuneTeller':
+      return { type:'Fortune Teller', title: tmpl(t('fortuneTeller')),
+        instruction:'A cootie-catcher / fortune-teller template (a square divided into 4 quadrants and 8 triangular flaps). Decorative {THEME} motifs on the outer flaps. Small fold lines marked with dashes.'
+          .split('{THEME}').join(ctx.themeLabel) };
+    case 'fingerPuppet':
+      return { type:'Finger Puppet Sheet', title: tmpl(t('fingerPuppet')),
+        instruction:'A sheet with 4 finger-puppet templates ({THEME} characters), each a simple cylinder shape with a dashed fold-line and a decorative {THEME} motif on the front. Instruction: "Color, cut, tape, and play!"'
+          .split('{THEME}').join(ctx.themeLabel) };
+    case 'hatTopper':
+      return { type:'Hat Topper', title: tmpl(t('hatTopper')),
+        instruction:'A crown-style hat topper that attaches to a paper party hat. Decorative peaks with {MOTIFS} and a name banner ({NAME}). Dashed cut-lines for assembly.'
+          .split('{MOTIFS}').join(ctx.motifsList).split('{NAME}').join(inp.name) };
+    default:
+      return null;
+  }
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var selectedStyle = 0;
+var selectedCount = 12;
+var extras = { thankyou:true, placemat:true, designyourown:true, keepsake:false };
+var textFreeMode = true;
+var extendedPool = true;
+var chaosLevel = 3;
+var variationCount = 0;
+var lastSections = null;
+var lastFingerprint = '';
+
+function $(id){ return document.getElementById(id); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i=a.length-1; i>0; i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function trimTo(s, n){
+  if(!s) return '';
+  if(s.length <= n) return s;
+  return s.substring(0, n-1) + '...';
+}
+function capFirst(s){
+  if(!s) return '';
+  return s.charAt(0).toUpperCase() + s.substring(1);
+}
+function ensureSinglePeriod(s){
+  if(!s) return '';
+  var t = s.replace(/\s+$/,'');
+  if(t.charAt(t.length-1) === '.') return t;
+  return t + '.';
+}
+
+/* ============================================================
+   FINGERPRINT — simple hash for variation tracking
+   ============================================================ */
+function computeFingerprint(inp, manifest){
+  var seed = inp.name + '|' + inp.theme + '|' + inp.eventType + '|' + inp.age + '|' +
+             inp.pageCount + '|' + manifest.length + '|' + inp.style.name + '|' + inp.chaos;
+  for(var i=0; i<manifest.length; i++){ seed += '|' + manifest[i].type; }
+  var h = 0;
+  for(var k=0; k<seed.length; k++){
+    h = ((h << 5) - h) + seed.charCodeAt(k);
+    h |= 0;
+  }
+  var hex = (h >>> 0).toString(16).toUpperCase();
+  while(hex.length < 8){ hex = '0' + hex; }
+  return hex;
+}
+
+/* ============================================================
+   THEME GENERATOR
+   ============================================================ */
+function generateTheme(){
+  var r = Math.random();
+  var theme;
+  if(r < 0.40){ theme = pick(THEME_GEN.complete); }
+  else if(r < 0.75){
+    theme = pick(THEME_GEN.adjectives) + ' ' + pick(THEME_GEN.subjects);
+  } else {
+    theme = pick(THEME_GEN.adjectives) + ' ' + pick(THEME_GEN.subjects) + ' ' + pick(THEME_GEN.settings);
+  }
+  if(Math.random() < 0.15){ theme = theme + ' ' + pick(THEME_GEN.modifiers); }
+
+  var input = $('inpTheme');
+  input.value = theme;
+  input.style.transition = 'background .3s';
+  input.style.background = 'rgba(79,209,197,0.3)';
+  setTimeout(function(){ input.style.background = ''; }, 400);
+
+  updateThemeMeta();
+  saveRecentTheme(theme);
+  renderThemeChips();
+  updateTags();
+  showToast('🎲 New theme: ' + theme);
+}
+
+function saveRecentTheme(theme){
+  try{
+    var recent = [];
+    var raw = window.localStorage.getItem(THEMES_KEY);
+    if(raw){ try{ recent = JSON.parse(raw) || []; }catch(e){ recent = []; } }
+    recent = recent.filter(function(x){ return x !== theme; });
+    recent.unshift(theme);
+    if(recent.length > 6){ recent = recent.slice(0, 6); }
+    window.localStorage.setItem(THEMES_KEY, JSON.stringify(recent));
+  }catch(e){}
+}
+
+function loadRecentThemes(){
+  try{
+    var raw = window.localStorage.getItem(THEMES_KEY);
+    if(!raw) return [];
+    var arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ return []; }
+}
+
+function renderThemeChips(){
+  var container = $('themeChips');
+  if(!container) return;
+  container.innerHTML = '';
+  var recent = loadRecentThemes();
+  if(recent.length === 0){
+    var defaults = ['under the sea','rainbow unicorns','superheroes','jungle safari'];
+    for(var d=0; d<defaults.length; d++){ addThemeChip(container, defaults[d], false); }
+  } else {
+    for(var r=0; r<recent.length; r++){ addThemeChip(container, recent[r], true); }
+  }
+}
+
+function addThemeChip(container, text, isRecent){
+  var chip = document.createElement('span');
+  chip.className = 'theme-chip';
+  chip.appendChild(document.createTextNode((isRecent ? '🕘 ' : '') + trimTo(text, 36)));
+  chip.onclick = function(){
+    $('inpTheme').value = text;
+    updateThemeMeta();
+    updateTags();
+    showToast('Theme loaded: ' + text);
+  };
+  container.appendChild(chip);
+}
+
+function updateThemeMeta(){
+  var val = $('inpTheme').value;
+  var len = val.length;
+  $('themeCharCount').innerHTML = '';
+  $('themeCharCount').appendChild(document.createTextNode(len + ' / 80 chars'));
+  var status = $('themeStatus');
+  if(len === 0){ status.innerHTML = ''; }
+  else if(len < 4){ status.innerHTML = ''; status.appendChild(document.createTextNode('⚠️ Add more')); status.style.color = '#f0a08a'; }
+  else if(len < 20){ status.innerHTML = ''; status.appendChild(document.createTextNode('✓ Ready')); status.style.color = 'var(--accent3)'; }
+  else { status.innerHTML = ''; status.appendChild(document.createTextNode('★ Detailed')); status.style.color = 'var(--accent2)'; }
+}
+
+/* ============================================================
+   GUEST GENERATORS
+   ============================================================ */
+function generateGuest(){
+  var name = pick(GUEST_GEN.names);
+  var hair = pick(GUEST_GEN.humanHair);
+  var eyes = pick(GUEST_GEN.eyes);
+  var skin = pick(GUEST_GEN.skin);
+  var outfit = pick(GUEST_GEN.outfits);
+  $('inpName').value = name;
+  $('inpHair').value = hair;
+  $('inpEyes').value = eyes;
+  $('inpSkin').value = skin;
+  $('inpOutfit').value = outfit;
+  flashFields(['inpName','inpHair','inpEyes','inpSkin','inpOutfit']);
+  showToast('🎲 New guest: ' + name);
+}
+
+function generateHelper(){
+  var name = pick(GUEST_GEN.mascotNames);
+  var type = pick(GUEST_GEN.mascotTypes);
+  $('inpMascotName').value = name;
+  $('inpMascotSpecies').value = type;
+  flashFields(['inpMascotName','inpMascotSpecies']);
+  showToast('🎲 New mascot: ' + name);
+}
+
+function flashFields(ids){
+  for(var i=0; i<ids.length; i++){
+    var el = $(ids[i]);
+    if(!el) continue;
+    el.style.transition = 'background .35s';
+    el.style.background = 'rgba(79,209,197,0.3)';
+    (function(e){ setTimeout(function(){ e.style.background = ''; }, 450); })(el);
+  }
+}
+
+function updateAuthorStatus(){
+  var el = $('authorStatus');
+  var inp = $('inpAuthor');
+  if(!el || !inp) return;
+  var v = inp.value.replace(/^\s+|\s+$/g,'');
+  el.innerHTML = '';
+  if(v){
+    el.className = 'author-status provided';
+    el.appendChild(document.createTextNode('✓ Creator: "' + v + '" — appears on cover + README.'));
+  } else {
+    el.className = 'author-status empty';
+    el.appendChild(document.createTextNode('No creator name — pack published without creator credit.'));
+  }
+}
+
+function toggleTextFree(){
+  textFreeMode = !textFreeMode;
+  var t = $('toggleTextFree');
+  if(t){ if(textFreeMode) t.classList.add('on'); else t.classList.remove('on'); }
+  updateTags();
+}
+
+function toggleExtended(){
+  extendedPool = !extendedPool;
+  var t = $('toggleExtended');
+  if(t){ if(extendedPool) t.classList.add('on'); else t.classList.remove('on'); }
+  updateTags();
+}
+
+function buildPageCountGrid(){
+  var grid = $('pageCountGrid');
+  if(!grid) return;
+  var btns = grid.querySelectorAll('.page-count-btn');
+  for(var i=0; i<btns.length; i++){
+    (function(btn){
+      btn.onclick = function(){
+        var all = grid.querySelectorAll('.page-count-btn');
+        for(var k=0; k<all.length; k++){ all[k].classList.remove('selected'); }
+        btn.classList.add('selected');
+        selectedCount = parseInt(btn.getAttribute('data-count'), 10);
+        updateTags();
+        if($('step3').classList.contains('done')){
+          setSummary(3, selectedCount + ' pages · ' + extrasSummary());
+        }
+      };
+    })(btns[i]);
+  }
+}
+
+function buildExtrasGrid(){
+  var grid = $('extrasGrid');
+  if(!grid) return;
+  var cards = grid.querySelectorAll('.check-card');
+  for(var i=0; i<cards.length; i++){
+    (function(card){
+      card.onclick = function(){
+        var key = card.getAttribute('data-extra');
+        extras[key] = !extras[key];
+        if(extras[key]){ card.classList.add('checked'); }
+        else { card.classList.remove('checked'); }
+        if($('step3').classList.contains('done')){
+          setSummary(3, selectedCount + ' pages · ' + extrasSummary());
+        }
+      };
+    })(cards[i]);
+  }
+}
+
+function buildStyleGrid(){
+  var grid = $('styleGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  for(var i=0; i<STYLES.length; i++){
+    (function(idx){
+      var card = document.createElement('div');
+      card.className = 'style-card' + (idx === selectedStyle ? ' selected' : '');
+      var dot = document.createElement('div');
+      dot.className = 'style-dot';
+      dot.style.background = STYLES[idx].dot;
+      var txt = document.createElement('div');
+      var nm = document.createElement('div');
+      nm.className = 'sname';
+      nm.appendChild(document.createTextNode(STYLES[idx].name));
+      var ds = document.createElement('div');
+      ds.className = 'sdesc';
+      ds.appendChild(document.createTextNode(STYLES[idx].desc + '.'));
+      txt.appendChild(nm); txt.appendChild(ds);
+      card.appendChild(dot); card.appendChild(txt);
+      card.onclick = function(){
+        selectedStyle = idx;
+        var cards = grid.children;
+        for(var c=0; c<cards.length; c++){
+          if(cards[c].classList){ cards[c].classList.remove('selected'); }
+        }
+        card.classList.add('selected');
+        updateTags();
+      };
+      grid.appendChild(card);
+    })(i);
+  }
+}
+
+function matchThemeVocab(themeText){
+  var t = (themeText || '').toLowerCase();
+  if(!t) return THEME_VOCAB_BANK.generic;
+  for(var key in THEME_VOCAB_BANK){
+    if(key === 'generic') continue;
+    var bank = THEME_VOCAB_BANK[key];
+    for(var i=0; i<bank.keywords.length; i++){
+      if(t.indexOf(bank.keywords[i]) !== -1){ return bank; }
+    }
+  }
+  return THEME_VOCAB_BANK.generic;
+}
+
+/* ============================================================
+   PHRASE VARIATION HELPERS  (Fix Level 1)
+   ============================================================ */
+function variedTitle(type, ctx, inp){
+  var arr = WORD_BANK.titles[type];
+  if(!arr) return '';
+  var s = pick(arr);
+  return s.split('{NAME}').join(inp.name)
+          .split('{THEME}').join(ctx.themeLabel)
+          .split('{EVENT}').join(inp.eventType)
+          .split('{ITEM}').join(ctx.designYour.replace(/^Design Your Own /,''));
+}
+
+function variedInstruction(type, ctx, inp){
+  var arr = WORD_BANK.instructions[type];
+  if(!arr) return null;
+  var s = pick(arr);
+  return s.split('{HERO}').join(inp.name)
+          .split('{THEME}').join(ctx.themeLabel)
+          .split('{GOAL}').join(ctx.mazeGoal)
+          .split('{MOTIFS}').join(ctx.motifsList)
+          .split('{WORDS}').join(ctx.wordList.join(', '))
+          .split('{SHAPE}').join(ctx.dotsShape);
+}
+
+function variedSubtitle(ctx, inp){
+  var s = pick(WORD_BANK.subtitles);
+  return s.split('{EVENT}').join(inp.eventType)
+          .split('{THEME}').join(ctx.themeLabel)
+          .split('{NAME}').join(inp.name);
+}
+
+function variedProductIntro(ctx, inp, n){
+  var s = pick(WORD_BANK.productIntros);
+  return s.split('{THEME}').join(ctx.themeLabel)
+          .split('{NAME}').join(inp.name)
+          .split('{N}').join(n);
+}
+
+function pickSeoKeywords(inp, ctx, n){
+  var pool = WORD_BANK.seoPool.slice(0);
+  var shuffled = shuffle(pool);
+  var out = [];
+  for(var i=0; i<shuffled.length && out.length < n; i++){
+    var s = shuffled[i];
+    s = s.split('{THEME}').join(inp.theme.toLowerCase())
+         .split('{EVENT}').join(inp.eventType.toLowerCase())
+         .split('{NAME}').join(inp.name.toLowerCase());
+    out.push(s);
+  }
+  return out;
+}
+
+/* ============================================================
+   MANIFEST GENERATOR (with extended pool integration)
+   ============================================================ */
+function buildManifest(inp, ctx){
+  var targetCount = inp.pageCount;
+  var hasThankYou = inp.extras.thankyou;
+  var hasPlacemat = inp.extras.placemat;
+  var hasDesign = inp.extras.designyourown;
+  var guests = inp.additionalGuests;
+
+  var pages = [];
+  var push = function(type, title, instruction){
+    pages.push({ type:type, title:title, instruction:instruction });
+  };
+
+  /* --- 1. Cover (always) --- */
+  push('Cover',
+    variedTitle('cover', ctx, inp),
+    'Personalized welcome cover featuring ' + ctx.guestRef + ' in a hero pose, surrounded by ' + ctx.motifsList + '. Title in playful display type, with a subtitle line reading "' + variedSubtitle(ctx, inp) + '". Light confetti scatter and a name banner.'
+  );
+
+  /* --- 2. Hero (always) --- */
+  push('Hero Coloring Page',
+    variedTitle('hero', ctx, inp),
+    'Big celebratory hero page with ' + ctx.guestRef + ' front and center, arms up in joy, surrounded by ' + ctx.motifsList + ' and a large banner reading "' + (inp.eventType === 'Birthday' ? 'Happy ' + inp.age + 'th Birthday, ' + inp.name + '!' : 'Happy ' + inp.eventType + '!') + '".'
+  );
+
+  /* --- 3. Maze (always) --- */
+  push('Maze',
+    variedTitle('maze', ctx, inp),
+    variedInstruction('maze', ctx, inp) || 'A hand-drawn style maze leading ' + ctx.mazeGoal + '. Walls decorated with ' + ctx.motifsList + '. "START" and "FINISH" labels.'
+  );
+
+  /* --- 4. Word Search (always) --- */
+  push('Word Search',
+    variedTitle('wordSearch', ctx, inp),
+    variedInstruction('wordSearch', ctx, inp) || 'A themed word search grid containing: ' + ctx.wordList.join(', ') + '.'
+  );
+
+  /* --- 5. Design-Your-Own or decorative fallback --- */
+  if(hasDesign){
+    push('Design-Your-Own',
+      variedTitle('designYourOwn', ctx, inp),
+      'A blank ' + ctx.designYour.toLowerCase().replace(/^design your own /, '') + ' template: ' + ctx.designPrompt + '. Instruction line at the top: "Use your favorite colors and make it yours!"'
+    );
+  } else {
+    push('Decorative Scene',
+      variedTitle('scene', ctx, inp),
+      'A wide ' + ctx.themeLabel + ' celebration scene with ' + ctx.guestRef + ' and several small friends, ' + ctx.motifsList + ', and a banner.'
+    );
+  }
+
+  /* --- 6. Placemat (if selected) --- */
+  if(hasPlacemat){
+    var placematNames = guests.length ? guests.join(', ') : inp.name;
+    push('Placemat',
+      variedTitle('placemat', ctx, inp),
+      'A landscape US Letter coloring placemat featuring a large central ' + ctx.themeLabel + ' motif, a wide border of ' + ctx.motifsList + ', and a small decorative name banner. Personalized with: ' + placematNames + '.'
+    );
+  }
+
+  /* --- 7. Thank-You (if selected) --- */
+  if(hasThankYou){
+    push('Thank-You',
+      variedTitle('thankYou', ctx, inp),
+      'A coloring thank-you note page with a big "Thank You!" headline, a small ' + ctx.themeLabel + ' illustration of ' + ctx.guestRef + ', and blank lines for the child to sign their name. "Thanks for celebrating with ' + inp.name + '!" at the bottom.'
+    );
+  }
+
+  /* --- 8. Connect-the-Dots (always) --- */
+  push('Connect-the-Dots',
+    variedTitle('connectDots', ctx, inp),
+    variedInstruction('connectDots', ctx, inp) || 'A connect-the-dots puzzle (1–20) revealing a large ' + ctx.themeLabel + ' shape (' + ctx.dotsShape + ').'
+  );
+
+  /* --- 12+ pages: add these --- */
+  if(targetCount >= 12){
+    push('Color-by-Number',
+      variedTitle('colorByNumber', ctx, inp),
+      variedInstruction('colorByNumber', ctx, inp) || 'A color-by-number page with 4–6 colors tied to the ' + ctx.themeLabel + ' palette.'
+    );
+    push('Pattern Page',
+      variedTitle('pattern', ctx, inp),
+      variedInstruction('pattern', ctx, inp) || 'A decorative coloring page made of repeating ' + ctx.themeLabel + ' motifs (' + ctx.motifsList + ').'
+    );
+    push('Mini Activity',
+      variedTitle('miniMatch', ctx, inp),
+      'A simple matching activity: two columns of ' + ctx.themeLabel + ' motifs. Instruction: "Draw a line to match each pair!"'
+    );
+    push('Portrait Page',
+      variedTitle('portrait', ctx, inp),
+      variedInstruction('portrait', ctx, inp) || 'A framed portrait-style page with ' + ctx.guestRef + ' inside an ornate frame.'
+    );
+  }
+
+  /* --- 16+ pages --- */
+  if(targetCount >= 16){
+    push('Mini Activity',
+      variedTitle('findCount', ctx, inp),
+      'A counting activity page with scattered ' + ctx.themeLabel + ' motifs. "How many ' + ctx.motifsList[0] + ' can you find? Write the number in the box!"'
+    );
+    push('Decorative Scene',
+      variedTitle('scene', ctx, inp),
+      'A second wide ' + ctx.themeLabel + ' scene showing a small celebration with ' + ctx.guestRef + ' as the star, plus space at the bottom for the child to add their own drawing.'
+    );
+    push('Design-Your-Own',
+      'Design Your Own ' + ctx.themeLabel + ' Invitation',
+      'A blank invitation template with lines for "You\u2019re invited to:", "Date:", "Time:", and "Place:".'
+    );
+    push('Mini Activity',
+      variedTitle('colorTrace', ctx, inp),
+      'A tracing + coloring page: dotted outlines of 4–5 ' + ctx.themeLabel + ' motifs (' + ctx.motifsList.slice(0,4).join(', ') + ') with dotted words beneath each.'
+    );
+  }
+
+  /* --- 20 pages --- */
+  if(targetCount >= 20){
+    push('Mini Activity',
+      variedTitle('iSpy', ctx, inp),
+      'An I-Spy activity page packed with small ' + ctx.themeLabel + ' motifs. "Can you find 3 ' + ctx.motifsList[0] + ', 2 ' + ctx.motifsList[1] + ', and 1 ' + ctx.motifsList[2] + '?"'
+    );
+    push('Decorative Scene',
+      variedTitle('cakeDecorate', ctx, inp),
+      'A big blank ' + ctx.themeLabel + '-themed cake outline on a plate. "Design and color ' + inp.name + '\u2019s dream party cake!"'
+    );
+    push('Pattern Page',
+      variedTitle('banner', ctx, inp),
+      'A long decorative bunting/banner page: several empty pennants, each with a ' + ctx.themeLabel + ' motif. "Color each pennant and write a letter in each to spell a message!"'
+    );
+    push('Portrait Page',
+      'A Thank-You Portrait of ' + inp.name,
+      'A second framed portrait: ' + ctx.guestRef + ' waving goodbye, surrounded by ' + ctx.motifsList + ' and small hearts, with space for guests to sign.'
+    );
+  }
+
+  /* --- EXTENDED POOL (Fix Level 2) --- */
+  if(extendedPool){
+    var extendedTypes = shuffle([
+      'sticker','bookmark','doorHanger','bagLabel','crown','photoFrame',
+      'ticTacToe','hiddenObject','spotDiff','patternTess','sequence',
+      'memoryMatch','storyStarter','fortuneTeller','fingerPuppet','hatTopper'
+    ]);
+
+    // Determine how many extended pages to add based on chaos + page count
+    var extCount = 0;
+    if(chaosLevel === 1) extCount = 0;
+    else if(chaosLevel === 2) extCount = (targetCount >= 16 ? 1 : 0);
+    else if(chaosLevel === 3) extCount = (targetCount >= 12 ? 2 : 1);
+    else if(chaosLevel === 4) extCount = (targetCount >= 16 ? 4 : 3);
+    else if(chaosLevel === 5) extCount = (targetCount >= 20 ? 6 : 5);
+
+    for(var e=0; e<extCount && e<extendedTypes.length; e++){
+      var ep = buildExtendedPage(extendedTypes[e], ctx, inp, guests);
+      if(ep) push(ep.type, ep.title, ep.instruction);
+    }
+  }
+
+  /* --- Fallback fillers --- */
+  var fillers = [
+    { type:'Decorative Scene', title: ctx.themeLabel + ' Adventure Path',
+      instruction:'A winding path through a ' + ctx.themeLabel + ' landscape with ' + ctx.guestRef + ' walking along it, ' + ctx.motifsList + ' on both sides.' },
+    { type:'Pattern Page', title:'Color the ' + ctx.themeLabel + ' Border',
+      instruction:'A full-page decorative border made of repeating ' + ctx.themeLabel + ' motifs, with a blank center panel. "Color the border, then draw your own picture in the middle!"' },
+    { type:'Mini Activity', title:'Finish the ' + ctx.themeLabel + ' Picture',
+      instruction:'A half-drawn ' + ctx.themeLabel + ' scene with the right half left blank. "Finish the picture and color it in!"' },
+    { type:'Decorative Scene', title:'A ' + ctx.themeLabel + ' Group Portrait',
+      instruction:'A group portrait of ' + ctx.guestRef + ' surrounded by 4–5 small ' + ctx.themeLabel + ' friends.' }
+  ];
+
+  var fi = 0;
+  while(pages.length < targetCount && fi < fillers.length){
+    var f = fillers[fi];
+    var lastType = pages.length ? pages[pages.length-1].type : '';
+    if(f.type === lastType && fi + 1 < fillers.length){ fi++; continue; }
+    push(f.type, f.title, f.instruction);
+    fi++;
+  }
+
+  if(pages.length > targetCount){ pages = pages.slice(0, targetCount); }
+
+  /* --- Prevent back-to-back duplicate types --- */
+  for(var i=1; i<pages.length; i++){
+    if(pages[i].type === pages[i-1].type){
+      pages[i].type = pages[i].type + ' (variant)';
+    }
+  }
+
+  return pages;
+}
+
+/* ============================================================
+   CONTEXT
+   ============================================================ */
+function buildContext(inp){
+  var bank = matchThemeVocab(inp.theme);
+  var guestRef, lockMode;
+  if(inp.likeness){
+    guestRef = inp.name + ', a real child with ' + inp.hair + ', ' + inp.eyes + ', ' + inp.skin + ', wearing ' + inp.outfit;
+    lockMode = 'real-likeness';
+  } else {
+    guestRef = 'a friendly ' + bank.label.toLowerCase() + ' mascot named ' + inp.name;
+    lockMode = 'themed mascot/avatar';
+  }
+  return {
+    bank: bank,
+    themeLabel: bank.label,
+    guestRef: guestRef,
+    lockMode: lockMode,
+    motifsList: bank.motifs.slice(0, 5).join(', '),
+    wordList: bank.wordSearch.slice(0, 10),
+    mazeGoal: bank.mazeGoal,
+    designYour: bank.designYour,
+    designPrompt: bank.designPrompt,
+    dotsShape: bank.motifs[0]
+  };
+}
+
+function hasLikeness(){
+  var h = $('inpHair').value.replace(/^\s+|\s+$/g,'');
+  var e = $('inpEyes').value.replace(/^\s+|\s+$/g,'');
+  var s = $('inpSkin').value.replace(/^\s+|\s+$/g,'');
+  var o = $('inpOutfit').value.replace(/^\s+|\s+$/g,'');
+  return (h || e || s || o) ? true : false;
+}
+
+function readInputs(){
+  var name = $('inpName').value.replace(/^\s+|\s+$/g,'') || 'the Guest of Honor';
+  var guestsRaw = $('inpGuests').value.replace(/^\s+|\s+$/g,'');
+  var guests = [];
+  if(guestsRaw){
+    var parts = guestsRaw.split(',');
+    for(var i=0; i<parts.length; i++){
+      var p = parts[i].replace(/^\s+|\s+$/g,'');
+      if(p) guests.push(p);
+    }
+  }
+  var authorV = $('inpAuthor').value.replace(/^\s+|\s+$/g,'');
+  return {
+    eventType: $('selEvent').value,
+    theme: $('inpTheme').value.replace(/^\s+|\s+$/g,'') || 'celebration',
+    name: name,
+    age: $('inpAge').value || '5',
+    hair: $('inpHair').value.replace(/^\s+|\s+$/g,''),
+    eyes: $('inpEyes').value.replace(/^\s+|\s+$/g,''),
+    skin: $('inpSkin').value.replace(/^\s+|\s+$/g,''),
+    outfit: $('inpOutfit').value.replace(/^\s+|\s+$/g,''),
+    likeness: hasLikeness(),
+    mascotName: $('inpMascotName').value.replace(/^\s+|\s+$/g,'') || 'Buddy',
+    mascotSpecies: $('inpMascotSpecies').value.replace(/^\s+|\s+$/g,'') || 'a friendly themed mascot',
+    author: authorV,
+    hasAuthor: authorV.length > 0,
+    textFree: textFreeMode,
+    extendedPool: extendedPool,
+    chaos: chaosLevel,
+    pageCount: selectedCount,
+    extras: {
+      thankyou: extras.thankyou,
+      placemat: extras.placemat,
+      designyourown: extras.designyourown,
+      keepsake: extras.keepsake    },
+    additionalGuests: guests,
+    style: STYLES[selectedStyle]
+  };
+}
+
+function validateInputs(inp){
+  if(!inp.theme || inp.theme.length < 2) return 'Please enter a party theme — or press 🎲 Theme.';
+  if(!$('inpName').value.replace(/^\s+|\s+$/g,'')) return 'Please enter the guest of honor\u2019s name — or press 🎲 Guest.';
+  return null;
+}
+
+/* ============================================================
+   COHERENT PACK DESCRIPTION
+   ============================================================ */
+function buildCoherentPackDesc(inp, ctx, manifest){
+  var typeSet = {};
+  for(var i=0; i<manifest.length; i++){
+    typeSet[manifest[i].type] = (typeSet[manifest[i].type] || 0) + 1;
+  }
+  var types = [];
+  for(var k in typeSet){
+    if(typeSet.hasOwnProperty(k) && k.indexOf('(variant)') === -1){ types.push(k); }
+  }
+  var opener = variedProductIntro(ctx, inp, manifest.length);
+  var contentsLine;
+  if(types.length <= 3){
+    contentsLine = ' Includes ' + types.slice(0, -1).join(', ') + ' and ' + types[types.length-1] + ' pages';
+  } else {
+    contentsLine = ' Includes ' + types.slice(0, 3).join(', ') + ', and more';
+  }
+  return opener + contentsLine + ' — ready to print on US Letter paper and hand out as a party favor.';
+}
+
+/* ============================================================
+   PROMPT ASSEMBLY
+   ============================================================ */
+function buildPrompt(inp){
+  var ctx = buildContext(inp);
+  var style = inp.style;
+  var manifest = buildManifest(inp, ctx);
+  var fingerprint = computeFingerprint(inp, manifest);
+
+  var packTitle = inp.name + '\u2019s ' + ctx.themeLabel + ' ' +
+    (inp.eventType === 'Birthday' ? inp.age + 'th Birthday ' : inp.eventType + ' ') +
+    'Coloring Pack';
+
+  var packDesc = buildCoherentPackDesc(inp, ctx, manifest);
+
+  var chaosTwists = '';
+  if(inp.chaos >= 3){
+    var twists = [
+      'Add a "hidden object" element on 3–4 pages for children to spot.',
+      'Include a small recurring decorative motif that becomes a running visual joke.',
+      'Add a bonus "Make Your Own Badge" template page.',
+      'Include a fold-out mini banner the child can assemble.',
+      'Add a "Party Bingo" card that uses the theme motifs.',
+      'Include a mini color-the-banner pennant set.',
+      'Add a small "thank-you token" cut-out card.',
+      'Add a "Mini Memory Game" pair of matching cards.',
+      'Include a "Wish Jar" prompt page for the guest of honor.',
+      'Add a cut-out door hanger for the guest to decorate their room.'
+    ];
+    var nTwists = Math.min(inp.chaos - 2, 3);
+    for(var t=0; t<nTwists; t++){
+      chaosTwists += '✨ CHAOS TWIST ' + (t+1) + ': ' + twists[(t + ctx.themeLabel.length) % twists.length] + '\n';
+    }
+  }
+
+  var P = '';
+  var guestLockSection = '';
+  var manifestSection = '';
+
+  P += 'CREATE A COMPLETE PERSONALIZED PARTY FAVOR COLORING PACK BLUEPRINT following the exact structure below. This is a UNIQUE, HIGH-CREATIVITY variation.\n\n';
+
+  P += '1. PRODUCT TITLE AND DESCRIPTION\n';
+  P += 'Pack Title: "' + packTitle + '"\n';
+  P += 'Pack Description: "' + packDesc + '"\n';
+  P += '\n';
+
+  P += '2. CREATOR / AUTHOR CREDIT\n';
+  if(inp.hasAuthor){
+    P += 'Creator: "' + inp.author + '"\n';
+    P += 'This creator name must appear on the pack cover (small type beneath the title) and in the README.txt file. It should NOT appear on any interior activity page.\n';
+  } else {
+    P += 'No creator name — the pack is published without creator credit. Do NOT include a creator name, a "by ___" line, or any creator placeholder anywhere on the cover, the interior pages, or the README.txt. If the README references a seller, use only "this listing" or "the shop".\n';
+  }
+  P += '\n';
+
+  P += '3. RECOMMENDED AUDIENCE AND USE CASE\n';
+  P += 'Ideal for parents, party planners, teachers, and gift-givers hosting a ' + inp.eventType.toLowerCase() + ' with the theme "' + inp.theme + '". The pack is designed as a printable instant-download party favor — guests color it at the table or take it home. Suitable for ages 3–10. Undated for repeat use at future parties.\n';
+  P += '\n';
+
+  P += '4. SHORT PRODUCT DESCRIPTION\n';
+  P += 'This printable ' + inp.theme + '-themed coloring pack features ' + inp.name + ' on ' + manifest.length + ' celebration activity pages. Each page is designed to be colored by the child and doubles as a table activity during the party and a keepsake afterward. Prints on standard US Letter paper — no special trim needed.\n';
+  P += '\n';
+
+  var kws = pickSeoKeywords(inp, ctx, 7);
+  P += '5. 7 SEO KEYWORDS\n';
+  for(var s=0; s<kws.length; s++){ P += (s+1) + '. ' + kws[s] + '\n'; }
+  P += '\n';
+
+  P += '6. PARTY OVERVIEW (MANIFEST SUMMARY)\n';
+  P += 'This ' + manifest.length + '-page personalized ' + ctx.themeLabel.toLowerCase() + ' pack is built around ' + inp.name + '\u2019s ' + inp.eventType.toLowerCase() + '. Every page is designed for the guest of honor and their guests to color at the table or take home.\n';
+  if(chaosTwists){ P += '\n' + chaosTwists; }
+  P += '\n';
+
+  guestLockSection += '7. GUEST OF HONOR LOCK\n';
+  guestLockSection += 'Locked for the entire production. Every page that features the guest of honor must use this exact description.\n\n';
+  guestLockSection += 'LOCK MODE: ' + ctx.lockMode + '\n\n';
+  guestLockSection += 'NAME: ' + inp.name + '\n';
+  if(inp.likeness){
+    guestLockSection += 'REAL-LIKENESS DESCRIPTION:\n';
+    guestLockSection += '- Hair: ' + (inp.hair || '—') + '\n';
+    guestLockSection += '- Eyes / Features: ' + (inp.eyes || '—') + '\n';
+    guestLockSection += '- Skin Tone: ' + (inp.skin || '—') + '\n';
+    guestLockSection += '- Outfit: ' + (inp.outfit || '—') + ' (unchanged on every page)\n';
+    guestLockSection += '- Full reference: ' + ctx.guestRef + '.\n';
+  } else {
+    guestLockSection += 'THEMED MASCOT / AVATAR MODE:\n';
+    guestLockSection += '- The guest of honor is represented by a themed mascot matching the party theme. Build: ' + ctx.bank.mascot + '.\n';
+    guestLockSection += '- Mascot name is ' + inp.name + ' — treat the mascot as the personal avatar.\n';
+    guestLockSection += '- Full reference: ' + ctx.guestRef + '.\n';
+  }
+  guestLockSection += '\nEnforcement rule: verify each page against every field. Any deviation → regenerate.\n\n';
+  P += guestLockSection;
+
+  P += '8. ART DIRECTION LOCK\n';
+  P += '- Style: ' + style.name + ' — ' + style.desc + '.\n';
+  P += '- Palette: ' + style.palette + '. No colors outside this palette.\n';
+  P += '- Line Weight: ' + style.line + '.\n';
+  P += '- Backgrounds: ' + style.bg + '.\n';
+  P += '- Theme Motifs: ' + ctx.bank.motifs.join(', ') + '.\n';
+  P += '\n';
+
+  P += '9. PARTY DETAILS BLOCK\n';
+  P += '- Event type: ' + inp.eventType + '\n';
+  P += '- Theme: ' + inp.theme + '\n';
+  P += '- Guest of honor: ' + inp.name + (inp.eventType === 'Birthday' ? ' (turning ' + inp.age + ')' : '') + '\n';
+  if(inp.additionalGuests.length){
+    P += '- Additional featured guests (1–2 pages): ' + inp.additionalGuests.join(', ') + '\n';
+  } else {
+    P += '- Additional featured guests: none — ' + inp.name + ' is the only featured name.\n';
+  }
+  P += '- Optional extras included:\n';
+  P += '  · Thank-You Page: ' + (inp.extras.thankyou ? 'YES' : 'NO') + '\n';
+  P += '  · Table Placemat Page: ' + (inp.extras.placemat ? 'YES' : 'NO') + '\n';
+  P += '  · Design-Your-Own Blank Page: ' + (inp.extras.designyourown ? 'YES' : 'NO') + '\n';
+  P += '  · Keepsake Full-Color Cover: ' + (inp.extras.keepsake ? 'YES (see section 12)' : 'NO') + '\n';
+  P += '\n';
+
+  manifestSection += '10. PAGE MANIFEST (' + manifest.length + ' pages)\n';
+  manifestSection += 'Below is the complete, ordered page manifest. Generate every page exactly as described. Do not reorder, merge, or skip pages.\n\n';
+  for(var i=0; i<manifest.length; i++){
+    var pg = manifest[i];
+    manifestSection += 'Page ' + (i+1) + ' — ' + pg.title + '\n';
+    manifestSection += '  Type: ' + pg.type + '\n';
+    manifestSection += '  Brief: ' + ensureSinglePeriod(pg.instruction) + '\n\n';
+  }
+  P += manifestSection;
+
+  P += '11. PER-PAGE IMAGE-GENERATION PROMPTS (' + manifest.length + ' pages)\n';
+  if(inp.textFree){
+    P += 'Generate each page as TEXT-FREE line art (no letters, words, numbers, or typography inside the image — see section 15).\n\n';
+  } else {
+    P += 'Generate each page as clean black line art with the page title and any text rendered inside the image in a playful rounded display font.\n\n';
+  }
+  for(var j=0; j<manifest.length; j++){
+    var p = manifest[j];
+    P += 'Page ' + (j+1) + ' — ' + p.title + ' (' + p.type + ')\n';
+    P += '  Prompt: ' + ensureSinglePeriod(p.instruction);
+    P += ' Apply the GUEST OF HONOR LOCK exactly (section 7) and the ART DIRECTION LOCK exactly (section 8 — ' + style.name + ' with its palette limits). Use the theme motifs (' + ctx.bank.motifs.slice(0,5).join(', ') + ') as decorative elements.';
+    if(inp.textFree){
+      P += ' TEXT-FREE — no letters, words, numbers, or typography inside the image.';
+    } else {
+      P += ' Render all titles and text in a playful rounded display font matching the party theme.';
+    }
+    P += ' Export as black line art on white at 2550 x 3300 px (8.5 x 11 in, US Letter portrait, 300 DPI).\n\n';
+  }
+
+  P += '12. COLORING CONVERSION & KEEPSAKE COVER NOTE\n';
+  P += 'Most pages in this pack ARE the coloring (black line art) version by design — no conversion is required for the activity pages.\n';
+  if(inp.extras.keepsake){
+    P += 'Since the Keepsake Full-Color Cover is ENABLED, produce an additional full-color version of Page 1 (Cover) and Page 2 (Hero):\n';
+    P += '- Render both in the full ' + style.name + ' style using the full palette.\n';
+    P += '- Apply the GUEST OF HONOR LOCK and ART DIRECTION LOCK exactly.\n';
+    P += '- Export as high-resolution color PNGs at 2550 x 3300 px, 300 DPI.\n';
+    P += '- Place them in a subfolder "Keepsake_Color_Version" in the delivery structure.\n';
+    if(inp.textFree){
+      P += '- These two keepsake pages are also TEXT-FREE; the pack title and any creator credit will be typeset separately.\n';
+    }
+    P += '\n';
+  } else {
+    P += 'Keepsake Full-Color Cover is DISABLED. All pages, including the cover, are produced as black line art.\n\n';
+  }
+
+  P += '13. OUTPUT & DELIVERY STRUCTURE\n';
+  P += 'Party favors are almost always sold as Etsy instant downloads — single printable folder.\n\n';
+  P += '/' + packTitle.replace(/[^A-Za-z0-9]+/g,'_') + '_Party_Pack/\n';
+  P += '  /Party_Pack_Printable\n';
+  P += '    - ' + packTitle.replace(/[^A-Za-z0-9]+/g,'_') + '_Complete_Pack.pdf\n';
+  P += '      Combined print-ready PDF, all ' + manifest.length + ' pages, US Letter (8.5 x 11 in portrait), 300 DPI.\n';
+  P += '    - /Individual_PNGs\n';
+  P += '      ' + manifest.length + ' PNGs, each 2550 x 3300 px at 300 DPI, named Page_01.png through Page_' + (manifest.length < 10 ? '0' : '') + manifest.length + '.png.\n';
+  if(inp.extras.keepsake){
+    P += '    - /Keepsake_Color_Version\n';
+    P += '      Page_01_Keepsake.png and Page_02_Keepsake.png — full-color versions.\n';
+  }
+  P += '    - README.txt\n';
+  P += '      Digital download note. Print at home on US Letter. Personalize the guest\u2019s name on the cover and hero page before printing.';
+  if(inp.hasAuthor){
+    P += ' Include: "Created by ' + inp.author + '."';
+  } else {
+    P += ' Do NOT include a creator name.';
+  }
+  P += '\n\n';
+
+  P += '14. PRODUCTION NOTES & EXPANSION REFERENCE\n';
+  if(inp.hasAuthor){
+    P += '- Creator: ' + inp.author + ' (already provided — do not re-confirm).\n';
+  } else {
+    P += '- Creator: NONE — omit all creator credit lines everywhere.\n';
+  }
+  P += '- PRINT SIZE NOTE: US Letter (8.5 x 11 in) at 2550 x 3300 px, 300 DPI — standard home-print format.\n';
+  P += '- CONTINUITY NOTE: Resolve any internal mismatch silently using the GUEST OF HONOR LOCK and section 10 as the controlling spec.\n';
+  P += '- EXPANSION REFERENCE: This same pack format can be regenerated instantly for the next party — a sibling, cousin, or classmate — by changing only the guest details. A repeatable product line for the seller.\n';
+  P += '- VARIATION FINGERPRINT: ' + fingerprint + ' — unique identifier for this variation. Use it to track production runs.\n';
+  P += '\n';
+
+  var nextSection = 15;
+  if(inp.textFree){
+    P += nextSection + '. TEXT-FREE ILLUSTRATION & TYPESETTING PLAN\n';
+    P += 'Generate ALL ' + manifest.length + ' activity pages as TEXT-FREE ARTWORK. No letters, words, numbers, or typography inside the images.\n\n';
+    P += 'IMPORTANT EXCEPTIONS for structured activity pages:\n';
+    P += '- Maze: leave "START" and "FINISH" labels and arrow markers to be typeset separately.\n';
+    P += '- Word Search: deliver as an EMPTY 10x10 grid of blank squares. Letters, word list, and title typeset separately.\n';
+    P += '- Connect-the-Dots: leave dot numbers (1–20) to be typeset separately.\n';
+    P += '- Color-by-Number: leave region numbers and color-key legend to be typeset separately.\n';
+    P += '- Tic-Tac-Toe / Memory Match / Fortune Teller: leave grid-lines and fold-marks as visual guides; any letters or numbers typeset separately.\n';
+    P += '- Cut-out pages (bookmark, door hanger, bag label, crown, hat topper, finger puppet, memory cards): keep dashed cut-lines as visual guides.\n';
+    if(!inp.hasAuthor){
+      P += '- This pack has NO creator name. Do not introduce any creator credit during typesetting.\n';
+    }
+    P += '\n';
+    P += 'RESERVE TEXT BANDS on every page:\n';
+    P += '- TITLE BAND: top 12–15% of page height, reserved for the page title.\n';
+    P += '- INSTRUCTION BAND: 5–7% directly beneath the title, for the child-facing instruction line.\n';
+    P += '- CREATOR BAND (cover and hero page only): small slot under the title, only if a creator name is provided.\n';
+    P += '\n';
+    P += 'TYPESETTING PLAN (SECOND PRODUCTION PASS):\n';
+    P += '- Tool: Canva, Affinity Publisher, Adobe InDesign, or HTML-to-PDF.\n';
+    P += '- Page title font: bold playful rounded display (Baloo 2, Fredoka, Quicksand Bold).\n';
+    P += '- Body font: warm child-friendly rounded sans (Nunito, Quicksand).\n';
+    P += '- Word Search letters: clean bold sans, sized large enough for kids to circle.\n';
+    P += '- Font sizes at 8.5 x 11 in: title min 24 pt, instruction min 14 pt, line spacing ≥ 1.3x.\n';
+    P += '- Color: warm accent tone from the ART DIRECTION LOCK palette, never pure black.\n';
+    P += '- Final export: flatten to print-ready PDF at 2550 x 3300 px per page, 300 DPI, embed all fonts.\n';
+    P += '\n';
+    nextSection = 16;
+  }
+
+  P += nextSection + '. DIRECT EXECUTION DIRECTIVE\n';
+  P += 'When this brief is received by the production agent (ChatGPT Codex / ChatGPT Work), begin production immediately in this session. Do not ask any questions. Do not request approval. Do not pause for confirmation. Execute every section above in order and deliver the complete final package.\n';
+
+  return { full: P, guestLock: guestLockSection, manifest: manifestSection, fingerprint: fingerprint };
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderOutput(sections){
+  lastSections = sections;
+  lastFingerprint = sections.fingerprint;
+  $('promptDisplay').textContent = sections.full;
+  var words = sections.full.split(/\s+/).filter(function(w){return w.length>0;}).length;
+  var chars = sections.full.length;
+  var sectionsCount = (sections.full.match(/^\d+\. /gm) || []).length;
+  $('countChip').textContent = words.toLocaleString() + ' words · ' + chars.toLocaleString() + ' chars · ' + sectionsCount + ' sections';
+  updateTags();
+}
+
+function updateTags(){
+  var name = $('inpName').value.replace(/^\s+|\s+$/g,'') || 'no guest';
+  var theme = $('inpTheme').value.replace(/^\s+|\s+$/g,'') || 'no theme';
+  var fpTag = lastFingerprint ? '<span class="tag fp">🔑 ' + lastFingerprint + '</span>' : '';
+  var tagsHtml =
+    '<span class="tag">🎉 ' + $('selEvent').value + '</span>' +
+    '<span class="tag">🎯 ' + theme.slice(0,26) + '</span>' +
+    '<span class="tag gold">🎂 ' + name + '</span>' +
+    '<span class="tag">📄 ' + selectedCount + ' pages</span>' +
+    '<span class="tag">🎨 ' + STYLES[selectedStyle].name + '</span>' +
+    '<span class="tag">🌀 Chaos: ' + chaosLevel + '/5</span>' +
+    '<span class="tag">' + (textFreeMode ? '✏️ Text-free' : '📝 Text-on-image') + '</span>' +
+    '<span class="tag">' + (extendedPool ? '🎪 Extended pool' : '📦 Core pool') + '</span>' +
+    fpTag;
+  $('settingsTags').innerHTML = tagsHtml;
+}
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+function extrasSummary(){
+  var list = [];
+  if(extras.thankyou) list.push('thank-you');
+  if(extras.placemat) list.push('placemat');
+  if(extras.designyourown) list.push('design-your-own');
+  if(extras.keepsake) list.push('keepsake cover');
+  return list.length ? list.join(', ') : 'core only';
+}
+
+function toggleStep(n){
+  var step = $('step'+n);
+  if(!step) return;
+  var wasOpen = step.classList.contains('open');
+  for(var i=1; i<=5; i++){
+    var s = $('step'+i);
+    if(!s) continue;
+    s.classList.remove('open');
+    if(s.classList.contains('done')){ s.classList.add('collapsed'); }
+  }
+  if(!wasOpen){
+    step.classList.remove('collapsed');
+    step.classList.add('open');
+  }
+}
+
+function openOnly(n){
+  for(var i=1; i<=5; i++){
+    var s = $('step'+i);
+    if(!s) continue;
+    s.classList.remove('open');
+    if(s.classList.contains('done')){ s.classList.add('collapsed'); }
+  }
+  var step = $('step'+n);
+  if(step){
+    step.classList.remove('collapsed');
+    step.classList.add('open');
+    if(step.scrollIntoView){ step.scrollIntoView({behavior:'smooth', block:'start'}); }
+  }
+}
+
+function markDone(n){
+  var s = $('step'+n);
+  if(s && !s.classList.contains('done')){ s.classList.add('done'); }
+}
+
+function setSummary(n, text){
+  var el = $('sum'+n);
+  if(!el) return;
+  el.innerHTML = '';
+  el.appendChild(document.createTextNode(text));
+}
+
+function nextStep(from, to){
+  if(from === 1){
+    var theme = $('inpTheme').value.replace(/^\s+|\s+$/g,'');
+    if(theme.length < 2){ showToast('Please enter a party theme — or press 🎲 Theme.'); return; }
+    markDone(1);
+    setSummary(1, $('selEvent').value + ' · ' + trimTo(theme, 30));
+  }
+  if(from === 2){
+    var nm = $('inpName').value.replace(/^\s+|\s+$/g,'');
+    if(nm.length < 1){ showToast('Please enter the guest of honor\u2019s name — or press 🎲 Guest.'); return; }
+    markDone(2);
+    var likeness = hasLikeness() ? 'likeness' : 'themed mascot';
+    var authorV = $('inpAuthor').value.replace(/^\s+|\s+$/g,'');
+    setSummary(2, nm + ' · ' + likeness + (authorV ? (' · by ' + trimTo(authorV, 14)) : ''));
+  }
+  if(from === 3){
+    markDone(3);
+    setSummary(3, selectedCount + ' pages · ' + extrasSummary());
+  }
+  if(from === 4){
+    markDone(4);
+    setSummary(4, STYLES[selectedStyle].name);
+  }
+  openOnly(to);
+  if(to === 5){
+    setSummary(5, (textFreeMode ? 'Text-free: ON' : 'Text-on-image') + ' · Chaos ' + chaosLevel + '/5');
+  }
+}
+
+function showToast(msg){
+  var t = $('toast');
+  t.innerHTML = '';
+  t.appendChild(document.createTextNode(msg));
+  t.className = 'toast show';
+  if(toastTimer){ window.clearTimeout(toastTimer); }
+  toastTimer = window.setTimeout(function(){ t.className = 'toast'; }, 2400);
+}
+var toastTimer = null;
+
+/* ============================================================
+   GENERATE / REGENERATE / REROLL / NEW
+   ============================================================ */
+function generate(){
+  var inp = readInputs();
+  var err = validateInputs(inp);
+  if(err){ showToast(err); return; }
+  variationCount++;
+  $('variationCounter').textContent = '🌀 Variations generated: ' + variationCount;
+  var sections = buildPrompt(inp);
+  renderOutput(sections);
+  var authorLabel = inp.hasAuthor ? ('by ' + inp.author) : 'no creator';
+  setSummary(5, 'Built · ' + inp.pageCount + ' pages · ' + authorLabel);
+  markDone(5);
+  saveProject(inp);
+  showToast('✦ Party pack prompt assembled — ready to copy!');
+}
+
+function regenerate(){
+  if(!lastSections){ showToast('Generate a prompt first, then regenerate.'); return; }
+  var inp = readInputs();
+  var err = validateInputs(inp);
+  if(err){ showToast(err); return; }
+  variationCount++;
+  $('variationCounter').textContent = '🌀 Variations generated: ' + variationCount;
+  var sections = buildPrompt(inp);
+  renderOutput(sections);
+  saveProject(inp);
+  showToast('↻ Fresh variation — new phrasing, titles, and page instructions.');
+}
+
+/* NEW: Reroll Manifest only — keeps theme/name, only rebuilds manifest + titles */
+function rerollManifest(){
+  if(!lastSections){ showToast('Build a prompt first, then reroll the manifest.'); return; }
+  var inp = readInputs();
+  var err = validateInputs(inp);
+  if(err){ showToast(err); return; }
+  variationCount++;
+  $('variationCounter').textContent = '🌀 Variations generated: ' + variationCount;
+  var sections = buildPrompt(inp);
+  renderOutput(sections);
+  saveProject(inp);
+  showToast('🎲 Manifest rerolled — new page order, titles, and briefs.');
+}
+
+function newProject(){
+  if(!window.confirm('Start a new project? This clears the wizard and the current prompt.')){ return; }
+  $('selEvent').selectedIndex = 0;
+  $('inpTheme').value = '';
+  $('inpName').value = '';
+  $('inpAge').value = 5;
+  $('inpHair').value = '';
+  $('inpEyes').value = '';
+  $('inpSkin').value = '';
+  $('inpOutfit').value = '';
+  $('inpMascotName').value = 'Buddy';
+  $('inpMascotSpecies').value = 'a friendly themed mascot';
+  $('inpGuests').value = '';
+  $('inpAuthor').value = '';
+  selectedStyle = 0;
+  selectedCount = 12;
+  extras = { thankyou:true, placemat:true, designyourown:true, keepsake:false };
+  textFreeMode = true;
+  extendedPool = true;
+  chaosLevel = 3;
+  variationCount = 0;
+  lastFingerprint = '';
+  $('chaosSlider').value = 3;
+  $('chaosDisplay').textContent = '3';
+  $('variationCounter').textContent = '🌀 Variations generated: 0';
+  var tr = $('toggleTextFree'); if(tr) tr.classList.add('on');
+  var trEx = $('toggleExtended'); if(trEx) trEx.classList.add('on');
+  buildStyleGrid();
+  var pcGrid = $('pageCountGrid');
+  if(pcGrid){
+    var btns = pcGrid.querySelectorAll('.page-count-btn');
+    for(var i=0; i<btns.length; i++){
+      btns[i].classList.remove('selected');
+      if(parseInt(btns[i].getAttribute('data-count'),10) === 12){ btns[i].classList.add('selected'); }
+    }
+  }
+  var exGrid = $('extrasGrid');
+  if(exGrid){
+    var cards = exGrid.querySelectorAll('.check-card');
+    for(var e=0; e<cards.length; e++){
+      var key = cards[e].getAttribute('data-extra');
+      if(extras[key]) cards[e].classList.add('checked');
+      else cards[e].classList.remove('checked');
+    }
+  }
+  updateAuthorStatus();
+  updateThemeMeta();
+  renderThemeChips();
+  lastSections = null;
+  $('promptDisplay').textContent = 'Fill in the wizard on the left, then press Build My Party Pack Prompt.';
+  $('countChip').textContent = '0 words · 0 chars · 0 sections';
+  $('settingsTags').innerHTML = '';
+  for(var j=1; j<=5; j++){
+    var s = $('step'+j);
+    if(s){ s.className = 'step' + (j===1 ? ' open' : ''); }
+    setSummary(j, '');
+  }
+  try{ window.localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  showToast('New project started.');
+}
+
+/* ============================================================
+   COPY / EXPORT
+   ============================================================ */
+function copyFull(){
+  if(!lastSections){ showToast('Generate a prompt first.'); return; }
+  var text = lastSections.full;
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); showToast('⧉ Copied to clipboard.'); }
+    catch(e2){ showToast('Copy failed — select manually.'); }
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      showToast('⧉ Copied to clipboard.');
+    }, function(){ fallback(); });
+  } else { fallback(); }
+}
+
+function exportPrompt(){
+  if(!lastSections){ showToast('Generate a prompt first.'); return; }
+  try{
+    var blob = new Blob([lastSections.full], {type:'text/plain;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var name = 'party_pack_' + ($('inpName').value.replace(/[^A-Za-z0-9]+/g,'_') || 'guest') + '_' + selectedCount + 'p_' + (lastFingerprint || 'x');
+    a.href = url;
+    a.download = name + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    showToast('💾 Exported as .txt');
+  }catch(e){ showToast('Export not supported.'); }
+}
+
+/* ============================================================
+   SAVE / LOAD
+   ============================================================ */
+function saveProject(inp){
+  try{
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      v: 4,
+      inp: inp,
+      outputs: lastSections,
+      styleIdx: selectedStyle,
+      count: selectedCount,
+      extras: extras,
+      textFree: textFreeMode,
+      extendedPool: extendedPool,
+      chaos: chaosLevel,
+      variationCount: variationCount,
+      fingerprint: lastFingerprint
+    }));
+  }catch(e){}
+}
+
+function loadProject(){
+  var raw = null;
+  try{ raw = window.localStorage.getItem(STORAGE_KEY); }catch(e){}
+  if(!raw) return false;
+  try{
+    var data = JSON.parse(raw);
+    if(!data || !data.inp) return false;
+    var inp = data.inp;
+
+    if(typeof data.textFree === 'boolean'){
+      textFreeMode = data.textFree;
+      var tr = $('toggleTextFree');
+      if(tr){ if(textFreeMode) tr.classList.add('on'); else tr.classList.remove('on'); }
+    }
+    if(typeof data.extendedPool === 'boolean'){
+      extendedPool = data.extendedPool;
+      var trEx = $('toggleExtended');
+      if(trEx){ if(extendedPool) trEx.classList.add('on'); else trEx.classList.remove('on'); }
+    }
+    if(typeof data.chaos === 'number'){
+      chaosLevel = data.chaos;
+      $('chaosSlider').value = chaosLevel;
+      $('chaosDisplay').textContent = chaosLevel;
+    }
+    if(typeof data.variationCount === 'number'){
+      variationCount = data.variationCount;
+      $('variationCounter').textContent = '🌀 Variations generated: ' + variationCount;
+    }
+    if(typeof data.fingerprint === 'string'){ lastFingerprint = data.fingerprint; }
+
+    $('selEvent').value = inp.eventType || 'Birthday';
+    $('inpTheme').value = inp.theme || '';
+    $('inpName').value = inp.name || '';
+    $('inpAge').value = inp.age || 5;
+    $('inpHair').value = inp.hair || '';
+    $('inpEyes').value = inp.eyes || '';
+    $('inpSkin').value = inp.skin || '';
+    $('inpOutfit').value = inp.outfit || '';
+    if(inp.mascotName) $('inpMascotName').value = inp.mascotName;
+    if(inp.mascotSpecies) $('inpMascotSpecies').value = inp.mascotSpecies;
+    $('inpGuests').value = (inp.additionalGuests || []).join(', ');
+    if(inp.author) $('inpAuthor').value = inp.author;
+
+    if(typeof data.styleIdx === 'number'){
+      selectedStyle = data.styleIdx;
+      buildStyleGrid();
+    }
+    if(typeof data.count === 'number'){
+      selectedCount = data.count;
+      var pcGrid = $('pageCountGrid');
+      if(pcGrid){
+        var pcBtns = pcGrid.querySelectorAll('.page-count-btn');
+        for(var pi=0; pi<pcBtns.length; pi++){
+          pcBtns[pi].classList.remove('selected');
+          if(parseInt(pcBtns[pi].getAttribute('data-count'),10) === selectedCount){ pcBtns[pi].classList.add('selected'); }
+        }
+      }
+    }
+    if(data.extras){
+      extras = data.extras;
+      var exGrid = $('extrasGrid');
+      if(exGrid){
+        var cards = exGrid.querySelectorAll('.check-card');
+        for(var e=0; e<cards.length; e++){
+          var key = cards[e].getAttribute('data-extra');
+          if(extras[key]) cards[e].classList.add('checked');
+          else cards[e].classList.remove('checked');
+        }
+      }
+    }
+
+    updateAuthorStatus();
+    updateThemeMeta();
+
+    if(data.outputs){
+      lastSections = data.outputs;
+      renderOutput(lastSections);
+    }
+
+    for(var i=1; i<=4; i++){ markDone(i); }
+    setSummary(1, (inp.eventType || '') + ' · ' + trimTo(inp.theme || '', 30));
+    setSummary(2, (inp.name || '') + (inp.eventType === 'Birthday' ? ' · turning ' + inp.age : ''));
+    setSummary(3, selectedCount + ' pages · ' + extrasSummary());
+    setSummary(4, STYLES[selectedStyle].name);
+    setSummary(5, 'Pack restored');
+    markDone(5);
+
+    openOnly(1);
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  buildStyleGrid();
+  buildPageCountGrid();
+  buildExtrasGrid();
+  loadProject();
+  updateAuthorStatus();
+  updateThemeMeta();
+  renderThemeChips();
+  updateTags();
+
+  $('inpTheme').addEventListener('input', function(){ updateThemeMeta(); updateTags(); });
+  $('inpName').addEventListener('input', updateTags);
+  $('inpAuthor').addEventListener('input', updateAuthorStatus);
+
+  $('chaosSlider').addEventListener('input', function(e){
+    chaosLevel = parseInt(e.target.value, 10);
+    $('chaosDisplay').textContent = chaosLevel;
+    updateTags();
+  });
+
+  $('copyBtn').addEventListener('click', function(){
+    copyFull();
+    this.innerHTML = '✓ Copied!';
+    this.classList.add('copied');
+    var self = this;
+    setTimeout(function(){ self.innerHTML = '📋 Copy Full Prompt'; self.classList.remove('copied'); }, 2000);
+  });
+}
+
+window.toggleStep = toggleStep;
+window.openOnly = openOnly;
+window.nextStep = nextStep;
+window.generate = generate;
+window.regenerate = regenerate;
+window.rerollManifest = rerollManifest;
+window.newProject = newProject;
+window.copyFull = copyFull;
+window.exportPrompt = exportPrompt;
+window.toggleTextFree = toggleTextFree;
+window.toggleExtended = toggleExtended;
+window.generateGuest = generateGuest;
+window.generateHelper = generateHelper;
+window.generateTheme = generateTheme;
+
+init();
+</script>
+</body>
+</html>
