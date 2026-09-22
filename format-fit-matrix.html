@@ -1,0 +1,741 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Format Fit Matrix — Stop Guessing. Start Building.</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#FFD60A;
+  --panel:#ffffff;
+  --ink:#000000;
+  --accent:#D62828;
+  --accent2:#000000;
+}
+html,body{margin:0;padding:0;background:var(--bg)}
+body{color:var(--ink);font-family:"Space Mono",monospace;min-height:100vh}
+h1,h2,h3{margin:0;font-family:"Space Grotesk",sans-serif}
+button{font-family:"Space Grotesk",sans-serif}
+#topbar{border-bottom:6px solid #000;padding:26px 28px 22px;background:var(--bg)}
+#topbar .wrap{max-width:1080px;margin:0 auto}
+.kicker{display:inline-block;background:#000;color:#FFD60A;font-family:"Space Grotesk",sans-serif;font-weight:700;
+  font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:6px 12px;margin-bottom:12px}
+#topbar h1{font-size:52px;font-weight:700;line-height:1;letter-spacing:-1px;text-transform:uppercase}
+#topbar .sub{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:19px;margin-top:8px;letter-spacing:1px;text-transform:uppercase}
+#topbar .sub em{font-style:normal;background:var(--accent);color:#fff;padding:2px 10px}
+#genRow{display:flex;gap:14px;margin-top:20px;flex-wrap:wrap}
+#in-niche{flex:1;min-width:240px;border:4px solid #000;border-radius:0;background:#fff;color:#000;
+  font-family:"Space Mono",monospace;font-size:17px;font-weight:700;padding:14px 16px;box-shadow:8px 8px 0 #000}
+#in-niche::placeholder{color:#888}
+#in-niche:focus{outline:none;background:#FFFBEA}
+#btnScore{background:#000;color:#FFD60A;border:4px solid #000;border-radius:0;font-weight:700;font-size:17px;
+  letter-spacing:1px;text-transform:uppercase;padding:14px 26px;cursor:pointer;box-shadow:8px 8px 0 rgba(0,0,0,.35);
+  transition:transform .08s,box-shadow .08s;white-space:nowrap}
+#btnScore:hover{transform:translate(-2px,-2px);box-shadow:10px 10px 0 rgba(0,0,0,.35)}
+#btnScore:active{transform:translate(4px,4px);box-shadow:2px 2px 0 rgba(0,0,0,.35)}
+#errMsg{display:none;max-width:1080px;margin:14px auto 0;padding:0 28px}
+#errBox{background:var(--accent);color:#fff;border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;
+  font-weight:700;padding:12px 16px;text-transform:uppercase;letter-spacing:1px}
+#main{max-width:1080px;margin:0 auto;padding:26px 28px 70px}
+#kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-bottom:26px}
+.kpi{background:var(--panel);border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;padding:16px 18px}
+.kpi .k{font-family:"Space Grotesk",sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.kpi .v{font-family:"Space Grotesk",sans-serif;font-size:30px;font-weight:700;margin-top:6px;text-transform:uppercase;line-height:1.1}
+.kpi.hot{background:#000;color:#FFD60A}
+.kpi.hot .k{color:#FFD60A}
+.kpi .s{font-size:12px;margin-top:6px}
+#grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.card{background:var(--panel);border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;padding:20px;position:relative}
+.card.rank1{background:#000;color:#fff}
+.card.rank1 .fname,.card.rank1 .why{color:#fff}
+.card.rank1 .bar{background:rgba(255,214,10,.25)}
+.card.rank1 .barlabel{color:#FFD60A}
+.badge{position:absolute;top:-4px;right:-4px;background:var(--accent);color:#fff;border:4px solid #000;border-radius:0;
+  font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:26px;padding:6px 14px;min-width:76px;text-align:center}
+.card.rank1 .badge{background:var(--bg);color:#000}
+.frow{display:flex;align-items:center;gap:12px;margin-bottom:4px;padding-right:96px}
+.glyph{width:52px;height:52px;background:#000;color:#FFD60A;font-family:"Space Grotesk",sans-serif;font-weight:700;
+  font-size:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:4px solid #000}
+.card.rank1 .glyph{background:var(--bg);color:#000}
+.fname{font-family:"Space Grotesk",sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:1px;line-height:1.1}
+.ranktag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;background:#000;color:#FFD60A;padding:3px 9px;margin-top:6px;text-transform:uppercase}
+.card.rank1 .ranktag{background:var(--accent);color:#fff}
+.srow{margin-top:14px}
+.barlabel{display:flex;justify-content:space-between;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.bar{border:3px solid #000;border-radius:0;background:#eee;height:22px;position:relative}
+.card.rank1 .bar{border-color:#FFD60A}
+.bar i{position:absolute;top:0;left:0;bottom:0;width:0;background:#000;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.bar.demand i{background:var(--accent)}
+.bar.ease i{background:#000}
+.card.rank1 .bar.ease i{background:var(--bg)}
+.why{font-size:13px;line-height:1.7;margin:16px 0 0}
+.why b{background:#000;color:#FFD60A;padding:0 5px}
+.card.rank1 .why b{background:var(--accent);color:#fff}
+#chartPanel{margin-top:30px;background:var(--panel);border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;padding:22px}
+#chartPanel h2{font-size:24px;text-transform:uppercase;letter-spacing:1px}
+#chartPanel p{font-size:13px;margin:6px 0 14px}
+#chartWrap{position:relative;max-width:640px;margin:0 auto}
+#toolbar{margin-top:26px;display:flex;gap:14px;flex-wrap:wrap}
+.btn-brut{background:#fff;color:#000;border:4px solid #000;border-radius:0;font-weight:700;font-size:15px;
+  letter-spacing:1px;text-transform:uppercase;padding:13px 20px;cursor:pointer;box-shadow:8px 8px 0 #000;
+  transition:transform .08s,box-shadow .08s}
+.btn-brut:hover{transform:translate(-2px,-2px);box-shadow:10px 10px 0 #000}
+.btn-brut:active{transform:translate(4px,4px);box-shadow:2px 2px 0 #000}
+.btn-brut.primary{background:#000;color:#FFD60A}
+#emptyState{border:4px dashed #000;border-radius:0;padding:60px 24px;text-align:center;margin-top:6px}
+#emptyState h2{font-size:28px;text-transform:uppercase}
+#emptyState p{font-size:14px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:none;background:#000;color:#FFD60A;
+  font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;
+  padding:13px 24px;border:4px solid #000;box-shadow:8px 8px 0 rgba(0,0,0,.35)}
+#tunePanel{margin-bottom:26px;background:#000;color:#FFD60A;border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 rgba(0,0,0,.35);padding:16px 18px}
+.tune-head{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;text-transform:uppercase}
+.tune-head span{font-size:11px;color:#FFD60A;opacity:.75}
+.sliders{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:12px}
+.sl{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.sl b{color:#fff;background:var(--accent);padding:0 6px;margin-left:4px}
+.sl input{width:100%;margin-top:6px;accent-color:var(--accent)}
+#roadmap{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:26px;background:var(--panel);
+  border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;padding:12px 16px;font-size:12px;font-weight:700}
+#roadmap .rlab{font-family:"Space Grotesk",sans-serif;letter-spacing:1px}
+.rmchip{background:#000;color:#FFD60A;font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:12px;padding:5px 10px;text-transform:uppercase}
+.rmchip.first{background:var(--accent);color:#fff}
+#histRow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px;font-size:12px;font-weight:700}
+.hchip{background:#fff;border:3px solid #000;border-radius:0;box-shadow:4px 4px 0 #000;padding:6px 10px;cursor:pointer;
+  font-size:12px;font-weight:700;text-transform:uppercase}
+.hchip:hover{background:#000;color:#FFD60A}
+.hchip small{opacity:.65}
+.spec{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:14px}
+.spec div{border:3px solid #000;padding:6px 8px;font-size:12px;font-weight:700}
+.spec b{display:block;font-family:"Space Grotesk",sans-serif;font-size:10px;letter-spacing:1px;color:var(--accent)}
+.card.rank1 .spec div{border-color:#FFD60A}
+.card.rank1 .spec b{color:var(--bg)}
+.edge{margin:14px 0 0;background:#000;color:#FFD60A;font-size:12.5px;font-weight:700;line-height:1.6;padding:10px 12px;text-transform:uppercase;letter-spacing:.5px}
+.card.rank1 .edge{background:var(--accent);color:#fff}
+.sigs{margin-top:14px;font-size:11px;font-weight:700;letter-spacing:1px;border-top:3px solid #000;padding-top:8px}
+#evidence{margin-bottom:14px;background:#000;color:#fff;border:4px solid #000;border-radius:0;
+  box-shadow:8px 8px 0 rgba(0,0,0,.35);padding:12px 16px;font-size:12.5px;font-weight:700;line-height:1.9}
+#evidence .src{color:#FFD60A}
+#databar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px;background:var(--panel);
+  border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;padding:10px 16px;font-size:12px;font-weight:700}
+.sdot2{display:inline-block;width:12px;height:12px;border:2px solid #000;margin-right:5px;vertical-align:-1px}
+.sdot2.on{background:#000}
+.sdot2.off{background:var(--accent)}
+#trendPanel{margin-top:30px;background:var(--panel);border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;padding:22px}
+#trendPanel h2{font-size:24px;text-transform:uppercase;letter-spacing:1px}
+#trendPanel p{font-size:13px;margin:6px 0 14px}
+#pulseWrap{position:relative;max-width:680px;margin:0 auto}
+details.how{margin-top:30px;background:var(--panel);border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;padding:0 22px}
+details.how summary{cursor:pointer;font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:18px;
+  text-transform:uppercase;letter-spacing:1px;padding:18px 0;list-style:none}
+details.how summary::-webkit-details-marker{display:none}
+details.how .hbody{padding:0 0 20px;font-size:13px;line-height:1.8}
+details.how table{border-collapse:collapse;width:100%;margin:10px 0;font-size:12px}
+details.how th,details.how td{border:3px solid #000;padding:6px 8px;text-align:left}
+details.how th{background:#000;color:#FFD60A;font-family:"Space Grotesk",sans-serif}
+details.how a{color:var(--accent);font-weight:700}
+#btnScore:disabled{opacity:.6;cursor:wait;transform:none}
+#btnGuide{background:#fff;color:#000;border:4px solid #000;border-radius:0;font-weight:700;font-size:17px;letter-spacing:1px;text-transform:uppercase;padding:14px 22px;cursor:pointer;box-shadow:8px 8px 0 rgba(0,0,0,.35);white-space:nowrap}
+#btnGuide:active{transform:translate(4px,4px);box-shadow:2px 2px 0 rgba(0,0,0,.35)}
+#guidePanel{display:none;max-width:1080px;margin:0 auto;padding:0 28px}
+#guideBox{background:#fff;border:4px solid #000;border-radius:0;box-shadow:8px 8px 0 #000;padding:20px 22px;margin-top:18px;font-size:13.5px;line-height:1.8}
+#guideBox b{background:#000;color:#FFD60A;padding:0 5px}
+#guideBox ol{margin:8px 0;padding-left:20px}
+#guideBox li{margin-bottom:6px}
+#pulseWrap{position:relative;max-width:680px;margin:0 auto}
+#pulseMeta{font-size:12px;font-weight:700;margin-top:10px;text-align:center}
+#trendLink{display:inline-block;margin-top:12px;text-decoration:none}
+@media(max-width:820px){#grid{grid-template-columns:minmax(0,1fr)}#kpis{grid-template-columns:minmax(0,1fr)}#topbar h1{font-size:34px}.sliders{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="wrap">
+    <div class="kicker">Niche Goldmine AI · Bonus Tool</div>
+    <h1>Format Fit Matrix</h1>
+    <div class="sub">Stop guessing. <em>Start building.</em></div>
+    <div id="genRow">
+      <input type="text" id="in-niche" maxlength="60" value="budget meal prep" placeholder="TYPE YOUR NICHE… E.G. MEAL PREP">
+      <button id="btnScore">SCORE MY NICHE →</button>
+      <button id="btnGuide">📖 HOW TO USE</button>
+    </div>
+  </div>
+</div>
+<div id="guidePanel"><div id="guideBox">
+<b>60-SECOND MANUAL:</b>
+<ol>
+<li>Type a niche, hit <b>SCORE MY NICHE</b> — the tool fires 5 live API calls (books, podcasts, ebooks, wiki views) and scores all 6 formats.</li>
+<li>Read the <b>NET log</b> in the data bar: every call shows HTTP status + milliseconds. Dots on = live. Off = failed → that dimension falls back to baseline, badge shows <b>~</b>.</li>
+<li>Cards sort best-first. <b>⚔ YOUR EDGE</b> is your angle; the spec grid shows real price/time/margin facts.</li>
+<li>Drag <b>WEIGHT TUNING</b> to re-rank by what YOU value (demand vs profit vs speed).</li>
+<li>The <b>12-month pulse</b> below is real measured Wikipedia views per month. For full Google Trends, hit the yellow button.</li>
+</ol>
+<b>OFFLINE?</b> Fewer than 2 sources → OFFLINE ESTIMATE mode. Check connection/adblock, then rescore — or serve via localhost.
+</div></div>
+<div id="errMsg"><div id="errBox"></div></div>
+<div id="main">
+  <div id="histRow" style="display:none"></div>
+  <div id="emptyState">
+    <h2>6 formats enter. 1 winner leaves.</h2>
+    <p>Type your niche above and hit SCORE MY NICHE.<br>Demand · Competition · Build-Ease — ranked, explained, charted.</p>
+  </div>
+  <div id="results" style="display:none">
+    <div id="kpis"></div>
+    <div id="roadmap"></div>
+    <div id="evidence"></div>
+    <div id="databar"></div>
+    <div id="tunePanel">
+      <div class="tune-head">⚙ WEIGHT TUNING <span>— drag · rankings re-sort live</span></div>
+      <div class="sliders">
+        <label class="sl">Demand <b id="wvd">30</b><input type="range" id="wd" min="0" max="50" value="30"></label>
+        <label class="sl">Open lane <b id="wvl">20</b><input type="range" id="wl" min="0" max="50" value="20"></label>
+        <label class="sl">Build-ease <b id="wve">20</b><input type="range" id="we" min="0" max="50" value="20"></label>
+        <label class="sl">Profit <b id="wvp">15</b><input type="range" id="wp" min="0" max="50" value="15"></label>
+        <label class="sl">Speed <b id="wvs">15</b><input type="range" id="ws" min="0" max="50" value="15"></label>
+      </div>
+    </div>
+    <div id="grid"></div>
+    <div id="chartPanel">
+      <h2>Opportunity Shape</h2>
+      <p>All 6 formats, 3 dimensions. Bigger footprint = better fit. OPEN LANE = 100 − COMPETITION.</p>
+      <div id="chartWrap"><canvas id="radar" height="320"></canvas></div>
+    </div>
+    <div id="trendPanel">
+      <h2>Live Search Interest</h2>
+      <p>Real monthly interest for your niche — 12 months of measured Wikipedia views. Spikes = demand you can ride.</p>
+      <div id="pulseWrap"><canvas id="pulse" height="180"></canvas></div>
+      <div id="pulseMeta"></div>
+      <div style="text-align:center"><a id="trendLink" class="btn-brut primary" href="#" target="_blank" rel="noopener">↗ OPEN LIVE GOOGLE TRENDS</a></div>
+    </div>
+    <details class="how">
+      <summary>HOW SCORED ↓ (formulas + sources)</summary>
+      <div class="hbody">
+        <b>Demand</b> = live market counts, log-normalized per format: Wikipedia article views (12 mo) + Google Books depth + iTunes podcast/ebook saturation (200-result cap). No books, no podcasts, no views → low demand. Simple.<br>
+        <b>Competition</b> = published-book counts (Google Books totalItems + Open Library numFound) + iTunes ebook saturation. More published titles = higher score = redder ocean.<br>
+        <b>Build-Ease / Profit / Speed</b> = fixed format benchmarks (below) — these are properties of the <i>format</i>, not your niche, so they don't pretend to be measured.<br>
+        <b>Adjustments</b>: keyword signals (±8–12 where the niche text matches a group) + long-tail specificity (−5 competition for 3+ word niches). Overall = your weight sliders, normalized.<br>
+        <b>Offline?</b> If fewer than 2 sources respond, the tool says OFFLINE ESTIMATE and falls back to baseline benchmarks + signals. It never fakes live numbers.
+        <table>
+          <tr><th>Format</th><th>Typical price</th><th>Build time</th><th>Margin</th></tr>
+          <tr><td>Ebook</td><td>$7–$27</td><td>3–7 days</td><td>~90%</td></tr>
+          <tr><td>Printable</td><td>$9–$37</td><td>Weekend</td><td>~95%</td></tr>
+          <tr><td>KDP Book</td><td>$9.99–$24.99</td><td>2–4 weeks</td><td>~60% royalty</td></tr>
+          <tr><td>Online Course</td><td>$47–$297</td><td>3–6 weeks</td><td>~90%</td></tr>
+          <tr><td>PLR Pack</td><td>$17–$67</td><td>1–2 weeks</td><td>~100%</td></tr>
+          <tr><td>POD Merch</td><td>$18–$35</td><td>1 week</td><td>~30–40%</td></tr>
+        </table>
+        Sources: <a href="https://developers.google.com/books" target="_blank" rel="noopener">Google Books API</a> ·
+        <a href="https://openlibrary.org/developers/api" target="_blank" rel="noopener">Open Library</a> ·
+        <a href="https://performance-partners.apple.com/search-api" target="_blank" rel="noopener">iTunes Search</a> ·
+        <a href="https://wikimedia.org/api/rest_v1/" target="_blank" rel="noopener">Wikimedia Pageviews</a> ·
+        <a href="https://trends.google.com" target="_blank" rel="noopener">Google Trends</a>
+      </div>
+    </details>
+    <div id="toolbar">
+      <button class="btn-brut primary" id="btnCopy">Copy Full Report as Text</button>
+      <button class="btn-brut" id="btnTxt">.TXT</button>
+      <button class="btn-brut" id="btnMd">.MD</button>
+      <button class="btn-brut" id="btnAgain">↻ Rescore</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+var LSKEY="ffm-state-v1";
+var FORMATS=[
+ {id:"ebook",name:"Ebook",glyph:"≡",base:{d:72,c:68,e:85,p:60,s:80},
+  real:{price:"$7–$27",time:"3–7 DAYS",sell:"GUMROAD · KDP",margin:"~90%"}},
+ {id:"printable",name:"Printable",glyph:"▦",base:{d:78,c:74,e:92,p:62,s:88},
+  real:{price:"$9–$37",time:"WEEKEND",sell:"ETSY",margin:"~95%"}},
+ {id:"kdp",name:"KDP Book",glyph:"▮",base:{d:65,c:55,e:60,p:70,s:45},
+  real:{price:"$9.99–$24.99",time:"2–4 WEEKS",sell:"AMAZON",margin:"~60% ROYALTY"}},
+ {id:"course",name:"Online Course",glyph:"▶",base:{d:80,c:62,e:45,p:95,s:50},
+  real:{price:"$47–$297",time:"3–6 WEEKS",sell:"TEACHABLE · GUMROAD",margin:"~90%"}},
+ {id:"plr",name:"PLR Pack",glyph:"⧉",base:{d:58,c:70,e:75,p:68,s:72},
+  real:{price:"$17–$67",time:"1–2 WEEKS",sell:"WARRIORPLUS · JVZOO",margin:"~100%"}},
+ {id:"pod",name:"POD Merch",glyph:"✚",base:{d:66,c:78,e:55,p:55,s:65},
+  real:{price:"$18–$35",time:"1 WEEK",sell:"PRINTFUL · ETSY",margin:"~30–40%"}}
+];
+var SIGNALS=[
+ {name:"VISUAL/CRAFT",
+  keys:["color","art","design","decor","paint","draw","craft","illustrat","photo","tattoo","pattern","crochet","knit","scrapbook","watercolor","calligraph","lettering","interior","fashion","beauty","sketch"],
+  adj:{pod:{d:12,c:8,p:4},kdp:{d:10,c:0,p:2},printable:{d:6,c:0,p:0}}},
+ {name:"SKILL/HOW-TO",
+  keys:["train","learn","course","guide","master","coach","speak","language","music","cod","skill","lesson","class","fitness","yoga","dance","guitar","piano","excel","leadership"],
+  adj:{course:{d:12,c:6,p:6},ebook:{d:8,c:4,p:2}}},
+ {name:"PRACTICAL/PLANNER",
+  keys:["planner","tracker","checklist","schedule","budget","meal","habit","journal","organiz","routine","printable","wedding","baby","teacher","homeschool","clean","garden","travel"],
+  adj:{printable:{d:12,c:5,e:3,s:4},plr:{d:6,c:0,p:2},ebook:{d:4,c:0,s:2}}},
+ {name:"EVERGREEN/MONEY",
+  keys:["money","business","market","wealth","diet","weight","parent","dog","income","invest","blog","wedding"],
+  adj:{plr:{d:10,c:5,p:4},ebook:{d:5,c:4,p:0},course:{d:4,c:0,p:3}}}
+];
+var WHY={
+ebook:["Demand {d} for '{niche}' is {dAdj}: readers already buy {niche} guides. Competition at {c} is {cAdj}, so your angle must punch through. Build-ease {e} — you can ship in a weekend. {verdict}",
+"An Ebook scores Demand {d} ({dAdj}) against Competition {c} ({cAdj}) for '{niche}'. With build-ease at {e}, it's the lowest-risk way to test this niche before bigger formats. {verdict}",
+"Ebook math for '{niche}': Demand {d}, Competition {c}, Profit {p}. {dAdj} interest with {cAdj} rivalry means the cover + hook do the selling. {verdict}",
+"With build-ease {e} and speed {s}, an Ebook is the fastest {niche} test you can run. Demand {d} ({dAdj}) says buyers exist. {verdict}"],
+printable:["Demand {d} ({dAdj}) plus build-ease {e} makes Printables a speed weapon for '{niche}'. Competition {c} is {cAdj} — win with a tighter, more specific pack. {verdict}",
+"Printables post Demand {d} and elite build-ease ({e}) for '{niche}'. Competition {c} ({cAdj}) rewards whoever niches down hardest. {verdict}",
+"Printable economics: Demand {d}, Profit {p}, Speed {s}. For '{niche}', fast products beat perfect products. Competition {c} ({cAdj}) only matters if you're generic. {verdict}",
+"Build-ease {e} means this {niche} pack exists by Sunday. Demand {d} ({dAdj}) + Competition {c} ({cAdj}) = a volume game you can win. {verdict}"],
+kdp:["KDP Books score Demand {d} ({dAdj}) with Competition {c} ({cAdj}) — the quietest lane for '{niche}'. Build-ease {e} reflects real formatting work, but the moat is worth it. {verdict}",
+"Demand {d} meets Competition {c} ({cAdj}) for a KDP Book in '{niche}': fewer rivals, longer shelf life. Build-ease {e} is honest — books take work. {verdict}",
+"KDP is the slow lane that compounds: Demand {d}, Profit {p} in royalties, Speed {s}. For '{niche}', Competition {c} ({cAdj}) is the opening. {verdict}",
+"A KDP Book turns '{niche}' into an asset: Demand {d} ({dAdj}), build-ease {e} (honest work), Speed {s} (slow). Patient builders win here. {verdict}"],
+course:["An Online Course shows Demand {d} ({dAdj}) for '{niche}' — the highest ceiling here. Competition {c} is {cAdj}, and build-ease {e} means real recording work. {verdict}",
+"Demand {d} says '{niche}' buyers pay for transformation, not files. Competition {c} ({cAdj}); build-ease {e} is the price of the highest ticket. {verdict}",
+"Course economics for '{niche}': Demand {d}, Profit {p} — the biggest ticket in the matrix. Competition {c} ({cAdj}), build-ease {e}. Big lift, bigger payoff. {verdict}",
+"Speed {s} is the course tax: weeks before first sale. But Demand {d} ({dAdj}) + Profit {p} for '{niche}' is why flagships exist. {verdict}"],
+plr:["PLR scores Demand {d} ({dAdj}) with Competition {c} ({cAdj}) for '{niche}'. Build-ease {e} — you're packaging, not creating from zero. Sellers buy speed. {verdict}",
+"Demand {d} ({dAdj}), Competition {c} ({cAdj}): PLR wins when '{niche}' has an evergreen reseller crowd. Build-ease {e} keeps margins fat. {verdict}",
+"PLR for '{niche}': Demand {d} ({dAdj}) from resellers, Competition {c} ({cAdj}), Profit {p} at ~100% margin. Build-ease {e} — curation over creation. {verdict}",
+"Speed {s} + build-ease {e} = PLR ships in days, not weeks. Demand {d} for '{niche}' decides everything. {verdict}"],
+pod:["POD Merch posts Demand {d} ({dAdj}) for '{niche}' against Competition {c} ({cAdj}) — one of the most crowded lanes in the matrix. Build-ease {e}: no inventory, but design matters. {verdict}",
+"Demand {d} proves '{niche}' fans wear their identity; Competition {c} ({cAdj}) proves everyone knows it. Build-ease {e} — zero stock, all design. {verdict}",
+"POD for '{niche}': Demand {d} ({dAdj}), Profit {p} (thin margins, volume game), Competition {c} ({cAdj}). Design is the entire moat. {verdict}",
+"Build-ease {e}, Speed {s}: POD tests '{niche}' designs with zero inventory. Demand {d} vs Competition {c} ({cAdj}) — only the distinctive survive. {verdict}"]
+};
+var ANGLES={
+ebook:["The 7-day '{niche}' reset guide — promise speed, not encyclopedias","'{niche}' mistakes: 17 fixes in 60 pages","The {niche} starter manual for total beginners"],
+printable:["The one-page {niche} dashboard: daily tracker + checklist","30-day {niche} challenge pack with sticker sheet","'{niche}' Sunday reset kit: plan the week in 20 minutes"],
+kdp:["The illustrated {niche} handbook (giftable paperback)","'{niche}' journal: 90 days of guided prompts","The big {niche} reference — the shelf-authority play"],
+course:["'{niche}' in 14 days: the sprint-style mini-course","The {niche} workshop: 5 modules, one transformation","From zero to first {niche} win — filmed in one weekend"],
+plr:["20 done-for-you {niche} articles + covers sellers rebrand","The {niche} content vault: posts, emails + graphics","'{niche}' PLR with the commercial license front and center"],
+pod:["One killer {niche} quote, three products, zero apologies","The '{niche} lifestyle' collection: tee + mug + tote","Funny {niche} designs for insiders — niche humor converts"]
+};
+var WEIGHTS={d:30,l:20,e:20,p:15,s:15};
+function $(id){ return document.getElementById(id); }
+function esc(s){ s=(s===null||s===undefined)?"":String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function showToast(m){ var t=$("toast"); t.innerHTML=esc(m); t.style.display="block"; setTimeout(function(){ t.style.display="none"; },2000); }
+function hashStr(s){ var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))%100000; } return h; }
+function clamp(v){ if(v<0){ return 0; } if(v>100){ return 100; } return Math.round(v); }
+function overallOf(d,c,e,p,s){
+  var sw=WEIGHTS.d+WEIGHTS.l+WEIGHTS.e+WEIGHTS.p+WEIGHTS.s;
+  var wd=1, wl=1, we=1, wp=1, ws=1;
+  if(sw>0){ wd=WEIGHTS.d; wl=WEIGHTS.l; we=WEIGHTS.e; wp=WEIGHTS.p; ws=WEIGHTS.s; }
+  else { sw=5; }
+  return Math.round((d*wd+(100-c)*wl+e*we+p*wp+s*ws)/sw);
+}
+var lastMarket=null;
+function getJSON(url,timeout,cb){
+  try{
+    var x=new XMLHttpRequest();
+    var done=false;
+    function fin(ok,json,code){ if(!done){ done=true; cb(ok,json,code); } }
+    x.onreadystatechange=function(){
+      if(x.readyState===4){
+        var code=0;
+        try{ code=x.status||0; }catch(e){}
+        if(code>=200&&code<300){
+          try{ fin(true,JSON.parse(x.responseText),code); }
+          catch(e){ fin(false,null,code); }
+        } else { fin(false,null,code); }
+      }
+    };
+    x.ontimeout=function(){ fin(false,null,"TIMEOUT"); };
+    x.onerror=function(){ fin(false,null,"ERROR"); };
+    x.open("GET",url,true);
+    x.timeout=timeout||8000;
+    x.send();
+  }catch(e){ cb(false,null,"ERROR"); }
+}
+function wikiViews(niche,cb,log){
+  var t0=new Date().getTime();
+  getJSON("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch="+encodeURIComponent(niche)+"&srlimit=1&format=json&origin=*",8000,function(ok,j,code){
+    try{
+      var title=j.query.search[0].title;
+      var now=new Date();
+      var d0=new Date(now.getFullYear(),now.getMonth()-12,1);
+      var d1=new Date(now.getFullYear(),now.getMonth(),1);
+      function f(d){ return d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2)+"00"; }
+      var url="https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/"+encodeURIComponent(title.replace(/ /g,"_"))+"/monthly/"+f(d0)+"/"+f(d1);
+      getJSON(url,8000,function(ok2,j2,code2){
+        try{
+          var sum=0; var series=[];
+          for(var i=0;i<j2.items.length;i++){ sum+=j2.items[i].views; series.push({t:String(j2.items[i].timestamp).slice(0,6),v:j2.items[i].views}); }
+          if(log){ log.push({k:"WIKI",ok:1,ms:new Date().getTime()-t0,code:code2}); }
+          cb(sum,title,series);
+        }catch(e){ if(log){ log.push({k:"WIKI",ok:0,ms:new Date().getTime()-t0,code:code2}); } cb(null,""); }
+      });
+    }catch(e){ if(log){ log.push({k:"WIKI",ok:0,ms:new Date().getTime()-t0,code:code}); } cb(null,""); }
+  });
+}
+function fetchMarket(niche,done){
+  var res={gb:null,ol:null,pb:null,eb:null,wv:null,wtitle:"",ok:{gb:0,ol:0,pb:0,eb:0,wv:0},n:0,log:[]};
+  var pending=5, finished=false;
+  function one(){ pending--; if(pending<=0&&!finished){ finished=true; res.n=res.ok.gb+res.ok.ol+res.ok.pb+res.ok.eb+res.ok.wv; done(res); } }
+  setTimeout(function(){ if(!finished){ finished=true; res.n=res.ok.gb+res.ok.ol+res.ok.pb+res.ok.eb+res.ok.wv; done(res); } },10000);
+  function hit(key,url,extract){
+    var t0=new Date().getTime();
+    getJSON(url,8000,function(ok,j,code){
+      res.log.push({k:key,ok:ok?1:0,ms:new Date().getTime()-t0,code:code});
+      var v=extract(ok,j);
+      if(v!==null&&v!==undefined){ res[key.toLowerCase()]=v; res.ok[key.toLowerCase()]=1; }
+      one();
+    });
+  }
+  hit("GB","https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(niche)+"&maxResults=1",function(ok,j){ if(ok&&j&&typeof j.totalItems==="number"){ return j.totalItems; } return null; });
+  hit("OL","https://openlibrary.org/search.json?q="+encodeURIComponent(niche)+"&limit=1",function(ok,j){ if(ok&&j&&typeof j.numFound==="number"){ return j.numFound; } return null; });
+  hit("PB","https://itunes.apple.com/search?term="+encodeURIComponent(niche)+"&media=podcast&limit=200",function(ok,j){ if(ok&&j&&typeof j.resultCount==="number"){ return j.resultCount; } return null; });
+  hit("EB","https://itunes.apple.com/search?term="+encodeURIComponent(niche)+"&media=ebook&limit=200",function(ok,j){ if(ok&&j&&typeof j.resultCount==="number"){ return j.resultCount; } return null; });
+  wikiViews(niche,function(v,t,s){ if(v!==null){ res.wv=v; res.wtitle=t; res.series=s; res.ok.wv=1; } one(); },res.log);
+}
+function lg(x){ return Math.log(1+x)/Math.LN10; }
+function mix(parts){
+  var sw=0, sv=0;
+  for(var i=0;i<parts.length;i++){ if(parts[i][1]!==null&&parts[i][1]!==undefined){ sw+=parts[i][0]; sv+=parts[i][0]*parts[i][1]; } }
+  if(sw<=0){ return null; }
+  return sv/sw;
+}
+function fmtNum(v){
+  if(v===null||v===undefined){ return "—"; }
+  if(v>=1000000){ return (v/1000000).toFixed(1)+"M"; }
+  if(v>=1000){ return (v/1000).toFixed(1)+"K"; }
+  return String(v);
+}
+function scoreNiche(niche,market){
+  var low=String(niche||"").toLowerCase();
+  var liveM=(market&&market.n>=2)?market:null;
+  var words=low.split(/\s+/);
+  var specAdj=0, specLabel="";
+  if(words.length>=3){ specAdj=-5; specLabel="LONG-TAIL ("+words.length+" WORDS) → −5 COMPETITION"; }
+  else if(words.length===2){ specAdj=-2; specLabel="FOCUSED (2 WORDS) → −2 COMPETITION"; }
+  else { specAdj=4; specLabel="BROAD (1 WORD) → +4 COMPETITION"; }
+  var I=null, pod=null, ebk=null, bks=null, bkc=null;
+  if(liveM){
+    if(liveM.ok.wv){ I=clamp(Math.round(22*lg(liveM.wv/500))); }
+    if(liveM.ok.pb){ pod=clamp(Math.round(liveM.pb/200*100)); }
+    if(liveM.ok.eb){ ebk=clamp(Math.round(liveM.eb/200*100)); }
+    if(liveM.ok.gb){ bks=clamp(Math.round(30*lg(liveM.gb/30))); }
+    else if(liveM.ok.ol){ bks=clamp(Math.round(26*lg(liveM.ol/100))); }
+    if(liveM.ok.gb||liveM.ok.ol){
+      var g=liveM.ok.gb?28*lg(liveM.gb/40):0;
+      var o=liveM.ok.ol?12*lg(liveM.ol/300):0;
+      bkc=clamp(Math.round(g+o));
+    }
+    if(I===null){ I=mix([[1,pod],[1,bks]]); }
+  }
+  var out=[];
+  for(var f=0;f<FORMATS.length;f++){
+    var F=FORMATS[f];
+    var d,c,e=F.base.e,p=F.base.p,s=F.base.s,live=0;
+    if(liveM){
+      var dd=null, cc=null;
+      if(F.id==="ebook"){ dd=mix([[0.6,I],[0.4,bks]]); cc=mix([[0.7,bkc],[0.3,ebk]]); }
+      else if(F.id==="printable"){ dd=mix([[0.7,I],[0.3,pod]]); cc=(bkc!==null)?clamp(Math.round(bkc*0.6+25)):null; }
+      else if(F.id==="kdp"){ dd=mix([[0.7,bks],[0.3,I]]); cc=mix([[0.8,bkc],[0.2,ebk]]); }
+      else if(F.id==="course"){ dd=mix([[0.55,I],[0.45,pod]]); cc=mix([[0.6,bkc],[0.4,pod]]); if(cc!==null){ cc=clamp(Math.round(cc+5)); } }
+      else if(F.id==="plr"){ dd=mix([[0.5,I],[0.5,bks]]); cc=(bkc!==null)?clamp(Math.round(bkc*0.7+15)):null; }
+      else if(F.id==="pod"){ dd=mix([[0.5,I],[0.5,pod]]); cc=mix([[0.6,bkc],[0.4,pod]]); if(cc!==null){ cc=clamp(Math.round(cc+10)); } }
+      var ddFromMarket=(dd!==null), ccFromMarket=(cc!==null);
+      if(dd===null){ dd=F.base.d; }
+      if(cc===null){ cc=F.base.c; }
+      live=(ddFromMarket&&ccFromMarket)?1:0;
+      d=Math.round(dd); c=Math.round(cc);
+    } else {
+      d=F.base.d; c=F.base.c;
+    }
+    for(var sg=0;sg<SIGNALS.length;sg++){
+      var found=false;
+      for(var k=0;k<SIGNALS[sg].keys.length;k++){
+        if(low.indexOf(SIGNALS[sg].keys[k])>=0){ found=true; break; }
+      }
+      if(found){
+        var adj=SIGNALS[sg].adj[F.id];
+        if(adj){ d+=adj.d||0; c+=adj.c||0; e+=adj.e||0; p+=adj.p||0; s+=adj.s||0; }
+      }
+    }
+    var hits=[];
+    for(var h2=0;h2<SIGNALS.length;h2++){
+      var f2=false;
+      for(var k2=0;k2<SIGNALS[h2].keys.length;k2++){
+        if(low.indexOf(SIGNALS[h2].keys[k2])>=0){ f2=true; break; }
+      }
+      if(f2){ hits.push(SIGNALS[h2].name); }
+    }
+    c+=specAdj;
+    d=clamp(d); c=clamp(c); e=clamp(e); p=clamp(p); s=clamp(s);
+    out.push({id:F.id,name:F.name,glyph:F.glyph,real:F.real,d:d,c:c,e:e,p:p,s:s,
+      overall:overallOf(d,c,e,p,s),hits:hits,spec:specLabel,live:liveM?live:0});
+  }
+  out.sort(function(a,b){ return b.overall-a.overall; });
+  for(var r=0;r<out.length;r++){ out[r].rank=r+1; }
+  return out;
+}
+function bandD(v){ if(v>=75){ return "red-hot"; } if(v>=60){ return "solid"; } if(v>=45){ return "moderate"; } return "soft"; }
+function bandC(v){ if(v>=70){ return "brutal"; } if(v>=55){ return "real"; } return "thin"; }
+function verdict(rank){
+  if(rank===1){ return "THE PICK — build this first."; }
+  if(rank===2){ return "Strong backup plan."; }
+  if(rank<=4){ return "Viable if you love the format."; }
+  return "Skip for now.";
+}
+function whyText(r,niche){
+  var bank=WHY[r.id];
+  var tpl=bank[(hashStr(niche.toLowerCase()+r.id))%bank.length];
+  return tpl.replace(/\{d\}/g,r.d).replace(/\{c\}/g,r.c).replace(/\{e\}/g,r.e)
+    .replace(/\{p\}/g,r.p).replace(/\{s\}/g,r.s)
+    .replace(/\{dAdj\}/g,bandD(r.d)).replace(/\{cAdj\}/g,bandC(r.c))
+    .replace(/\{niche\}/g,niche).replace(/\{verdict\}/g,verdict(r.rank));
+}
+function angleText(r,niche){
+  var bank=ANGLES[r.id];
+  var tpl=bank[(hashStr(niche.toLowerCase()+"angle"+r.id))%bank.length];
+  return tpl.replace(/\{niche\}/g,niche);
+}
+function barRow(label,val,cls){
+  return '<div class="srow"><div class="barlabel"><span>'+label+'</span><span>'+val+'/100</span></div><div class="bar'+(cls?" "+cls:"")+'"><i data-w="'+val+'"></i></div></div>';
+}
+var chartInst=null;
+function renderAll(niche,market,noHist){
+  var rows=scoreNiche(niche,market);
+  $("emptyState").style.display="none";
+  $("results").style.display="block";
+  var best=rows[0];
+  var sum=0, fast=rows[0], prof=rows[0];
+  for(var i=0;i<rows.length;i++){
+    sum+=rows[i].d;
+    if(rows[i].e>fast.e){ fast=rows[i]; }
+    if(rows[i].p>prof.p||(rows[i].p===prof.p&&rows[i].overall>prof.overall)){ prof=rows[i]; }
+  }
+  var avg=Math.round(sum/rows.length);
+  $("kpis").innerHTML=
+    '<div class="kpi hot"><div class="k">Best format</div><div class="v">'+esc(best.name)+'</div><div class="s">OVERALL '+best.overall+'/100 · RANK #1 OF 6</div></div>'+
+    '<div class="kpi"><div class="k">Avg demand</div><div class="v">'+avg+'/100</div><div class="s">ACROSS ALL 6 FORMATS</div></div>'+
+    '<div class="kpi"><div class="k">Fastest to build</div><div class="v">'+esc(fast.name)+'</div><div class="s">BUILD-EASE '+fast.e+'/100</div></div>'+
+    '<div class="kpi"><div class="k">Highest profit</div><div class="v">'+esc(prof.name)+'</div><div class="s">PROFIT '+prof.p+'/100</div></div>';
+  var rm='<span class="rlab">BUILD ORDER →</span>';
+  for(var q=0;q<rows.length;q++){
+    rm+='<span class="rmchip'+(q===0?" first":"")+'">'+(q+1)+'. '+esc(rows[q].name)+'</span>';
+  }
+  $("roadmap").innerHTML=rm;
+  if(!noHist){ pushHist(niche,best); renderHist(); }
+  var liveCount=market?market.n:0;
+  var ev='<span class="src">EVIDENCE:</span> &#128218; '+fmtNum(market?market.gb:null)+' BOOKS (GOOGLE) · &#128218; '+fmtNum(market?market.ol:null)+' (OPEN LIB) · &#127908; '+fmtNum(market?market.pb:null)+' PODCASTS · &#128213; '+fmtNum(market?market.eb:null)+' EBOOKS';
+  if(market&&market.ok.wv){ ev+=' · &#128214; '+fmtNum(market.wv)+' WIKI VIEWS/12MO ("'+esc(market.wtitle)+'")'; }
+  ev+=liveCount>=2?' · <span class="src">● LIVE MARKET DATA</span>':' · <span class="src">○ OFFLINE ESTIMATE</span>';
+  $("evidence").innerHTML=ev;
+  var srcs=[["GB",market&&market.ok.gb],["OL",market&&market.ok.ol],["POD",market&&market.ok.pb],["EB",market&&market.ok.eb],["WIKI",market&&market.ok.wv]];
+  var db="";
+  for(var sd=0;sd<srcs.length;sd++){ db+='<span><span class="sdot2 '+(srcs[sd][1]?"on":"off")+'"></span>'+srcs[sd][0]+'</span>'; }
+  db+='<span style="margin-left:auto">'+(liveCount>=2?"● LIVE ("+liveCount+"/5 SOURCES)":"○ ESTIMATE ("+liveCount+"/5 SOURCES)")+'</span>';
+  if(market&&market.log&&market.log.length){
+    db+='<span style="flex-basis:100%;font-size:11px">NET: ';
+    for(var li=0;li<market.log.length;li++){ var le=market.log[li]; db+=(li>0?" · ":"")+le.k+" "+le.code+" "+le.ms+"ms"; }
+    db+='</span>';
+  }
+  if(!(market&&market.n>=2)){ db+='<span style="flex-basis:100%;font-size:11px">TIP: NO LIVE DATA — CHECK CONNECTION/ADBLOCK, THEN RESCORE. FILE OPENED DIRECTLY? SERVE VIA LOCALHOST: python3 -m http.server</span>'; }
+  $("databar").innerHTML=db;
+  renderPulse(market);
+  var h="";
+  for(var r=0;r<rows.length;r++){
+    var tag=r===0?"#1 PICK":("#"+rows[r].rank+" OF 6");
+    if(rows[r].c>=80){ tag+=" · RED OCEAN"; }
+    if(rows[r].e>=90){ tag+=" · FAST BUILD"; }
+    if(rows[r].overall>=75&&r>0){ tag+=" · HOT"; }
+    var sigs=rows[r].hits.length?rows[r].hits.join(" + "):"BASELINE (NO KEYWORD HIT)";
+    h+='<div class="card'+(r===0?" rank1":"")+'"><div class="badge">'+(rows[r].live?"":"~")+rows[r].overall+'</div>'+
+      '<div class="frow"><div class="glyph">'+rows[r].glyph+'</div><div><div class="fname">'+esc(rows[r].name)+'</div><span class="ranktag">'+tag+'</span></div></div>'+
+      barRow("Demand",rows[r].d,"demand")+barRow("Competition",rows[r].c,"")+barRow("Build-ease",rows[r].e,"ease")+
+      barRow("Profit",rows[r].p,"demand")+barRow("Speed",rows[r].s,"ease")+
+      '<p class="why">'+esc(whyText(rows[r],niche))+'</p>'+
+      '<p class="edge">⚔ YOUR EDGE: '+esc(angleText(rows[r],niche))+'</p>'+
+      '<div class="spec"><div><b>TYPICAL PRICE</b>'+esc(rows[r].real.price)+'</div><div><b>BUILD TIME</b>'+esc(rows[r].real.time)+'</div><div><b>SELL ON</b>'+esc(rows[r].real.sell)+'</div><div><b>MARGIN</b>'+esc(rows[r].real.margin)+'</div></div>'+
+      '<div class="sigs">SIGNALS: '+esc(sigs)+' · '+esc(rows[r].spec)+'</div></div>';
+  }
+  $("grid").innerHTML=h;
+  setTimeout(function(){
+    var bars=document.querySelectorAll("#grid .bar i");
+    for(var b=0;b<bars.length;b++){ bars[b].style.width=bars[b].getAttribute("data-w")+"%"; }
+  },60);
+  renderChart(rows);
+  try{ localStorage.setItem(LSKEY,niche); }catch(e){}
+  return rows;
+}
+function refreshScores(){
+  var niche=$("in-niche").value.replace(/\s+/g," ").trim();
+  if(!niche){ return; }
+  renderAll(niche,lastMarket,true);
+}
+function renderChart(rows){
+  if(!window.Chart){ return; }
+  if(chartInst){ try{ chartInst.destroy(); }catch(e){} chartInst=null; }
+  var colors=["#000000","#D62828","#8a7300","#555555","#FF4040","#2b2b2b"];
+  var sets=[];
+  for(var i=0;i<rows.length;i++){
+    sets.push({label:rows[i].name+" ("+rows[i].overall+")",
+      data:[rows[i].d,100-rows[i].c,rows[i].e,rows[i].p,rows[i].s],
+      borderColor:colors[i%colors.length],backgroundColor:"rgba(0,0,0,0)",
+      borderWidth:i===0?4:3,pointRadius:3,pointBackgroundColor:colors[i%colors.length]});
+  }
+  var ctx=$("radar").getContext("2d");
+  chartInst=new Chart(ctx,{type:"radar",
+    data:{labels:["DEMAND","OPEN LANE","BUILD-EASE","PROFIT","SPEED"],datasets:sets},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{labels:{font:{family:"'Space Mono',monospace",size:11},color:"#000",boxWidth:14}}},
+      scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{family:"'Space Mono',monospace",size:10},color:"#000",
+        backdropColor:"#fff"},grid:{color:"#000"},angleLines:{color:"#000"},pointLabels:{font:{family:"'Space Grotesk',sans-serif",size:12,weight:"700"},color:"#000"}}}}});
+}
+function reportText(niche,rows,market){
+  var L="FORMAT FIT MATRIX — "+niche.toUpperCase()+"\n";
+  L+="STOP GUESSING. START BUILDING.\n";
+  L+="Weights: Demand "+WEIGHTS.d+" · Open lane "+WEIGHTS.l+" · Ease "+WEIGHTS.e+" · Profit "+WEIGHTS.p+" · Speed "+WEIGHTS.s+"\n";
+  if(market){
+    L+="Evidence: "+fmtNum(market.gb)+" Google Books · "+fmtNum(market.ol)+" Open Library · "+fmtNum(market.pb)+" podcasts · "+fmtNum(market.eb)+" ebooks";
+    if(market.ok.wv){ L+=" · "+fmtNum(market.wv)+" wiki views ('"+market.wtitle+"')"; }
+    L+=" — "+(market.n>=2?("LIVE ("+market.n+"/5 sources)"):("OFFLINE ESTIMATE ("+market.n+"/5)"))+"\n";
+  if(market.log&&market.log.length){
+    L+="Net: ";
+    for(var li=0;li<market.log.length;li++){ var le=market.log[li]; L+=(li>0?" · ":"")+le.k+" "+le.code+" "+le.ms+"ms"; }
+    L+="\n";
+  }
+  }
+  L+="\n";
+  L+="BUILD ORDER: ";
+  for(var b=0;b<rows.length;b++){ L+=(b>0?" → ":"")+rows[b].name; }
+  L+="\n\n";
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    L+="#"+r.rank+" "+r.name.toUpperCase()+" — OVERALL "+r.overall+"/100\n";
+    L+="Demand "+r.d+"/100 · Competition "+r.c+"/100 · Build-Ease "+r.e+"/100 · Profit "+r.p+"/100 · Speed "+r.s+"/100\n";
+    L+=whyText(r,niche)+"\n";
+    L+="Edge: "+angleText(r,niche)+"\n";
+    L+="Typical: "+r.real.price+" · "+r.real.time+" · "+r.real.sell+" · "+r.real.margin+"\n\n";
+  }
+  L+="Winner: "+rows[0].name+" ("+rows[0].overall+"/100). Build that first.";
+  return L;
+}
+function reportMD(niche,rows,market){
+  var L="# Format Fit Matrix — "+niche+"\n\n**Stop guessing. Start building.**\n\n";
+  if(market){
+    L+="_Evidence: "+fmtNum(market.gb)+" Google Books · "+fmtNum(market.ol)+" Open Library · "+fmtNum(market.pb)+" podcasts · "+fmtNum(market.eb)+" ebooks";
+    if(market.ok.wv){ L+=" · "+fmtNum(market.wv)+" wiki views"; }
+    L+=" — "+(market.n>=2?"live":"estimate")+"_\n\n";
+  }
+  L+="| Rank | Format | Overall | D | C | E | P | S |\n|---|---|---|---|---|---|---|---|\n";
+  for(var i=0;i<rows.length;i++){ var r=rows[i];
+    L+="| "+r.rank+" | "+r.name+" | "+r.overall+" | "+r.d+" | "+r.c+" | "+r.e+" | "+r.p+" | "+r.s+" |\n"; }
+  for(var j=0;j<rows.length;j++){ var q=rows[j];
+    L+="\n## #"+q.rank+" "+q.name+" ("+q.overall+"/100)\n\n"+whyText(q,niche)+"\n\n**Edge:** "+angleText(q,niche)+"\n\n";
+    L+="_Typical: "+q.real.price+" · "+q.real.time+" · "+q.real.sell+" · "+q.real.margin+"_\n\n"; }
+  return L;
+}
+function downloadFile(name,content,mime){
+  try{
+    var blob=new Blob([content],{type:mime||"text/plain"});
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); try{ URL.revokeObjectURL(u); }catch(e){} },400);
+  }catch(e){ showToast("DOWNLOAD BLOCKED"); }
+}
+var HKEY="ffm-hist-v1";
+function loadHist(){ try{ var r=localStorage.getItem(HKEY); if(r){ return JSON.parse(r)||[]; } }catch(e){} return []; }
+function pushHist(niche,best){
+  var h=loadHist();
+  var kept=[];
+  for(var i=0;i<h.length;i++){ if(h[i].n!==niche){ kept.push(h[i]); } }
+  kept.unshift({n:niche,w:best.name,o:best.overall});
+  kept=kept.slice(0,6);
+  try{ localStorage.setItem(HKEY,JSON.stringify(kept)); }catch(e){}
+}
+function renderHist(){
+  var h=loadHist();
+  var el=$("histRow");
+  if(!h.length){ el.style.display="none"; el.innerHTML=""; return; }
+  var s='<span>RECENT:</span>';
+  for(var i=0;i<h.length;i++){ s+='<button class="hchip" data-h="'+i+'">'+esc(h[i].n)+' <small>→ '+esc(h[i].w)+' '+h[i].o+'</small></button>'; }
+  el.style.display="flex"; el.innerHTML=s;
+  var cs=el.querySelectorAll("[data-h]");
+  for(var j=0;j<cs.length;j++){ cs[j].onclick=function(){
+    var it=loadHist()[parseInt(this.getAttribute("data-h"),10)];
+    if(it){ $("in-niche").value=it.n; doScore(); }
+  }; }
+}
+function copyText(txt,msg){
+  function done(){ showToast(msg||"COPIED"); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){ fb(); }); }
+  else { fb(); }
+  function fb(){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); }
+    catch(e){ showToast("COPY BLOCKED"); }
+  }
+}
+var pulseInst=null;
+var MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+function pulseMeta(market){
+  if(!market||!market.series||market.series.length<3){ return "NO MONTHLY SERIES — WIKI BLOCKED OR NO ARTICLE. USE THE YELLOW BUTTON FOR GOOGLE TRENDS."; }
+  var tot=0, peak=market.series[0];
+  for(var i=0;i<market.series.length;i++){ tot+=market.series[i].v; if(market.series[i].v>peak.v){ peak=market.series[i]; } }
+  var pm=MON[parseInt(peak.t.slice(4,6),10)-1]+" "+peak.t.slice(0,4);
+  return 'WIKIPEDIA "'+market.wtitle+'" — '+fmtNum(tot)+' VIEWS / 12 MO · PEAK '+pm;
+}
+function renderPulse(market){
+  $("pulseMeta").innerHTML=esc(pulseMeta(market));
+  if(!window.Chart){ return; }
+  if(pulseInst){ try{ pulseInst.destroy(); }catch(e){} pulseInst=null; }
+  if(!market||!market.series||market.series.length<3){ return; }
+  var labels=[], data=[];
+  for(var i=0;i<market.series.length;i++){ var t=market.series[i].t; labels.push(MON[parseInt(t.slice(4,6),10)-1]); data.push(market.series[i].v); }
+  var ctx=$("pulse").getContext("2d");
+  pulseInst=new Chart(ctx,{type:"line",
+    data:{labels:labels,datasets:[{label:"MONTHLY VIEWS",data:data,borderColor:"#000",backgroundColor:"rgba(214,40,40,.18)",borderWidth:4,pointRadius:4,pointBackgroundColor:"#D62828",fill:true,tension:.25}]},
+    options:{responsive:true,plugins:{legend:{labels:{font:{family:"'Space Mono',monospace",size:11},color:"#000",boxWidth:14}}},
+      scales:{y:{ticks:{font:{family:"'Space Mono',monospace",size:10},color:"#000",callback:function(v){ return v>=1000?((v/1000)+"K"):v; }},grid:{color:"#000"}},x:{ticks:{font:{family:"'Space Mono',monospace",size:10},color:"#000"},grid:{color:"#ddd"}}}}});
+}
+function setTrend(niche){
+  try{ $("trendLink").href="https://trends.google.com/trends/explore?q="+encodeURIComponent(niche)+"&date=today%2012-m"; }catch(e){}
+}
+function currentRows(){
+  var niche=$("in-niche").value.replace(/\s+/g," ").trim();
+  return {niche:niche,rows:scoreNiche(niche,lastMarket),market:lastMarket};
+}
+function doScore(silent){
+  var niche=$("in-niche").value.replace(/\s+/g," ").trim().slice(0,60);
+  $("in-niche").value=niche;
+  if(!niche){
+    $("errMsg").style.display="block";
+    $("errBox").innerHTML="TYPE YOUR NICHE FIRST — THE MATRIX NEEDS INPUT.";
+    return;
+  }
+  $("errMsg").style.display="none";
+  $("btnScore").innerHTML="SCORING… LIVE DATA…";
+  $("btnScore").disabled=true;
+  fetchMarket(niche,function(m){
+    lastMarket=m;
+    $("btnScore").innerHTML="SCORE MY NICHE →";
+    $("btnScore").disabled=false;
+    var rows=renderAll(niche,m);
+    setTrend(niche);
+    if(!silent){ showToast(m.n>=2?("LIVE SCORED ("+m.n+"/5): "+niche.toUpperCase()):("ESTIMATED (OFFLINE): "+niche.toUpperCase())); }
+  });
+}
+function init(){
+  $("btnScore").onclick=function(){ doScore(); };
+  $("in-niche").onkeydown=function(e){ if(e&&(e.key==="Enter"||e.keyCode===13)){ doScore(); } };
+  $("btnCopy").onclick=function(){ var c=currentRows(); copyText(reportText(c.niche,c.rows,c.market),"REPORT COPIED"); };
+  $("btnTxt").onclick=function(){ var t=currentRows(); downloadFile("format-fit-matrix.txt",reportText(t.niche,t.rows,t.market),"text/plain"); };
+  $("btnMd").onclick=function(){ var m=currentRows(); downloadFile("format-fit-matrix.md",reportMD(m.niche,m.rows,m.market),"text/markdown"); };
+  $("btnAgain").onclick=function(){ doScore(); };
+  var wmap=[["wd","d","wvd"],["wl","l","wvl"],["we","e","wve"],["wp","p","wvp"],["ws","s","wvs"]];
+  for(var wi=0;wi<wmap.length;wi++){ (function(id,key,lab){
+    $(id).oninput=function(){ WEIGHTS[key]=parseInt($(id).value,10)||0; $(lab).innerHTML=String(WEIGHTS[key]); refreshScores(); };
+  })(wmap[wi][0],wmap[wi][1],wmap[wi][2]); }
+  renderHist();
+  $("btnGuide").onclick=function(){
+    var gp=$("guidePanel");
+    var open=(gp.style.display==="none"||gp.style.display==="");
+    gp.style.display=open?"block":"none";
+  };
+  try{
+    var saved=localStorage.getItem(LSKEY);
+    if(saved){ $("in-niche").value=saved; doScore(true); }
+  }catch(e){}
+}
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",init); } else { init(); }
+</script>
+</body>
+</html>
