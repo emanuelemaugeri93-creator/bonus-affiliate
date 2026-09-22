@@ -1,0 +1,714 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Micro-Course Blueprint Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-grad-1:#1a2744;
+  --bg-grad-2:#0d1526;
+  --glass-bg:rgba(255,255,255,.08);
+  --glass-border:rgba(255,255,255,.15);
+  --accent:#4FC3F7;
+  --accent2:#00E5FF;
+  --text:#f0f6ff;
+  --text-muted:#9db4d6;
+}
+html,body{margin:0;padding:0;min-height:100%}
+body{background:linear-gradient(135deg,var(--bg-grad-1),var(--bg-grad-2));background-attachment:fixed;
+  color:var(--text);font-family:"DM Sans",Arial,sans-serif;min-height:100vh}
+body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(600px 320px at 12% 0%, rgba(79,195,247,.16), transparent 60%),
+    radial-gradient(700px 380px at 88% 20%, rgba(0,229,255,.12), transparent 60%),
+    radial-gradient(800px 420px at 50% 110%, rgba(79,195,247,.10), transparent 60%)}
+h1,h2,h3{margin:0;font-family:"Sora","DM Sans",sans-serif}
+button{font-family:"Sora",sans-serif}
+#topbar{position:sticky;top:0;z-index:30;padding:16px 26px;background:rgba(13,21,38,.75);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border)}
+.brand{display:flex;align-items:center;gap:13px;max-width:960px;margin:0 auto}
+.seal{width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 24px -6px var(--accent2)}
+.seal svg{width:24px;height:24px}
+.kicker{font-size:10.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-muted);font-weight:700}
+.brand h1{font-size:23px;font-weight:800;letter-spacing:-.3px}
+.brand .sub{font-size:12.5px;color:var(--text-muted)}
+#pbarwrap{max-width:960px;margin:0 auto;padding:14px 26px 0;position:relative;z-index:1}
+#pbar{height:6px;border-radius:99px;background:rgba(255,255,255,.10);overflow:hidden}
+#pbar i{display:block;height:100%;width:20%;border-radius:99px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s ease;box-shadow:0 0 12px var(--accent2)}
+#stepdots{display:flex;gap:8px;margin-top:10px}
+.sdot{flex:1;font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);
+  padding-top:8px;border-top:2px solid rgba(255,255,255,.12)}
+.sdot.on{color:#fff;border-top-color:var(--accent2)}
+.sdot.done{color:var(--accent);border-top-color:var(--accent)}
+#stage{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:22px 26px 70px}
+.glass{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:20px;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:0 18px 50px -20px rgba(0,0,0,.6);padding:30px 30px 26px}
+.view{display:none}
+.view.show{display:block;animation:fadeUp .45s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.stagenum{font-size:11px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent2)}
+.glass h2{font-size:27px;font-weight:800;margin:8px 0 6px;letter-spacing:-.4px}
+.glass .lede{color:var(--text-muted);font-size:14.5px;line-height:1.65;margin:0 0 18px}
+label.f{display:block;font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--text-muted);margin:16px 0 7px}
+.glass input[type=text],.glass textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--glass-border);
+  border-radius:12px;padding:13px 15px;color:var(--text);font-size:15px;font-family:"DM Sans",sans-serif}
+.glass textarea{min-height:86px;resize:vertical;line-height:1.6}
+.glass input::placeholder,.glass textarea::placeholder{color:#6d86ab}
+.glass input:focus,.glass textarea:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 1px var(--accent2),0 0 18px -6px var(--accent2)}
+.hint{font-size:12.5px;color:var(--text-muted);margin-top:6px;line-height:1.6}
+.optgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:6px}
+.opt{border:1px solid var(--glass-border);border-radius:14px;padding:15px 14px;cursor:pointer;background:rgba(255,255,255,.04);transition:border-color .15s,box-shadow .15s,transform .12s}
+.opt:hover{transform:translateY(-1px)}
+.opt.on{border-color:var(--accent2);box-shadow:0 0 0 1px var(--accent2),0 0 22px -8px var(--accent2);background:rgba(0,229,255,.07)}
+.opt b{display:block;font-family:"Sora",sans-serif;font-size:15px;margin-bottom:4px}
+.opt small{color:var(--text-muted);font-size:12.5px;line-height:1.5}
+.opt .price{font-family:"Sora",sans-serif;font-weight:800;color:var(--accent2);font-size:13px;margin-top:6px;display:block}
+.navrow{display:flex;gap:10px;margin-top:24px}
+.btn{border:none;border-radius:12px;padding:14px 22px;font-weight:700;font-size:14.5px;cursor:pointer}
+.btn-back{background:transparent;border:1px solid var(--glass-border);color:var(--text)}
+.btn-back:hover{border-color:#fff}
+.btn-next{background:linear-gradient(92deg,var(--accent),var(--accent2));color:#04222e;margin-left:auto;
+  box-shadow:0 6px 26px -8px var(--accent2);transition:transform .12s}
+.btn-next:hover{transform:translateY(-1px)}
+.btn-next:active{transform:translateY(1px)}
+#validMsg{display:none;color:#ff9db0;font-size:13.5px;font-weight:700;margin-top:12px}
+.revrow{display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.04);border:1px solid var(--glass-border);
+  border-radius:12px;padding:12px 14px;margin-bottom:9px}
+.revrow .k{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);min-width:110px;padding-top:2px}
+.revrow .v{flex:1;font-size:14px;line-height:1.55;min-width:0}
+.revrow .v span{color:var(--text-muted)}
+.editbtn{background:transparent;border:1px solid var(--glass-border);color:var(--text);border-radius:8px;
+  font-size:12px;font-weight:700;padding:5px 11px;cursor:pointer;flex-shrink:0}
+.editbtn:hover{border-color:#fff}
+/* results */
+#resTitle{font-size:32px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+#resPromise{font-size:16px;color:var(--text-muted);line-height:1.65;margin:10px 0 0}
+#resPromise b{color:var(--accent2)}
+.pricebox{margin-top:18px;border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  background:linear-gradient(120deg,rgba(79,195,247,.16),rgba(0,229,255,.08));border:1px solid rgba(0,229,255,.35)}
+.pricebox .big{font-family:"Sora",sans-serif;font-size:38px;font-weight:800}
+.pricebox .rng{font-size:13px;color:var(--text-muted)}
+.pricebox .why{font-size:13.5px;line-height:1.6;flex:1;min-width:220px}
+.mod{margin-top:14px;padding:20px 22px}
+.mod .mnum{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent2)}
+.mod h3{font-size:19px;margin:6px 0 10px}
+.mod ul{margin:0;padding:0;list-style:none}
+.mod li{font-size:14px;line-height:1.6;padding:9px 0 9px 30px;position:relative;border-top:1px solid rgba(255,255,255,.08)}
+.mod li:first-child{border-top:none}
+.mod li:before{content:"▸";position:absolute;left:8px;color:var(--accent2);font-weight:800}
+.quiz{margin-top:14px;padding:20px 22px}
+.quiz h3{font-size:19px;margin-bottom:4px}
+.quiz .qsub{font-size:13px;color:var(--text-muted);margin:0 0 12px}
+.q{margin-bottom:16px}
+.q .qq{font-size:14.5px;font-weight:700;line-height:1.55;margin-bottom:7px}
+.q .qo{font-size:13.5px;color:var(--text-muted);line-height:1.9}
+.q .qo b{color:var(--text);display:inline-block;min-width:22px}
+.anskey{margin-top:6px;font-size:12.5px;color:var(--text-muted);background:rgba(255,255,255,.04);
+  border:1px dashed var(--glass-border);border-radius:10px;padding:10px 13px;line-height:1.8}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:none;
+  background:#fff;color:#0d1526;font-weight:800;font-size:13px;border-radius:99px;padding:12px 22px;
+  box-shadow:0 8px 30px rgba(0,0,0,.5);font-family:"DM Sans",sans-serif}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.stats span{font-size:12.5px;font-weight:700;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.3);border-radius:99px;padding:6px 13px}
+.outbox{margin-top:14px;padding:20px 22px}
+.outbox h3{font-size:17px;margin-bottom:8px}
+.outbox ul{margin:0;padding:0;list-style:none}
+.outbox li{font-size:14px;line-height:1.6;padding:7px 0 7px 28px;position:relative}
+.outbox li:before{content:"✓";position:absolute;left:6px;color:var(--accent2);font-weight:800}
+.notfor{margin-top:14px;font-size:13px;color:var(--text-muted);background:rgba(255,255,255,.04);border:1px dashed var(--glass-border);border-radius:12px;padding:11px 15px;line-height:1.6}
+@media(max-width:700px){.optgrid{grid-template-columns:minmax(0,1fr)}.glass{padding:22px 18px}.brand h1{font-size:19px}#resTitle{font-size:25px}.revrow .k{min-width:80px}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="brand">
+    <div class="seal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#04222e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a2 2 0 0 1 2-2h13v13H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h13"/><path d="M9 9.5l2 2 4-4.5"/></svg></div>
+    <div><div class="kicker">Niche Goldmine AI · Bonus Tool</div><h1>Micro-Course Blueprint Builder</h1><div class="sub">Niche in → sellable mini-course out: modules, lessons, quiz + price</div></div>
+  </div>
+</div>
+<div id="pbarwrap">
+  <div id="pbar"><i id="pfill"></i></div>
+  <div id="stepdots"></div>
+</div>
+<div id="stage">
+  <div class="glass view" id="v0">
+    <div class="stagenum">Step 1 of 5 — Niche &amp; Audience</div>
+    <h2>What world is this course in?</h2>
+    <p class="lede">Name the niche and the exact human being this course serves. Specific beats broad — "budget meal prep for night-shift nurses" outsells "cooking" every time.</p>
+    <label class="f">Your niche</label>
+    <input type="text" id="in-niche" maxlength="60" placeholder="e.g. budget meal prep">
+    <label class="f">Who is this course for?</label>
+    <input type="text" id="in-audience" maxlength="90" placeholder="e.g. busy moms who want to eat healthy without the stress">
+    <div id="validMsg"></div>
+    <div class="navrow"><button class="btn btn-next" data-next="1">Next →</button></div>
+  </div>
+  <div class="glass view" id="v1">
+    <div class="stagenum">Step 2 of 5 — Transformation</div>
+    <h2>What changes for them?</h2>
+    <p class="lede">Finish this sentence: <i>"After this course, my student can…"</i> — this single line becomes your course promise, your sales headline, and the spine of every module.</p>
+    <label class="f">After this course, they can…</label>
+    <textarea id="in-trans" maxlength="140" placeholder="e.g. plan a full week of healthy dinners in under an hour"></textarea>
+    <div class="hint">Tip: start with an action verb (plan, build, launch, cook, write…). Avoid "I want to" or "they will be able to" — just the outcome.</div>
+    <div id="validMsg2"></div>
+    <div class="navrow"><button class="btn btn-back" data-back="0">← Back</button><button class="btn btn-next" data-next="2">Next →</button></div>
+  </div>
+  <div class="glass view" id="v2">
+    <div class="stagenum">Step 3 of 5 — Depth &amp; Format</div>
+    <h2>How deep does it go?</h2>
+    <p class="lede">Pick the course size that fits your audience's patience — and the format you'll actually finish recording.</p>
+    <label class="f">Course length</label>
+    <div class="optgrid" id="depthGrid"></div>
+    <label class="f">Format preference <span style="text-transform:none;letter-spacing:0">(shapes lesson phrasing)</span></label>
+    <div class="optgrid" id="formatGrid"></div>
+    <label class="f">Pace <span style="text-transform:none;letter-spacing:0">(drives every "in 14 days" promise)</span></label>
+    <div class="optgrid" id="paceGrid"></div>
+    <div class="navrow"><button class="btn btn-back" data-back="1">← Back</button><button class="btn btn-next" data-next="3">Next →</button></div>
+  </div>
+  <div class="glass view" id="v3">
+    <div class="stagenum">Step 4 of 5 — Price Positioning</div>
+    <h2>Where does it sit on the shelf?</h2>
+    <p class="lede">Price is positioning, not just money. Pick the tier that matches how boldly you want to sell the transformation.</p>
+    <div class="optgrid" id="priceGrid"></div>
+    <div class="navrow"><button class="btn btn-back" data-back="2">← Back</button><button class="btn btn-next" data-next="4">Next →</button></div>
+  </div>
+  <div class="glass view" id="v4">
+    <div class="stagenum">Step 5 of 5 — Review &amp; Generate</div>
+    <h2>Check it before we build it</h2>
+    <p class="lede">Everything below feeds the blueprint engine. Spot a typo? Jump straight back with Edit.</p>
+    <div id="reviewBox"></div>
+    <div class="navrow"><button class="btn btn-back" data-back="3">← Back</button><button class="btn btn-next" id="btnBuild">Build My Course Blueprint ⚡</button></div>
+  </div>
+  <div class="glass view" id="v5">
+    <div class="stagenum">Your blueprint is ready</div>
+    <h2 id="resTitle"></h2>
+    <p id="resPromise"></p>
+    <div class="stats" id="resStats"></div>
+    <div class="pricebox" id="resPrice"></div>
+    <div id="resModules"></div>
+    <div class="glass outbox"><h3>🎯 What they'll walk away with</h3><ul id="resOut"></ul></div>
+    <div id="resBonus"></div>
+    <div class="notfor" id="resNot"></div>
+    <div class="glass quiz" style="padding:20px 22px;background:rgba(255,255,255,.04)">
+      <h3>📝 Course-Completion Quiz</h3>
+      <p class="qsub">5 questions tied to the modules above — drop straight into your course platform.</p>
+      <div id="resQuiz"></div>
+      <div class="anskey" id="resKey"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-next" id="btnCopy" style="margin-left:0">Copy Full Blueprint as Text</button>
+      <button class="btn btn-back" id="btnTxt">.txt</button>
+      <button class="btn btn-back" id="btnMd">.md</button>
+      <button class="btn btn-back" id="btnRegen">⟳ Regenerate variations</button>
+      <button class="btn btn-back" id="btnOver">← Start Over</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+var LSKEY="mcb-state-v1";
+var STEPS=["Niche","Promise","Depth","Price","Review"];
+var DEPTHS=[
+ {id:"micro",name:"Micro",desc:"3 modules · weekend build",mods:3,lessons:"3–4 lessons each"},
+ {id:"standard",name:"Standard",desc:"5 modules · the classic",mods:5,lessons:"3 lessons each"},
+ {id:"deep",name:"Deep-Dive",desc:"7 modules · flagship",mods:7,lessons:"2–3 lessons each"}
+];
+var FORMATS=[
+ {id:"video",name:"Video-based",desc:"Watch / demo phrasing"},
+ {id:"text",name:"Text + Worksheets",desc:"Read / worksheet phrasing"},
+ {id:"mixed",name:"Mixed",desc:"A blend of both"}
+];
+var PRICES=[
+ {id:"budget",name:"Budget",desc:"Fast, impulse-friendly sales",range:"$27 – $47",prices:[27,37,47]},
+ {id:"mid",name:"Mid",desc:"The proven sweet spot",range:"$47 – $97",prices:[47,67,97]},
+ {id:"premium",name:"Premium",desc:"Outcome-based authority pricing",range:"$97 – $297",prices:[97,147,197,297]}
+];
+var PACE=[
+ {id:"sprint",name:"14-Day Sprint",desc:"Daily momentum, fast finish",dur:"in 14 Days",durLow:"in 14 days",durSent:"In 14 days",durCap:"In 14 Days",durWord:"14-day",paceWord:"Sprint"},
+ {id:"paced",name:"Self-Paced",desc:"Zero pressure, lifetime access",dur:"at Your Own Pace",durLow:"at your own pace",durSent:"At your own pace",durCap:"At Your Own Pace",durWord:"self-paced",paceWord:"Course"},
+ {id:"weekend",name:"Weekend Intensive",desc:"One focused weekend",dur:"in One Weekend",durLow:"in one weekend",durSent:"In one weekend",durCap:"In One Weekend",durWord:"weekend",paceWord:"Intensive"}
+];
+var OUTCOMES=[
+"{TransCap} from scratch — no prior experience needed",
+"Follow a proven {niche} system instead of guessing",
+"Fix the most common {niche} mistakes before they cost you",
+"Build a repeatable {niche} routine that survives busy weeks",
+"Know exactly what to do next, every single day",
+"Finish with a completed {niche} result you can actually show off"
+];
+var BONUS=[
+"Fast-Action Bonus: The {Niche} Cheat-Sheet Pack — every key step on a single page",
+"Bonus Workshop: {TransCap} Live Walkthrough (recorded Q&A included)",
+"Bonus Vault: 10 Done-for-You {Niche} Templates",
+"Bonus: The 7-Day {Niche} Quick-Start Calendar"
+];
+var NOTFOR=[
+"Advanced {niche} veterans looking for expert-level theory",
+"Anyone hoping for results without 15 focused minutes a day",
+"Tool collectors — this is about doing, not buying",
+"Students who want 10 hours of video instead of one fast result"
+];
+var SPIN_PAIRS=[["simple","easy"],["quick","fast"],["tiny","small"],["build","create"],["proven","tested"]];
+var ARCS={
+micro:[
+ {t:"Start Here: {Niche} Foundations",ls:["Welcome + how to finish this course in 15 minutes a day","The {Niche} map: the only 5 terms you need","Set your baseline: the 10-minute starting audit","Your tools checklist (the free version works fine)"]},
+ {t:"The Core {Niche} Method",ls:["The core method, step by step","From zero to {transformation}: the guided walkthrough","Fix the 3 mistakes everyone makes at this stage","The 20-minute shortcut for busy days"]},
+ {t:"Launch Week: Use It in Real Life",ls:["Your 7-day {niche} launch plan","What to do when you fall off (the 2-day rule)","Level up: where to go after {transformation}","Graduation checklist + your next steps"]}
+],
+standard:[
+ {t:"Foundations First",ls:["Start here: how this course gets you to {transformation}","The {Niche} essentials (zero fluff)","Your personal starting audit","Set up your space + tools in 20 minutes"]},
+ {t:"Core Skill 1: Learn What Matters",ls:["Skill 1 broken down: the 80/20 version","Guided practice: your first real {niche} rep","Beginner mistakes and their instant fixes","Checkpoint: prove skill 1 in 10 minutes"]},
+ {t:"Core Skill 2: Build Confidence",ls:["Skill 2 step by step: from shaky to solid","Do it with me: {transformation} in miniature","Troubleshooting clinic: when it doesn't work","Checkpoint: combine skills 1 + 2"]},
+ {t:"Real-Life Application Week",ls:["Your 7-day {niche} action plan","Adapt the method to YOUR schedule","What to track (and what to ignore)","Fixing slumps: the 48-hour reset"]},
+ {t:"Sustain, Sharpen & What's Next",ls:["Turn {transformation} into a habit that sticks","Beyond the basics: your next 3 upgrades","Recommended tools, books + communities","Final review + your 30-day roadmap"]}
+],
+deep:[
+ {t:"Welcome & Orientation",ls:["Meet your instructor + how to win this course","Who this is for: {audience}","How to get the most from every module","Download your course workbook"]},
+ {t:"Mindset & Setup",ls:["The {Niche} mindset shift that changes everything","Audit: find your exact starting point","Build your practice environment in 30 minutes","Set a goal you'll actually keep"]},
+ {t:"Core Skill 1: Foundations in Motion",ls:["Skill 1 from zero: the complete walkthrough","Guided reps: lock in the basics","Mistake autopsy: 5 errors and their fixes","Skill 1 mastery checkpoint"]},
+ {t:"Core Skill 2: Intermediate Power",ls:["Skill 2, demystified step by step","Practice lab: {transformation} on a small scale","When you plateau: the breakthrough protocol","Combine skills 1 + 2 like a pro"]},
+ {t:"Core Skill 3: Advanced Moves",ls:["The advanced techniques nobody teaches first","Case study: {transformation} under real constraints","Faster without sloppier: the speed protocol","Skill 3 stress test"]},
+ {t:"Real-World Application",ls:["Your 14-day {niche} implementation sprint","Customize everything to your life","Metrics that matter: track 3 numbers only","The 48-hour rescue plan for bad weeks"]},
+ {t:"Scale, Sustain & Next Level",ls:["From skill to lifestyle: make {transformation} automatic","Teach it to lock it in (the mastery shortcut)","Optional next paths: expand or monetize","Graduation: your 90-day mastery map"]}
+]};
+ARCS.micro[0].ls.push("Q&A: your {niche} questions, answered before you start","Print this: your course roadmap on one page");
+ARCS.micro[1].ls.push("Speed run: the whole method in 10 minutes flat","Real example: {transformation} start to finish");
+ARCS.micro[2].ls.push("Share your win: the graduation post template","Keep the streak: the 5-minute daily minimum");
+ARCS.standard[0].ls.push("Myth-busting: what {niche} gurus get wrong","Meet your workbook: the only pages that matter");
+ARCS.standard[1].ls.push("Live correction: watch a beginner get coached","Drill pack: 3 reps to lock in skill 1");
+ARCS.standard[2].ls.push("Before/after: skill 2 in action","The confidence ladder: small proof, big belief");
+ARCS.standard[3].ls.push("Done-for-you scripts for tough {niche} days","Weekly review: the 10-minute audit");
+ARCS.standard[4].ls.push("The 80/20 maintenance plan","Student showcase: steal these wins");
+ARCS.deep[0].ls.push("Tech setup: course platform tour in 6 minutes","Set your personal finish line");
+ARCS.deep[1].ls.push("Energy design: practice even when you're tired","Accountability: find your course buddy");
+ARCS.deep[2].ls.push("Slow-motion breakdown: skill 1 frame by frame","Flashcards: skill 1 in your pocket");
+ARCS.deep[3].ls.push("Guest lesson: how a pro handles skill 2","Deliberate practice plan for skill 2");
+ARCS.deep[4].ls.push("The advanced toolkit (only what earns its place)","Deconstructing mastery: a pro session analyzed");
+ARCS.deep[5].ls.push("Sprint rules: how the days actually run","Office hours: bring your stuck points");
+ARCS.deep[6].ls.push("Your {niche} flywheel: growth without grind","Certificate + how to show this skill off");
+var VERBS={
+video:["Watch: ","Demo: ","Follow along: "],
+text:["Read: ","Worksheet: ","Template: "],
+mixed:["Do: ","Build: ","Walkthrough: ","Worksheet: "]
+};
+var TITLES=[
+"The {Niche} Blueprint: How to {transLow} {dur}",
+"{TransCap} {durCap}: The {Niche} Fast-Track",
+"From Stuck to Started: {TransCap} with {Niche}",
+"The {Niche} {paceWord}: {TransCap} Step by Step",
+"{Niche} Made Simple: {TransCap} Without the Overwhelm",
+"The {Niche} Shortcut: {TransCap} {dur}",
+"{TransCap}, Even If You're Starting From Zero",
+"The Everyday {Niche} System: {TransCap} on Autopilot",
+"Small Steps, Big Shift: {TransCap} Through {Niche}",
+"The {Niche} Launchpad: {TransCap} From Day One"
+];
+var PROMISES=[
+"By the end of this course, you will {transLow} — even if you're starting from zero.",
+"Go from overwhelmed to confident and {transLow} {durLow}, with a system built for {audience}.",
+"{DurSent}, {transLow}: no experience, no expensive tools, no guesswork. Just follow the modules.",
+"Stop guessing at {niche}. Follow this {n}-module path and {transLow} — one small win at a time.",
+"This isn't another {niche} info-dump. It's a {durWord} system that ends with you able to {transLow}.",
+"Imagine next month: {transLow} feels easy. This course is the bridge — {n} modules, zero fluff.",
+"Built for {audience}: {transLow} {durLow} with 15 focused minutes a day.",
+"One promise: do the lessons in order, and {transLow} stops feeling hard."
+];
+var PRICE_WHY={
+budget:["Impulse-buy pricing for a {n}-module sprint — it sells on the transformation ({transformation}), not the length, so volume does the heavy lifting.",
+"Priced to move: at ${price}, {transformation} costs less than one takeout dinner — an instant yes for {n} modules of transformation."],
+mid:["The proven sweet spot for a {n}-module course: serious enough that students finish, easy enough that they say yes on the spot.",
+"At ${price}, students pay attention AND take action — the completion sweet spot for outcome-driven courses."],
+premium:["Premium anchor pricing — you're selling the outcome ({transformation}), and outcomes command outcome prices. The {n}-module depth justifies every dollar.",
+"At ${price}, you filter for action-takers: fewer refunds, better testimonials, and a course that funds your next launch."]
+};
+var QUIZ=[
+{q:"What is the smartest FIRST step to {transLow}?",o:["Set up one simple system you can repeat daily","Buy every recommended tool first","Study theory for two weeks, then start","Wait until you feel fully ready"],c:0},
+{q:"Which habit keeps {niche} progress alive long-term?",o:["Short sessions you repeat often","Rare all-day marathon sessions","Switching methods every single week","Only practicing when you feel motivated"],c:0},
+{q:"True or false: you need expensive gear to {transLow}.",o:["True — gear matters most","False — a simple repeatable system beats gear","True — free methods never work","False — nothing matters, just wing it"],c:1},
+{q:"What is the #1 beginner mistake in {niche}?",o:["Trying to master everything at once","Starting with embarrassingly small steps","Asking for feedback too early","Tracking progress every week"],c:0},
+{q:"You missed three days of {niche}. What now?",o:["Restart with the smallest step tomorrow","Quit until next month","Double the workload to punish yourself","Skip ahead two modules to catch up"],c:0},
+{q:"How do you know the method is actually working?",o:["Small completed wins stack up weekly","You spent more hours than last week","You bought better tools","An expert complimented you"],c:0},
+{q:"What should your practice setup include?",o:["Only what the current lesson needs","Every tool ever recommended","Nothing — setup is procrastination","A picture-perfect aesthetic desk"],c:0},
+{q:"When progress stalls, the best fix is…",o:["Shrink the step until it's easy again","Add three brand-new techniques","Take a full month off","Copy an advanced student exactly"],c:0}
+];
+QUIZ.push(
+{q:"What does a good {niche} practice session look like?",o:["Short, focused, with one clear target","Long and scattered, covering everything","Skipped whenever you're tired","Copied from a random video"],c:0},
+{q:"Which tool setup is right for this course?",o:["The minimal kit from the setup lesson","The most expensive kit available","No tools at all, ever","Whatever influencers unbox this week"],c:0},
+{q:"Complete the course rule: 'Done beats…'",o:["perfect","started","fast","pretty"],c:0},
+{q:"What makes {transLow} sustainable?",o:["A routine that fits bad weeks too","Relying on motivation spikes","Restarting from zero every month","Doing more every single day"],c:0},
+{q:"A friend asks how you learned {niche} so fast. You say…",o:["One small lesson at a time, in order","I watched everything twice at double speed","Natural talent, obviously","I skipped straight to the last module"],c:0},
+{q:"What belongs in your {niche} tracker?",o:["Completed reps plus one-line notes","Hours stared at the screen","Money spent this month","Other people's scores"],c:0}
+);
+function $(id){ return document.getElementById(id); }
+function esc(s){ s=(s===null||s===undefined)?"":String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function cap1(s){ s=String(s||""); if(!s){ return ""; } return s.charAt(0).toUpperCase()+s.slice(1); }
+function low1(s){ s=String(s||""); if(!s){ return ""; } return s.charAt(0).toLowerCase()+s.slice(1); }
+function titleCase(s){ var w=String(s||"").split(" "); for(var i=0;i<w.length;i++){ if(w[i]){ w[i]=w[i].charAt(0).toUpperCase()+w[i].slice(1); } } return w.join(" "); }
+function showToast(m){ var t=$("toast"); t.innerHTML=esc(m); t.style.display="block"; setTimeout(function(){ t.style.display="none"; },1800); }
+function rndSeed(){ return Math.floor(Math.random()*99999)+1; }
+function srand(seed){ var s=(seed>>>0)||1; return function(){ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }; }
+function normTrans(raw){
+  var t=String(raw||"").replace(/\s+/g," ").trim().replace(/[.!\s]+$/,"");
+  t=t.replace(/^(to|i want to|i can|be able to|learn how to|learn to|i will be able to|i will)\s+/i,"");
+  return t;
+}
+function spinOnce(text,a,b){
+  var idx=text.indexOf(a);
+  while(idx>=0){
+    var before=idx===0?" ":text.charAt(idx-1);
+    var after=(idx+a.length>=text.length)?" ":text.charAt(idx+a.length);
+    if(!/[A-Za-z]/.test(before)&&!/[A-Za-z]/.test(after)){ return text.slice(0,idx)+b+text.slice(idx+a.length); }
+    idx=text.indexOf(a,idx+1);
+  }
+  return text;
+}
+function fmtDur(min){ var h=Math.floor(min/60); var m=min%60; if(h>0&&m>0){ return h+" h "+m+" min"; } if(h>0){ return h+" h"; } return m+" min"; }
+function fill(t,d){
+  return String(t).replace(/\{niche\}/g,d.niche).replace(/\{Niche\}/g,d.Niche)
+    .replace(/\{transformation\}/g,d.transLow).replace(/\{transLow\}/g,d.transLow).replace(/\{TransCap\}/g,d.transCap)
+    .replace(/\{audience\}/g,d.audience).replace(/\{n\}/g,d.nMods)
+    .replace(/\{durLow\}/g,d.durLow||"").replace(/\{DurSent\}/g,d.durSent||"").replace(/\{durCap\}/g,d.durCap||"")
+    .replace(/\{durWord\}/g,d.durWord||"").replace(/\{dur\}/g,d.dur||"")
+    .replace(/\{paceName\}/g,d.paceName||"").replace(/\{paceWord\}/g,d.paceWord||"").replace(/\{price\}/g,d.price||"");
+}
+function stateDefault(){
+  return {step:0,inputs:{niche:"",audience:"",trans:"",depth:"standard",format:"mixed",price:"mid",pace:"sprint"},
+    seeds:{t:rndSeed(),p:rndSeed(),m:[rndSeed(),rndSeed(),rndSeed(),rndSeed(),rndSeed(),rndSeed(),rndSeed()],q:[rndSeed(),rndSeed(),rndSeed(),rndSeed(),rndSeed()],pr:rndSeed()},
+    result:null};
+}
+var state=null;
+function saveLS(){ try{ localStorage.setItem(LSKEY,JSON.stringify(state)); }catch(e){} }
+function loadLS(){ try{ var r=localStorage.getItem(LSKEY); if(r){ var p=JSON.parse(r); if(p&&p.inputs){ if(!p.inputs.pace){ p.inputs.pace="sprint"; } if(!p.seeds||!p.seeds.m||!p.seeds.q){ p.seeds=stateDefault().seeds; } return p; } } }catch(e){} return null; }
+function collectFromUI(){
+  state.inputs.niche=$("in-niche").value.replace(/\s+/g," ").trim().slice(0,60);
+  state.inputs.audience=$("in-audience").value.replace(/\s+/g," ").trim().slice(0,90);
+  state.inputs.trans=$("in-trans").value.replace(/\s+/g," ").trim().slice(0,140);
+}
+function paintDots(){
+  var h="";
+  for(var i=0;i<STEPS.length;i++){
+    var cls=i===state.step?"sdot on":(i<state.step||state.result?"sdot done":"sdot");
+    h+='<div class="'+cls+'">'+STEPS[i]+'</div>';
+  }
+  $("stepdots").innerHTML=h;
+  $("pfill").style.width=((Math.min(state.step,4)+1)/5*100)+"%";
+}
+function showStep(n){
+  collectFromUI();
+  state.step=n; saveLS(); paintDots();
+  for(var i=0;i<=5;i++){ $("v"+i).className="glass view"+(i===n?" show":""); }
+  window.scrollTo(0,0);
+}
+function paintOpts(){
+  var dh="";
+  for(var i=0;i<DEPTHS.length;i++){
+    dh+='<div class="opt'+(state.inputs.depth===DEPTHS[i].id?" on":"")+'" data-depth="'+DEPTHS[i].id+'"><b>'+esc(DEPTHS[i].name)+'</b><small>'+esc(DEPTHS[i].desc)+'<br>'+esc(DEPTHS[i].lessons)+'</small></div>';
+  }
+  $("depthGrid").innerHTML=dh;
+  var fh="";
+  for(var j=0;j<FORMATS.length;j++){
+    fh+='<div class="opt'+(state.inputs.format===FORMATS[j].id?" on":"")+'" data-format="'+FORMATS[j].id+'"><b>'+esc(FORMATS[j].name)+'</b><small>'+esc(FORMATS[j].desc)+'</small></div>';
+  }
+  $("formatGrid").innerHTML=fh;
+  var gh="";
+  for(var g=0;g<PACE.length;g++){
+    gh+='<div class="opt'+(state.inputs.pace===PACE[g].id?" on":"")+'" data-pace="'+PACE[g].id+'"><b>'+esc(PACE[g].name)+'</b><small>'+esc(PACE[g].desc)+'</small></div>';
+  }
+  $("paceGrid").innerHTML=gh;
+  var ph="";
+  for(var k=0;k<PRICES.length;k++){
+    ph+='<div class="opt'+(state.inputs.price===PRICES[k].id?" on":"")+'" data-price="'+PRICES[k].id+'"><b>'+esc(PRICES[k].name)+'</b><small>'+esc(PRICES[k].desc)+'</small><span class="price">'+esc(PRICES[k].range)+'</span></div>';
+  }
+  $("priceGrid").innerHTML=ph;
+  bindOpts();
+}
+function bindOpts(){
+  var ds=document.querySelectorAll("[data-depth]");
+  for(var i=0;i<ds.length;i++){ ds[i].onclick=function(){ state.inputs.depth=this.getAttribute("data-depth"); saveLS(); paintOpts(); }; }
+  var fs=document.querySelectorAll("[data-format]");
+  for(var j=0;j<fs.length;j++){ fs[j].onclick=function(){ state.inputs.format=this.getAttribute("data-format"); saveLS(); paintOpts(); }; }
+  var ps=document.querySelectorAll("[data-price]");
+  for(var k=0;k<ps.length;k++){ ps[k].onclick=function(){ state.inputs.price=this.getAttribute("data-price"); saveLS(); paintOpts(); }; }
+  var gs=document.querySelectorAll("[data-pace]");
+  for(var w=0;w<gs.length;w++){ gs[w].onclick=function(){ state.inputs.pace=this.getAttribute("data-pace"); saveLS(); paintOpts(); }; }
+}
+function validMsg(id,msg){
+  var el=$(id);
+  if(msg){ el.style.display="block"; el.innerHTML=esc(msg); return false; }
+  el.style.display="none"; return true;
+}
+function renderReview(){
+  var d=reviewData();
+  var rows=[
+    ["Niche",d.niche,0],["Audience",d.audience,0],["Transformation",d.transCap,1],
+    ["Length",d.depthName+" · "+d.nMods+" modules",2],["Format",d.formatName,2],["Pace",d.paceName,2],["Price tier",d.priceRange,3]
+  ];
+  var h="";
+  for(var i=0;i<rows.length;i++){
+    h+='<div class="revrow"><div class="k">'+rows[i][0]+'</div><div class="v">'+esc(rows[i][1])+'</div><button class="editbtn" data-goto="'+rows[i][2]+'">Edit</button></div>';
+  }
+  $("reviewBox").innerHTML=h;
+  var es=document.querySelectorAll("[data-goto]");
+  for(var j=0;j<es.length;j++){ es[j].onclick=function(){ showStep(parseInt(this.getAttribute("data-goto"),10)); }; }
+}
+function reviewData(){
+  collectFromUI();
+  var dn="",fn="",pr="",pn="14-Day Sprint";
+  for(var w=0;w<PACE.length;w++){ if(PACE[w].id===state.inputs.pace){ pn=PACE[w].name; } }
+  for(var i=0;i<DEPTHS.length;i++){ if(DEPTHS[i].id===state.inputs.depth){ dn=DEPTHS[i].name; } }
+  for(var j=0;j<FORMATS.length;j++){ if(FORMATS[j].id===state.inputs.format){ fn=FORMATS[j].name; } }
+  var nMods=3;
+  for(var m=0;m<DEPTHS.length;m++){ if(DEPTHS[m].id===state.inputs.depth){ nMods=DEPTHS[m].mods; } }
+  for(var k=0;k<PRICES.length;k++){ if(PRICES[k].id===state.inputs.price){ pr=PRICES[k].range; } }
+  var t=normTrans(state.inputs.trans);
+  return {niche:state.inputs.niche||"—",audience:state.inputs.audience||"—",transCap:cap1(t)||"—",
+    depthName:dn,nMods:nMods,formatName:fn,priceRange:pr,paceName:pn};
+}
+function buildBlueprint(){
+  collectFromUI();
+  var t=normTrans(state.inputs.trans);
+  var Niche=titleCase(state.inputs.niche);
+  var d={niche:state.inputs.niche,Niche:Niche,transLow:low1(t),transCap:cap1(t),
+    transformation:low1(t),audience:state.inputs.audience,nMods:0};
+  var depthId=state.inputs.depth;
+  var arc=ARCS[depthId];
+  d.nMods=arc.length;
+  var pace=PACE[0];
+  for(var pi=0;pi<PACE.length;pi++){ if(PACE[pi].id===state.inputs.pace){ pace=PACE[pi]; } }
+  d.dur=pace.dur; d.durLow=pace.durLow; d.durSent=pace.durSent; d.durCap=pace.durCap;
+  d.durWord=pace.durWord; d.paceName=pace.name; d.paceWord=pace.paceWord; d.price="";
+  var r=srand(state.seeds.t);
+  var titlePool=[];
+  for(var tp=0;tp<TITLES.length;tp++){
+    if(state.inputs.pace==="paced"&&/Fast-Track/i.test(TITLES[tp])){ continue; }
+    if(/day|week|month|hour|minute/i.test(t)&&TITLES[tp].indexOf("{dur")>=0){ continue; }
+    titlePool.push(TITLES[tp]);
+  }
+  if(!titlePool.length){ titlePool=TITLES.slice(0); }
+  var title=fill(titlePool[Math.floor(r()*titlePool.length)],d);
+  var r2=srand(state.seeds.p);
+  var promise=fill(PROMISES[Math.floor(r2()*PROMISES.length)],d);
+  var verbs=VERBS[state.inputs.format]||VERBS.mixed;
+  var modules=[];
+  for(var m=0;m<arc.length;m++){
+    var rm=srand(state.seeds.m[m]);
+    var mTitle=fill(arc[m].t,d);
+    var pool=arc[m].ls.slice(0);
+    var rot=Math.floor(rm()*pool.length);
+    pool=pool.slice(rot).concat(pool.slice(0,rot));
+    var want=3;
+    if(depthId==="micro"){ want=3+(Math.floor(rm()*2)); }
+    if(depthId==="deep"){ want=2+(Math.floor(rm()*2)); }
+    want=Math.min(want,pool.length);
+    var lessons=[];
+    for(var l=0;l<want;l++){
+      var lt=fill(pool[l],d);
+      if(rm()<0.5){ lt=verbs[Math.floor(rm()*verbs.length)]+low1(lt); }
+      for(var sp=0;sp<SPIN_PAIRS.length;sp++){ if(rm()<0.18){ lt=spinOnce(lt,SPIN_PAIRS[sp][0],SPIN_PAIRS[sp][1]); } }
+      lessons.push(cap1(lt));
+    }
+    var perMin=state.inputs.format==="video"?12:(state.inputs.format==="text"?8:10);
+    modules.push({title:mTitle,lessons:lessons,mins:lessons.length*perMin});
+  }
+  var order=[];
+  for(var oi=0;oi<QUIZ.length;oi++){ order.push(oi); }
+  var rq=srand(state.seeds.q[0]*7+state.step+11);
+  for(var s=order.length-1;s>0;s--){ var jj=Math.floor(rq()*(s+1)); var tmp=order[s]; order[s]=order[jj]; order[jj]=tmp; }
+  var quiz=[];
+  for(var q=0;q<5;q++){
+    var stem=QUIZ[order[q]];
+    var ro=srand(state.seeds.q[q]+q*101);
+    var idx=[0,1,2,3];
+    for(var z=idx.length-1;z>0;z--){ var j2=Math.floor(ro()*(z+1)); var t2=idx[z]; idx[z]=idx[j2]; idx[j2]=t2; }
+    var opts=[];
+    var ans=0;
+    for(var o=0;o<4;o++){ opts.push(fill(stem.o[idx[o]],d)); if(idx[o]===stem.c){ ans=o; } }
+    quiz.push({q:fill(stem.q,d),opts:opts,ans:ans});
+  }
+  var tier=PRICES[0];
+  for(var p=0;p<PRICES.length;p++){ if(PRICES[p].id===state.inputs.price){ tier=PRICES[p]; } }
+  var rp=srand(state.seeds.pr);
+  var price=tier.prices[Math.floor(rp()*tier.prices.length)];
+  d.price=price;
+  var fmtName="Mixed";
+  for(var fi=0;fi<FORMATS.length;fi++){ if(FORMATS[fi].id===state.inputs.format){ fmtName=FORMATS[fi].name; } }
+  var whyBank=PRICE_WHY[state.inputs.price]||PRICE_WHY.mid;
+  var why=fill(whyBank[Math.floor(rp()*whyBank.length)],d);
+  var ro2=srand(state.seeds.pr*3+5);
+  var opool=OUTCOMES.slice(0);
+  for(var sh=opool.length-1;sh>0;sh--){ var jh=Math.floor(ro2()*(sh+1)); var th=opool[sh]; opool[sh]=opool[jh]; opool[jh]=th; }
+  var outcomes=[];
+  for(var oc=0;oc<4;oc++){ outcomes.push(fill(opool[oc],d)); }
+  var bpool=BONUS.slice(0);
+  for(var bh=bpool.length-1;bh>0;bh--){ var jb=Math.floor(ro2()*(bh+1)); var tb=bpool[bh]; bpool[bh]=bpool[jb]; bpool[jb]=tb; }
+  var bonuses=[fill(bpool[0],d),fill(bpool[1],d)];
+  var notfor=fill(NOTFOR[Math.floor(ro2()*NOTFOR.length)],d);
+  var totalMin=0, totalLessons=0;
+  for(var tm=0;tm<modules.length;tm++){ totalMin+=modules[tm].mins; totalLessons+=modules[tm].lessons.length; }
+  return {title:title,promise:promise,modules:modules,quiz:quiz,price:price,range:tier.range,tierName:tier.name,
+    why:why,depthId:depthId,outcomes:outcomes,bonuses:bonuses,notfor:notfor,totalMin:totalMin,totalLessons:totalLessons,paceName:pace.name,formatName:fmtName};
+}
+function renderResult(){
+  var b=state.result;
+  $("resTitle").innerHTML=esc(b.title);
+  $("resPromise").innerHTML=esc(b.promise);
+  $("resPrice").innerHTML='<div><div class="big">$'+b.price+'</div><div class="rng">suggested · '+esc(b.tierName)+' tier ('+esc(b.range)+')</div></div><div class="why">'+esc(b.why)+'</div>';
+  $("resStats").innerHTML="<span>📚 "+b.modules.length+" modules</span><span>📝 "+b.totalLessons+" lessons</span><span>⏱ ≈"+fmtDur(b.totalMin)+"</span><span>❓ 5-question quiz</span><span>🎁 2 bonuses</span><span>"+esc(b.paceName)+"</span>";
+  var h="";
+  for(var m=0;m<b.modules.length;m++){
+    h+='<div class="glass mod"><div class="mnum">Module '+(m+1)+' of '+b.modules.length+' · ≈'+fmtDur(b.modules[m].mins)+'</div><h3>'+esc(b.modules[m].title)+'</h3><ul>';
+    for(var l=0;l<b.modules[m].lessons.length;l++){ h+='<li>'+esc(b.modules[m].lessons[l])+'</li>'; }
+    h+='</ul></div>';
+  }
+  $("resModules").innerHTML=h;
+  var qh="";
+  var letters=["A","B","C","D"];
+  var key=[];
+  for(var q=0;q<b.quiz.length;q++){
+    qh+='<div class="q"><div class="qq">'+(q+1)+'. '+esc(b.quiz[q].q)+'</div><div class="qo">';
+    for(var o=0;o<4;o++){ qh+=letters[o]+') '+esc(b.quiz[q].opts[o])+(o<3?'<br>':""); }
+    qh+='</div></div>';
+    key.push((q+1)+letters[b.quiz[q].ans]);
+  }
+  $("resQuiz").innerHTML=qh;
+  $("resKey").innerHTML="<b style='color:#fff'>Answer key (for you, the creator):</b> "+esc(key.join(" · "));
+  var oh="";
+  for(var oi=0;oi<b.outcomes.length;oi++){ oh+="<li>"+esc(b.outcomes[oi])+"</li>"; }
+  $("resOut").innerHTML=oh;
+  var bh2="";
+  for(var bi=0;bi<b.bonuses.length;bi++){ bh2+='<div class="glass mod"><div class="mnum">Included bonus '+(bi+1)+'</div><h3>🎁 '+esc(b.bonuses[bi])+'</h3></div>'; }
+  $("resBonus").innerHTML=bh2;
+  $("resNot").innerHTML="🚫 <b>Not for:</b> "+esc(b.notfor);
+}
+function blueprintText(){
+  var b=state.result;
+  var d=reviewData();
+  var rule="";
+  for(var ri=0;ri<Math.min(b.title.length,60);ri++){ rule+="="; }
+  var L="MICRO-COURSE BLUEPRINT\n"+b.title+"\n"+rule+"\n\n";
+  L+="PROMISE: "+b.promise+"\n\n";
+  L+="AUDIENCE: "+d.audience+"\nFORMAT: "+d.formatName+"\n\n";
+  L+="SUGGESTED PRICE: $"+b.price+" ("+b.tierName+" tier · "+b.range+")\nWhy: "+b.why+"\n";
+  L+="\nOUTCOMES — students will:\n";
+  for(var oc=0;oc<b.outcomes.length;oc++){ L+="  ✓ "+b.outcomes[oc]+"\n"; }
+  L+="\nRUNTIME: ≈"+fmtDur(b.totalMin)+" total ("+b.totalLessons+" lessons · "+d.paceName+")\n";
+  for(var m=0;m<b.modules.length;m++){
+    L+="\nMODULE "+(m+1)+" — "+b.modules[m].title+"\n";
+    for(var l=0;l<b.modules[m].lessons.length;l++){ L+="  - "+b.modules[m].lessons[l]+"\n"; }
+  }
+  L+="\nINCLUDED BONUSES\n";
+  for(var bi=0;bi<b.bonuses.length;bi++){ L+="  [BONUS] "+b.bonuses[bi]+"\n"; }
+  L+="\nNot for: "+b.notfor+"\n";
+  L+="\nCOMPLETION QUIZ\n";
+  var letters=["A","B","C","D"];
+  for(var q=0;q<b.quiz.length;q++){
+    L+="\n"+(q+1)+". "+b.quiz[q].q+"\n";
+    for(var o=0;o<4;o++){ L+="   "+letters[o]+") "+b.quiz[q].opts[o]+"\n"; }
+  }
+  L+="\nAnswer key: ";
+  var key=[];
+  for(var k=0;k<b.quiz.length;k++){ key.push((k+1)+letters[b.quiz[k].ans]); }
+  L+=key.join(", ")+"\n";
+  return L;
+}
+function copyText(txt,msg){
+  function done(){ showToast(msg||"Copied"); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){ fb(); }); }
+  else { fb(); }
+  function fb(){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); }
+    catch(e){ showToast("Copy blocked — select manually"); }
+  }
+}
+function downloadFile(name,content,mime){
+  try{
+    var blob=new Blob([content],{type:mime||"text/plain"});
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); try{ URL.revokeObjectURL(u); }catch(e){} },400);
+  }catch(e){ showToast("Download blocked"); }
+}
+function blueprintMD(){
+  var b=state.result;
+  var d=reviewData();
+  var L="# "+b.title+"\n\n> "+b.promise+"\n\n";
+  L+="**Audience:** "+d.audience+" · **Format:** "+d.formatName+" · **Pace:** "+d.paceName+"\n\n";
+  L+="## Suggested price: $"+b.price+" ("+b.tierName+" · "+b.range+")\n\n"+b.why+"\n\n";
+  L+="## Outcomes\n\n";
+  for(var oc=0;oc<b.outcomes.length;oc++){ L+="- [ ] "+b.outcomes[oc]+"\n"; }
+  L+="\n**Runtime:** ≈"+fmtDur(b.totalMin)+" ("+b.totalLessons+" lessons)\n\n";
+  for(var m=0;m<b.modules.length;m++){
+    L+="## Module "+(m+1)+": "+b.modules[m].title+" (≈"+fmtDur(b.modules[m].mins)+")\n\n";
+    for(var l=0;l<b.modules[m].lessons.length;l++){ L+="- [ ] "+b.modules[m].lessons[l]+"\n"; }
+    L+="\n";
+  }
+  L+="## Bonuses\n\n";
+  for(var bi=0;bi<b.bonuses.length;bi++){ L+="- 🎁 "+b.bonuses[bi]+"\n"; }
+  L+="\n_Not for:_ "+b.notfor+"\n\n## Quiz\n\n";
+  var letters=["A","B","C","D"];
+  for(var q=0;q<b.quiz.length;q++){
+    L+="**"+(q+1)+". "+b.quiz[q].q+"**\n\n";
+    for(var o=0;o<4;o++){ L+="- "+letters[o]+") "+b.quiz[q].opts[o]+"\n"; }
+    L+="\n";
+  }
+  var key=[];
+  for(var k=0;k<b.quiz.length;k++){ key.push((k+1)+letters[b.quiz[k].ans]); }
+  L+="**Answer key:** "+key.join(", ")+"\n";
+  return L;
+}
+function init(){
+  var saved=loadLS();
+  state=saved||stateDefault();
+  if(!state.inputs){ state=stateDefault(); }
+  if(!state.seeds||!state.seeds.m){ state.seeds=stateDefault().seeds; }
+  $("in-niche").value=state.inputs.niche||"";
+  $("in-audience").value=state.inputs.audience||"";
+  $("in-trans").value=state.inputs.trans||"";
+  paintOpts();
+  if(state.result&&!state.result.bonuses){ try{ state.result=buildBlueprint(); saveLS(); }catch(e){ state.result=null; } }
+  if(state.result){ renderResult(); showStep(5); }
+  else { showStep(Math.min(state.step||0,4)); }
+  var nx=document.querySelectorAll("[data-next]");
+  for(var i=0;i<nx.length;i++){ nx[i].onclick=function(){
+    var n=parseInt(this.getAttribute("data-next"),10);
+    collectFromUI();
+    if(n===1){
+      if(!state.inputs.niche){ validMsg("validMsg","Please enter your niche first — everything builds on it."); return; }
+      if(!state.inputs.audience){ validMsg("validMsg","Tell us who this course is for (one short line is enough)."); return; }
+      validMsg("validMsg",null);
+    }
+    if(n===2){
+      if(!state.inputs.trans){ validMsg("validMsg2","Describe the transformation — e.g. \"plan a week of dinners in under an hour\"."); return; }
+      validMsg("validMsg2",null);
+    }
+    if(n===4){ renderReview(); }
+    saveLS(); showStep(n);
+  }; }
+  var bk=document.querySelectorAll("[data-back]");
+  for(var j=0;j<bk.length;j++){ bk[j].onclick=function(){ showStep(parseInt(this.getAttribute("data-back"),10)); }; }
+  $("btnBuild").onclick=function(){
+    collectFromUI(); saveLS();
+    state.result=buildBlueprint(); saveLS();
+    renderResult(); showStep(5); showToast("Blueprint built");
+  };
+  $("btnCopy").onclick=function(){ if(!state.result){ return; } copyText(blueprintText(),"Blueprint copied"); };
+  $("btnRegen").onclick=function(){
+    state.seeds={t:rndSeed(),p:rndSeed(),m:[rndSeed(),rndSeed(),rndSeed(),rndSeed(),rndSeed(),rndSeed(),rndSeed()],q:[rndSeed(),rndSeed(),rndSeed(),rndSeed(),rndSeed()],pr:rndSeed()};
+    state.result=buildBlueprint(); saveLS(); renderResult(); showToast("Fresh variations");
+  };
+  $("btnOver").onclick=function(){ state.result=null; state.step=0; saveLS(); showStep(0); };
+  $("btnTxt").onclick=function(){ if(!state.result){ return; } downloadFile("course-blueprint.txt",blueprintText(),"text/plain"); };
+  $("btnMd").onclick=function(){ if(!state.result){ return; } downloadFile("course-blueprint.md",blueprintMD(),"text/markdown"); };
+  var ins=["in-niche","in-audience","in-trans"];
+  for(var k=0;k<ins.length;k++){ $(ins[k]).oninput=function(){ collectFromUI(); saveLS(); }; }
+}
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",init); } else { init(); }
+</script>
+</body>
+</html>
