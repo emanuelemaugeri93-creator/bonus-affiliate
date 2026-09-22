@@ -1,0 +1,495 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offer Ladder Architect</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root{
+  --bg:#ffffff;
+  --panel:#fafafa;
+  --border:#e5e5e5;
+  --ink:#111111;
+  --muted:#6b6b6b;
+  --accent:#0070F3;
+  --accent2:#00D4FF;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",Arial,sans-serif}
+h1,h2,h3{margin:0;font-family:"Sora",Arial,sans-serif}
+#topbar{display:flex;align-items:center;gap:12px;padding:14px 26px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:20}
+#topbar .mark{width:38px;height:38px;border-radius:10px;background:#0b0b0c;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #2a2a2c}
+#topbar .mark svg{width:24px;height:24px}
+#topbar h1{font-size:19px;font-weight:800;letter-spacing:-.3px}
+#topbar .sub{font-size:12.5px;color:var(--muted)}
+#layout{display:grid;grid-template-columns:380px 1fr;max-width:1360px;margin:0 auto;align-items:start;gap:0}
+#formPanel{padding:28px 26px;border-right:1px solid var(--border);min-height:calc(100vh - 63px);background:var(--panel)}
+#formPanel label.f{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:20px 0 8px;font-family:"Sora"}
+#formPanel label.f:first-child{margin-top:0}
+#in-niche{width:100%;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:"DM Sans";font-size:15px;color:var(--ink)}
+#in-niche:focus{outline:none;border-color:var(--accent)}
+.radio{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--border);border-radius:8px;padding:11px 12px;margin-bottom:8px;cursor:pointer;background:#fff;font-size:14px}
+.radio:hover{border-color:var(--accent)}
+.radio input{margin-top:2px;accent-color:var(--accent)}
+.radio.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.radio small{display:block;color:var(--muted);font-size:12px}
+.buildbtn{width:100%;margin-top:22px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:14px;font-family:"Sora";font-weight:700;font-size:15px;cursor:pointer}
+.buildbtn:active{transform:translateY(1px)}
+.regenbtn{width:100%;margin-top:8px;background:#fff;color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:"Sora";font-weight:600;font-size:13px;cursor:pointer}
+#validMsg{display:none;color:#c0392b;font-size:13px;margin-top:8px}
+#preview{padding:28px 30px;min-width:0}
+#prevBar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+#prevBar h2{font-size:20px;font-weight:800;letter-spacing:-.3px}
+#prevBar .spacer{flex:1}
+.cpbtn{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:"Sora";font-weight:600;font-size:13px;cursor:pointer}
+.cpbtn:hover{border-color:var(--accent);color:var(--accent)}
+.rung{border:1px solid var(--border);border-radius:12px;padding:20px 22px;background:#fff;position:relative;overflow:hidden;transition:box-shadow .2s}
+.rung:hover{box-shadow:0 8px 28px rgba(0,112,243,.10)}
+.rung .idx{position:absolute;right:10px;top:-6px;font-family:"Sora";font-size:64px;font-weight:800;color:#f1f1f1;pointer-events:none;user-select:none}
+.guarantee{margin-top:10px;font-size:12.5px;color:var(--accent);font-weight:700}
+.codename{font-family:"Sora";font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+@media print{
+  #topbar,#formPanel,.mini-btns,#prevBar .cpbtn,.regenbtn,.buildbtn,#validMsg,#toast{display:none !important}
+  #layout{display:block}
+  #preview{padding:0}
+  .rung{break-inside:avoid;box-shadow:none}
+  #totalBar{break-inside:avoid}
+}
+.rung + .conn{margin:0}
+.rung .tag{display:inline-block;font-family:"Sora";font-size:11px;font-weight:800;letter-spacing:1.5px;color:#fff;background:var(--ink);border-radius:6px;padding:4px 10px;margin-bottom:10px}
+.rung.oto1 .tag{background:var(--accent)}
+.rung.oto2 .tag{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.rung.downsell .tag{background:#fff;color:var(--ink);border:1px solid var(--ink)}
+.rung h3{font-size:19px;font-weight:700;margin-bottom:4px}
+.rung .price{font-family:"Sora";font-size:22px;font-weight:800;margin:6px 0}
+.rung .role{font-size:13.5px;color:var(--muted);font-style:italic;margin-bottom:10px}
+.rung ul{margin:0;padding-left:20px;font-size:14px;line-height:1.7}
+.conn{display:flex;flex-direction:column;align-items:center;padding:0}
+.conn .ln{width:2px;height:26px;background:linear-gradient(180deg,var(--accent),var(--accent2))}
+.conn .arw{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid var(--accent2);margin-top:-1px}
+#totalBar{margin-top:24px;border:1px solid var(--border);border-radius:12px;padding:18px 22px;background:var(--panel)}
+#totalBar .tl{font-family:"Sora";font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+#totalBar .tv{font-family:"Sora";font-size:34px;font-weight:800;letter-spacing:-1px}
+#totalBar .track{height:8px;background:var(--border);border-radius:99px;margin-top:10px;overflow:hidden}
+#totalBar .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .3s}
+#emptyState{border:1px dashed var(--border);border-radius:12px;padding:60px 30px;text-align:center;color:var(--muted)}
+.tagline{font-size:14px;color:var(--muted);font-style:italic;margin-top:2px}
+.mini-btns{float:right;display:flex;gap:6px}
+.mini-btns button{background:#fff;border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-family:"Sora";font-size:12px;font-weight:700;cursor:pointer}
+.mini-btns button:hover{border-color:var(--accent);color:var(--accent)}
+.stated{font-size:13px;font-weight:500;color:var(--muted)}
+.rung.bump{border-style:dashed}
+.rung.bump .tag{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+.sechead{font-size:15px;font-weight:800;margin:26px 0 10px;letter-spacing:-.2px}
+.emailcard{border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13.5px;margin-bottom:8px;background:#fff}
+.chkline{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-top:10px;cursor:pointer}
+.chkline input{accent-color:var(--accent)}
+#in-angle{width:100%;border:1px solid var(--border);border-radius:8px;padding:11px 12px;font-family:"DM Sans";font-size:14px;background:#fff}
+.saveditem{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;margin-bottom:6px;background:#fff}
+.saveditem span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saveditem button{background:#fff;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12px;cursor:pointer;font-family:"Sora";font-weight:600}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:99px;font-family:"Sora";font-size:13px;font-weight:600;display:none;z-index:99}
+@media(max-width:920px){#layout{grid-template-columns:1fr}#formPanel{border-right:none;border-bottom:1px solid var(--border);min-height:auto}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="mark" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><rect x="5" y="27" width="7" height="8" rx="1.5" fill="#3a3a3e"/><rect x="14.5" y="20" width="7" height="15" rx="1.5" fill="#0070F3"/><rect x="24" y="13" width="7" height="22" rx="1.5" fill="#00D4FF"/><path d="M6 24 L20 10 L26 15 L35 5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 5 H35 V12" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div><h1>Offer Ladder Architect</h1><div class="sub">Turn one niche into a launch-ready monetization funnel</div></div>
+</div>
+<div id="root"></div>
+<div id="toast"></div>
+<script type="text/babel" data-presets="env,react">
+/* LOGIC-START */
+var STOPW=["a","an","the","and","or","but","of","at","in","on","to","for","with","my","your","how","best","top","easy","simple","that","this","from","shy","happy","brave","kind","small","young","new","first","special","learn","learns","make","makes","find","finds","love","loves","help","helps","want","gets","go","try"];
+function titleCase(s){ var w=String(s||"").split(" "); for(var i=0;i<w.length;i++){ if(w[i]){ w[i]=w[i].charAt(0).toUpperCase()+w[i].slice(1); } } return w.join(" "); }
+function extractKw(raw){
+  var clean=String(raw||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ");
+  var parts=clean.split(" "); var out=[];
+  for(var i=0;i<parts.length;i++){ var w=parts[i]; if(w.length>2&&STOPW.indexOf(w)<0&&out.indexOf(w)<0){ out.push(w); } }
+  return out.slice(0,3);
+}
+function makeRng(seed){ var s=(seed>>>0)||1; return function(){ s=(Math.floor(s*1664525+1013904223))%4294967296; return s/4294967296; }; }
+function pickN(rng,arr,n){ var c=arr.slice(0); var out=[]; while(out.length<n&&c.length){ out.push(c.splice(Math.floor(rng()*c.length),1)[0]); } return out; }
+var RUNG_ROLES={
+  fe:["Low-friction entry point — proves value fast, builds the buyer list, and funds ad spend.","Cheap yes that starts the relationship — value first, pitch second."],
+  oto1:["Doubles down on the transformation with done-for-you speed assets the buyer craves next.","Strikes while desire is hot: the natural 'yes, and…' right after checkout."],
+  oto2:["High-leverage upgrade for committed buyers — license, scale, or done-with-you profit multiplier.","Separates buyers from collectors: premium price, premium proximity and rights."],
+  downsell:["Recovers abandoning buyers with a lighter, cheaper slice of the upsell they just skipped.","A graceful second chance — keeps the sale alive instead of losing it forever."]
+};
+var NAMES={
+  fe:["{N} Starter Kit","{N} Quick-Start Bundle","{N} Foundations Pack","The {K} Launch Kit","{N} Essentials Bundle","{K} Jumpstart Pack","The {K} Blueprint","{N} in 7 Days","First Steps in {K}","{K} Crash Startup","The {K} Fast-Start System","{N} Zero-to-Hero Guide","{N} Weekend Workshop","Smart Start {K}"],
+  oto1:["{N} Pro Toolkit","{N} Done-For-You Pack","{N} Accelerator Bundle","{N} Templates Vault","{N} Fast-Track Upgrade","The {K} Implementation Pack","{K} Swipe Files","{N} Done-With-You Sessions","The {K} Content Engine","{N} Automation Pack","{N} Scale-Up Scripts","{N} Client-Getting Kit","The {K} Asset Library","{N} Profit Templates"],
+  oto2:["{N} Mastery Bundle","{N} Agency License","{N} Reseller Rights Pack","{N} Coaching Upgrade","{N} Empire Bundle","{N} Certification Program","{N} Inner Circle","{N} Partner License","{N} Six-Figure Playbook","White-Label {K} Suite","{N} Legacy Program","{N} Elite Mastermind","{N} Done-For-You Service","{K} Authority Bundle"],
+  downsell:["{N} Lite Edition","{N} Essentials Only","{N} Downsell Sampler","{K} Basics Express","{N} Trial Pack","{N} Core-Only Version","{N} Starter Sampler","{K} Crash Notes","{N} Pocket Guide","{N} Quick Primer","{K} Starter Notes","{N} Mini Workshop"]
+};
+var PRICE_TABLE={
+  fe:{budget:"$7–$17",mid:"$27",premium:"$67"},
+  oto1:{budget:"$27–$37",mid:"$47–$67",premium:"$97–$147"},
+  oto2:{budget:"$47–$67",mid:"$97",premium:"$197"},
+  downsell:{budget:"$17",mid:"$37",premium:"$77"}
+};
+var CONTENTS={
+  fe:["{N} core guide (PDF)","Quick-start checklist","10 starter templates","30-day action calendar","Private resource list","{K} quick-win tutorial","Niche glossary & tools list","3 starter case studies"],
+  oto1:["50 done-for-you {K} templates","30 {K} social post pack","PLR article bundle (10)","Email swipe sequences","Canva cover + mockup kit","{K} funnel templates","30-day content calendar","Stock graphics bundle"],
+  oto2:["Full {K} video masterclass","Agency / client license","Monthly content drops (6 mo)","1:1 strategy audit","Resell rights to the front-end","Live Q&A recordings","Private community access","DFY ad creatives"],
+  downsell:["Core {N} guide only","10 essential templates","{K} cheat sheet","{K} starter audio"]
+};
+var TYPE_WORDS={
+  pet:["dog","cat","puppy","kitten","pet","parrot","bird","fish","rabbit","horse","pup","kit"],
+  food:["meal","cook","bake","recipe","keto","vegan","sourdough","bbq","coffee","diet","food","cake"],
+  biz:["business","freelance","agency","marketing","money","invest","seo","etsy","amazon","income","client","brand"],
+  kids:["kid","child","baby","parent","mom","toddler","school","teacher","student","family"],
+  fitness:["fitness","workout","yoga","weight","run","marathon","muscle","pilates","gym"],
+  craft:["craft","sew","knit","crochet","wood","paint","art","photo","jewelry","candle","draw"]
+};
+var TYPE_BULLETS={
+  pet:{fe:"Vet-approved {K} safety sheet",oto1:"Printable {K} training charts",oto2:"Ask-a-trainer private consult",downsell:"Top 10 {K} starter tips"},
+  food:{fe:"7-day {K} starter menu",oto1:"200-recipe {K} vault",oto2:"Live {K} cook-along sessions",downsell:"{K} shopping list pack"},
+  biz:{fe:"{K} niche validation worksheet",oto1:"50 {K} outreach templates",oto2:"Client acquisition masterclass",downsell:"{K} pricing cheat sheet"},
+  kids:{fe:"Age-by-age {K} activity guide",oto1:"100 printable {K} worksheets",oto2:"Parent coaching workshop",downsell:"{K} bedtime routine cards"},
+  fitness:{fe:"14-day {K} starter plan",oto1:"Video {K} form library",oto2:"Personalized {K} programming",downsell:"{K} quick routines pack"},
+  craft:{fe:"{K} supply starter list",oto1:"25 {K} project patterns",oto2:"Live {K} studio critiques",downsell:"{K} pattern sampler"}
+};
+function detectType(nicheRaw,kw){
+  var s=" "+String(nicheRaw||"").toLowerCase()+" "+kw.join(" ")+" ";
+  for(var t in TYPE_WORDS){
+    if(TYPE_WORDS.hasOwnProperty(t)){
+      var ws=TYPE_WORDS[t];
+      for(var i=0;i<ws.length;i++){ if(s.indexOf(ws[i])>=0){ return t; } }
+    }
+  }
+  return null;
+}
+var GUARANTEES=["Backed by a 30-day action-based guarantee.","Try it for 30 days — love it or refund, no forms.","30-day guarantee: do the work, or pay nothing.","Risk-free for 30 days, guaranteed in writing."];
+var FUNNEL_NAMES=["The {K} Ascension Engine","Project {K} Ladder","The {K} Profit Staircase","Operation {K} Funnel","The {K} Value Ladder","{K} Launch Architecture"];
+var HOOKS={
+  speed:["Go from zero to {K} in 30 days flat.","The fastest path through {N} — no fluff.","{K} results on a deadline.","{K} speedrun: results this week.","Cut the {N} learning curve to days."],
+  system:["The exact {K} system, step by step.","A repeatable {N} machine you can run forever.","Every {K} moving part, mapped once.","Plug-and-play {K} workflows.","The {N} operating system."],
+  secret:["The {K} shortcut nobody talks about.","What {N} gurus never mention.","The overlooked {K} lever.","Borrowed {K} tactics from top performers.","The hidden {K} advantage."],
+  challenge:["A 30-day {K} challenge with daily wins.","One small {K} win every day for a month.","Turn {N} into a game you can win.","Prove it in 7 days: the {K} starter bet.","Level up {K} weekly."],
+  proof:["Real {K} results without the fluff.","{N} that works in the real world.","No theory — only tested {K} moves.","{K} case studies, zero hype.","What actually moved the {K} needle."]
+};
+var ANGLES=[["speed","Speed"],["system","System"],["secret","Secret"],["challenge","Challenge"],["proof","No-fluff proof"]];
+var BUMP_NAMES=["{K} Quick-Start Checklist Pack","10 {K} Copy-Paste Templates","{K} Resource Rolodex","{N} Cheat-Sheet Bundle","{K} Swipe File Sampler","{N} Fast-Action Bonus Pack"];
+var BUMP_PRICE={budget:"$9",mid:"$19",premium:"$47"};
+var BUMP_ROLE="Impulse add-on at checkout — lifts average order value with zero extra funnel steps.";
+var EMAILS={
+  cart:["Stuck on {K}? Your {FE} is waiting (still {PRICE})","You left {FE} in your cart — here's what happens next","Quick reminder: {N} starters get {FE} today","Still thinking? {FE} holds your seat","{K} won't wait — neither should you ({FE})"],
+  oto:["You unlocked {FE} — now 10x it with {OTO}","Buyers who add {OTO} finish twice as fast","One click took you this far — {OTO} takes you further","{FE} buyers also grabbed {OTO} today","Your {K} shortcut compounds with {OTO}"],
+  down:["Not ready for the full upgrade? Take the lite path","A smaller {N} win, same day: {FE} lite inside","Last call: your {N} shortcut at its lowest price","Downsized, not downgraded: {N} lite","Keep momentum: lite {K} inside"]
+};
+var VALUE_MULT={budget:3,mid:2.5,premium:2};
+function round5(x){ return Math.max(5,Math.round(x/5)*5); }
+function priceMid(p){
+  var nums=String(p).replace(/\$/g,"").split("–");
+  if(nums.length===2){ return (parseFloat(nums[0])+parseFloat(nums[1]))/2; }
+  return parseFloat(nums[0])||0;
+}
+function fillTpl(t,N,K){
+  return t.replace(/\{N\}/g,N).replace(/\{K\}/g,K);
+}
+var ALT_PRICE_TABLE={
+  fe:{budget:"$17",mid:"$37",premium:"$77"},
+  oto1:{budget:"$37",mid:"$67",premium:"$147"},
+  oto2:{budget:"$67",mid:"$127",premium:"$247"},
+  downsell:{budget:"$27",mid:"$47",premium:"$97"}
+};
+function buildFunnel(nicheRaw,positioning,depth,seed,angle){
+  var clean=String(nicheRaw||"").replace(/^\s+|\s+$/g,"");
+  var N=titleCase(clean);
+  var kw=extractKw(clean);
+  var K=kw.length?titleCase(kw[0]):N;
+  var rungs=depth==="simple"?["fe","oto1"]:depth==="standard"?["fe","oto1","oto2"]:["fe","oto1","oto2","downsell"];
+  var rng=makeRng(seed);
+  var ntype=detectType(clean,kw);
+  var usedNames=[], usedCont=[];
+  function freshName(r){
+    var pool=[];
+    for(var i=0;i<NAMES[r].length;i++){ if(usedNames.indexOf(NAMES[r][i])<0){ pool.push(NAMES[r][i]); } }
+    if(!pool.length){ pool=NAMES[r].slice(0); }
+    var t=pool[Math.floor(rng()*pool.length)];
+    usedNames.push(t);
+    return fillTpl(t,N,K);
+  }
+  function freshCont(r,want,first){
+    var pool=[];
+    for(var j=0;j<CONTENTS[r].length;j++){ if(usedCont.indexOf(CONTENTS[r][j])<0){ pool.push(CONTENTS[r][j]); } }
+    if(!pool.length){ pool=CONTENTS[r].slice(0); }
+    var got=[];
+    if(first){ got.push(first); usedCont.push("TYPE:"+r); }
+    while(got.length<want&&pool.length){ got.push(pool.splice(Math.floor(rng()*pool.length),1)[0]); }
+    for(var c=0;c<got.length;c++){
+      if(got[c].indexOf("{N}")<0&&got[c].indexOf("{K}")<0){ continue; }
+      got[c]=fillTpl(got[c],N,K);
+      usedCont.push(got[c]);
+    }
+    return got;
+  }
+  var out=[];
+  for(var i=0;i<rungs.length;i++){
+    var r=rungs[i];
+    var name=freshName(r);
+    var price=PRICE_TABLE[r][positioning];
+    var alt=ALT_PRICE_TABLE[r][positioning];
+    var role=RUNG_ROLES[r][Math.floor(rng()*RUNG_ROLES[r].length)];
+    var want=r==="downsell"?2:3;
+    var first=null;
+    if(ntype&&TYPE_BULLETS[ntype]&&TYPE_BULLETS[ntype][r]){ first=TYPE_BULLETS[ntype][r]; }
+    var cont=freshCont(r,want,first);
+    out.push({rung:r,name:name,price:price,alt:alt,role:role,contents:cont});
+  }
+  var codename=fillTpl(FUNNEL_NAMES[Math.floor(rng()*FUNNEL_NAMES.length)],N,K);
+  var guarantee=GUARANTEES[Math.floor(rng()*GUARANTEES.length)];
+  var tagPool=HOOKS[angle]||HOOKS.system;
+  var tagline=fillTpl(tagPool[Math.floor(rng()*tagPool.length)],N,K);
+  var bumpName=fillTpl(pickN(rng,BUMP_NAMES,1)[0],N,K);
+  var feName=out.length?out[0].name:"";
+  var otoName=out.length>1?out[1].name:feName;
+  var emails=[];
+  var types=["cart","oto","down"];
+  var labels={cart:"Cart recovery",oto:"Upsell reminder",down:"Downsell recovery"};
+  for(var e=0;e<types.length;e++){
+    var subj=pickN(rng,EMAILS[types[e]],1)[0];
+    subj=subj.replace(/\{FE\}/g,feName).replace(/\{OTO\}/g,otoName).replace(/\{N\}/g,N).replace(/\{K\}/g,K).replace(/\{PRICE\}/g,out.length?out[0].price:"");
+    emails.push({type:labels[types[e]],subject:subj});
+  }
+  return {display:N,keyword:K,angle:angle,tagline:tagline,codename:codename,guarantee:guarantee,ntype:ntype,rungs:out,
+    bump:{name:bumpName,price:BUMP_PRICE[positioning],role:BUMP_ROLE},emails:emails};
+}
+function chosenPrice(rungObj,sel){ return sel===1?rungObj.alt:rungObj.price; }
+function funnelTotal(f,priceSel,bumpOn){
+  var t=0;
+  for(var i=0;i<f.rungs.length;i++){ t+=priceMid(chosenPrice(f.rungs[i],priceSel[i])); }
+  if(bumpOn){ t+=priceMid(f.bump.price); }
+  return Math.round(t);
+}
+function funnelStacked(f,priceSel,bumpOn,positioning){
+  var mult=VALUE_MULT[positioning]||2;
+  var t=0;
+  for(var i=0;i<f.rungs.length;i++){ t+=round5(priceMid(chosenPrice(f.rungs[i],priceSel[i]))*mult); }
+  if(bumpOn){ t+=round5(priceMid(f.bump.price)*mult); }
+  return t;
+}
+function funnelText(f,posLabel,depthLabel,priceSel,bumpOn,positioning){
+  var L="OFFER LADDER — "+f.display+" ("+posLabel+", "+depthLabel+")\nFunnel: "+(f.codename||"")+"\nHook: "+f.tagline+"\nGuarantee: "+(f.guarantee||"")+"\n";
+  var tags={fe:"FRONT-END",oto1:"OTO1",oto2:"OTO2",downsell:"DOWNSELL"};
+  for(var i=0;i<f.rungs.length;i++){
+    var r=f.rungs[i];
+    L+="\n"+tags[r.rung]+" — "+r.name+" — "+chosenPrice(r,priceSel[i])+" (valued at $"+round5(priceMid(chosenPrice(r,priceSel[i]))*(VALUE_MULT[positioning]||2))+")\nRole: "+r.role+"\nIncludes:\n";
+    for(var c=0;c<r.contents.length;c++){ L+="  - "+r.contents[c]+"\n"; }
+  }
+  if(bumpOn){ L+="\nORDER BUMP — "+f.bump.name+" — "+f.bump.price+"\nRole: "+f.bump.role+"\n"; }
+  L+="\nFOLLOW-UP ANGLES:\n";
+  for(var e=0;e<f.emails.length;e++){ L+="  - ["+f.emails[e].type+"] "+f.emails[e].subject+"\n"; }
+  L+="\nTotal Funnel Value: $"+funnelTotal(f,priceSel,bumpOn)+" (stacked value $"+funnelStacked(f,priceSel,bumpOn,positioning)+")";
+  return L;
+}
+/* LOGIC-END */
+var POS_LABEL={budget:"Budget ($7–$27)",mid:"Mid ($27–$67)",premium:"Premium ($67–$197)"};
+var DEPTH_LABEL={simple:"Simple (FE + 1 OTO)",standard:"Standard (FE + 2 OTOs)",full:"Full (FE + 2 OTOs + Downsell)"};
+var RUNG_TAG={fe:"FRONT-END",oto1:"OTO 1",oto2:"OTO 2",downsell:"DOWNSELL"};
+function useCountUp(target){
+  var useState=React.useState, useEffect=React.useEffect, useRef=React.useRef;
+  var st=useState(target); var val=st[0], setVal=st[1];
+  var ref=useRef(target);
+  useEffect(function(){
+    var from=ref.current; var t0=performance.now(); var raf=0;
+    function step(t){
+      var p=(t-t0)/700; if(p>1){ p=1; }
+      setVal(Math.round(from+(target-from)*p));
+      if(p<1){ raf=requestAnimationFrame(step); } else { ref.current=target; }
+    }
+    if(from===target){ setVal(target); return; }
+    raf=requestAnimationFrame(step);
+    return function(){ cancelAnimationFrame(raf); };
+  },[target]);
+  return val;
+}
+function copyText(txt,msg){
+  function done(){ var t=document.getElementById("toast"); t.textContent=msg||"Copied"; t.style.display="block"; setTimeout(function(){ t.style.display="none"; },1800); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){ fb(); }); }
+  else { fb(); }
+  function fb(){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); }
+    catch(e){ var t2=document.getElementById("toast"); t2.textContent="Copy blocked — select manually"; t2.style.display="block"; setTimeout(function(){ t2.style.display="none"; },1800); }
+  }
+}
+function RungCard(props){
+  var r=props.rung;
+  return (
+    <div>
+      <div className={"rung "+r.rung}>
+        <span className="tag">{RUNG_TAG[r.rung]}</span>
+        <span className="mini-btns">
+          <button title="Re-roll name + contents" onClick={props.onReroll}>↻</button>
+          <button title="Cycle price point" onClick={props.onPrice}>$</button>
+        </span>
+        <span className="idx">{props.num}</span>
+        <h3>{r.name}</h3>
+        <div className="price">{props.price} <span className="stated">valued at ${props.stated}</span></div>
+        <div className="role">{r.role}</div>
+        <ul>{r.contents.map(function(c,i){ return <li key={i}>{c}</li>; })}</ul>
+        {props.guarantee && <div className="guarantee">🛡 {props.guarantee}</div>}
+      </div>
+      {!props.last && <div className="conn"><div className="ln"></div><div className="arw"></div></div>}
+    </div>
+  );
+}
+function loadSavedList(){ try{ var r=localStorage.getItem("ola-saved"); if(r){ return JSON.parse(r)||[]; } }catch(e){} return []; }
+function App(){
+  var saved=null;
+  try{ var raw=localStorage.getItem("ola-state"); if(raw){ saved=JSON.parse(raw); } }catch(e){}
+  var useState=React.useState, useEffect=React.useEffect;
+  var ns=useState(saved&&saved.niche?saved.niche:""); var niche=ns[0], setNiche=ns[1];
+  var ps=useState(saved&&saved.pos?saved.pos:"mid"); var pos=ps[0], setPos=ps[1];
+  var ds=useState(saved&&saved.depth?saved.depth:"standard"); var depth=ds[0], setDepth=ds[1];
+  var as=useState(saved&&saved.angle?saved.angle:"system"); var angle=as[0], setAngle=as[1];
+  var bo=useState(saved&&typeof saved.bumpOn!=="undefined"?saved.bumpOn:true); var bumpOn=bo[0], setBumpOn=bo[1];
+  var ss=useState(7); var seed=ss[0], setSeed=ss[1];
+  var bs=useState(!!(saved&&saved.niche)); var built=bs[0], setBuilt=bs[1];
+  var es=useState(""); var err=es[0], setErr=es[1];
+  var ov=useState({}); var over=ov[0], setOver=ov[1];
+  var px=useState({}); var pIdx=px[0], setPIdx=px[1];
+  var sv=useState(loadSavedList()); var savedList=sv[0], setSavedList=sv[1];
+  useEffect(function(){
+    try{ localStorage.setItem("ola-state",JSON.stringify({niche:niche,pos:pos,depth:depth,angle:angle,bumpOn:bumpOn})); }catch(e){}
+  },[niche,pos,depth,angle,bumpOn]);
+  var clean=niche.replace(/^\s+|\s+$/g,"");
+  var base=built&&clean?buildFunnel(clean,pos,depth,seed,angle):null;
+  var funnel=null;
+  if(base){
+    var rr=[];
+    for(var i=0;i<base.rungs.length;i++){ rr.push(over[i]||base.rungs[i]); }
+    funnel={display:base.display,keyword:base.keyword,angle:base.angle,tagline:base.tagline,codename:base.codename,guarantee:base.guarantee,rungs:rr,bump:base.bump,emails:base.emails};
+  }
+  function priceShown(i){ return chosenPrice(funnel.rungs[i],pIdx[i]); }
+  var total=funnel?funnelTotal(funnel,pIdx,bumpOn):0;
+  var stacked=funnel?funnelStacked(funnel,pIdx,bumpOn,pos):0;
+  var shown=useCountUp(total);
+  var maxRef=pos==="budget"?160:pos==="mid"?300:600;
+  function resetVariants(){ setOver({}); setPIdx({}); }
+  function doBuild(){
+    if(!niche.replace(/\s/g,"")){ setErr("Type a niche first — even two words are enough."); return; }
+    setErr(""); resetVariants(); setBuilt(true);
+  }
+  function rerollRung(i){
+    var r=funnel.rungs[i];
+    var rng=makeRng(Math.floor(Math.random()*999999)+1);
+    var name=fillTpl(pickN(rng,NAMES[r.rung],1)[0],funnel.display,funnel.keyword);
+    var want=r.rung==="downsell"?2:3;
+    var cont=pickN(rng,CONTENTS[r.rung],want);
+    for(var c=0;c<cont.length;c++){ cont[c]=fillTpl(cont[c],funnel.display,funnel.keyword); }
+    var role=RUNG_ROLES[r.rung][Math.floor(rng()*RUNG_ROLES[r.rung].length)];
+    var no={}; for(var k in over){ no[k]=over[k]; }
+    no[i]={rung:r.rung,name:name,price:r.price,alt:r.alt,role:role,contents:cont};
+    setOver(no);
+  }
+  function cyclePrice(i){
+    var no={}; for(var k in pIdx){ no[k]=pIdx[k]; }
+    no[i]=(no[i]===1?0:1);
+    setPIdx(no);
+  }
+  function copyAll(){ copyText(funnelText(funnel,POS_LABEL[pos],DEPTH_LABEL[depth],pIdx,bumpOn,pos),"Funnel copied as text"); }
+  function downloadMd(){
+    try{
+      var blob=new Blob(["# "+funnel.display+" — Offer Ladder\n\n"+funnelText(funnel,POS_LABEL[pos],DEPTH_LABEL[depth],pIdx,bumpOn,pos)],{type:"text/markdown"});
+      var u=URL.createObjectURL(blob);
+      var a=document.createElement("a"); a.href=u; a.download="offer-ladder.md"; document.body.appendChild(a); a.click();
+      setTimeout(function(){ document.body.removeChild(a); try{ URL.revokeObjectURL(u); }catch(e){} },400);
+    }catch(e){ copyAll(); }
+  }
+  function saveCurrent(){
+    var snap={niche:niche,pos:pos,depth:depth,angle:angle,bumpOn:bumpOn,seed:seed,over:over,pIdx:pIdx,when:Date.now()};
+    var list=savedList.slice(0); list.unshift(snap); list=list.slice(0,10);
+    setSavedList(list);
+    try{ localStorage.setItem("ola-saved",JSON.stringify(list)); }catch(e){}
+  }
+  function loadSnap(s){
+    setNiche(s.niche); setPos(s.pos); setDepth(s.depth); setAngle(s.angle); setBumpOn(s.bumpOn);
+    setSeed(s.seed); setOver(s.over||{}); setPIdx(s.pIdx||{}); setBuilt(true); setErr("");
+  }
+  function delSnap(i){
+    var list=savedList.slice(0); list.splice(i,1); setSavedList(list);
+    try{ localStorage.setItem("ola-saved",JSON.stringify(list)); }catch(e){}
+  }
+  return (
+    <div id="layout">
+      <div id="formPanel">
+        <label className="f">Niche</label>
+        <input id="in-niche" type="text" value={niche} placeholder="e.g. dog training, budget travel" maxLength="60"
+          onChange={function(e){ setNiche(e.target.value); if(err){ setErr(""); } }} />
+        <label className="f">Price positioning</label>
+        {[["budget","Budget ($7–$27)","Entry-level WarriorPlus style"], ["mid","Mid ($27–$67)","Core professional range"], ["premium","Premium ($67–$197)","Authority pricing"]].map(function(o){
+          return (
+            <label key={o[0]} className={"radio"+(pos===o[0]?" on":"")}>
+              <input type="radio" name="pos" checked={pos===o[0]} onChange={function(){ setPos(o[0]); }} />
+              <span>{o[1]}<small>{o[2]}</small></span>
+            </label>
+          );
+        })}
+        <label className="f">Funnel depth</label>
+        {[["simple","Simple (FE + 1 OTO)","Fastest to launch"], ["standard","Standard (FE + 2 OTOs)","The classic ladder"], ["full","Full (FE + 2 OTOs + Downsell)","Maximum recovery"]].map(function(o){
+          return (
+            <label key={o[0]} className={"radio"+(depth===o[0]?" on":"")}>
+              <input type="radio" name="depth" checked={depth===o[0]} onChange={function(){ setDepth(o[0]); }} />
+              <span>{o[1]}<small>{o[2]}</small></span>
+            </label>
+          );
+        })}
+        <label className="f">Hook angle</label>
+        <select id="in-angle" value={angle} onChange={function(e){ setAngle(e.target.value); }}>
+          {ANGLES.map(function(a){ return <option key={a[0]} value={a[0]}>{a[1]}</option>; })}
+        </select>
+        <label className="chkline"><input type="checkbox" checked={bumpOn} onChange={function(e){ setBumpOn(e.target.checked); }} /> Order bump at checkout</label>
+        <button className="buildbtn" onClick={doBuild}>Build My Funnel</button>
+        <button className="regenbtn" onClick={function(){ setSeed(Math.floor(Math.random()*999999)+1); resetVariants(); if(clean){ setBuilt(true); } }}>⟳ Regenerate variants</button>
+        <button className="regenbtn" onClick={saveCurrent}>★ Save this funnel</button>
+        {savedList.length>0 && <div>
+          <label className="f">Saved funnels</label>
+          {savedList.map(function(s,i){
+            return <div key={i} className="saveditem"><span>{s.niche}</span><button onClick={function(){ loadSnap(s); }}>Load</button><button onClick={function(){ delSnap(i); }}>✕</button></div>;
+          })}
+        </div>}
+        <div id="validMsg" style={{display:err?"block":"none"}}>{err}</div>
+      </div>
+      <div id="preview">
+        {!funnel && <div id="emptyState"><h2>Your funnel ladder appears here</h2><p>Type a niche, pick positioning and depth, then press “Build My Funnel”.</p></div>}
+        {funnel && <div>
+          <div id="prevBar">
+            <div><div className="codename">{funnel.codename}</div><h2>{funnel.display}</h2><div className="tagline">{funnel.tagline}</div></div>
+            <div className="spacer"></div>
+            <button className="cpbtn" onClick={copyAll}>Copy Full Funnel as Text</button>
+            <button className="cpbtn" onClick={downloadMd}>Download .md</button>
+          </div>
+          {funnel.rungs.map(function(r,i){
+            return <div key={r.rung+"-"+seed+"-"+i+(over[i]?"-o":"")}>
+              <RungCard rung={r} num={i+1} last={i===funnel.rungs.length-1 && !bumpOn}
+                price={priceShown(i)}
+                stated={round5(priceMid(priceShown(i))*(VALUE_MULT[pos]||2))}
+                guarantee={r.rung==="fe"?funnel.guarantee:null}
+                onReroll={function(){ rerollRung(i); }} onPrice={function(){ cyclePrice(i); }} />
+              {bumpOn && i===0 && <div><div className="conn"><div className="ln"></div><div className="arw"></div></div><div className="rung bump"><span className="tag">ORDER BUMP</span><h3>{funnel.bump.name}</h3><div className="price">{funnel.bump.price}</div><div className="role">{funnel.bump.role}</div></div></div>}
+            </div>;
+          })}
+          <h3 className="sechead">Follow-up angles</h3>
+          {funnel.emails.map(function(m,i){ return <div key={i} className="emailcard"><b>{m.type}:</b> “{m.subject}”</div>; })}
+          <div id="totalBar">
+            <div className="tl">Total Funnel Value</div>
+            <div className="tv">${shown} <span className="stacked">stacked value ${stacked}</span></div>
+            <div className="track"><div className="fill" style={{width:Math.min(100,Math.round(shown/maxRef*100))+"%"}}></div></div>
+          </div>
+        </div>}
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
