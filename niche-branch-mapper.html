@@ -1,0 +1,613 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Niche Branch Mapper</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style id="appStyles">
+:root{
+  --bg:#0f0e0a;
+  --bg-panel:#1a1810;
+  --gold:#C9A84C;
+  --gold-bright:#e6c866;
+  --text:#f5f0e8;
+  --text-muted:#a89a78;
+  --line:#3a3424;
+  --node-glow:0 0 18px rgba(201,168,76,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:"Lato",Arial,sans-serif}
+h1,h2,h3{margin:0;font-family:"Cormorant Garamond",Georgia,serif}
+#topbar{display:flex;align-items:center;gap:12px;padding:10px 18px;background:var(--bg-panel);border-bottom:1px solid var(--line);min-height:62px;flex-wrap:wrap;position:relative;z-index:30}
+.gembadge{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2a2416,#1a1810);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--node-glow)}
+.gembadge svg{width:22px;height:22px}
+#topbar h1{font-size:22px;font-weight:700;color:var(--gold-bright);white-space:nowrap}
+#nicheWrap{display:flex;gap:8px;align-items:center;flex:1;min-width:280px;max-width:640px;margin:0 auto}
+#in-niche{flex:1;background:#0c0b08;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px 12px;font-family:"Lato";font-size:14px;min-width:0}
+#in-niche:focus{outline:none;border-color:var(--gold)}
+#in-niche::placeholder{color:var(--text-muted)}
+.goldbtn{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#141310;border:none;border-radius:8px;padding:10px 16px;font-family:"Lato";font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.goldbtn:active{transform:translateY(1px)}
+.ghostbtn2{background:transparent;border:1px solid var(--line);color:var(--text-muted);border-radius:8px;padding:10px 12px;font-family:"Lato";font-size:13px;cursor:pointer;white-space:nowrap}
+.ghostbtn2:hover{border-color:var(--gold);color:var(--gold-bright)}
+#validMsg{display:none;width:100%;font-size:12px;color:#e08a7a;padding:2px 4px 0}
+#stage{position:relative;height:calc(100vh - 63px);min-height:480px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#171410 0%,var(--bg) 65%)}
+#map{display:block}
+.link{fill:none;stroke:var(--gold);stroke-width:2;opacity:.75;stroke-dasharray:1;stroke-dashoffset:1;animation:grow .45s ease-out forwards}
+.link.thin{stroke-width:1.2;opacity:.55}
+@keyframes grow{to{stroke-dashoffset:0}}
+.node{cursor:pointer}
+.node circle.face{fill:#1c1912;stroke:var(--gold);stroke-width:2}
+.node.center circle.face{fill:#221c10;stroke:var(--gold-bright);stroke-width:3}
+.node text{font-family:"Cormorant Garamond",Georgia,serif;fill:var(--text);text-anchor:middle;pointer-events:none}
+.node .sub{font-family:"Lato",Arial,sans-serif;fill:var(--text-muted)}
+.node.leaf rect.face{fill:#161310;stroke:var(--gold);stroke-width:1.4}
+.node.leaf text{font-size:13px}
+#tip{position:absolute;display:none;max-width:300px;background:#211c11;border:1px solid var(--gold);border-radius:10px;padding:14px 15px;box-shadow:var(--node-glow),0 10px 30px rgba(0,0,0,.6);z-index:20}
+#tip h3{font-size:18px;color:var(--gold-bright);margin-bottom:6px;line-height:1.25}
+#tip p{font-size:13px;line-height:1.6;color:var(--text);margin:0 0 6px}
+#tip .fmt{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+#counterBox{position:absolute;left:18px;bottom:16px;background:rgba(26,24,16,.92);border:1px solid var(--line);border-radius:10px;padding:10px 16px;z-index:15}
+#counterBox .n{font-family:"Cormorant Garamond",Georgia,serif;font-size:26px;color:var(--gold-bright);font-weight:700}
+#counterBox .l{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)}
+#exportBox{position:absolute;right:18px;bottom:16px;z-index:15;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+#expErr{display:none;max-width:280px;background:#3a1414;border:1px solid #a0503f;color:#f0c9bd;border-radius:8px;padding:9px 12px;font-size:12px}
+#zoomRow{display:flex;gap:6px}
+#zoomRow button{background:rgba(26,24,16,.92);border:1px solid var(--line);color:var(--gold-bright);border-radius:8px;padding:7px 11px;font-family:"Lato";font-size:13px;font-weight:700;cursor:pointer}
+#helpWrap{position:relative;flex-shrink:0}
+#helpDrop{display:none;position:absolute;top:48px;right:0;width:400px;max-width:92vw;max-height:74vh;overflow-y:auto;background:#211c11;border:1px solid var(--gold);border-radius:12px;box-shadow:var(--node-glow),0 12px 40px rgba(0,0,0,.6);z-index:60;padding:6px}
+#helpDrop.open{display:block}
+#helpDrop .hhead{padding:12px 12px 6px}
+#helpDrop .hhead strong{font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;color:var(--gold-bright)}
+#helpDrop .hhead p{margin:4px 0 0;font-size:12.5px;color:var(--text-muted)}
+#helpDrop details{border:1px solid var(--line);border-radius:8px;margin:6px;overflow:hidden}
+#helpDrop summary{background:#191510;font-size:13px;cursor:pointer;padding:10px 12px;font-weight:700;list-style:none}
+#helpDrop summary::-webkit-details-marker{display:none}
+#helpDrop .hbody{padding:10px 12px;font-size:13px;line-height:1.6;color:var(--text)}
+#helpDrop .hbody ol,#helpDrop .hbody ul{margin:6px 0;padding-left:20px}
+#helpDrop kbd{background:#0c0b08;border:1px solid var(--line);border-radius:5px;padding:1px 7px;font-size:11px;color:var(--gold-bright)}
+#helpDrop .exchip{display:inline-block;border:1px solid var(--gold);border-radius:999px;padding:3px 12px;margin:2px;font-size:12px;cursor:pointer;color:var(--gold-bright)}
+#kwChips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+#kwChips span{font-size:10.5px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--text-muted)}
+#favPanel{display:none;position:absolute;left:18px;bottom:86px;width:320px;max-width:86vw;max-height:46vh;overflow-y:auto;background:#211c11;border:1px solid var(--gold);border-radius:12px;z-index:18;padding:10px 12px}
+#favPanel.open{display:block}
+#favPanel h3{font-size:17px;color:var(--gold-bright);margin-bottom:8px}
+.favitem{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12.5px}
+.favitem b{color:var(--gold-bright);display:block;margin-bottom:2px}
+.favitem .rx{float:right;cursor:pointer;color:#e08a7a;font-weight:700}
+.tipbtns{display:flex;gap:6px;margin-top:8px}
+.tipbtns button{flex:1;background:transparent;border:1px solid var(--gold);color:var(--gold-bright);border-radius:7px;padding:6px;font-size:12px;font-family:"Lato";font-weight:700;cursor:pointer}
+.tipbtns button.on{background:var(--gold);color:#141310}
+#favCount{cursor:pointer;text-decoration:underline}
+#depthRow{display:flex;gap:6px;align-items:center}
+#depthRow button{background:rgba(26,24,16,.92);border:1px solid var(--line);color:var(--text-muted);border-radius:8px;padding:7px 11px;font-family:"Lato";font-size:12px;font-weight:700;cursor:pointer}
+#depthRow button.on{border-color:var(--gold);color:var(--gold-bright)}
+@media(max-width:760px){
+  #topbar h1{font-size:18px}
+  #counterBox{left:10px;bottom:10px;padding:7px 12px}
+  #exportBox{right:10px;bottom:10px}
+  #tip{max-width:240px}
+}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="gembadge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2L20 9L12 22L4 9Z" stroke="#e6c866" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 9H20M12 2L8.5 9L12 22L15.5 9L12 2" stroke="#C9A84C" stroke-width="1.2"/></svg></div>
+  <h1>Niche Branch Mapper</h1>
+  <div id="nicheWrap">
+    <input type="text" id="in-niche" placeholder="Type your niche... e.g. dog training, sourdough baking" maxlength="60">
+    <button class="goldbtn" id="btnUncover">Uncover the Goldmine</button>
+    <button class="ghostbtn2" id="btnShuffle" title="Reshuffle idea variants">⟳</button>
+    <button class="ghostbtn2" id="btnNew">New Map</button>
+    <div id="helpWrap">
+      <button class="ghostbtn2" id="btnHelp">How to use ▾</button>
+      <div id="helpDrop" role="menu" aria-label="How to use this tool">
+        <div class="hhead"><strong>How to use Niche Branch Mapper</strong><p>Turn one niche into a living map of sellable product ideas.</p></div>
+        <details open><summary>⚡ In 30 seconds</summary><div class="hbody"><ol><li>Type a niche (e.g. <i>dog training</i>) and press <kbd>Uncover the Goldmine</kbd>.</li><li>Click any gold branch to explode it into concrete product ideas.</li><li>Click an idea pill for its mini-pitch, then ★ save or copy it.</li><li>Press <kbd>⟳</kbd> for a fresh set of ideas, or export everything below.</li></ol><div><span class="exchip" data-ex="dog training">dog training</span><span class="exchip" data-ex="sourdough baking">sourdough baking</span><span class="exchip" data-ex="midlife career change">midlife career change</span><span class="exchip" data-ex="budget meal prep">budget meal prep</span></div></div></details>
+        <details><summary>🗺️ The 6 branches</summary><div class="hbody">Each branch is a monetization format: <b>Ebook &amp; Guide</b>, <b>Printables &amp; Worksheets</b>, <b>KDP Book</b>, <b>Online Course</b>, <b>PLR / Resell Pack</b>, <b>Print on Demand</b>. Click a branch again to collapse it. The counter bottom-left ticks up as you uncover ideas.</div></details>
+        <details><summary>★ Favorites &amp; lists</summary><div class="hbody">In any idea card press <b>★ Save</b> to pin it. Click the <b>★ count</b> bottom-left to review saved ideas, remove them, or export them as Markdown. <b>Copy ideas list</b> copies every visible idea as a checklist.</div></details>
+        <details><summary>🔍 Depth &amp; zoom</summary><div class="hbody">Use <b>3 / 4 / 5</b> bottom-right to set how many ideas each branch explodes into. Use <b>+ / −</b> to zoom the map for screenshots and big screens.</div></details>
+        <details><summary>📤 Export without tears</summary><div class="hbody"><ul><li><b>Export Map as PNG</b> downloads the current view at 2x. If the browser blocks it you get a clear red message — never a blank file.</li><li><b>Export ★ .md</b> downloads your saved ideas as a Markdown list.</li></ul></div></details>
+        <details><summary>💡 Best niches to try</summary><div class="hbody">Two to four words work best: <i>puppy training</i>, <i>wedding on a budget</i>, <i>indoor herb garden</i>, <i>freelance taxes</i>. Abstract niches work too — the engine adapts (e.g. no coloring book for non-visual topics).</div></details>
+      </div>
+    </div>
+    <div id="validMsg">Type a niche first — even two words are enough to strike gold.</div>
+  </div>
+</div>
+<div id="stage">
+  <svg id="map" role="img" aria-label="Niche product mindmap"></svg>
+  <div id="tip"></div>
+<div id="toast" style="display:none;position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#211c11;border:1px solid var(--gold);color:var(--text);padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;z-index:99"></div>
+  <div id="favPanel"><h3>★ Saved ideas <span id="favClose" style="float:right;cursor:pointer">✕</span></h3><div id="favList"></div><button class="goldbtn" id="btnFavMd" style="width:100%;margin-top:4px">Export ★ .md</button></div>
+  <div id="counterBox"><div class="n" id="countNum">0</div><div class="l">ideas uncovered · <span id="favCount">★ 0 saved</span></div><div id="kwChips"></div></div>
+  <div id="exportBox">
+    <div id="expErr"></div>
+    <div id="depthRow"><span style="font-size:11px;color:var(--text-muted)">Ideas:</span><button data-depth="3">3</button><button data-depth="4" class="on">4</button><button data-depth="5">5</button></div>
+    <div id="zoomRow"><button id="btnZoomOut" title="Zoom out">−</button><button id="btnZoomReset" title="Reset zoom">100%</button><button id="btnZoomIn" title="Zoom in">+</button></div>
+    <button class="ghostbtn2" id="btnCopyList">Copy ideas list</button>
+    <button class="ghostbtn2" id="btnExport">Export Map as PNG</button>
+  </div>
+</div>
+<script>
+var LSKEY="nbm-niche";
+var W=1000, H=700, CX=500, CY=340, R=220;
+var state=null;
+var shownCount=0;
+var STOP=["a","an","the","and","or","but","of","at","in","on","to","for","with","my","your","how","101","step","guide","complete","ultimate","best","top","easy","simple","that","this","from"];
+function esc(s){ s=(s===null||s===undefined)?"":String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function $(id){ return document.getElementById(id); }
+function cap(s){ s=String(s||""); if(!s){ return ""; } return s.charAt(0).toUpperCase()+s.slice(1); }
+function titleCase(s){ var w=String(s||"").split(" "); for(var i=0;i<w.length;i++){ if(w[i]){ w[i]=w[i].charAt(0).toUpperCase()+w[i].slice(1); } } return w.join(" "); }
+function makeRng(seed){ var s=(seed>>>0)||1; return function(){ s=(Math.floor(s*1664525+1013904223))%4294967296; return s/4294967296; }; }
+function shuffled(arr,rng){ var c=arr.slice(0); for(var i=c.length-1;i>0;i--){ var j=Math.floor(rng()*(i+1)); var t=c[i]; c[i]=c[j]; c[j]=t; } return c; }
+/* ---------- niche keyword extractor ---------- */
+function extractNiche(raw){
+  var clean=String(raw||"").toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ");
+  var parts=clean.split(" "); var kw=[];
+  for(var i=0;i<parts.length;i++){ var w=parts[i]; if(w.length>2&&STOP.indexOf(w)<0&&kw.indexOf(w)<0){ kw.push(w); } }
+  kw=kw.slice(0,3);
+  var display=titleCase(String(raw||"").replace(/\s+/g," ").replace(/^\s+|\s+$/g,""));
+  return {phrase:String(raw||"").replace(/^\s+|\s+$/g,""),display:display,kw:kw,K:kw.length?titleCase(kw[0]):display};
+}
+function isVisualNiche(n){
+  var hints=["art","draw","paint","color","kid","child","dog","cat","animal","garden","flower","bird","photo","craft","sew","bake","cake","wedding","baby","tattoo","anime","comic","fashion","plant","interior","decor"];
+  var s=" "+n.phrase.toLowerCase()+" "+n.kw.join(" ")+" ";
+  for(var i=0;i<hints.length;i++){ if(s.indexOf(hints[i])>=0){ return true; } }
+  return false;
+}
+/* ---------- template banks ---------- */
+var CATS=[
+{id:"ebook",label:["Ebook","& Guide"],icon:"book"},
+{id:"print",label:["Printables","& Worksheets"],icon:"printer"},
+{id:"kdp",label:["KDP","Book"],icon:"kdp"},
+{id:"course",label:["Online","Course"],icon:"cap"},
+{id:"plr",label:["PLR /","Resell Pack"],icon:"box"},
+{id:"pod",label:["Print on","Demand"],icon:"bag"}
+];
+var TITLES={
+ebook:["The Complete {N} Starter Guide","{N} for Beginners in 7 Days","{N} Myths Debunked","The {N} Mistakes Handbook","{N} Step by Step","The Busy Person's {N} Guide","{N} Questions Answered","Mastering {N}: The Essentials","The {K} Method","{K} Made Simple","Zero to {K} in 30 Days","The {K} Playbook"],
+print:["{N} Weekly Planner","{N} Habit Tracker Sheet","{N} Ultimate Checklist Bundle","{N} 30-Day Challenge Kit","{N} Goal-Setting Worksheet Pack","{N} Daily Log Pages","{N} Progress Tracker Bundle","{N} Quick-Start Workbook Pages","{K} Scorecard & Tracker","The {K} One-Page Planner","{K} Routine Cards","{N} Fill-in Journal Pages"],
+kdp:["{N} Journal (KDP Low-Content)","{N} Guided Workbook","{N} Logbook & Tracker (KDP)","{N} 90-Day Planner (KDP)","{N} Prompt & Reflection Book","{N} Activity Book for Beginners","{N} Sketch & Notes Book (KDP)","{N} Coloring Book","The {K} Companion Journal","{K} Daily Record Book","My First {K} Logbook","The Little Book of {K}"],
+course:["{N} Crash Course (5 Modules)","{N} for Beginners: Video Course","{N} Certification Mini-Course","{N} Masterclass 2.0","30-Day {N} Challenge Course","{N} Live Workshop Series","{N} Weekend Bootcamp","Advanced {N} Strategies Course","{K} Foundations Bootcamp","From Zero to {K}","The {K} Accelerator","{K} Office Hours Coaching"],
+plr:["{N} PLR Article Pack (10)","{N} PLR Email Swipe Set","Done-For-You {N} Social Posts","{N} PLR Ebook + Covers","{N} Lead Magnet Mini-Pack","{N} PLR Video Scripts","{N} Resell Rights Bundle","{N} Content Vault (50 Pieces)","{K} Quote Graphics Pack","{K} Checklist PLR Bundle","{N} Faceless Video Pack","{K} Carousel Templates"],
+pod:["{N} Quote T-Shirt Line","{N} Mug & Sticker Collection","Funny {N} T-Shirts","{N} Hoodie & Cap Set","{N} Tote Bag Series","{N} Poster & Wall Art Pack","{N} Pin & Patch Set","{N} Notebook Cover Line","I Survived {K} Tee","{K} Lover Mug","Retro {K} Poster","{K} Club Hoodie"]
+};
+var BUYERS={
+ebook:["beginners who want one clear path instead of forum-hopping","busy people who happily pay for curation over chaos","gift-buyers hunting practical presents","returning hobbyists ready for a system","parents buying for their kids' new interest"],
+print:["action-takers who print tonight and start tomorrow","planner lovers who collect matching sets","coaches who hand these to clients","teachers hunting classroom-ready pages","habit-trackers who love checking boxes"],
+kdp:["Amazon shoppers searching their exact problem at midnight","gift-givers who love useful presents","habit-builders who fill one page a day","journal addicts growing a shelf","travelers who log everything"],
+course:["impatient beginners who want outcomes, not theory","career-switchers investing in proof of skill","hobbyists ready to pay to skip mistakes","parents funding a kid's head start","small teams upskilling together"],
+plr:["bloggers and creators hungry for ready content","marketers building lists in this exact niche","coaches who need bonuses fast","newsletter writers on deadline","agencies white-labeling for clients"],
+pod:["proud enthusiasts who wear their hobby","gift-buyers who want funny and personal","collectors of niche merch drops","club members matching outfits","pet owners twinning with their animals"]
+};
+var SPEEDS={
+ebook:["a focused weekend","5–7 evenings","about a week of mornings","ten lunch breaks","two weekends, covers included"],
+print:["one afternoon in Canva","a single weekend","two or three evenings","a Sunday batch session","five pomodoros flat"],
+kdp:["a weekend with a template","under a week","a few evenings of formatting","one sprint with KDP templates","a week, interiors included"],
+course:["two weekends of recording","about 10 days, phone camera included","three weeks at an easy pace","a month of weekends","14 days with live cohorts"],
+plr:["a week of repurposing","a few focused days","one strong weekend","a week, covers outsourced","ten days with AI drafts"],
+pod:["an evening of designs","a weekend of uploads","a couple of nights","one print-on-demand sprint","three evenings, ten designs"]
+};
+var FRAMES=[
+"{idea} gives {buyer} a single trusted path through {niche}. You can build the first version in {speed} and sell it on your own store or Etsy.",
+"Buyers of {idea} are {buyer}. The angle is simple: specific beats generic, and you can ship it in {speed}.",
+"{idea} works because {buyer} already search for {niche} help every day. A first version takes {speed} — launch lean, then expand.",
+"Position {idea} as the shortcut: {buyer} skip years of trial and error. Build it in {speed}, price it with confidence.",
+"{idea} is a bundle-friendly win: {buyer} rarely stop at one. First version in {speed}, then upsell the matching formats.",
+"Think collection, not product: {idea} anchors a shelf for {buyer}. Ship the core in {speed} and let reviews pull the rest."
+];
+function fillTitle(tpl,n){
+  return tpl.replace(/\{N\}/g,n.display).replace(/\{K\}/g,n.K).replace(/\{niche\}/g,n.phrase.toLowerCase());
+}
+var DEPTH=4;
+var ZOOM=1;
+var FAVS=[];
+function buildLeaves(catId,n,seed,depth){
+  var rng=makeRng(seed);
+  var pool=TITLES[catId].slice(0);
+  if(catId==="kdp"&&!isVisualNiche(n)){
+    var noColor=[];
+    for(var f=0;f<pool.length;f++){ if(pool[f].indexOf("Coloring Book")<0){ noColor.push(pool[f]); } }
+    pool=noColor;
+  }
+  var order=shuffled(pool,rng).slice(0,depth||DEPTH);
+  var buyers=shuffled(BUYERS[catId],rng);
+  var speeds=shuffled(SPEEDS[catId],rng);
+  var frames=shuffled(FRAMES,rng);
+  var out=[];
+  for(var i=0;i<order.length;i++){
+    var title=fillTitle(order[i],n);
+    var pitch=frames[i%frames.length].replace(/\{idea\}/g,title).replace(/\{buyer\}/g,buyers[i%buyers.length]).replace(/\{niche\}/g,n.phrase.toLowerCase()).replace(/\{speed\}/g,speeds[i%speeds.length]);
+    out.push({title:title,pitch:pitch});
+  }
+  return out;
+}
+function buildMap(nicheRaw,seed){
+  var n=extractNiche(nicheRaw);
+  var branches=[];
+  for(var i=0;i<CATS.length;i++){
+    branches.push({cat:CATS[i].id,open:false,leaves:buildLeaves(CATS[i].id,n,seed+i*1013)});
+  }
+  return {niche:n,seed:seed,branches:branches};
+}
+/* ---------- svg helpers ---------- */
+function wrapLabel(text,max){
+  var words=String(text).split(" "); var lines=[]; var cur="";
+  for(var i=0;i<words.length;i++){
+    var test=cur?cur+" "+words[i]:words[i];
+    if(test.length<=max){ cur=test; } else { if(cur){ lines.push(cur); } cur=words[i]; }
+  }
+  if(cur){ lines.push(cur); }
+  return lines.slice(0,4);
+}
+function iconSVG(kind,x,y){
+  var s='<g transform="translate('+x+','+y+')" stroke="#C9A84C" stroke-width="1.6" fill="none">';
+  if(kind==="book"){ s+='<path d="M-9 -6 Q-4.5 -8 0 -6 V7 Q-4.5 5 -9 7 Z M0 -6 Q4.5 -8 9 -6 V7 Q4.5 5 0 7 Z"/>'; }
+  else if(kind==="printer"){ s+='<rect x="-8" y="-3" width="16" height="8" rx="1.5"/><rect x="-5" y="-8" width="10" height="5"/><rect x="-5" y="5" width="10" height="4"/>'; }
+  else if(kind==="kdp"){ s+='<rect x="-7" y="-9" width="14" height="18" rx="1.5"/><line x1="-3.5" y1="-9" x2="-3.5" y2="9"/>'; }
+  else if(kind==="cap"){ s+='<circle cx="0" cy="0" r="9"/><path d="M-4 -2 L4 -2 L0 4 Z" fill="#C9A84C" stroke="none"/>'; }
+  else if(kind==="box"){ s+='<rect x="-8" y="-6" width="16" height="6"/><rect x="-8" y="1" width="16" height="6"/><line x1="0" y1="-6" x2="0" y2="7"/>'; }
+  else { s+='<path d="M-7 -2 H7 L6 9 H-6 Z"/><path d="M-4 -2 Q-4 -8 0 -8 Q4 -8 4 -2"/>'; }
+  return s+'</g>';
+}
+function linkPath(x1,y1,x2,y2,thin){
+  var mx=(x1+x2)/2+(y2-y1)*0.08, my=(y1+y2)/2;
+  return '<path class="link'+(thin?" thin":"")+'" pathLength="1" d="M'+Math.round(x1)+' '+Math.round(y1)+' Q'+Math.round(mx)+' '+Math.round(my)+' '+Math.round(x2)+' '+Math.round(y2)+'"/>';
+}
+function clamp(v,a,b){ if(v<a){ return a; } if(v>b){ return b; } return v; }
+/* ---------- render ---------- */
+function measure(){
+  var st=$("stage");
+  W=Math.max(320,st.clientWidth); H=Math.max(420,st.clientHeight);
+  var svg=$("map");
+  svg.setAttribute("width",W); svg.setAttribute("height",H); svg.setAttribute("viewBox","0 0 "+W+" "+H);
+  CX=W/2; CY=H/2-8; R=clamp(Math.min(W,H)*0.30,140,300);
+}
+function primaryXY(i){
+  var a=(i*60-90)*Math.PI/180;
+  return {x:CX+R*Math.cos(a),y:CY+R*Math.sin(a),ang:i*60-90};
+}
+function fanOffs(n){
+  if(n<=3){ return [-30,0,30]; }
+  if(n===4){ return [-36,-12,12,36]; }
+  return [-46,-23,0,23,46];
+}
+function leafXY(baseAng,k,count){
+  var offs=fanOffs(count||DEPTH);
+  var a=(baseAng+offs[k%offs.length])*Math.PI/180;
+  var R2=R+200;
+  var x=clamp(CX+R2*Math.cos(a),95,W-95);
+  var y=clamp(CY+R2*Math.sin(a),80,H-46);
+  return {x:x,y:y};
+}
+function leafCount(){
+  var n=0;
+  for(var i=0;i<state.branches.length;i++){ if(state.branches[i].open){ n+=state.branches[i].leaves.length; } }
+  return n;
+}
+function render(){
+  measure();
+  hideTip();
+  var zx=CX-(CX*ZOOM), zy=CY-(CY*ZOOM);
+  var s='<g transform="translate('+Math.round(zx)+' '+Math.round(zy)+') scale('+ZOOM+')">';
+  var cl=wrapLabel(state.niche.display,13);
+  var i,k,ln;
+  for(i=0;i<state.branches.length;i++){
+    var b=state.branches[i]; var p=primaryXY(i);
+    s+=linkPath(CX,CY,p.x,p.y,false);
+  }
+  for(i=0;i<state.branches.length;i++){
+    var b2=state.branches[i]; var p2=primaryXY(i);
+    if(b2.open){
+      for(k=0;k<b2.leaves.length;k++){
+        var lp=leafXY(p2.ang,k,b2.leaves.length);
+        s+=linkPath(p2.x,p2.y,lp.x,lp.y,true);
+      }
+    }
+  }
+  s+='<g class="node center" data-kind="center"><circle class="face" cx="'+CX+'" cy="'+CY+'" r="66"/><circle cx="'+CX+'" cy="'+CY+'" r="74" fill="none" stroke="#e6c866" stroke-width="1" opacity=".6"/>';
+  for(ln=0;ln<cl.length;ln++){ s+='<text x="'+CX+'" y="'+(CY-14+ln*20)+'" font-size="17" font-weight="700">'+esc(cl[ln])+'</text>'; }
+  s+='<text class="sub" x="'+CX+'" y="'+(CY-14+cl.length*20+4)+'" font-size="11">YOUR NICHE</text></g>';
+  for(i=0;i<state.branches.length;i++){
+    var b3=state.branches[i]; var p3=primaryXY(i);
+    var cat=null;
+    for(var c=0;c<CATS.length;c++){ if(CATS[c].id===b3.cat){ cat=CATS[c]; } }
+    s+='<g class="node primary" data-i="'+i+'"><circle class="face" cx="'+Math.round(p3.x)+'" cy="'+Math.round(p3.y)+'" r="52"/>';
+    s+=iconSVG(cat.icon,Math.round(p3.x),Math.round(p3.y)-16);
+    s+='<text x="'+Math.round(p3.x)+'" y="'+Math.round(p3.y+8)+'" font-size="14" font-weight="600">'+esc(cat.label[0])+'</text>';
+    s+='<text x="'+Math.round(p3.x)+'" y="'+Math.round(p3.y+26)+'" font-size="14" font-weight="600">'+esc(cat.label[1])+'</text></g>';
+    if(b3.open){
+      for(k=0;k<b3.leaves.length;k++){
+        var lp2=leafXY(p3.ang,k,b3.leaves.length);
+        var lines=wrapLabel(b3.leaves[k].title,18);
+        var rh=lines.length*17+18;
+        s+='<g class="node leaf" data-i="'+i+'" data-k="'+k+'"><rect class="face" x="'+Math.round(lp2.x-84)+'" y="'+Math.round(lp2.y-rh/2)+'" width="168" height="'+rh+'" rx="13"/>';
+        for(ln=0;ln<lines.length;ln++){ s+='<text x="'+Math.round(lp2.x)+'" y="'+Math.round(lp2.y-rh/2+22+ln*17)+'">'+esc(lines[ln])+'</text>'; }
+        s+='</g>';
+      }
+    }
+  }
+  s+='</g>';
+  $("map").innerHTML=s;
+  renderKw();
+  var prims=document.querySelectorAll("#map .node.primary");
+  for(i=0;i<prims.length;i++){ prims[i].addEventListener("click",onPrimary); }
+  var leafs=document.querySelectorAll("#map .node.leaf");
+  for(i=0;i<leafs.length;i++){ leafs[i].addEventListener("click",onLeaf); }
+  animateCount(leafCount());
+}
+function onPrimary(e){
+  if(e&&e.stopPropagation){ e.stopPropagation(); }
+  var i=parseInt(this.getAttribute("data-i"),10);
+  state.branches[i].open=!state.branches[i].open;
+  saveLS();
+  render();
+}
+function onLeaf(e){
+  if(e&&e.stopPropagation){ e.stopPropagation(); }
+  var i=parseInt(this.getAttribute("data-i"),10);
+  var k=parseInt(this.getAttribute("data-k"),10);
+  var b=state.branches[i];
+  var p=primaryXY(i); var lp=leafXY(p.ang,k);
+  showTip(lp.x,lp.y,b.cat,b.leaves[k]);
+}
+function favKey(catId,title){ return catId+"::"+title; }
+function isFav(catId,title){
+  for(var i=0;i<FAVS.length;i++){ if(FAVS[i].key===favKey(catId,title)){ return true; } }
+  return false;
+}
+function toggleFav(catId,leaf){
+  var k=favKey(catId,leaf.title);
+  for(var i=0;i<FAVS.length;i++){ if(FAVS[i].key===k){ FAVS.splice(i,1); saveFavs(); renderFavs(); refreshTipFav(catId,leaf); return; } }
+  var cn=catId;
+  for(var c=0;c<CATS.length;c++){ if(CATS[c].id===catId){ cn=CATS[c].label[0]+" "+CATS[c].label[1]; } }
+  FAVS.push({key:k,cat:cn,title:leaf.title,pitch:leaf.pitch});
+  saveFavs(); renderFavs(); refreshTipFav(catId,leaf);
+  showToast("Saved to favorites");
+}
+function refreshTipFav(catId,leaf){
+  var b=$("tipFav");
+  if(b){ b.innerHTML=isFav(catId,leaf)?"★ Saved":"☆ Save"; if(isFav(catId,leaf)){ b.className="on"; } else { b.className=""; } }
+}
+function copyText(txt,msg){
+  function done(){ showToast(msg||"Copied"); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){ fallbackCopy(txt,done); }); }
+  else { fallbackCopy(txt,done); }
+}
+function fallbackCopy(txt,cb){
+  try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); cb(); }
+  catch(e){ showToast("Copy blocked — select manually"); }
+}
+function saveFavs(){ try{ localStorage.setItem("nbm-favs",JSON.stringify(FAVS)); }catch(e){} }
+function loadFavs(){ try{ var r=localStorage.getItem("nbm-favs"); if(r){ FAVS=JSON.parse(r)||[]; } }catch(e){ FAVS=[]; } }
+function renderFavs(){
+  $("favCount").innerHTML="★ "+FAVS.length+" saved";
+  var h="";
+  for(var i=0;i<FAVS.length;i++){ h+='<div class="favitem"><span class="rx" data-f="'+i+'">✕</span><b>'+esc(FAVS[i].title)+'</b>'+esc(FAVS[i].pitch)+'</div>'; }
+  if(!FAVS.length){ h='<div style="font-size:12.5px;color:var(--text-muted)">Nothing saved yet — open any idea and press ☆ Save.</div>'; }
+  $("favList").innerHTML=h;
+  var xs=$("favList").querySelectorAll(".rx");
+  for(var q=0;q<xs.length;q++){ (function(el){ el.onclick=function(e){ if(e&&e.stopPropagation){ e.stopPropagation(); } FAVS.splice(parseInt(el.getAttribute("data-f"),10),1); saveFavs(); renderFavs(); }; })(xs[q]); }
+}
+function exportFavMd(){
+  if(!FAVS.length){ showToast("No favorites yet"); return; }
+  var L="# Saved ideas — "+state.niche.display+"\n\n";
+  for(var i=0;i<FAVS.length;i++){ L+="## "+(i+1)+". "+FAVS[i].title+"\n_" + FAVS[i].cat + "_\n\n" + FAVS[i].pitch + "\n\n"; }
+  var blob=null;
+  try{ blob=new Blob([L],{type:"text/markdown"}); }catch(e){ showToast("Download blocked"); return; }
+  var u=URL.createObjectURL(blob);
+  var a=document.createElement("a"); a.href=u; a.download="goldmine-favorites.md"; document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); try{ URL.revokeObjectURL(u); }catch(e2){} },400);
+}
+function copyIdeasList(){
+  if(!state){ return; }
+  var L="GOLDMINE IDEAS — "+state.niche.display+"\n";
+  for(var i=0;i<state.branches.length;i++){
+    var b=state.branches[i]; var cn=b.cat;
+    for(var c=0;c<CATS.length;c++){ if(CATS[c].id===b.cat){ cn=CATS[c].label[0]+" "+CATS[c].label[1]; } }
+    L+="\n["+cn.toUpperCase()+"]\n";
+    for(var k=0;k<b.leaves.length;k++){ L+="[ ] "+b.leaves[k].title+"\n"; }
+  }
+  copyText(L,"Ideas list copied");
+}
+function renderKw(){
+  var h="";
+  for(var i=0;i<state.niche.kw.length;i++){ h+="<span>"+esc(state.niche.kw[i])+"</span>"; }
+  $("kwChips").innerHTML=h;
+}
+function showTip(x,y,catId,leaf){
+  var tip=$("tip");
+  var catName=catId;
+  for(var c=0;c<CATS.length;c++){ if(CATS[c].id===catId){ catName=CATS[c].label[0]+" "+CATS[c].label[1]; } }
+  tip.innerHTML='<div class="fmt">'+esc(catName)+'</div><h3>'+esc(leaf.title)+'</h3><p>'+esc(leaf.pitch)+'</p><div class="tipbtns"><button id="tipFav">☆ Save</button><button id="tipCopy">Copy pitch</button></div>';
+  tip.style.display="block";
+  refreshTipFav(catId,leaf);
+  $("tipFav").onclick=function(e){ if(e&&e.stopPropagation){ e.stopPropagation(); } toggleFav(catId,leaf); };
+  $("tipCopy").onclick=function(e){ if(e&&e.stopPropagation){ e.stopPropagation(); } copyText(leaf.title+"\n\n"+leaf.pitch,"Pitch copied"); };
+  var st=$("stage");
+  var tw=tip.offsetWidth||280, th=tip.offsetHeight||150;
+  var lx=x+18, ly=y-th-14;
+  if(lx+tw>W-10){ lx=x-tw-18; }
+  if(lx<10){ lx=10; }
+  if(ly<10){ ly=y+22; }
+  tip.style.left=lx+"px"; tip.style.top=ly+"px";
+}
+function hideTip(){ $("tip").style.display="none"; }
+function animateCount(target){
+  var from=shownCount; var t0=null;
+  function step(ts){
+    if(!t0){ t0=ts; }
+    var p=(ts-t0)/600; if(p>1){ p=1; }
+    var v=Math.round(from+(target-from)*p);
+    $("countNum").innerHTML=String(v);
+    if(p<1){ requestAnimationFrame(step); } else { shownCount=target; }
+  }
+  if(from===target){ $("countNum").innerHTML=String(target); return; }
+  requestAnimationFrame(step);
+}
+/* ---------- export png ---------- */
+function showToast(m){ var t=$("toast"); t.innerHTML=esc(m); t.style.display="block"; setTimeout(function(){ t.style.display="none"; },1800); }
+function showExpErr(m){ var e=$("expErr"); e.style.display="block"; e.innerHTML=esc(m); }
+function clearExpErr(){ var e=$("expErr"); e.style.display="none"; e.innerHTML=""; }
+var FONT_CSS_CACHE=null;
+function getFontCSS(cb){
+  if(FONT_CSS_CACHE!==null){ cb(FONT_CSS_CACHE); return; }
+  try{
+    var href=null;
+    var links=document.getElementsByTagName("link");
+    for(var i=0;i<links.length;i++){ var h=links[i].getAttribute("href")||""; if(h.indexOf("fonts.googleapis.com/css")>=0){ href=h; } }
+    if(!href){ cb(""); return; }
+    var xhr=new XMLHttpRequest();
+    xhr.open("GET",href,true);
+    xhr.onreadystatechange=function(){
+      if(xhr.readyState!==4){ return; }
+      if(xhr.status!==200&&xhr.status!==0){ cb(""); return; }
+      var css=xhr.responseText;
+      var urls=[]; var re=/url\((https:[^)]+)\)/g; var m;
+      while((m=re.exec(css))!==null){ if(urls.indexOf(m[1])<0){ urls.push(m[1]); } }
+      var idx=0;
+      function next(){
+        if(idx>=urls.length){ FONT_CSS_CACHE=css; cb(css); return; }
+        var u=urls[idx];
+        var x2=new XMLHttpRequest(); x2.open("GET",u,true); x2.responseType="blob";
+        x2.onload=function(){
+          try{
+            var fr=new FileReader();
+            fr.onload=function(){ css=css.split(u).join(fr.result); idx++; next(); };
+            fr.onerror=function(){ idx++; next(); };
+            fr.readAsDataURL(x2.response);
+          }catch(e){ idx++; next(); }
+        };
+        x2.onerror=function(){ idx++; next(); };
+        try{ x2.send(); }catch(e){ idx++; next(); }
+      }
+      next();
+    };
+    xhr.onerror=function(){ cb(""); };
+    xhr.send();
+  }catch(e){ cb(""); }
+}
+function exportPNG(){
+  clearExpErr();
+  showToast("Preparing pixel-perfect export…");
+  getFontCSS(function(fontCss){ doExportPNG(fontCss||""); });
+}
+function doExportPNG(fontCss){
+  try{
+    var svg=$("map");
+    var clone=svg.cloneNode(true);
+    clone.setAttribute("xmlns","http://www.w3.org/2000/svg");
+    clone.setAttribute("width",W); clone.setAttribute("height",H);
+    var appCss=document.getElementById("appStyles").innerHTML.split("@media")[0];
+    var override=".link{stroke-dashoffset:0 !important;stroke-dasharray:none !important;animation:none !important;}";
+    var st=document.createElementNS("http://www.w3.org/2000/svg","style");
+    st.textContent=fontCss+"\n"+appCss.replace(/<\/style/gi,"<\\/style")+"\n"+override;
+    clone.insertBefore(st,clone.firstChild);
+    var defs=document.createElementNS("http://www.w3.org/2000/svg","defs");
+    defs.innerHTML='<radialGradient id="exbg" cx="50%" cy="45%" r="75%"><stop offset="0%" stop-color="#171410"/><stop offset="65%" stop-color="#0f0e0a"/></radialGradient>';
+    clone.insertBefore(defs,st.nextSibling);
+    var bg=document.createElementNS("http://www.w3.org/2000/svg","rect");
+    bg.setAttribute("width",W); bg.setAttribute("height",H); bg.setAttribute("fill","url(#exbg)");
+    clone.insertBefore(bg,defs.nextSibling);
+    var xml=new XMLSerializer().serializeToString(clone);
+    if(!xml||xml.length<500){ showExpErr("Map is empty — uncover ideas first, then export."); return; }
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var cv=document.createElement("canvas");
+        cv.width=W*2; cv.height=H*2;
+        var ctx=cv.getContext("2d");
+        ctx.fillStyle="#0f0e0a"; ctx.fillRect(0,0,cv.width,cv.height);
+        ctx.drawImage(img,0,0,cv.width,cv.height);
+        var px=ctx.getImageData(0,0,Math.min(20,cv.width),Math.min(20,cv.height)).data;
+        var url=cv.toDataURL("image/png");
+        if(!url||url.length<2000){ showExpErr("Render came back blank — try Print Screen instead."); return; }
+        var a=document.createElement("a");
+        a.href=url; a.download="niche-branch-map.png";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }catch(err){ showExpErr("Canvas render failed ("+err.message+")."); }
+    };
+    img.onerror=function(){ showExpErr("Browser blocked the SVG-to-image render. Screenshot the map instead."); };
+    img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(xml);
+  }catch(err){ showExpErr("Export failed ("+err.message+")."); }
+}
+/* ---------- state / init ---------- */
+function saveLS(){ try{ localStorage.setItem(LSKEY,state.niche.phrase); }catch(e){} }
+function uncover(nicheRaw,keepSeed){
+  var v=String(nicheRaw||"").replace(/^\s+|\s+$/g,"");
+  if(!v){ $("validMsg").style.display="block"; return false; }
+  $("validMsg").style.display="none";
+  var seed=keepSeed&&state?state.seed:(Math.floor(Math.random()*999999)+1);
+  state=buildMap(v,seed);
+  saveLS();
+  render();
+  return true;
+}
+function init(){
+  $("btnUncover").onclick=function(){ uncover($("in-niche").value,false); };
+  $("in-niche").onkeydown=function(e){ e=e||window.event; var k=e.keyCode||e.which; if(k===13){ uncover($("in-niche").value,false); } };
+  $("in-niche").oninput=function(){ $("validMsg").style.display="none"; };
+  $("btnShuffle").onclick=function(){
+    if(!state){ uncover($("in-niche").value,false); return; }
+    var raw=state.niche.phrase;
+    state=buildMap(raw,Math.floor(Math.random()*999999)+1);
+    for(var i=0;i<state.branches.length;i++){ state.branches[i].open=true; }
+    render();
+  };
+  $("btnNew").onclick=function(){
+    $("in-niche").value="";
+    state=buildMap("Your Niche Here",1);
+    for(var i=0;i<state.branches.length;i++){ state.branches[i].open=false; }
+    try{ localStorage.removeItem(LSKEY); }catch(e){}
+    render();
+    $("in-niche").focus();
+  };
+  $("btnExport").onclick=function(){ exportPNG(); };
+  $("btnCopyList").onclick=function(){ copyIdeasList(); };
+  $("btnFavMd").onclick=function(){ exportFavMd(); };
+  $("favCount").onclick=function(){ var p=$("favPanel"); if(p.className.indexOf("open")>=0){ p.className=p.className.replace("open",""); } else { p.className=p.className+" open"; } };
+  $("favClose").onclick=function(){ $("favPanel").className=$("favPanel").className.replace("open",""); };
+  var dbs=document.querySelectorAll("#depthRow button");
+  for(var di=0;di<dbs.length;di++){ dbs[di].onclick=function(){
+    DEPTH=parseInt(this.getAttribute("data-depth"),10);
+    for(var q=0;q<dbs.length;q++){ dbs[q].className=(dbs[q]===this?"on":""); }
+    if(state){ uncover(state.niche.phrase,true); for(var i=0;i<state.branches.length;i++){ state.branches[i].open=true; } render(); }
+  }; }
+  $("btnZoomIn").onclick=function(){ ZOOM=Math.min(1.6,ZOOM+0.15); $("btnZoomReset").innerHTML=Math.round(ZOOM*100)+"%"; render(); };
+  $("btnZoomOut").onclick=function(){ ZOOM=Math.max(0.6,ZOOM-0.15); $("btnZoomReset").innerHTML=Math.round(ZOOM*100)+"%"; render(); };
+  $("btnZoomReset").onclick=function(){ ZOOM=1; $("btnZoomReset").innerHTML="100%"; render(); };
+  $("btnHelp").onclick=function(e){ if(e&&e.stopPropagation){ e.stopPropagation(); } var d=$("helpDrop"); if(d.className.indexOf("open")>=0){ d.className=d.className.replace("open","").replace(/\s+/g," "); } else { d.className=d.className+" open"; } };
+  document.addEventListener("click",function(e){
+    var d=$("helpDrop"); if(!d||d.className.indexOf("open")<0){ return; }
+    var t=e.target||e.srcElement; var w=$("helpWrap");
+    while(t){ if(t===w){ return; } t=t.parentNode; }
+    d.className=d.className.replace("open","").replace(/\s+/g," ");
+  });
+  var exs=document.querySelectorAll(".exchip");
+  for(var ei=0;ei<exs.length;ei++){ exs[ei].onclick=function(){ $("in-niche").value=this.getAttribute("data-ex"); uncover(this.getAttribute("data-ex"),false); }; }
+  loadFavs(); renderFavs();
+  $("stage").addEventListener("click",function(e){
+    var t=e.target||e.srcElement;
+    while(t&&t!==$("stage")){ if(t.getAttribute&&(t.getAttribute("class")||"").indexOf("node")>=0){ return; } t=t.parentNode; }
+    hideTip();
+  });
+  document.onkeydown=function(e){ e=e||window.event; var k=e.keyCode||e.which; if(k===27){ hideTip(); } };
+  window.onresize=function(){ if(state){ render(); } };
+  var last=null;
+  try{ last=localStorage.getItem(LSKEY); }catch(e){}
+  if(last){
+    $("in-niche").value=last;
+    uncover(last,false);
+    for(var i=0;i<state.branches.length;i++){ state.branches[i].open=true; }
+    render();
+  } else {
+    state=buildMap("Your Niche Here",1);
+    render();
+  }
+}
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",init); } else { init(); }
+</script>
+</body>
+</html>
