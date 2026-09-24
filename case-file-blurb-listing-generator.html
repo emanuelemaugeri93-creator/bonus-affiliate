@@ -1,0 +1,741 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case File Blurb &amp; Listing Generator — Jikan Nazo Bonus</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#0B1526;
+  --side:#111F36;
+  --paper:#ECE3CC;
+  --paper2:#DCCFAF;
+  --ink:#1B2432;
+  --muted:#6E7480;
+  --accent:#A07E14;
+  --rule:#B3A983;
+}
+html,body{margin:0;padding:0;background:var(--desk);color:var(--ink);font-family:"Inter",Arial,sans-serif;min-height:100%}
+h1,h2,h3{margin:0;font-family:"Playfair Display",Georgia,serif}
+button{font-family:"Inter",sans-serif}
+#topbar{padding:24px 30px 20px;background:var(--side);border-bottom:3px solid var(--accent);color:#E8ECF3}
+#topbar .kicker{font-family:"Special Elite",monospace;font-size:13px;letter-spacing:4px;color:var(--accent);text-transform:uppercase}
+#topbar h1{font-size:30px;font-weight:800;margin-top:6px;color:#E8ECF3}
+#topbar .sub{font-size:13.5px;color:#8E9BB0;margin-top:4px}
+#topbar .sub em{font-family:"Special Elite",monospace;font-style:normal;color:#C9A227;letter-spacing:1px}
+.brand{display:flex;gap:16px;align-items:center}
+.logo{width:56px;height:56px;flex-shrink:0}
+.logo svg{width:100%;height:100%;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+#topbar h1 span{color:var(--accent);font-style:italic}
+#layout{display:grid;grid-template-columns:390px minmax(0,1fr);max-width:1320px;margin:0 auto;align-items:start}
+/* LEFT — dark desk panel */
+#formPanel{background:var(--side);color:#E8ECF3;border-right:1px solid #000;padding:24px 22px;position:sticky;top:0;max-height:100vh;overflow-y:auto}
+#formPanel label.f{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#8E9BB0;margin:18px 0 7px}
+#formPanel label.f:first-child{margin-top:0}
+#formPanel input[type=text],#formPanel input[type=number],#formPanel select{width:100%;background:#0B1526;border:1px solid #2E4059;border-radius:6px;padding:11px 13px;color:#E8ECF3;font-family:"Inter",sans-serif;font-size:14px}
+#formPanel input:focus,#formPanel select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.chkrow{display:flex;gap:8px;flex-wrap:wrap}
+.chk{flex:1;min-width:100px;display:flex;gap:8px;align-items:center;font-size:13.5px;background:#0B1526;border:1px solid #2E4059;border-radius:6px;padding:9px 10px;cursor:pointer;color:#E8ECF3}
+.chk input{accent-color:var(--accent)}
+.chk.on{border-color:var(--accent)}
+.radio{display:flex;gap:9px;align-items:flex-start;border:1px solid #2E4059;border-radius:6px;padding:10px 11px;margin-bottom:7px;font-size:13.5px;cursor:pointer;background:#0B1526;line-height:1.45;color:#E8ECF3}
+.radio.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.radio input{margin-top:3px;accent-color:var(--accent);flex-shrink:0}
+.radio small{display:block;color:#8E9BB0;font-size:12px}
+.lenrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.len{border:1px solid #2E4059;border-radius:6px;padding:8px 4px;font-size:12.5px;text-align:center;font-weight:600;cursor:pointer;background:#0B1526;color:#E8ECF3}
+.len.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.len input{accent-color:var(--accent)}
+.len small{display:block;color:#8E9BB0;font-weight:400;font-size:11px}
+.buildbtn{width:100%;margin-top:22px;background:var(--accent);color:#0B1526;border:none;border-radius:6px;padding:15px;font-weight:700;font-size:15px;cursor:pointer;letter-spacing:.3px}
+.buildbtn:active{transform:translateY(1px)}
+.regenbtn{width:100%;margin-top:8px;background:transparent;border:1px solid #2E4059;color:#E8ECF3;border-radius:6px;padding:11px;font-weight:600;font-size:13px;cursor:pointer}
+.regenbtn:hover{border-color:var(--accent)}
+.newbtn{width:100%;margin-top:8px;background:transparent;border:none;color:#8E9BB0;font-size:13px;cursor:pointer;text-decoration:underline}
+#validMsg{display:none;color:#ff9d8a;font-size:13px;margin-top:10px;font-weight:600;line-height:1.5}
+.secdiv{font-size:11px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#E8ECF3;background:#050B16;margin:22px -22px 4px;padding:10px 22px;border-top:1px solid #2E4059;border-bottom:1px solid #2E4059}
+.secdiv small{display:block;color:#8E9BB0;font-weight:500;letter-spacing:.3px;text-transform:none;font-size:12px;margin-top:3px}
+.saveditem{display:flex;align-items:center;gap:6px;border:1px solid #2E4059;border-radius:6px;padding:7px 9px;font-size:13px;margin-top:6px;background:#0B1526;color:#E8ECF3}
+.saveditem span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saveditem button{background:#1A2A45;color:#E8ECF3;border:1px solid #2E4059;border-radius:5px;padding:3px 8px;font-size:12px;cursor:pointer}
+#checkList{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+#checkList label{display:flex;gap:9px;align-items:flex-start;font-size:13px;cursor:pointer;color:#C9D2E0;line-height:1.5}
+#checkList input{margin-top:3px;accent-color:var(--accent)}
+/* RIGHT — paper dossier */
+#previewCol{min-width:0;padding:26px 30px 70px}
+#copybar{position:sticky;top:0;z-index:10;display:flex;gap:10px;align-items:center;background:rgba(20,18,16,.95);padding:12px 14px;border:1px solid #2E4059;border-radius:8px;margin-bottom:20px;flex-wrap:wrap}
+#copybar .t{font-family:"Special Elite",monospace;font-size:12px;letter-spacing:2px;color:#8E9BB0}
+.cpbtn{background:#E8ECF3;color:#0B1526;border:none;border-radius:6px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer}
+.cpbtn.ghost{background:transparent;color:#E8ECF3;border:1px solid #2E4059}
+.cpbtn.ghost:hover{border-color:var(--accent)}
+.sheet{position:relative;background:var(--paper);background-image:radial-gradient(rgba(27,36,50,.07) 1px,transparent 1px);background-size:22px 22px;
+  color:var(--ink);border-radius:4px;padding:40px 38px 30px;margin-bottom:24px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.stamp{position:absolute;top:24px;right:28px;font-family:"Special Elite",monospace;font-size:22px;letter-spacing:3px;color:var(--accent);
+  border:3px double var(--accent);border-radius:4px;padding:5px 14px;transform:rotate(-8deg);opacity:.92;text-transform:uppercase;pointer-events:none}
+.evtag{display:inline-block;font-family:"Special Elite",monospace;font-size:12px;letter-spacing:2px;color:#fff;background:var(--ink);border-radius:3px;padding:4px 10px;margin-bottom:12px;text-transform:uppercase}
+.sheet h2{font-size:30px;font-weight:800;line-height:1.25;margin-bottom:6px;padding-right:150px;color:var(--ink)}
+.sheet hr.rule{border:none;border-top:2px solid var(--ink);margin:14px 0 18px}
+.sheet p{font-family:"Special Elite",monospace;font-size:15px;line-height:1.9;margin:0 0 14px;color:#232F42}
+.sheet p.tagline{font-family:"Playfair Display",Georgia,serif;font-size:19px;font-weight:700;color:var(--ink);margin:20px 0 0}
+.sheet ul.feats{margin:6px 0 16px;padding:0;list-style:none}
+.sheet ul.feats li{font-family:"Special Elite",monospace;font-size:14.5px;line-height:1.75;padding:8px 0 8px 28px;position:relative;color:#232F42;border-top:1px dashed var(--rule)}
+.sheet ul.feats li:first-child{border-top:none}
+.sheet ul.feats li:before{content:"▸";position:absolute;left:8px;color:var(--accent);font-weight:700}
+.sheet p.cta{font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:16px;color:var(--ink)}
+.kwchip{display:inline-block;font-family:"Special Elite",monospace;font-size:13px;background:var(--paper2);border:1px solid var(--rule);border-radius:4px;padding:6px 10px;margin:0 6px 8px 0;color:#232F42}
+.kwchip small{color:var(--muted)}
+.catline{font-family:"Special Elite",monospace;font-size:14px;line-height:1.8;color:#232F42;padding:7px 0;border-top:1px dashed var(--rule)}
+.catline:first-of-type{border-top:none}
+.counter{font-size:12px;color:var(--muted);margin-top:10px;font-family:"Inter",sans-serif}
+.counter b{color:var(--accent)}
+.counter.over b{color:var(--accent);font-weight:800}
+.mini{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.minibtn{background:var(--ink);color:var(--paper);border:none;border-radius:6px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
+.minibtn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+#emptyState{border:1px dashed #2E4059;border-radius:6px;padding:70px 30px;text-align:center;color:#8E9BB0}
+#emptyState h2{font-size:26px;color:#E8ECF3;margin-bottom:8px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:none;background:#E8ECF3;color:#0B1526;font-weight:700;font-size:13px;border-radius:99px;padding:12px 22px}
+@media(max-width:920px){#layout{grid-template-columns:minmax(0,1fr)}#formPanel{position:static;max-height:none;border-right:none;border-bottom:1px solid #000}.sheet h2{padding-right:0}.stamp{position:static;display:inline-block;transform:rotate(-3deg);margin-bottom:14px}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="2" y="2" width="44" height="44" rx="10" fill="#0B1526" stroke="#A07E14" stroke-width="3"/><circle cx="21" cy="21" r="10" fill="none" stroke="#A07E14" stroke-width="3.5"/><line x1="28.5" y1="28.5" x2="38" y2="38" stroke="#A07E14" stroke-width="4.5" stroke-linecap="round"/><text x="21" y="27.5" text-anchor="middle" font-family="Playfair Display,Georgia,serif" font-size="16" font-weight="800" fill="#A07E14">?</text></svg></div>
+    <div>
+      <div class="kicker">Case File Nº 01 · Jikan Nazo Bonus Tool</div>
+      <h1>Case File <span>Blurb &amp; Listing</span> Generator</h1>
+      <div class="sub">Back-cover copy · Amazon listing · subtitles · keywords &amp; categories — <em>typed up like a real dossier.</em></div>
+    </div>
+  </div>
+</div>
+<div id="layout">
+  <div id="formPanel">
+    <label class="f">Book title</label>
+    <input type="text" id="in-title" maxlength="80" value="The Riverside Number Murders" placeholder="e.g. The Riverside Number Murders">
+    <label class="f">Puzzle theme / series name</label>
+    <input type="text" id="in-theme" maxlength="80" value="The Riverside Manor Mysteries" placeholder="e.g. The Riverside Manor Mysteries">
+    <label class="f">Difficulty levels covered</label>
+    <div class="chkrow" id="diffRow">
+      <label class="chk"><input type="checkbox" value="Gentle"> Gentle</label>
+      <label class="chk"><input type="checkbox" value="Standard" checked> Standard</label>
+      <label class="chk"><input type="checkbox" value="Fiendish"> Fiendish</label>
+    </div>
+    <label class="f">Target reader</label>
+    <select id="in-reader">
+      <option value="general" selected>General Puzzle Fans</option>
+      <option value="mystery">Mystery Genre Fans</option>
+      <option value="senior">Senior / Large-Print Readers</option>
+      <option value="classroom">Classroom / Educational</option>
+    </select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><label class="f">Puzzle count</label><input type="number" id="in-count" value="100" min="10" max="500"></div>
+      <div><label class="f">Trim / format</label><select id="in-trim"><option value="std6x9" selected>6×9in Paperback</option><option value="lp811">8.5×11in Large Print</option><option value="sq8585">8.5×8.5in Square</option></select></div>
+    </div>
+    <label class="f">Tone</label>
+    <div id="toneRadios"></div>
+    <label class="f">Blurb length</label>
+    <div class="lenrow" id="lenRow">
+      <label class="len"><input type="radio" name="blen" value="short"> Short <small>hook + 2</small></label>
+      <label class="len"><input type="radio" name="blen" value="standard" checked> Standard <small>+ contents</small></label>
+      <label class="len"><input type="radio" name="blen" value="long"> Long <small>+ bonus §</small></label>
+    </div>
+    <button class="buildbtn" id="btnBuild">Generate Case File Copy</button>
+    <button class="regenbtn" id="btnRegen">⟳ Regenerate variations</button>
+    <button class="newbtn" id="btnNew">New Project (reset)</button>
+    <div id="validMsg"></div>
+    <div class="secdiv">Projects <small>Save up to 8 dossiers, reload anytime</small></div>
+    <button class="regenbtn" id="btnSaveProj">★ Save this project</button>
+    <div id="savedList"></div>
+    <div class="secdiv">KDP pre-flight <small>Tick off before you hit publish</small></div>
+    <div id="checkList"></div>
+  </div>
+  <div id="previewCol">
+    <div id="copybar" style="display:none">
+      <span class="t">DOSSIER READY —</span>
+      <button class="cpbtn" id="btnCopyBoth">Copy Both (Blurb + Listing)</button>
+      <button class="cpbtn ghost" id="btnCopyAll">Copy Full Dossier</button>
+      <button class="cpbtn ghost" id="btnCopyHtml">Copy Listing as Amazon HTML</button>
+      <button class="cpbtn ghost" id="btnRegenTop">⟳</button>
+    </div>
+    <div id="emptyState"><h2>Your dossier gets typed up here</h2><p>Fill in the file on the left, pick a tone and length, then press “Generate Case File Copy”.</p></div>
+    <div id="resultWrap" style="display:none">
+      <div class="sheet">
+        <div class="stamp">Case File</div>
+        <div class="evtag">Exhibit A — Back-cover blurb</div>
+        <div class="mini" style="margin:0 0 6px"><button class="minibtn" id="btnCopyBlurb">Copy blurb</button><button class="minibtn ghost" id="btnReBlurb" title="Reshuffle blurb only">⟳ blurb</button></div>
+        <h2 id="blurbHook"></h2>
+        <hr class="rule">
+        <div id="blurbBody"></div>
+        <p class="tagline" id="blurbTag"></p>
+        <div class="counter" id="blurbCount"></div>
+      </div>
+      <div class="sheet">
+        <div class="evtag">Exhibit B — Amazon listing description</div>
+        <div class="mini" style="margin:0 0 6px"><button class="minibtn" id="btnCopyListing">Copy listing</button><button class="minibtn ghost" id="btnReList" title="Reshuffle listing only">⟳ listing</button></div>
+        <h2 id="listTitle"></h2>
+        <hr class="rule">
+        <div id="listBody"></div>
+        <ul class="feats" id="listBullets"></ul>
+        <p class="cta" id="listCta"></p>
+        <div class="counter" id="listCount"></div>
+      </div>
+      <div class="sheet">
+        <div class="evtag">Exhibit C — KDP subtitle options (pick one)</div>
+        <div class="mini" style="margin:0 0 6px"><button class="minibtn" id="btnCopySubs">Copy subtitles</button></div>
+        <div id="subOpts"></div>
+      </div>
+      <div class="sheet">
+        <div class="evtag">Exhibit D — 7 backend keywords (≤50 chars each)</div>
+        <div class="mini" style="margin:0 0 6px"><button class="minibtn" id="btnCopyKw">Copy keywords</button></div>
+        <div id="kwBox"></div>
+        <div class="counter">KDP allows 7 keyword slots, 50 characters max each. Paste one per slot.</div>
+      </div>
+      <div class="sheet">
+        <div class="evtag">Exhibit E — Suggested categories</div>
+        <div id="catBox"></div>
+        <div class="counter">Pick up to 3 BISAC-adjacent paths in KDP (use “Switch categories” or support request if needed).</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+var LSKEY="cfbl-state-v2";
+var SPIN=[["simple","easy"],["quick","fast"],["tiny","small"],["smart","sharp"],["cross out","strike out"],["answer key","solution key"]];
+var TONES=[["noir","Classic Noir","Shadowy · hard-boiled"],["cozy","Cozy Mystery","Warm · fireside"],["thriller","Modern Thriller","Fast · high-stakes"]];
+var READERS={
+ general:{label:"General Puzzle Fans",phrase:"puzzle fans everywhere",bullet:["A perfect gift for the puzzle fan who has solved everything else — a format they have never seen.","Made for puzzle night: cases range from 10-minute solves to full-evening investigations.","The gift that gets finished — {count} cases beat another gadget."]},
+ mystery:{label:"Mystery Genre Fans",phrase:"whodunit readers",bullet:["Built for whodunit readers: every case reads like a miniature mystery, minus the murder.","If you finish mysteries and immediately guess the killer — this book was made for you.","Reads like a casebook, solves like a puzzle: the crossover whodunit fans asked for."]},
+ senior:{label:"Senior / Large-Print Readers",phrase:"senior solvers and large-print readers",bullet:["Senior-friendly solving: clear grids, kind print, and zero tiny-text squinting.","A favorite with older solvers — gentle on the eyes, ruthless on boredom.","Big grids, clear clues, zero eye-strain — built for the senior shelf from page one."]},
+ classroom:{label:"Classroom / Educational",phrase:"teachers and classrooms",bullet:["Classroom-ready: real logic practice (elimination, deduction, parity) with a full answer key for checking work.","Teachers: photocopy-friendly cases that teach deduction without a single worksheet groan.","Answer keys that show their work — grade logic, not just answers."]}
+};
+var TRIMS={
+ std6x9:{label:"6×9in Paperback",phrase:"the classic 6×9\" paperback trim",bullet:["Classic 6×9\" paperback trim — travels in a bag, solves on a train.","The standard KDP paperback size buyers already love.","Printed as a proper 6×9\" paperback — real book, real shelf presence."]},
+ lp811:{label:"8.5×11in Large Print",phrase:"big 8.5×11\" large-print pages",bullet:["Large-print 8.5×11\" pages: oversized numbers you can actually read.","Printed large on purpose — no magnifier required, ever.","Senior-shelf approved: the large-print edition buyers over 60 actually review."]},
+ sq8585:{label:"8.5×8.5in Square",phrase:"the square 8.5×8.5\" format",bullet:["Square 8.5×8.5\" format with roomy grids — pencil-friendly crossing out.","Generous square pages give every register room to breathe.","The square format puzzlers photograph for social — free marketing with every solve."]}
+};
+var HOOKS={
+noir:["One number is guilty. {count} suspects. No alibis.",
+"Every number is a suspect in {theme}.",
+"{title}: {count} cases. Zero innocent pages.",
+"The clues don't lie. Somebody on that page does.",
+"The register is full. The alibis aren't.",
+"{theme} has room for one more name: yours. And {count} open cases."],
+cozy:["Curl up with {count} cozy little cases from {theme}.",
+"Tea's hot. Pencil's sharp. {theme} needs you.",
+"{title}: {count} mysteries, zero mayhem.",
+"Small town. Big mysteries. {count} cases to solve by teatime.",
+"{theme} called — it needs an armchair detective.",
+"{count} gentle whodunits, best served with biscuits."],
+thriller:["{count} cases. One guilty number each. Zero time to waste.",
+"THE REGISTER IS LIVE: {theme} has a fugitive.",
+"{title}: find the guilty number before the trail goes cold.",
+"DECLASSIFIED: {count} open files from {theme}.",
+"Suspect count: an entire register. Time: tonight.",
+"Every page is a crime scene. Bring a pencil."]};
+var BLURB_P1={
+noir:["The district of {theme} looks quiet on paper. It isn't. Behind every register of numbers, somebody is guilty — and the paperwork doesn't lie.",
+"{title} opens the file on {theme}: {count} cases, each one a page of suspects and a stack of evidence.",
+"They say numbers never lie. In {theme}, one of them is lying through its teeth — and {title} hands you the file.",
+"File {count} cases deep, {theme} is the kind of town that keeps its secrets in plain sight — printed in neat little rows."],
+cozy:["Welcome to {theme}, where the kettle is always on and every page hides a polite little mystery.",
+"{title} gathers {count} cozy cases from {theme} — no gore, no gloom, just good clean detective fun.",
+"Pull up your armchair: {theme} needs a sleuth, and {title} brings {count} cases with your name on them.",
+"{title} is {theme}'s guest book, and every guest is a suspect with a smile."],
+thriller:["CASE FILE OPEN. {theme} is live, and a register full of numbers with something to hide just hit your desk.",
+"{title}: {count} active cases from {theme}. No backup. No second chances.",
+"The register doesn't wait. {theme} has {count} open files, and {title} puts every one of them in your hands.",
+"You don't read {title}. You work it — {count} files from {theme}, each one live from page one."]};
+var BLURB_P2={
+noir:["Every case works the same hard way: a register full of suspects, a fistful of clues. Cross out every number a clue clears. When the smoke clears, exactly one number is left standing — the guilty one. Each case is verified to a single solution, so the collar always sticks. Cases run {diffRange}, so pick your poison.",
+"Interrogate the page. Each clue eliminates the innocent — evens, odds, digit-sums, positions — until one number can't talk its way out. Nothing is guessed; the proof is in the crossings-out. With cases at {diffRange}, start soft or go straight for the hard stuff.",
+"The method is elimination, and it's airtight: apply every clue and one survivor remains. Remove any single clue and the case re-opens — that's how you know every clue earns its place. {diffRangeCap}, {count} times over.",
+"No hunches, no hand-waving: a clue only counts if it clears somebody. That's the house rule in {theme}, and every file obeys it."],
+cozy:["Here's how a case unfolds: you get a page of suspects (all numbers, all innocent-looking) and a gentle stack of clues. Cross out every number a clue clears, sip your tea, and watch the page shrink until one number remains. Every case is verified to a single solution — no arguments at the kitchen table. Cases run {diffRange}, from easy evenings to proper head-scratchers.",
+"No gore, no gloom — just you, a pencil, and a page of suspects. Each clue politely removes the innocent until exactly one number is left holding the teapot. Everything is checked to a single solution before it reaches print, so every finish feels fair. {diffRangeCap}, ready when you are.",
+"The rules fit on an index card: one number is the answer, the clues eliminate the rest, exactly one survives. {theme} keeps it cozy with cases at {diffRange} — start with a smile, finish with a flourish.",
+"Stuck? Peek at the coded answers, then carry on — {theme} forgives curiosity, and every case still closes clean."],
+thriller:["The protocol is simple and non-negotiable: a register of suspects hits the page, the clues come fast, and you eliminate. Cross out every number a clue kills. One survivor. Zero doubt — every case is verified to a single solution before print. Cases run {diffRange}. Move.",
+"Read fast, cross out faster. Each clue strips the innocent off the register — parity, sums, positions — until a single number is exposed. Nothing is guessed; hesitation is the only enemy. {diffRangeCap}. The clock is already running.",
+"One register. One answer. The clues eliminate everything else in real time, and the proof key at the back reconstructs every kill. {count} cases at {diffRange} — each one verified, each one closable tonight.",
+"Hesitation kills cases. The register rewards the fast and the certain — {diffRange}, no excuses."]};
+var BLURB_P3={
+noir:["Inside the file: {count} cases spanning {diffs}, printed in {trimPhrase}. Built for {readerPhrase} who like their justice black-coffee strong.",
+"{theme} doesn't do filler. {count} full cases, {diffs}, plus a coded answer key that proves every elimination — for {readerPhrase} who check their work.",
+"The dossier: {count} cases ({diffs}), {trimPhrase}, and an answer key that names every eliminated entry. For {readerPhrase}. No loose ends.",
+"Paperwork included: coded answers, full proof keys, {trimPhrase}. {count} cases. Zero cold ones."],
+cozy:["Inside: {count} delightful cases ({diffs}) in {trimPhrase}, with a friendly answer key at the back. Made for {readerPhrase} and rainy afternoons.",
+"{theme} at its coziest: {count} cases spanning {diffs}, {trimPhrase}, and solutions that never cheat. For {readerPhrase} who solve with a smile.",
+"Your parcel from {theme}: {count} cases ({diffs}), {trimPhrase}, and a coded answer section for peeking (we won't tell). For {readerPhrase}.",
+"Everything's included: the cases, the coded answers, the proof keys — plus {trimPhrase} made for laps and armchairs."],
+thriller:["Payload: {count} cases ({diffs}), {trimPhrase}, coded answers in the back. Built for {readerPhrase} who finish what they start.",
+"{theme} deployment kit: {count} live cases spanning {diffs}, {trimPhrase}, plus a proof key that verifies every kill. For {readerPhrase}. No filler, all signal.",
+"Contents: {count} verified cases ({diffs}) in {trimPhrase}. Answer key included — coded, so nothing spoils. For {readerPhrase}. Go.",
+"Kit contents: {count} live cases, coded answers, proof keys, {trimPhrase}. Sign here."]};
+var BLURB_P4={
+noir:["Collect the set: {theme} runs {diffs}, so the shelf builds itself — start where you're soft, end where it hurts.",
+"Gift it to the cynic in your life. Nothing converts a skeptic like closing their first case.",
+"The proof key is the real star: for every clue, it names the entry only that clue kills. Audit the whole book without solving a page."],
+cozy:["{theme} is a series built for slow Sundays: {diffs} means there's always a next case at exactly your speed.",
+"Wrap it up with a ribbon: puzzle lovers collect {theme} the way others collect teapots.",
+"The answer key reads like a scrapbook of solved afternoons — every elimination witnessed, every case fairly closed."],
+thriller:["{theme} scales with you: {diffs}. Burn through Gentle by Friday, take Fiendish hostage by Sunday.",
+"One volume, {count} missions. Finish it and the next {theme} file is already waiting.",
+"The proof key logs every kill per clue — audit at speed, trust at sight."]};
+var TAGLINES={
+noir:["Can you crack every case before the ink dries?","Every number is a suspect. Every clue, a confession.","Open the file. Close the case.","Justice fits in a pencil.","In {theme}, the numbers did it.","Pencil up. Somebody's guilty."],
+cozy:["Put the kettle on — the cases are waiting.","One pencil, one cup of tea, {count} little triumphs.","Every closed case is a small, paperback-shaped joy.","Sweet solves, zero stress — that's the {theme} promise.","Mystery loves company — bring tea.","{theme} saves you a seat by the fire."],
+thriller:["The clock is ticking. The numbers don't lie.","Zero hour starts on page one.","{count} fugitives. One pencil. Go.","Clear the register. Close the file.","Read the clues. Run the eliminations. Close it.","The guilty number can't hide forever."]};
+var LIST_INTRO={
+noir:["Tired of puzzle books where the only mystery is why you bought them? {title} is a different animal: {count} number-mystery cases from {theme}, where one guilty number hides in every register and the clues eliminate the rest.",
+"Some books collect dust. This one collects suspects. {title} brings {count} elimination-mystery cases from {theme} — part puzzle book, part detective's casebook, all killer.",
+"Forget fill-in-the-blank busywork. {title} hands you {count} live cases from {theme}: a page of numbers, a stack of clues, and one guilty survivor per file.",
+"{title} isn't a puzzle book. It's {count} arrest warrants printed in {trimPhrase}, straight out of {theme}."],
+cozy:["Looking for a puzzle book that feels like a warm hug with a mystery inside? {title} gathers {count} cozy number-mysteries from {theme} — gentle, clever, and impossible to put down.",
+"{theme} is the village you never want to leave: {title} collects {count} of its friendliest cases, each one a page of suspects waiting for your pencil.",
+"Puzzle books shouldn't feel like homework. {title} serves {count} delightful cases from {theme} — sip tea, cross out suspects, feel brilliant.",
+"Think of {title} as {count} invitations from {theme} — every one arrives with suspects, clues, and cake (cake not included)."],
+thriller:["Stop scrolling. {title} drops {count} live number-mystery cases from {theme} straight onto your desk — high-stakes elimination puzzles with zero filler.",
+"{theme} doesn't do easy reading. {title} packs {count} rapid-fire cases: registers full of suspects, clues that cut fast, one survivor per file.",
+"Your next obsession ships in paperback form: {count} elimination cases from {theme}, engineered for speed-solvers and verified to a single solution.",
+"Intel drop: {theme} is compromised. {title} contains {count} field cases — register, clues, one survivor each."]};
+var LIST_MECH={
+noir:["HOW IT WORKS: each case prints a register of numbers — the suspects. A numbered clue list eliminates them slice by slice: evens fall, odds fall, digit-sums fall. Cross out the innocent and exactly one number survives. The coded answer key at the back proves every elimination, clue by clue, so you can verify your collar without spoiling the next case.",
+"THE RULES OF THE FILE: one number per register is the answer. Read the clues in order. Cross off everything a clue rules out. Exactly one number survives — check it against the coded key. The full answer section names every eliminated entry and the clue that killed it, so a whole book can be proof-read without solving a thing.",
+"EVIDENCE PROTOCOL: clues arrive numbered and each one must earn its keep — remove any single clue and the case re-opens. That's the guarantee: no filler, no freeloaders, no rigged endings."],
+cozy:["HOW A CASE WORKS: each puzzle gives you a page of numbers and a friendly list of clues. Read a clue, cross out every number it clears, and repeat until a single number remains. A coded answer section at the back lets you peek without spoiling, and the full key explains every elimination for curious minds.",
+"SO SIMPLE, SO ADDICTIVE: one answer hides in every register. The clues do the rest — no math degree, no mystery-writing skills needed. Work in pencil, cross out (never erase!), and enjoy watching each page shrink to a single survivor. Full solutions included.",
+"FAIR-PLAY PROMISE: every clue matters and every case closes cleanly. Remove one clue and the mystery re-opens — so no case ever cheats, and no solver ever feels cheated."],
+thriller:["PROTOCOL: one register, one answer. The clue list executes eliminations in sequence — parity, sums, positions, rows. You cross out the fallen in real time until a single number stands. The coded key at the back verifies every kill without exposing the next file.",
+"ZERO LEARNING CURVE, MAXIMUM VELOCITY: read clue, eliminate, repeat. Each case is engineered so removing any single clue re-opens the file — meaning zero filler and zero dead ends. Coded answers plus a full proof key ship in every copy.",
+"ZERO-FILLER DOCTRINE: every clue is load-bearing. Pull one and the file re-opens. That constraint is what makes all {count} cases solvable, checkable, and re-playable as gifts."]};
+var BULLET_VERIFY=[
+"Every case proven to exactly ONE solution — no guessing, no broken puzzles, no one-star surprises.",
+"Verified single-solution engine: each case ends with one survivor, and the answer key proves every clue.",
+"No dead ends, ever: every puzzle is machine-verified so the last number standing is always the right one.",
+"One solution, guaranteed in print: each case is proven before export, so your reviews stay five-star."];
+var BULLET_COUNT=[
+"{count} full cases — a whole shelf of mysteries bound into one volume.",
+"{count} hand-checked cases, from quick 10-minute solves to long-evening investigations.",
+"{count} cases across {diffs} — a complete ladder in a single volume."];
+var BULLET_DIFF={
+full:["Climb the ladder: Gentle warm-ups to truly Fiendish finales, all in one book.","Three difficulty gears — start gentle, finish fiendish, never get bored.","Gentle to Fiendish in one spine: the rare book beginners and veterans both finish."],
+pair:["Two gears: {diffA} cases to warm up, {diffB} cases to sweat over.","A {diffA} on-ramp with a {diffB} payoff — the difficulty curve does the motivating.","No filler levels — just {diffA} and {diffB}, the two gears worth printing."],
+single:["Every case pitched at {diffX} level — one consistent, satisfying challenge.","Pure {diffX}: the whole book tuned to a single difficulty, zero filler.","No difficulty whiplash: {diffX} from cover to cover."]};
+var LIST_CTA={
+noir:["Scroll up, open the file, and close your first case tonight. The guilty number is waiting.","One click opens {count} case files. Justice has never been this affordable.","Buy it for the mysteries. Keep it for the collars.","The file is open. The pencil is yours."],
+cozy:["Scroll up and click Buy Now — the kettle's on, and {theme} is waiting.","Gift it, keep it, solve it twice: {count} cozy cases are one click away.","One click, {count} happy evenings. {theme} does the rest.","Tea. Pencil. {title}. Tonight."],
+thriller:["Scroll up and hit Buy Now. Zero hour is whenever you open page one.","{count} files. One click. The register is waiting — move.","Buy now. The numbers won't eliminate themselves.","Paperback. Real pages, real pencil, real collar."]};
+HOOKS.noir.push("The guilty number signed the register. Find the signature.","Ink dries. Guilt doesn't. {theme} has {count} open files.");
+HOOKS.cozy.push("Scones in the oven, suspects on the page — {theme} awaits.","{count} cases so gentle you'll finish smiling.");
+HOOKS.thriller.push("Threat level: one guilty number per page. Response: you.","The file doesn't close itself. {count} cases, analyst.");
+BLURB_P1.noir.push("{title} walks into {theme} like it owns the precinct — {count} cases, no badges, no backup.","Nobody calls {theme} quiet twice. {title} files {count} reports from streets paved with suspects.");
+BLURB_P1.cozy.push("{title} smells faintly of old paper and fresh tea — {count} cases from {theme}, bound with love.","If {theme} had a welcome mat, it would read: wipe your feet, sharpen your pencil, stay for {count} cases.");
+BLURB_P1.thriller.push("Eyes only: {title} compiles {count} live registers from {theme}. Burn after solving.","No training montage. {title} drops you into {theme} with {count} live files and a pencil.");
+BLURB_P2.noir.push("Paper doesn't sweat, but suspects do: every clue in {theme} corners somebody until one number stops answering.","Follow the crossings-out — they're the footprints. One set always leads to the guilty number.");
+BLURB_P2.cozy.push("Every clue is a friendly nudge, every crossed-out number a small victory lap around {theme}.","Share the solving: {theme} cases are built for two pencils and one pot of tea.");
+BLURB_P2.thriller.push("Intel confirms zero filler: each clue in {theme} is mission-critical, each register closes clean.","Debrief after every case: the proof key replays each elimination so the method sticks.");
+BLURB_P3.noir.push("Filed under {diffs}: {count} cases, {trimPhrase}, coded keys. {theme} keeps its records straight.","The archive grows: {theme} collects {diffs} cases in {trimPhrase} — shelve accordingly.");
+BLURB_P3.cozy.push("Shelve it beside the cookbooks: {count} comforting cases ({diffs}) in {trimPhrase}.","Lend it, gift it, re-solve it: {theme} in {trimPhrase} only gets better with company.");
+BLURB_P3.thriller.push("Archive status: {count} closed-pending cases ({diffs}) in {trimPhrase}. Access granted.","Exfil in paperback: {trimPhrase} carries {count} {theme} cases anywhere.");
+BLURB_P4.noir.push("Word on the street: solvers finish {theme} books twice — once for the collar, once for the craft.","Cold cases welcome: revisit any file; the proof key re-opens it clean.");
+BLURB_P4.cozy.push("Rainy-day certified: {theme} has ended more grey afternoons than umbrellas.","Stitch it into routine: one {theme} case with morning tea beats the news, daily.");
+BLURB_P4.thriller.push("Replay value: classified. Veterans re-run {theme} files against the clock.","Chain of custody intact: from register to proof key, every page is accounted for.");
+TAGLINES.noir.push("The guilty always sign twice: once in ink, once in elimination.","File closed. Pencil down. Next case.");
+TAGLINES.cozy.push("Solved with love from {theme}.","Happily ever after — one elimination at a time.");
+TAGLINES.thriller.push("Case load: zero. Standing by for the next file.","The register is clean. You did that.");
+LIST_INTRO.noir.push("Evidence locker overflow: {title} archives {count} {theme} cases — registers, clues, collars. Enter with a pencil.","Cold open: a page of numbers, a list of clues, one guilty survivor. {title} runs that play {count} times across {theme}.");
+LIST_INTRO.cozy.push("Gather round, sleuths: {title} pours {count} warm cases from {theme} — best enjoyed with biscuits and a blunt pencil.","The village noticeboard reads: {count} mysteries need solving. {title} answers every single one.");
+LIST_INTRO.thriller.push("Situation report: {theme} registers compromised. {title} deploys {count} field-ready cases with full proof keys.","Asset briefing complete: {count} {theme} files, each verified single-solution, each closable under pressure.");
+LIST_MECH.noir.push("CHAIN OF CUSTODY: register, clues, crossings-out, coded key, proof ledger. Break the chain nowhere — {theme} files hold up in any court of opinion.");
+LIST_MECH.cozy.push("TEA-BREAK PACING: every case is sized for one sitting — start after supper, close before bed. {theme} respects your evening.");
+LIST_MECH.thriller.push("MISSION LOOP: register in, clues down, survivor out — then next file. {theme} runs {count} loops without a single misfire.");
+LIST_CTA.noir.push("Stamp it solved: {count} cases, one click, zero cold files.","The precinct gift shop has one item: this book. Take two.");
+LIST_CTA.cozy.push("Wrap {theme} in brown paper and watch a face light up.","{count} hugs in paperback — add to basket.");
+LIST_CTA.thriller.push("Authorize the purchase. Debrief on page one.","One click deploys {count} cases to your doorstep.");
+BULLET_VERIFY.push("Proven before print: apply every clue and exactly one number survives — the other outcomes are mathematically impossible.");
+BULLET_COUNT.push("Roughly {pages} pages of pure deduction — {count} cases plus coded keys and proof ledgers.");
+BULLET_DIFF.full.push("Beginners enter Gentle, veterans bleed Fiendish — one book serves the whole precinct.");
+BULLET_DIFF.pair.push("{diffA} files for training day, {diffB} files for the real thing.");
+BULLET_DIFF.single.push("Single-grade {diffX}: calibrated once, satisfying always.");
+TRIMS.std6x9.bullet.push("Pocket-precinct size: 6×9\" goes where cases happen.");
+TRIMS.lp811.bullet.push("18-point large print on 8.5×11\": the senior shelf's favorite format.");
+TRIMS.sq8585.bullet.push("Big square pages: grids you can cross out with a marker, not a microscope.");
+READERS.general.bullet.push("Shelf candy: the spine looks as good as the solves feel.");
+READERS.mystery.bullet.push("For readers who dog-ear the reveal — here the reveal is earned.");
+READERS.senior.bullet.push("Grandparent-approved: large cells, clear clues, satisfying closes.");
+READERS.classroom.bullet.push("Sub-plan gold: self-checking cases with keys that prove every step.");
+var CHECKS=["Cover uploaded (front, spine + back blurb pasted)","7 backend keyword slots filled (Exhibit D)","3 categories chosen (Exhibit E)","Description pasted — plain or Amazon HTML","Price set + KDP select / expanded distribution decided","Flip-through video ready for A+ Content"];
+function $(id){ return document.getElementById(id); }
+function esc(s){ s=(s===null||s===undefined)?"":String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escHtml(s){ return esc(s).replace(/"/g,"&quot;"); }
+function cap1(s){ s=String(s||""); if(!s){ return ""; } return s.charAt(0).toUpperCase()+s.slice(1); }
+function showToast(m){ var t=$("toast"); t.innerHTML=esc(m); t.style.display="block"; setTimeout(function(){ t.style.display="none"; },1800); }
+function rndSeed(){ return Math.floor(Math.random()*99999)+1; }
+function pick(arr,seed){
+  if(seed===undefined||seed===null||isNaN(seed)){ seed=0; }
+  return arr[((seed%arr.length)+arr.length)%arr.length];
+}
+function srand(seed){ var s=(seed>>>0)||1; return function(){ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }; }
+function spinOnce(text,a,b){
+  var idx=text.indexOf(a);
+  while(idx>=0){
+    var before=idx===0?" ":text.charAt(idx-1);
+    var after=(idx+a.length>=text.length)?" ":text.charAt(idx+a.length);
+    if(!/[A-Za-z]/.test(before)&&!/[A-Za-z]/.test(after)){ return text.slice(0,idx)+b+text.slice(idx+a.length); }
+    idx=text.indexOf(a,idx+1);
+  }
+  return text;
+}
+function spin(text,seed){
+  var r=srand(seed);
+  for(var i=0;i<SPIN.length;i++){ if(r()<0.25){ text=spinOnce(text,SPIN[i][0],SPIN[i][1]); } }
+  return text;
+}
+function fill(tpl,d){
+  return String(tpl).replace(/\{title\}/g,d.title).replace(/\{theme\}/g,d.theme).replace(/\{count\}/g,d.count)
+    .replace(/\{diffRange\}/g,d.diffRange).replace(/\{diffRangeCap\}/g,cap1(d.diffRange))
+    .replace(/\{diffs\}/g,d.diffs).replace(/\{diffA\}/g,d.diffA).replace(/\{diffB\}/g,d.diffB).replace(/\{diffX\}/g,d.diffX)
+    .replace(/\{readerPhrase\}/g,d.readerPhrase).replace(/\{trimPhrase\}/g,d.trimPhrase).replace(/\{pages\}/g,d.pages||"");
+}
+function diffData(sel){
+  var order=["Gentle","Standard","Fiendish"];
+  var s=[];
+  for(var i=0;i<order.length;i++){ if(sel.indexOf(order[i])>=0){ s.push(order[i]); } }
+  var d={list:s,diffs:"",diffRange:"",diffA:"",diffB:"",diffX:"",diffsTitle:""};
+  if(s.length>=3){ d.diffs="Gentle, Standard and Fiendish"; d.diffRange="from Gentle all the way to Fiendish"; d.diffsTitle="Gentle to Fiendish"; }
+  else if(s.length===2){ d.diffs=s[0]+" and "+s[1]; d.diffRange="from "+s[0]+" to "+s[1]; d.diffA=s[0]; d.diffB=s[1]; d.diffsTitle=s[0]+" to "+s[1]; }
+  else if(s.length===1){ d.diffs=s[0]; d.diffRange="at a pure "+s[0]+" level"; d.diffX=s[0]; d.diffsTitle=s[0]+" Level"; }
+  return d;
+}
+function collectInputs(){
+  var ds=document.querySelectorAll("#diffRow input");
+  var sel=[];
+  for(var i=0;i<ds.length;i++){ if(ds[i].checked){ sel.push(ds[i].value); } }
+  var tone="noir";
+  var rs=document.getElementsByName("tone");
+  for(var j=0;j<rs.length;j++){ if(rs[j].checked){ tone=rs[j].value; } }
+  var blen="standard";
+  var lr=document.getElementsByName("blen");
+  for(var q=0;q<lr.length;q++){ if(lr[q].checked){ blen=lr[q].value; } }
+  var count=parseInt($("in-count").value,10);
+  if(isNaN(count)||count<10){ count=10; }
+  if(count>500){ count=500; }
+  return {title:$("in-title").value.replace(/\s+/g," ").trim().slice(0,80),
+    theme:$("in-theme").value.replace(/\s+/g," ").trim().slice(0,80),
+    diffs:sel,tone:tone,blen:blen,reader:$("in-reader").value,count:String(count),trim:$("in-trim").value};
+}
+function buildCopy(inputs,seeds){
+  var dd=diffData(inputs.diffs);
+  var d={title:inputs.title,theme:inputs.theme,count:inputs.count,pages:String(parseInt(inputs.count,10)+12),
+    diffs:dd.diffs,diffRange:dd.diffRange,diffA:dd.diffA,diffB:dd.diffB,diffX:dd.diffX,
+    readerPhrase:READERS[inputs.reader].phrase,trimPhrase:TRIMS[inputs.trim].phrase};
+  var tone=inputs.tone;
+  var paras=[spin(fill(pick(BLURB_P1[tone],seeds.p1),d),seeds.p1*3+1),
+             spin(fill(pick(BLURB_P2[tone],seeds.p2),d),seeds.p2*3+2)];
+  if(inputs.blen!=="short"){ paras.push(spin(fill(pick(BLURB_P3[tone],seeds.p3),d),seeds.p3*3+3)); }
+  if(inputs.blen==="long"){ paras.push(spin(fill(pick(BLURB_P4[tone],seeds.p4),d),seeds.p4*3+4)); }
+  var data={
+    hook:fill(pick(HOOKS[tone],seeds.hook),d),
+    paras:paras,
+    tag:fill(pick(TAGLINES[tone],seeds.tag),d),
+    intro:spin(fill(pick(LIST_INTRO[tone],seeds.li),d),seeds.li*3+5),
+    mech:spin(fill(pick(LIST_MECH[tone],seeds.lm),d),seeds.lm*3+6),
+    bullets:[],
+    cta:fill(pick(LIST_CTA[tone],seeds.cta),d),
+    subs:[],
+    keywords:[],
+    cats:[],
+    d:d, dd:dd
+  };
+  data.bullets.push(fill(pick(BULLET_VERIFY,seeds.bv),d));
+  data.bullets.push(fill(pick(BULLET_COUNT,seeds.bv+7),d));
+  var dk=dd.list.length>=3?"full":(dd.list.length===2?"pair":"single");
+  data.bullets.push(fill(pick(BULLET_DIFF[dk],seeds.bv+13),d));
+  data.bullets.push(fill(pick(TRIMS[inputs.trim].bullet,seeds.bv+29),d));
+  data.bullets.push(fill(pick(READERS[inputs.reader].bullet,seeds.bv+41),d));
+  data.subs=buildSubs(inputs,dd,d,seeds.sub);
+  data.keywords=buildKeywords(inputs,dd);
+  data.cats=buildCats(inputs);
+  data.listTitle=inputs.title+" — "+inputs.count+" "+cap1(tone==="noir"?"number-mystery cases":(tone==="cozy"?"cozy mystery puzzles":"elimination-mystery cases"));
+  return data;
+}
+function buildSubs(inputs,dd,d,seed){
+  var pool=[
+    inputs.count+" Elimination-Mystery Puzzles from "+inputs.theme+" ("+dd.diffsTitle+")",
+    "Find the Guilty Number in Every Register — "+inputs.count+" Verified Single-Solution Cases",
+    "A Whodunit Puzzle Book for Adults: Cross Out the Innocent, Expose the Culprit",
+    inputs.theme+": "+inputs.count+" Number-Mystery Cases ("+dd.diffs+")",
+    inputs.theme+" Case Files: "+inputs.count+" Verified Number Mysteries ("+dd.diffsTitle+")"
+  ];
+  var r=srand(seed||1);
+  var idx=[0,1,2,3,4];
+  for(var i=idx.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)); var t=idx[i]; idx[i]=idx[j]; idx[j]=t; }
+  return [pool[idx[0]],pool[idx[1]],pool[idx[2]]];
+}
+var KW_STOP=["a","an","the","and","of","for","with","your","my","how","best","easy","new","big","little","book","books","vol","volume"];
+var KW_POOL=["mystery puzzle book","logic puzzle book","number puzzle book","whodunit puzzles","elimination puzzles","brain teasers for adults","detective puzzle book","puzzle books for adults","crime puzzle book","murder mystery puzzles","logic games for adults","deduction puzzle book"];
+function kwWords(s){
+  var parts=String(s||"").toLowerCase().replace(/[^a-z\s]/g," ").split(/\s+/);
+  var out=[];
+  for(var i=0;i<parts.length;i++){ if(parts[i].length>3&&KW_STOP.indexOf(parts[i])<0&&out.indexOf(parts[i])<0){ out.push(parts[i]); } }
+  return out;
+}
+function kwTrim(s){
+  s=String(s||"").replace(/\s+/g," ").trim();
+  if(s.length<=50){ return s; }
+  var cut=s.slice(0,50);
+  var sp=cut.lastIndexOf(" ");
+  if(sp>20){ cut=cut.slice(0,sp); }
+  return cut;
+}
+function buildKeywords(inputs,dd){
+  var tw=kwWords(inputs.theme+" "+inputs.title);
+  var out=[];
+  function push(s){ s=kwTrim(s).toLowerCase(); if(s&&out.indexOf(s)<0&&s.length>2){ out.push(s); } }
+  if(tw.length>=2){ push(tw[0]+" "+tw[1]+" puzzle book"); }
+  else if(tw.length===1){ push(tw[0]+" puzzle book"); }
+  push("logic puzzles for adults");
+  if(inputs.reader==="senior"||inputs.trim==="lp811"){ push("large print puzzle book"); }
+  else if(inputs.reader==="classroom"){ push("logic puzzles for classroom"); }
+  else { push("mystery puzzle book for adults"); }
+  if(dd.list.indexOf("Fiendish")>=0){ push("fiendish logic puzzles"); }
+  else { push("easy mystery puzzles"); }
+  push("number puzzle book");
+  push(inputs.count+" logic puzzles");
+  push("whodunit puzzle book");
+  push("brain teasers for adults");
+  var pi=0;
+  while(out.length<7&&pi<KW_POOL.length){ push(KW_POOL[pi]); pi++; }
+  return out.slice(0,7);
+}
+function buildCats(inputs){
+  var cats=["Books › Humor & Entertainment › Puzzles & Games › Logic & Brain Teasers"];
+  if(inputs.reader==="senior"){ cats.push("Books › Large Print › Puzzles & Games"); }
+  else if(inputs.reader==="classroom"){ cats.push("Books › Education & Teaching › Studying & Workbooks"); }
+  else if(inputs.reader==="mystery"){ cats.push("Books › Mystery, Thriller & Suspense › Cozy Mysteries"); }
+  else { cats.push("Books › Science & Math › Mathematics › Recreations & Games"); }
+  cats.push("Books › Humor & Entertainment › Puzzles & Games › Crosswords");
+  return cats;
+}
+function blurbText(data){
+  return data.hook+"\n\n"+data.paras.join("\n\n")+"\n\n"+data.tag;
+}
+function listingText(data){
+  var L=data.intro+"\n\n"+data.mech+"\n\n";
+  for(var i=0;i<data.bullets.length;i++){ L+="• "+data.bullets[i]+"\n"; }
+  L+="\n"+data.cta;
+  return L;
+}
+function listingHTML(data){
+  var L="<b>"+escHtml(data.hook)+"</b><br><br>"+escHtml(data.intro)+"<br><br>"+escHtml(data.mech)+"<br><br><ul>";
+  for(var i=0;i<data.bullets.length;i++){ L+="<li>"+escHtml(data.bullets[i])+"</li>"; }
+  L+="</ul><br><b>"+escHtml(data.cta)+"</b>";
+  return L;
+}
+function bothText(data,inputs){
+  return inputs.title+"\n"+inputs.theme+" · "+inputs.count+" cases · "+READERS[inputs.reader].label+"\n\n"+
+    "BACK-COVER BLURB\n"+blurbText(data)+"\n\n----------------\n\n"+
+    "AMAZON LISTING DESCRIPTION\n"+data.listTitle+"\n\n"+listingText(data);
+}
+function allText(data,inputs){
+  var L=bothText(data,inputs)+"\n\n----------------\n\nKDP SUBTITLE OPTIONS (pick one)\n";
+  for(var i=0;i<data.subs.length;i++){ L+=(i+1)+". "+data.subs[i]+"\n"; }
+  L+="\nBACKEND KEYWORDS (one per slot, ≤50 chars)\n";
+  for(var k=0;k<data.keywords.length;k++){ L+=(k+1)+". "+data.keywords[k]+" ("+data.keywords[k].length+"/50)\n"; }
+  L+="\nSUGGESTED CATEGORIES\n";
+  for(var c=0;c<data.cats.length;c++){ L+=(c+1)+". "+data.cats[c]+"\n"; }
+  return L;
+}
+function validate(inputs){
+  if(!inputs.title){ return "Give the book a title — the hooks and headlines write themselves around it."; }
+  if(!inputs.theme){ return "Name the theme or series (e.g. The Riverside Manor Mysteries) — the copy needs its setting."; }
+  if(!inputs.diffs.length){ return "Check at least one difficulty level (Gentle, Standard or Fiendish)."; }
+  return null;
+}
+function wordsOf(s){ var w=String(s||"").trim().split(/\s+/); if(w.length===1&&w[0]===""){ return 0; } return w.length; }
+var state=null;
+function saveLS(){ try{ localStorage.setItem(LSKEY,JSON.stringify({inputs:collectInputs(),seeds:state.seeds})); }catch(e){} }
+function loadLS(){ try{ var r=localStorage.getItem(LSKEY); if(r){ var p=JSON.parse(r); if(p&&p.inputs){ return p; } } }catch(e){} return null; }
+function freshSeeds(){ return {hook:rndSeed(),p1:rndSeed(),p2:rndSeed(),p3:rndSeed(),p4:rndSeed(),tag:rndSeed(),li:rndSeed(),lm:rndSeed(),cta:rndSeed(),bv:rndSeed(),sub:rndSeed()}; }
+function mergeSeeds(s){ var f=freshSeeds(); if(s){ for(var k in f){ if(s[k]!==undefined&&s[k]!==null&&!isNaN(s[k])){ f[k]=s[k]; } } } return f; }
+function copyText(txt,msg){
+  function done(){ showToast(msg||"Copied"); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){ fb(); }); }
+  else { fb(); }
+  function fb(){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); }
+    catch(e){ showToast("Copy blocked — select manually"); }
+  }
+}
+function renderTones(){
+  var cur="noir";
+  try{ var ex=document.getElementsByName("tone"); for(var z=0;z<ex.length;z++){ if(ex[z].checked){ cur=ex[z].value; } } }catch(e){}
+  var h="";
+  for(var i=0;i<TONES.length;i++){
+    h+='<label class="radio'+(TONES[i][0]===cur?" on":"")+'"><input type="radio" name="tone" value="'+TONES[i][0]+'"'+(TONES[i][0]===cur?" checked":"")+'> <span><b>'+esc(TONES[i][1])+'</b><small>'+esc(TONES[i][2])+'</small></span></label>';
+  }
+  $("toneRadios").innerHTML=h;
+  var rs=document.getElementsByName("tone");
+  for(var q=0;q<rs.length;q++){ rs[q].onchange=function(){ renderTones(); saveLS(); }; }
+}
+function paintDiffs(){
+  var ds=document.querySelectorAll("#diffRow input");
+  for(var i=0;i<ds.length;i++){ ds[i].parentNode.className="chk"+(ds[i].checked?" on":""); }
+}
+function paintLens(blen){
+  var lr=document.getElementsByName("blen");
+  for(var q=0;q<lr.length;q++){ lr[q].parentNode.className="len"+(lr[q].value===blen?" on":""); }
+}
+function renderAll(){
+  var inputs=collectInputs();
+  var data=buildCopy(inputs,state.seeds);
+  state.cache={data:data,inputs:inputs};
+  $("blurbHook").innerHTML=esc(data.hook);
+  var bh="";
+  for(var i=0;i<data.paras.length;i++){ bh+="<p>"+esc(data.paras[i])+"</p>"; }
+  $("blurbBody").innerHTML=bh;
+  $("blurbTag").innerHTML=esc(data.tag);
+  var bw=wordsOf(data.hook+" "+data.paras.join(" ")+" "+data.tag);
+  $("blurbCount").innerHTML="Blurb: <b>"+bw+" words</b> · "+data.paras.length+" paragraphs + hook + tagline";
+  $("listTitle").innerHTML=esc(data.listTitle);
+  $("listBody").innerHTML="<p>"+esc(data.intro)+"</p><p>"+esc(data.mech)+"</p>";
+  var lh="";
+  for(var j=0;j<data.bullets.length;j++){ lh+="<li>"+esc(data.bullets[j])+"</li>"; }
+  $("listBullets").innerHTML=lh;
+  $("listCta").innerHTML=esc(data.cta);
+  var lt=listingText(data);
+  var lc=$("listCount");
+  lc.innerHTML="Listing: <b>"+lt.length+" / 4000 chars</b> · "+wordsOf(lt)+" words";
+  lc.className="counter"+(lt.length>4000?" over":"");
+  var sh="";
+  for(var s=0;s<data.subs.length;s++){ sh+='<p style="margin-bottom:8px">OPTION '+(s+1)+': '+esc(data.subs[s])+' <small style="color:var(--muted)">('+data.subs[s].length+' chars)</small></p>'; }
+  $("subOpts").innerHTML=sh;
+  var kh="";
+  for(var k=0;k<data.keywords.length;k++){ kh+='<span class="kwchip">'+esc(data.keywords[k])+' <small>'+data.keywords[k].length+'/50</small></span>'; }
+  $("kwBox").innerHTML=kh;
+  var ch="";
+  for(var c=0;c<data.cats.length;c++){ ch+='<div class="catline">'+(c+1)+'. '+esc(data.cats[c])+'</div>'; }
+  $("catBox").innerHTML=ch;
+  $("emptyState").style.display="none";
+  $("resultWrap").style.display="block";
+  $("copybar").style.display="flex";
+}
+function reseeds(keys){
+  for(var i=0;i<keys.length;i++){ state.seeds[keys[i]]=rndSeed(); }
+  saveLS(); renderAll();
+}
+function regen(){
+  var inputs=collectInputs();
+  var err=validate(inputs);
+  if(err){ $("validMsg").style.display="block"; $("validMsg").innerHTML=esc(err); return; }
+  $("validMsg").style.display="none";
+  state.seeds=freshSeeds(); saveLS(); renderAll(); showToast("Fresh variations typed up");
+}
+function loadSavedProj(){ try{ var r=localStorage.getItem("cfbl-saved"); if(r){ return JSON.parse(r)||[]; } }catch(e){} return []; }
+function renderSavedProj(list){
+  var h="";
+  for(var i=0;i<list.length;i++){ h+='<div class="saveditem"><span>'+esc(list[i].name)+'</span><button data-ld="'+i+'">Load</button><button data-dl="'+i+'">✕</button></div>'; }
+  if(!list.length){ h='<div style="font-size:12px;color:#8E9BB0">No saved projects yet.</div>'; }
+  $("savedList").innerHTML=h;
+  var lds=document.querySelectorAll("[data-ld]");
+  for(var a=0;a<lds.length;a++){ (function(el){ el.onclick=function(){
+    var all=loadSavedProj(); var s=all[parseInt(el.getAttribute("data-ld"),10)];
+    applyInputs(s.inputs); state.seeds=mergeSeeds(s.seeds); saveLS(); renderAll(); showToast("Project loaded");
+  }; })(lds[a]); }
+  var dls=document.querySelectorAll("[data-dl]");
+  for(var b=0;b<dls.length;b++){ (function(el){ el.onclick=function(){ var all2=loadSavedProj(); all2.splice(parseInt(el.getAttribute("data-dl"),10),1); try{ localStorage.setItem("cfbl-saved",JSON.stringify(all2)); }catch(e){} renderSavedProj(all2); }; })(dls[b]); }
+}
+function applyInputs(inp){
+  $("in-title").value=inp.title||""; $("in-theme").value=inp.theme||"";
+  $("in-reader").value=inp.reader||"general"; $("in-count").value=inp.count||"100"; $("in-trim").value=inp.trim||"std6x9";
+  var ds=document.querySelectorAll("#diffRow input");
+  for(var i=0;i<ds.length;i++){ ds[i].checked=(inp.diffs||[]).indexOf(ds[i].value)>=0; }
+  try{ var rs=document.getElementsByName("tone"); for(var t=0;t<rs.length;t++){ if(rs[t].value===inp.tone){ rs[t].checked=true; } } }catch(e){}
+  try{ var lr=document.getElementsByName("blen"); for(var q=0;q<lr.length;q++){ if(lr[q].value===(inp.blen||"standard")){ lr[q].checked=true; } } }catch(e){}
+  renderTones(); paintDiffs(); paintLens(inp.blen||"standard");
+}
+function renderChecks(){
+  var done={};
+  try{ var r=localStorage.getItem("cfbl-checks"); if(r){ done=JSON.parse(r)||{}; } }catch(e){}
+  var h="";
+  for(var i=0;i<CHECKS.length;i++){ h+='<label><input type="checkbox" data-ch="'+i+'"'+(done[i]?" checked":"")+'> '+esc(CHECKS[i])+'</label>'; }
+  $("checkList").innerHTML=h;
+  var boxes=document.querySelectorAll("[data-ch]");
+  for(var q=0;q<boxes.length;q++){ boxes[q].onchange=function(){
+    var d2={};
+    var all=document.querySelectorAll("[data-ch]");
+    for(var k=0;k<all.length;k++){ d2[k]=all[k].checked?1:0; }
+    try{ localStorage.setItem("cfbl-checks",JSON.stringify(d2)); }catch(e){}
+  }; }
+}
+function init(){
+  renderTones();
+  paintDiffs();
+  paintLens("standard");
+  renderSavedProj(loadSavedProj());
+  renderChecks();
+  var saved=loadLS();
+  if(saved&&saved.inputs){
+    applyInputs(saved.inputs);
+    state={seeds:mergeSeeds(saved.seeds),cache:null};
+    if(saved.inputs.title&&saved.inputs.theme){ renderAll(); }
+  } else {
+    state={seeds:freshSeeds(),cache:null};
+  }
+  var ds2=document.querySelectorAll("#diffRow input");
+  for(var d=0;d<ds2.length;d++){ ds2[d].onchange=function(){ paintDiffs(); saveLS(); }; }
+  var lr2=document.getElementsByName("blen");
+  for(var lq=0;lq<lr2.length;lq++){ lr2[lq].onchange=function(){ paintLens(collectInputs().blen); saveLS(); }; }
+  var ids=["in-title","in-theme","in-reader","in-count","in-trim"];
+  for(var k=0;k<ids.length;k++){ $(ids[k]).oninput=function(){ saveLS(); }; $(ids[k]).onchange=function(){ saveLS(); }; }
+  $("btnBuild").onclick=function(){
+    var inputs=collectInputs();
+    var err=validate(inputs);
+    if(err){ $("validMsg").style.display="block"; $("validMsg").innerHTML=esc(err); return; }
+    $("validMsg").style.display="none";
+    saveLS(); renderAll(); showToast("Case file written");
+  };
+  $("btnRegen").onclick=regen;
+  $("btnRegenTop").onclick=regen;
+  $("btnReBlurb").onclick=function(){ if(!state.cache){ return; } reseeds(["hook","p1","p2","p3","p4","tag"]); showToast("Blurb reshuffled"); };
+  $("btnReList").onclick=function(){ if(!state.cache){ return; } reseeds(["li","lm","cta","bv","sub"]); showToast("Listing reshuffled"); };
+  $("btnSaveProj").onclick=function(){
+    var inputs=collectInputs();
+    var err=validate(inputs);
+    if(err){ $("validMsg").style.display="block"; $("validMsg").innerHTML=esc(err); return; }
+    $("validMsg").style.display="none";
+    var all=loadSavedProj();
+    all.unshift({name:inputs.title+" — "+inputs.tone,inputs:inputs,seeds:state.seeds});
+    all=all.slice(0,8);
+    try{ localStorage.setItem("cfbl-saved",JSON.stringify(all)); }catch(e){}
+    renderSavedProj(all); showToast("Project saved");
+  };
+  $("btnCopyBlurb").onclick=function(){ if(!state.cache){ return; } copyText(blurbText(state.cache.data),"Blurb copied"); };
+  $("btnCopyListing").onclick=function(){ if(!state.cache){ return; } var c2=state.cache; copyText(c2.data.listTitle+"\n\n"+listingText(c2.data),"Listing copied"); };
+  $("btnCopySubs").onclick=function(){ if(!state.cache){ return; } copyText(state.cache.data.subs.join("\n"),"Subtitles copied"); };
+  $("btnCopyKw").onclick=function(){ if(!state.cache){ return; } copyText(state.cache.data.keywords.join("\n"),"Keywords copied"); };
+  $("btnCopyBoth").onclick=function(){ if(!state.cache){ return; } var c3=state.cache; copyText(bothText(c3.data,c3.inputs),"Blurb + listing copied"); };
+  $("btnCopyAll").onclick=function(){ if(!state.cache){ return; } var c4=state.cache; copyText(allText(c4.data,c4.inputs),"Full dossier copied"); };
+  $("btnCopyHtml").onclick=function(){ if(!state.cache){ return; } copyText(listingHTML(state.cache.data),"Amazon HTML copied"); };
+  $("btnNew").onclick=function(){
+    if(!confirm("Start a new project? Current inputs will reset.")){ return; }
+    try{ localStorage.removeItem(LSKEY); }catch(e){}
+    $("in-title").value=""; $("in-theme").value=""; $("in-reader").value="general";
+    $("in-count").value="100"; $("in-trim").value="std6x9";
+    var dx=document.querySelectorAll("#diffRow input");
+    for(var z=0;z<dx.length;z++){ dx[z].checked=(dx[z].value==="Standard"); }
+    try{ var rs=document.getElementsByName("tone"); rs[0].checked=true; }catch(e){}
+    try{ var lr=document.getElementsByName("blen"); lr[1].checked=true; }catch(e){}
+    state={seeds:freshSeeds(),cache:null};
+    renderTones(); paintDiffs(); paintLens("standard"); saveLS();
+    $("resultWrap").style.display="none"; $("copybar").style.display="none"; $("emptyState").style.display="block";
+  };
+}
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",init); } else { init(); }
+</script>
+</body>
+</html>
