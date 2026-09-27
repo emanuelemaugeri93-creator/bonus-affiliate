@@ -1,0 +1,511 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Companion Cast Stat Sheet Generator — Gamebooks Empire Bonus</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e8e2d0;
+  --panel:#ffffff;
+  --ink:#000000;
+  --accent:#7a2e2e;
+  --accent2:#3d5a3d;
+}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Space Mono",monospace;min-height:100%}
+h1,h2,h3{margin:0;font-family:"Cinzel",serif}
+button{font-family:"Cinzel",serif}
+#topbar{background:var(--panel);border-bottom:4px solid #000;padding:20px 28px 18px}
+#topbar .wrap{max-width:1200px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:14px}
+.badge{width:52px;height:52px;background:var(--accent);border:3px solid #000;border-radius:0;box-shadow:4px 4px 0 #000;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.badge svg{width:30px;height:30px}
+.kicker{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+#topbar h1{font-size:28px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+#topbar .sub{font-size:13px;margin-top:4px}
+#genRow{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;align-items:stretch}
+#in-theme{flex:1;min-width:220px;border:3px solid #000;border-radius:0;background:#fff;color:#000;
+  font-family:"Space Mono",monospace;font-size:15px;font-weight:700;padding:12px 14px;box-shadow:6px 6px 0 #000;text-transform:uppercase;letter-spacing:.5px}
+#in-theme::placeholder{color:#888}
+#in-theme:focus{outline:none;background:#fffbe8}
+#in-count{border:3px solid #000;border-radius:0;background:#fff;font-family:"Space Mono",monospace;font-size:15px;font-weight:700;
+  padding:12px;box-shadow:6px 6px 0 #000;cursor:pointer}
+#in-pstyle{border:3px solid #000;border-radius:0;background:#fff;font-family:"Space Mono",monospace;font-size:13px;font-weight:700;
+  padding:12px;box-shadow:6px 6px 0 #000;cursor:pointer}
+#partyStats{display:none;margin-bottom:18px}
+#partyStats .pbox{background:#000;color:#fff;border:3px solid #000;border-radius:0;box-shadow:6px 6px 0 rgba(0,0,0,.3);
+  padding:14px 18px;font-size:12px;font-weight:700;letter-spacing:1px}
+#partyStats .pbox b{color:#FFD60A}
+.locktag{display:inline-block;background:#000;color:#FFD60A;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 9px;margin-left:8px}
+.ability{margin-top:10px;font-size:12.5px;line-height:1.7;background:#000;color:#fff;padding:9px 11px}
+.ability b{color:#FFD60A}
+.flawline{margin-top:8px;font-size:12.5px;line-height:1.7}
+.bondline{margin-top:8px;font-size:12.5px;line-height:1.7;border-left:6px solid var(--accent2);padding-left:10px}
+.pwrline{font-size:12px;font-weight:700;letter-spacing:1px;margin-top:10px}
+.pwrline .rank{display:inline-block;background:var(--accent);color:#fff;padding:2px 10px;margin-left:6px}
+@media print{
+  #topbar,#toolbar,#partyStats,.cardbtns,#toast,.btn,.sbtn{display:none !important}
+  body{background:#fff}
+  #main{padding:0}
+  #grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .card{box-shadow:none;break-inside:avoid}
+}
+.btn{background:#000;color:#fff;border:3px solid #000;border-radius:0;font-weight:700;font-size:15px;letter-spacing:1px;
+  text-transform:uppercase;padding:12px 22px;cursor:pointer;box-shadow:6px 6px 0 rgba(0,0,0,.3);white-space:nowrap}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(0,0,0,.3)}
+.btn.red{background:var(--accent)}
+.btn.green{background:var(--accent2)}
+.btn.ghost{background:#fff;color:#000;box-shadow:6px 6px 0 #000}
+#toolbar{max-width:1200px;margin:0 auto;padding:18px 28px 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+#toolbar .note{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+#main{max-width:1200px;margin:0 auto;padding:20px 28px 70px}
+#grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.card{background:var(--panel);border:3px solid #000;border-radius:0;box-shadow:6px 6px 0 #000;padding:20px;position:relative}
+.card .cnum{position:absolute;top:-3px;right:-3px;background:#000;color:#fff;font-size:12px;font-weight:700;padding:5px 11px;letter-spacing:1px}
+.card h3{font-size:20px;font-weight:800;line-height:1.25;text-transform:uppercase;letter-spacing:.5px;padding-right:52px}
+.card .role{display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;padding:4px 10px;margin:10px 0 4px}
+.stats{margin-top:12px;border-top:3px solid #000;padding-top:10px}
+.srow{display:grid;grid-template-columns:92px minmax(0,1fr) 28px;gap:8px;align-items:center;margin-bottom:8px;font-size:12px;font-weight:700}
+.pips{display:flex;gap:3px}
+.pips i{display:block;height:14px;flex:1;background:#fff;border:2px solid #000}
+.pips i.on{background:var(--accent2)}
+.pips i.on.hot{background:var(--accent)}
+.sval{text-align:right}
+.inv{margin:12px 0 0;padding:10px 12px;background:#f4efe0;border:3px solid #000;font-size:12.5px;line-height:1.9}
+.inv b{display:block;font-size:11px;letter-spacing:2px;margin-bottom:2px}
+.inv li{list-style:none;margin:0;padding:0}
+.inv ul{margin:0;padding:0}
+.quirk{margin-top:12px;font-size:12.5px;line-height:1.7;border-left:6px solid var(--accent);padding-left:10px}
+.quirk b{letter-spacing:1px}
+.promptbox{margin-top:12px;background:#000;color:#7dff9e;border-radius:0;padding:12px;font-size:11.5px;line-height:1.7;word-break:break-word}
+.promptbox b{color:#fff;letter-spacing:1px}
+.cardbtns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.sbtn{flex:1;background:#fff;border:3px solid #000;border-radius:0;font-size:12px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;padding:9px 6px;cursor:pointer;box-shadow:4px 4px 0 #000;white-space:nowrap}
+.sbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.sbtn.dark{background:#000;color:#fff}
+#btnGuide{background:#FFD60A !important;color:#000 !important;border:3px solid #000;box-shadow:6px 6px 0 #000}
+#guidePanel .guide-box{box-shadow:6px 6px 0 #FFD60A}
+#guidePanel{display:none;max-width:1200px;margin:0 auto;padding:0 28px}
+.guide-box{background:#fff;border:3px solid #000;border-radius:0;box-shadow:6px 6px 0 #000;padding:18px 22px;margin-top:16px;font-size:13.5px;line-height:1.9}
+.guide-box b{background:#000;color:#fff;padding:0 6px}
+.guide-box ol{margin:8px 0;padding-left:20px}
+.guide-box li{margin-bottom:5px}
+.guide-box kbd{background:#f4efe0;border:2px solid #000;border-radius:0;padding:0 7px;font-size:12px;font-family:inherit;white-space:nowrap}
+#emptyState{border:3px dashed #000;border-radius:0;padding:60px 26px;text-align:center;margin-top:6px;background:var(--panel)}
+#emptyState h2{font-size:24px;text-transform:uppercase;margin-bottom:8px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:none;background:#000;color:#fff;
+  font-family:"Cinzel",serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;padding:13px 24px;border:3px solid #000;box-shadow:6px 6px 0 rgba(0,0,0,.3)}
+@media(max-width:1000px){#grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:660px){#grid{grid-template-columns:minmax(0,1fr)}#topbar h1{font-size:21px}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 6 V11 C20 16 16.5 19.5 12 21 C7.5 19.5 4 16 4 11 V6 Z"/><path d="M12 7 V13 M9 10 H15"/></svg></div>
+      <div><div class="kicker">Gamebooks Empire Bonus · Cast Registry</div><h1>Companion Cast Stat Sheet Generator</h1><div class="sub">TURN YOUR SUPPORTING CAST INTO REAL CHARACTERS.</div></div>
+    </div>
+    <div id="genRow">
+      <input type="text" id="in-theme" maxlength="60" value="Viking raid saga" placeholder="THEME / SETTING — E.G. VIKING RAID SAGA">
+      <select id="in-count"><option value="2">2 COMPANIONS</option><option value="3">3 COMPANIONS</option><option value="4">4 COMPANIONS</option><option value="5">5 COMPANIONS</option><option value="6" selected>6 COMPANIONS</option></select>
+      <select id="in-pstyle" title="Portrait art style"><option value="storybook" selected>STORYBOOK ART</option><option value="cinematic">CINEMATIC</option><option value="pixel">PIXEL ART</option><option value="watercolor">WATERCOLOR</option></select>
+      <button class="btn red" id="btnGen">⚔ GENERATE CAST</button>
+    </div>
+  </div>
+</div>
+<div id="toolbar" style="display:none">
+  <span class="note" id="castNote"></span>
+  <button class="btn green" id="btnCopyAll">⧉ COPY ENTIRE CAST</button>
+  <button class="btn ghost" id="btnTxt">.TXT</button>
+  <button class="btn ghost" id="btnMd">.MD</button>
+  <button class="btn ghost" id="btnJson">.JSON</button>
+  <button class="btn ghost" id="btnGuide">📖 HOW TO USE</button>
+  <button class="btn ghost" id="btnNew">↻ NEW CAST</button>
+</div>
+<div id="guidePanel"><div class="guide-box">
+<b>60-SECOND MANUAL:</b>
+<ol>
+<li>Type a <b>setting</b> (viking, pirate, samurai, noir…) — the engine loads the matching name/role/item bank. Unknown worlds fall back to the adventurer bank.</li>
+<li>Pick <b>2–6 companions</b> + a <b>portrait art style</b>, hit <kbd>⚔ GENERATE CAST</kbd>.</li>
+<li>Read the sheet: <b>pips</b> (red = strongest stat) · <b>POWER/RANK</b> · <b>ability</b> keyed to the best stat · <b>flaw</b> · <b>bond</b> to a party member.</li>
+<li><kbd>⟳ REROLL</kbd> reshuffles one card. <b>LOCK</b> protects keepers — locked heroes survive <kbd>NEW CAST</kbd>.</li>
+<li><kbd>COPY PROMPT</kbd> pastes straight into any image generator. <kbd>COPY SHEET</kbd> / <kbd>ENTIRE CAST</kbd> / <kbd>.TXT</kbd> <kbd>.MD</kbd> <kbd>.JSON</kbd> save your files. Print works too.</li>
+<li>The black <b>PARTY strip</b> shows averages, total power and the MVP. Everything autosaves in your browser.</li>
+</ol>
+</div></div>
+<div id="main">
+  <div id="partyStats"></div>
+  <div id="emptyState"><h2>Six chairs. Empty table.</h2><p>Type a setting above and hit GENERATE CAST.<br>Names · roles · stats · inventory · quirks · portrait prompts.</p></div>
+  <div id="grid"></div>
+</div>
+<div id="toast"></div>
+<script>
+var LSKEY="ccg-state-v1";
+var BANK={
+viking:{keys:["viking","norse","fjord"],
+ first:["Asta","Bjorn","Eirik","Freya","Gudrun","Haldor","Ingrid","Leif","Ragna","Sigrid"],
+ last:["Ironhand","the Red","Stormborn","Oarbreaker","Wolfdaughter","Skaldsson","Frostbeard","Wavewatcher"],
+ roles:[{n:"Sea-Wolf Raider",w:{s:3,w:0,c:1,l:1}},{n:"Rune-Carver",w:{s:0,w:3,c:1,l:0}},{n:"Shipwright",w:{s:2,w:1,c:0,l:1}},{n:"Shieldmaiden",w:{s:2,w:0,c:1,l:1}},{n:"Skald",w:{s:0,w:1,c:3,l:1}},{n:"Pathfinder",w:{s:0,w:2,c:0,l:2}}],
+ inv:["Notched hand-axe","Rune-carved drinking horn","Sealskin cloak","Whetstone","Salt pork ration","Bronze arm-ring","Fishing hooks","Oak shield boss","Dried seaweed rations","Bone dice set"],
+ quirk:["Braids their beard before every battle.","Only laughs at jokes about the sea.","Carves a mark into the mast after every voyage.","Refuses to sleep indoors.","Sings rowing songs while eating.","Polishes their axe when nervous.","Names every wave that hits the ship.","Snores loud enough to wake the fjord."],
+ desc:["braided war-hair","tribal tattoos","weather-beaten face","ice-blue eyes","fur-lined armor","scarred knuckles","wind-burned cheeks","silver arm-rings"]},
+medieval:{keys:["medieval","kingdom","castle","knight","fantasy"],
+ first:["Aldric","Brienne","Cedric","Elowen","Gareth","Isolde","Rowan","Tilda","Wystan","Ysolde"],
+ last:["the Bold","Oathkeeper","of Thornwall","the Patient","Millerson","Hartwood","the Steady","Crowshield"],
+ roles:[{n:"Loyal Blacksmith",w:{s:3,w:1,c:0,l:0}},{n:"Cunning Scout",w:{s:0,w:2,c:0,l:2}},{n:"Wary Healer",w:{s:0,w:3,c:1,l:0}},{n:"Oathbound Knight",w:{s:2,w:0,c:1,l:0}},{n:"Wandering Bard",w:{s:0,w:1,c:3,l:1}},{n:"Young Squire",w:{s:1,w:0,c:1,l:2}}],
+ inv:["Iron dagger","Healing salve","Lucky coin","Bedroll","Flint and tinder","Hard cheese wheel","Leather map case","Torch stubs","Rope coil","Silver penny"],
+ quirk:["Bows to every statue they pass.","Hums tavern songs while sharpening blades.","Collects interesting buttons.","Never sits with their back to a door.","Talks to their horse like an old friend.","Counts coins twice, every time.","Falls asleep the moment a story ends.","Smells every meal before eating."],
+ desc:["calloused hands","sharp cheekbones","travel-worn cloak","steady grey eyes","mud-flecked boots","plaited hair","ink-stained fingers","a crooked smile"]},
+egyptian:{keys:["egypt","pharaoh","nile","tomb"],
+ first:["Amara","Djoser","Kesi","Menna","Nefra","Osahar","Rami","Sitre","Tarek","Zahra"],
+ last:["of the Nile","Jackalsworn","the Keen-Eyed","Sandstrider","Lotusborn","the Silent","Sunmarked","Riverwise"],
+ roles:[{n:"Tomb Guard",w:{s:3,w:0,c:1,l:0}},{n:"Royal Scribe",w:{s:0,w:3,c:1,l:0}},{n:"Temple Priest",w:{s:0,w:2,c:1,l:0}},{n:"Desert Tracker",w:{s:0,w:2,c:0,l:2}},{n:"Bazaar Merchant",w:{s:0,w:1,c:3,l:1}},{n:"Tumbling Acrobat",w:{s:1,w:0,c:1,l:3}}],
+ inv:["Bronze khopesh","Papyrus scroll","Linen bandages","Dried figs","Scarab amulet","Kohl pot","Copper mirror","Water skin","Incense cones","Carved ushabti"],
+ quirk:["Reads omens in spilled grain.","Never steps on threshold lines.","Feeds stray cats before themselves.","Memorizes star positions nightly.","Bargains for sport, not need.","Oils their blade every sundown.","Whistles through their teeth when thinking.","Keeps a pebble from every city visited."],
+ desc:["kohl-lined eyes","sun-bronzed skin","shaven head","gold earrings","linen robes","sand-worn sandals","hieroglyph tattoos","a solemn stare"]},
+pirate:{keys:["pirate","sea","ocean","ship","caribbean","sail"],
+ first:["Anne","Bartholomew","Calico Jack","Diana","Ezra","Flint","Grog","Hattie","Ishmael","Peg"],
+ last:["One-Eye","Saltbeard","the Lucky","Stormcrow","Barnacle","Goldtooth","Seadog","the Quiet"],
+ roles:[{n:"Daring Swashbuckler",w:{s:2,w:0,c:1,l:1}},{n:"Master Navigator",w:{s:0,w:3,c:1,l:0}},{n:"Ship's Cook",w:{s:0,w:1,c:2,l:1}},{n:"Crow's-Nest Lookout",w:{s:0,w:2,c:0,l:2}},{n:"Bold Captain",w:{s:1,w:0,c:3,l:0}},{n:"Carpenter",w:{s:3,w:1,c:0,l:0}}],
+ inv:["Cutlass","Brass spyglass","Bottle of rum","Hardtack biscuits","Treasure map scrap","Lucky doubloon","Tar brush","Compass that spins","Parrot feather","Bandana collection"],
+ quirk:["Narrates their own life like a legend.","Refuses to eat with a fork.","Knows the name of every gull in port.","Sleeps with one eye open. Literally.","Challenges strangers to knot-tying contests.","Cries at sunsets, denies it after.","Keeps a list of everyone who owes them rum.","Swears the ship talks back."],
+ desc:["salt-crusted coat","gold tooth","tricorn hat","sun-bleached hair","rope-burned hands","a swaggering stance","tattooed forearms","squinting sea-eyes"]},
+samurai:{keys:["samurai","japan","shogun","ninja","katana"],
+ first:["Akira","Botan","Daichi","Emiko","Hayato","Isamu","Kaede","Ren","Sora","Yuki"],
+ last:["of the Crane","Ironblossom","the Patient","Stormcaller","Pinewatch","the Unbroken","Moonshadow","Riverstone"],
+ roles:[{n:"Honored Kenshi",w:{s:3,w:1,c:0,l:0}},{n:"Battle Strategist",w:{s:0,w:3,c:1,l:0}},{n:"Silver-Tongued Courtier",w:{s:0,w:1,c:3,l:0}},{n:"Shadow Shinobi",w:{s:1,w:0,c:0,l:3}},{n:"Longbow Archer",w:{s:1,w:2,c:0,l:1}},{n:"Temple Monk",w:{s:0,w:2,c:1,l:0}}],
+ inv:["Katana in lacquered saya","Whetstone","Rice balls","Calligraphy brush","Paper fan","Healing herbs","Travel papers with seals","Tea brick","Spare bowstring","Wooden training sword"],
+ quirk:["Bows to the sunrise every morning.","Composes a haiku before every duel.","Never draws without need, never sheathes in anger.","Polishes armor while reciting ancestors.","Refuses the last rice cake, always.","Counts footsteps on bridges.","Keeps cricket in a bamboo cage for luck.","Apologizes to the training dummy."],
+ desc:["topknot hair","calm dark eyes","lacquered armor","calloused sword-hand","ink-brushed robes","a measured stillness","weathered sandals","a thin dueling scar"]},
+roman:{keys:["roman","rome","gladiator","legion","empire"],
+ first:["Aurelia","Cassius","Decima","Felix","Horatia","Marcus","Octavia","Priscus","Tullia","Vitus"],
+ last:["of the Ninth","Wolfborn","the Steadfast","Laurel-crowned","Stonefist","the Keen","Riverford","Oathbound"],
+ roles:[{n:"Iron Legionary",w:{s:3,w:0,c:1,l:0}},{n:"Temple Augur",w:{s:0,w:3,c:1,l:0}},{n:"Iron Centurion",w:{s:1,w:0,c:2,l:0}},{n:"Road Scout",w:{s:0,w:2,c:0,l:1}},{n:"Siege Engineer",w:{s:1,w:2,c:0,l:0}},{n:"Arena Gladiator",w:{s:2,w:0,c:1,l:1}}],
+ inv:["Gladius","Bronze lorica scrap","Wax tablet and stylus","Salt ration","Red cloak (worn)","Dice of bone","Oil flask","Sandals, spare pair","Laurel sprig","Coin of the Emperor"],
+ quirk:["Salutes magpies for luck.","Recites marching songs while cooking.","Never breaks bread with the left hand.","Collects enemy shield-bosses as stools.","Argues with statues.","Drills footwork before breakfast.","Keeps muster rolls of pigeons.","Toasts fallen friends every Saturnalia."],
+ desc:["close-cropped hair","soldier's posture","sun-darkened skin","a broken nose","scarred forearms","steady brown eyes","marching boots","laurel tattoo"]},
+wildwest:{keys:["west","cowboy","frontier","sheriff","ranch"],
+ first:["Beauregard","Clara","Dusty","Etta","Frank","Hazel","Jesse","Lena","Otis","Sadie"],
+ last:["Two-Guns","the Patient","Dustrunner","Ironheels","the Lucky","Cactus Rose","Longrider","the Quiet"],
+ roles:[{n:"Quick-Draw Gunslinger",w:{s:1,w:0,c:1,l:3}},{n:"Desert Tracker",w:{s:0,w:2,c:0,l:1}},{n:"Town Doctor",w:{s:0,w:3,c:1,l:0}},{n:"Steadfast Sheriff",w:{s:1,w:0,c:2,l:0}},{n:"Saloon Pianist",w:{s:0,w:1,c:3,l:1}},{n:"Ranch Blacksmith",w:{s:3,w:1,c:0,l:0}}],
+ inv:["Six-shooter","Spare bullets","Bedroll","Tin coffee pot","Poker deck (marked)","Snakebite kit","Stetson hat","Lasso","Jerky strips","Wanted poster collection"],
+ quirk:["Tips their hat to tumbleweeds.","Whistles before every draw.","Never plays cards on Sundays.","Names their horse after exes.","Spits precisely into spittoons at ten paces.","Keeps a diary in terrible poetry.","Trusts dogs, doubts bankers.","Naps with boots on, always."],
+ desc:["squinting eyes","dust-coated coat","wide-brim hat","leather gloves","spurred boots","sun-creased face","a slow drawl","calloused trigger finger"]},
+victorian:{keys:["victorian","london","gaslight","steam"],
+ first:["Ada","Benedict","Clara","Edmund","Florence","Hugo","Ivy","Jasper","Lydia","Silas"],
+ last:["Brasswhistle","the Observant","Candlewick","Fogworthy","the Precise","Gearwright","Nightingale","the Patient"],
+ roles:[{n:"Gaslight Detective",w:{s:0,w:3,c:1,l:0}},{n:"Brass Inventor",w:{s:0,w:2,c:0,l:1}},{n:"Veil Medium",w:{s:0,w:1,c:2,l:1}},{n:"Dogged Constable",w:{s:2,w:0,c:1,l:0}},{n:"Street Urchin",w:{s:0,w:1,c:1,l:3}},{n:"Bold Explorer",w:{s:1,w:2,c:1,l:0}}],
+ inv:["Magnifying glass","Brass pocket watch","Notebook and pencil","Vial of Fog (labeled)","Lockpicks","Calling cards","Umbrella (sword inside)","Telegram blanks","Smelling salts","Pocket atlas"],
+ quirk:["Deduces strangers aloud, accurately.","Winds their watch exactly 40 turns.","Speaks to pigeons as informants.","Never removes gloves outdoors.","Collects other people's umbrellas.","Takes tea at 4, even mid-chase.","Memorizes train timetables for fun.","Apologizes to furniture bumped into."],
+ desc:["sharp cheekbones","brass goggles","tailored coat","ink-smudged cuffs","a knowing smirk","fog-damp hair","gloved hands","pocket-watch chain"]},
+greek:{keys:["myth","olympus","sparta","athens","gods"],
+ first:["Ajax","Callista","Damon","Elena","Hector","Ione","Jason","Kora","Leonidas","Thalia"],
+ last:["of Athens","Godtouched","Olivecrowned","the Swift","Waveborn","Lionhearted","Oathkeeper","the Cunning"],
+ roles:[{n:"Bronze Hoplite",w:{s:3,w:0,c:1,l:0}},{n:"Delphic Oracle",w:{s:0,w:3,c:1,l:0}},{n:"Olympic Champion",w:{s:2,w:0,c:1,l:0}},{n:"Swift Messenger",w:{s:0,w:2,c:0,l:1}},{n:"Marble Artisan",w:{s:1,w:2,c:0,l:0}},{n:"Wandering Rhapsode",w:{s:0,w:1,c:3,l:0}}],
+ inv:["Short sword (xiphos)","Round shield","Olive oil flask","Honey cakes","Lyre","Helmet plume","Sandals","Papyrus map","Offering coins","Shepherd's staff"],
+ quirk:["Consults bird flights before decisions.","Oils their shield before battle and dinner.","Recites epic verses while marching.","Never refuses a footrace.","Leaves honey cakes at crossroads.","Argues philosophy with statues.","Trains at dawn, naps at noon.","Names their weapons after winds."],
+ desc:["olive skin","curled dark hair","bronze armor","laurel crown","sea-grey eyes","sandaled feet","discus shoulders","solemn brow"]},
+noir:{keys:["detective","noir","1920s","crime","gangster"],
+ first:["Vera","Eddie","Gloria","Hank","Iris","Jack","Lola","Mickey","Nora","Sal"],
+ last:["Two-Coats","the Canary","Nightowl","Brassbuttons","the Quiet","Fogarty","Quickfingers","Valentine"],
+ roles:[{n:"Hardboiled Detective",w:{s:0,w:3,c:1,l:0}},{n:"Velvet Femme Fatale",w:{s:0,w:1,c:3,l:0}},{n:"Beat Cop",w:{s:2,w:0,c:1,l:0}},{n:"Bar Informant",w:{s:0,w:0,c:1,l:3}},{n:"Safecracker",w:{s:0,w:2,c:0,l:1}},{n:"Gumshoe Reporter",w:{s:0,w:2,c:1,l:0}}],
+ inv:["Snub-nose revolver","Flask of rye","Press pass","Lockpicks","Box camera","Notebook stub","Trench coat","Spare collar","Lucky matchbook","Telegram blanks"],
+ quirk:["Narrates their own entrances.","Lights two cigarettes, gives one away.","Never sits facing away from doors.","Pays in exact change, always.","Feeds the same stray cat nightly.","Hums jazz while tailing marks.","Collects other people's umbrellas.","Apologizes to lampposts."],
+ desc:["fedora shadow","sharp cheekbones","trench coat","tired eyes","pencil mustache","fingerless gloves","cigarette smoke","polished brogues"]},
+space:{keys:["space","galaxy","starship","robot","alien","mars","future"],
+ first:["Nova","Rex","Io","Vega","Pax","Juno","Kai","Lyra","Orion","Zara"],
+ last:["Starfall","the Augmented","Voidwalker","Quasar","Ironlung","the Calculated","Moondust","Zero-G"],
+ roles:[{n:"Star Pilot",w:{s:0,w:2,c:0,l:1}},{n:"Ship Engineer",w:{s:0,w:3,c:0,l:0}},{n:"Void Marine",w:{s:3,w:0,c:1,l:0}},{n:"Diplomat",w:{s:0,w:1,c:3,l:0}},{n:"Ship Medic",w:{s:0,w:2,c:1,l:0}},{n:"Asteroid Smuggler",w:{s:0,w:0,c:1,l:3}}],
+ inv:["Plasma cutter","Med-gel packs","Oxygen tabs","Holo-map","Multi-tool","Ration bars","Commlink","Zero-G boots","Patch kit","Lucky circuit chip"],
+ quirk:["Names every bulkhead slept behind.","Talks to the ship AI like family.","Collects alien bottle caps.","Sleeps in zero-G by choice.","Calibrates everything twice.","Hums engine harmonics.","Never eats rehydrated pie.","Salutes airlocks."],
+ desc:["chrome augments","zero-G hair","flight suit","visor tan lines","glowing tattoos","magnetic boots","shaved head","star-chart freckles"]},
+horror:{keys:["haunted","ghost","vampire","monster","horror","witch","curse"],
+ first:["Agatha","Bram","Cordelia","Edgar","Griselda","Ichabod","Lenore","Mortimer","Ophelia","Silas"],
+ last:["Grimsbane","the Pale","Blackwood","Thorne","the Watchful","Crowfeather","Holloway","Nightshade"],
+ roles:[{n:"Candlelit Occultist",w:{s:0,w:3,c:0,l:0}},{n:"Monster Hunter",w:{s:2,w:1,c:0,l:0}},{n:"Pale Medium",w:{s:0,w:1,c:2,l:0}},{n:"Grim Gravedigger",w:{s:3,w:0,c:0,l:0}},{n:"Oathbound Exorcist",w:{s:0,w:2,c:1,l:0}},{n:"Final Survivor",w:{s:0,w:0,c:1,l:3}}],
+ inv:["Silver dagger","Holy water flask","Salt pouch","Lantern","Crucifix","Garlic braid","Journal of omens","Iron nails","Wolfsbane sprig","Black candle"],
+ quirk:["Never sleeps facing a mirror.","Counts doors in every building.","Leaves salt lines at thresholds.","Whistles to check for echoes.","Never whistles after dark.","Knocks twice before any door.","Carries a dead saint's medal.","Sleeps with lantern lit."],
+ desc:["pale skin","dark-ringed eyes","black coat","silver jewelry","nervous hands","hollow cheeks","candlelit pallor","ink-stained cuffs"]},
+generic:{keys:[],
+ first:["Ash","Bram","Cora","Dain","Elsa","Finn","Greta","Hugo","Ivy","Joren"],
+ last:["the Brave","Swiftfoot","Oakenheart","the Lucky","Stormeye","the Kind","Brightblade","the Wanderer"],
+ roles:[{n:"Stalwart Warrior",w:{s:3,w:0,c:1,l:0}},{n:"Wise Sage",w:{s:0,w:3,c:1,l:0}},{n:"Born Leader",w:{s:1,w:0,c:3,l:0}},{n:"Keen Scout",w:{s:0,w:2,c:0,l:1}},{n:"Gentle Healer",w:{s:0,w:2,c:1,l:0}},{n:"Lucky Rogue",w:{s:0,w:0,c:1,l:3}}],
+ inv:["Iron dagger","Healing salve","Lucky coin","Bedroll","Rope coil","Torch stubs","Hard cheese","Map scrap","Flint and tinder","Silver ring"],
+ quirk:["Hums while sharpening blades.","Counts stars when nervous.","Never sits with back to a door.","Collects odd-shaped stones.","Talks to their weapon.","Falls asleep mid-story.","Smells books before reading.","Doodles maps on napkins."],
+ desc:["steady eyes","travel-worn boots","a crooked smile","calloused hands","wind-tangled hair","a patched cloak","ink-stained fingers","an easy grin"]}
+};
+BANK.viking.roles.push({n:"Frenzied Berserker",w:{s:3,w:0,c:0,l:1}},{n:"Whaling Captain",w:{s:2,w:0,c:0,l:1}});
+BANK.viking.first.push("Astrid","Birgit","Einar","Liv"); BANK.viking.last.push("Axebitten","Sailborn");
+BANK.medieval.roles.push({n:"Royal Falconer",w:{s:0,w:2,c:0,l:1}},{n:"Wise Prioress",w:{s:0,w:2,c:2,l:0}});
+BANK.medieval.first.push("Dunstan","Mira","Oswald","Petra"); BANK.medieval.last.push("Ashdown","the True");
+BANK.egyptian.roles.push({n:"War Charioteer",w:{s:2,w:0,c:0,l:1}},{n:"Royal Embalmer",w:{s:0,w:3,c:0,l:0}});
+BANK.egyptian.first.push("Bakari","Chione","Ineni","Sabola"); BANK.egyptian.last.push("Goldenscarab","the Watcher");
+BANK.pirate.roles.push({n:"Powder Monkey",w:{s:0,w:0,c:0,l:3}},{n:"Quartermaster",w:{s:0,w:1,c:2,l:0}});
+BANK.pirate.first.push("Betsy","Cormac","Opal","Rourke"); BANK.pirate.last.push("Deadreckoning","Plankwalker");
+BANK.samurai.roles.push({n:"Tea Master",w:{s:0,w:1,c:2,l:0}},{n:"Sumo Wrestler",w:{s:3,w:0,c:1,l:0}});
+BANK.samurai.first.push("Fumiko","Jiro","Michiko","Taro"); BANK.samurai.last.push("Snowfall","the Loyal");
+BANK.roman.roles.push({n:"Vestal Guard",w:{s:0,w:2,c:1,l:0}},{n:"Ballista Captain",w:{s:3,w:1,c:0,l:0}});
+BANK.roman.first.push("Drusa","Gaius","Livia","Rufus"); BANK.roman.last.push("Eagle-eyed","the Fortunate");
+BANK.wildwest.roles.push({n:"Railroad Boss",w:{s:1,w:0,c:2,l:0}},{n:"Snake-Oil Salesman",w:{s:0,w:1,c:3,l:0}});
+BANK.wildwest.first.push("Amos","Belle","Cole","Daisy"); BANK.wildwest.last.push("Sixshooter","the Tall");
+BANK.victorian.roles.push({n:"Chimney Sweep",w:{s:1,w:0,c:0,l:2}},{n:"Suffragette",w:{s:0,w:1,c:2,l:0}});
+BANK.victorian.first.push("Mabel","Oliver","Prudence","Theodore"); BANK.victorian.last.push("Inkwell","the Curious");
+var ABILITY={
+ s:["Power Strike: once per scene, shove or break straight through","Iron Grip: never disarmed, never dropped","Second Wind: shake off one hit per day","Heavy Lifting: carry double load without slowing","Shield Wall: shield one nearby ally","Knockback: send foes sprawling"],
+ w:["Keen Eye: spot hidden details instantly","Old Lore: recall one useful fact per scene","Trap Sense: never surprised","Herbal Remedy: soothe wounds with found herbs","Read Intent: sense lies","Patient Plan: allies act first once per day"],
+ c:["Silver Tongue: talk past one guard per scene","Rally: allies reroll fear","Bargain: halve one price per market","Distraction: hold attention while allies sneak","Inspire: grant an ally extra courage","First Impressions: welcomed once, everywhere"],
+ l:["Lucky Break: reroll one disaster per day","Right Place: always finds the clue first","Narrow Escape: slip one trap per scene","Gambler's Grace: wins all ties","Fortune's Favorite: finds extra loot","Dodge Fate: ignore one mishap"]};
+var FLAWS=["Afraid of deep water","Cannot resist a wager","Snores loud enough to wake camp","Allergic to heroics before breakfast","Loses every map handed over","Talks to enemies mid-fight","Hoards snacks, shares nothing","Terrified of spiders","Recites dramatic poetry aloud","Never backs down, even when wise"];
+var BONDS=["Owes {other} a life debt from the river crossing.","Swore to teach {other} everything they know.","Shares a secret language with {other}.","Once dragged {other} from a burning barn.","Competes with {other} over everything — lovingly.","Carries a token carved by {other}."];
+var PSTYLES=[
+ {id:"storybook",name:"STORYBOOK",suffix:"warm storybook illustration style, head-and-shoulders composition"},
+ {id:"cinematic",name:"CINEMATIC",suffix:"cinematic concept art, dramatic rim lighting, ultra detailed, head-and-shoulders composition"},
+ {id:"pixel",name:"PIXEL ART",suffix:"16-bit pixel art portrait, limited palette, head-and-shoulders composition"},
+ {id:"watercolor",name:"WATERCOLOR",suffix:"soft watercolor portrait, gentle washes, head-and-shoulders composition"}];
+function powerRank(t){ if(t>=34){ return "S"; } if(t>=28){ return "A"; } if(t>=22){ return "B"; } return "C"; }
+function $(id){ return document.getElementById(id); }
+function esc(s){ s=(s===null||s===undefined)?"":String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function titleCase(s){ var w=String(s||"").split(" "); for(var i=0;i<w.length;i++){ if(w[i]){ w[i]=w[i].charAt(0).toUpperCase()+w[i].slice(1); } } return w.join(" "); }
+function showToast(m){ var t=$("toast"); t.innerHTML=esc(m); t.style.display="block"; setTimeout(function(){ t.style.display="none"; },2000); }
+function rndSeed(){ return Math.floor(Math.random()*99999)+1; }
+function srand(seed){ var s=(seed>>>0)||1; return function(){ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }; }
+function pickR(r,arr){ return arr[Math.floor(r()*arr.length)%arr.length]; }
+function detectBank(theme){
+  var low=String(theme||"").toLowerCase();
+  var keys=["viking","medieval","egyptian","pirate","samurai","roman","wildwest","victorian","greek","noir","space","horror"];
+  for(var i=0;i<keys.length;i++){
+    var b=BANK[keys[i]];
+    for(var k=0;k<b.keys.length;k++){ if(low.indexOf(b.keys[k])>=0){ return {id:keys[i],bank:b}; } }
+  }
+  return {id:"generic",bank:BANK.generic};
+}
+function rollStat(r,base,w){
+  var v=base+Math.floor(r()*6)+w;
+  if(v<1){ v=1; }
+  if(v>10){ v=10; }
+  return v;
+}
+function buildChar(bank,r,usedN,usedR){
+  var nm="", rl=null, guard=0;
+  while(guard<60){
+    guard++;
+    var fn=pickR(r,bank.first), ln=pickR(r,bank.last);
+    nm=fn+" "+ln;
+    if(usedN.indexOf(nm)<0){ break; }
+    nm="";
+  }
+  if(!nm){ nm=pickR(r,bank.first)+" "+pickR(r,bank.last)+" "+(guard); }
+  guard=0;
+  while(guard<60){
+    guard++;
+    var cand=pickR(r,bank.roles);
+    if(usedR.indexOf(cand.n)<0){ rl=cand; break; }
+  }
+  if(!rl){ rl=pickR(r,bank.roles); }
+  usedN.push(nm); usedR.push(rl.n);
+  var base=2;
+  var stats={s:rollStat(r,base,rl.w.s),w:rollStat(r,base,rl.w.w),c:rollStat(r,base,rl.w.c),l:rollStat(r,base,rl.w.l)};
+  var inv=[], guard2=0;
+  while(inv.length<3&&guard2<60){
+    guard2++;
+    var it=pickR(r,bank.inv);
+    if(inv.indexOf(it)<0){ inv.push(it); }
+  }
+  while(inv.length<3){ inv.push(pickR(r,bank.inv)); }
+  var ds=[], g3=0;
+  while(ds.length<3&&g3<60){
+    g3++;
+    var dd=pickR(r,bank.desc);
+    if(ds.indexOf(dd)<0){ ds.push(dd); }
+  }
+  while(ds.length<3){ ds.push(pickR(r,bank.desc)); }
+  var order=["s","w","c","l"], bv=stats.s, tied=[], ti, tj;
+  for(ti=0;ti<4;ti++){ if(stats[order[ti]]>bv){ bv=stats[order[ti]]; } }
+  for(tj=0;tj<4;tj++){ if(stats[order[tj]]===bv){ tied.push(order[tj]); } }
+  var bk=tied[Math.floor(r()*tied.length)%tied.length];
+  var power=stats.s+stats.w+stats.c+stats.l;
+  return {name:nm,role:rl.n,stats:stats,inv:inv,quirk:pickR(r,bank.quirk),desc:ds,
+    ability:pickR(r,ABILITY[bk]),flaw:pickR(r,FLAWS),power:power,rank:powerRank(power)};
+}
+function portraitFor(ch,theme,styleId){
+  var suf=PSTYLES[0].suffix;
+  for(var i=0;i<PSTYLES.length;i++){ if(PSTYLES[i].id===styleId){ suf=PSTYLES[i].suffix; } }
+  return "Portrait of "+ch.name+", "+ch.role.toLowerCase()+" from a "+theme+" adventure: "+ch.desc.join(", ")+"; dramatic lighting, detailed expressive face, "+suf;
+}
+function buildCast(theme,count,seeds,styleId){
+  var det=detectBank(theme);
+  var dispTheme=String(theme||"").trim()||"Uncharted Realms";
+  var usedN=[], usedR=[], out=[];
+  for(var i=0;i<count;i++){
+    var r=srand(seeds[i%seeds.length]+i*101);
+    var ch=buildChar(det.bank,r,usedN,usedR);
+    ch.portrait=portraitFor(ch,dispTheme,styleId);
+    out.push(ch);
+  }
+  for(var b=0;b<out.length;b++){
+    var r2=srand(seeds[b%seeds.length]+999+b);
+    var others=[];
+    for(var o=0;o<out.length;o++){ if(o!==b){ others.push(o); } }
+    if(others.length){
+      var pk=others[Math.floor(r2()*others.length)%others.length];
+      out[b].bond=BONDS[Math.floor(r2()*BONDS.length)%BONDS.length].replace("{other}",out[pk].name);
+    } else { out[b].bond="Lone wolf — trusts no one yet."; }
+  }
+  return {chars:out,bankId:det.id,theme:dispTheme};
+}
+function sheetText(ch,theme){
+  var L=ch.name.toUpperCase()+" — "+ch.role.toUpperCase()+" ("+theme+")\n";
+  L+="STR "+ch.stats.s+"/10 · WIS "+ch.stats.w+"/10 · CHA "+ch.stats.c+"/10 · LCK "+ch.stats.l+"/10 · POWER "+ch.power+"/40 (RANK "+ch.rank+")\n";
+  L+="ABILITY: "+ch.ability+"\n";
+  L+="FLAW: "+ch.flaw+"\n";
+  L+="BOND: "+ch.bond+"\n";
+  L+="INVENTORY: "+ch.inv.join(", ")+"\n";
+  L+="QUIRK: "+ch.quirk+"\n";
+  L+="PORTRAIT PROMPT: "+ch.portrait;
+  return L;
+}
+function castText(data){
+  var L="COMPANION CAST — "+data.theme.toUpperCase()+" ("+data.chars.length+" CHARACTERS)\n";
+  L+="========================================\n\n";
+  for(var i=0;i<data.chars.length;i++){
+    L+=(i>0?"\n----------------------------------------\n\n":"")+(i+1)+". "+sheetText(data.chars[i],data.theme)+"\n";
+  }
+  return L;
+}
+var state=null;
+function saveLS(){ try{ localStorage.setItem(LSKEY,JSON.stringify({theme:$("in-theme").value,count:$("in-count").value,pstyle:$("in-pstyle").value,seeds:state.seeds,locked:state.locked})); }catch(e){} }
+function loadLS(){ try{ var r=localStorage.getItem(LSKEY); if(r){ var p=JSON.parse(r); if(p){ return p; } } }catch(e){} return null; }
+function pips(v,hotAt){
+  var h="";
+  for(var i=1;i<=10;i++){ h+='<i class="'+(i<=v?("on"+(i>=hotAt?" hot":"")):"")+'"></i>'; }
+  return h;
+}
+function renderAll(){
+  var theme=$("in-theme").value.replace(/\s+/g," ").trim();
+  var count=parseInt($("in-count").value,10)||6;
+  var data=buildCast(theme,count,state.seeds,state.pstyle);
+  state.cache=data;
+  var totP=0, avS=0, avW=0, avC=0, avL=0, bestN="", bestP=-1;
+  for(var q=0;q<data.chars.length;q++){ var cc=data.chars[q]; totP+=cc.power; avS+=cc.stats.s; avW+=cc.stats.w; avC+=cc.stats.c; avL+=cc.stats.l; if(cc.power>bestP){ bestP=cc.power; bestN=cc.name; } }
+  var n=data.chars.length||1;
+  $("partyStats").style.display="block";
+  $("partyStats").innerHTML='<div class="pbox">PARTY: <b>'+esc(data.theme)+'</b> · '+n+' HEROES · AVG STR '+(avS/n).toFixed(1)+' · WIS '+(avW/n).toFixed(1)+' · CHA '+(avC/n).toFixed(1)+' · LCK '+(avL/n).toFixed(1)+' · TOTAL POWER <b>'+totP+'</b> · MVP <b>'+esc(bestN)+'</b> ('+bestP+')</div>';
+  var h="";
+  for(var i=0;i<data.chars.length;i++){
+    (function(ch,idx){
+      var hot=Math.max(ch.stats.s,ch.stats.w,ch.stats.c,ch.stats.l);
+      var locked=state.locked.indexOf(state.seeds[idx])>=0;
+      h+='<div class="card"><div class="cnum">#'+(idx+1)+'</div><h3>'+esc(ch.name)+(locked?'<span class="locktag">🔒 LOCKED</span>':"")+'</h3><span class="role">'+esc(ch.role)+'</span>';
+      h+='<div class="pwrline">POWER '+ch.power+'/40<span class="rank">RANK '+ch.rank+'</span></div>';
+      h+='<div class="stats">'+
+        '<div class="srow"><span>STRENGTH</span><span class="pips">'+pips(ch.stats.s,hot)+'</span><span class="sval">'+ch.stats.s+'</span></div>'+
+        '<div class="srow"><span>WISDOM</span><span class="pips">'+pips(ch.stats.w,hot)+'</span><span class="sval">'+ch.stats.w+'</span></div>'+
+        '<div class="srow"><span>CHARISMA</span><span class="pips">'+pips(ch.stats.c,hot)+'</span><span class="sval">'+ch.stats.c+'</span></div>'+
+        '<div class="srow"><span>LUCK</span><span class="pips">'+pips(ch.stats.l,hot)+'</span><span class="sval">'+ch.stats.l+'</span></div></div>';
+      h+='<div class="ability"><b>★ ABILITY — </b>'+esc(ch.ability)+'</div>';
+      h+='<div class="flawline"><b>FLAW — </b>'+esc(ch.flaw)+'</div>';
+      h+='<div class="bondline"><b>BOND — </b>'+esc(ch.bond)+'</div>';
+      h+='<div class="inv"><b>■ INVENTORY</b><ul>';
+      for(var j=0;j<ch.inv.length;j++){ h+='<li>▸ '+esc(ch.inv[j])+'</li>'; }
+      h+='</ul></div>';
+      h+='<div class="quirk"><b>QUIRK — </b>'+esc(ch.quirk)+'</div>';
+      h+='<div class="promptbox"><b>◈ PORTRAIT PROMPT</b><br>'+esc(ch.portrait)+'</div>';
+      h+='<div class="cardbtns"><button class="sbtn" data-cp="'+idx+'">COPY SHEET</button><button class="sbtn" data-pp="'+idx+'">COPY PROMPT</button><button class="sbtn" data-lk="'+idx+'">'+(locked?"UNLOCK":"LOCK")+'</button><button class="sbtn dark" data-rg="'+idx+'">⟳ REROLL</button></div></div>';
+    })(data.chars[i],i);
+  }
+  $("grid").innerHTML=h;
+  $("emptyState").style.display="none";
+  $("toolbar").style.display="flex";
+  $("castNote").innerHTML="CAST: <b>"+esc(data.theme)+"</b> · "+data.chars.length+" COMPANIONS · BANK: "+data.bankId.toUpperCase();
+  var cps=document.querySelectorAll("[data-cp]");
+  for(var a=0;a<cps.length;a++){ (function(el){ el.onclick=function(){ var k=parseInt(el.getAttribute("data-cp"),10); copyText(sheetText(state.cache.chars[k],state.cache.theme),"Sheet "+(k+1)+" copied"); }; })(cps[a]); }
+  var pps=document.querySelectorAll("[data-pp]");
+  for(var b=0;b<pps.length;b++){ (function(el){ el.onclick=function(){ var k2=parseInt(el.getAttribute("data-pp"),10); copyText(state.cache.chars[k2].portrait,"Portrait prompt copied"); }; })(pps[b]); }
+  var rgs=document.querySelectorAll("[data-rg]");
+  for(var c=0;c<rgs.length;c++){ (function(el){ el.onclick=function(){ var k3=parseInt(el.getAttribute("data-rg"),10); state.seeds[k3]=rndSeed(); saveLS(); renderAll(); showToast("Character "+(k3+1)+" rerolled"); }; })(rgs[c]); }
+  var lks=document.querySelectorAll("[data-lk]");
+  for(var d=0;d<lks.length;d++){ (function(el){ el.onclick=function(){
+    var k4=parseInt(el.getAttribute("data-lk"),10);
+    var sd=state.seeds[k4], at=state.locked.indexOf(sd);
+    if(at>=0){ state.locked.splice(at,1); showToast("Character "+(k4+1)+" unlocked"); }
+    else { state.locked.push(sd); showToast("Character "+(k4+1)+" locked"); }
+    saveLS(); renderAll();
+  }; })(lks[d]); }
+}
+function castMD(data){
+  var L="# Companion Cast — "+data.theme+"\n\n_"+data.chars.length+" characters · bank "+data.bankId+"_\n\n";
+  for(var i=0;i<data.chars.length;i++){
+    var ch=data.chars[i];
+    L+="## "+(i+1)+". "+ch.name+" — "+ch.role+"\n\n";
+    L+="- **STR** "+ch.stats.s+"/10 · **WIS** "+ch.stats.w+"/10 · **CHA** "+ch.stats.c+"/10 · **LCK** "+ch.stats.l+"/10 · **POWER** "+ch.power+"/40 (Rank "+ch.rank+")\n";
+    L+="- **Ability:** "+ch.ability+"\n- **Flaw:** "+ch.flaw+"\n- **Bond:** "+ch.bond+"\n";
+    L+="- **Inventory:** "+ch.inv.join(", ")+"\n- **Quirk:** "+ch.quirk+"\n";
+    L+="- **Portrait prompt:** "+ch.portrait+"\n\n";
+  }
+  return L;
+}
+function downloadFile(name,content,mime){
+  try{
+    var blob=new Blob([content],{type:mime||"text/plain"});
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); try{ URL.revokeObjectURL(u); }catch(e){} },400);
+    showToast("DOWNLOADED");
+  }catch(e){ showToast("DOWNLOAD BLOCKED"); }
+}
+function copyText(txt,msg){
+  function done(){ showToast(msg||"COPIED"); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){ fb(); }); }
+  else { fb(); }
+  function fb(){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); }
+    catch(e){ showToast("COPY BLOCKED"); }
+  }
+}
+function freshSeeds(n){ var s=[]; for(var i=0;i<(n||6);i++){ s.push(rndSeed()); } return s; }
+function init(){
+  var saved=loadLS();
+  if(saved){
+    $("in-theme").value=saved.theme||"";
+    $("in-count").value=saved.count||"6";
+    $("in-pstyle").value=saved.pstyle||"storybook";
+    state={seeds:saved.seeds||freshSeeds(6),locked:saved.locked||[],pstyle:saved.pstyle||"storybook",cache:null};
+    if((saved.theme||"").replace(/\s/g,"")){ renderAll(); }
+  } else {
+    state={seeds:freshSeeds(6),locked:[],pstyle:"storybook",cache:null};
+  }
+  $("btnGen").onclick=function(){ saveLS(); renderAll(); showToast("CAST GENERATED"); };
+  $("in-count").onchange=function(){ var n=parseInt($("in-count").value,10)||6; while(state.seeds.length<n){ state.seeds.push(rndSeed()); } saveLS(); };
+  $("btnCopyAll").onclick=function(){ if(!state.cache){ return; } copyText(castText(state.cache),"Entire cast copied"); };
+  $("btnGuide").onclick=function(){
+    var gp=$("guidePanel");
+    var open=(gp.style.display==="none"||gp.style.display==="");
+    gp.style.display=open?"block":"none";
+  };
+  $("btnTxt").onclick=function(){ if(!state.cache){ return; } downloadFile("companion-cast.txt",castText(state.cache),"text/plain"); };
+  $("btnMd").onclick=function(){ if(!state.cache){ return; } downloadFile("companion-cast.md",castMD(state.cache),"text/markdown"); };
+  $("btnJson").onclick=function(){ if(!state.cache){ return; } downloadFile("companion-cast.json",JSON.stringify(state.cache,null,2),"application/json"); };
+  $("in-pstyle").onchange=function(){ state.pstyle=$("in-pstyle").value; saveLS(); if(state.cache){ renderAll(); } };
+  $("btnNew").onclick=function(){
+    var lockedN=state.locked.length;
+    if(!confirm(lockedN?("Reroll unlocked characters? ("+lockedN+" locked kept)"):("Reroll the whole cast?"))){ return; }
+    var n2=parseInt($("in-count").value,10)||6;
+    var ns=[];
+    for(var i=0;i<n2;i++){
+      var old=state.seeds[i];
+      if(old!==undefined&&state.locked.indexOf(old)>=0){ ns.push(old); }
+      else { ns.push(rndSeed()); }
+    }
+    state.seeds=ns; saveLS(); renderAll(); showToast("NEW CAST");
+  };
+}
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",init); } else { init(); }
+</script>
+</body>
+</html>
