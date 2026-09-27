@@ -1,0 +1,985 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playable Demo Engine — Gamebooks Empire Bonus</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#150f0a;
+  --panel:#1f170f;
+  --parchment:#efe3c8;
+  --gold:#C9A84C;
+  --gold-bright:#e6c866;
+  --text:#f0e8d8;
+  --muted:#8a7c5e;
+  --danger:#8a3324;
+  --success:#3d6b4a;
+}
+*,*:before,*:after{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"EB Garamond",Georgia,serif;min-height:100%}
+h1,h2,h3{margin:0;font-family:"Cinzel",serif}
+button{font-family:"Cinzel",serif}
+#topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 24px;background:var(--panel);
+  border-bottom:2px solid var(--gold);position:sticky;top:0;z-index:40}
+.badge{width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%,var(--gold-bright),var(--gold) 60%,#7a5f22);
+  box-shadow:0 0 18px -2px var(--gold)}
+.badge svg{width:25px;height:25px}
+#topbar h1{font-size:19px;font-weight:700;letter-spacing:1px}
+#topbar h1 span{color:var(--gold-bright)}
+#modetoggle{display:flex;border:2px solid var(--gold);border-radius:10px;overflow:hidden}
+#modetoggle button{background:transparent;border:none;color:var(--gold);font-size:12px;font-weight:700;letter-spacing:2px;padding:10px 18px;cursor:pointer}
+#modetoggle button.on{background:var(--gold);color:#150f0a}
+#topbar .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.tbtn{background:transparent;border:2px solid var(--gold);color:var(--gold-bright);border-radius:10px;
+  font-size:11.5px;font-weight:700;letter-spacing:1px;padding:10px 15px;cursor:pointer}
+.tbtn:hover{background:rgba(201,168,76,.14)}
+.tbtn.primary{background:var(--gold);color:#150f0a}
+.tbtn.primary:hover{background:var(--gold-bright)}
+.tbtn.danger{border-color:var(--danger);color:#e08a7a}
+#wrap{max-width:1180px;margin:0 auto;padding:24px 26px 70px}
+/* builder */
+#builderGrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.pagecard{background:var(--panel);border:1px solid #3a2f1d;border-radius:14px;padding:20px;margin-bottom:16px}
+.pagecard.startcard{border-color:var(--gold);box-shadow:0 0 18px -8px var(--gold)}
+.pagecard .phead{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.pagecard .phead .pid{font-family:"Cinzel",serif;font-size:13px;font-weight:700;letter-spacing:1px;color:var(--gold-bright)}
+.pagecard .phead .spacer{flex:1}
+.mini{background:transparent;border:1px solid #3a2f1d;color:var(--muted);border-radius:7px;font-size:11px;
+  font-family:"EB Garamond",serif;padding:5px 10px;cursor:pointer}
+.mini:hover{color:var(--gold-bright);border-color:var(--gold)}
+.mini.danger:hover{color:#e08a7a;border-color:var(--danger)}
+label.f{display:block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+  margin:12px 0 6px;font-family:"Cinzel",serif}
+.pagecard input[type=text],.pagecard textarea,.pagecard select{width:100%;background:#150f0a;border:1px solid #3a2f1d;
+  border-radius:8px;padding:10px 12px;color:var(--text);font-family:"EB Garamond",serif;font-size:16px}
+.pagecard textarea{min-height:110px;resize:vertical;line-height:1.65}
+.pagecard input:focus,.pagecard textarea:focus,.pagecard select:focus{outline:none;border-color:var(--gold)}
+.idrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choices{margin-top:4px}
+.chrow{display:grid;grid-template-columns:1fr 190px 34px;gap:8px;margin-bottom:8px;align-items:center}
+.chrow input[type=text]{font-size:15px}
+.chrow select{font-size:13px;padding:9px 8px}
+.chx{background:transparent;border:1px solid var(--danger);color:#e08a7a;border-radius:7px;font-size:13px;padding:7px 0;cursor:pointer;width:34px}
+.endrow{display:flex;gap:14px;align-items:center;margin-top:12px;font-size:15px;flex-wrap:wrap}
+.endrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--gold)}
+.endrow select{width:auto;font-size:14px}
+.startradio{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}
+.startradio input{accent-color:var(--gold)}
+#addPage{width:100%;margin-top:4px;background:transparent;border:2px dashed #3a2f1d;color:var(--gold-bright);
+  border-radius:14px;font-size:14px;font-weight:700;letter-spacing:1px;padding:16px;cursor:pointer}
+#addPage:hover{border-color:var(--gold)}
+#side{position:sticky;top:96px}
+.sidebox{background:var(--panel);border:1px solid #3a2f1d;border-radius:14px;padding:18px;margin-bottom:14px}
+.sidebox h3{font-size:13px;letter-spacing:2px;color:var(--gold-bright);margin-bottom:10px}
+#outline{font-size:14px;line-height:1.8;max-height:300px;overflow-y:auto}
+#outline .oid{color:var(--gold-bright);font-weight:700}
+#outline .oarrow{color:var(--muted)}
+#errBox{display:none;font-size:14px;line-height:1.7}
+#errBox .err{color:#f0a090}
+#errBox .warn{color:var(--gold-bright)}
+#errBox.ok{color:#9fd8ae}
+/* play */
+#playView{display:none;min-height:calc(100vh - 150px);padding:26px 20px 60px;position:relative}
+#crumbs{display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:22px;flex-wrap:wrap;min-height:14px}
+#crumbs i{width:10px;height:10px;border-radius:50%;background:transparent;border:2px solid var(--gold);display:block}
+#crumbs i.done{background:var(--gold)}
+#crumbs i.now{background:var(--gold-bright);box-shadow:0 0 10px var(--gold-bright)}
+#book{max-width:640px;margin:0 auto;background:var(--parchment);color:#2a2118;border-radius:6px;padding:46px 48px 40px;
+  box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 0 90px rgba(160,120,60,.25);position:relative;
+  opacity:1;transition:opacity .3s ease}
+#book.fade{opacity:0}
+#book h2{font-size:27px;font-weight:700;text-align:center;line-height:1.3;color:#241a10}
+#book .rule{border:none;border-top:2px solid var(--gold);width:120px;margin:16px auto 20px}
+#book .story{font-size:19px;line-height:1.85}
+#book .story p{margin:0 0 16px}
+#book .story p:first-of-type::first-letter{font-family:"Cinzel",serif;font-size:2.6em;font-weight:700;float:left;line-height:.9;padding-right:8px;color:#6b4d1f}
+#choices{margin-top:26px;display:flex;flex-direction:column;gap:12px}
+.signpost{background:#3a2a17;color:var(--gold-bright);border:2px solid var(--gold);border-radius:4px 14px 14px 4px;
+  font-family:"Cinzel",serif;font-size:15px;font-weight:600;letter-spacing:.5px;padding:15px 18px 15px 44px;cursor:pointer;
+  text-align:left;position:relative;transition:transform .1s,background .15s;box-shadow:0 4px 0 #17100a}
+.signpost:before{content:"➤";position:absolute;left:16px;color:var(--gold)}
+.signpost:hover{background:#4a3519}
+.signpost:active{transform:translateY(3px);box-shadow:0 1px 0 #17100a}
+#endbanner{text-align:center;margin-top:8px}
+#endbanner .big{font-family:"Cinzel",serif;font-size:34px;font-weight:800;letter-spacing:4px;color:#241a10}
+#endbanner .ebadge{display:inline-block;font-family:"Cinzel",serif;font-size:13px;font-weight:700;letter-spacing:2px;
+  border-radius:99px;padding:6px 18px;margin-top:12px;color:#fff}
+#endbanner .again{margin-top:22px;background:var(--gold);color:#241a10;border:none;border-radius:10px;
+  font-size:14px;font-weight:700;letter-spacing:1px;padding:14px 30px;cursor:pointer}
+#backLink{position:absolute;top:18px;left:22px;background:transparent;border:1px solid var(--muted);color:var(--muted);
+  border-radius:8px;font-size:12px;font-family:"EB Garamond",serif;padding:7px 13px;cursor:pointer}
+#backLink:hover{color:var(--gold-bright);border-color:var(--gold)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:none;background:var(--gold);
+  color:#150f0a;font-weight:700;font-size:14px;border-radius:99px;padding:12px 24px;font-family:"EB Garamond",serif;max-width:90vw}
+#cover{display:none;max-width:640px;margin:0 auto;background:linear-gradient(160deg,#241a10,#17100a);border:3px solid var(--gold);border-radius:8px;padding:60px 44px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+#cover h2{font-size:34px;color:var(--gold-bright);line-height:1.35}
+#cover .by{font-size:17px;color:var(--muted);margin-top:14px;font-style:italic}
+#cover .orn{color:var(--gold);font-size:22px;letter-spacing:8px;margin:18px 0}
+#cover .open{margin-top:26px;background:var(--gold);color:#241a10;border:none;border-radius:10px;font-size:15px;font-weight:700;letter-spacing:1px;padding:16px 40px;cursor:pointer;font-family:"Cinzel",serif;animation:openpulse 2.2s ease-in-out infinite}
+@keyframes openpulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,.55)}50%{box-shadow:0 0 0 12px rgba(201,168,76,0)}}
+#keyhint{text-align:center;font-size:13.5px;color:var(--muted);margin-top:16px;font-style:italic}
+#crumbs i{cursor:pointer}
+#notebook{display:none;max-width:640px;margin:18px auto 0;background:var(--panel);border:1px solid #3a2f1d;border-radius:10px;padding:16px 20px;font-size:15px;line-height:1.7}
+#notebook h4{margin:0 0 8px;font-family:"Cinzel",serif;font-size:12px;letter-spacing:2px;color:var(--gold-bright)}
+#notebook .nrow{padding:5px 0;border-top:1px dashed #3a2f1d}
+#notebook .nrow span{color:var(--muted);font-size:13.5px}
+#cover .found{margin-top:18px;font-size:14px;color:var(--muted)}
+#cover .found b{color:var(--gold-bright)}
+.fbtns{position:absolute;top:18px;right:22px;display:flex;gap:6px}
+.fbtns button{background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:7px;font-size:12px;padding:5px 10px;cursor:pointer;font-family:"EB Garamond",serif}
+.fbtns button:hover{color:var(--gold-bright);border-color:var(--gold)}
+.fbtns button.off{opacity:.4}
+.newend{color:var(--gold-bright);font-weight:700;letter-spacing:1px}
+.erritem{cursor:pointer}
+.erritem:hover{text-decoration:underline}
+.wcount{font-size:12px;color:var(--muted);margin-left:8px}
+#guidePanel{display:none;max-width:1180px;margin:0 auto;padding:0 26px}
+#tplStrip{max-width:1180px;margin:0 auto;padding:16px 26px 0}
+#tplStrip .stripbox{background:var(--panel);border:2px solid var(--gold);border-radius:14px;padding:14px 18px}
+#tplStrip .stripbox b{color:var(--gold-bright);font-family:"Cinzel",serif;font-size:12px;letter-spacing:2px}
+#tplStrip .tplbtn{display:inline-block;width:auto;margin:8px 8px 0 0}
+#guideBox{background:var(--panel);border:2px solid var(--gold);border-radius:14px;padding:22px 26px;margin-top:18px;font-size:16px;line-height:1.8}
+#guideBox b{color:var(--gold-bright)}
+#guideBox ol{margin:10px 0;padding-left:22px}
+#guideBox li{margin-bottom:7px}
+#guideBox kbd{background:rgba(201,168,76,.14);border:1px solid var(--gold);border-radius:6px;padding:1px 8px;font-size:14px;font-family:inherit;white-space:nowrap}
+.tplbtn{display:block;width:100%;text-align:left;background:transparent;border:1px solid #3a2f1d;color:var(--text);border-radius:9px;font-size:14px;font-family:"EB Garamond",serif;padding:10px 12px;margin-top:8px;cursor:pointer;line-height:1.5}
+.tplbtn:hover{border-color:var(--gold)}
+.tplbtn b{color:var(--gold-bright);font-family:"Cinzel",serif;font-size:12px;letter-spacing:1px}
+#confirmWrap{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.72)}
+#confirmBox{max-width:440px;margin:18vh auto 0;background:var(--panel);border:2px solid var(--gold);border-radius:14px;padding:26px 28px}
+#confirmBox h3{font-size:16px;letter-spacing:2px;color:var(--gold-bright);margin-bottom:10px}
+#confirmBox p{font-size:16px;line-height:1.6}
+#confirmBox .row{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+@media(max-width:920px){#builderGrid{grid-template-columns:minmax(0,1fr)}#side{position:static}#book{padding:32px 24px}.chrow{grid-template-columns:minmax(0,1fr);gap:6px}.chx{width:100%}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#241a10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L20 7 V13 C20 17.5 16.5 20.5 12 21.5 C7.5 20.5 4 17.5 4 13 V7 Z"/><path d="M9.5 12 L11.5 14 L15 10"/></svg></div>
+  <div><h1>PLAYABLE <span>DEMO</span> ENGINE</h1></div>
+  <div id="modetoggle"><button id="mBuild" class="on">BUILDER</button><button id="mPlay">PLAY</button></div>
+  <div class="actions">
+    <button class="tbtn primary" id="btnPreview">▶ PREVIEW / PLAY DEMO</button>
+    <button class="tbtn" id="btnGuide">📖 GUIDE</button>
+    <button class="tbtn" id="btnExport">EXPORT STANDALONE HTML</button>
+    <button class="tbtn danger" id="btnNew">NEW DEMO</button>
+    <button class="tbtn danger" id="btnClear" title="Empty the builder">CLEAR</button>
+  </div>
+</div>
+<div id="wrap">
+  <div id="tplStrip"><div class="stripbox"><b>★ START FROM A TEMPLATE —</b> <span style="font-size:14px;color:var(--muted)">one click loads a complete playable demo:</span><div id="tplButtons"></div></div></div>
+  <div id="guidePanel"><div id="guideBox">
+<b>READER'S GUIDE — from AI text to playable teaser in minutes:</b>
+<ol>
+<li><b>Build section by section.</b> Each page = one gamebook section. Paste your AI passage into <kbd>STORY TEXT</kbd> — aim for <b>120–220 words</b> (the counter under each ID watches this, just like the product rules).</li>
+<li><b>Link with choices.</b> Every choice needs text plus a target: another Page ID or <kbd>★ THE END</kbd>. Write them the classic way — <b>“Turn to 3”</b> style works, plain language works too.</li>
+<li><b>Score your endings.</b> Mark ending pages and pick the kind that matches the clue score: <b>Best</b> (all key clues), <b>Partial</b> (thin proof), <b>Cold case</b> (unsolved + Detective's Tip). This is what makes readers replay.</li>
+<li><b>Set the start.</b> One radio <kbd>Set as Starting Page</kbd> — that's your Section 1.</li>
+<li><b>Fill BOOK DATA.</b> Title + author appear on the cover screen and inside the exported file.</li>
+<li><b>Clear PRE-FLIGHT.</b> Red = broken (click any error to jump to that page). Yellow = warning, e.g. unreachable pages. Green means play.</li>
+<li><b>Play it like a kid.</b> Cover → <kbd>OPEN THE BOOK</kbd> → click signposts (or keys <kbd>1–4</kbd>). Dots track your path. Endings you find get a <b>★ NEW</b> badge and stay counted on the cover.</li>
+<li><b>Ship it.</b> <kbd>EXPORT STANDALONE HTML</kbd> builds the shareable teaser (email, A+ Content preview, screen-record). <kbd>EXPORT JSON</kbd> backs the project up.</li>
+<li><b>Play like a game.</b> Story types itself out (click to skip, <kbd>TYPE</kbd> toggles it). Dots are clickable — jump back to any step. <kbd>📓</kbd> opens your detective notebook, <kbd>🔊</kbd> toggles retro sounds. Broken link in pre-flight? Hit <kbd>＋ CREATE</kbd> and the missing page builds itself.</li>
+</ol>
+<b>New here?</b> Pick a template from the gold strip at the top — each is a complete playable demo. Open it, play it, then reshape it into yours. <kbd>CLEAR</kbd> empties the builder when you want a blank slate.
+</div></div>
+  <div id="builderGrid">
+    <div><div class="pagecard"><div class="phead"><span class="pid">★ BOOK DATA</span></div>
+<label class="f">Book title (cover + export)</label><input type="text" id="in-book" maxlength="90" placeholder="e.g. The Maple Hollow Pie Heist">
+<label class="f">Author name</label><input type="text" id="in-author" maxlength="60" placeholder="e.g. by …">
+</div><div id="pageList"></div><button id="addPage">+ ADD PAGE</button></div>
+    <div id="side">
+      <div class="sidebox"><h3>STORY MAP</h3><div id="outline"></div></div>
+      <div class="sidebox"><h3>PRE-FLIGHT CHECK</h3><div id="errBox"></div></div>
+      <div class="sidebox"><h3>BOOK STATS</h3><div id="statBox" style="font-size:14px;line-height:1.8"></div></div>
+      <div class="sidebox"><h3>BACKUP</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="mini" id="btnJson">EXPORT JSON</button><button class="mini" id="btnImport">IMPORT</button></div><input type="file" id="fileImp" accept=".json,application/json" style="display:none"></div>
+    </div>
+  </div>
+  <div id="playView">
+    <button id="backLink">← Back to Builder</button>
+    <div class="fbtns"><button id="fontDown" title="Smaller text">A−</button><button id="fontUp" title="Larger text">A+</button><button id="btnType" title="Toggle typewriter effect">TYPE</button><button id="btnNote" title="Detective notebook">📓</button><button id="btnSfx" title="Toggle sounds">🔊</button></div>
+    <div id="crumbs"></div>
+    <div id="cover"><div class="orn">❧ ❧ ❧</div><h2 id="covTitle"></h2><div class="by" id="covAuthor"></div><div class="orn">❧ ❧ ❧</div><div><button class="open" id="btnOpen">OPEN THE BOOK</button></div><div class="found" id="covFound"></div></div>
+    <div id="book">
+      <h2 id="bkTitle"></h2>
+      <div class="rule"></div>
+      <div id="bkBody"></div>
+    </div>
+    <div id="notebook" style="display:none"></div>
+    <div id="keyhint">Tip: click a signpost — or press 1–4 · A−/A+ adjusts text size</div>
+  </div>
+</div>
+<div id="confirmWrap"><div id="confirmBox">
+  <h3 id="cfTitle">ARE YOU SURE?</h3>
+  <p id="cfMsg"></p>
+  <div class="row"><button class="tbtn" id="cfNo">CANCEL</button><button class="tbtn primary" id="cfYes">YES, DO IT</button></div>
+</div></div>
+<div id="toast"></div>
+<script>
+var LSKEY="pde-state-v1";
+var ETYPES={success:{label:"SUCCESS",bg:"#3d6b4a"},partial:{label:"PARTIAL",bg:"#8a6a24"},failure:{label:"FAILURE",bg:"#8a3324"}};
+function $(id){ return document.getElementById(id); }
+function esc(s){ s=(s===null||s===undefined)?"":String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function showToast(m){ var t=$("toast"); t.innerHTML=esc(m); t.style.display="block"; setTimeout(function(){ t.style.display="none"; },2600); }
+var cfCb=null;
+function askConfirm(msg,cb){
+  $("cfMsg").innerHTML=esc(msg);
+  cfCb=cb;
+  $("confirmWrap").style.display="block";
+}
+function rndId(p){ return (p||"page")+"-"+Math.floor(Math.random()*9000+1000); }
+function blankPage(id,title){
+  return {id:id||rndId(),title:title||"Untitled Page",text:"",choices:[{text:"",target:""}],isEnding:false,endingType:"success"};
+}
+function starterStory(){
+  return {startId:"sec1",book:{title:"The Maple Hollow Pie Heist",author:"A Gamebooks Empire Mystery"},pages:[
+   {id:"sec1",title:"Section 1 — The Bell Rings at Noon",text:"The old bronze bell above the community hall rings three times fast. That's Maple Hollow's signal for trouble.\n\nYou run toward the hall with Biscuit at your heels. Someone is shouting that the recipe box is gone — the wooden box holding Gran Odette Larkspur's secret pie recipe.",choices:[{text:"Head into the community hall kitchen",target:"sec2"},{text:"Check Marjorie's Maple Stand",target:"sec3"}],isEnding:false,endingType:"success"},
+   {id:"sec2",title:"Section 2 — Flour Everywhere",text:"The kitchen smells of cinnamon and panic. A trail of flour leads behind the big pantry door — and a very guilty-looking apron hangs on its hook.",choices:[{text:"Name the thief — you have proof",target:"end-best"},{text:"Keep looking before you accuse",target:"sec4"}],isEnding:false,endingType:"success"},
+   {id:"sec3",title:"Section 3 — Sticky Business",text:"Marjorie's maple stand is empty, but the syrup jug is still warm. Someone was here minutes ago — and they left muddy bootprints heading toward Pie Tent Row.",choices:[{text:"Follow the bootprints",target:"sec4"},{text:"Chase the rumor by the tents",target:"end-cold"}],isEnding:false,endingType:"success"},
+   {id:"sec4",title:"Section 4 — Pie Tent Row",text:"Three tents, one nervous pie judge, and a crumb trail even Biscuit could follow. Everything you found so far points at the same tent.",choices:[{text:"Make the accusation",target:"end-best"},{text:"Split the difference and guess",target:"end-partial"}],isEnding:false,endingType:"success"},
+   {id:"end-best",title:"Best Ending — Case Closed",text:"You lay out the clues one by one: the flour, the warm jug, the bootprints. The thief confesses, the recipe box is found, and Mayor Figgs declares you Detective of the Festival.",choices:[],isEnding:true,endingType:"success"},
+   {id:"end-partial",title:"Partial Ending — Right Thief, Thin Proof",text:"You name the right thief — but your reasoning wobbles, and the crowd murmurs. The box is found anyway. Next time, detective: collect one more clue first.",choices:[],isEnding:true,endingType:"partial"},
+   {id:"end-cold",title:"Cold Case — The Trail Goes Cold",text:"The rumor leads to an empty tent and a cold cup of cider. The box stays hidden… for now. Detective's Tip: follow evidence, not gossip — replay and try the other path.",choices:[],isEnding:true,endingType:"failure"}
+  ]};
+}
+var TEMPLATES={
+library:{name:"Midnight Library",desc:"5 pages · locked-in mystery · 2 endings",
+ book:{title:"The Midnight Library Mystery",author:"A Gamebooks Empire Mystery"},startId:"lib1",pages:[
+  {id:"lib1",title:"Section 1 — Locked In at Dusk",text:"The library door clicks shut behind you. Dust dances in the last light. Somewhere between the tall shelves, a book falls with a soft thump — all by itself.",choices:[{text:"Follow the whispering shelves",target:"lib2"},{text:"Ask the portrait",target:"lib3"}],isEnding:false,endingType:"success"},
+  {id:"lib2",title:"Section 2 — Whispers",text:"You press your ear to the cold wood. The whispering stops the moment you hold your breath — and a small brass key glints between two books.",choices:[{text:"Name the midnight borrower",target:"lib-best"},{text:"Shout into the dark",target:"lib-cold"}],isEnding:false,endingType:"success"},
+  {id:"lib3",title:"Section 3 — The Portrait",text:"The painted eyes seem to follow you. Under the frame, in pencil almost too light to read: return what was borrowed.",choices:[{text:"Piece the clue together",target:"lib-best"},{text:"Run for the doors",target:"lib-cold"}],isEnding:false,endingType:"success"},
+  {id:"lib-best",title:"Best Ending — Case Closed",text:"Key, whisper, portrait — it all fits. You name the midnight borrower out loud, and the library sighs like it was holding its breath. Case closed.",choices:[],isEnding:true,endingType:"success"},
+  {id:"lib-cold",title:"Cold Case — Candles Out",text:"Darkness swallows the shelves before you finish thinking. Detective's Tip: slow down and collect one more clue — then replay.",choices:[],isEnding:true,endingType:"failure"}]},
+harbor:{name:"Haunted Harbor",desc:"7 pages · smugglers & fog · 3 endings",
+ book:{title:"The Haunted Harbor Heist",author:"A Gamebooks Empire Mystery"},startId:"har1",pages:[
+  {id:"har1",title:"Section 1 — Foghorn at Midnight",text:"The foghorn groans across the black water. A rowboat bumps the dock — empty, except for a lantern still burning and a rope cut clean through.",choices:[{text:"Row out to the wreck",target:"har2"},{text:"Climb the lighthouse stair",target:"har3"}],isEnding:false,endingType:"success"},
+  {id:"har2",title:"Section 2 — The Wreck",text:"Barnacles grip the hull like knuckles. In the captain's cabin, a chart is marked with three red crosses — and one of them is this harbor.",choices:[{text:"Take the chart to the ferryman",target:"har4"},{text:"Pocket the brass compass",target:"har-best"}],isEnding:false,endingType:"success"},
+  {id:"har3",title:"Section 3 — Ninety Steps Up",text:"Your legs burn by step forty. At the top, the lamp room is empty — but the logbook's last line is fresh ink: they come with the fog.",choices:[{text:"Read on by lantern light",target:"har4"},{text:"Race back down",target:"har-cold"}],isEnding:false,endingType:"success"},
+  {id:"har4",title:"Section 4 — The Ferryman",text:"The ferryman won't look at you. He slides one coin across the wood and whispers: the third cross. Then he points at the fog.",choices:[{text:"Light the harbor lamp",target:"har-best"},{text:"Guess and row out blind",target:"har-partial"}],isEnding:false,endingType:"success"},
+  {id:"har-best",title:"Best Ending — Light the Lamp",text:"Light floods the fog. The smugglers' boat turns back, the charts make sense, and the harbor bell rings for you. Case closed, detective.",choices:[],isEnding:true,endingType:"success"},
+  {id:"har-partial",title:"Partial Ending — Half the Charts",text:"You stop half the smugglers — but one boat slips away in the fog. Next time, bring one more clue.",choices:[],isEnding:true,endingType:"partial"},
+  {id:"har-cold",title:"Cold Case — Lost in the Fog",text:"The fog eats the dock, the boat, and your confidence. Detective's Tip: evidence first, rowing second — replay and try the lighthouse.",choices:[],isEnding:true,endingType:"failure"}]},
+galleon:{name:"Sunken Galleon",desc:"6 pages · underwater dive · 3 endings",
+ book:{title:"The Sunken Galleon Mystery",author:"A Gamebooks Empire Mystery"},startId:"gal1",pages:[
+  {id:"gal1",title:"Section 1 — Tide Pools",text:"A hand-drawn map flutters from a library book. X marks the tide pools — and someone has circled today's date. You grab your bucket and go.",choices:[{text:"Search the tide pools",target:"gal2"},{text:"Ask the old pier keeper",target:"gal3"}],isEnding:false,endingType:"success"},
+  {id:"gal2",title:"Section 2 — Crab Patrol",text:"A crab the size of a dinner plate guards a glass bottle. Inside: half a map and a key that hums when the waves hit.",choices:[{text:"Take the key to the pier",target:"gal4"},{text:"Follow the crab",target:"gal-best"}],isEnding:false,endingType:"success"},
+  {id:"gal3",title:"Section 3 — The Pier Keeper",text:"The keeper squints at your map and laughs — then stops laughing. 'That ship only shows at low tide, kid. And the tide is turning.'",choices:[{text:"Row out now",target:"gal4"},{text:"Wait for tomorrow",target:"gal-cold"}],isEnding:false,endingType:"success"},
+  {id:"gal4",title:"Section 4 — Low Tide",text:"The water pulls back like a curtain. There she is: the Sunken Galleon, dripping and silent, her bell still swinging.",choices:[{text:"Ring the brass bell",target:"gal-best"},{text:"Grab one coin and run",target:"gal-partial"}],isEnding:false,endingType:"success"},
+  {id:"gal-best",title:"Best Ending — The Bell Rings",text:"You ring the bell three times. Gulls scatter, the fog lifts, and the whole beach applauds. Mystery solved, treasure shared.",choices:[],isEnding:true,endingType:"success"},
+  {id:"gal-partial",title:"Partial Ending — One Gold Coin",text:"You pocket one coin and sprint for the pier as the tide rushes back. Half a treasure — and a whole reason to replay.",choices:[],isEnding:true,endingType:"partial"},
+  {id:"gal-cold",title:"Cold Case — Fog Rolls In",text:"By morning the map is soggy and the tide is high. Detective's Tip: the tide waits for no one — replay and row out fast.",choices:[],isEnding:true,endingType:"failure"}]},
+express:{name:"Clockwork Express",desc:"6 pages · night train · 3 endings",
+ book:{title:"The Clockwork Express Mystery",author:"A Gamebooks Empire Mystery"},startId:"exp1",pages:[
+  {id:"exp1",title:"Section 1 — Platform Fizz",text:"The 6:15 express hisses clouds of cinnamon-scented steam. Your ticket says seat 9¾ — except someone has scribbled over it: FIND THE CONDUCTOR'S WATCH.",choices:[{text:"Search the dining car",target:"exp2"},{text:"Check the luggage van",target:"exp3"}],isEnding:false,endingType:"success"},
+  {id:"exp2",title:"Section 2 — Dining Car",text:"Twelve empty teacups, one full. The waiter winks and slides you a napkin: second boiling pot from the left.",choices:[{text:"Inspect the boiling pots",target:"exp4"},{text:"Pocket the napkin and sit tight",target:"exp-best"}],isEnding:false,endingType:"success"},
+  {id:"exp3",title:"Section 3 — Luggage Van",text:"Suitcases tower like sleepy giants. One tag reads CONDUCTOR in wobbly letters — and it is ticking.",choices:[{text:"Open it carefully",target:"exp4"},{text:"Close the van and walk away",target:"exp-cold"}],isEnding:false,endingType:"success"},
+  {id:"exp4",title:"Section 4 — Dark Tunnel",text:"The train dives into a tunnel and every light goes out. When they sputter back, the watch is gleaming on the floor — with a note.",choices:[{text:"Read the note aloud",target:"exp-best"},{text:"Hide the watch first",target:"exp-partial"}],isEnding:false,endingType:"success"},
+  {id:"exp-best",title:"Best Ending — Right on Time",text:"The note names the station thief. The conductor shakes your hand as the brakes sigh. Case closed, right on schedule.",choices:[],isEnding:true,endingType:"success"},
+  {id:"exp-partial",title:"Partial Ending — Ticket-Stub Clue",text:"You save the watch but the note blows out the window. Half solved — replay and read faster.",choices:[],isEnding:true,endingType:"partial"},
+  {id:"exp-cold",title:"Cold Case — Wrong Train",text:"You wake up at the wrong station with someone else's umbrella. Detective's Tip: curiosity beats comfort — replay and open things.",choices:[],isEnding:true,endingType:"failure"}]},
+treehouse:{name:"Treehouse Club",desc:"6 pages · backyard spies · 3 endings",
+ book:{title:"The Treehouse Club Caper",author:"A Gamebooks Empire Mystery"},startId:"tree1",pages:[
+  {id:"tree1",title:"Section 1 — The Missing Flag",text:"The Treehouse Club flag is gone — and the rope ladder has a knot nobody tied. Your walkie-talkie crackles: 'Agent Robin, come in.'",choices:[{text:"Climb the rope ladder",target:"tree2"},{text:"Search the hollow oak",target:"tree3"}],isEnding:false,endingType:"success"},
+  {id:"tree2",title:"Section 2 — Lookout Duty",text:"From the top, the whole backyard is a green ocean. A flash of red darts behind the shed — too big for a squirrel, too fast for a grown-up.",choices:[{text:"Signal with the mirror",target:"tree-best"},{text:"Slide down and chase",target:"tree4"}],isEnding:false,endingType:"success"},
+  {id:"tree3",title:"Section 3 — Hollow Oak",text:"Inside the oak: crumb trails, a marble collection, and a note in wobbly capitals: THE FLAG IS UP HIGH.",choices:[{text:"Compare notes with Robin",target:"tree-best"},{text:"Accuse the squirrel",target:"tree-cold"}],isEnding:false,endingType:"success"},
+  {id:"tree4",title:"Section 4 — The Shed",text:"The shed door creaks. Inside: the flag, folded neatly — guarded by the neighbor's extremely proud beagle.",choices:[{text:"Trade a biscuit for the flag",target:"tree-best"},{text:"Grab and run",target:"tree-partial"}],isEnding:false,endingType:"success"},
+  {id:"tree-best",title:"Best Ending — Flag Raised",text:"The flag snaps back over the treehouse. Robin salutes with a juice box. Mystery solved before dinner.",choices:[],isEnding:true,endingType:"success"},
+  {id:"tree-partial",title:"Partial Ending — Half a Hoist",text:"The flag is up — upside down, and slightly chewed. Close enough to celebrate, good enough to replay.",choices:[],isEnding:true,endingType:"partial"},
+  {id:"tree-cold",title:"Cold Case — Squirrel Suspect",text:"You accuse a squirrel. The squirrel accuses you back. Detective's Tip: compare notes before accusing — replay and share.",choices:[],isEnding:true,endingType:"failure"}]}
+};
+function renderTpl(){
+  var h="";
+  for(var k in TEMPLATES){
+    if(!TEMPLATES.hasOwnProperty(k)){ continue; }
+    h+='<button class="tplbtn" data-tpl="'+k+'"><b>'+esc(TEMPLATES[k].name.toUpperCase())+'</b><br>'+esc(TEMPLATES[k].desc)+'</button>';
+  }
+  $("tplButtons").innerHTML=h;
+  var bs=document.querySelectorAll("[data-tpl]");
+  for(var i=0;i<bs.length;i++){ bs[i].onclick=function(){ loadTemplate(this.getAttribute("data-tpl")); }; }
+}
+function loadTemplate(key){
+  var t=TEMPLATES[key];
+  if(!t){ return; }
+  askConfirm("Load \""+t.name+"\"? The current project will be replaced.",function(){
+    state=JSON.parse(JSON.stringify({startId:t.startId,book:t.book,pages:t.pages}));
+    play={cur:null,trail:[]};
+    $("in-book").value=state.book.title; $("in-author").value=state.book.author;
+    renderBuilder(); setMode(false); showToast("TEMPLATE LOADED — PLAY IT FIRST");
+  });
+}
+function stateDefault(){ return starterStory(); }
+var state=null;
+var play={cur:null,trail:[]};
+function saveLS(){ try{ localStorage.setItem(LSKEY,JSON.stringify(state)); }catch(e){} }
+function loadLS(){ try{ var r=localStorage.getItem(LSKEY); if(r){ var p=JSON.parse(r); if(p&&p.pages&&p.pages.length){ return p; } } }catch(e){} return null; }
+function countWords(s){ var w=String(s||"").trim().split(/\s+/); if(w.length===1&&w[0]===""){ return 0; } return w.length; }
+function hashStr(s){ var h=0; s=String(s||""); for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))%1000003; } return h; }
+function depthStats(pages,startId){
+  var map=pageMap(pages);
+  var reach={}, best=0;
+  function dfs(id,depth,seen){
+    if(depth>200||!map[id]||seen[id]){ return; }
+    reach[id]=1;
+    if(depth>best){ best=depth; }
+    var pg=map[id];
+    if(pg.isEnding){ return; }
+    seen[id]=1;
+    for(var i=0;i<pg.choices.length;i++){ if(pg.choices[i].target!=="THE_END"){ dfs(pg.choices[i].target,depth+1,seen); } }
+    seen[id]=0;
+  }
+  if(startId&&map[startId]){ dfs(startId,1,{}); }
+  var n=0;
+  for(var k in reach){ if(reach.hasOwnProperty(k)){ n++; } }
+  return {reach:n,longest:best};
+}
+function sanitizeImport(o){
+  if(!o||!o.pages||!(o.pages instanceof Array)||!o.pages.length){ return null; }
+  var pages=[];
+  for(var i=0;i<Math.min(o.pages.length,40);i++){
+    var p=o.pages[i];
+    if(!p||typeof p!=="object"){ continue; }
+    var chs=[];
+    if(p.choices instanceof Array){
+      for(var j=0;j<Math.min(p.choices.length,4);j++){
+        var c=p.choices[j]||{};
+        chs.push({text:String(c.text||""),target:String(c.target||"THE_END")});
+      }
+    }
+    var et=String(p.endingType||"success");
+    if(et!=="success"&&et!=="partial"&&et!=="failure"){ et="success"; }
+    pages.push({id:String(p.id||("page-"+i)),title:String(p.title||"Untitled Page"),text:String(p.text||""),choices:chs,isEnding:!!p.isEnding,endingType:et});
+  }
+  if(!pages.length){ return null; }
+  var st=String(o.startId||""), has=false;
+  for(var k=0;k<pages.length;k++){ if(pages[k].id===st){ has=true; } }
+  if(!has){ st=pages[0].id; }
+  var bk=(o.book&&typeof o.book==="object")?o.book:{};
+  return {startId:st,book:{title:String(bk.title||""),author:String(bk.author||"")},pages:pages};
+}
+function pageMap(pages){
+  var m={};
+  for(var i=0;i<pages.length;i++){ m[pages[i].id]=pages[i]; }
+  return m;
+}
+function validateStory(pages,startId){
+  var errors=[], warnings=[], startFix=null, missing=[], seenM={};
+  var map=pageMap(pages);
+  var seen={};
+  for(var i=0;i<pages.length;i++){
+    var p=pages[i];
+    if(!p.id){ errors.push("A page has an empty ID."); }
+    else if(seen[p.id]){ errors.push("Duplicate Page ID: \""+p.id+"\"."); }
+    seen[p.id]=1;
+  }
+  if(!startId||!map[startId]){ errors.push("Starting Page is not set (or points nowhere)."); }
+  else if(map[startId].isEnding){
+    errors.push("Starting Page \""+startId+"\" is an ENDING — the demo would open directly on a finale with no choices. Set a story page (e.g. sec1) as start instead — or hit AUTO-FIX below.");
+    for(var f=0;f<pages.length;f++){ if(!pages[f].isEnding){ startFix=pages[f].id; break; } }
+  }
+  for(var j=0;j<pages.length;j++){
+    var q=pages[j];
+    if(q.isEnding){ continue; }
+    if(!q.choices.length){ errors.push("\""+q.id+"\" has no choices and isn't marked as an ending."); }
+    for(var k=0;k<q.choices.length;k++){
+      var t=q.choices[k].target;
+      if(t!=="THE_END"&&!map[t]){ errors.push("Broken link in \""+q.id+"\": \""+q.choices[k].text+"\" → missing \""+t+"\"."); if(t&&!seenM[t]){ seenM[t]=1; missing.push(t); } }
+    }
+  }
+  if(startId&&map[startId]){
+    var reach={}, stack=[startId];
+    while(stack.length){
+      var cur=stack.pop();
+      if(reach[cur]||!map[cur]){ continue; }
+      reach[cur]=1;
+      var pg=map[cur];
+      if(!pg.isEnding){ for(var w=0;w<pg.choices.length;w++){ if(pg.choices[w].target!=="THE_END"){ stack.push(pg.choices[w].target); } } }
+    }
+    for(var v=0;v<pages.length;v++){
+      if(!reach[pages[v].id]){ warnings.push("\""+pages[v].id+"\" is unreachable from the start."); }
+    }
+  }
+  return {errors:errors,warnings:warnings,startFix:startFix,missing:missing};
+}
+function collectFromUI(){
+  var cards=document.querySelectorAll("[data-page]");
+  var pages=[];
+  for(var i=0;i<cards.length;i++){
+    (function(card){
+      var pid=card.querySelector("[data-f=id]").value.replace(/\s+/g," ").trim();
+      var p={id:pid,
+        title:card.querySelector("[data-f=title]").value,
+        text:card.querySelector("[data-f=text]").value,
+        choices:[],isEnding:card.querySelector("[data-f=end]").checked,
+        endingType:card.querySelector("[data-f=etype]").value};
+      if(card.querySelector("[data-f=start]").checked){ state.startId=pid; }
+      var rows=card.querySelectorAll("[data-ch]");
+      for(var j=0;j<rows.length;j++){
+        p.choices.push({text:rows[j].querySelector("[data-c=text]").value,
+          target:rows[j].querySelector("[data-c=target]").value});
+      }
+      pages.push(p);
+    })(cards[i]);
+  }
+  state.book={title:$("in-book").value.replace(/\s+/g," ").trim().slice(0,90),
+    author:$("in-author").value.replace(/\s+/g," ").trim().slice(0,60)};
+  state.pages=pages;
+  if(!pageMap(pages)[state.startId]){ state.startId=pages.length?pages[0].id:""; }
+}
+function targetOptions(exceptId,sel){
+  var h='<option value="THE_END">★ THE END</option>';
+  for(var i=0;i<state.pages.length;i++){
+    var p=state.pages[i];
+    h+='<option value="'+esc(p.id)+'"'+(p.id===sel?" selected":"")+'>'+esc(p.id+" — "+(p.title||"untitled").slice(0,28))+'</option>';
+  }
+  return h;
+}
+function renderBuilder(){
+  var h="";
+  for(var i=0;i<state.pages.length;i++){
+    (function(p,idx){
+      h+='<div class="pagecard'+(p.id===state.startId?" startcard":"")+'" data-page="'+idx+'">';
+      h+='<div class="phead"><span class="pid">'+(p.id===state.startId?"★ START · ":"")+esc(p.id||"no-id")+'<span class="wcount">'+countWords(p.text)+' wds</span></span><span class="spacer"></span>';
+      h+='<button class="mini" onclick="movePage('+idx+',-1)">↑</button><button class="mini" onclick="movePage('+idx+',1)">↓</button><button class="mini" onclick="dupPage('+idx+')">DUPL</button><button class="mini danger" onclick="delPage('+idx+')">DELETE</button></div>';
+      h+='<div class="idrow"><div><label class="f">Page ID</label><input type="text" data-f="id" maxlength="40" value="'+esc(p.id)+'"></div>';
+      h+='<div><label class="f">Page title</label><input type="text" data-f="title" maxlength="90" value="'+esc(p.title)+'"></div></div>';
+      h+='<label class="f">Story text</label><textarea data-f="text" placeholder="Paste the generated passage here…">'+esc(p.text)+'</textarea>';
+      if(!p.isEnding){
+        h+='<label class="f">Choices ('+p.choices.length+')</label><div class="choices">';
+        for(var j=0;j<p.choices.length;j++){
+          h+='<div class="chrow" data-ch="'+j+'"><input type="text" data-c="text" maxlength="90" placeholder="e.g. Open the heavy oak door" value="'+esc(p.choices[j].text)+'">'+
+            '<select data-c="target">'+targetOptions(p.id,p.choices[j].target)+'</select>'+
+            '<button class="chx" onclick="delChoice('+idx+','+j+')">×</button></div>';
+        }
+        h+='</div><button class="mini" onclick="addChoice('+idx+')">+ ADD CHOICE</button>';
+      }
+      h+='<div class="endrow"><label><input type="checkbox" data-f="end"'+(p.isEnding?" checked":"")+'> Mark as ENDING</label>';
+      h+='<select data-f="etype"><option value="success"'+(p.endingType==="success"?" selected":"")+'>Success</option><option value="partial"'+(p.endingType==="partial"?" selected":"")+'>Partial</option><option value="failure"'+(p.endingType==="failure"?" selected":"")+'>Failure</option></select></div>';
+      h+='<label class="startradio"><input type="radio" name="startpg" data-f="start"'+(p.id===state.startId?" checked":"")+'> Set as Starting Page</label>';
+      h+='</div>';
+    })(state.pages[i],i);
+  }
+  $("pageList").innerHTML=h;
+  renderSide();
+}
+function renderStats(){
+  var tot=0, ch=0, out=0, ends={success:0,partial:0,failure:0};
+  for(var i=0;i<state.pages.length;i++){
+    var p=state.pages[i], w=countWords(p.text);
+    tot+=w;
+    if(w<120||w>220){ out++; }
+    if(p.isEnding){ if(ends[p.endingType]!==undefined){ ends[p.endingType]++; } }
+    else { ch+=p.choices.length; }
+  }
+  var ds=depthStats(state.pages,state.startId);
+  var avg=state.pages.length?Math.round(tot/state.pages.length):0;
+  $("statBox").innerHTML="Pages: <b>"+state.pages.length+"</b> · Endings: <b>"+(ends.success+ends.partial+ends.failure)+"</b> (S"+ends.success+"/P"+ends.partial+"/F"+ends.failure+")<br>"+
+    "Choices: <b>"+ch+"</b> · Words: <b>"+tot+"</b> (avg "+avg+"/section)<br>"+
+    "Outside 120–220 wds: <b>"+out+"</b> · Longest route: <b>"+ds.longest+"</b> sections";
+}
+function errHTML(msg){
+  var map=pageMap(state.pages);
+  return esc(msg).replace(/"([^"]+)"/g,function(m0,g1){
+    if(map[g1]){ return '"<span class="erritem" onclick="scrollToPage(\''+String(g1).replace(/'/g,"")+'\')">'+esc(g1)+'</span>"'; }
+    return m0;
+  });
+}
+function renderSide(){
+  var h="";
+  for(var i=0;i<state.pages.length;i++){
+    var p=state.pages[i];
+    h+='<div><span class="oid">'+esc(p.id)+'</span> <span class="oarrow">→</span> ';
+    if(p.isEnding){ h+='<i>ending</i>'; }
+    else {
+      var ts=[];
+      for(var j=0;j<p.choices.length;j++){ ts.push(esc(p.choices[j].target||"?")); }
+      h+=ts.join(", ")||"<i>no choices</i>";
+    }
+    h+='</div>';
+  }
+  $("outline").innerHTML=h;
+  renderStats();
+  var v=validateStory(state.pages,state.startId);
+  var box=$("errBox");
+  if(!v.errors.length&&!v.warnings.length){
+    box.className="ok"; box.id="errBox";
+    box.innerHTML="✓ All links resolve. Ready to play.";
+  } else {
+    box.className=""; box.id="errBox";
+    var eh="";
+    for(var a=0;a<v.errors.length;a++){ eh+='<div class="err erritem">✕ '+errHTML(v.errors[a])+'</div>'; }
+    for(var b=0;b<v.warnings.length;b++){ eh+='<div class="warn erritem">! '+errHTML(v.warnings[b])+'</div>'; }
+    if(v.startFix){ eh+='<div style="margin-top:10px"><button class="mini" onclick="autoFixStart()">★ AUTO-FIX: USE "'+esc(v.startFix)+'" AS START</button></div>'; }
+    if(v.missing&&v.missing.length){
+      for(var c=0;c<v.missing.length;c++){ eh+='<div style="margin-top:6px"><button class="mini" onclick="createPage(\''+String(v.missing[c]).replace(/'/g,"")+'\')">＋ CREATE MISSING PAGE "'+esc(v.missing[c])+'"</button></div>'; }
+    }
+    box.innerHTML=eh;
+  }
+}
+function dupPage(idx){
+  collectFromUI();
+  if(state.pages.length>=40){ showToast("MAX 40 PAGES"); return; }
+  var src=state.pages[idx];
+  var cp=JSON.parse(JSON.stringify(src));
+  cp.id=rndId(); cp.title=(cp.title||"Untitled")+" (copy)";
+  state.pages.splice(idx+1,0,cp);
+  saveLS(); renderBuilder(); showToast("PAGE DUPLICATED");
+}
+function scrollToPage(id){
+  var cards=document.querySelectorAll("[data-page]");
+  for(var i=0;i<cards.length;i++){
+    var inp=cards[i].querySelector("[data-f=id]");
+    if(inp&&inp.value===id){
+      if(cards[i].scrollIntoView){ try{ cards[i].scrollIntoView(); }catch(e){} }
+      cards[i].style.borderColor="var(--gold)";
+      (function(el){ setTimeout(function(){ el.style.borderColor=""; },1600); })(cards[i]);
+      return;
+    }
+  }
+}
+function createPage(id){
+  collectFromUI();
+  if(state.pages.length>=40){ showToast("MAX 40 PAGES"); return; }
+  state.pages.push({id:String(id).slice(0,40),title:String(id),text:"",choices:[{text:"Continue",target:"THE_END"}],isEnding:false,endingType:"success"});
+  saveLS(); renderBuilder(); showToast("PAGE CREATED — FILL IT IN");
+}
+function autoFixStart(){
+  collectFromUI();
+  state.startId="";
+  for(var i=0;i<state.pages.length;i++){
+    if(!state.pages[i].isEnding){ state.startId=state.pages[i].id; break; }
+  }
+  if(!state.startId&&state.pages.length){ state.startId=state.pages[0].id; }
+  saveLS(); renderBuilder();
+  showToast("START FIXED — READY TO PLAY");
+}
+function movePage(idx,dir){
+  collectFromUI();
+  var j=idx+dir;
+  if(j<0||j>=state.pages.length){ return; }
+  var t=state.pages[idx]; state.pages[idx]=state.pages[j]; state.pages[j]=t;
+  saveLS(); renderBuilder();
+}
+function delPage(idx){
+  collectFromUI();
+  if(state.pages.length<=1){ showToast("KEEP AT LEAST ONE PAGE"); return; }
+  var gone=state.pages[idx].id;
+  state.pages.splice(idx,1);
+  saveLS(); renderBuilder(); showToast("PAGE DELETED");
+}
+function addChoice(idx){
+  collectFromUI();
+  var p=state.pages[idx];
+  if(p.choices.length>=4){ showToast("MAX 4 CHOICES PER PAGE"); return; }
+  p.choices.push({text:"",target:"THE_END"});
+  saveLS(); renderBuilder();
+}
+function delChoice(pi,ci){
+  collectFromUI();
+  state.pages[pi].choices.splice(ci,1);
+  saveLS(); renderBuilder();
+}
+/* ---------- play ---------- */
+function setMode(play){
+  collectFromUI(); saveLS();
+  $("builderGrid").style.display=play?"none":"grid";
+  $("playView").style.display=play?"block":"none";
+  $("mBuild").className=play?"":"on";
+  $("mPlay").className=play?"on":"";
+  window.scrollTo(0,0);
+}
+function parasOf(text){
+  var parts=String(text||"").split(/\n\s*\n|\n/);
+  var h="";
+  for(var i=0;i<parts.length;i++){
+    var t=parts[i].replace(/\s+/g," ").trim();
+    if(t){ h+="<p>"+esc(t)+"</p>"; }
+  }
+  return h||"<p><i>(No story text yet.)</i></p>";
+}
+var typeOn=true, typeTimer=null, sfxOn=true;
+try{ var t0=localStorage.getItem("pde-type"); if(t0!==null){ typeOn=(t0==="1"); } }catch(e){}
+try{ var s0=localStorage.getItem("pde-sfx"); if(s0!==null){ sfxOn=(s0==="1"); } }catch(e){}
+var AC=null;
+function beep(freq,dur,delay){
+  if(!sfxOn){ return; }
+  try{
+    if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(!C){ return; } AC=new C(); }
+    if(AC.state==="suspended"){ AC.resume(); }
+    var o=AC.createOscillator(), g=AC.createGain();
+    o.type="sine"; o.frequency.value=freq;
+    var t=AC.currentTime+(delay||0);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.25,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(t); o.stop(t+dur+0.05);
+  }catch(e){}
+}
+function sfxChoice(){ beep(520,0.12,0); beep(780,0.1,0.08); }
+function sfxEnd(ok){
+  if(ok){ beep(523,0.15,0); beep(659,0.15,0.12); beep(784,0.25,0.24); }
+  else { beep(330,0.2,0); beep(220,0.3,0.15); }
+}
+function stopType(){ if(typeTimer){ clearInterval(typeTimer); typeTimer=null; } }
+function finishType(){
+  if(!typeTimer){ return false; }
+  clearInterval(typeTimer); typeTimer=null;
+  var ps=document.querySelectorAll("#bkBody .story p");
+  for(var i=0;i<ps.length;i++){
+    var f=ps[i].getAttribute("data-full");
+    if(f!==null&&f!==undefined){ ps[i].innerHTML=esc(f); }
+  }
+  return true;
+}
+function runTypewriter(){
+  stopType();
+  if(!typeOn){ return; }
+  var ps=document.querySelectorAll("#bkBody .story p");
+  if(!ps.length){ return; }
+  var full=[], i;
+  for(i=0;i<ps.length;i++){ full.push(ps[i].textContent||""); ps[i].setAttribute("data-full",full[i]); ps[i].innerHTML=""; }
+  var idx=0, ch=0;
+  typeTimer=setInterval(function(){
+    if(idx>=ps.length){ stopType(); return; }
+    ch++;
+    ps[idx].innerHTML=esc(full[idx].slice(0,ch));
+    if(ch>=full[idx].length){ idx++; ch=0; }
+  },14);
+}
+function drawCrumbs(){
+  var h="";
+  for(var i=0;i<play.trail.length;i++){
+    h+='<i data-cr="'+i+'" onclick="crumbBack('+i+')" class="'+(i<play.trail.length-1?"done":"now")+'" title="'+esc(crumbTitle(play.trail[i]))+'"></i>';
+  }
+  $("crumbs").innerHTML=h;
+  renderNotebook();
+}
+function crumbTitle(e){ var map=pageMap(state.pages); return (map[e.id]&&map[e.id].title)||e.id; }
+function crumbBack(i){
+  if(i<0||i>=play.trail.length){ return; }
+  play.trail=play.trail.slice(0,i+1);
+  sfxChoice();
+  showPage(play.trail[i].id,false);
+}
+function renderNotebook(){
+  var box=$("notebook");
+  if(!box||box.style.display==="none"){ return; }
+  var map=pageMap(state.pages);
+  var h="<h4>📓 DETECTIVE NOTEBOOK</h4>";
+  for(var i=0;i<play.trail.length;i++){
+    var e=play.trail[i];
+    var t=(map[e.id]&&map[e.id].title)||e.id;
+    h+='<div class="nrow"><b>'+(i+1)+'.</b> '+esc(t)+(e.via?'<br><span>↳ chose “'+esc(e.via)+'”</span>':"")+'</div>';
+  }
+  box.innerHTML=h||"<h4>📓 DETECTIVE NOTEBOOK</h4><i>No steps yet.</i>";
+}
+function showPage(id,first){
+  stopType();
+  var map=pageMap(state.pages);
+  var p=map[id];
+  var book=$("book");
+  $("cover").style.display="none";
+  book.style.display="block";
+  function paint(){
+    if(!p){
+      $("bkTitle").innerHTML="Lost Page";
+      $("bkBody").innerHTML='<div class="story"><p>This path leads nowhere — go back and fix the link.</p></div><div id="choices"><button class="signpost" onclick="playAgain()">↺ Play Again</button></div>';
+      return;
+    }
+    $("bkTitle").innerHTML=esc(p.title||p.id);
+    var body='<div class="story">'+parasOf(p.text)+'</div>';
+    if(p.isEnding){
+      var et=ETYPES[p.endingType]||ETYPES.success;
+      var isNew=markEnding(p.id);
+      sfxEnd(p.endingType!=="failure");
+      body+='<div id="endbanner"><div class="big">✦ THE END ✦</div><br><span class="ebadge" style="background:'+et.bg+'">'+et.label+'</span><br>';
+      if(isNew){ body+='<div class="newend" style="margin-top:10px">★ NEW ENDING DISCOVERED ★</div>'; }
+      body+='<br><button class="again" onclick="playAgain()">↺ PLAY AGAIN</button></div>';
+    } else {
+      body+='<div id="choices">';
+      for(var i=0;i<p.choices.length;i++){
+        body+='<button class="signpost" onclick="goChoice('+i+')">'+esc(p.choices[i].text||("Choice "+(i+1)))+'</button>';
+      }
+      body+='</div>';
+    }
+    $("bkBody").innerHTML=body;
+    applyFont();
+    runTypewriter();
+    drawCrumbs();
+  }
+  if(first){ paint(); return; }
+  book.className="fade";
+  setTimeout(function(){ play.cur=id; paint(); book.className=""; },300);
+}
+function goChoice(i){
+  var map=pageMap(state.pages);
+  var p=map[play.cur];
+  if(!p||!p.choices[i]){ return; }
+  var t=p.choices[i].target;
+  if(t==="THE_END"){ play.trail.push({id:"THE END",via:""}); sfxEnd(false); paintTheEnd(); return; }
+  play.trail.push({id:t,via:p.choices[i].text||""});
+  sfxChoice();
+  showPage(t,false);
+}
+function paintTheEnd(){
+  var book=$("book");
+  book.className="fade";
+  setTimeout(function(){
+    $("bkTitle").innerHTML="The End";
+    $("bkBody").innerHTML='<div class="story"><p>Your choices led you here. The case rests — for now.</p></div><div id="endbanner"><div class="big">✦ THE END ✦</div><br><button class="again" onclick="playAgain()">↺ PLAY AGAIN</button></div>';
+    drawCrumbs();
+    book.className="";
+  },300);
+}
+function playAgain(){
+  play.trail=[{id:state.startId,via:""}];
+  showPage(state.startId,true);
+  drawCrumbs();
+}
+function storyHash(){ return "pde-end-"+hashStr(JSON.stringify(state.pages)); }
+function foundEndings(){ var h=storyHash(), all={}; try{ var r=localStorage.getItem("pde-endseen"); if(r){ all=JSON.parse(r)||{}; } }catch(e){} return all[h]||[]; }
+function markEnding(id){
+  var h=storyHash(), all={};
+  try{ var r=localStorage.getItem("pde-endseen"); if(r){ all=JSON.parse(r)||{}; } }catch(e){}
+  var list=all[h]||[];
+  var isNew=list.indexOf(id)<0;
+  if(isNew){ list.push(id); all[h]=list; try{ localStorage.setItem("pde-endseen",JSON.stringify(all)); }catch(e){} }
+  return isNew;
+}
+function endingCount(){ var n=0; for(var i=0;i<state.pages.length;i++){ if(state.pages[i].isEnding){ n++; } } return n; }
+function showCover(){
+  var map=pageMap(state.pages);
+  var start=map[state.startId];
+  var bt=(state.book&&state.book.title)||"";
+  $("covTitle").innerHTML=esc(bt||(start?(start.title||"Untitled Demo"):"Untitled Demo"));
+  $("covAuthor").innerHTML=esc((state.book&&state.book.author)||"");
+  var got=foundEndings();
+  var ends=[];
+  for(var e=0;e<state.pages.length;e++){ if(state.pages[e].isEnding){ ends.push(state.pages[e]); } }
+  var dots="";
+  for(var j=0;j<ends.length;j++){
+    var col=ends[j].endingType==="success"?"#6fae7e":(ends[j].endingType==="partial"?"#C9A84C":"#b0574a");
+    dots+='<span style="color:'+(got.indexOf(ends[j].id)>=0?col:"#4a4234")+'">●</span> ';
+  }
+  $("covFound").innerHTML="Endings discovered: <b>"+got.length+"/"+ends.length+"</b> "+dots+"<br>every ending is a new victory lap";
+  $("cover").style.display="block";
+  $("book").style.display="none";
+  $("crumbs").innerHTML="";
+  play.trail=[]; play.cur=null;
+}
+function bookFont(){ var f=17; try{ var r=localStorage.getItem("pde-font"); if(r){ f=parseInt(r,10)||17; } }catch(e){} return Math.max(14,Math.min(24,f)); }
+function applyFont(f){
+  if(f===undefined||f===null){ f=bookFont(); }
+  var st=document.querySelectorAll("#book .story");
+  for(var i=0;i<st.length;i++){ st[i].style.fontSize=f+"px"; }
+}
+function setFont(f){ f=Math.max(14,Math.min(24,f)); try{ localStorage.setItem("pde-font",String(f)); }catch(e){} applyFont(f); }
+function startPlay(){
+  collectFromUI(); saveLS();
+  var v=validateStory(state.pages,state.startId);
+  if(v.errors.length){
+    setMode(false);
+    showToast("STOP — FIX "+v.errors.length+" ISSUE(S) IN PRE-FLIGHT FIRST");
+    return;
+  }
+  play.trail=[];
+  setMode(true);
+  showCover();
+}
+/* ---------- export ---------- */
+function buildExportHTML(pages,startId,book){
+  var data=JSON.stringify({pages:pages,startId:startId,book:book||{title:"",author:""}}).replace(/<\//g,"<\\/");
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'+
+  '<title>Playable Demo</title>\n'+
+  '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">\n'+
+  '<style>\nhtml,body{margin:0;padding:0;background:#150f0a;color:#f0e8d8;font-family:"EB Garamond",Georgia,serif;min-height:100%}\n'+
+  '#wrap{max-width:680px;margin:0 auto;padding:34px 22px 60px}\n'+
+  '#crumbs{display:flex;gap:8px;justify-content:center;margin-bottom:20px}\n'+
+  '#crumbs i{width:10px;height:10px;border-radius:50%;border:2px solid #C9A84C;display:block}\n'+
+  '#crumbs i.done{background:#C9A84C}#crumbs i.now{background:#e6c866;box-shadow:0 0 10px #e6c866}\n'+
+  '#book{background:#efe3c8;color:#2a2118;border-radius:6px;padding:44px 44px 38px;box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 0 90px rgba(160,120,60,.25);opacity:1;transition:opacity .3s ease}\n'+
+  '#book.fade{opacity:0}\n'+
+'#cover{max-width:640px;margin:0 auto;background:linear-gradient(160deg,#241a10,#17100a);border:3px solid #C9A84C;border-radius:8px;padding:56px 40px;text-align:center}\n'+
+'#cover h2{font-family:Cinzel,serif;font-size:32px;color:#e6c866;line-height:1.35}\n'+
+'#cover .by{font-size:17px;color:#8a7c5e;font-style:italic;margin-top:12px}\n'+
+'#cover .orn{color:#C9A84C;font-size:20px;letter-spacing:8px;margin:16px 0}\n'+
+'#cover .open{margin-top:24px;background:#C9A84C;color:#241a10;border:none;border-radius:10px;font-family:Cinzel,serif;font-size:15px;font-weight:700;padding:16px 38px;cursor:pointer}\n'+
+'#cover .found{margin-top:16px;font-size:14px;color:#8a7c5e}\n'+
+'#cover .found b{color:#e6c866}\n'+
+  '#book h2{font-family:Cinzel,serif;font-size:26px;text-align:center;margin:0;line-height:1.3}\n'+
+  '#book .rule{border:none;border-top:2px solid #C9A84C;width:120px;margin:16px auto 20px}\n'+
+  '#book .story{font-size:19px;line-height:1.85}#book .story p{margin:0 0 16px}\n'+
+  '.signpost{display:block;width:100%;background:#3a2a17;color:#e6c866;border:2px solid #C9A84C;border-radius:4px 14px 14px 4px;font-family:Cinzel,serif;font-size:15px;font-weight:600;padding:15px 18px;margin-top:12px;cursor:pointer;text-align:left}\n'+
+  '.signpost:active{transform:translateY(2px)}\n'+
+  '#endbanner{text-align:center}#endbanner .big{font-family:Cinzel,serif;font-size:32px;font-weight:800;letter-spacing:4px}\n'+
+  '.ebadge{display:inline-block;font-family:Cinzel,serif;font-size:13px;font-weight:700;letter-spacing:2px;border-radius:99px;padding:6px 18px;margin-top:12px;color:#fff}\n'+
+  '.again{margin-top:22px;background:#C9A84C;color:#241a10;border:none;border-radius:10px;font-family:Cinzel,serif;font-size:14px;font-weight:700;padding:14px 30px;cursor:pointer}\n'+
+  '</style>\n</head>\n<body>\n<div id="wrap"><div id="cover"><div class="orn">\\u2767 \\u2767 \\u2767</div><h2 id="ct"></h2><div class="by" id="ca"></div><div class="orn">\\u2767 \\u2767 \\u2767</div><div><button class="open" onclick="openBk()">OPEN THE BOOK</button></div><div class="found" id="cf"></div></div><div id="crumbs" style="display:none"></div><div style="text-align:right;margin-bottom:10px;display:none" id="fz"><button class="again" style="padding:8px 14px;font-size:12px;margin-right:6px" onclick="xnote()">NOTEBOOK</button><button class="again" style="padding:8px 14px;font-size:12px;margin-right:6px" id="xsfxt" onclick="xsfx()">SOUND ON</button><button class="again" style="padding:8px 14px;font-size:12px;margin-right:6px" onclick="fs(-1)">A\\u2212</button><button class="again" style="padding:8px 14px;font-size:12px" onclick="fs(1)">A+</button></div><div id="xnote" style="display:none;max-width:640px;margin:0 auto 14px;background:#1f170f;border:1px solid #3a2f1d;border-radius:10px;padding:14px 18px;font-size:15px;line-height:1.7"></div><div id="book" style="display:none" onclick="xskip()"><h2 id="t"></h2><div class="rule"></div><div id="b"></div></div></div>\n'+
+  '<script>\nvar DATA='+data+';\n'+
+  'var ET={success:["SUCCESS","#3d6b4a"],partial:["PARTIAL","#8a6a24"],failure:["FAILURE","#8a3324"]};\n'+
+  'var MAP={},trail=[],cur=null;\n'+
+'var BK=(DATA.book||{title:"",author:""});\n'+
+'function xh(s){var h=0;s=String(s||"");for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))%1000003;}return h;}\n'+
+'function xkey(){return "pde-xend-"+xh(JSON.stringify(DATA.pages));}\n'+
+'var xseen=[];\n'+
+'try{var xr=JSON.parse(localStorage.getItem(xkey())||"[]");if(xr instanceof Array){xseen=xr;}}catch(e){}\n'+
+'var xfont=17;\n'+
+'try{var xf=parseInt(localStorage.getItem("pde-xfont")||"17",10);if(xf>=14&&xf<=24){xfont=xf;}}catch(e){}\n'+
+'function xsave(){try{localStorage.setItem(xkey(),JSON.stringify(xseen));}catch(e){} try{localStorage.setItem("pde-xfont",String(xfont));}catch(e){}}\n'+
+'function xapply(){var st=document.querySelectorAll("#book .story");for(var i=0;i<st.length;i++){st[i].style.fontSize=xfont+"px";}}\n'+
+'function fs(d){xfont=Math.max(14,Math.min(24,xfont+d));xsave();xapply();}\n'+
+'var xtype=null;\n'+
+'function xstop(){if(xtype){clearInterval(xtype);xtype=null;}}\n'+
+'function xskip(){if(!xtype){return;}clearInterval(xtype);xtype=null;var ps=document.querySelectorAll("#b .story p");for(var i=0;i<ps.length;i++){var f=ps[i].getAttribute("data-full");if(f!==null){ps[i].innerHTML=esc(f);}}}\n'+
+'function xrun(){xstop();var ps=document.querySelectorAll("#b .story p");if(!ps.length){return;}var full=[],i;for(i=0;i<ps.length;i++){full.push(ps[i].textContent||"");ps[i].setAttribute("data-full",full[i]);ps[i].innerHTML="";}var idx=0,ch=0;xtype=setInterval(function(){if(idx>=ps.length){xstop();return;}ch++;ps[idx].innerHTML=esc(full[idx].slice(0,ch));if(ch>=full[idx].length){idx++;ch=0;}},14);}\n'+
+'var xsfx=true;\n'+
+'try{var sx0=localStorage.getItem("pde-xsfx");if(sx0!==null){xsfx=(sx0==="1");}}catch(e){}\n'+
+'var xAC=null;\n'+
+'function xbeep(fr,du,de){if(!xsfx){return;}try{if(!xAC){var C=window.AudioContext||window.webkitAudioContext;if(!C){return;}xAC=new C();}if(xAC.state==="suspended"){xAC.resume();}var o=xAC.createOscillator(),g=xAC.createGain();o.type="sine";o.frequency.value=fr;var t=xAC.currentTime+(de||0);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.25,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+du);o.connect(g);g.connect(xAC.destination);o.start(t);o.stop(t+du+0.05);}catch(e){}}\n'+
+'function xchoice(){xbeep(520,0.12,0);xbeep(780,0.1,0.08);}\n'+
+'function xendf(ok){if(ok){xbeep(523,0.15,0);xbeep(659,0.15,0.12);xbeep(784,0.25,0.24);}else{xbeep(330,0.2,0);xbeep(220,0.3,0.15);}}\n'+
+'function xsfx(){xsfx=!xsfx;try{localStorage.setItem("pde-xsfx",xsfx?"1":"0");}catch(e){}document.getElementById("xsfxt").innerHTML=xsfx?"SOUND ON":"SOUND OFF";if(xsfx){xchoice();}}\n'+
+'function xnote(){var n=document.getElementById("xnote");var open=(n.style.display==="none"||n.style.display==="");n.style.display=open?"block":"none";if(open){xrenderNote();}}\n'+
+'function xrenderNote(){var h="<b>NOTEBOOK</b><br>";for(var i=0;i<trail.length;i++){var e=trail[i];var t=(MAP[e.id]&&MAP[e.id].title)||e.id;h+=(i+1)+". "+esc(t)+(e.via?"<br><span style=\\"color:#8a7c5e\\">\\u21B3 chose \\""+esc(e.via)+"\\"</span>":"")+"<br>";}document.getElementById("xnote").innerHTML=h;}\n'+
+'function crumbBack(i){if(i<0||i>=trail.length){return;}trail=trail.slice(0,i+1);xchoice();show(trail[i].id,false);}\n'+
+'function xcover(){var ends=[];for(var i=0;i<DATA.pages.length;i++){if(DATA.pages[i].isEnding){ends.push(DATA.pages[i]);}}var dots="";for(var j=0;j<ends.length;j++){var col=ends[j].endingType==="success"?"#6fae7e":(ends[j].endingType==="partial"?"#C9A84C":"#b0574a");dots+="<span style=\\"color:"+(xseen.indexOf(ends[j].id)>=0?col:"#4a4234")+"\\">\\u25CF</span> ";}document.getElementById("ct").innerHTML=esc(BK.title||"Untitled Demo");document.getElementById("ca").innerHTML=esc(BK.author||"");document.getElementById("cf").innerHTML="Endings discovered: <b>"+xseen.length+"/"+ends.length+"</b> "+dots;}\n'+
+'function openBk(){document.getElementById("cover").style.display="none";document.getElementById("book").style.display="block";document.getElementById("crumbs").style.display="flex";document.getElementById("fz").style.display="block";trail=[{id:DATA.startId,via:""}];show(DATA.startId,true);}\n'+
+  'for(var i=0;i<DATA.pages.length;i++){MAP[DATA.pages[i].id]=DATA.pages[i];}\n'+
+  'function esc(s){s=String(s||"");return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}\n'+
+  'function paras(t){var p=String(t||"").split(/\\n\\s*\\n|\\n/);var h="";for(var i=0;i<p.length;i++){var x=p[i].replace(/\\s+/g," ").trim();if(x){h+="<p>"+esc(x)+"</p>";}}return h||"<p><i>(No story text yet.)</i></p>";}\n'+
+  'function crumbs(){var h="";for(var i=0;i<trail.length;i++){h+="<i data-cr=\\""+i+"\\" onclick=\\"crumbBack("+i+")\\" class=\\""+(i<trail.length-1?"done":"now")+"\\"></i>";}document.getElementById("crumbs").innerHTML=h;xrenderNote();}\n'+
+  'function paint(){\n'+
+  'var p=MAP[cur];\n'+
+  'if(!p){document.getElementById("t").innerHTML="Lost Page";document.getElementById("b").innerHTML="<div class=\\"story\\"><p>Broken link.</p></div>";return;}\n'+
+  'document.getElementById("t").innerHTML=esc(p.title||p.id);\n'+
+  'var h="<div class=\\"story\\">"+paras(p.text)+"</div>";\n'+
+  'if(p.isEnding){var e=ET[p.endingType]||ET.success;var nw=false;if(xseen.indexOf(p.id)<0){xseen.push(p.id);xsave();nw=true;}xendf(p.endingType!=="failure");h+="<div id=\\"endbanner\\"><div class=\\"big\\">\\u2726 THE END \\u2726</div><br><span class=\\"ebadge\\" style=\\"background:"+e[1]+"\\">"+e[0]+"</span><br>";if(nw){h+="<div style=\\"color:#8a6a24;font-weight:bold;letter-spacing:1px\\">\\u2605 NEW ENDING DISCOVERED \\u2605</div><br>";}h+="<button class=\\"again\\" onclick=\\"again()\\">\\u21BA PLAY AGAIN</button></div>";}\n'+
+  'else{h+="<div>";for(var i=0;i<p.choices.length;i++){h+="<button class=\\"signpost\\" onclick=\\"go("+i+")\\">"+esc(p.choices[i].text||("Choice "+(i+1)))+"</button>";}h+="</div>";}\n'+
+  'document.getElementById("b").innerHTML=h;crumbs();xapply();xrun();}\n'+
+  'function show(id,first){var bk=document.getElementById("book");xstop();if(first){cur=id;paint();return;}bk.className="fade";setTimeout(function(){cur=id;paint();bk.className="";},300);}\n'+
+  'function go(i){var p=MAP[cur];if(!p||!p.choices[i]){return;}xchoice();var t=p.choices[i].target;if(t==="THE_END"){trail.push({id:"THE END",via:""});xendf(false);theEnd();return;}trail.push({id:t,via:p.choices[i].text||""});show(t,false);}\n'+
+  'function theEnd(){var bk=document.getElementById("book");bk.className="fade";xendf(false);setTimeout(function(){document.getElementById("t").innerHTML="The End";document.getElementById("b").innerHTML="<div class=\\"story\\"><p>Your choices led you here. The case rests \\u2014 for now.</p></div><div id=\\"endbanner\\"><div class=\\"big\\">\\u2726 THE END \\u2726</div><br><button class=\\"again\\" onclick=\\"again()\\">\\u21BA PLAY AGAIN</button></div>";crumbs();bk.className="";},300);}\n'+
+  'function again(){trail=[{id:DATA.startId,via:""}];show(DATA.startId,true);}\n'+
+  'xcover();xapply();\n'+
+'document.addEventListener("keydown",function(e){var t=(e.target&&e.target.tagName)||"";if(t==="INPUT"||t==="TEXTAREA"||t==="SELECT"){return;}var n=parseInt(e.key||"",10);if(n>=1&&n<=4){var pp=MAP[cur];if(pp&&!pp.isEnding&&document.getElementById("book").style.display!=="none"){go(n-1);}}});\n'+
+  '<\/script>\n</body>\n</html>';
+}
+function downloadFile(name,content,mime){
+  try{
+    var blob=new Blob([content],{type:mime||"text/plain"});
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); try{ URL.revokeObjectURL(u); }catch(e){} },400);
+    showToast("STANDALONE HTML DOWNLOADED");
+  }catch(e){ showToast("Download blocked"); }
+}
+/* ---------- chrome ---------- */
+function init(){
+  var saved=loadLS();
+  state=saved||stateDefault();
+  if(!state.book){ state.book={title:"",author:""}; }
+  $("in-book").value=state.book.title||"";
+  $("in-author").value=state.book.author||"";
+  applyFont(bookFont());
+  renderBuilder();
+  $("addPage").onclick=function(){
+    collectFromUI();
+    state.pages.push(blankPage());
+    saveLS(); renderBuilder(); showToast("PAGE ADDED");
+  };
+  $("mBuild").onclick=function(){ setMode(false); };
+  $("mPlay").onclick=function(){ startPlay(); };
+  $("btnPreview").onclick=function(){ startPlay(); };
+  $("backLink").onclick=function(){ setMode(false); renderBuilder(); };
+  $("btnExport").onclick=function(){
+    collectFromUI(); saveLS(); renderBuilder();
+    var v=validateStory(state.pages,state.startId);
+    if(v.errors.length){ showToast("STOP — FIX "+v.errors.length+" ISSUE(S) IN PRE-FLIGHT FIRST"); return; }
+    downloadFile("playable-demo.html",buildExportHTML(state.pages,state.startId,state.book),"text/html");
+  };
+  $("btnNew").onclick=function(){
+    var self=this;
+    askConfirm("Start a new demo? All pages will be cleared.",function(){
+      try{ localStorage.removeItem(LSKEY); }catch(e){}
+      state=stateDefault(); play={cur:null,trail:[]};
+      $("in-book").value=state.book.title; $("in-author").value=state.book.author;
+      renderBuilder(); setMode(false); showToast("NEW DEMO");
+    });
+  };
+  $("btnClear").onclick=function(){
+    askConfirm("Clear everything? The builder will be emptied to one blank page.",function(){
+      state={startId:"",book:{title:"",author:""},pages:[{id:"page-1",title:"Untitled Page",text:"",choices:[{text:"",target:"THE_END"}],isEnding:false,endingType:"success"}]};
+      play={cur:null,trail:[]};
+      $("in-book").value=""; $("in-author").value="";
+      renderBuilder(); setMode(false); showToast("BUILDER CLEARED — ADD PAGES OR LOAD A TEMPLATE");
+    });
+  };
+  $("cfYes").onclick=function(){ $("confirmWrap").style.display="none"; var cb=cfCb; cfCb=null; if(cb){ cb(); } };
+  $("cfNo").onclick=function(){ $("confirmWrap").style.display="none"; cfCb=null; };
+  $("pageList").oninput=function(){ collectFromUI(); saveLS(); renderSide(); };
+  $("pageList").onchange=function(){ collectFromUI(); saveLS(); renderBuilder(); };
+  $("fontUp").onclick=function(){ setFont(bookFont()+1); };
+  $("fontDown").onclick=function(){ setFont(bookFont()-1); };
+  $("btnOpen").onclick=function(){ play.cur=state.startId; play.trail=[{id:state.startId,via:""}]; showPage(state.startId,true); };
+  $("book").onclick=function(){ finishType(); };
+  $("btnType").onclick=function(){
+    typeOn=!typeOn;
+    try{ localStorage.setItem("pde-type",typeOn?"1":"0"); }catch(e){}
+    $("btnType").className=typeOn?"":"off";
+    showToast(typeOn?"TYPEWRITER ON":"TYPEWRITER OFF");
+  };
+  if(!typeOn){ $("btnType").className="off"; }
+  $("btnNote").onclick=function(){
+    var nb=$("notebook");
+    var open=(nb.style.display==="none"||nb.style.display==="");
+    nb.style.display=open?"block":"none";
+    if(open){ renderNotebook(); }
+  };
+  $("btnSfx").onclick=function(){
+    sfxOn=!sfxOn;
+    try{ localStorage.setItem("pde-sfx",sfxOn?"1":"0"); }catch(e){}
+    $("btnSfx").innerHTML=sfxOn?"🔊":"🔇";
+    if(sfxOn){ sfxChoice(); }
+  };
+  if(!sfxOn){ $("btnSfx").innerHTML="🔇"; }
+  $("btnGuide").onclick=function(){
+    var gp=$("guidePanel");
+    var open=(gp.style.display==="none"||gp.style.display==="");
+    gp.style.display=open?"block":"none";
+  };
+  renderTpl();
+  $("btnJson").onclick=function(){ collectFromUI(); downloadFile("demo-backup.json",JSON.stringify(state),"application/json"); };
+  $("btnImport").onclick=function(){ $("fileImp").click(); };
+  $("fileImp").onchange=function(){
+    var f=this.files&&this.files[0];
+    if(!f){ return; }
+    var rd=new FileReader();
+    rd.onload=function(){
+      try{
+        var clean=sanitizeImport(JSON.parse(rd.result));
+        if(!clean){ showToast("NOT A VALID DEMO FILE"); return; }
+        state=clean; play={cur:null,trail:[]};
+        $("in-book").value=state.book.title; $("in-author").value=state.book.author;
+        renderBuilder(); setMode(false); showToast("DEMO IMPORTED");
+      }catch(e){ showToast("NOT A VALID DEMO FILE"); }
+    };
+    try{ rd.readAsText(f); }catch(e){ showToast("IMPORT FAILED"); }
+    this.value="";
+  };
+  document.addEventListener("keydown",function(e){
+    var tag=(e.target&&e.target.tagName)||"";
+    if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"){ return; }
+    if($("playView").style.display!=="block"){ return; }
+    var n=parseInt((e.key||""),10);
+    if(n>=1&&n<=4){ goChoice(n-1); }
+  });
+}
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",init); } else { init(); }
+</script>
+</body>
+</html>
