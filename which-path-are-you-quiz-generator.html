@@ -1,0 +1,657 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Which Path Are You? Reader Quiz Generator — Gamebooks Empire Bonus</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d14;
+  --panel:#1a1a2e;
+  --grad1:#FF006E;
+  --grad2:#8338EC;
+  --grad3:#3A86FF;
+  --text:#ffffff;
+  --text-muted:#b8b0d8;
+}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Plus Jakarta Sans",Arial,sans-serif;min-height:100%}
+body{position:relative}
+body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;
+  background:radial-gradient(600px 320px at 12% 0%,rgba(255,0,110,.2),transparent 60%),
+  radial-gradient(700px 360px at 88% 8%,rgba(131,56,236,.22),transparent 60%),
+  radial-gradient(800px 420px at 50% 110%,rgba(58,134,255,.16),transparent 60%)}
+h1,h2,h3{margin:0;font-family:"Syne","Plus Jakarta Sans",sans-serif}
+button{font-family:"Syne",sans-serif}
+#topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 24px;background:rgba(13,13,20,.93);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.1)}
+.badge{width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--grad1),var(--grad2));box-shadow:0 0 20px -4px var(--grad1)}
+.badge svg{width:25px;height:25px}
+#topbar h1{font-size:20px;font-weight:800;letter-spacing:.5px}
+#topbar h1 span{background:linear-gradient(92deg,var(--grad1),var(--grad3));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+#topbar .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.tbtn{background:transparent;border:2px solid var(--grad2);color:var(--text);border-radius:12px;font-size:12px;font-weight:700;
+  letter-spacing:1px;padding:10px 15px;cursor:pointer;white-space:nowrap}
+.tbtn:hover{border-color:var(--grad1)}
+.tbtn.primary{background:linear-gradient(92deg,var(--grad1),var(--grad2));border:none;box-shadow:0 4px 20px -6px var(--grad1)}
+#wrap{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:22px 24px 70px}
+/* builder */
+#genForm{background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px;margin-bottom:18px}
+#genForm label.f{display:block;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin:14px 0 6px}
+#genForm label.f:first-child{margin-top:0}
+#genForm input[type=text],#genForm select{background:#0d0d14;border:1px solid rgba(255,255,255,.16);border-radius:10px;
+  padding:12px 14px;color:var(--text);font-size:14px;font-family:"Plus Jakarta Sans",sans-serif;width:100%}
+#genForm input:focus,#genForm select:focus{outline:none;border-color:var(--grad1)}
+.titlerow{display:grid;grid-template-columns:minmax(0,1fr) 52px;gap:8px}
+.dicebtn{background:var(--panel);border:1px solid rgba(255,255,255,.16);border-radius:10px;color:var(--text);font-size:19px;cursor:pointer}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qcard{background:var(--panel);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;margin-bottom:14px}
+.qcard .qh{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.qcard .qn{font-family:"Syne",sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;
+  background:linear-gradient(92deg,var(--grad1),var(--grad2));border-radius:99px;padding:4px 12px;flex-shrink:0}
+.qcard input.stem{width:100%;background:#0d0d14;border:1px solid rgba(255,255,255,.16);border-radius:8px;
+  padding:10px 12px;color:var(--text);font-size:14.5px;font-weight:600;font-family:"Plus Jakarta Sans",sans-serif}
+.optrow{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:8px;margin-top:8px}
+.optrow input{background:#0d0d14;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:9px 11px;
+  color:var(--text);font-size:13.5px;font-family:"Plus Jakarta Sans",sans-serif}
+.optrow select{background:#0d0d14;border:1px solid var(--grad2);border-radius:8px;padding:9px 6px;color:var(--text);
+  font-size:12px;font-weight:700;font-family:"Plus Jakarta Sans",sans-serif;cursor:pointer}
+.seclabel{font-family:"Syne",sans-serif;font-weight:800;font-size:15px;letter-spacing:1px;margin:24px 0 4px}
+.secsub{font-size:13px;color:var(--text-muted);margin:0 0 12px}
+.rcard{background:linear-gradient(135deg,rgba(255,0,110,.14),rgba(131,56,236,.14));border:1px solid rgba(255,255,255,.16);
+  border-radius:16px;padding:18px;margin-bottom:12px}
+.rcard h3{font-size:18px;margin-bottom:6px}
+.rcard p{font-size:13.5px;line-height:1.65;color:var(--text-muted);margin:0 0 8px}
+.rcard input{width:100%;background:#0d0d14;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:9px 11px;
+  color:var(--text);font-size:13.5px;font-family:"Plus Jakarta Sans",sans-serif;margin-bottom:8px}
+.rcard textarea{width:100%;background:#0d0d14;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:9px 11px;
+  color:var(--text);font-size:13.5px;font-family:"Plus Jakarta Sans",sans-serif;min-height:64px;resize:vertical;line-height:1.6}
+.rcard .share{font-size:12px;color:var(--text-muted);margin:8px 0 4px;font-weight:700;letter-spacing:1px}
+/* play */
+#playView{display:none;max-width:680px;margin:0 auto}
+#pbar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:22px}
+#pbar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--grad1),var(--grad2),var(--grad3));transition:width .35s ease}
+#qbox{background:var(--panel);border:2px solid transparent;border-radius:20px;padding:30px 28px;
+  background-clip:padding-box;position:relative;transition:opacity .3s ease,transform .3s ease}
+#qbox:before{content:"";position:absolute;inset:-2px;border-radius:22px;padding:2px;z-index:-1;
+  background:linear-gradient(135deg,var(--grad1),var(--grad2),var(--grad3))}
+#qbox.fade{opacity:0;transform:translateY(14px)}
+#qbox .qn{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--text-muted)}
+#qbox h2{font-size:23px;line-height:1.4;margin:8px 0 18px}
+.optbtn{display:block;width:100%;text-align:left;background:#0d0d14;border:2px solid rgba(255,255,255,.16);color:var(--text);
+  border-radius:14px;font-size:15px;font-weight:600;font-family:"Plus Jakarta Sans",sans-serif;padding:15px 17px;margin-bottom:10px;cursor:pointer;transition:border-color .15s,transform .1s}
+.optbtn:hover{border-color:var(--grad1);transform:translateX(4px)}
+.optbtn:active{transform:scale(.98)}
+#resultCard{text-align:center;padding:20px 0}
+#resultCard .pop{animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+#resultCard .glow{background:linear-gradient(135deg,rgba(255,0,110,.2),rgba(131,56,236,.2));border:2px solid transparent;
+  background-clip:padding-box;position:relative;border-radius:22px;padding:34px 28px;animation:glowp 2s ease-in-out infinite}
+#resultCard .glow:before{content:"";position:absolute;inset:-2px;border-radius:24px;padding:2px;z-index:-1;
+  background:linear-gradient(135deg,var(--grad1),var(--grad2),var(--grad3))}
+@keyframes glowp{0%,100%{box-shadow:0 0 18px -6px var(--grad1)}50%{box-shadow:0 0 42px -4px var(--grad2)}}
+#resultCard h2{font-size:30px;margin-bottom:10px}
+#resultCard p{font-size:15px;line-height:1.7;color:var(--text-muted);max-width:480px;margin:0 auto 16px}
+#shareBox{background:#0d0d14;border:1px dashed rgba(255,255,255,.3);border-radius:12px;padding:14px 16px;font-size:14px;
+  max-width:480px;margin:0 auto 14px;line-height:1.6}
+#emptyState{text-align:center;padding:60px 20px;color:var(--text-muted)}
+#emptyState h2{font-size:24px;color:var(--text);margin-bottom:8px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:none;background:#fff;color:#0d0d14;
+  font-weight:800;font-size:13px;border-radius:99px;padding:12px 22px}
+#guidePanel{display:none}
+.guidebox{background:var(--panel);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:18px 22px;margin-bottom:18px;
+  font-size:13.5px;line-height:1.8;color:var(--text-muted)}
+.guidebox b{color:#fff}
+.guidebox ol{margin:8px 0;padding-left:20px}
+.guidebox li{margin-bottom:5px}
+.guidebox kbd{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:1px 8px;
+  font-size:12px;font-family:inherit;white-space:nowrap;color:#fff}
+.custag{font-size:10px;font-weight:800;letter-spacing:1px;background:var(--grad3);border-radius:99px;padding:3px 10px;margin-left:8px}
+.qdel{background:transparent;border:1px solid var(--grad1);color:var(--grad1);border-radius:8px;font-size:11px;font-weight:700;
+  padding:4px 10px;cursor:pointer;font-family:"Syne",sans-serif;margin-left:auto}
+.confetti{position:fixed;top:-14px;width:10px;height:14px;z-index:98;pointer-events:none;border-radius:2px;animation:cfall linear forwards}
+@keyframes cfall{to{transform:translateY(105vh) rotate(720deg)}}
+@media(max-width:700px){.grid2{grid-template-columns:minmax(0,1fr)}.optrow{grid-template-columns:minmax(0,1fr)}#topbar h1{font-size:16px}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11.5a5.5 5.5 0 1 1 8.6 4.6L21 19.5"/><circle cx="9" cy="11.5" r="1.4" fill="#fff"/></svg></div>
+  <div><h1>WHICH PATH <span>ARE YOU?</span></h1></div>
+  <div class="actions">
+    <button class="tbtn" id="btnBuilder" style="display:none">← BUILDER</button>
+    <button class="tbtn" id="btnPreview">▶ PREVIEW QUIZ</button>
+    <button class="tbtn" id="btnGuide">📖 GUIDE</button>
+    <button class="tbtn" id="btnExport">EXPORT HTML</button>
+    <button class="tbtn" id="btnNew">NEW QUIZ</button>
+  </div>
+</div>
+<div id="wrap">
+  <div id="guidePanel"><div class="guidebox">
+<b>60-SECOND MANUAL — build pre-launch buzz:</b>
+<ol>
+<li>Type your <b>theme</b>, pick <b>3–5 result types</b>, hit <kbd>⚡ GENERATE QUIZ</kbd> — 6 fresh questions (rotated every time) + finale + result cards + viral hook.</li>
+<li>Every answer is <b>pre-tagged</b> to an archetype — tweak any tag dropdown to re-score. Add your own <b>custom questions</b> with <kbd>+ ADD QUESTION</kbd>.</li>
+<li>Hit <b>PREVIEW</b> and take it like a fan: progress bar, tally, animated reveal, copyable share caption.</li>
+<li>Ship it: <b>EXPORT HTML</b> gives the standalone shareable quiz (landing page, email link, social bio). <b>COPY AS TEXT</b> drops the whole quiz into a newsletter.</li>
+<li>Post the <b>viral hook + share caption</b> on social BEFORE launch — every result screen is a list-building machine asking to be shared.</li>
+</ol>
+</div></div>
+  <div id="builderView">
+    <div id="genForm">
+      <label class="f">Gamebook theme / setting</label>
+      <input type="text" id="in-theme" maxlength="60" value="Viking raid saga" placeholder="e.g. Viking raid saga">
+      <label class="f">Quiz title</label>
+      <div class="titlerow"><input type="text" id="in-title" maxlength="80" value=""><button class="dicebtn" id="btnDice" title="Shuffle title ideas">🎲</button></div>
+      <div class="grid2">
+        <div><label class="f">Result types (3–5)</label><select id="in-n"><option value="3">3 — Warrior · Scholar · Trickster</option><option value="4">4 — + Healer</option><option value="5" selected>5 — + Leader</option></select></div>
+        <div><label class="f">&nbsp;</label><button class="tbtn primary" id="btnGen" style="width:100%;padding:13px">⚡ GENERATE QUIZ</button></div>
+      </div>
+    </div>
+    <div id="emptyState"><h2>Your viral quiz appears here</h2><p>Pick result types, hit Generate — then fine-tune any option tag.</p></div>
+    <div id="quizEdit" style="display:none">
+      <div class="seclabel">❓ QUESTIONS <span style="color:var(--text-muted);font-weight:400">(tap any tag to re-score)</span></div>
+      <p class="secsub">Each answer feeds one result type. Tally wins, ties go to the earlier archetype.</p>
+      <div id="qList"></div>
+      <button class="tbtn" id="btnAddQ" style="width:100%;padding:12px;margin-bottom:6px">＋ ADD CUSTOM QUESTION</button>
+      <div class="seclabel">🏆 RESULT CARDS</div>
+      <p class="secsub">What each winner sees — title, read-out, share caption.</p>
+      <div id="rList"></div>
+      <div class="seclabel">📢 VIRAL HOOK</div>
+      <p class="secsub">The one-liner that sells the quiz on social. Copied with the caption.</p>
+      <div class="qcard"><input class="stem" id="hookInp" maxlength="120" value=""></div>
+      <button class="tbtn primary" id="btnPreview2" style="width:100%;padding:14px;margin-top:8px">▶ PREVIEW / TAKE QUIZ</button>
+      <button class="tbtn" id="btnCopyText" style="width:100%;padding:12px;margin-top:8px">⧉ COPY QUIZ AS TEXT</button>
+    </div>
+  </div>
+  <div id="playView">
+    <div id="pbar"><i id="pfill"></i></div>
+    <div id="qbox">
+      <div id="playBody"></div>
+    </div>
+    <div style="text-align:center;margin-top:16px"><button class="tbtn" id="btnBack">← BACK TO BUILDER</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+var LSKEY="wpq-state-v1";
+var ARCH=["warrior","scholar","trickster","healer","leader"];
+var ARCH_LABEL={warrior:"The Warrior",scholar:"The Scholar",trickster:"The Trickster",healer:"The Healer",leader:"The Leader"};
+var ARCH_EMOJI={warrior:"⚔",scholar:"📜",trickster:"🃏",healer:"🌿",leader:"👑"};
+var SETKEYS={
+ viking:["viking","norse","fjord"],medieval:["medieval","castle","knight","fantasy","kingdom"],
+ egyptian:["egypt","pharaoh","nile","tomb"],pirate:["pirate","sea","ocean","ship","sail"],
+ samurai:["samurai","japan","shogun","ninja"],roman:["roman","rome","gladiator","legion"],
+ wildwest:["west","cowboy","frontier","sheriff","ranch"],victorian:["victorian","london","gaslight","steam"],
+ mystery:["mystery","detective","noir","crime"],space:["space","galaxy","star","robot","alien"],
+ horror:["haunt","ghost","vampire","horror","witch"],spooky:["spooky","cozy"]
+};
+function titleCase(s){ var w=String(s||"").split(" "); for(var i=0;i<w.length;i++){ if(w[i]){ w[i]=w[i].charAt(0).toUpperCase()+w[i].slice(1); } } return w.join(" "); }
+var QUESTIONS=[
+ {stem:"Your {setting} quest begins at dawn. First thing you pack?",
+  opts:{warrior:"A blade that has never failed me",scholar:"A journal — knowledge weighs nothing",trickster:"A deck of marked cards, obviously",healer:"Bandages. Someone always bleeds",leader:"A banner for us to rally under"}},
+ {stem:"A stranger blocks the road, begging for help. You…",
+  opts:{warrior:"Draw steel and step forward",scholar:"Ask three questions before moving",trickster:"Help — after checking their pockets",healer:"Kneel at once. What hurts?",leader:"Organize the whole rescue on the spot"}},
+ {stem:"Cave or bridge? The party must choose a path. You vote…",
+  opts:{warrior:"Cave. Danger first, glory after",scholar:"Bridge — I ran the odds",trickster:"Whichever hides the treasure",healer:"Bridge. Nobody bleeds on my watch",leader:"We vote, then I take responsibility"}},
+ {stem:"A locked chest in the ruins. You…",
+  opts:{warrior:"Break it open",scholar:"Study the mechanism first",trickster:"Pick it — quietly",healer:"Check for traps so nobody gets hurt",leader:"Guard the door while the expert works"}},
+ {stem:"Victory feast tonight. Your role?",
+  opts:{warrior:"Retell the battle, scars out",scholar:"Record everything for the archives",trickster:"Win everyone's coin at dice",healer:"Make sure every plate is full",leader:"Toast the team, name every hero"}},
+ {stem:"Pick a sidekick for your {setting} journey.",
+  opts:{warrior:"A warhound with scarred ears",scholar:"A raven that collects shiny facts",trickster:"A ferret with sticky paws",healer:"A plump pony carrying bandages",leader:"A young squire who idolizes you"}},
+ {stem:"Your greatest fear on this {setting} quest?",
+  opts:{warrior:"Hesitating when it matters",scholar:"Forgetting something vital",trickster:"A lock I cannot pick",healer:"Losing someone I love",leader:"Letting the team down"}},
+ {stem:"The treasure chest opens. First move?",
+  opts:{warrior:"Stand guard while others look",scholar:"Catalogue everything precisely",trickster:"Pocket the shiniest thing first",healer:"Share it equally, no debate",leader:"Decide shares fairly for all"}},
+ {stem:"Last stand at the gates of {setting}. Your final words?",
+  opts:{warrior:"“FORWARD!”",scholar:"“Remember this moment.”",trickster:"“Watch this.”",healer:"“No one dies today.”",leader:"“Together — NOW!”"}},
+ {stem:"FAME:SET|The bards will sing of you as…",
+  opts:{warrior:"The one who never backed down",scholar:"The one who knew the way",trickster:"The one nobody saw coming",healer:"The one who brought everyone home",leader:"The one we all followed"}}
+];
+var FAME={
+ viking:{stem:"The skalds will sing of you as…",opts:{warrior:"Shield-Breaker",scholar:"Rune-Reader",trickster:"Trick-Finder",healer:"Wound-Binder",leader:"Ring-Giver"}},
+ mystery:{stem:"The case files will remember you as…",opts:{warrior:"The Muscle",scholar:"The Profiler",trickster:"The Con",healer:"The Confidante",leader:"The Mastermind"}},
+ space:{stem:"The star-charts will log you as…",opts:{warrior:"Blade of the Fleet",scholar:"The Navigator",trickster:"The Smuggler",healer:"The Medic",leader:"The Captain"}},
+ pirate:{stem:"Tavern songs will call you…",opts:{warrior:"Terror of the Seas",scholar:"Keeper of Charts",trickster:"The Stowaway",healer:"Sawbones",leader:"The Captain"}},
+ horror:{stem:"They will whisper your name as…",opts:{warrior:"The One Who Stayed",scholar:"The One Who Knew",trickster:"The One Who Vanished",healer:"The One Who Healed",leader:"The One Who Led Out"}}
+};
+var RESULTS={
+ warrior:{titles:["{emoji} THE WARRIOR","{emoji} THE BLADE"],
+  descs:["You don't wait for permission — in {theme}, you ARE the plan. Charge first, apologize never (okay, sometimes). Your party sleeps soundly because you don't.",
+   "First into danger, last to leave it. {theme} tests everyone — you simply answer louder, and the party follows your example anyway."],
+  shares:["I got {emoji} THE WARRIOR on the {theme} quiz! Which path are YOU? ⚔️","No hesitation, all heart — I'm {emoji} THE BLADE of {theme}! Take the quiz 👇"]},
+ scholar:{titles:["{emoji} THE SCHOLAR","{emoji} THE LOREKEEPER"],
+  descs:["Knowledge is your weapon and curiosity your compass. While others swing swords across {theme}, you read the room, the runes, and the fine print.",
+   "Every party needs the one who actually read the map. In {theme}, that is you: calm, curious, and always three steps ahead in your head."],
+  shares:["I got {emoji} THE SCHOLAR on the {theme} quiz! Which path are YOU? 📜","Big brain energy: I'm {emoji} THE LOREKEEPER of {theme}! What's your result? 👇"]},
+ trickster:{titles:["{emoji} THE TRICKSTER","{emoji} THE WILDCARD"],
+  descs:["Rules are suggestions and locks are invitations. {theme} never sees you coming — exactly how you like it.",
+   "Chaos with a smile. {theme} keeps its treasures locked, which you find adorable. Nobody — nobody — sees the wildcard coming."],
+  shares:["I got {emoji} THE TRICKSTER on the {theme} quiz! Which path are YOU? 🃏","Rules? Never met them. I'm {emoji} THE WILDCARD of {theme}! Take the quiz 👇"]},
+ healer:{titles:["{emoji} THE HEALER","{emoji} THE GUARDIAN"],
+  descs:["Everyone's favorite person in {theme}. You keep the party alive — literally and emotionally. Never underestimate the one with the bandages.",
+   "Strength saves the day; you save the party. Across {theme}, no one walks alone while the guardian walks with them."],
+  shares:["I got {emoji} THE HEALER on the {theme} quiz! Which path are YOU? 🌿","Everyone's favorite: I'm {emoji} THE GUARDIAN of {theme}! Find your path 👇"]},
+ leader:{titles:["{emoji} THE LEADER","{emoji} THE COMMANDER"],
+  descs:["When {theme} falls apart, everyone looks at you — and you're already pointing the way out. Crowns are heavy; you carry yours well.",
+   "Orders, courage, responsibility — you collect them all. {theme} doesn't follow you by accident; it follows because you never bluff."],
+  shares:["I got {emoji} THE LEADER on the {theme} quiz! Which path are YOU? 👑","Born to lead: I'm {emoji} THE COMMANDER of {theme}! Take the quiz 👇"]}};
+var HOOKS=["90% of {Theme} fans get THIS result 👇","I took the {Theme} quiz and I'm SHOOK 😱",
+ "Stop scrolling: your {Theme} destiny is one quiz away ✨","Tag someone who is SO the Trickster 👇",
+ "6 questions. 5 destinies. 1 {Theme} legend — you.","POV: the {Theme} quiz just called you out 📢"];
+var TITLES=["Which Path Through {Theme} Are You?","Which {Theme} Legend Are You?","Discover Your {Theme} Destiny","Your {Theme} Alter Ego — Revealed","Answer 6 Questions, Meet Your {Theme} Self"];
+function $(id){ return document.getElementById(id); }
+function esc(s){ s=(s===null||s===undefined)?"":String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function showToast(m){ var t=$("toast"); t.innerHTML=esc(m); t.style.display="block"; setTimeout(function(){ t.style.display="none"; },2000); }
+function rndSeed(){ return Math.floor(Math.random()*99999)+1; }
+function srand(seed){ var s=(seed>>>0)||1; return function(){ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }; }
+function fill(tpl,d){
+  return String(tpl).replace(/\{setting\}/g,d.setting).replace(/\{theme\}/g,d.theme).replace(/\{Theme\}/g,d.Theme)
+    .replace(/\{emoji\}/g,d.emoji||"");
+}
+function detectFam(theme){
+  var low=String(theme||"").toLowerCase();
+  for(var k in SETKEYS){
+    if(!SETKEYS.hasOwnProperty(k)){ continue; }
+    for(var i=0;i<SETKEYS[k].length;i++){ if(low.indexOf(SETKEYS[k][i])>=0){ return k; } }
+  }
+  return "generic";
+}
+function stateDefault(){
+  return {theme:"Viking raid saga",title:"",nTypes:5,titleSeed:1,seeds:[11,22,33,44,55,66,77],quiz:null};
+}
+var state=null;
+var play={qi:0,tally:{},order:[]};
+function saveLS(){ try{ localStorage.setItem(LSKEY,JSON.stringify({theme:$("in-theme").value,title:$("in-title").value,nTypes:$("in-n").value,seeds:state.seeds,quiz:state.quiz})); }catch(e){} }
+function loadLS(){ try{ var r=localStorage.getItem(LSKEY); if(r){ var p=JSON.parse(r); if(p){ return p; } } }catch(e){} return null; }
+function activeArch(n){ return ARCH.slice(0,Math.max(3,Math.min(5,n||5))); }
+function shuffle(arr,r){
+  var a=arr.slice(0);
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(r()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function buildQuiz(theme,title,nTypes,seeds,titleSeed){
+  var arch=activeArch(nTypes);
+  var fam=detectFam(theme);
+  var disp=String(theme||"").trim()||"Uncharted Realms";
+  var d0={setting:dispTheme(disp),theme:dispTheme(disp),Theme:titleCase(disp)};
+  var rO=srand((seeds[6%seeds.length]||1)+77);
+  var pool=[];
+  for(var g=0;g<9;g++){ pool.push(g); }
+  pool=shuffle(pool,rO).slice(0,5);
+  var qs=[];
+  for(var qi=0;qi<pool.length;qi++){
+    qs.push(makeQ(QUESTIONS[pool[qi]],arch,d0,seeds[qi%seeds.length]+qi*31));
+  }
+  var fm=FAME[fam]||FAME_Q(fam,d0);
+  qs.push(makeQ(fm,arch,d0,seeds[5%seeds.length]+5*31));
+  var rT=srand(titleSeed||1);
+  var titles=[];
+  for(var t=0;t<TITLES.length;t++){ titles.push(fill(TITLES[t],{setting:d0.setting,theme:d0.theme,Theme:d0.Theme,emoji:""})); }
+  var picked=title&&String(title).trim()?String(title).trim():titles[Math.floor(rT()*titles.length)%titles.length];
+  var rV=srand((seeds[0]||1)+913);
+  var vi=Math.floor(rV()*2)%2;
+  var rH=srand((seeds[1]||1)+551);
+  var hook=fill(HOOKS[Math.floor(rH()*HOOKS.length)%HOOKS.length],{setting:d0.setting,theme:d0.theme,Theme:d0.Theme,emoji:""});
+  var res={};
+  // results per archetype below
+  for(var a=0;a<arch.length;a++){
+    var k=arch[a];
+    res[k]={title:fill(RESULTS[k].titles[vi],{setting:"",theme:d0.theme,Theme:"",emoji:ARCH_EMOJI[k]}),
+      desc:fill(RESULTS[k].descs[vi],{setting:"",theme:d0.theme,Theme:"",emoji:""}),
+      share:fill(RESULTS[k].shares[vi],{setting:"",theme:d0.theme,Theme:"",emoji:ARCH_EMOJI[k]})};
+  }
+  return {theme:disp,title:picked,titles:titles,hook:hook,arch:arch,questions:qs,results:res,fam:fam};
+}
+function dispTheme(d){ return d; }
+function FAME_Q(fam,d0){
+  return {stem:"FAME:SET|The bards of "+d0.setting+" will sing of you as…",
+    opts:{warrior:"The one who never backed down",scholar:"The one who knew the way",trickster:"The one nobody saw coming",healer:"The one who brought everyone home",leader:"The one we all followed"}};
+}
+function makeQ(tpl,arch,d0,seed){
+  var r=srand(seed);
+  var stem=tpl.stem;
+  if(stem.indexOf("FAME:SET|")===0){ stem=stem.slice(9); }
+  stem=fill(stem,d0);
+  var opts=[];
+  for(var i=0;i<arch.length;i++){
+    opts.push({text:fill(tpl.opts[arch[i]],d0),tag:arch[i]});
+  }
+  var order=[];
+  for(var j=0;j<opts.length;j++){ order.push(j); }
+  order=shuffle(order,r);
+  var out=[];
+  for(var k=0;k<order.length;k++){ out.push(opts[order[k]]); }
+  return {stem:stem,opts:out};
+}
+function extractCustoms(quiz){
+  var out=[];
+  if(!quiz||!quiz.questions){ return out; }
+  for(var i=0;i<quiz.questions.length;i++){
+    if(quiz.questions[i].custom){ out.push(quiz.questions[i]); }
+  }
+  return out;
+}
+function quizText(q){
+  var L=q.title+"\n"+(q.hook||"")+"\n\n";
+  for(var i=0;i<q.questions.length;i++){
+    L+=(i+1)+". "+q.questions[i].stem+"\n";
+    for(var j=0;j<q.questions[i].opts.length;j++){ L+="   - "+q.questions[i].opts[j].text+" ["+q.questions[i].opts[j].tag+"]\n"; }
+    L+="\n";
+  }
+  L+="RESULTS:\n";
+  for(var k=0;k<q.arch.length;k++){ var r=q.results[q.arch[k]]; L+="\n"+r.title+"\n"+r.desc+"\nShare: "+r.share+"\n"; }
+  return L;
+}
+var CONF_COLORS=["#FF006E","#8338EC","#3A86FF","#FFE066","#00FFCC"];
+function boom(){
+  try{
+    for(var i=0;i<26;i++){
+      var s=document.createElement("span");
+      s.className="confetti";
+      s.style.left=(Math.random()*100)+"vw";
+      s.style.background=CONF_COLORS[i%CONF_COLORS.length];
+      s.style.animationDuration=(1.4+Math.random()*1.4)+"s";
+      s.style.animationDelay=(Math.random()*0.5)+"s";
+      document.body.appendChild(s);
+      (function(el){ setTimeout(function(){ if(el.parentNode){ el.parentNode.removeChild(el); } },3400); })(s);
+    }
+  }catch(e){}
+}
+function collectEdits(){
+  if(!state.quiz){ return; }
+  var qcards=document.querySelectorAll("[data-q]");
+  for(var i=0;i<qcards.length&&i<state.quiz.questions.length;i++){
+    (function(card,qi){
+      var st=card.querySelector("[data-s=stem]");
+      if(st){ state.quiz.questions[qi].stem=st.value; }
+      var rows=card.querySelectorAll("[data-o]");
+      for(var j=0;j<rows.length&&j<state.quiz.questions[qi].opts.length;j++){
+        var tx=rows[j].querySelector("[data-ot=text]");
+        var tg=rows[j].querySelector("[data-ot=tag]");
+        if(tx){ state.quiz.questions[qi].opts[j].text=tx.value; }
+        if(tg){ state.quiz.questions[qi].opts[j].tag=tg.value; }
+      }
+    })(qcards[i],i);
+  }
+  var rcards=document.querySelectorAll("[data-r]");
+  for(var r=0;r<rcards.length;r++){
+    (function(card2){
+      var k=card2.getAttribute("data-r");
+      var ti=card2.querySelector("[data-rt=title]");
+      var de=card2.querySelector("[data-rt=desc]");
+      var sh=card2.querySelector("[data-rt=share]");
+      if(ti){ state.quiz.results[k].title=ti.value; }
+      if(de){ state.quiz.results[k].desc=de.value; }
+      if(sh){ state.quiz.results[k].share=sh.value; }
+    })(rcards[r]);
+  }
+  var ti=$("in-title").value;
+  if(ti&&String(ti).trim()){ state.quiz.title=String(ti).trim(); }
+  var hi=$("hookInp");
+  if(hi){ state.quiz.hook=hi.value; }
+}
+function tagOptions(arch){
+  var h="";
+  for(var i=0;i<arch.length;i++){ h+='<option value="'+arch[i]+'">'+esc(ARCH_LABEL[arch[i]])+'</option>'; }
+  return h;
+}
+function renderEdit(){
+  var q=state.quiz;
+  if(!q){ return; }
+  var h="";
+  for(var i=0;i<q.questions.length;i++){
+    h+='<div class="qcard" data-q="'+i+'"><div class="qh"><span class="qn">Q'+(i+1)+'</span>'+(q.questions[i].custom?'<span class="custag">CUSTOM</span><button class="qdel" data-qdel="'+i+'">✕</button>':"")+'</div>';
+    h+='<input class="stem" data-s="stem" maxlength="140" value="'+esc(q.questions[i].stem)+'">';
+    for(var j=0;j<q.questions[i].opts.length;j++){
+      var o=q.questions[i].opts[j];
+      h+='<div class="optrow" data-o="'+j+'"><input data-ot="text" maxlength="90" value="'+esc(o.text)+'"><select data-ot="tag">';
+      for(var a=0;a<q.arch.length;a++){
+        h+='<option value="'+q.arch[a]+'"'+(o.tag===q.arch[a]?" selected":"")+'>'+esc(ARCH_LABEL[q.arch[a]])+'</option>';
+      }
+      h+='</select></div>';
+    }
+    h+='</div>';
+  }
+  $("qList").innerHTML=h;
+  var rh="";
+  for(var k=0;k<q.arch.length;k++){
+    var key=q.arch[k], rc=q.results[key];
+    rh+='<div class="rcard" data-r="'+key+'"><h3>'+esc(rc.title)+'</h3><p>'+esc(rc.desc)+'</p>';
+    rh+='<input data-rt="title" maxlength="60" value="'+esc(rc.title)+'">';
+    rh+='<textarea data-rt="desc">'+esc(rc.desc)+'</textarea>';
+    rh+='<div class="share">SHARE CAPTION</div><input data-rt="share" maxlength="140" value="'+esc(rc.share)+'"></div>';
+  }
+  $("rList").innerHTML=rh;
+  $("hookInp").value=q.hook||"";
+  var dels=document.querySelectorAll("[data-qdel]");
+  for(var d=0;d<dels.length;d++){ (function(el){ el.onclick=function(){
+    collectEdits();
+    state.quiz.questions.splice(parseInt(el.getAttribute("data-qdel"),10),1);
+    saveLS(); renderEdit(); showToast("QUESTION DELETED");
+  }; })(dels[d]); }
+  $("emptyState").style.display="none";
+  $("quizEdit").style.display="block";
+}
+/* ---------- play ---------- */
+function setMode(playMode){
+  collectEdits(); saveLS();
+  $("builderView").style.display=playMode?"none":"block";
+  $("playView").style.display=playMode?"block":"none";
+  $("btnBuilder").style.display=playMode?"":"none";
+  window.scrollTo(0,0);
+}
+function startPlay(){
+  collectEdits(); saveLS();
+  if(!state.quiz||!state.quiz.questions.length){ showToast("GENERATE THE QUIZ FIRST"); return; }
+  play.qi=0; play.tally={}; play.order=state.quiz.arch.slice(0);
+  for(var i=0;i<play.order.length;i++){ play.tally[play.order[i]]=0; }
+  setMode(true);
+  paintQ(true);
+}
+function paintQ(first){
+  var box=$("qbox");
+  function paint(){
+    var q=state.quiz;
+    if(play.qi>=q.questions.length){ paintResult(); return; }
+    $("pfill").style.width=Math.round(play.qi/q.questions.length*100)+"%";
+    var cur=q.questions[play.qi];
+    var h='<div id="playBody"><div class="qn">QUESTION '+(play.qi+1)+' / '+q.questions.length+'</div><h2>'+esc(cur.stem)+'</h2>';
+    for(var i=0;i<cur.opts.length;i++){
+      h+='<button class="optbtn" onclick="answer('+i+')">'+esc(cur.opts[i].text)+'</button>';
+    }
+    h+='</div>';
+    $("playBody").innerHTML=h;
+  }
+  if(first){ paint(); return; }
+  box.className="fade";
+  setTimeout(function(){ paint(); box.className=""; },300);
+}
+function answer(i){
+  var q=state.quiz;
+  var cur=q.questions[play.qi];
+  if(!cur||!cur.opts[i]){ return; }
+  var tag=cur.opts[i].tag;
+  if(play.tally[tag]===undefined){ play.tally[tag]=0; }
+  play.tally[tag]++;
+  play.qi++;
+  paintQ(false);
+}
+function winner(){
+  var best=null, bv=-1;
+  for(var i=0;i<play.order.length;i++){
+    var k=play.order[i];
+    var v=play.tally[k]||0;
+    if(v>bv){ bv=v; best=k; }
+  }
+  return best;
+}
+function paintResult(){
+  boom();
+  $("pfill").style.width="100%";
+  var k=winner();
+  var rc=state.quiz.results[k];
+  var h='<div id="resultCard"><div class="pop"><div class="glow">';
+  h+='<div class="qn">YOUR RESULT</div><h2>'+esc(rc.title)+'</h2><p>'+esc(rc.desc)+'</p>';
+  h+='<div id="shareBox">'+esc(rc.share)+'</div>';
+  h+='<button class="tbtn" onclick="copyShare()">⧉ COPY CAPTION</button> ';
+  h+='<button class="tbtn primary" onclick="retake()">↻ RETAKE QUIZ</button>';
+  h+='</div></div></div>';
+  $("playBody").innerHTML=h;
+}
+function copyShare(){
+  var k=winner();
+  copyText(state.quiz.results[k].share,"Caption copied — go viral");
+}
+function retake(){
+  play.qi=0; play.tally={};
+  for(var i=0;i<play.order.length;i++){ play.tally[play.order[i]]=0; }
+  paintQ(true);
+}
+function copyText(txt,msg){
+  function done(){ showToast(msg||"COPIED"); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){ fb(); }); }
+  else { fb(); }
+  function fb(){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); }
+    catch(e){ showToast("COPY BLOCKED"); }
+  }
+}
+/* ---------- export ---------- */
+function buildExportHTML(quiz){
+  var data=JSON.stringify(quiz).replace(/<\//g,"<\\/");
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'+
+  '<title>'+quiz.title.replace(/</g,"&lt;")+'</title>\n'+
+  '<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">\n'+
+  '<style>\nhtml,body{margin:0;padding:0;background:#0d0d14;color:#fff;font-family:"Plus Jakarta Sans",Arial,sans-serif;min-height:100%}\n'+
+  '#wrap{max-width:640px;margin:0 auto;padding:30px 22px 60px}\n'+
+  'h1{font-family:Syne,sans-serif;font-size:26px;text-align:center;margin:0 0 4px}\n'+
+  '.sub{text-align:center;color:#b8b0d8;font-size:13px;margin-bottom:18px}\n'+
+  '#pbar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:20px}\n'+
+  '#pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#FF006E,#8338EC,#3A86FF);transition:width .3s}\n'+
+  '#qbox{background:#1a1a2e;border:2px solid #8338EC;border-radius:20px;padding:28px 26px;transition:opacity .3s}\n'+
+  '#qbox.fade{opacity:0}\n'+
+  '#qbox h2{font-family:Syne,sans-serif;font-size:22px;margin:6px 0 16px}\n'+
+  '.optbtn{display:block;width:100%;text-align:left;background:#0d0d14;border:2px solid rgba(255,255,255,.16);color:#fff;border-radius:14px;font-size:15px;font-weight:600;font-family:"Plus Jakarta Sans",sans-serif;padding:14px 16px;margin-bottom:10px;cursor:pointer}\n'+
+  '.optbtn:active{transform:scale(.98)}\n'+
+  '#res{text-align:center}#res h2{font-family:Syne,sans-serif;font-size:28px}\n'+
+  '#res p{color:#b8b0d8;line-height:1.7}.hookline{color:#FFE066;font-weight:700;margin:0 0 10px}\n'+
+  '.confetti{position:fixed;top:-14px;width:10px;height:14px;z-index:99;pointer-events:none;border-radius:2px;animation:cfall linear forwards}\n'+
+  '@keyframes cfall{to{transform:translateY(105vh) rotate(720deg)}}\n'+
+  '#share{border:1px dashed rgba(255,255,255,.3);border-radius:12px;padding:14px;margin:14px 0}\n'+
+  '.btn{background:linear-gradient(92deg,#FF006E,#8338EC);border:none;color:#fff;border-radius:12px;font-family:Syne,sans-serif;font-weight:700;padding:13px 22px;cursor:pointer;font-size:14px}\n'+
+  '</style>\n</head>\n<body>\n<div id="wrap"><h1>'+quiz.title.replace(/</g,"&lt;")+'</h1><div class="sub">Which path are YOU?</div><div id="pbar"><i id="pf"></i></div><div id="qbox"><div id="pb"></div></div></div>\n'+
+  '<script>\nvar DATA='+data+';\n'+
+  'var qi=0,tally={},order=DATA.arch.slice(0);\n'+
+  'for(var i=0;i<order.length;i++){tally[order[i]]=0;}\n'+
+  'function esc(s){s=String(s||"");return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}\n'+
+'function boom(){try{var cols=["#FF006E","#8338EC","#3A86FF","#FFE066"];for(var i=0;i<24;i++){var s=document.createElement("span");s.className="confetti";s.style.left=(Math.random()*100)+"vw";s.style.background=cols[i%4];s.style.animationDuration=(1.4+Math.random()*1.4)+"s";document.body.appendChild(s);}}catch(e){}}\n'+
+  'function paint(first){\n'+
+  'if(qi>=DATA.questions.length){result();return;}\n'+
+  'document.getElementById("pf").style.width=Math.round(qi/DATA.questions.length*100)+"%";\n'+
+  'var c=DATA.questions[qi];\n'+
+  'var h="<div>QUESTION "+(qi+1)+" / "+DATA.questions.length+"</div><h2>"+esc(c.stem)+"</h2>";\n'+
+  'for(var i=0;i<c.opts.length;i++){h+="<button class=\\"optbtn\\" onclick=\\"go("+i+")\\">"+esc(c.opts[i].text)+"</button>";}\n'+
+  'document.getElementById("pb").innerHTML=h;}\n'+
+  'function show(first){var b=document.getElementById("qbox");if(first){paint();return;}b.className="fade";setTimeout(function(){paint();b.className="";},300);}\n'+
+  'function go(i){var c=DATA.questions[qi];if(!c||!c.opts[i]){return;}var t=c.opts[i].tag;if(tally[t]===undefined){tally[t]=0;}tally[t]++;qi++;show(false);}\n'+
+  'function win(){var best=null,bv=-1;for(var i=0;i<order.length;i++){var v=tally[order[i]]||0;if(v>bv){bv=v;best=order[i];}}return best;}\n'+
+  'function result(){boom();document.getElementById("pf").style.width="100%";var r=DATA.results[win()];document.getElementById("pb").innerHTML="<div id=\\"res\\"><div>YOUR RESULT</div><h2>"+esc(r.title)+"</h2><p>"+esc(r.desc)+"</p><div class=\\"hookline\\">"+esc(DATA.hook||"")+"</div><div id=\\"share\\">"+esc(r.share)+"</div><button class=\\"btn\\" onclick=\\"if(navigator.clipboard){navigator.clipboard.writeText(DATA.results[win()].share)}\\">COPY CAPTION</button> <button class=\\"btn\\" onclick=\\"qi=0;for(var i=0;i<order.length;i++){tally[order[i]]=0;}show(true)\\">RETAKE</button></div>";}\n'+
+  'paint(true);\n'+
+  '<\/script>\n</body>\n</html>';
+}
+function downloadFile(name,content,mime){
+  try{
+    var blob=new Blob([content],{type:mime||"text/plain"});
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); try{ URL.revokeObjectURL(u); }catch(e){} },400);
+    showToast("STANDALONE HTML DOWNLOADED");
+  }catch(e){ showToast("Download blocked"); }
+}
+/* ---------- chrome ---------- */
+function freshSeeds(){ var s=[]; for(var i=0;i<7;i++){ s.push(rndSeed()); } return s; }
+function init(){
+  var saved=loadLS();
+  state=saved&&saved.quiz?{theme:saved.theme||"",title:saved.title||"",nTypes:saved.nTypes||"5",titleSeed:1,seeds:saved.seeds||freshSeeds(),quiz:saved.quiz}:stateDefault();
+  if(!state.seeds||state.seeds.length<7){ state.seeds=freshSeeds(); }
+  $("in-theme").value=state.theme||"";
+  $("in-title").value=(state.quiz&&state.quiz.title)||"";
+  $("in-n").value=state.nTypes||"5";
+  if(state.quiz){ renderEdit(); }
+  $("btnGen").onclick=function(){
+    var th=$("in-theme").value.replace(/\s+/g," ").trim();
+    if(!th){ showToast("TYPE YOUR THEME FIRST"); return; }
+    var nT=$("in-n").value;
+    state.theme=th; state.nTypes=nT;
+    state.seeds=freshSeeds();
+    var keep=state.quiz?extractCustoms(state.quiz):[];
+    var ti=$("in-title").value;
+    state.quiz=buildQuiz(th,ti,nT,state.seeds,state.titleSeed);
+    var room=Math.max(0,12-state.quiz.questions.length);
+    state.quiz.questions=state.quiz.questions.concat(keep.slice(0,room));
+    state.titleSeed=rndSeed();
+    saveLS(); renderEdit(); showToast("QUIZ GENERATED");
+    window.scrollTo(0,0);
+  };
+  $("btnDice").onclick=function(){
+    collectEdits();
+    var th2=$("in-theme").value.replace(/\s+/g," ").trim()||"Uncharted Realms";
+    var d0={setting:th2,theme:th2,Theme:titleCase(th2),emoji:""};
+    var arr=[];
+    for(var t=0;t<TITLES.length;t++){ arr.push(fill(TITLES[t],d0)); }
+    var cur=$("in-title").value;
+    var nx=arr[0];
+    for(var k=0;k<arr.length;k++){ if(arr[k]!==cur){ nx=arr[k]; break; } }
+    if(state.quiz){ state.quiz.title=nx; }
+    $("in-title").value=nx; saveLS();
+  };
+  var ids=["in-theme","in-title"];
+  for(var k=0;k<ids.length;k++){ $(ids[k]).oninput=function(){ saveLS(); }; }
+  $("in-n").onchange=function(){ saveLS(); };
+  $("btnPreview").onclick=function(){ startPlay(); };
+  $("btnPreview2").onclick=function(){ startPlay(); };
+  $("btnGuide").onclick=function(){
+    var gp=$("guidePanel");
+    var open=(gp.style.display==="none"||gp.style.display==="");
+    gp.style.display=open?"block":"none";
+  };
+  $("btnAddQ").onclick=function(){
+    collectEdits();
+    if(!state.quiz){ showToast("GENERATE THE QUIZ FIRST"); return; }
+    if(state.quiz.questions.length>=12){ showToast("MAX 12 QUESTIONS"); return; }
+    var opts=[];
+    for(var i=0;i<state.quiz.arch.length;i++){ opts.push({text:"New answer — tap to edit",tag:state.quiz.arch[i]}); }
+    state.quiz.questions.push({stem:"New custom question — tap to edit",opts:opts,custom:true});
+    saveLS(); renderEdit(); showToast("QUESTION ADDED");
+  };
+  $("btnCopyText").onclick=function(){
+    collectEdits(); saveLS();
+    if(!state.quiz){ showToast("GENERATE THE QUIZ FIRST"); return; }
+    copyText(quizText(state.quiz),"Quiz text copied");
+  };
+  $("btnBuilder").onclick=function(){ setMode(false); };
+  $("btnBack").onclick=function(){ setMode(false); };
+  $("btnExport").onclick=function(){
+    collectEdits(); saveLS();
+    if(!state.quiz){ showToast("GENERATE THE QUIZ FIRST"); return; }
+    downloadFile("reader-quiz.html",buildExportHTML(state.quiz),"text/html");
+  };
+  $("btnNew").onclick=function(){
+    if(!confirm("Start over? The current quiz will be cleared.")){ return; }
+    try{ localStorage.removeItem(LSKEY); }catch(e){}
+    state=stateDefault(); play={qi:0,tally:{},order:[]};
+    $("in-theme").value=""; $("in-title").value=""; $("in-n").value="5";
+    $("emptyState").style.display="block"; $("quizEdit").style.display="none";
+    setMode(false); saveLS(); showToast("NEW QUIZ");
+  };
+  $("quizEdit").oninput=function(){ collectEdits(); saveLS(); };
+  $("quizEdit").onchange=function(){ collectEdits(); saveLS(); };
+}
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",init); } else { init(); }
+</script>
+</body>
+</html>
