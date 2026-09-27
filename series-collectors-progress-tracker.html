@@ -1,0 +1,494 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Series Collector's Progress Tracker — Gamebooks Empire Bonus</title>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5ecd7;
+  --panel:#ffffff;
+  --ink:#3a2f1f;
+  --muted:#8b7d5e;
+  --accent:#8B5E3C;
+  --accent2:#C17767;
+  --accent3:#7B9E87;
+}
+*,*:before,*:after{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"Nunito",sans-serif;min-height:100%}
+body{background-image:radial-gradient(rgba(139,94,60,.08) 1px,transparent 1px);background-size:24px 24px}
+h1,h2,h3{margin:0;font-family:"Josefin Sans",sans-serif}
+button{font-family:"Josefin Sans",sans-serif}
+#topbar{background:var(--ink);color:var(--bg);padding:20px 30px 16px}
+#topbar .wrap{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.badge{width:50px;height:50px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%,var(--accent2),var(--accent) 70%);border:3px solid var(--bg)}
+.badge svg{width:26px;height:26px}
+.kicker{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#d8c49a;font-weight:700}
+#topbar h1{font-size:25px;font-weight:700;margin-top:4px}
+#topbar .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.tbtn{background:transparent;border:2px solid #d8c49a;color:#f5ecd7;border-radius:99px;font-size:12px;font-weight:700;
+  letter-spacing:1px;padding:9px 16px;cursor:pointer}
+.tbtn:hover{background:rgba(216,196,154,.15)}
+#wrap{max-width:1080px;margin:0 auto;padding:24px 26px 70px}
+.panel{background:var(--panel);border:2px solid var(--ink);border-radius:18px;padding:24px;box-shadow:6px 6px 0 rgba(58,47,31,.18)}
+.panel h2{font-size:19px;letter-spacing:1px;margin-bottom:4px}
+.panel .sub{font-size:14px;color:var(--muted);margin:0 0 8px}
+label.f{display:block;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+input[type=text],input[type=number]{background:#fffdf6;border:2px solid var(--ink);border-radius:10px;padding:10px 12px;
+  color:var(--ink);font-family:"Nunito",sans-serif;font-size:15px;font-weight:600;width:100%}
+input:focus{outline:none;border-color:var(--accent)}
+.vol{border:2px dashed var(--muted);border-radius:14px;padding:16px;margin-top:14px}
+.volhead{display:grid;grid-template-columns:90px minmax(0,1fr) auto;gap:10px;align-items:end}
+.mini{background:transparent;border:2px solid var(--ink);color:var(--ink);border-radius:99px;font-size:12px;font-weight:700;
+  padding:7px 14px;cursor:pointer;white-space:nowrap}
+.mini:hover{background:var(--ink);color:#fff}
+.mini.danger{border-color:var(--accent2);color:var(--accent2)}
+.mini.danger:hover{background:var(--accent2);color:#fff}
+.endrow{display:grid;grid-template-columns:26px minmax(0,1fr) 118px 32px;gap:8px;align-items:center;margin-top:8px}
+.endrow input[type=text]{font-size:14px;padding:8px 10px}
+.endrow select{font-size:13px;padding:8px 6px;background:#fffdf6;border:2px solid var(--ink);border-radius:10px;font-family:"Nunito",sans-serif;font-weight:700;cursor:pointer}
+.dotpick{width:22px;height:22px;border-radius:50%;border:2px solid var(--muted);background:transparent;padding:0;cursor:pointer}
+.dotpick.s{background:#4e7a58;border-color:#4e7a58}
+.dotpick.p{background:#C17767;border-color:#C17767}
+.dotpick.f{background:#8B5E3C;border-color:#8B5E3C}
+.delx{background:transparent;border:2px solid var(--muted);color:var(--muted);border-radius:8px;font-size:14px;padding:5px 0;cursor:pointer;width:32px}
+.bigbtn{width:100%;margin-top:18px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:15px;
+  font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer}
+.bigbtn:active{transform:translateY(1px)}
+.ghostbtn{width:100%;margin-top:8px;background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;text-decoration:underline}
+#validMsg{display:none;color:var(--accent2);font-size:14px;margin-top:10px;font-weight:700}
+/* tracker */
+#overall{background:var(--panel);border:2px solid var(--ink);border-radius:18px;padding:22px 24px;box-shadow:6px 6px 0 rgba(58,47,31,.18);
+  text-align:center;margin-bottom:20px}
+#overall .pct{font-family:"Josefin Sans",sans-serif;font-size:44px;font-weight:700;color:var(--accent)}
+#overall .bar{height:16px;border-radius:99px;background:#e8dfc6;border:2px solid var(--ink);overflow:hidden;margin:12px 0 6px}
+#overall .bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--accent3),var(--accent2));transition:width .6s ease}
+#overall .lbl{font-size:14px;color:var(--muted);font-weight:700}
+#volGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.vcard{background:var(--panel);border:2px solid var(--ink);border-radius:18px;padding:20px;box-shadow:5px 5px 0 rgba(58,47,31,.15);position:relative;transition:border-color .3s,box-shadow .3s}
+.vcard.mastered{border-color:#C9A227;box-shadow:0 0 0 3px #C9A227,5px 5px 0 rgba(58,47,31,.15)}
+.vcard h3{font-size:17px}
+.vcard .vnum{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--muted)}
+.vcard .pbar{height:12px;border-radius:99px;background:#e8dfc6;border:2px solid var(--ink);overflow:hidden;margin:10px 0 4px}
+.vcard .pbar i{display:block;height:100%;width:0;background:var(--accent3);border-radius:99px;transition:width .5s ease}
+.vcard .pcount{font-size:13px;font-weight:800;color:var(--muted)}
+.vbadge{position:absolute;top:-14px;right:14px;background:#C9A227;color:#3a2f1f;font-family:"Josefin Sans",sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:1px;border:2px solid var(--ink);border-radius:99px;padding:4px 12px;display:none}
+.vcard.mastered .vbadge{display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{border:2px solid var(--muted);color:var(--muted);background:transparent;border-radius:99px;font-size:13px;font-weight:700;
+  padding:8px 14px;cursor:pointer;font-family:"Nunito",sans-serif;transition:transform .12s}
+.chip:active{transform:scale(.94)}
+.chip.found{color:#fff;border-color:var(--ink)}
+.chip.found.s{background:#4e7a58}
+.chip.found.p{background:#C17767}
+.chip.found.f{background:#8B5E3C}
+.chip .tick{font-weight:800;margin-right:4px}
+#trackBtns{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.abtn{flex:1;min-width:200px;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px}
+.abtn.share{background:var(--accent);color:#fff;border:none}
+.abtn.reset{background:transparent;border:2px solid var(--muted);color:var(--muted)}
+#emptyTrack{text-align:center;color:var(--muted);padding:50px 20px;font-size:15px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:none;background:var(--ink);color:#fff;
+  font-weight:800;font-size:14px;border-radius:99px;padding:12px 24px}
+#guidePanel{display:none}
+.guidebox{background:var(--panel);border:2px solid var(--ink);border-radius:18px;padding:20px 24px;margin-bottom:18px;
+  font-size:14.5px;line-height:1.8;box-shadow:6px 6px 0 rgba(58,47,31,.18)}
+.guidebox b{color:var(--accent)}
+.guidebox ol{margin:8px 0;padding-left:20px}
+.guidebox li{margin-bottom:6px}
+.guidebox kbd{background:#f5ecd7;border:2px solid var(--ink);border-radius:6px;padding:0 8px;font-size:13px;font-family:inherit;white-space:nowrap}
+#tplStrip{margin-bottom:18px}
+#tplStrip .stripbox{background:var(--panel);border:2px solid var(--accent);border-radius:14px;padding:14px 20px;box-shadow:6px 6px 0 rgba(58,47,31,.18)}
+#tplStrip .stripbox b{font-family:"Josefin Sans",sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent)}
+#tplStrip .tplbtn{display:inline-block;width:auto;margin:8px 8px 0 0;background:#fffdf6;border:2px solid var(--ink);
+  border-radius:99px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink)}
+#tplStrip .tplbtn:hover{border-color:var(--accent)}
+#tplStrip .tplbtn b{font-size:12px;letter-spacing:1px}
+@media print{
+  #topbar,#setupView,#trackBtns,#toast,#guidePanel,#tplStrip,.confetti{display:none !important}
+  #wrap{padding:0}
+  #overall{box-shadow:none}
+  .vcard{box-shadow:none;break-inside:avoid}
+  body{background:#fff}
+}
+.confetti{position:fixed;top:-16px;width:11px;height:15px;z-index:200;pointer-events:none;border-radius:3px;animation:cfall linear forwards}
+@keyframes cfall{to{transform:translateY(108vh) rotate(var(--rot,360deg))}}
+@media(max-width:860px){#volGrid{grid-template-columns:minmax(0,1fr)}.volhead{grid-template-columns:minmax(0,1fr);gap:8px}#topbar h1{font-size:20px}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="wrap">
+    <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 L13 13 L8.5 15.5 L11 11 Z" fill="#fff"/></svg></div>
+    <div><div class="kicker">Gamebooks Empire Bonus · Reader Insert</div><h1>Series Collector's Progress Tracker</h1></div>
+    <div class="actions"><button class="tbtn" id="btnGuide">📖 GUIDE</button><button class="tbtn" id="btnEditSetup" style="display:none">✏ EDIT SERIES SETUP</button></div>
+  </div>
+</div>
+<div id="wrap">
+  <div id="guidePanel"><div class="guidebox">
+<b>FIELD GUIDE — publisher setup + reader tracking:</b>
+<ol>
+<li><b>Publisher: list the series.</b> Series title, then per volume: number, title, and every ending with its dot color (<kbd>S</kbd>uccess / <kbd>P</kbd>artial / <kbd>F</kbd>ailure). <kbd>+ ADD VOLUME</kbd> grows the saga; the ⧉ button clones a volume.</li>
+<li><b>Save once.</b> <kbd>SAVE SERIES SETUP</kbd> validates (every volume needs a named ending) and flips to the reader view. Or start from a <b>template</b> in the gold strip.</li>
+<li><b>Readers: tap endings found.</b> Outlined chips are missing; filled + ✓ means collected. Bars animate, percents stay honest.</li>
+<li><b>100% anywhere pays off.</b> A finished volume earns the golden <b>VOLUME MASTERED</b> seal; a finished series rains confetti (once per series version).</li>
+<li><b>Share &amp; restart.</b> <kbd>SHARE MY PROGRESS</kbd> copies the brag text. <kbd>RESET MY PROGRESS</kbd> wipes only reader ticks — the publisher setup survives.</li>
+<li><b>Extras:</b> JSON export/import backs up or moves a series · the tracker prints cleanly (tracker only) · everything autosaves locally.</li>
+</ol>
+</div></div>
+  <div id="setupView">
+    <div id="tplStrip"><div class="stripbox"><b>★ START FROM A TEMPLATE —</b> <span style="font-size:14px;color:var(--muted)">one click loads a finished example:</span><div id="tplButtons"></div></div></div>
+    <div class="panel">
+      <h2>📚 Publisher Setup — build the series once</h2>
+      <p class="sub">List every volume and its endings. Save, then readers just track. Print the link/QR in your book.</p>
+      <label class="f">Series / book title</label>
+      <input type="text" id="in-series" maxlength="70" value="" placeholder="e.g. The Maple Hollow Mysteries">
+      <div id="volList"></div>
+      <button class="mini" id="btnAddVol" style="margin-top:12px">+ ADD VOLUME</button>
+      <button class="bigbtn" id="btnSaveSetup">💾 SAVE SERIES SETUP</button>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="mini" id="btnJsonExp">EXPORT JSON</button><button class="mini" id="btnJsonImp">IMPORT JSON</button></div><input type="file" id="fileImp" accept=".json,application/json" style="display:none">
+      <button class="ghostbtn" id="btnNewSeries">New series setup (reset everything)</button>
+      <div id="validMsg"></div>
+    </div>
+  </div>
+  <div id="trackView" style="display:none">
+    <div id="overall">
+      <div class="pct" id="ovPct">0%</div>
+      <div class="bar"><i id="ovFill"></i></div>
+      <div class="lbl" id="ovLbl"></div>
+    </div>
+    <div id="volGrid"></div>
+    <div id="trackBtns">
+      <button class="abtn share" id="btnShare">📤 SHARE MY PROGRESS</button>
+      <button class="abtn reset" id="btnResetProg">↺ RESET MY PROGRESS</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+var LS_SETUP="scpt-setup-v1", LS_PROG="scpt-prog-v1";
+var TYPES=["success","partial","failure"];
+var TYPE_DOT={success:"s",partial:"p",failure:"f"};
+var TYPE_LABEL={success:"Success",partial:"Partial",failure:"Failure"};
+function $(id){ return document.getElementById(id); }
+function esc(s){ s=(s===null||s===undefined)?"":String(s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function showToast(m){ var t=$("toast"); t.innerHTML=esc(m); t.style.display="block"; setTimeout(function(){ t.style.display="none"; },2200); }
+function uid(p){ return (p||"id")+"-"+Math.floor(Math.random()*900000+100000); }
+function blankEnding(name,type){ return {id:uid("e"),name:name||"",type:type||"success"}; }
+function blankVolume(n){ return {id:uid("v"),n:n||1,title:"",endings:[blankEnding(),blankEnding(),blankEnding()]}; }
+var TEMPLATES={
+maple:{name:"Maple Hollow Saga",desc:"2 volumes · 6 endings",
+ setup:{title:"The Maple Hollow Mysteries",volumes:[
+  {id:"tpl-v1",n:1,title:"The Pie Heist",endings:[{id:"tpl-e1",name:"The Hero's Triumph",type:"success"},{id:"tpl-e2",name:"The Bitter Compromise",type:"partial"},{id:"tpl-e3",name:"Lost in the Catacombs",type:"failure"}]},
+  {id:"tpl-v2",n:2,title:"Night Library",endings:[{id:"tpl-e4",name:"The Borrower Named",type:"success"},{id:"tpl-e5",name:"Half Past the Truth",type:"partial"},{id:"tpl-e6",name:"Lights Out",type:"failure"}]}]}},
+harbor:{name:"Haunted Harbor",desc:"2 volumes · 5 endings",
+ setup:{title:"Tales from Haunted Harbor",volumes:[
+  {id:"tpl-w1",n:1,title:"Low Tide",endings:[{id:"tpl-f1",name:"The Bell Rings",type:"success"},{id:"tpl-f2",name:"One Gold Coin",type:"partial"}]},
+  {id:"tpl-w2",n:2,title:"Fog Rolls In",endings:[{id:"tpl-f3",name:"Right on Time",type:"success"},{id:"tpl-f4",name:"Ticket-Stub Clue",type:"partial"},{id:"tpl-f5",name:"Wrong Train",type:"failure"}]}]}}
+};
+function renderTpl(){
+  var h="";
+  for(var k in TEMPLATES){
+    if(!TEMPLATES.hasOwnProperty(k)){ continue; }
+    h+='<button class="tplbtn" data-tpl="'+k+'"><b>'+esc(TEMPLATES[k].name.toUpperCase())+'</b><br>'+esc(TEMPLATES[k].desc)+'</button>';
+  }
+  $("tplButtons").innerHTML=h;
+  var bs=document.querySelectorAll("[data-tpl]");
+  for(var i=0;i<bs.length;i++){ bs[i].onclick=function(){ loadTemplate(this.getAttribute("data-tpl")); }; }
+}
+function loadTemplate(key){
+  var t=TEMPLATES[key];
+  if(!t){ return; }
+  if(!confirm("Load \""+t.name+"\"? The current setup will be replaced.")){ return; }
+  setup=JSON.parse(JSON.stringify(t.setup));
+  prog={found:{},celebrated:null};
+  saveSetup(); saveProg();
+  $("in-series").value=setup.title||"";
+  renderSetup(); renderTracker(); setMode("track");
+  showToast("TEMPLATE LOADED — TAP TO TRACK");
+}
+function normalizeSetup(o){
+  if(!o||typeof o!=="object"){ return null; }
+  if(typeof o.title!=="string"){ return null; }
+  if(!(o.volumes instanceof Array)||!o.volumes.length||o.volumes.length>12){ return null; }
+  var vols=[];
+  for(var i=0;i<o.volumes.length;i++){
+    var v=o.volumes[i];
+    if(!v||typeof v!=="object"){ return null; }
+    var ends=[];
+    if(!(v.endings instanceof Array)){ return null; }
+    for(var j=0;j<Math.min(v.endings.length,12);j++){
+      var e=v.endings[j]||{};
+      var tp=String(e.type||"success");
+      if(tp!=="success"&&tp!=="partial"&&tp!=="failure"){ tp="success"; }
+      ends.push({id:String(e.id||uid("e")),name:String(e.name||"").slice(0,60),type:tp});
+    }
+    var nn=parseInt(v.n,10);
+    vols.push({id:String(v.id||uid("v")),n:isNaN(nn)?i+1:nn,title:String(v.title||"").slice(0,70),endings:ends});
+  }
+  return {title:String(o.title).slice(0,70),volumes:vols};
+}
+function downloadFile(name,content,mime){
+  try{
+    var blob=new Blob([content],{type:mime||"text/plain"});
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); try{ URL.revokeObjectURL(u); }catch(e){} },400);
+    showToast("DOWNLOADED");
+  }catch(e){ showToast("DOWNLOAD BLOCKED"); }
+}
+function stateDefault(){ return {title:"",volumes:[blankVolume(1)]}; }
+var setup=null, prog=null, mode="setup";
+function saveSetup(){ try{ localStorage.setItem(LS_SETUP,JSON.stringify(setup)); }catch(e){} }
+function loadSetup(){ try{ var r=localStorage.getItem(LS_SETUP); if(r){ var p=JSON.parse(r); if(p&&p.volumes){ return p; } } }catch(e){} return null; }
+function saveProg(){ try{ localStorage.setItem(LS_PROG,JSON.stringify(prog)); }catch(e){} }
+function loadProg(){ try{ var r=localStorage.getItem(LS_PROG); if(r){ var p=JSON.parse(r); if(p&&p.found){ return p; } } }catch(e){} return {found:{},celebrated:null}; }
+function setupHash(){ var s=setup?setup.title:""; for(var i=0;i<(setup?setup.volumes.length:0);i++){ s+="|"+setup.volumes[i].title; for(var j=0;j<setup.volumes[i].endings.length;j++){ s+=setup.volumes[i].endings[j].name+setup.volumes[i].endings[j].type; } } var h=0; for(var k=0;k<s.length;k++){ h=(h*31+s.charCodeAt(k))%1000003; } return "h"+h; }
+function totals(){
+  var t=0, f=0, per=[];
+  for(var i=0;i<setup.volumes.length;i++){
+    var named=0, ff=0;
+    for(var j=0;j<setup.volumes[i].endings.length;j++){
+      if(setup.volumes[i].endings[j].name){ named++; t++; if(prog.found[setup.volumes[i].endings[j].id]){ ff++; f++; } }
+    }
+    per.push({found:ff,total:named});
+  }
+  return {found:f,total:t,per:per};
+}
+function pctOf(found,total){ if(!total){ return 0; } return Math.round(found/total*100); }
+function shouldCelebrate(){
+  if(!setup||!prog){ return false; }
+  var t=totals();
+  if(!t.total||t.found<t.total){ return false; }
+  return prog.celebrated!==setupHash();
+}
+/* ---------- setup UI ---------- */
+function renderSetup(){
+  $("in-series").value=setup.title||"";
+  var h="";
+  for(var i=0;i<setup.volumes.length;i++){
+    (function(v,vi){
+      h+='<div class="vol" data-vol="'+vi+'"><div class="volhead">';
+      h+='<div><label class="f" style="margin-top:0">Vol. nº</label><input type="number" data-v="n" min="1" max="99" value="'+v.n+'"></div>';
+      h+='<div><label class="f" style="margin-top:0">Volume title</label><input type="text" data-v="title" maxlength="70" placeholder="e.g. The Pie Heist" value="'+esc(v.title)+'"></div>';
+      h+='<div><button class="mini danger" data-v="delvol">✕ VOLUME</button> <button class="mini" data-v="dupvol" title="Duplicate volume">⧉</button></div></div>';
+      h+='<label class="f">Endings in this volume</label>';
+      for(var j=0;j<v.endings.length;j++){
+        (function(e,ei){
+          h+='<div class="endrow" data-end="'+ei+'"><button class="dotpick '+(TYPE_DOT[e.type]||"s")+'" data-e="dot" title="'+esc(TYPE_LABEL[e.type]||"Success")+'"></button>';
+          h+='<input type="text" data-e="name" maxlength="60" placeholder="e.g. The Hero\u2019s Triumph" value="'+esc(e.name)+'">';
+          h+='<select data-e="type"><option value="success"'+(e.type==="success"?" selected":"")+'>Success</option><option value="partial"'+(e.type==="partial"?" selected":"")+'>Partial</option><option value="failure"'+(e.type==="failure"?" selected":"")+'>Failure</option></select>';
+          h+='<button class="delx" data-e="del">×</button></div>';
+        })(v.endings[j],j);
+      }
+      h+='<button class="mini" data-v="addend" style="margin-top:8px">+ ADD ENDING</button></div>';
+    })(setup.volumes[i],i);
+  }
+  $("volList").innerHTML=h;
+  wireSetup();
+}
+function wireSetup(){
+  var vols=document.querySelectorAll("[data-vol]");
+  for(var i=0;i<vols.length;i++){
+    (function(card,vi){
+      card.querySelector("[data-v=n]").oninput=function(){ var v=parseInt(this.value,10); setup.volumes[vi].n=isNaN(v)?vi+1:v; saveSetup(); };
+      card.querySelector("[data-v=title]").oninput=function(){ setup.volumes[vi].title=this.value.slice(0,70); saveSetup(); };
+      card.querySelector("[data-v=delvol]").onclick=function(){
+        if(setup.volumes.length<=1){ showToast("KEEP AT LEAST ONE VOLUME"); return; }
+        setup.volumes.splice(vi,1); saveSetup(); renderSetup();
+      };
+      card.querySelector("[data-v=dupvol]").onclick=function(){
+        if(setup.volumes.length>=12){ showToast("MAX 12 VOLUMES"); return; }
+        var src=setup.volumes[vi];
+        var cp=JSON.parse(JSON.stringify(src));
+        cp.id=uid("v");
+        for(var e=0;e<cp.endings.length;e++){ cp.endings[e].id=uid("e"); }
+        cp.title=(cp.title||"Untitled")+" (copy)";
+        setup.volumes.splice(vi+1,0,cp); saveSetup(); renderSetup();
+        showToast("VOLUME DUPLICATED");
+      };
+      card.querySelector("[data-v=addend]").onclick=function(){
+        if(setup.volumes[vi].endings.length>=12){ showToast("MAX 12 ENDINGS PER VOLUME"); return; }
+        setup.volumes[vi].endings.push(blankEnding()); saveSetup(); renderSetup();
+      };
+      var rows=card.querySelectorAll("[data-end]");
+      for(var j=0;j<rows.length;j++){
+        (function(row,ei){
+          row.querySelector("[data-e=dot]").onclick=function(){ cycleEndType(vi,ei); };
+          row.querySelector("[data-e=name]").oninput=function(){ setup.volumes[vi].endings[ei].name=this.value.slice(0,60); saveSetup(); };
+          row.querySelector("[data-e=type]").onchange=function(){ setup.volumes[vi].endings[ei].type=this.value; saveSetup(); renderSetup(); };
+          row.querySelector("[data-e=del]").onclick=function(){
+            if(setup.volumes[vi].endings.length<=1){ showToast("KEEP AT LEAST ONE ENDING"); return; }
+            setup.volumes[vi].endings.splice(ei,1); saveSetup(); renderSetup();
+          };
+        })(rows[j],j);
+      }
+    })(vols[i],i);
+  }
+}
+function cycleEndType(vi,ei){
+  var order=["success","partial","failure"];
+  var cur=setup.volumes[vi].endings[ei].type;
+  setup.volumes[vi].endings[ei].type=order[(order.indexOf(cur)+1)%3];
+  saveSetup(); renderSetup();
+}
+function validateSetup(){
+  if(!String(setup.title||"").replace(/\s/g,"")){ return "Name the series first."; }
+  if(!setup.volumes.length){ return "Add at least one volume."; }
+  for(var i=0;i<setup.volumes.length;i++){
+    var named=0;
+    for(var j=0;j<setup.volumes[i].endings.length;j++){ if(String(setup.volumes[i].endings[j].name||"").replace(/\s/g,"")){ named++; } }
+    if(!named){ return "Volume "+setup.volumes[i].n+" needs at least one named ending."; }
+  }
+  return null;
+}
+/* ---------- tracker ---------- */
+function setMode(m){
+  mode=m;
+  $("setupView").style.display=m==="setup"?"block":"none";
+  $("trackView").style.display=m==="track"?"block":"none";
+  $("btnEditSetup").style.display=m==="track"?"":"none";
+  window.scrollTo(0,0);
+}
+function renderTracker(){
+  var t=totals();
+  var pct=pctOf(t.found,t.total);
+  $("ovPct").innerHTML=pct+"%";
+  $("ovFill").style.width=pct+"%";
+  $("ovLbl").innerHTML="Series Completion — <b>"+t.found+" of "+t.total+" endings found</b> across “"+esc(setup.title)+"”";
+  var h="";
+  if(!setup.volumes.length){ h='<div id="emptyTrack">No volumes yet — go back to setup.</div>'; }
+  for(var i=0;i<setup.volumes.length;i++){
+    (function(v,vi){
+      var p=t.per[vi], pp=pctOf(p.found,p.total);
+      var mastered=p.total>0&&p.found>=p.total;
+      h+='<div class="vcard'+(mastered?" mastered":"")+'" data-vcard="'+vi+'">';
+      if(mastered){ h+='<span class="vbadge">★ VOLUME MASTERED!</span>'; }
+      h+='<div class="vnum">VOLUME '+v.n+'</div><h3>'+esc(v.title||("Volume "+v.n))+'</h3>';
+      h+='<div class="pbar"><i style="width:'+pp+'%"></i></div>';
+      h+='<div class="pcount">'+p.found+' of '+p.total+' endings found</div><div class="chips">';
+      for(var j=0;j<v.endings.length;j++){
+        (function(e){
+          if(!e.name){ return; }
+          var on=!!prog.found[e.id];
+          h+='<button class="chip'+(on?(" found "+(TYPE_DOT[e.type]||"s")):"")+'" data-chip="'+e.id+'" title="'+esc(TYPE_LABEL[e.type]||"Success")+'">'+(on?'<span class="tick">✓</span>':"")+esc(e.name)+'</button>';
+        })(v.endings[j]);
+      }
+      h+='</div></div>';
+    })(setup.volumes[i],i);
+  }
+  $("volGrid").innerHTML=h;
+  var chips=document.querySelectorAll("[data-chip]");
+  for(var c=0;c<chips.length;c++){ chips[c].onclick=function(){ toggleFound(this.getAttribute("data-chip")); }; }
+}
+function toggleFound(eid){
+  if(prog.found[eid]){ delete prog.found[eid]; }
+  else { prog.found[eid]=1; }
+  saveProg(); renderTracker();
+  if(shouldCelebrate()){
+    prog.celebrated=setupHash(); saveProg();
+    confettiBurst();
+    showToast("🏆 100% — SERIES COMPLETE!");
+  }
+}
+function shareText(){
+  var t=totals();
+  return "I've found "+t.found+" of "+t.total+" endings across the "+setup.title+" saga! 📖✨";
+}
+var CONF_COLORS=["#8B5E3C","#C17767","#7B9E87","#C9A227","#f5ecd7"];
+function confettiBurst(){
+  try{
+    for(var i=0;i<60;i++){
+      var s=document.createElement("div");
+      s.className="confetti";
+      s.style.left=(Math.random()*100)+"vw";
+      s.style.background=CONF_COLORS[i%CONF_COLORS.length];
+      s.style.animationDuration=(2+Math.random()*2)+"s";
+      s.style.animationDelay=(Math.random()*0.6)+"s";
+      s.style.setProperty("--rot",(Math.random()*720-360)+"deg");
+      document.body.appendChild(s);
+      (function(el){ setTimeout(function(){ if(el.parentNode){ el.parentNode.removeChild(el); } },5200); })(s);
+    }
+  }catch(e){}
+}
+function copyText(txt,msg){
+  function done(){ showToast(msg||"COPIED"); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,function(){ fb(); }); }
+  else { fb(); }
+  function fb(){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); done(); }
+    catch(e){ showToast("COPY BLOCKED"); }
+  }
+}
+/* ---------- chrome ---------- */
+function init(){
+  var sv=loadSetup();
+  setup=sv||stateDefault();
+  prog=loadProg();
+  $("in-series").value=setup.title||"";
+  renderSetup();
+  if(sv&&validateSetup()===null){ setMode("track"); renderTracker(); }
+  else { setMode("setup"); }
+  $("in-series").oninput=function(){ setup.title=$("in-series").value.slice(0,70); saveSetup(); };
+  $("btnAddVol").onclick=function(){
+    if(setup.volumes.length>=12){ showToast("MAX 12 VOLUMES"); return; }
+    setup.volumes.push(blankVolume(setup.volumes.length+1));
+    saveSetup(); renderSetup();
+  };
+  $("btnSaveSetup").onclick=function(){
+    setup.title=$("in-series").value.slice(0,70);
+    var err=validateSetup();
+    if(err){ $("validMsg").style.display="block"; $("validMsg").innerHTML=esc(err); return; }
+    $("validMsg").style.display="none";
+    saveSetup(); renderTracker(); setMode("track");
+    showToast("SERIES SAVED — HAPPY TRACKING");
+  };
+  $("btnNewSeries").onclick=function(){
+    if(!confirm("Reset everything? Series setup AND reader progress will be cleared.")){ return; }
+    try{ localStorage.removeItem(LS_SETUP); }catch(e){}
+    try{ localStorage.removeItem(LS_PROG); }catch(e){}
+    setup=stateDefault(); prog={found:{},celebrated:null};
+    $("in-series").value="";
+    renderSetup(); setMode("setup"); showToast("FRESH SERIES");
+  };
+  $("btnEditSetup").onclick=function(){ renderSetup(); setMode("setup"); };
+  $("btnGuide").onclick=function(){
+    var gp=$("guidePanel");
+    var open=(gp.style.display==="none"||gp.style.display==="");
+    gp.style.display=open?"block":"none";
+  };
+  renderTpl();
+  $("btnJsonExp").onclick=function(){ downloadFile("series-setup.json",JSON.stringify(setup),"application/json"); };
+  $("btnJsonImp").onclick=function(){ $("fileImp").click(); };
+  $("fileImp").onchange=function(){
+    var f=this.files&&this.files[0];
+    if(!f){ return; }
+    var rd=new FileReader();
+    rd.onload=function(){
+      try{
+        var clean=normalizeSetup(JSON.parse(rd.result));
+        if(!clean){ showToast("NOT A VALID SERIES FILE"); return; }
+        setup=clean; prog={found:{},celebrated:null};
+        saveSetup(); saveProg();
+        $("in-series").value=setup.title||"";
+        renderSetup(); renderTracker(); setMode("track");
+        showToast("SERIES IMPORTED");
+      }catch(e){ showToast("NOT A VALID SERIES FILE"); }
+    };
+    try{ rd.readAsText(f); }catch(e){ showToast("IMPORT FAILED"); }
+    this.value="";
+  };
+  $("btnShare").onclick=function(){ copyText(shareText(),"Progress copied — go brag"); };
+  $("btnResetProg").onclick=function(){
+    if(!confirm("Reset YOUR progress? The series setup stays.")){ return; }
+    prog={found:{},celebrated:null}; saveProg(); renderTracker(); showToast("PROGRESS RESET");
+  };
+}
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",init); } else { init(); }
+</script>
+</body>
+</html>
