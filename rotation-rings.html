@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotation Rings - Dial Puzzle Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:'Lato',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:linear-gradient(155deg,#0f0e0a 0%,#141209 55%,#1a1810 100%);
+  color:#f5f0e8;overflow:hidden;
+}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 20% 10%,rgba(201,168,76,.10) 0%,transparent 45%),radial-gradient(circle at 85% 90%,rgba(201,168,76,.08) 0%,transparent 45%);}
+button{font-family:'Lato',-apple-system,'Segoe UI',Arial,sans-serif;cursor:pointer;transition:transform .06s ease,box-shadow .15s,background .15s;}
+button:active{transform:scale(.97);}
+input,select{font-family:'Lato',-apple-system,'Segoe UI',Arial,sans-serif;}
+h1,h2,h3,.ttl{font-family:'Cormorant Garamond',Georgia,serif;font-weight:700;}
+
+/* ===== APP SHELL ===== */
+.app-shell{position:fixed;inset:0;display:grid;grid-template-columns:360px 1fr;z-index:1;height:100vh;}
+.sidebar{background:rgba(20,18,12,.96);border-right:1px solid rgba(201,168,76,.55);overflow-y:auto;padding:18px 16px 30px;box-shadow:4px 0 28px rgba(201,168,76,.10);}
+.sidebar::-webkit-scrollbar{width:9px;}
+.sidebar::-webkit-scrollbar-thumb{background:#5a4d28;border-radius:6px;}
+.web-app-nav{display:flex;gap:8px;margin-bottom:14px;}
+.web-app-nav a{flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;padding:9px 6px;border-radius:9px;border:1px solid #C9A84C;color:#C9A84C;background:rgba(201,168,76,.07);}
+.web-app-nav a:hover{background:rgba(201,168,76,.16);box-shadow:0 0 12px rgba(201,168,76,.45);}
+.brand{border:1px solid rgba(201,168,76,.55);border-radius:14px;padding:16px 14px;margin-bottom:14px;background:rgba(201,168,76,.05);box-shadow:0 0 22px rgba(201,168,76,.14);}
+.brand .kicker{font-size:11px;letter-spacing:.22em;color:#C9A84C;text-transform:uppercase;font-weight:900;}
+.brand h1{margin:6px 0 4px;font-size:32px;color:#f5f0e8;text-shadow:0 0 18px rgba(201,168,76,.45);}
+.brand .tagline{font-size:14px;color:#e8d9ae;margin-bottom:8px;font-style:italic;font-family:'Cormorant Garamond',Georgia,serif;font-size:17px;}
+.brand .desc{font-size:12px;line-height:1.65;color:#cfc4a6;}
+.panel{border:1px solid rgba(201,168,76,.4);border-radius:14px;background:rgba(26,24,16,.9);margin-bottom:14px;overflow:hidden;}
+.panel-head{padding:12px 14px;border-bottom:1px solid rgba(201,168,76,.3);font-family:'Cormorant Garamond',Georgia,serif;font-size:19px;font-weight:700;color:#e8d9ae;}
+.panel-body{padding:14px;}
+.flabel{font-size:11px;font-weight:900;color:#a99c72;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em;}
+.flabel:first-child{margin-top:0;}
+.ipt,.sel{width:100%;padding:9px 11px;border-radius:9px;border:1px solid #5a4d28;background:#100f0a;color:#f5f0e8;font-size:13px;outline:none;}
+.ipt:focus,.sel:focus{border-color:#C9A84C;box-shadow:0 0 0 3px rgba(201,168,76,.22),0 0 14px rgba(201,168,76,.4);}
+.ipt:disabled{opacity:.45;}
+.diff-group{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.diff-group button{border:1px solid #5a4d28;background:#100f0a;color:#cfc4a6;border-radius:9px;padding:9px 2px;font-size:12px;font-weight:900;}
+.diff-group button.active{background:#C9A84C;border-color:#C9A84C;color:#141209;box-shadow:0 0 14px rgba(201,168,76,.7);}
+.diff-group button:hover{border-color:#C9A84C;}
+.range-row{display:flex;align-items:center;gap:10px;}
+input[type=range]{flex:1;accent-color:#C9A84C;}
+.range-val{font-size:12px;color:#e8d9ae;min-width:44px;text-align:right;font-weight:700;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;}
+.toggle-row span{font-size:13px;color:#e8d9ae;}
+.sw{position:relative;width:42px;height:23px;flex-shrink:0;display:inline-block;}
+.sw input{opacity:0;width:0;height:0;}
+.sw .sl{position:absolute;inset:0;background:#3a3423;border:1px solid #5a4d28;border-radius:20px;transition:.2s;}
+.sw .sl:before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;background:#f5f0e8;border-radius:50%;transition:.2s;}
+.sw input:checked + .sl{background:#C9A84C;box-shadow:0 0 12px rgba(201,168,76,.7);}
+.sw input:checked + .sl:before{transform:translateX(19px);}
+.sw input:disabled + .sl{opacity:.4;}
+.swatches{display:flex;gap:8px;margin-top:8px;}
+.swatch{width:38px;height:38px;border-radius:50%;border:2px solid transparent;padding:0;flex-shrink:0;}
+.swatch.active{border-color:#f5f0e8;box-shadow:0 0 12px rgba(245,240,232,.6);}
+.color-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;color:#e8d9ae;}
+.color-row input[type=color]{width:44px;height:30px;border:1px solid #5a4d28;border-radius:7px;background:#100f0a;padding:2px;}
+.gen-btn{width:100%;padding:14px;border:1px solid #C9A84C;border-radius:11px;background:linear-gradient(180deg,#d9b95e,#a8873a);color:#141209;font-size:15px;font-weight:900;font-family:'Cormorant Garamond',Georgia,serif;letter-spacing:.05em;box-shadow:0 0 20px rgba(201,168,76,.45);margin-top:6px;}
+.gen-btn:disabled{opacity:.55;pointer-events:none;}
+.sub-btn{width:100%;padding:10px;border-radius:10px;border:1px solid #C9A84C;background:rgba(201,168,76,.07);color:#e8d9ae;font-size:12px;font-weight:700;margin-top:8px;}
+.sub-btn:hover{background:rgba(201,168,76,.16);box-shadow:0 0 12px rgba(201,168,76,.4);}
+.progress-text{font-size:12px;color:#e8d9ae;margin-top:10px;min-height:18px;}
+.progress-bar{height:9px;border-radius:6px;background:#241f12;margin-top:6px;overflow:hidden;border:1px solid #5a4d28;}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#8a6d2f,#C9A84C,#e8d9ae);box-shadow:0 0 10px rgba(201,168,76,.8);}
+.progress-error{display:none;margin-top:8px;font-size:12px;font-weight:700;color:#fff;background:#7f1d1d;border:1px solid #ef4444;border-radius:9px;padding:9px 10px;line-height:1.5;}
+.note{font-size:11px;color:#a99c72;line-height:1.6;margin-top:8px;}
+
+/* ===== MAIN ===== */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;}
+.topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(201,168,76,.45);background:rgba(20,18,12,.94);flex-wrap:wrap;flex-shrink:0;}
+.chip{font-size:11px;font-weight:700;padding:6px 12px;border-radius:16px;border:1px solid rgba(201,168,76,.6);color:#e8d9ae;background:rgba(201,168,76,.07);white-space:nowrap;}
+.chip.preset{border-color:#C9A84C;color:#141209;background:#C9A84C;font-weight:900;}
+.view-toggle{display:flex;border:1px solid #5a4d28;border-radius:18px;overflow:hidden;background:#100f0a;}
+.view-toggle button{border:none;background:transparent;padding:7px 14px;font-size:12px;font-weight:700;color:#cfc4a6;}
+.view-toggle button.active{background:#C9A84C;color:#141209;box-shadow:0 0 12px rgba(201,168,76,.6);}
+.topbar select{background:#100f0a;color:#f5f0e8;border:1px solid #5a4d28;border-radius:9px;padding:7px 9px;font-size:12px;}
+.tb-btn{border:1px solid #5a4d28;background:#1c1a12;color:#f5f0e8;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:700;}
+.tb-btn:hover{border-color:#C9A84C;box-shadow:0 0 12px rgba(201,168,76,.45);}
+.tb-btn.primary{background:linear-gradient(180deg,#d9b95e,#a8873a);border-color:#C9A84C;color:#141209;box-shadow:0 0 16px rgba(201,168,76,.5);}
+.preview-scroll{flex:1;min-height:0;overflow:auto;padding:26px 22px;display:flex;flex-direction:column;align-items:center;}
+.preview-host{display:flex;gap:26px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+.empty-card{max-width:520px;text-align:center;border:1px dashed rgba(201,168,76,.6);border-radius:18px;padding:54px 40px;background:rgba(26,24,16,.8);}
+.empty-card h2{color:#e8d9ae;margin:0 0 12px;font-size:32px;}
+.empty-card p{color:#cfc4a6;font-size:13px;line-height:1.7;}
+.bottomnav{display:flex;align-items:center;gap:14px;justify-content:center;padding:12px;border-top:1px solid rgba(201,168,76,.45);background:rgba(20,18,12,.94);flex-shrink:0;flex-wrap:wrap;}
+.nav-btn{width:38px;height:38px;border-radius:50%;border:1px solid #C9A84C;background:rgba(201,168,76,.1);color:#f5f0e8;font-size:16px;}
+.nav-btn:hover:not(:disabled){box-shadow:0 0 14px rgba(201,168,76,.7);}
+.nav-btn:disabled{opacity:.3;}
+.sheet-pos{font-size:12px;color:#e8d9ae;font-weight:700;}
+.meta-line{font-size:11px;color:#a99c72;width:100%;text-align:center;}
+
+/* ===== PAPER SHEET (always printable light) ===== */
+.sheet-slot{flex-shrink:0;position:relative;}
+.sheet{width:820px;height:1080px;background:#fbf6ea;color:#1a1710;position:relative;flex-shrink:0;overflow:hidden;transform:scale(var(--paper-scale,0.7));transform-origin:top left;box-shadow:0 18px 60px rgba(0,0,0,.55),0 0 40px rgba(201,168,76,.22);}
+.sheet-inner{position:absolute;inset:0;padding:34px 40px 30px;display:flex;flex-direction:column;}
+.top-strip{height:12px;border-radius:6px;background:var(--pp1,#C9A84C);margin-bottom:14px;flex-shrink:0;}
+.hdr-badge{display:inline-block;align-self:flex-start;font-family:'Lato',sans-serif;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;padding:6px 14px;border-radius:8px;margin-bottom:10px;background:var(--ppk,#1a1710);color:var(--ppp,#fbf6ea);}
+.hdr-capsule .hdr-badge{border-radius:20px;}
+.hdr-split .hdr-row{display:flex;align-items:center;justify-content:space-between;width:100%;}
+.hdr-classic .hdr-badge{background:transparent;color:var(--ppk,#1a1710);border:2px solid var(--ppk,#1a1710);}
+.hdr-ribbon .hdr-badge{background:var(--pp1,#C9A84C);color:#fff;}
+.sheet-title{font-weight:700;font-size:38px;margin:0 0 4px;color:var(--ppk,#1a1710);letter-spacing:.01em;}
+.hdr-split .sheet-title{font-size:30px;}
+.sheet-sub{font-size:14px;color:var(--ppk,#1a1710);opacity:.72;margin:0 0 10px;font-style:italic;font-family:'Cormorant Garamond',Georgia,serif;font-size:17px;}
+.name-line{display:flex;gap:26px;font-size:13px;color:var(--ppk,#1a1710);opacity:.8;border-bottom:1.5px solid var(--pp2,#8a6d2f);padding-bottom:8px;margin-bottom:6px;flex-shrink:0;}
+.board-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;}
+.board-wrap svg{max-width:100%;max-height:100%;}
+.answer-boxes{display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:center;padding:10px 0 2px;flex-shrink:0;}
+.answer-boxes .abox{font-size:15px;font-weight:700;color:var(--ppk,#1a1710);font-family:'Cormorant Garamond',Georgia,serif;font-size:19px;}
+.answer-boxes .blank{display:inline-block;min-width:44px;border-bottom:2px solid var(--ppk,#1a1710);}
+.spokesum-line{text-align:center;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;color:var(--ppk,#1a1710);flex-shrink:0;}
+.steps-table{margin:6px auto 0;flex-shrink:0;font-size:13px;}
+.steps-table .srow{display:flex;gap:10px;justify-content:center;padding:3px 0;color:var(--ppk,#1a1710);}
+.steps-table .srow b{font-family:'Cormorant Garamond',Georgia,serif;font-size:17px;}
+.howto-box{border:1px solid var(--pp2,#8a6d2f);border-radius:12px;background:var(--ppp,#fbf6ea);padding:10px 14px;font-size:12px;line-height:1.6;color:#4a4436;margin-top:8px;flex-shrink:0;}
+.howto-box b{color:var(--ppk,#1a1710);}
+.sheet-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:8px;border-top:1px solid var(--pp2,#8a6d2f);font-size:11px;color:#6a6250;flex-shrink:0;}
+.sheet-footer>span:nth-child(2),.sheet-footer>span:nth-child(3){flex-shrink:0;}
+.footer-chip{background:var(--ppk,#1a1710);color:var(--ppp,#fbf6ea);font-size:11px;font-weight:700;padding:5px 12px;border-radius:12px;white-space:nowrap;max-width:60%;overflow:hidden;text-overflow:ellipsis;}
+.warn-chip{display:inline-block;background:#7f1d1d;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:12px;margin-left:8px;}
+.bd-glow{outline:3px solid var(--pp1,#C9A84C);outline-offset:-3px;}
+.bd-frame{border:6px solid var(--pp1,#C9A84C);}
+.bd-double{border:10px double var(--pp1,#C9A84C);}
+.bd-dashed{border:3px dashed var(--pp1,#C9A84C);}
+.bd-clean{border:none;}
+.bgp-grid .sheet-inner{background-image:linear-gradient(rgba(26,23,16,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(26,23,16,.05) 1px,transparent 1px);background-size:28px 28px;}
+.bgp-dots .sheet-inner{background-image:radial-gradient(rgba(26,23,16,.10) 1.4px,transparent 1.4px);background-size:22px 22px;}
+.bgp-rays .sheet-inner{background-image:repeating-linear-gradient(45deg,rgba(201,168,76,.06) 0 12px,transparent 12px 24px);}
+.pv-bw.bgp-rays .sheet-inner{background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.035) 0 12px,transparent 12px 24px);}
+.ringg{transition:transform .45s ease;transform-box:fill-box;}
+.ringg.clickable{cursor:pointer;}
+.help-overlay{position:fixed;inset:0;background:rgba(15,14,10,.72);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.help-overlay.show{display:flex;}
+.help-modal{background:#16140d;border:1px solid rgba(201,168,76,.5);border-radius:18px;box-shadow:0 0 44px rgba(201,168,76,.3);width:620px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+.help-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(201,168,76,.25);}
+.help-head h3{margin:0;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:#e8d9ae;}
+.help-close{border:1px solid #5a4d28;background:#100f0a;color:#f5f0e8;width:32px;height:32px;border-radius:9px;font-size:15px;}
+.help-close:hover{border-color:#C9A84C;box-shadow:0 0 12px rgba(201,168,76,.5);}
+.help-body{padding:18px 20px;overflow-y:auto;}
+.help-step{display:flex;gap:12px;margin-bottom:15px;}
+.help-num{width:26px;height:26px;border-radius:50%;background:#C9A84C;color:#141209;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.help-step h4{margin:0 0 4px;font-size:13px;color:#e8d9ae;}
+.help-step p{margin:0;font-size:12px;line-height:1.65;color:#cfc4a6;}
+.help-step p b{color:#e8d9ae;}
+#exportDeck{position:fixed;left:-99999px;top:0;width:820px;}
+
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:280px 1fr;}.brand h1{font-size:26px;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:1px solid rgba(201,168,76,.55);}}
+@media print{
+  body{background:#fff;}
+  body::before,.sidebar,.topbar,.bottomnav,.help-overlay{display:none !important;}
+  .app-shell{display:block;position:static;height:auto;}
+  .main{display:block;}
+  .preview-scroll{overflow:visible;display:block;padding:0;}
+  .preview-host{display:block;}
+  .sheet-slot{width:auto !important;height:auto !important;margin:0;}
+  .sheet{transform:none;box-shadow:none;page-break-after:always;margin:0;}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <nav class="web-app-nav" id="webAppNav" style="display:none;">
+      <a id="linkApp2" href="#" target="_blank" rel="noopener">App 2</a>
+      <a id="linkApp3" href="#" target="_blank" rel="noopener">App 3</a>
+    </nav>
+    <div class="brand">
+      <div class="kicker">Dial Puzzle Studio</div>
+      <h1>Rotation Rings</h1>
+      <div class="tagline">Turn the rings. Align the numbers.</div>
+      <div class="desc">Generate mandala-style puzzles with concentric rings of numbers. Rotate the rings until every spoke adds up to the same total. Every puzzle has exactly one solution, verified by code.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Generator</div>
+      <div class="panel-body">
+        <div class="flabel">Puzzle count (1-40)</div>
+        <input class="ipt" type="number" id="inCount" value="6" min="1" max="40">
+        <div class="flabel">Difficulty</div>
+        <div class="diff-group" id="diffGroup">
+          <button data-diff="easy">Easy</button>
+          <button data-diff="medium" class="active">Medium</button>
+          <button data-diff="hard">Hard</button>
+          <button data-diff="expert">Expert</button>
+        </div>
+        <div class="flabel">Rings</div>
+        <select class="sel" id="inRings">
+          <option value="auto" selected>Auto (per difficulty)</option>
+          <option value="3">3 rings</option>
+          <option value="4">4 rings</option>
+          <option value="5">5 rings</option>
+        </select>
+        <div class="flabel">Spokes</div>
+        <select class="sel" id="inSpokes">
+          <option value="auto" selected>Auto (per difficulty)</option>
+          <option value="8">8 spokes</option>
+          <option value="10">10 spokes</option>
+          <option value="12">12 spokes</option>
+        </select>
+        <div class="flabel">Digit range</div>
+        <select class="sel" id="inDigits">
+          <option value="auto" selected>Auto (per difficulty)</option>
+          <option value="6">1-6 (kids)</option>
+          <option value="9">1-9 (default)</option>
+          <option value="12">1-12 (advanced)</option>
+        </select>
+        <div class="flabel">Target sum</div>
+        <select class="sel" id="inTarget">
+          <option value="auto" selected>Auto (per difficulty)</option>
+          <option value="shown">Shown in medallion</option>
+          <option value="hidden">Hidden</option>
+        </select>
+        <div class="flabel">Center medallion</div>
+        <select class="sel" id="inMedal">
+          <option value="auto" selected>Auto</option>
+          <option value="star">Decorative star</option>
+          <option value="rosette">Mandala rosette</option>
+        </select>
+        <div class="flabel">Ring decoration</div>
+        <select class="sel" id="inDeco">
+          <option value="plain" selected>Plain</option>
+          <option value="ticks">Tick marks</option>
+          <option value="ornate">Ornate</option>
+        </select>
+        <div class="note" id="tightHint" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Style</div>
+      <div class="panel-body">
+        <div class="flabel">Visual preset</div>
+        <select class="sel" id="inPreset">
+          <option value="gilded" selected>Gilded Ivory</option>
+          <option value="sapphire">Midnight Sapphire</option>
+          <option value="emerald">Emerald Court</option>
+          <option value="rose">Rose Copper</option>
+          <option value="bw">Print-safe B/W</option>
+        </select>
+        <div class="swatches" id="swatches"></div>
+        <div class="flabel">Worksheet title</div>
+        <input class="ipt" id="inTitle" value="Rotation Rings">
+        <div class="flabel">Subtitle</div>
+        <input class="ipt" id="inSubtitle" value="Turn the outer rings until every spoke adds up to the same number.">
+        <div class="flabel">Header style</div>
+        <select class="sel" id="inHeader">
+          <option value="ribbon" selected>Ribbon</option>
+          <option value="capsule">Capsule</option>
+          <option value="split">Split</option>
+          <option value="classic">Classic</option>
+        </select>
+        <div class="flabel">Page border</div>
+        <select class="sel" id="inBorder">
+          <option value="glow" selected>Glow</option>
+          <option value="frame">Frame</option>
+          <option value="double">Double</option>
+          <option value="dashed">Dashed</option>
+          <option value="clean">Clean</option>
+        </select>
+        <div class="flabel">Background pattern</div>
+        <select class="sel" id="inBg">
+          <option value="none">None</option>
+          <option value="grid" selected>Faint grid</option>
+          <option value="dots">Dots</option>
+          <option value="rays">Rays</option>
+        </select>
+        <div class="flabel">Answer-key style</div>
+        <select class="sel" id="inAnswerStyle">
+          <option value="badges" selected>Badges</option>
+          <option value="dark">Dark</option>
+          <option value="clean">Clean</option>
+        </select>
+        <div class="toggle-row"><span>Mandala tint (shade by value)</span><label class="sw"><input type="checkbox" id="inTintOn" checked><span class="sl"></span></label></div>
+        <div class="flabel">Accents &amp; paper</div>
+        <div class="color-row"><span>Primary accent</span><input type="color" id="inPrimary" value="#C9A84C"></div>
+        <div class="color-row"><span>Secondary accent</span><input type="color" id="inSecondary" value="#8a6d2f"></div>
+        <div class="color-row"><span>Paper</span><input type="color" id="inPaper" value="#fbf6ea"></div>
+        <div class="color-row"><span>Ink</span><input type="color" id="inInk" value="#1a1710"></div>
+        <div class="flabel">Tint strength (<span id="tintVal">32%</span>)</div>
+        <div class="range-row"><input type="range" id="inTint" min="0" max="100" value="32"></div>
+        <div class="toggle-row"><span>Show footer page numbers</span><label class="sw"><input type="checkbox" id="inFootNums" checked><span class="sl"></span></label></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Export Deck</div>
+      <div class="panel-body">
+        <button class="gen-btn" id="btnGenerate">Generate 6 Puzzles</button>
+        <button class="sub-btn" id="btnApply">Apply Style Changes</button>
+        <button class="sub-btn" id="btnShuffle">Shuffle layout (selected sheet)</button>
+        <div class="progress-text" id="progressText">Idle. Choose your rings and spokes, then generate.</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-error" id="progressError"></div>
+        <div class="note">Puzzles first, then the answer key. File name comes from the worksheet title. Tip: click a ring on a puzzle page to turn it one step (testing only, export is unaffected).</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="chip" id="kpiDeck">No deck yet</span>
+      <span class="chip preset" id="kpiPreset">Gilded Ivory</span>
+      <div class="view-toggle">
+        <button id="viewPuzzle" class="active">Puzzle View</button>
+        <button id="viewAnswer">Answer View</button>
+      </div>
+      <select id="selLayout">
+        <option value="single" selected>Single</option>
+        <option value="spread">2-page spread</option>
+        <option value="strip">3-up strip</option>
+        <option value="grid">2x2 grid</option>
+      </select>
+      <select id="selZoom"></select>
+      <button class="tb-btn" id="btnHelp">? How to use</button>
+      <button class="tb-btn primary" id="btnPDF">Download Exact PDF</button>
+      <button class="tb-btn" id="btnPrint">Exact Print</button>
+    </div>
+    <div class="preview-scroll"><div class="preview-host" id="previewHost"></div></div>
+    <div class="bottomnav">
+      <button class="nav-btn" id="btnPrev">&lt;</button>
+      <span class="sheet-pos" id="sheetPos">Sheet - / -</span>
+      <button class="nav-btn" id="btnNext">&gt;</button>
+      <div class="meta-line" id="metaLine">Your first ring puzzle is one click away. Choose your rings and spokes, then generate.</div>
+    </div>
+  </main>
+</div>
+<div id="exportDeck"></div>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-modal">
+    <div class="help-head"><h3>How to use Rotation Rings</h3><button class="help-close" id="btnHelpClose">X</button></div>
+    <div class="help-body">
+      <div class="help-step"><div class="help-num">1</div><div><h4>Generate your deck</h4><p>Set the <b>puzzle count (1-40)</b> and <b>difficulty</b> - it chooses rings, spokes, digits and whether the target shows. Override anything manually, then press <b>Generate</b>. Every puzzle is brute-force checked for exactly one solution.</p></div></div>
+      <div class="help-step"><div class="help-num">2</div><div><h4>Style it live</h4><p>Pick a <b>preset</b>, medallion, decoration and mandala tint. Every control <b>updates the preview instantly</b>. Ring A never moves; turn the others until every spoke matches.</p></div></div>
+      <div class="help-step"><div class="help-num">3</div><div><h4>Test-turn the rings</h4><p><b>Click any ring</b> on a puzzle page to rotate it one step with a smooth animation. This is only your scratch pad - the export always uses the pristine puzzle.</p></div></div>
+      <div class="help-step"><div class="help-num">4</div><div><h4>Preview and export</h4><p>Toggle <b>Puzzle / Answer View</b>, browse layouts and zoom, reshuffle single sheets. <b>Download Exact PDF</b> renders puzzles first, then the key; <b>Exact Print</b> gives one page per sheet. Use <b>Print-safe B/W</b> for KDP interiors.</p></div></div>
+      <div class="help-step"><div class="help-num">5</div><div><h4>Tips</h4><p>Write each ring's <b>clockwise steps</b> in the boxes under the board. If the spoke sum is hidden, it goes in the blank instead. The <b>seed in the footer</b> reproduces that exact puzzle.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+var LINK_APP_2 = "";
+var LINK_APP_3 = "";
+var EXPORT_SCALE = 3;
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffleWith(rng,arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(rng()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function slug(s){return String(s||"rotation-rings").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"rotation-rings";}
+
+var DIFF = {
+  easy:{R:3,S:8,D:6,shown:true,label:"Easy"},
+  medium:{R:4,S:8,D:9,shown:true,label:"Medium"},
+  hard:{R:4,S:10,D:9,shown:false,label:"Hard"},
+  expert:{R:5,S:12,D:12,shown:false,label:"Expert"}
+};
+var PRESETS = {
+  gilded:{name:"Gilded Ivory",primary:"#C9A84C",secondary:"#8a6d2f",paper:"#fbf6ea",ink:"#1a1710",tint:32,sw:["#C9A84C","#8a6d2f"]},
+  sapphire:{name:"Midnight Sapphire",primary:"#2e5cb8",secondary:"#C9A84C",paper:"#f2f5fd",ink:"#101a33",tint:30,sw:["#2e5cb8","#C9A84C"]},
+  emerald:{name:"Emerald Court",primary:"#1e7a4f",secondary:"#C9A84C",paper:"#f2faf3",ink:"#0e2a1c",tint:30,sw:["#1e7a4f","#C9A84C"]},
+  rose:{name:"Rose Copper",primary:"#b4604d",secondary:"#8c3f54",paper:"#fdf3ee",ink:"#33161a",tint:30,sw:["#b4604d","#8c3f54"]},
+  bw:{name:"Print-safe B/W",primary:"#000000",secondary:"#555555",paper:"#ffffff",ink:"#000000",tint:0,sw:["#000000","#555555"]}
+};
+var RING_LETTERS = ["A","B","C","D","E"];
+
+/* ================= CORE LOGIC ================= */
+function randComposition(rng,R,T,D){
+  var a=[];var rem=T;var r;
+  for(r=0;r<R-1;r++){
+    var nrem=R-1-r;
+    var lo=Math.max(1,rem-nrem*D),hi=Math.min(D,rem-nrem);
+    var v=lo+Math.floor(rng()*(hi-lo+1));
+    a.push(v);rem-=v;
+  }
+  a.push(rem);
+  return a;
+}
+function pickTarget(rng,R,D){
+  var lo=R+2,hi=R*D-2;
+  var mean=R*(D+1)/2;
+  var jit=(rng()*2-1)*R;
+  var t=Math.round(mean+jit);
+  if(t<lo){t=lo;} if(t>hi){t=hi;}
+  return t;
+}
+function buildSolution(rng,R,S,T,D){
+  var sol=[];var r,k;
+  for(r=0;r<R;r++){var row=[];for(k=0;k<S;k++){row.push(0);}sol.push(row);}
+  for(k=0;k<S;k++){var comp=randComposition(rng,R,T,D);for(r=0;r<R;r++){sol[r][k]=comp[r];}}
+  return sol;
+}
+function dispFromSol(sol,shifts,R,S){
+  var disp=[];var r,k;
+  for(r=0;r<R;r++){var row=[];for(k=0;k<S;k++){row.push(sol[r][(k+shifts[r])%S]);}disp.push(row);}
+  return disp;
+}
+function applyShifts(disp,offs,R,S){
+  var out=[];var r,k;
+  for(r=0;r<R;r++){var row=[];for(k=0;k<S;k++){row.push(disp[r][(((k-offs[r])%S)+S)%S]);}out.push(row);}
+  return out;
+}
+function spokeSums(grid,R,S){
+  var sums=[];var k,r;
+  for(k=0;k<S;k++){var s=0;for(r=0;r<R;r++){s+=grid[r][k];}sums.push(s);}
+  return sums;
+}
+function countAlignments(disp,R,S,T,shown){
+  var total=1;var r;
+  for(r=1;r<R;r++){total*=S;}
+  var count=0;
+  for(var code=0;code<total;code++){
+    var tmp=code;var o=[0];
+    for(r=1;r<R;r++){o[r]=tmp%S;tmp=Math.floor(tmp/S);}
+    var first=-1;var ok=true;
+    for(var k=0;k<S&&ok;k++){
+      var sum=0;
+      for(r=0;r<R;r++){sum+=disp[r][(((k-o[r])%S)+S)%S];}
+      if(k===0){first=sum;}
+      else if(sum!==first){ok=false;}
+    }
+    if(ok&&shown&&first!==T){ok=false;}
+    if(ok){count++;if(count>1){return count;}}
+  }
+  return count;
+}
+function verifyPuzzle(p){
+  var R=p.R,S=p.S;
+  if(countAlignments(p.disp,R,S,p.T,p.shown)!==1){return {ok:false,why:"count"};}
+  var restored=applyShifts(p.disp,p.shifts,R,S);
+  var sums=spokeSums(restored,R,S);
+  var k,r;
+  for(k=0;k<S;k++){if(sums[k]!==p.T){return {ok:false,why:"sums"};}}
+  for(r=1;r<R;r++){
+    var same=true;
+    for(k=0;k<S;k++){if(p.disp[r][k]!==p.sol[r][k]){same=false;break;}}
+    if(same){return {ok:false,why:"already-solved"};}
+  }
+  for(r=0;r<R;r++){for(k=0;k<S;k++){var v=p.disp[r][k];if(v<1||v>p.D){return {ok:false,why:"range"};}}}
+  return {ok:true};
+}
+function generateOnePuzzle(seed,opts){
+  var R=opts.R,S=opts.S,D=opts.D;
+  var fallback=null;
+  for(var att=0;att<60;att++){
+    var s=(seed+att*7919)>>>0;
+    var rng=mulberry32(s);
+    var T=pickTarget(rng,R,D);
+    var sol=buildSolution(rng,R,S,T,D);
+    var shifts=[0];var r;
+    for(r=1;r<R;r++){shifts[r]=1+Math.floor(rng()*(S-1));}
+    var disp=dispFromSol(sol,shifts,R,S);
+    if(countAlignments(disp,R,S,T,opts.shown)!==1){
+      if(!fallback){fallback={s:s,T:T,sol:sol,shifts:shifts,disp:disp};}
+      continue;
+    }
+    var p={seed:s,R:R,S:S,D:D,T:T,shown:opts.shown,
+      deco:opts.deco,medal:opts.medal,sol:sol,shifts:shifts,disp:disp,
+      difficulty:opts.difficulty,warning:false};
+    if(verifyPuzzle(p).ok){return p;}
+    if(!fallback){fallback={s:s,T:T,sol:sol,shifts:shifts,disp:disp};}
+  }
+  if(fallback){
+    return {seed:fallback.s,R:R,S:S,D:D,T:fallback.T,shown:opts.shown,
+      deco:opts.deco,medal:opts.medal,sol:fallback.sol,shifts:fallback.shifts,disp:fallback.disp,
+      difficulty:opts.difficulty,warning:true,warnNote:"Could not verify a unique alignment after 60 tries"};
+  }
+  return null;
+}
+function puzzleSignature(p){
+  var flat=[];
+  for(var r=0;r<p.R;r++){flat.push(p.disp[r].join(","));}
+  return p.R+"x"+p.S+"|D"+p.D+"|T"+p.T+"|"+flat.join("|")+"|"+p.shifts.join(",");
+}
+function resolveOpts(){
+  var d=DIFF[state.difficulty];
+  return {
+    R:state.rings==="auto"?d.R:parseInt(state.rings,10),
+    S:state.spokes==="auto"?d.S:parseInt(state.spokes,10),
+    D:state.digits==="auto"?d.D:parseInt(state.digits,10),
+    shown:state.target==="auto"?d.shown:(state.target==="shown"),
+    deco:state.deco,medal:state.medal,difficulty:state.difficulty
+  };
+}
+
+/* ---------- state ---------- */
+var state = {
+  count:6, difficulty:"medium", rings:"auto", spokes:"auto", digits:"auto",
+  target:"auto", medal:"auto", deco:"plain",
+  preset:"gilded", title:"Rotation Rings",
+  subtitle:"Turn the outer rings until every spoke adds up to the same number.",
+  headerStyle:"ribbon", border:"glow", bgPattern:"grid",
+  answerStyle:"badges", tintOn:true, primary:"#C9A84C", secondary:"#8a6d2f",
+  paper:"#fbf6ea", ink:"#1a1710", boardTint:32, showFooterNums:true,
+  view:"puzzle", layout:"single", zoom:70
+};
+var deck = [];
+var currentSheet = 0;
+var previewRot = {};
+
+/* ---------- color helpers ---------- */
+function hexToRgb(h){h=h.replace("#","");return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function mixHex(h1,h2,t){
+  var a=hexToRgb(h1),b=hexToRgb(h2);
+  var r=Math.round(a[0]+(b[0]-a[0])*t),g=Math.round(a[1]+(b[1]-a[1])*t),bl=Math.round(a[2]+(b[2]-a[2])*t);
+  function hx(n){var s=n.toString(16);return s.length===1?"0"+s:s;}
+  return "#"+hx(r)+hx(g)+hx(bl);
+}
+function isBW(){return state.preset==="bw";}
+
+/* ---------- ring SVG ---------- */
+function polar(cx,cy,rad,deg){var a=deg*Math.PI/180;return [cx+rad*Math.cos(a),cy+rad*Math.sin(a)];}
+function ringRadii(R){
+  var outer=300;
+  var m0=R>=5?72:64;
+  var total=outer-m0;
+  var weights=[];var r;var sum=0;
+  for(r=0;r<R;r++){weights[r]=R+1-r;sum+=weights[r];}
+  var b=[outer];
+  for(r=0;r<R;r++){b.push(b[r]-total*weights[r]/sum);}
+  return {b:b,m0:m0};
+}
+function sectorPath(cx,cy,rOuter,rInner,a0,a1){
+  var p0=polar(cx,cy,rOuter,a0),p1=polar(cx,cy,rOuter,a1);
+  var p2=polar(cx,cy,rInner,a1),p3=polar(cx,cy,rInner,a0);
+  return "M"+p0[0].toFixed(1)+" "+p0[1].toFixed(1)+
+    "A"+rOuter.toFixed(1)+" "+rOuter.toFixed(1)+" 0 0 1 "+p1[0].toFixed(1)+" "+p1[1].toFixed(1)+
+    "L"+p2[0].toFixed(1)+" "+p2[1].toFixed(1)+
+    "A"+rInner.toFixed(1)+" "+rInner.toFixed(1)+" 0 0 0 "+p3[0].toFixed(1)+" "+p3[1].toFixed(1)+"Z";
+}
+function starPath(cx,cy,rO,rI,n){
+  var d="";var i;
+  for(i=0;i<n*2;i++){
+    var rad=i%2===0?rO:rI;
+    var a=-90+i*180/n;
+    var p=polar(cx,cy,rad,a);
+    d+=(i===0?"M":"L")+p[0].toFixed(1)+" "+p[1].toFixed(1);
+  }
+  return d+"Z";
+}
+function dialSVG(p,mode,boardDiam,mini,rotOff){
+  var R=p.R,S=p.S;
+  var pad=mini?26:52;
+  var W=boardDiam+2*pad,H=W,cx=W/2;
+  var sc=boardDiam/640;
+  var ink=isBW()?"#000000":state.ink;
+  var paper=isBW()?"#ffffff":state.paper;
+  var gold=isBW()?"#555555":state.primary;
+  var rr=ringRadii(R);
+  var step=360/S;
+  var grid=(mode==="puzzle")?p.disp:p.sol;
+  var h='<svg width="'+W+'" height="'+W+'" viewBox="0 0 '+W+' '+W+'" xmlns="http://www.w3.org/2000/svg">';
+  h+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="'+paper+'"></rect>';
+  /* spokes */
+  var k,r;
+  for(k=0;k<S;k++){
+    var a=-90+k*step;
+    var q0=polar(cx,cx,rr.m0,a),q1=polar(cx,cx,300,a);
+    h+='<line x1="'+q0[0].toFixed(1)+'" y1="'+q0[1].toFixed(1)+'" x2="'+q1[0].toFixed(1)+'" y2="'+q1[1].toFixed(1)+'" stroke="'+ink+'" stroke-width="'+(mini?0.7:1)+'" opacity="0.45"></line>';
+  }
+  /* rings */
+  for(r=0;r<R;r++){
+    var rO=rr.b[r],rI=rr.b[r+1];
+    var rot=(rotOff&&rotOff[r])?rotOff[r]:0;
+    h+='<g class="ringg'+(mode==="puzzle"&&!mini?" clickable":"")+'" data-ring="'+r+'">';
+    for(k=0;k<S;k++){
+      var kk=(k+rot)%S;
+      var a0=-90+kk*step,a1=a0+step;
+      var v=grid[r][k];
+      var fill=paper;
+      if(state.tintOn&&!isBW()){
+        var t=((v-1)/Math.max(1,(p.D-1)))*(state.boardTint/100);
+        fill=mixHex(paper,state.primary,t);
+      }
+      h+='<path d="'+sectorPath(cx,cx,rO,rI,a0,a1)+'" fill="'+fill+'" stroke="'+ink+'" stroke-width="'+(mini?0.8:1.3)+'"></path>';
+      var mid=-90+kk*step+step/2;
+      var midR=(rO+rI)/2;
+      var tp=polar(cx,cx,midR,mid);
+      var cellW=2*Math.PI*midR/S,cellH=rO-rI;
+      var fs=Math.max(mini?7:9,Math.min(cellW*0.42,cellH*0.5));
+      h+='<text x="'+tp[0].toFixed(1)+'" y="'+(tp[1]+fs*0.35).toFixed(1)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" font-weight="700" fill="'+ink+'" font-family="Lato,Arial,sans-serif">'+v+'</text>';
+    }
+    h+='</g>';
+  }
+  /* outer + medallion */
+  h+='<circle cx="'+cx+'" cy="'+cx+'" r="300" fill="none" stroke="'+ink+'" stroke-width="'+(mini?2:2.6)+'"></circle>';
+  if(p.deco==="ornate"){
+    h+='<circle cx="'+cx+'" cy="'+cx+'" r="308" fill="none" stroke="'+gold+'" stroke-width="1.4"></circle>';
+    for(k=0;k<S;k++){
+      var dp=polar(cx,cx,308,-90+k*step);
+      h+='<circle cx="'+dp[0].toFixed(1)+'" cy="'+dp[1].toFixed(1)+'" r="'+(mini?1.6:2.4)+'" fill="'+gold+'"></circle>';
+    }
+  }
+  if(p.deco==="ticks"||p.deco==="ornate"){
+    for(k=0;k<S;k++){
+      var t0=polar(cx,cx,302,-90+k*step),t1=polar(cx,cx,310,-90+k*step);
+      h+='<line x1="'+t0[0].toFixed(1)+'" y1="'+t0[1].toFixed(1)+'" x2="'+t1[0].toFixed(1)+'" y2="'+t1[1].toFixed(1)+'" stroke="'+gold+'" stroke-width="1.6"></line>';
+    }
+  }
+  /* medallion */
+  h+='<circle cx="'+cx+'" cy="'+cx+'" r="'+rr.m0+'" fill="'+paper+'" stroke="'+ink+'" stroke-width="2.2"></circle>';
+  if(p.shown){
+    h+='<text x="'+cx+'" y="'+(cx+rr.m0*0.24).toFixed(1)+'" text-anchor="middle" font-size="'+(rr.m0*0.72).toFixed(0)+'" font-weight="700" fill="'+ink+'" font-family="Cormorant Garamond,Georgia,serif">'+p.T+'</text>';
+  }else if(p.medal==="star"){
+    h+='<path d="'+starPath(cx,cx,rr.m0*0.72,rr.m0*0.3,5)+'" fill="none" stroke="'+gold+'" stroke-width="2"></path>';
+    h+='<circle cx="'+cx+'" cy="'+cx+'" r="'+(rr.m0*0.12)+'" fill="'+gold+'"></circle>';
+  }else{
+    var pet;
+    for(pet=0;pet<8;pet++){
+      var pa=-90+pet*45;
+      var pc=polar(cx,cx,rr.m0*0.42,pa);
+      h+='<ellipse cx="'+pc[0].toFixed(1)+'" cy="'+pc[1].toFixed(1)+'" rx="'+(rr.m0*0.2).toFixed(1)+'" ry="'+(rr.m0*0.34).toFixed(1)+'" fill="none" stroke="'+gold+'" stroke-width="1.6" transform="rotate('+pa.toFixed(1)+' '+pc[0].toFixed(1)+' '+pc[1].toFixed(1)+')"></ellipse>';
+    }
+    h+='<circle cx="'+cx+'" cy="'+cx+'" r="'+(rr.m0*0.16)+'" fill="none" stroke="'+gold+'" stroke-width="1.8"></circle>';
+  }
+  /* ring labels + pointers at top */
+  for(r=0;r<R;r++){
+    var bR=rr.b[r];
+    var py=cx-bR;
+    h+='<path d="M'+cx+' '+(py+7*sc).toFixed(1)+'L'+(cx-6*sc).toFixed(1)+' '+(py-4*sc).toFixed(1)+'L'+(cx+6*sc).toFixed(1)+' '+(py-4*sc).toFixed(1)+'Z" fill="'+gold+'" stroke="'+ink+'" stroke-width="0.8"></path>';
+    h+='<text x="'+(cx+13*sc).toFixed(1)+'" y="'+(py+4*sc).toFixed(1)+'" font-size="'+(12*sc+2).toFixed(1)+'" font-weight="900" fill="'+ink+'" font-family="Lato,Arial,sans-serif" letter-spacing="1">'+RING_LETTERS[r]+'</text>';
+  }
+  /* spoke sums (answer) */
+  if(mode!=="puzzle"){
+    var sums=spokeSums(p.sol,R,S);
+    for(k=0;k<S;k++){
+      var sp=polar(cx,cx,332,-90+k*step);
+      h+='<text x="'+sp[0].toFixed(1)+'" y="'+(sp[1]+6).toFixed(1)+'" text-anchor="middle" font-size="15" font-weight="900" fill="'+ink+'" font-family="Lato,Arial,sans-serif">'+sums[k]+'</text>';
+    }
+  }
+  h+='</svg>';
+  return h;
+}
+
+/* ---------- sheet HTML ---------- */
+function sheetVars(){
+  return 'style="--pp1:'+state.primary+';--pp2:'+state.secondary+';--ppk:'+state.ink+';--ppp:'+state.paper+';--paper-scale:1;"';
+}
+function headerBadgeHTML(p){
+  return '<div class="hdr-row"><span class="hdr-badge">Dial Puzzle '+DIFF[p.difficulty].label+'</span></div>';
+}
+function answerBoxesHTML(p){
+  var h='<div class="answer-boxes">';
+  var r;
+  for(r=1;r<p.R;r++){h+='<span class="abox">Ring '+RING_LETTERS[r]+': <span class="blank">&nbsp;&nbsp;&nbsp;&nbsp;</span> steps clockwise</span>';}
+  h+='</div>';
+  if(!p.shown){h+='<div class="spokesum-line">Spoke sum = ________</div>';}
+  return h;
+}
+function stepsTableHTML(p){
+  var h='<div class="steps-table">';
+  var r;
+  for(r=1;r<p.R;r++){h+='<div class="srow"><span>Ring <b>'+RING_LETTERS[r]+'</b></span><span><b>'+p.shifts[r]+'</b> step'+(p.shifts[r]===1?"":"s")+' clockwise</span></div>';}
+  h+='<div class="srow"><span>Every spoke sums to <b>'+p.T+'</b>.</span></div>';
+  h+='</div>';
+  return h;
+}
+function howtoHTML(){
+  return '<div class="howto-box"><b>How to play:</b> Ring A never moves. Turn each other ring clockwise by some number of steps until every spoke adds up to the same total. '+
+    'Write each ring&rsquo;s steps in the boxes. There is exactly one solution.</div>';
+}
+function footerHTML(p,idx,pageNo){
+  var h='<div class="sheet-footer"><span class="footer-chip">Rings #'+(idx+1)+' - Seed '+p.seed+'</span>';
+  h+='<span>'+esc(state.title)+'</span>';
+  h+='<span>'+(state.showFooterNums?("Page "+pageNo):"")+'</span></div>';
+  return h;
+}
+function puzzleSheetHTML(p,idx,pageNo,rotOff){
+  var warn=p.warning?'<span class="warn-chip">FLAGGED: '+esc(p.warnNote||"could not verify after 60 tries")+'</span>':"";
+  var h='<div class="sheet-slot"><div class="sheet bd-'+state.border+' bgp-'+state.bgPattern+' hdr-'+state.headerStyle+(isBW()?" pv-bw":"")+'" '+sheetVars()+'>';
+  h+='<div class="sheet-inner">';
+  h+='<div class="top-strip"></div>';
+  h+=headerBadgeHTML(p);
+  h+='<h2 class="sheet-title">'+esc(state.title)+warn+'</h2>';
+  h+='<p class="sheet-sub">'+esc(state.subtitle)+'</p>';
+  h+='<div class="name-line"><span>Name ________________</span><span>Date __________</span></div>';
+  h+='<div class="board-wrap puzzle-board" data-sheet="'+idx+'">'+dialSVG(p,"puzzle",640,false,rotOff)+'</div>';
+  h+=answerBoxesHTML(p);
+  h+=howtoHTML();
+  h+=footerHTML(p,idx,pageNo);
+  h+='</div></div></div>';
+  return h;
+}
+function answerSheetHTML(p,idx,pageNo){
+  var h='<div class="sheet-slot"><div class="sheet bd-'+state.border+' bgp-'+state.bgPattern+' hdr-'+state.headerStyle+' ans-'+state.answerStyle+'" '+sheetVars()+'>';
+  h+='<div class="sheet-inner">';
+  h+='<div class="top-strip"></div>';
+  h+='<div class="hdr-row"><span class="hdr-badge">Answer Key</span></div>';
+  h+='<h2 class="sheet-title" style="font-size:30px;">'+esc(state.title)+' - Answers</h2>';
+  h+='<p class="sheet-sub">Puzzle #'+(idx+1)+' aligned. One solution, checked by the generator.</p>';
+  h+='<div class="board-wrap">'+dialSVG(p,"answer",600,false,null)+'</div>';
+  h+=stepsTableHTML(p);
+  h+=footerHTML(p,idx,pageNo);
+  h+='</div></div></div>';
+  return h;
+}
+function answerSheetsFor(deckArr){
+  var out=[];var i;
+  for(i=0;i<deckArr.length;i++){out.push(i);}
+  return out;
+}
+
+/* ---------- preview render ---------- */
+function layoutScale(){
+  var z=state.zoom/100;
+  if(state.layout==="single"){return z;}
+  if(state.layout==="spread"){return z*0.62;}
+  return z*0.45;
+}
+function renderPreview(){
+  var host=$("previewHost");
+  var empty='<div class="empty-card"><h2>Rotation Rings</h2><p>Your first ring puzzle is one click away. Choose your rings and spokes, then generate.</p></div>';
+  if(!deck.length){host.innerHTML=empty;$("sheetPos").innerText="Sheet - / -";$("kpiDeck").innerText="No deck yet";updateMeta();return;}
+  var scale=layoutScale();
+  var perPage=1;
+  if(state.layout==="spread"){perPage=2;}
+  else if(state.layout==="strip"){perPage=3;}
+  else if(state.layout==="grid"){perPage=4;}
+  var sheets=[];var i;
+  if(state.view==="puzzle"){
+    for(i=0;i<deck.length;i++){sheets.push({kind:"p",idx:i});}
+  }else{
+    var ap=answerSheetsFor(deck);
+    for(i=0;i<ap.length;i++){sheets.push({kind:"a",idx:ap[i]});}
+  }
+  if(currentSheet>=sheets.length){currentSheet=0;}
+  var vis=sheets.slice(currentSheet,currentSheet+perPage);
+  var html="";var v;
+  var pageBase=state.view==="puzzle"?1:deck.length+1;
+  for(v=0;v<vis.length;v++){
+    var globalIdx=currentSheet+v;
+    var pageNo=pageBase+globalIdx;
+    var inner;
+    if(vis[v].kind==="p"){inner=puzzleSheetHTML(deck[vis[v].idx],vis[v].idx,pageNo,previewRot[vis[v].idx]);}
+    else{inner=answerSheetHTML(deck[vis[v].idx],vis[v].idx,pageNo);}
+    inner=inner.replace('<div class="sheet-slot">','<div class="sheet-slot" style="width:'+(820*scale).toFixed(0)+'px;height:'+(1080*scale).toFixed(0)+'px;overflow:hidden;">');
+    inner=inner.split("--paper-scale:1").join("--paper-scale:"+scale);
+    html+=inner;
+  }
+  host.innerHTML=html;
+  $("sheetPos").innerText="Sheet "+(currentSheet+1)+" / "+sheets.length;
+  var d0=deck[0];
+  $("kpiDeck").innerText=deck.length+" puzzles \u2022 "+d0.R+"R/"+d0.S+"S \u2022 "+DIFF[d0.difficulty].label;
+  $("kpiPreset").innerText=PRESETS[state.preset].name;
+  updateMeta();
+}
+function updateMeta(){
+  if(!deck.length){return;}
+  if(state.view==="puzzle"){
+    var p=deck[currentSheet]||deck[0];
+    $("metaLine").innerText="Sheet "+(currentSheet+1)+"/"+deck.length+" \u2022 "+p.R+" rings \u2022 "+p.S+" spokes \u2022 "+(p.shown?("target "+p.T):"target hidden")+" \u2022 Seed "+p.seed+(p.warning?" \u2022 FLAGGED":"");
+  }else{
+    var ap=answerSheetsFor(deck);
+    $("metaLine").innerText="Answer sheet "+(currentSheet+1)+"/"+ap.length+" \u2022 one key per page \u2022 "+state.answerStyle+" style";
+  }
+}
+
+/* ---------- generation (one puzzle per tick) ---------- */
+var genRunning=false;
+function setProgress(t,f){$("progressText").innerText=t;$("progressFill").style.width=(f*100).toFixed(0)+"%";}
+function showError(msg){
+  var e=$("progressError");
+  if(!msg){e.style.display="none";e.innerText="";return;}
+  e.style.display="block";e.innerText=msg;
+}
+function updateTightHint(){
+  var el=$("tightHint");
+  var msg="";
+  var R=state.rings==="auto"?DIFF[state.difficulty].R:parseInt(state.rings,10);
+  var S=state.spokes==="auto"?DIFF[state.difficulty].S:parseInt(state.spokes,10);
+  if(R>=5&&S>=12){msg="Heads up: 5 rings x 12 spokes checks up to 20,736 alignments per sheet - the progress bar keeps you posted.";}
+  if(msg){el.style.display="block";el.innerText=msg;}
+  else{el.style.display="none";}
+}
+function readControls(){
+  state.count=Math.max(1,Math.min(40,parseInt($("inCount").value,10)||6));
+  state.rings=$("inRings").value;
+  state.spokes=$("inSpokes").value;
+  state.digits=$("inDigits").value;
+  state.target=$("inTarget").value;
+  state.medal=$("inMedal").value;
+  state.deco=$("inDeco").value;
+  var shownEff=state.target==="auto"?DIFF[state.difficulty].shown:(state.target==="shown");
+  $("inMedal").disabled=shownEff;
+  state.title=$("inTitle").value||"Rotation Rings";
+  state.subtitle=$("inSubtitle").value||"";
+  state.headerStyle=$("inHeader").value;
+  state.border=$("inBorder").value;
+  state.bgPattern=$("inBg").value;
+  state.answerStyle=$("inAnswerStyle").value;
+  state.tintOn=$("inTintOn").checked&&state.preset!=="bw";
+  state.primary=$("inPrimary").value;
+  state.secondary=$("inSecondary").value;
+  state.paper=$("inPaper").value;
+  state.ink=$("inInk").value;
+  state.boardTint=parseInt($("inTint").value,10);
+  state.showFooterNums=$("inFootNums").checked;
+  $("btnGenerate").innerText="Generate "+state.count+" Puzzle"+(state.count===1?"":"s");
+  updateTightHint();
+}
+function medalFor(shown,medalSel){
+  if(shown){return "number";}
+  if(medalSel==="star"){return "star";}
+  return "rosette";
+}
+function startGeneration(){
+  if(genRunning){return;}
+  readControls();
+  showError("");
+  genRunning=true;
+  $("btnGenerate").disabled=true;
+  var baseSeed=(Math.random()*1000000000)|0;
+  var opts=resolveOpts();
+  var fresh=[];var seen={};var i=0;var guard=0;var warnCount=0;
+  currentSheet=0;previewRot={};
+  setProgress("Generating puzzle 1 / "+state.count+" ...",0);
+  function tick(){
+    if(i>=state.count){
+      deck=fresh;
+      genRunning=false;
+      $("btnGenerate").disabled=false;
+      setProgress("Done. "+deck.length+" puzzles generated."+(warnCount?(" "+warnCount+" sheet(s) flagged - see red chips."):""),1);
+      renderPreview();
+      return;
+    }
+    guard++;
+    if(guard>state.count*80){
+      deck=fresh;genRunning=false;$("btnGenerate").disabled=false;
+      setProgress("Stopped: could not make all puzzles distinct.",1);
+      renderPreview();return;
+    }
+    var seed=(baseSeed+i*100003+guard*17)>>>0;
+    var p=generateOnePuzzle(seed,opts);
+    if(!p){setTimeout(tick,0);return;}
+    var sig=puzzleSignature(p);
+    if(seen[sig]&&!p.warning){setTimeout(tick,0);return;}
+    if(p.warning){warnCount++;}
+    seen[sig]=true;
+    fresh.push(p);i++;
+    setProgress("Generating puzzle "+Math.min(i+1,state.count)+" / "+state.count+" ..."+(warnCount?(" ("+warnCount+" flagged)"):""),i/state.count);
+    setTimeout(tick,0);
+  }
+  setTimeout(tick,0);
+}
+function shuffleCurrentSheet(){
+  if(!deck.length){return;}
+  if(state.view!=="puzzle"){return;}
+  readControls();
+  var opts=resolveOpts();
+  var np=generateOnePuzzle(((Math.random()*1000000000)|0),opts);
+  if(np&&!np.warning){deck[currentSheet]=np;delete previewRot[currentSheet];setProgress("Sheet "+(currentSheet+1)+" reshuffled. New seed "+np.seed+".",1);}
+  else{setProgress("Reshuffle could not verify a unique alignment - kept old sheet.",1);}
+  renderPreview();
+}
+
+/* ---------- export ---------- */
+function totalSheets(){return deck.length+answerSheetsFor(deck).length;}
+function inlineExportColors(root){
+  var paper=state.paper;
+  var els=root.querySelectorAll("*");
+  var i;
+  for(i=0;i<els.length;i++){
+    var el=els[i];
+    if(el.classList&&el.classList.contains("top-strip")){el.style.background=state.primary;continue;}
+    if(el.classList&&el.classList.contains("hdr-badge")){el.style.background=state.primary;el.style.color="#ffffff";continue;}
+    if(el.classList&&el.classList.contains("footer-chip")){el.style.background=state.ink;el.style.color=state.paper;continue;}
+    try{
+      var cs=window.getComputedStyle(el);
+      if(cs){
+        if(el.tagName!=="svg"&&el.tagName!=="polyline"&&el.tagName!=="line"&&el.tagName!=="rect"&&el.tagName!=="circle"&&el.tagName!=="text"&&el.tagName!=="path"&&el.tagName!=="marker"&&el.tagName!=="ellipse"&&el.tagName!=="g"){
+          var bg=cs.backgroundColor;
+          if(bg==="rgba(0, 0, 0, 0)"||bg==="transparent"){el.style.backgroundColor=paper;}
+          else{el.style.backgroundColor=bg;}
+          el.style.backgroundImage="none";
+          el.style.color=cs.color;
+          el.style.borderColor=cs.borderTopColor;
+        }
+        el.style.boxShadow="none";
+        el.style.textShadow="none";
+        el.style.backdropFilter="none";
+        el.style.webkitBackdropFilter="none";
+      }
+    }catch(e){}
+  }
+}
+function buildExportDeck(){
+  var host=$("exportDeck");
+  host.innerHTML="";
+  var i;var pageNo=0;
+  for(i=0;i<deck.length;i++){
+    pageNo++;
+    var d=document.createElement("div");
+    d.innerHTML=puzzleSheetHTML(deck[i],i,pageNo,null);
+    var slot=d.firstChild;
+    var sheet=slot.querySelector(".sheet");
+    sheet.style.setProperty("--paper-scale",1);
+    sheet.style.transform="none";
+    host.appendChild(slot);
+  }
+  var ap=answerSheetsFor(deck);
+  for(i=0;i<ap.length;i++){
+    pageNo++;
+    var d2=document.createElement("div");
+    d2.innerHTML=answerSheetHTML(deck[ap[i]],ap[i],pageNo);
+    var slot2=d2.firstChild;
+    var sheet2=slot2.querySelector(".sheet");
+    sheet2.style.setProperty("--paper-scale",1);
+    sheet2.style.transform="none";
+    host.appendChild(slot2);
+  }
+  inlineExportColors(host);
+  return host.querySelectorAll(".sheet");
+}
+function exportFail(msg){
+  showError(msg+" Falling back to Exact Print.");
+  setProgress(msg,1);
+  setTimeout(function(){exactPrint();},600);
+}
+async function exportPDF(){
+  showError("");
+  if(!deck.length){exportFail("Nothing to export: generate a deck first.");return;}
+  if(typeof window.html2canvas==="undefined"||!window.jspdf||!window.jspdf.jsPDF){
+    exportFail("PDF libraries did not load (you appear offline: html2canvas/jsPDF missing).");
+    return;
+  }
+  readControls();
+  setProgress("Rendering PDF ... 0/"+totalSheets(),0);
+  try{
+    var sheets=buildExportDeck();
+    var Ctor=window.jspdf.jsPDF;
+    var pdf=new Ctor({unit:"pt",format:[615,810]});
+    for(var i=0;i<sheets.length;i++){
+      var canvas=await window.html2canvas(sheets[i],{scale:EXPORT_SCALE,backgroundColor:state.paper,useCORS:true,logging:false});
+      if(!canvas||!canvas.width||!canvas.height){throw new Error("capture "+(i+1)+" came back blank.");}
+      var img=canvas.toDataURL("image/jpeg",0.92);
+      if(!img||img.length<20000){throw new Error("capture "+(i+1)+" looks empty.");}
+      if(i>0){pdf.addPage([615,810]);}
+      pdf.addImage(img,"JPEG",0,0,615,810);
+      setProgress("Rendering PDF ... "+(i+1)+"/"+sheets.length,(i+1)/sheets.length);
+    }
+    pdf.save(slug(state.title)+".pdf");
+    setProgress("Done. PDF downloaded ("+sheets.length+" pages).",1);
+  }catch(e){
+    exportFail("Export failed: "+(e&&e.message?e.message:String(e)));
+  }
+}
+function printDocHTML(){
+  readControls();
+  var cssText=document.querySelector("style").innerHTML;
+  var html="<html><head><title>"+esc(state.title)+"</title>";
+  html+='<link rel="preconnect" href="https://fonts.googleapis.com">';
+  html+='<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">';
+  html+="<style>";
+  html+=cssText;
+  html+="@page{size:820px 1080px;margin:0;}";
+  html+="html,body{margin:0 !important;padding:0 !important;background:#ffffff !important;}";
+  html+="body::before{display:none !important;}";
+  html+=".sheet-slot{width:820px !important;min-width:820px !important;max-width:820px !important;height:1080px !important;min-height:1080px !important;max-height:1080px !important;overflow:hidden !important;margin:0 !important;padding:0 !important;page-break-after:always !important;break-inside:avoid !important;}";
+  html+=".sheet-slot:last-child{page-break-after:auto !important;}";
+  html+=".sheet{transform:none !important;box-shadow:none !important;outline:none !important;margin:0 !important;break-inside:avoid !important;}";
+  html+="</style></head><body>";
+  var i;var pageNo=0;
+  for(i=0;i<deck.length;i++){pageNo++;html+='<div class="sheet-slot">'+puzzleSheetHTML(deck[i],i,pageNo,null)+"</div>";}
+  var ap=answerSheetsFor(deck);
+  for(i=0;i<ap.length;i++){pageNo++;html+='<div class="sheet-slot">'+answerSheetHTML(deck[ap[i]],ap[i],pageNo)+"</div>";}
+  html+="</body></html>";
+  return html;
+}
+function exactPrint(){
+  if(!deck.length){showError("Nothing to print: generate a deck first.");return;}
+  var html=printDocHTML();
+  var w=window.open("","_blank");
+  if(!w){var pe=$("progressError");pe.style.display="block";pe.innerText=(pe.innerText?pe.innerText+" ":"")+"Popup blocked: printing the current view instead. Allow popups for the full-deck print document.";window.print();return;}
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},400);
+}
+
+/* ---------- wiring ---------- */
+function setDifficulty(d){
+  state.difficulty=d;
+  var btns=document.querySelectorAll("#diffGroup button");
+  var i;
+  for(i=0;i<btns.length;i++){btns[i].classList.toggle("active",btns[i].getAttribute("data-diff")===d);}
+  readControls();renderPreview();
+}
+function applyPreset(key){
+  state.preset=key;
+  var pr=PRESETS[key];
+  state.primary=pr.primary;state.secondary=pr.secondary;
+  state.paper=pr.paper;state.ink=pr.ink;state.boardTint=pr.tint;
+  $("inPreset").value=key;
+  $("inPrimary").value=pr.primary;$("inSecondary").value=pr.secondary;
+  $("inPaper").value=pr.paper;$("inInk").value=pr.ink;
+  $("inTint").value=pr.tint;$("tintVal").innerText=pr.tint+"%";
+  var sw=document.querySelectorAll(".swatch");
+  var i;
+  for(i=0;i<sw.length;i++){sw[i].classList.toggle("active",sw[i].getAttribute("data-preset")===key);}
+  readControls();renderPreview();
+}
+function buildSwatches(){
+  var host=$("swatches");host.innerHTML="";
+  var keys=["gilded","sapphire","emerald","rose","bw"];
+  var i;
+  for(i=0;i<keys.length;i++){
+    (function(k){
+      var pr=PRESETS[k];
+      var b=document.createElement("button");
+      b.className="swatch"+(state.preset===k?" active":"");
+      b.setAttribute("data-preset",k);
+      b.title=pr.name;
+      b.style.background="linear-gradient(135deg,"+pr.sw[0]+" 50%,"+pr.sw[1]+" 50%)";
+      host.appendChild(b);
+      b.addEventListener("click",function(){applyPreset(k);});
+    })(keys[i]);
+  }
+}
+function buildZoom(){
+  var sel=$("selZoom");sel.innerHTML="";
+  var vals=[10,20,30,40,50,60,70,80,90,100,110,120,130];
+  var i;
+  for(i=0;i<vals.length;i++){
+    var o=document.createElement("option");
+    o.value=vals[i];o.innerText=vals[i]+"%";
+    if(vals[i]===state.zoom){o.selected=true;}
+    sel.appendChild(o);
+  }
+}
+function initNav(){
+  if(LINK_APP_2||LINK_APP_3){
+    $("webAppNav").style.display="flex";
+    if(LINK_APP_2){$("linkApp2").href=LINK_APP_2;}
+    if(LINK_APP_3){$("linkApp3").href=LINK_APP_3;}
+    if(!LINK_APP_2){$("linkApp2").style.display="none";}
+    if(!LINK_APP_3){$("linkApp3").style.display="none";}
+  }else{$("webAppNav").style.display="none";}
+}
+var ringAnimBusy=false;
+function wire(){
+  var btns=document.querySelectorAll("#diffGroup button");
+  var i;
+  for(i=0;i<btns.length;i++){
+    (function(b){b.addEventListener("click",function(){setDifficulty(b.getAttribute("data-diff"));});})(btns[i]);
+  }
+  var live=["inCount","inRings","inSpokes","inDigits","inTarget","inMedal","inDeco","inPreset","inTitle","inSubtitle","inHeader","inBorder","inBg","inAnswerStyle","inTintOn","inPrimary","inSecondary","inPaper","inInk","inTint","inFootNums"];
+  for(i=0;i<live.length;i++){
+    (function(id){
+      $(id).addEventListener("input",function(){
+        if(id==="inTint"){$("tintVal").innerText=$(id).value+"%";}
+        readControls();renderPreview();
+      });
+      $(id).addEventListener("change",function(){readControls();renderPreview();});
+    })(live[i]);
+  }
+  $("inPreset").addEventListener("change",function(){applyPreset($("inPreset").value);});
+  $("btnGenerate").addEventListener("click",startGeneration);
+  $("btnApply").addEventListener("click",function(){readControls();renderPreview();setProgress("Style applied to preview.",1);});
+  $("btnShuffle").addEventListener("click",shuffleCurrentSheet);
+  $("viewPuzzle").addEventListener("click",function(){state.view="puzzle";$("viewPuzzle").classList.add("active");$("viewAnswer").classList.remove("active");currentSheet=0;renderPreview();});
+  $("viewAnswer").addEventListener("click",function(){state.view="answer";$("viewAnswer").classList.add("active");$("viewPuzzle").classList.remove("active");currentSheet=0;renderPreview();});
+  $("selLayout").addEventListener("change",function(){state.layout=$("selLayout").value;renderPreview();});
+  $("selZoom").addEventListener("change",function(){state.zoom=parseInt($("selZoom").value,10);renderPreview();});
+  $("btnPDF").addEventListener("click",exportPDF);
+  $("btnPrint").addEventListener("click",exactPrint);
+  $("btnHelp").addEventListener("click",function(){$("helpOverlay").classList.add("show");});
+  $("btnHelpClose").addEventListener("click",function(){$("helpOverlay").classList.remove("show");});
+  $("helpOverlay").addEventListener("click",function(e){if(e.target===$("helpOverlay")){$("helpOverlay").classList.remove("show");}});
+  document.addEventListener("keydown",function(e){
+    var a=document.activeElement;
+    if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")){return;}
+    if(e.key==="Escape"){$("helpOverlay").classList.remove("show");}
+    if(e.key==="h"||e.key==="H"){$("helpOverlay").classList.toggle("show");}
+  });
+  $("btnPrev").addEventListener("click",function(){if(currentSheet>0){currentSheet--;renderPreview();}});
+  $("btnNext").addEventListener("click",function(){
+    var max=state.view==="puzzle"?deck.length:answerSheetsFor(deck).length;
+    if(currentSheet<max-1){currentSheet++;renderPreview();}
+  });
+  document.addEventListener("keydown",function(e){
+    var a2=document.activeElement;
+    if(a2&&(a2.tagName==="INPUT"||a2.tagName==="TEXTAREA"||a2.tagName==="SELECT")){return;}
+    if(e.key==="ArrowLeft"&&currentSheet>0){currentSheet--;renderPreview();}
+    if(e.key==="ArrowRight"){var max2=state.view==="puzzle"?deck.length:answerSheetsFor(deck).length;if(currentSheet<max2-1){currentSheet++;renderPreview();}}
+  });
+  $("previewHost").addEventListener("click",function(e){
+    var g=e.target;
+    while(g&&!(g.classList&&g.classList.contains("ringg"))){g=g.parentNode;}
+    if(!g||!g.classList.contains("clickable")||ringAnimBusy){return;}
+    var board=g.closest(".puzzle-board");
+    if(!board){return;}
+    var sheetIdx=parseInt(board.getAttribute("data-sheet"),10);
+    var ring=parseInt(g.getAttribute("data-ring"),10);
+    var p=deck[sheetIdx];
+    if(!p){return;}
+    ringAnimBusy=true;
+    if(!previewRot[sheetIdx]){previewRot[sheetIdx]={};}
+    var cur=previewRot[sheetIdx][ring]||0;
+    var stepDeg=360/p.S;
+    g.style.transform="rotate("+((cur+1)*stepDeg)+"deg)";
+    setTimeout(function(){
+      previewRot[sheetIdx][ring]=(cur+1)%p.S;
+      ringAnimBusy=false;
+      renderPreview();
+    },480);
+  });
+}
+
+window.RR = {
+  randComposition:randComposition, pickTarget:pickTarget, buildSolution:buildSolution,
+  dispFromSol:dispFromSol, applyShifts:applyShifts, spokeSums:spokeSums,
+  countAlignments:countAlignments, verifyPuzzle:verifyPuzzle,
+  generateOnePuzzle:generateOnePuzzle, puzzleSignature:puzzleSignature,
+  resolveOpts:resolveOpts, DIFF:DIFF, PRESETS:PRESETS,
+  getState:function(){return state;}, getDeck:function(){return deck;},
+  setState:function(s){state=s;}, setDeck:function(d){deck=d;currentSheet=0;previewRot={};renderPreview();},
+  answerSheetsFor:answerSheetsFor, renderPreview:renderPreview,
+  buildExportDeck:buildExportDeck, startGeneration:startGeneration, printDocHTML:printDocHTML,
+  medalFor:medalFor
+};
+
+initNav();buildSwatches();buildZoom();wire();readControls();renderPreview();
+</script>
+</body>
+</html>
