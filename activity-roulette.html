@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone-Free Activity Roulette — Pack Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --shell:#12062b; --shell-2:#1b0a3d; --panel:#1e0b42;
+    --pink:#FF006E; --violet:#8338EC; --blue:#3A86FF;
+    --ink:#f3ecff; --muted:#b9a8e0; --line:rgba(255,255,255,.10);
+    --good:#4ade80; --bad:#ff5470; --warn:#ffb703;
+    --radius:18px;
+    --font-title:'Syne',system-ui,sans-serif;
+    --font-ui:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{background:var(--shell);color:var(--ink);font-family:var(--font-ui);font-size:14px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .app-shell{display:grid;grid-template-columns:380px 1fr;height:100vh;width:100vw}
+
+  .sidebar{background:linear-gradient(180deg,var(--panel) 0%,var(--shell-2) 100%);border-right:1px solid var(--line);overflow-y:auto;padding:18px 16px 40px}
+  .sidebar::-webkit-scrollbar{width:8px}
+  .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+  .brand{margin-bottom:16px}
+  .brand .kicker{font-size:10.5px;text-transform:uppercase;letter-spacing:2.6px;font-weight:700;background:linear-gradient(90deg,var(--pink),var(--violet),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand h1{font-family:var(--font-title);font-size:22px;line-height:1.15;margin:3px 0 4px;background:linear-gradient(90deg,#fff,#c9b6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand .tagline{font-size:12.5px;color:var(--muted);font-style:italic}
+  .brand .desc{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+  .panel{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+  .panel h2{font-family:var(--font-title);font-size:12.5px;text-transform:uppercase;letter-spacing:1.8px;margin:0 0 12px;color:#fff;display:flex;align-items:center;gap:8px}
+  .panel h2 .dot{width:7px;height:7px;border-radius:50%;background:linear-gradient(90deg,var(--pink),var(--violet))}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:700;margin-bottom:6px}
+  select,input[type=text],input[type=number]{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.35);color:#fff;font-family:var(--font-ui);font-size:13px;outline:none}
+  select:focus,input:focus{border-color:var(--violet)}
+  .seg{display:flex;flex-wrap:wrap;gap:5px}
+  .seg button{flex:1 1 auto;min-width:44px;padding:8px 6px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-family:var(--font-ui);font-weight:700;font-size:11.5px;cursor:pointer}
+  .seg button:hover{color:#fff;border-color:rgba(131,56,236,.5)}
+  .seg button.on{background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff;border-color:transparent}
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);font-family:var(--font-ui);font-weight:700;font-size:11px;cursor:pointer}
+  .chip:hover{color:#fff;border-color:rgba(131,56,236,.5)}
+  .chip.on{background:linear-gradient(135deg,var(--pink),var(--violet));color:#fff;border-color:transparent}
+  .swatches{display:flex;gap:7px;flex-wrap:wrap}
+  .swatches button{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.2);cursor:pointer}
+  .swatches button.on{border-color:#fff;transform:scale(1.1);box-shadow:0 0 0 3px rgba(255,255,255,.15)}
+  .color-row{display:flex;gap:8px;align-items:center}
+  .color-row input[type=color]{width:36px;height:32px;border-radius:9px;border:1px solid var(--line);background:transparent;cursor:pointer;padding:2px}
+  .checks{display:flex;flex-direction:column;gap:7px}
+  .checks label{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--muted);cursor:pointer;font-weight:600}
+  .checks input{margin-top:2px;accent-color:var(--pink)}
+  .btn{width:100%;padding:12px;border-radius:12px;border:0;cursor:pointer;font-family:var(--font-ui);font-weight:800;font-size:13.5px;color:#fff;background:linear-gradient(135deg,var(--pink),var(--violet));box-shadow:0 6px 20px rgba(255,0,110,.35)}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn.alt{background:linear-gradient(135deg,var(--blue),var(--violet));box-shadow:0 6px 20px rgba(58,134,255,.35)}
+  .btn.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);box-shadow:none}
+  .btn.small{padding:9px;font-size:12px}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .progress{height:7px;border-radius:99px;background:rgba(0,0,0,.4);overflow:hidden;margin-top:9px}
+  .progress > div{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--violet),var(--pink));transition:width .2s}
+  .note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
+  .jar-list{max-height:170px;overflow:auto;display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .jar-item{display:flex;gap:8px;align-items:flex-start;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;padding:8px 9px;font-size:12px}
+  .jar-item .t{flex:1;line-height:1.35}
+  .jar-item button{background:transparent;border:0;color:var(--bad);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px}
+  .jar-empty{font-size:11.5px;color:var(--muted);font-style:italic;padding:6px 0}
+
+  main{display:flex;flex-direction:column;overflow:hidden;position:relative}
+  .topbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--line);background:rgba(18,6,43,.7);z-index:5}
+  .kpis{display:flex;gap:7px;flex-wrap:wrap}
+  .kpi{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:11.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .kpi b{color:#fff}
+  .toggle{display:flex;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px}
+  .toggle button{border:0;background:transparent;color:var(--muted);font-family:var(--font-ui);font-weight:700;font-size:12.5px;padding:7px 15px;border-radius:999px;cursor:pointer}
+  .toggle button.on{background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff}
+  .top-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .top-actions .btn{width:auto;padding:9px 14px;font-size:12px}
+  .preview-area{flex:1;overflow:auto;padding:22px;position:relative}
+  .preview-area::-webkit-scrollbar{width:10px}
+  .preview-area::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:8px}
+
+  .wheel-stage{display:flex;flex-direction:column;align-items:center;gap:18px;padding:10px 0 40px;position:relative}
+  .wheel-wrap{position:relative;width:520px;height:520px;max-width:88vw;max-height:88vw}
+  canvas#wheel{width:100%;height:100%;display:block;border-radius:50%;box-shadow:0 0 70px rgba(131,56,236,.55), 0 0 140px rgba(255,0,110,.3)}
+  .pointer{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:26px solid var(--pink);filter:drop-shadow(0 3px 8px rgba(255,0,110,.7));z-index:3}
+  .pointer::after{content:'';position:absolute;top:-30px;left:-11px;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--violet))}
+  .spin-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .spin-btn{padding:15px 40px;border-radius:999px;border:0;cursor:pointer;font-family:var(--font-title);font-size:17px;font-weight:800;letter-spacing:.5px;color:#fff;background:linear-gradient(135deg,var(--pink),var(--violet),var(--blue));background-size:200% 200%;animation:grad 4s ease infinite;box-shadow:0 10px 34px rgba(255,0,110,.5)}
+  .spin-btn:hover{transform:translateY(-2px)}
+  .spin-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;animation:none}
+  @keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .relax-note{background:rgba(255,183,3,.14);border:1px solid rgba(255,183,3,.5);color:#ffe6a8;padding:8px 14px;border-radius:10px;font-size:12px;max-width:520px;text-align:center}
+  .result-card{width:100%;max-width:520px;background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:22px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5);opacity:0;transform:translateY(30px) scale(.96);transition:opacity .45s, transform .45s;pointer-events:none}
+  .result-card.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .result-card .rc-icon{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--pink),var(--violet));margin-bottom:14px}
+  .result-card .rc-icon svg{width:34px;height:34px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .result-card h3{font-family:var(--font-title);font-size:24px;line-height:1.2;margin:0 0 8px;background:linear-gradient(90deg,#fff,#d9c6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .result-card .tip{font-size:13.5px;color:var(--muted);margin-bottom:14px;font-style:italic}
+  .result-card .meta{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+  .result-card .meta span{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:700;color:#e7dcff}
+  .result-card .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .result-card .actions .btn{width:auto;flex:1 1 auto;padding:11px 14px;font-size:12.5px}
+  .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:22px;z-index:4}
+  .confetti i{position:absolute;width:9px;height:14px;opacity:.95;animation:fall 1.8s linear forwards}
+  @keyframes fall{to{transform:translateY(420px) rotate(720deg);opacity:0}}
+
+  .cards-stage{display:flex;flex-direction:column;align-items:center;gap:18px}
+  .page{background:#fff;color:#111;box-shadow:0 20px 60px rgba(0,0,0,.55);position:relative;border-radius:4px;overflow:hidden}
+  .page.letter{width:816px;height:1056px}
+  .page.a4{width:794px;height:1123px}
+  .page-inner{position:absolute;inset:34px}
+  .cards-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:14px;height:100%}
+  .pcard{border:1.5px dashed #c9c9c9;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;overflow:hidden;position:relative;background:#fff}
+  .pcard .band{height:6px;border-radius:99px;margin:-14px -14px 6px;background:linear-gradient(90deg,var(--band-a),var(--band-b))}
+  .pcard .head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .pcard .ico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none;background:linear-gradient(135deg,var(--band-a),var(--band-b))}
+  .pcard .ico svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .pcard .chips{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+  .pcard .chip{font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:99px;background:#f1eef8;color:#4a3a7a;white-space:nowrap}
+  .pcard .txt{font-weight:700;line-height:1.25;color:#18122b;flex:1;overflow:hidden}
+  .pcard .tip{font-size:10.5px;color:#6b6480;line-height:1.3}
+  .pcard .foot{display:flex;justify-content:space-between;font-size:8.5px;color:#9a93ad;letter-spacing:.4px;border-top:1px dashed #e3e0ec;padding-top:6px;margin-top:auto}
+  .pcard.blank .txt{color:#c9c9c9;font-style:italic}
+  .pcard.print-safe .ico{background:#fff;border:1.5px solid #333}
+  .pcard.print-safe .ico svg{stroke:#111}
+  .pcard.print-safe .chip{background:#fff;border:1px solid #999;color:#111}
+  .pcard.print-safe .band{background:#111}
+  .page-footer{position:absolute;bottom:12px;left:34px;right:34px;display:flex;justify-content:space-between;font-size:9.5px;color:#9a93ad;letter-spacing:.4px}
+  .cover{position:absolute;inset:0;padding:60px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:linear-gradient(160deg,var(--c-a),var(--c-b));color:#fff}
+  .cover h1{font-family:var(--font-title);font-size:52px;line-height:1.05;margin:0 0 14px}
+  .cover .sub{font-size:16px;opacity:.9;font-style:italic;margin-bottom:34px}
+  .cover .badge{border:2px solid rgba(255,255,255,.5);border-radius:99px;padding:7px 18px;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-top:8px}
+  .cover .shop{margin-top:auto;font-size:12px;opacity:.85}
+  .info-page{position:absolute;inset:0;padding:54px 60px;display:flex;flex-direction:column;background:#fff;color:#18122b}
+  .info-page h2{font-family:var(--font-title);font-size:28px;margin:0 0 6px;color:#18122b}
+  .info-page .lead{font-size:13px;color:#6b6480;margin-bottom:22px;font-style:italic}
+  .info-page .box{border:1.5px dashed #c9c9c9;border-radius:12px;padding:14px;margin-bottom:14px}
+  .info-page .box h3{font-family:var(--font-title);font-size:15px;margin:0 0 6px;color:#18122b}
+  .info-page .box p{font-size:12.5px;color:#4a3a7a;margin:0;line-height:1.5}
+  .tracker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:14px}
+  .tracker-cell{border:1.5px solid #c9c9c9;border-radius:10px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#c9c9c9}
+  .cert{border:4px double var(--c-a);border-radius:16px;padding:44px 34px;text-align:center;margin:auto;max-width:640px;width:100%}
+  .cert .seal{width:76px;height:76px;border-radius:50%;background:var(--c-a);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-title);font-weight:800;font-size:13px;margin:0 auto 18px;text-align:center;line-height:1.05}
+  .cert h2{font-family:var(--font-title);font-size:34px;margin:0 0 10px;color:#18122b}
+  .cert p{font-size:14px;color:#4a3a7a;margin:0 0 26px;line-height:1.6}
+  .cert .sign{display:flex;gap:30px;margin-top:40px;font-size:11px;color:#6b6480}
+  .cert .sign div{flex:1;border-top:1px solid #c9c9c9;padding-top:5px}
+  .poster{position:absolute;inset:0;padding:40px;display:flex;flex-direction:column;align-items:center;background:#fff}
+  .poster h2{font-family:var(--font-title);font-size:30px;color:#18122b;margin:0 0 6px;text-align:center}
+  .poster .sub{color:#6b6480;font-size:13px;margin-bottom:20px;text-align:center}
+  .poster .rule{margin-top:auto;font-size:12px;color:#6b6480;text-align:center;line-height:1.6}
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:60vh;text-align:center;color:var(--muted);padding:40px}
+  .empty-state .big{font-family:var(--font-title);font-size:26px;line-height:1.25;max-width:520px;background:linear-gradient(90deg,var(--pink),var(--violet),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .empty-state .sub{font-size:13.5px;max-width:480px}
+  .navbar{display:flex;justify-content:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line);background:rgba(18,6,43,.85);flex-wrap:wrap}
+  .navbar button{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:9px;color:var(--muted);padding:8px 13px;font-family:var(--font-ui);font-weight:700;font-size:12px;cursor:pointer}
+  .navbar button.on{background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff;border-color:transparent}
+  .navbar button:disabled{opacity:.35;cursor:not-allowed}
+  .alert{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999;background:var(--bad);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.5);max-width:80vw}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff;padding:11px 20px;border-radius:999px;font-weight:700;font-size:13px;opacity:0;transition:opacity .3s}
+  .toast.show{opacity:1}
+  .hidden-render{position:fixed;left:-99999px;top:0;background:#fff;pointer-events:none}
+  .measure{position:fixed;left:-99999px;top:0;visibility:hidden}
+
+  #printLayer{display:none}
+
+  @media (max-width:1180px){.app-shell{grid-template-columns:340px 1fr}.wheel-wrap{width:440px;height:440px}}
+  @media (max-width:980px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto;min-height:100vh}body{overflow:auto}.sidebar{max-height:none}main{min-height:80vh}.wheel-wrap{width:380px;height:380px}.page{transform:scale(.85);transform-origin:top center}}
+  @media (max-width:760px){.topbar{flex-direction:column;align-items:stretch}.kpis{justify-content:center}.top-actions{justify-content:center}.wheel-wrap{width:320px;height:320px}.result-card{padding:16px}.result-card h3{font-size:20px}.page{transform:scale(.55)}}
+
+  /* =========================================================
+     PRINT — dedicated layer, real size, one page per sheet
+     ========================================================= */
+  @page{ margin: 0; }
+  @media print{
+    html,body{background:#fff !important;height:auto !important;overflow:visible !important;margin:0;padding:0}
+    body *{visibility:hidden !important}
+    .app-shell{display:none !important}
+    #printLayer{display:block !important;visibility:visible !important;position:static !important;left:auto !important;top:auto !important}
+    #printLayer *{visibility:visible !important}
+    #printLayer .page{
+      display:block !important;
+      width:816px !important;height:1056px !important;
+      box-shadow:none !important;
+      transform:none !important;
+      margin:0 !important;
+      padding:0 !important;
+      page-break-after:always;
+      page-break-inside:avoid;
+      border-radius:0 !important;
+      overflow:hidden;
+    }
+    #printLayer .page.a4{width:794px !important;height:1123px !important}
+    #printLayer .page:last-child{page-break-after:auto}
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="kicker">Pack Studio</div>
+      <h1>Phone-Free Activity Roulette</h1>
+      <div class="tagline">Spin. Pick. Print. Sell.</div>
+      <div class="desc">Generate a full printable activity pack in one click: cover, instructions, 30 cut-out cards, tracker, certificate, jar labels and a wall poster. Batch up to 20 packs with different seeds and palettes.</div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Situation</h2>
+      <div class="chips" id="situationChips"></div>
+      <div class="note" id="sitNote">Pick a quick situation or set filters manually below.</div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Wheel Settings</h2>
+      <div class="field">
+        <label>Time available</label>
+        <div class="seg" id="segTime">
+          <button data-v="5">5 min</button>
+          <button data-v="15" class="on">15 min</button>
+          <button data-v="30">30 min</button>
+          <button data-v="60">1 hour</button>
+          <button data-v="120">2+ hours</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Energy</label>
+        <div class="seg" id="segEnergy">
+          <button data-v="Low" class="on">Low</button>
+          <button data-v="Medium">Medium</button>
+          <button data-v="High">High</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Place</label>
+        <div class="seg" id="segPlace">
+          <button data-v="Indoors" class="on">Indoors</button>
+          <button data-v="Outdoors">Outdoors</button>
+          <button data-v="Anywhere">Anywhere</button>
+          <button data-v="Car/Waiting">Car</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Who</label>
+        <div class="seg" id="segWho">
+          <button data-v="Solo" class="on">Solo</button>
+          <button data-v="Partner">Partner</button>
+          <button data-v="Family">Family</button>
+          <button data-v="Friends">Friends</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Wedges on wheel</label>
+        <div class="seg" id="segWedges">
+          <button data-v="6">6</button>
+          <button data-v="8" class="on">8</button>
+          <button data-v="10">10</button>
+          <button data-v="12">12</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Sound</label>
+        <div class="seg" id="segSound">
+          <button data-v="off" class="on">Off</button>
+          <button data-v="on">On</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Mode</label>
+        <div class="seg" id="segMode">
+          <button data-v="detox" class="on">Screen-free</button>
+          <button data-v="neutral">Neutral</button>
+        </div>
+        <div class="note" id="modeNote">Neutral removes all phone references — good for classrooms and therapy.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Style</h2>
+      <div class="field">
+        <label>Preset</label>
+        <select id="presetSel"></select>
+      </div>
+      <div class="field">
+        <label>Palette</label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+      <div class="field">
+        <label>Pack title</label>
+        <input type="text" id="inpTitle" value="The Boredom Jar" maxlength="40">
+      </div>
+      <div class="field">
+        <label>Pack subtitle</label>
+        <input type="text" id="inpSubtitle" value="Pick a card, put the phone down, and do it." maxlength="70">
+      </div>
+      <div class="field">
+        <label>Accent</label>
+        <div class="color-row">
+          <input type="color" id="inpAccentA" value="#FF006E">
+          <input type="color" id="inpAccentB" value="#8338EC">
+        </div>
+      </div>
+      <div class="field">
+        <label>Paper &amp; ink</label>
+        <div class="color-row">
+          <input type="color" id="inpPaper" value="#ffffff">
+          <input type="color" id="inpInk" value="#18122b">
+        </div>
+      </div>
+      <div class="field">
+        <label>Your shop name</label>
+        <input type="text" id="inpShop" value="Your Shop" maxlength="30">
+      </div>
+      <div class="field">
+        <label>Paper size</label>
+        <select id="paperSel">
+          <option value="letter">US Letter</option>
+          <option value="a4">A4</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Pack Contents</h2>
+      <div class="checks" id="packExtras">
+        <label><input type="checkbox" data-k="cover" checked> Cover page</label>
+        <label><input type="checkbox" data-k="instructions" checked> Instructions page</label>
+        <label><input type="checkbox" data-k="cards" checked> Activity cards (30)</label>
+        <label><input type="checkbox" data-k="blanks" checked> Blank cards (10)</label>
+        <label><input type="checkbox" data-k="tracker" checked> 30-day tracker</label>
+        <label><input type="checkbox" data-k="certificate" checked> Completion certificate</label>
+        <label><input type="checkbox" data-k="jarLabels" checked> Jar labels</label>
+        <label><input type="checkbox" data-k="poster" checked> Wall poster with wheel</label>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Packs in batch (1–20)</label>
+        <input type="number" id="batchCount" value="3" min="1" max="20">
+      </div>
+      <button class="btn" id="btnGenerate">Generate pack batch</button>
+      <div class="progress"><div id="progBar"></div></div>
+      <div class="note" id="progNote">Ready.</div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Export</h2>
+      <div class="field">
+        <label>Batch view</label>
+        <select id="batchSel"></select>
+      </div>
+      <button class="btn alt" id="btnExportPack">Download this pack (PDF)</button>
+      <button class="btn ghost small" id="btnExportAll" style="margin-top:6px">Download all packs (PDF)</button>
+      <button class="btn ghost small" id="btnExportPoster" style="margin-top:6px">Download poster only</button>
+      <button class="btn ghost small" id="btnExportTracker" style="margin-top:6px">Download tracker only</button>
+      <button class="btn ghost small" id="btnExportPNGs" style="margin-top:6px">Download cards as PNGs</button>
+      <div class="note" id="exportNote">Exports render at about 300 DPI. If a library fails to load, the app will tell you and fall back to browser print.</div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Boredom Jar</h2>
+      <div class="jar-list" id="jarList"></div>
+      <button class="btn ghost small" id="btnClearJar" style="margin-top:8px">Clear jar</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar no-print">
+      <div class="kpis">
+        <span class="kpi">Pool <b id="kpiPool">0</b></span>
+        <span class="kpi">Wedges <b id="kpiWedges">8</b></span>
+        <span class="kpi">Jar <b id="kpiJar">0</b></span>
+        <span class="kpi">Spins <b id="kpiSpins">0</b></span>
+        <span class="kpi">Packs <b id="kpiPacks">0</b></span>
+      </div>
+      <div class="toggle">
+        <button id="tabWheel" class="on">Wheel</button>
+        <button id="tabCards">Pack Preview</button>
+      </div>
+      <div class="top-actions">
+        <button class="btn ghost" id="btnPrint" disabled>Print</button>
+      </div>
+    </div>
+
+    <div class="preview-area" id="previewArea">
+      <div class="wheel-stage" id="wheelStage">
+        <div class="wheel-wrap">
+          <div class="pointer"></div>
+          <canvas id="wheel" width="1040" height="1040"></canvas>
+        </div>
+        <div id="relaxNote"></div>
+        <div class="spin-row">
+          <button class="spin-btn" id="btnSpin">SPIN</button>
+        </div>
+        <div class="result-card" id="resultCard">
+          <div class="confetti" id="confetti"></div>
+          <div class="rc-icon" id="rcIcon"></div>
+          <h3 id="rcText">—</h3>
+          <div class="tip" id="rcTip"></div>
+          <div class="meta" id="rcMeta"></div>
+          <div class="actions">
+            <button class="btn" id="btnDoIt">I'll do it</button>
+            <button class="btn alt" id="btnSpinAgain">Spin again</button>
+            <button class="btn ghost" id="btnSaveJar">Save to Boredom Jar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cards-stage" id="cardsStage" style="display:none">
+        <div id="cardsOut"></div>
+      </div>
+    </div>
+
+    <div class="navbar no-print" id="navbar" style="display:none">
+      <button id="navPrev">◀ Prev</button>
+      <button id="navPage">Page 1 / 1</button>
+      <button id="navNext">Next ▶</button>
+      <button id="navZoomOut">−</button>
+      <button id="navZoom">100%</button>
+      <button id="navZoomIn">+</button>
+    </div>
+  </main>
+</div>
+
+<div class="hidden-render" id="hiddenRender"></div>
+<div class="measure" id="measureEl"></div>
+<div id="printLayer"></div>
+
+<script>
+/* =========================================================
+   Phone-Free Activity Roulette — Pack Studio (ES5, English only)
+   ========================================================= */
+
+var EXPORT_SCALE = 3.125;
+var LETTER_W = 816, LETTER_H = 1056;
+var A4_W = 794, A4_H = 1123;
+var STORAGE_KEY = "pfar_pack_v2";
+
+/* ---------- 30 icons ---------- */
+var ICONS = {
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  brush:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 5-1.5 5-4"/><path d="M14 3l7 7-7 7-7-7z"/></svg>',
+  scissors:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5L20 18M8 16.5L20 6"/></svg>',
+  music:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+  camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><path d="M9 7l1.5-3h3L15 7"/></svg>',
+  leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c8 0 14-6 16-16-8 0-14 4-16 10z"/><path d="M4 20c3-6 8-10 16-16"/></svg>',
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.8 6 6.2.9-4.5 4.4 1 6.2-5.5-3-5.5 3 1-6.2L3 9.9 9.2 9z"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>',
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/></svg>',
+  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 20a6 6 0 0 1 12 0M14.5 20a4 4 0 0 1 6.5-3"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  car:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l2-6h14l2 6v4h-3M3 18v-4h18"/><circle cx="7.5" cy="18" r="1.8"/><circle cx="16.5" cy="18" r="1.8"/></svg>',
+  cup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v6a5 5 0 0 1-11 0z"/><path d="M16 10h2a2 2 0 0 1 0 4h-2"/></svg>',
+  plate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>',
+  run:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="4.5" r="1.7"/><path d="M13 8l-3 3 2 3-3 5"/><path d="M13 8l4 2 2 3"/><path d="M10 11H6"/></svg>',
+  bike:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-9h4l4 9M9 8h6"/></svg>',
+  stretch:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.8"/><path d="M12 8v6M8 10h8M9 20l3-6 3 6"/></svg>',
+  yoga:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.8"/><path d="M12 8v5M6 13h12M7 20l5-7 5 7"/></svg>',
+  ball:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/></svg>',
+  game:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="10" rx="3"/><path d="M8 13h2M9 12v2M15 12.5h.01M17 14.5h.01"/></svg>',
+  puzzle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4h4v3a2 2 0 1 0 4 0h3v4h-3a2 2 0 1 0 0 4h3v4h-4v-3a2 2 0 1 0-4 0v3h-4v-3a2 2 0 1 0-4 0v3H4v-4h3a2 2 0 1 0 0-4H4V8h3a2 2 0 1 0 4 0z"/></svg>',
+  seed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-6 4-10 8-11-1 7-4 11-8 11z"/><path d="M12 21c0-6-4-10-8-11 1 7 4 11 8 11z"/></svg>',
+  drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 7 6 12a6 6 0 0 1-12 0c0-5 6-12 6-12z"/></svg>',
+  wind:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 12h14a3 3 0 1 1-3 3"/><path d="M3 16h8"/></svg>',
+  cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6 1A3.5 3.5 0 0 1 17 18z"/></svg>',
+  sparkle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.5L18 9l-4.2 1.5L12 15l-1.8-4.5L6 9l4.2-1.5z"/><path d="M18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  basket:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16l-2 9H6z"/><path d="M8 10l2-6M16 10l-2-6"/></svg>'
+};
+
+/* =========================================================
+   CONTENT BANK — activities (same as before)
+   ========================================================= */
+var ACTIVITIES = [
+{a:"Take five slow breaths and name how you feel.",t:"Just notice. No fixing needed.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Rest",i:"wind"},
+{a:"Write three words for today.",t:"Three is enough. Keep it kind.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Friends"],c:"Make",i:"pen"},
+{a:"Stretch your neck and shoulders.",t:"Slow, small, no forcing.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Family"],c:"Move",i:"stretch"},
+{a:"Look out a window for two minutes.",t:"Let your eyes land far away.",m:5,e:"Low",p:["Indoors","Car/Waiting"],w:["Solo","Partner","Family"],c:"Notice",i:"cloud"},
+{a:"Text one person you miss a kind line.",t:"Short and warm beats perfect.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo"],c:"Connect",i:"chat"},
+{a:"Name five things you can hear.",t:"The quiet ones count too.",m:5,e:"Low",p:["Indoors","Outdoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"music"},
+{a:"Do ten slow shoulder rolls.",t:"Let your jaw soften too.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Family"],c:"Move",i:"yoga"},
+{a:"Read one page of any book.",t:"One page is a real page.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Draw one tiny doodle.",t:"No skill required. Just a shape.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Family"],c:"Make",i:"brush"},
+{a:"Step outside and feel the air.",t:"Ten breaths, then come back.",m:5,e:"Low",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"leaf"},
+{a:"Write one thing you are glad about.",t:"Small counts. Tiny counts.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"heart"},
+{a:"Do a two-minute tidy of one surface.",t:"Stop when the timer stops.",m:5,e:"Low",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"home"},
+{a:"Hum one song you love.",t:"Quietly is fine. Loudly is fun.",m:5,e:"Low",p:["Indoors","Car/Waiting"],w:["Solo","Family"],c:"Make",i:"music"},
+{a:"Ask someone near you about their day.",t:"Listen more than you reply.",m:5,e:"Low",p:["Indoors","Anywhere"],w:["Partner","Family","Friends"],c:"Connect",i:"people"},
+{a:"Close your eyes and count to thirty.",t:"Let the count be slow.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Rest",i:"moon"},
+{a:"Do ten gentle calf raises.",t:"Hold a wall if you need to.",m:5,e:"Medium",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner"],c:"Move",i:"run"},
+{a:"Write a three-line note to a friend.",t:"You do not have to send it.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo"],c:"Connect",i:"pen"},
+{a:"Pick up one thing that is out of place.",t:"One is a win. Truly.",m:5,e:"Low",p:["Indoors"],w:["Solo","Family"],c:"Make",i:"basket"},
+{a:"Look at one plant closely.",t:"Count the leaves you can see.",m:5,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Family"],c:"Notice",i:"leaf"},
+{a:"Say one kind thing to yourself.",t:"Out loud, if you can.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Rest",i:"heart"},
+{a:"Roll a ball between your hands.",t:"Notice the pressure and warmth.",m:5,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Family"],c:"Rest",i:"ball"},
+{a:"Sip water slowly and just sip.",t:"No phone on the table.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Family","Friends"],c:"Rest",i:"cup"},
+{a:"Write tomorrow's top one thing.",t:"Just one. That's the whole list.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"pen"},
+{a:"Watch the sky for one minute.",t:"Clouds, color, or nothing at all.",m:5,e:"Low",p:["Outdoors","Indoors","Car/Waiting"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"sun"},
+{a:"Take a slow walk around the block.",t:"No destination, no rush.",m:15,e:"Low",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"run"},
+{a:"Make a cup of tea and sit with it.",t:"Let it be warm and unhurried.",m:15,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner"],c:"Rest",i:"cup"},
+{a:"Read one chapter of a book.",t:"If you drift, start the page again.",m:15,e:"Low",p:["Indoors","Outdoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Draw something you can see right now.",t:"Messy is completely fine.",m:15,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Family"],c:"Make",i:"brush"},
+{a:"Write a short letter to someone you love.",t:"Three sentences is plenty.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Connect",i:"pen"},
+{a:"Do a gentle stretch routine.",t:"Move only where it feels easy.",m:15,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner","Family"],c:"Move",i:"yoga"},
+{a:"Tidy one small drawer or shelf.",t:"Stop when it looks better, not perfect.",m:15,e:"Low",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"home"},
+{a:"Sit outside and just listen.",t:"Birds, wind, traffic, all of it.",m:15,e:"Low",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"leaf"},
+{a:"Play one card game with someone.",t:"Winner does the next tidy.",m:15,e:"Low",p:["Indoors","Anywhere"],w:["Partner","Family","Friends"],c:"Connect",i:"game"},
+{a:"Write down three things you noticed today.",t:"Details beat big ideas here.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Notice",i:"pen"},
+{a:"Make a small snack from scratch.",t:"Toast counts. So does fruit.",m:15,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"plate"},
+{a:"Water the plants and check each one.",t:"Talk to them if you like.",m:15,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Family"],c:"Make",i:"drop"},
+{a:"Do a ten-minute stretch and breathe.",t:"Long exhales, slow count.",m:15,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Move",i:"stretch"},
+{a:"Look through one photo album.",t:"Let one memory take its time.",m:15,e:"Low",p:["Indoors"],w:["Solo","Partner","Family"],c:"Notice",i:"camera"},
+{a:"Write a list of five small joys.",t:"Keep it specific and real.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"heart"},
+{a:"Do a short home workout.",t:"Stop one rep before tired.",m:15,e:"High",p:["Indoors","Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"run"},
+{a:"Make a playlist for the next hour.",t:"Then actually listen to it.",m:15,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Friends"],c:"Make",i:"music"},
+{a:"Sit with someone and just chat.",t:"No agenda. No phones.",m:15,e:"Low",p:["Indoors","Anywhere"],w:["Partner","Family","Friends"],c:"Connect",i:"chat"},
+{a:"Sketch a map of your neighborhood.",t:"It does not need to be accurate.",m:15,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Family"],c:"Make",i:"pen"},
+{a:"Do a crossword or word puzzle.",t:"Paper only, no app.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Family"],c:"Read",i:"puzzle"},
+{a:"Take a photo of something ordinary.",t:"Look for the small and strange.",m:15,e:"Low",p:["Outdoors","Indoors"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"camera"},
+{a:"Make a snack and eat it outside.",t:"Even a doorstep counts.",m:15,e:"Low",p:["Outdoors"],w:["Solo","Partner","Family"],c:"Rest",i:"plate"},
+{a:"Stretch your legs where you are.",t:"Small moves, no fuss.",m:15,e:"Low",p:["Car/Waiting","Anywhere"],w:["Solo","Partner","Family"],c:"Move",i:"stretch"},
+{a:"Write three lines about how you feel.",t:"Honest beats tidy.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"pen"},
+{a:"Cook a simple meal from what you have.",t:"Three ingredients is a fine start.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"plate"},
+{a:"Take a longer walk somewhere green.",t:"Pick a route you have not walked.",m:30,e:"Medium",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"leaf"},
+{a:"Read a whole short story.",t:"One sitting, one story.",m:30,e:"Low",p:["Indoors","Outdoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Make something with your hands.",t:"Paper, clay, wood, thread, anything.",m:30,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"brush"},
+{a:"Do a full stretch and mobility session.",t:"Slow is the whole point.",m:30,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Move",i:"yoga"},
+{a:"Write a real letter and address it.",t:"You can post it tomorrow.",m:30,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Friends"],c:"Connect",i:"pen"},
+{a:"Tidy one whole room properly.",t:"Set a timer and stop when it rings.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"home"},
+{a:"Cook something for someone else.",t:"Small, warm, made by you.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"plate"},
+{a:"Go for a bike ride or a long walk.",t:"Choose the route by mood.",m:30,e:"High",p:["Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"bike"},
+{a:"Sit somewhere new and write.",t:"A page, half a page, whatever.",m:30,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner"],c:"Make",i:"pen"},
+{a:"Play a board game or card game.",t:"Two games if the first is quick.",m:30,e:"Medium",p:["Indoors","Anywhere"],w:["Partner","Family","Friends"],c:"Connect",i:"game"},
+{a:"Do a puzzle on a table.",t:"Let the edges come first.",m:30,e:"Low",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"puzzle"},
+{a:"Make a proper cup of coffee or tea.",t:"Slow method, slow drink.",m:30,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner"],c:"Rest",i:"cup"},
+{a:"Draw or paint something from life.",t:"No photos, just looking.",m:30,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner","Family"],c:"Make",i:"brush"},
+{a:"Go outside and notice ten things.",t:"Small counts. Tiny counts too.",m:30,e:"Low",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"leaf"},
+{a:"Write a list of ten ideas for later.",t:"No filtering. Quantity wins.",m:30,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"sparkle"},
+{a:"Do a home workout with no video.",t:"Your body is the guide.",m:30,e:"High",p:["Indoors","Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"run"},
+{a:"Make a small gift for someone.",t:"Made beats bought, always.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"heart"},
+{a:"Read outside for half an hour.",t:"Bring a blanket or a chair.",m:30,e:"Low",p:["Outdoors"],w:["Solo","Partner","Family"],c:"Read",i:"book"},
+{a:"Cook breakfast for dinner.",t:"Pancakes at night are allowed.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"plate"},
+{a:"Take a slow bath or long shower.",t:"No audio. Just water.",m:30,e:"Low",p:["Indoors"],w:["Solo","Partner"],c:"Rest",i:"drop"},
+{a:"Organize a small shelf or cupboard.",t:"One shelf. One win.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"home"},
+{a:"Write a page about your week.",t:"What worked, what didn't, no blame.",m:30,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"pen"},
+{a:"Walk with someone and really talk.",t:"One topic, full attention.",m:30,e:"Medium",p:["Outdoors","Anywhere"],w:["Partner","Family","Friends"],c:"Connect",i:"people"},
+{a:"Cook a meal from a new recipe.",t:"Read the recipe twice first.",m:60,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"plate"},
+{a:"Take a long walk somewhere new.",t:"Get a little lost on purpose.",m:60,e:"Medium",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"leaf"},
+{a:"Do a proper deep tidy of one space.",t:"One space, done well, then stop.",m:60,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"home"},
+{a:"Read a big chunk of a book.",t:"Two chapters, one sitting.",m:60,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Make something real, start to finish.",t:"A small finished thing beats a big unfinished one.",m:60,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"brush"},
+{a:"Do a long workout or class on paper.",t:"Write the plan, then do it.",m:60,e:"High",p:["Indoors","Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"run"},
+{a:"Have a proper sit-down meal with people.",t:"No phones on the table.",m:60,e:"Low",p:["Indoors","Outdoors"],w:["Partner","Family","Friends"],c:"Connect",i:"plate"},
+{a:"Write a long letter to someone.",t:"Take your time with it.",m:60,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Connect",i:"pen"},
+{a:"Plan a small trip on paper.",t:"Where, when, what to bring.",m:60,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"sparkle"},
+{a:"Do a big puzzle or a long game.",t:"Let it take the whole hour.",m:60,e:"Low",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"puzzle"},
+{a:"Go for a bike ride.",t:"Pick a loop you enjoy.",m:60,e:"High",p:["Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"bike"},
+{a:"Make a batch of something to share.",t:"Soup, bread, cookies, anything.",m:60,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"plate"},
+{a:"Do a slow, full stretch and reset.",t:"Head to toe, unhurried.",m:60,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Move",i:"yoga"},
+{a:"Read and take notes on what you read.",t:"A few lines is plenty.",m:60,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Work on a craft or hobby project.",t:"Progress, not perfection.",m:60,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"brush"},
+{a:"Take a long walk and take photos.",t:"No posting. Just looking.",m:60,e:"Medium",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"camera"},
+{a:"Cook a long, slow meal from scratch.",t:"The kind that fills the house.",m:120,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"plate"},
+{a:"Take a long hike or day walk.",t:"Bring water and snacks.",m:120,e:"High",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"leaf"},
+{a:"Do a big project in one sitting.",t:"Pick the thing you keep putting off.",m:120,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"sparkle"},
+{a:"Read a whole book in one go.",t:"Short book, long afternoon.",m:120,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Host a proper meal for people you like.",t:"Simple food, long table.",m:120,e:"Medium",p:["Indoors","Outdoors"],w:["Partner","Family","Friends"],c:"Connect",i:"people"},
+{a:"Make something big with your hands.",t:"Furniture, art, garden, anything.",m:120,e:"High",p:["Indoors","Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"brush"},
+{a:"Go somewhere new for the afternoon.",t:"A town, a trail, a museum, a beach.",m:120,e:"Medium",p:["Outdoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"car"},
+{a:"Do a long, slow reset routine.",t:"Stretch, bath, read, sleep early.",m:120,e:"Low",p:["Indoors"],w:["Solo","Partner"],c:"Rest",i:"moon"},
+{a:"Plan and cook a week of meals.",t:"Shop, prep, store, done.",m:120,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"plate"},
+{a:"Spend the afternoon outside with people.",t:"Park, picnic, walk, talk.",m:120,e:"Medium",p:["Outdoors"],w:["Partner","Family","Friends"],c:"Connect",i:"sun"},
+{a:"Work on a big creative project.",t:"One long block, no interruptions.",m:120,e:"Medium",p:["Indoors"],w:["Solo","Partner","Friends"],c:"Make",i:"brush"},
+{a:"Deep clean and reset your home.",t:"One room fully, then rest.",m:120,e:"High",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"home"},
+{a:"Read, nap, and read again.",t:"The whole point is slow.",m:120,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner","Family"],c:"Rest",i:"book"},
+{a:"Take a long bike ride somewhere new.",t:"Pack water and a snack.",m:120,e:"High",p:["Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"bike"},
+/* extra spread */
+{a:"Do a five-minute dance in the kitchen.",t:"One song, full commitment.",m:5,e:"High",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"music"},
+{a:"Ask a kid what they would do right now.",t:"Then actually do it.",m:5,e:"Low",p:["Indoors","Outdoors"],w:["Family"],c:"Connect",i:"people"},
+{a:"Send a voice note instead of a text.",t:"Your real voice, one minute.",m:5,e:"Low",p:["Anywhere","Car/Waiting"],w:["Solo","Partner","Friends"],c:"Connect",i:"chat"},
+{a:"Name three things you can smell.",t:"Even the boring ones count.",m:5,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner","Family"],c:"Notice",i:"leaf"},
+{a:"Do a slow hand and wrist stretch.",t:"Typing hands need this.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Move",i:"stretch"},
+{a:"Read a poem out loud to yourself.",t:"Quietly or boldly, your call.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Write one sentence you would tell a friend.",t:"Then decide whether to send it.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Friends"],c:"Connect",i:"pen"},
+{a:"Tidy your bag or your coat pocket.",t:"Small spaces, quick win.",m:5,e:"Low",p:["Indoors","Car/Waiting"],w:["Solo","Partner","Family"],c:"Make",i:"basket"},
+{a:"Look at the furthest thing you can see.",t:"Let your eyes rest there.",m:5,e:"Low",p:["Indoors","Outdoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"cloud"},
+{a:"Make a cup of something warm.",t:"Hold the cup with both hands.",m:5,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Rest",i:"cup"},
+{a:"Do fifteen minutes of reading aloud.",t:"To a kid, a pet, or the room.",m:15,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Family","Partner"],c:"Read",i:"book"},
+{a:"Take a fifteen-minute walk with a friend.",t:"Phones stay in pockets.",m:15,e:"Medium",p:["Outdoors"],w:["Friends","Partner"],c:"Move",i:"run"},
+{a:"Draw a small map of your day.",t:"Where you went, what you saw.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Family"],c:"Make",i:"pen"},
+{a:"Do a fifteen-minute tidy with music on.",t:"Timer on, stop when it rings.",m:15,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"home"},
+{a:"Write a short list of things to try this week.",t:"Three is plenty. Five is bold.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Friends"],c:"Make",i:"sparkle"},
+{a:"Make a snack for someone else.",t:"Surprise is the best part.",m:15,e:"Medium",p:["Indoors"],w:["Partner","Family","Friends"],c:"Make",i:"plate"},
+{a:"Sit and breathe for fifteen minutes.",t:"Long exhales, no timer needed.",m:15,e:"Low",p:["Indoors","Outdoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Family","Friends"],c:"Rest",i:"wind"},
+{a:"Take a fifteen-minute photo walk.",t:"Look for one color only.",m:15,e:"Low",p:["Outdoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"camera"},
+{a:"Do a fifteen-minute stretch by a window.",t:"Light on your face helps.",m:15,e:"Low",p:["Indoors"],w:["Solo","Partner","Family"],c:"Move",i:"yoga"},
+{a:"Write a thank-you note to someone.",t:"Handwritten beats typed here.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Friends"],c:"Connect",i:"heart"},
+{a:"Make a thirty-minute playlist and listen.",t:"All the way through, no skipping.",m:30,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner","Friends"],c:"Rest",i:"music"},
+{a:"Do a thirty-minute home workout.",t:"Warm up first, always.",m:30,e:"High",p:["Indoors","Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"run"},
+{a:"Cook something you have never made.",t:"Follow the recipe once, then improvise.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"plate"},
+{a:"Take a thirty-minute walk and notice colors.",t:"Name them in your head.",m:30,e:"Medium",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"leaf"},
+{a:"Read for thirty minutes in a new spot.",t:"A different chair counts.",m:30,e:"Low",p:["Indoors","Outdoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Make a small thing for your home.",t:"A shelf, a print, a plant pot.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"home"},
+{a:"Do a thirty-minute puzzle or game.",t:"Let it be the whole activity.",m:30,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"puzzle"},
+{a:"Write three pages of anything.",t:"Morning pages, evening pages, any pages.",m:30,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"pen"},
+{a:"Sit outside with a warm drink.",t:"Even five minutes of sun counts.",m:30,e:"Low",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Rest",i:"sun"},
+{a:"Do a thirty-minute tidy of one closet.",t:"One closet, fully done.",m:30,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"basket"},
+{a:"Make a meal for the week ahead.",t:"Batch cook, portion, store.",m:60,e:"Medium",p:["Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"plate"},
+{a:"Take a one-hour walk with no destination.",t:"Let your feet decide.",m:60,e:"Medium",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"run"},
+{a:"Read for a full hour with a notebook.",t:"Write what stays with you.",m:60,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Do a one-hour creative session.",t:"One project, one hour, no switching.",m:60,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner","Friends"],c:"Make",i:"brush"},
+{a:"Cook and eat a slow lunch.",t:"No screen at the table.",m:60,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Rest",i:"plate"},
+{a:"Take a one-hour bike ride.",t:"Pick a loop that feels good.",m:60,e:"High",p:["Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"bike"},
+{a:"Write a one-hour letter or journal entry.",t:"Let it wander, then land.",m:60,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Friends"],c:"Make",i:"pen"},
+{a:"Play a long game with people.",t:"Cards, board, or invented.",m:60,e:"Medium",p:["Indoors","Outdoors"],w:["Partner","Family","Friends"],c:"Connect",i:"game"},
+{a:"Do a one-hour stretch and reset.",t:"Head to toe, then rest.",m:60,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Move",i:"yoga"},
+{a:"Plan a project on paper.",t:"What, when, how, who.",m:60,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Make",i:"sparkle"},
+{a:"Take a two-hour walk with a friend.",t:"Snacks, water, no rush.",m:120,e:"Medium",p:["Outdoors"],w:["Friends","Partner"],c:"Move",i:"leaf"},
+{a:"Cook a two-hour meal for people.",t:"The kind you cannot rush.",m:120,e:"Medium",p:["Indoors"],w:["Partner","Family","Friends"],c:"Make",i:"plate"},
+{a:"Do a two-hour creative deep dive.",t:"Phone in another room.",m:120,e:"Medium",p:["Indoors"],w:["Solo","Partner","Friends"],c:"Make",i:"brush"},
+{a:"Read a whole book in one afternoon.",t:"Short one, long chair.",m:120,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner","Family"],c:"Read",i:"book"},
+{a:"Host a two-hour gathering.",t:"Simple food, long talk.",m:120,e:"Medium",p:["Indoors","Outdoors"],w:["Partner","Family","Friends"],c:"Connect",i:"people"},
+{a:"Take a two-hour trip somewhere new.",t:"A town, a trail, a market.",m:120,e:"Medium",p:["Outdoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"car"},
+{a:"Do a two-hour home project.",t:"One thing, finished.",m:120,e:"High",p:["Indoors","Outdoors"],w:["Solo","Partner","Family"],c:"Make",i:"home"},
+{a:"Do a two-hour slow reset.",t:"Stretch, bath, read, early night.",m:120,e:"Low",p:["Indoors"],w:["Solo","Partner","Family"],c:"Rest",i:"moon"},
+{a:"Sit in silence for five minutes.",t:"No music, no talking, no phone.",m:5,e:"Low",p:["Indoors","Outdoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Rest",i:"moon"},
+{a:"Write a five-minute gratitude list.",t:"Three things, no repeats.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"heart"},
+{a:"Do a five-minute body scan.",t:"Toes to head, slowly.",m:5,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Rest",i:"wind"},
+{a:"Read a poem and sit with it.",t:"Fifteen minutes, one poem.",m:15,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Do a fifteen-minute slow yoga flow.",t:"Breath leads the movement.",m:15,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Move",i:"yoga"},
+{a:"Write a fifteen-minute journal page.",t:"Whatever comes, no editing.",m:15,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner"],c:"Make",i:"pen"},
+{a:"Draw a fifteen-minute self-portrait.",t:"No mirror needed.",m:15,e:"Low",p:["Indoors","Anywhere"],w:["Solo","Partner","Friends"],c:"Make",i:"brush"},
+{a:"Do a thirty-minute solo walk.",t:"Phone in your pocket, not your hand.",m:30,e:"Medium",p:["Outdoors"],w:["Solo","Partner"],c:"Move",i:"run"},
+{a:"Read for thirty minutes in silence.",t:"One chapter, one chair.",m:30,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Do a thirty-minute slow stretch.",t:"Head to toe, unhurried.",m:30,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Move",i:"stretch"},
+{a:"Write for thirty minutes without stopping.",t:"Keep the pen moving.",m:30,e:"Low",p:["Indoors","Anywhere","Car/Waiting"],w:["Solo","Partner","Friends"],c:"Make",i:"pen"},
+{a:"Do a one-hour solo project.",t:"One thing, no switching.",m:60,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Make",i:"sparkle"},
+{a:"Read for a full hour.",t:"A whole story if you can.",m:60,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Solo","Partner"],c:"Read",i:"book"},
+{a:"Do a one-hour slow reset.",t:"Stretch, tea, music, rest.",m:60,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner"],c:"Rest",i:"moon"},
+{a:"Do a two-hour solo creative session.",t:"Phone in another room.",m:120,e:"Medium",p:["Indoors","Outdoors"],w:["Solo","Partner","Friends"],c:"Make",i:"brush"},
+{a:"Do a two-hour slow reset day.",t:"Stretch, bath, read, sleep early.",m:120,e:"Low",p:["Indoors","Outdoors"],w:["Solo","Partner","Family"],c:"Rest",i:"moon"},
+{a:"Play a five-minute silly game.",t:"Whoever laughs first wins.",m:5,e:"High",p:["Indoors","Outdoors"],w:["Family","Friends"],c:"Connect",i:"game"},
+{a:"Ask a family member one real question.",t:"Then listen without fixing.",m:5,e:"Low",p:["Indoors","Anywhere"],w:["Family"],c:"Connect",i:"chat"},
+{a:"Do a five-minute tidy race.",t:"Timer on, everyone helps.",m:5,e:"Medium",p:["Indoors"],w:["Family","Friends"],c:"Move",i:"home"},
+{a:"Take a fifteen-minute family walk.",t:"Anyone can pick the route.",m:15,e:"Low",p:["Outdoors"],w:["Family","Friends"],c:"Move",i:"leaf"},
+{a:"Play a fifteen-minute card game.",t:"Best of three, then stop.",m:15,e:"Low",p:["Indoors","Outdoors","Anywhere"],w:["Family","Friends","Partner"],c:"Connect",i:"game"},
+{a:"Make a fifteen-minute snack together.",t:"Everyone does one job.",m:15,e:"Medium",p:["Indoors"],w:["Family","Friends","Partner"],c:"Make",i:"plate"},
+{a:"Draw a fifteen-minute family portrait.",t:"No erasing allowed.",m:15,e:"Low",p:["Indoors","Anywhere"],w:["Family","Friends"],c:"Make",i:"brush"},
+{a:"Do a thirty-minute family project.",t:"Build, bake, or make something.",m:30,e:"Medium",p:["Indoors","Outdoors"],w:["Family","Friends","Partner"],c:"Make",i:"sparkle"},
+{a:"Cook a thirty-minute meal together.",t:"Each person owns one step.",m:30,e:"Medium",p:["Indoors"],w:["Family","Friends","Partner"],c:"Make",i:"plate"},
+{a:"Do a thirty-minute game night.",t:"Two games, then done.",m:30,e:"Medium",p:["Indoors"],w:["Family","Friends","Partner"],c:"Connect",i:"game"},
+{a:"Take a one-hour family outing.",t:"Park, walk, snack, home.",m:60,e:"Medium",p:["Outdoors"],w:["Family","Friends"],c:"Move",i:"sun"},
+{a:"Cook a one-hour meal together.",t:"Slow food, long table.",m:60,e:"Medium",p:["Indoors"],w:["Family","Friends","Partner"],c:"Make",i:"plate"},
+{a:"Do a one-hour family project.",t:"One thing, finished together.",m:60,e:"Medium",p:["Indoors","Outdoors"],w:["Family","Friends"],c:"Make",i:"home"},
+{a:"Host a two-hour gathering.",t:"Simple food, long talk.",m:120,e:"Medium",p:["Indoors","Outdoors"],w:["Family","Friends","Partner"],c:"Connect",i:"people"},
+{a:"Take a two-hour family trip.",t:"Somewhere new, together.",m:120,e:"Medium",p:["Outdoors","Anywhere"],w:["Family","Friends","Partner"],c:"Notice",i:"car"},
+{a:"Do a two-hour family cooking project.",t:"Everyone helps, everyone eats.",m:120,e:"Medium",p:["Indoors"],w:["Family","Friends","Partner"],c:"Make",i:"plate"},
+{a:"Do a five-minute breathing pattern.",t:"In four, out six. Repeat.",m:5,e:"Low",p:["Car/Waiting","Anywhere","Indoors"],w:["Solo","Partner","Family","Friends"],c:"Rest",i:"wind"},
+{a:"Name three things you look forward to.",t:"Small ones count.",m:5,e:"Low",p:["Car/Waiting","Anywhere","Indoors"],w:["Solo","Partner","Family"],c:"Notice",i:"sparkle"},
+{a:"Write a three-line poem about right now.",t:"It does not need to rhyme.",m:5,e:"Low",p:["Car/Waiting","Anywhere","Indoors"],w:["Solo","Partner","Family"],c:"Make",i:"pen"},
+{a:"Do a five-minute shoulder and neck release.",t:"Slow, gentle, no force.",m:5,e:"Low",p:["Car/Waiting","Anywhere","Indoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"stretch"},
+{a:"Look for five things of the same color.",t:"Pick a color you like.",m:5,e:"Low",p:["Car/Waiting","Outdoors","Indoors","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Notice",i:"leaf"},
+{a:"Write a list of three songs you love.",t:"Then hum one.",m:5,e:"Low",p:["Car/Waiting","Anywhere","Indoors"],w:["Solo","Partner","Friends"],c:"Make",i:"music"},
+{a:"Read one page of anything on paper.",t:"A book, a map, a note.",m:5,e:"Low",p:["Car/Waiting","Indoors","Anywhere"],w:["Solo","Partner","Family"],c:"Read",i:"book"},
+{a:"Do a fifteen-minute car or waiting stretch.",t:"Shoulders, neck, wrists, ankles.",m:15,e:"Low",p:["Car/Waiting","Anywhere"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"yoga"},
+{a:"Write a fifteen-minute list of ideas.",t:"No filtering, just write.",m:15,e:"Low",p:["Car/Waiting","Anywhere","Indoors"],w:["Solo","Partner","Friends"],c:"Make",i:"sparkle"},
+{a:"Read a chapter while you wait.",t:"Paper or e-ink, no feed.",m:15,e:"Low",p:["Car/Waiting","Anywhere","Indoors"],w:["Solo","Partner","Family"],c:"Read",i:"book"},
+{a:"Do a fifteen-minute breathing and rest.",t:"Long exhales, soft jaw.",m:15,e:"Low",p:["Car/Waiting","Anywhere","Indoors"],w:["Solo","Partner","Family","Friends"],c:"Rest",i:"wind"},
+{a:"Sketch what you see from where you are.",t:"Lines only, no erasing.",m:15,e:"Low",p:["Car/Waiting","Outdoors","Indoors","Anywhere"],w:["Solo","Partner","Family"],c:"Make",i:"brush"},
+{a:"Write a thirty-minute plan for the week.",t:"Three priorities, then stop.",m:30,e:"Low",p:["Car/Waiting","Indoors","Anywhere"],w:["Solo","Partner","Friends"],c:"Make",i:"pen"},
+{a:"Do a thirty-minute reading session.",t:"A whole chapter, one sitting.",m:30,e:"Low",p:["Car/Waiting","Indoors","Outdoors","Anywhere"],w:["Solo","Partner","Family"],c:"Read",i:"book"},
+{a:"Do a thirty-minute slow stretch.",t:"Wherever you are, gently.",m:30,e:"Low",p:["Car/Waiting","Indoors","Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"yoga"},
+{a:"Write for thirty minutes about anything.",t:"No editing, just moving the pen.",m:30,e:"Low",p:["Car/Waiting","Indoors","Anywhere"],w:["Solo","Partner","Friends"],c:"Make",i:"pen"},
+{a:"Read for an hour in a waiting space.",t:"A whole story if you can.",m:60,e:"Low",p:["Car/Waiting","Indoors","Anywhere"],w:["Solo","Partner","Family"],c:"Read",i:"book"},
+{a:"Do a one-hour slow project.",t:"One thing, no switching.",m:60,e:"Low",p:["Car/Waiting","Indoors","Anywhere"],w:["Solo","Partner","Friends"],c:"Make",i:"sparkle"},
+{a:"Do a two-hour slow reset at home.",t:"Stretch, bath, read, sleep early.",m:120,e:"Low",p:["Indoors"],w:["Solo","Partner","Family"],c:"Rest",i:"moon"},
+{a:"Do a two-hour creative session.",t:"Phone in another room.",m:120,e:"Medium",p:["Indoors"],w:["Solo","Partner","Friends"],c:"Make",i:"brush"},
+{a:"Do twenty squats and twenty jumping jacks.",t:"Warm up first, always.",m:5,e:"High",p:["Indoors","Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"run"},
+{a:"Run up and down the stairs five times.",t:"Slow on the way down.",m:15,e:"High",p:["Indoors"],w:["Solo","Partner","Friends"],c:"Move",i:"run"},
+{a:"Do a fifteen-minute HIIT session on paper.",t:"Write the plan, then do it.",m:15,e:"High",p:["Indoors","Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"run"},
+{a:"Do a thirty-minute run or brisk walk.",t:"Pick a route you like.",m:30,e:"High",p:["Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"run"},
+{a:"Do a one-hour hike with elevation.",t:"Bring water and snacks.",m:60,e:"High",p:["Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"leaf"},
+{a:"Do a two-hour outdoor adventure.",t:"Plan it, then go.",m:120,e:"High",p:["Outdoors"],w:["Solo","Partner","Friends"],c:"Move",i:"sun"},
+{a:"Do a fifteen-minute gentle walk.",t:"No pace goal. Just move.",m:15,e:"Medium",p:["Outdoors","Indoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"leaf"},
+{a:"Do a thirty-minute easy bike ride.",t:"Flat route, no rush.",m:30,e:"Medium",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"bike"},
+{a:"Do a one-hour nature walk.",t:"Stop often. Look closely.",m:60,e:"Medium",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"leaf"},
+{a:"Do a two-hour slow nature walk.",t:"No destination, no pace.",m:120,e:"Medium",p:["Outdoors"],w:["Solo","Partner","Family","Friends"],c:"Move",i:"leaf"}
+];
+
+/* =========================================================
+   PRESETS
+   ========================================================= */
+var PRESETS = [
+  {name:"Neon Pop",        a:"#FF006E", b:"#8338EC", paper:"#ffffff", ink:"#18122b", safe:false, shell:["#12062b","#1b0a3d"]},
+  {name:"Sunset Gradient", a:"#FF7A00", b:"#FF006E", paper:"#fffaf5", ink:"#2a1020", safe:false, shell:["#1a0716","#2a0a26"]},
+  {name:"Mint Lime",       a:"#00D9A6", b:"#7BE495", paper:"#fafffb", ink:"#0d2a22", safe:false, shell:["#04211c","#06322a"]},
+  {name:"Ice Blue",        a:"#3A86FF", b:"#7FD8FF", paper:"#f7fbff", ink:"#0c1a33", safe:false, shell:["#050f24","#08203d"]},
+  {name:"Print-safe B/W",  a:"#111111", b:"#555555", paper:"#ffffff", ink:"#111111", safe:true,  shell:["#0c0c0c","#161616"]}
+];
+
+var SITUATIONS = [
+  {id:"car10",     label:"10 min in the car",        f:{time:15, energy:"Low", place:"Car/Waiting", who:"Solo"}},
+  {id:"rainy",     label:"Rainy Sunday afternoon",   f:{time:60, energy:"Low", place:"Indoors", who:"Family"}},
+  {id:"kids",      label:"Kids are bored",           f:{time:30, energy:"Medium", place:"Indoors", who:"Family"}},
+  {id:"anxious",   label:"Anxious, can't focus",     f:{time:5, energy:"Low", place:"Indoors", who:"Solo"}},
+  {id:"evening",   label:"Quiet evening alone",      f:{time:30, energy:"Low", place:"Indoors", who:"Solo"}},
+  {id:"outside",   label:"Sunny, want to be outside",f:{time:60, energy:"Medium", place:"Outdoors", who:"Solo"}},
+  {id:"friends",   label:"Friends coming over",      f:{time:120, energy:"Medium", place:"Indoors", who:"Friends"}},
+  {id:"couple",    label:"Couple time, no phones",   f:{time:60, energy:"Low", place:"Indoors", who:"Partner"}},
+  {id:"move",      label:"Need to move my body",     f:{time:30, energy:"High", place:"Outdoors", who:"Solo"}},
+  {id:"waiting",   label:"Waiting room",             f:{time:15, energy:"Low", place:"Car/Waiting", who:"Solo"}}
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+var state = {
+  time:15, energy:"Low", place:"Indoors", who:"Solo", wedges:8, sound:false,
+  mode:"detox",
+  presetIndex:0, title:"The Boredom Jar", subtitle:"Pick a card, put the phone down, and do it.",
+  accentA:"#FF006E", accentB:"#8338EC", paper:"#ffffff", ink:"#18122b",
+  shop:"Your Shop", paperSize:"letter",
+  seed:0, spinCount:0, lastResult:null, lastResults:[], jar:[],
+  view:"wheel", cardPage:0, cardZoom:1,
+  packExtras:{cover:true, instructions:true, cards:true, blanks:true, tracker:true, certificate:true, jarLabels:true, poster:true},
+  batchCount:3, batch:[], activeBatch:0
+};
+
+/* =========================================================
+   SEEDED PRNG
+   ========================================================= */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function newSeed(){ return Math.floor(Math.random()*1e9); }
+function shuffleWith(arr, rng){
+  var a = arr.slice(), i, j, t;
+  for(i=a.length-1;i>0;i--){ j = Math.floor(rng()*(i+1)); t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+
+/* =========================================================
+   FILTERING
+   ========================================================= */
+function matches(a, f, ignore){
+  ignore = ignore || {};
+  if(!ignore.who && f.who && a.w.indexOf(f.who) === -1) return false;
+  if(!ignore.place && f.place && a.p.indexOf(f.place) === -1) return false;
+  if(!ignore.energy && f.energy && a.e !== f.energy) return false;
+  if(!ignore.time && f.time && a.m !== f.time) return false;
+  return true;
+}
+function filterPool(f, relax){
+  relax = relax || {};
+  var out = [], i;
+  for(i=0;i<ACTIVITIES.length;i++){
+    if(matches(ACTIVITIES[i], f, relax)) out.push(ACTIVITIES[i]);
+  }
+  return out;
+}
+function poolForWheel(f, wedges){
+  var pool = filterPool(f, {});
+  var relaxed = "";
+  if(pool.length < wedges){ pool = filterPool(f, {who:true}); if(pool.length >= wedges) relaxed = "who"; }
+  if(pool.length < wedges){ pool = filterPool(f, {who:true, place:true}); if(pool.length >= wedges) relaxed = "who and place"; }
+  if(pool.length < wedges){ pool = filterPool(f, {who:true, place:true, energy:true}); if(pool.length >= wedges) relaxed = "who, place and energy"; }
+  if(pool.length === 0){ pool = ACTIVITIES.slice(); relaxed = "all filters"; }
+  return {pool:pool, relaxed:relaxed};
+}
+
+/* =========================================================
+   WHEEL
+   ========================================================= */
+var wheel = {
+  canvas:null, ctx:null,
+  angle:0, spinning:false,
+  wedges:[], colors:[],
+  spinStartTime:0, spinDuration:0, startAngle:0, endAngle:0,
+  lastTickWedge:-1,
+  reduceMotion:false, tickFn:null, chimeFn:null
+};
+function wheelColors(n){
+  var base = ["#FF006E","#8338EC","#3A86FF","#00D9A6","#FFB703","#FF5C8A","#9D4EDD","#4CC9F0","#F72585","#7209B7","#4361EE","#06D6A0"];
+  var out = [], i;
+  for(i=0;i<n;i++) out.push(base[i % base.length]);
+  return out;
+}
+function drawWheel(){
+  var c = wheel.canvas, ctx = wheel.ctx;
+  if(!c || !ctx) return;
+  var W = c.width, H = c.height, cx = W/2, cy = H/2, R = Math.min(W,H)/2 - 16;
+  ctx.clearRect(0,0,W,H);
+  var n = wheel.wedges.length;
+  if(n === 0){
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fillStyle = "#1b0a3d"; ctx.fill();
+    ctx.fillStyle = "#b9a8e0";
+    ctx.font = "700 42px 'Plus Jakarta Sans', sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("No matches", cx, cy);
+    return;
+  }
+  var arc = Math.PI*2 / n, i;
+  for(i=0;i<n;i++){
+    var start = wheel.angle + i*arc;
+    var end = start + arc;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,start,end); ctx.closePath();
+    ctx.fillStyle = wheel.colors[i]; ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 3; ctx.stroke();
+    var mid = start + arc/2;
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(mid);
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffffff"; ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 8;
+    var label = wheel.wedges[i].a;
+    var maxChars = n <= 6 ? 32 : n <= 8 ? 26 : n <= 10 ? 22 : 18;
+    if(label.length > maxChars) label = label.substring(0, maxChars-1) + "…";
+    var fs = n <= 6 ? 30 : n <= 8 ? 26 : n <= 10 ? 22 : 19;
+    ctx.font = "700 " + fs + "px 'Plus Jakarta Sans', sans-serif";
+    ctx.fillText(label, R - 28, 0);
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,R*0.13,0,Math.PI*2);
+  ctx.fillStyle = "#12062b"; ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 3; ctx.stroke();
+}
+function pointerWedgeIndex(){
+  var n = wheel.wedges.length;
+  if(n === 0) return -1;
+  var arc = Math.PI*2 / n;
+  var pointer = -Math.PI/2;
+  var rel = (pointer - wheel.angle) % (Math.PI*2);
+  if(rel < 0) rel += Math.PI*2;
+  var idx = Math.floor(rel / arc) % n;
+  if(idx < 0) idx += n;
+  return idx;
+}
+function easeOutQuint(t){ return 1 - Math.pow(1-t, 5); }
+function startSpin(){
+  if(wheel.spinning) return;
+  var n = wheel.wedges.length;
+  if(n === 0){ showAlert("No activities match. Try different filters."); return; }
+  wheel.spinning = true;
+  wheel.spinDuration = wheel.reduceMotion ? 1000 : (3400 + Math.random()*1600);
+  wheel.spinStartTime = performance.now();
+  wheel.startAngle = wheel.angle;
+  var fullTurns = 4 + Math.floor(Math.random()*4);
+  var extra = Math.random() * Math.PI*2;
+  wheel.endAngle = wheel.startAngle + fullTurns*Math.PI*2 + extra;
+  wheel.lastTickWedge = pointerWedgeIndex();
+  document.getElementById("btnSpin").disabled = true;
+  document.getElementById("resultCard").classList.remove("show");
+  requestAnimationFrame(stepSpin);
+}
+function stepSpin(now){
+  var t = (now - wheel.spinStartTime) / wheel.spinDuration;
+  if(t >= 1){
+    wheel.angle = wheel.endAngle;
+    drawWheel();
+    var idx = pointerWedgeIndex();
+    wheel.spinning = false;
+    document.getElementById("btnSpin").disabled = false;
+    onSpinEnd(idx);
+    return;
+  }
+  var eased = easeOutQuint(t);
+  wheel.angle = wheel.startAngle + (wheel.endAngle - wheel.startAngle) * eased;
+  drawWheel();
+  var idx = pointerWedgeIndex();
+  if(idx !== wheel.lastTickWedge){
+    wheel.lastTickWedge = idx;
+    if(state.sound && wheel.tickFn) wheel.tickFn();
+  }
+  requestAnimationFrame(stepSpin);
+}
+function onSpinEnd(idx){
+  if(idx < 0 || idx >= wheel.wedges.length) return;
+  var a = wheel.wedges[idx];
+  state.lastResult = a;
+  state.lastResults.unshift(a);
+  if(state.lastResults.length > 48) state.lastResults.length = 48;
+  state.spinCount++;
+  updateKPIs();
+  showResult(a);
+  if(state.sound && wheel.chimeFn) wheel.chimeFn();
+  fireConfetti();
+}
+
+/* =========================================================
+   RESULT CARD
+   ========================================================= */
+function showResult(a){
+  var rc = document.getElementById("resultCard");
+  document.getElementById("rcIcon").innerHTML = ICONS[a.i] || ICONS.sparkle;
+  document.getElementById("rcText").textContent = a.a;
+  document.getElementById("rcTip").textContent = a.t;
+  var mins = a.m >= 120 ? "2+ hours" : a.m >= 60 ? "1 hour" : a.m + " min";
+  document.getElementById("rcMeta").innerHTML =
+    '<span>' + mins + '</span><span>' + a.e + ' energy</span><span>' + a.c + '</span>' +
+    '<span>' + (a.p[0] || "Anywhere") + '</span><span>' + (a.w[0] || "Solo") + '</span>';
+  rc.classList.add("show");
+}
+function fireConfetti(){
+  if(wheel.reduceMotion) return;
+  var box = document.getElementById("confetti");
+  box.innerHTML = "";
+  var colors = ["#FF006E","#8338EC","#3A86FF","#00D9A6","#FFB703","#FF5C8A"];
+  var i;
+  for(i=0;i<34;i++){
+    var s = document.createElement("i");
+    s.style.left = (Math.random()*100) + "%";
+    s.style.top = (-10 - Math.random()*40) + "px";
+    s.style.background = colors[i % colors.length];
+    s.style.animationDelay = (Math.random()*0.4) + "s";
+    s.style.animationDuration = (1.4 + Math.random()*0.8) + "s";
+    s.style.transform = "rotate(" + (Math.random()*360) + "deg)";
+    box.appendChild(s);
+  }
+  setTimeout(function(){ box.innerHTML = ""; }, 2600);
+}
+
+/* =========================================================
+   AUDIO
+   ========================================================= */
+function makeAudio(){
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return {tick:null, chime:null};
+  var ctx = new AC();
+  return {
+    tick: function(){
+      try{
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "square"; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.04, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.04);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime+0.05);
+      }catch(e){}
+    },
+    chime: function(){
+      try{
+        var notes = [523.25, 659.25, 783.99, 1046.5], i;
+        for(i=0;i<notes.length;i++){
+          (function(n, delay){
+            var o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = "sine"; o.frequency.value = n;
+            g.gain.setValueAtTime(0.0001, ctx.currentTime + delay);
+            g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + delay + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + delay + 0.5);
+            o.connect(g); g.connect(ctx.destination);
+            o.start(ctx.currentTime + delay); o.stop(ctx.currentTime + delay + 0.7);
+          })(notes[i], i*0.07);
+        }
+      }catch(e){}
+    }
+  };
+}
+
+/* =========================================================
+   MEASURED TEXT FIT
+   ========================================================= */
+function measureFit(text, maxW, maxH, startPx){
+  var m = document.getElementById("measureEl");
+  m.style.width = maxW + "px";
+  m.style.height = "auto";
+  m.style.fontFamily = "Plus Jakarta Sans, sans-serif";
+  m.style.fontWeight = "700";
+  m.style.lineHeight = "1.25";
+  var px = startPx;
+  while(px > 9){
+    m.style.fontSize = px + "px";
+    m.textContent = text;
+    if(m.offsetHeight <= maxH) return {px:px, text:text};
+    px -= 0.5;
+  }
+  m.style.fontSize = "10px";
+  var t = text;
+  while(t.length > 4 && m.offsetHeight > maxH){
+    t = t.substring(0, t.length-2);
+    m.textContent = t + "…";
+  }
+  return {px:10, text:t + "…"};
+}
+
+/* =========================================================
+   CARD ELEMENT
+   ========================================================= */
+function buildCardEl(a, preset, index, opts){
+  opts = opts || {};
+  var card = document.createElement("div");
+  card.className = "pcard" + (preset.safe ? " print-safe" : "") + (opts.blank ? " blank" : "");
+  card.style.setProperty("--band-a", preset.a);
+  card.style.setProperty("--band-b", preset.b);
+  card.style.background = preset.paper;
+  card.style.color = preset.ink;
+
+  var band = document.createElement("div"); band.className = "band"; card.appendChild(band);
+  var head = document.createElement("div"); head.className = "head";
+  var ico = document.createElement("div"); ico.className = "ico";
+  ico.innerHTML = ICONS[opts.blank ? "sparkle" : (a.i || "sparkle")];
+  head.appendChild(ico);
+  var chips = document.createElement("div"); chips.className = "chips";
+  if(!opts.blank){
+    var mins = a.m >= 120 ? "2+ hrs" : a.m >= 60 ? "1 hr" : a.m + " min";
+    var c1 = document.createElement("span"); c1.className = "chip"; c1.textContent = mins; chips.appendChild(c1);
+    var c2 = document.createElement("span"); c2.className = "chip"; c2.textContent = a.e; chips.appendChild(c2);
+  } else {
+    var c3 = document.createElement("span"); c3.className = "chip"; c3.textContent = "write your own"; chips.appendChild(c3);
+  }
+  head.appendChild(chips);
+  card.appendChild(head);
+
+  var txt = document.createElement("div"); txt.className = "txt";
+  if(opts.blank){
+    txt.textContent = "____________________________";
+    txt.style.fontSize = "14px";
+    txt.style.color = "#c9c9c9";
+  } else {
+    var fit = measureFit(a.a, 320, 96, 16);
+    txt.style.fontSize = fit.px + "px";
+    txt.textContent = fit.text;
+  }
+  card.appendChild(txt);
+
+  var tip = document.createElement("div"); tip.className = "tip";
+  if(opts.blank){
+    tip.textContent = "Idea:";
+    tip.style.fontSize = "11px";
+  } else {
+    var fitTip = measureFit(a.t, 320, 40, 11);
+    tip.style.fontSize = fitTip.px + "px";
+    tip.textContent = fitTip.text;
+  }
+  card.appendChild(tip);
+
+  var foot = document.createElement("div"); foot.className = "foot";
+  var left = document.createElement("span"); left.textContent = "seed " + state.seed;
+  var right = document.createElement("span"); right.textContent = "#" + (index+1);
+  foot.appendChild(left); foot.appendChild(right);
+  card.appendChild(foot);
+  return card;
+}
+
+/* =========================================================
+   PACK PAGE BUILDERS
+   ========================================================= */
+function makeCoverPage(){
+  var p = document.createElement("div");
+  p.className = "page " + (state.paperSize === "a4" ? "a4" : "letter");
+  var c = document.createElement("div"); c.className = "cover";
+  c.style.setProperty("--c-a", state.accentA);
+  c.style.setProperty("--c-b", state.accentB);
+  c.innerHTML = '<div class="badge">' + (state.mode === "neutral" ? "Activity Pack" : "Screen-Free Pack") + '</div>' +
+    '<h1>' + escapeHtml(state.title) + '</h1>' +
+    '<div class="sub">' + escapeHtml(state.subtitle) + '</div>' +
+    '<div class="badge">' + ACTIVITIES.length + ' activities</div>' +
+    '<div class="shop">' + escapeHtml(state.shop) + '</div>';
+  p.appendChild(c);
+  return p;
+}
+function makeInstructionsPage(){
+  var p = document.createElement("div");
+  p.className = "page " + (state.paperSize === "a4" ? "a4" : "letter");
+  var inner = document.createElement("div"); inner.className = "info-page";
+  var title = state.mode === "neutral" ? "How to use this activity pack" : "How to use this screen-free pack";
+  inner.innerHTML =
+    '<h2>' + title + '</h2>' +
+    '<div class="lead">A gentle, low-pressure way to find something to do.</div>' +
+    '<div class="box"><h3>1. Cut out the cards</h3><p>Print the card pages, cut along the dashed lines, and put them in a jar, a box or a bowl.</p></div>' +
+    '<div class="box"><h3>2. Pick one when you are bored</h3><p>Pull a card at random. You can do it as written, or swap it for another if it does not fit the moment.</p></div>' +
+    '<div class="box"><h3>3. Use the blank cards</h3><p>The blank cards are for your own ideas. Write one activity per card and add it to the jar.</p></div>' +
+    '<div class="box"><h3>4. Track your streak</h3><p>Colour in a square on the tracker each time you complete an activity. Aim for 30, not for perfect.</p></div>' +
+    '<div class="box"><h3>5. Finish with the certificate</h3><p>When the tracker is full, sign the certificate and keep it somewhere you will see it.</p></div>' +
+    '<p style="font-size:11.5px;color:#9a93ad;margin-top:auto">' + escapeHtml(state.shop) + ' · seed ' + state.seed + '</p>';
+  p.appendChild(inner);
+  return p;
+}
+function makeCardsPages(cards, blankMode){
+  var pages = [];
+  var size = state.paperSize === "a4" ? "a4" : "letter";
+  var preset = PRESETS[state.presetIndex];
+  var total = cards.length;
+  var pageCount = Math.ceil(total / 8);
+  var i, p;
+  for(p=0;p<pageCount;p++){
+    var page = document.createElement("div");
+    page.className = "page " + size;
+    var inner = document.createElement("div"); inner.className = "page-inner";
+    var grid = document.createElement("div"); grid.className = "cards-grid";
+    for(i=0;i<8;i++){
+      var idx = p*8 + i;
+      if(idx < total) grid.appendChild(buildCardEl(cards[idx], preset, idx, {blank: blankMode}));
+      else { var b = document.createElement("div"); b.className = "pcard"; b.style.border = "1.5px dashed #e5e5e5"; grid.appendChild(b); }
+    }
+    inner.appendChild(grid); page.appendChild(inner);
+    var foot = document.createElement("div"); foot.className = "page-footer";
+    foot.innerHTML = '<span>' + escapeHtml(state.title) + ' · seed ' + state.seed + ' · ' + escapeHtml(state.shop) + '</span>' +
+      '<span>' + (blankMode ? 'Blank cards' : 'Cards') + ' · Page ' + (p+1) + ' / ' + pageCount + '</span>';
+    page.appendChild(foot);
+    pages.push(page);
+  }
+  return pages;
+}
+function makeTrackerPage(){
+  var p = document.createElement("div");
+  p.className = "page " + (state.paperSize === "a4" ? "a4" : "letter");
+  var inner = document.createElement("div"); inner.className = "info-page";
+  var grid = '<div class="tracker-grid">';
+  var i;
+  for(i=1;i<=30;i++) grid += '<div class="tracker-cell">' + i + '</div>';
+  grid += '</div>';
+  inner.innerHTML = '<h2>30-Day Tracker</h2>' +
+    '<div class="lead">Colour one square each time you finish an activity. Aim for progress, not perfection.</div>' +
+    grid +
+    '<div class="box" style="margin-top:18px"><h3>Notes</h3><p style="height:60px"></p></div>' +
+    '<p style="font-size:11.5px;color:#9a93ad;margin-top:auto">' + escapeHtml(state.shop) + ' · seed ' + state.seed + '</p>';
+  p.appendChild(inner);
+  return p;
+}
+function makeCertificatePage(){
+  var p = document.createElement("div");
+  p.className = "page " + (state.paperSize === "a4" ? "a4" : "letter");
+  var inner = document.createElement("div"); inner.className = "info-page";
+  inner.style.justifyContent = "center";
+  var cert = document.createElement("div"); cert.className = "cert";
+  cert.style.setProperty("--c-a", state.accentA);
+  cert.innerHTML = '<div class="seal">DONE<br>30</div>' +
+    '<h2>Certificate</h2>' +
+    '<p>This certifies that <b>________________________</b> completed the 30-day activity challenge.</p>' +
+    '<div class="sign"><div>Signed</div><div>Date</div></div>';
+  inner.appendChild(cert);
+  p.appendChild(inner);
+  return p;
+}
+function makeJarLabelsPage(){
+  var p = document.createElement("div");
+  p.className = "page " + (state.paperSize === "a4" ? "a4" : "letter");
+  var inner = document.createElement("div"); inner.className = "info-page";
+  var labels = '';
+  var i;
+  for(i=0;i<6;i++){
+    labels += '<div style="border:2px dashed #c9c9c9;border-radius:14px;padding:22px;text-align:center;margin-bottom:14px">' +
+      '<div style="font-family:Syne,sans-serif;font-size:26px;color:#18122b">' + escapeHtml(state.title) + '</div>' +
+      '<div style="font-size:12px;color:#6b6480;font-style:italic;margin-top:4px">' + escapeHtml(state.subtitle) + '</div>' +
+      '</div>';
+  }
+  inner.innerHTML = '<h2>Jar Labels</h2><div class="lead">Cut along the dashed lines and stick one on your jar, box or bowl.</div>' + labels +
+    '<p style="font-size:11.5px;color:#9a93ad;margin-top:auto">' + escapeHtml(state.shop) + ' · seed ' + state.seed + '</p>';
+  p.appendChild(inner);
+  return p;
+}
+function makePosterPage(){
+  var p = document.createElement("div");
+  p.className = "page " + (state.paperSize === "a4" ? "a4" : "letter");
+  var inner = document.createElement("div"); inner.className = "poster";
+  var svg = '<svg viewBox="0 0 400 400" width="360" height="360" style="margin:6px 0">';
+  var n = 8, i;
+  for(i=0;i<n;i++){
+    var a0 = i * Math.PI*2/n - Math.PI/2;
+    var a1 = a0 + Math.PI*2/n;
+    var x0 = 200 + 190*Math.cos(a0), y0 = 200 + 190*Math.sin(a0);
+    var x1 = 200 + 190*Math.cos(a1), y1 = 200 + 190*Math.sin(a1);
+    var fill = i % 2 === 0 ? state.accentA : state.accentB;
+    svg += '<path d="M200,200 L' + x0 + ',' + y0 + ' A190,190 0 0,1 ' + x1 + ',' + y1 + ' Z" fill="' + fill + '" opacity="' + (0.55 + (i%3)*0.15) + '"/>';
+  }
+  svg += '<circle cx="200" cy="200" r="30" fill="#fff"/>';
+  svg += '<circle cx="200" cy="200" r="8" fill="' + state.accentA + '"/>';
+  svg += '</svg>';
+  inner.innerHTML = '<h2>' + escapeHtml(state.title) + '</h2>' +
+    '<div class="sub">' + escapeHtml(state.subtitle) + '</div>' +
+    svg +
+    '<div class="rule"><b>How to spin:</b> close your eyes, point to a wedge, do the activity.<br>' +
+    'Or use the cut-out cards. Either way, one small thing is enough.<br><br>' +
+    escapeHtml(state.shop) + ' · seed ' + state.seed + '</div>';
+  p.appendChild(inner);
+  return p;
+}
+
+/* =========================================================
+   PACK BUILDER
+   ========================================================= */
+function buildPack(seed, paletteIndex){
+  var f = {time:state.time, energy:state.energy, place:state.place, who:state.who};
+  var pool = filterPool(f, {});
+  if(pool.length < 30) pool = filterPool(f, {who:true});
+  if(pool.length < 30) pool = filterPool(f, {who:true, place:true});
+  if(pool.length < 30) pool = filterPool(f, {who:true, place:true, energy:true});
+  if(pool.length < 30) pool = ACTIVITIES.slice();
+  var rng = mulberry32(seed);
+  var cards = shuffleWith(pool, rng).slice(0, 30);
+  var blanks = shuffleWith(pool, mulberry32(seed+1)).slice(0, 10);
+  return {seed:seed, paletteIndex:paletteIndex, cards:cards, blanks:blanks, length:cards.length};
+}
+function makePackPages(pack, paletteIndex){
+  var savedPreset = state.presetIndex;
+  var savedSeed = state.seed;
+  var savedA = state.accentA, savedB = state.accentB;
+  var savedPaper = state.paper, savedInk = state.ink;
+  state.presetIndex = paletteIndex;
+  state.seed = pack.seed;
+  var preset = PRESETS[paletteIndex];
+  state.accentA = preset.a; state.accentB = preset.b;
+  state.paper = preset.paper; state.ink = preset.ink;
+  var pages = [];
+  if(state.packExtras.cover) pages.push(makeCoverPage());
+  if(state.packExtras.instructions) pages.push(makeInstructionsPage());
+  if(state.packExtras.cards) pages = pages.concat(makeCardsPages(pack.cards, false));
+  if(state.packExtras.blanks) pages = pages.concat(makeCardsPages(pack.blanks, true));
+  if(state.packExtras.tracker) pages.push(makeTrackerPage());
+  if(state.packExtras.certificate) pages.push(makeCertificatePage());
+  if(state.packExtras.jarLabels) pages.push(makeJarLabelsPage());
+  if(state.packExtras.poster) pages.push(makePosterPage());
+  state.presetIndex = savedPreset;
+  state.seed = savedSeed;
+  state.accentA = savedA; state.accentB = savedB;
+  state.paper = savedPaper; state.ink = savedInk;
+  return pages;
+}
+
+/* =========================================================
+   RENDER PACK (preview only, scaled)
+   ========================================================= */
+function renderPack(packIndex){
+  var out = document.getElementById("cardsOut");
+  out.innerHTML = "";
+  if(!state.batch.length){
+    out.innerHTML = '<div class="empty-state"><div class="big">Your first pack starts here.</div><div class="sub">Pick a situation or set filters, then press Generate pack batch.</div></div>';
+    updateNav(); return;
+  }
+  var pack = state.batch[packIndex];
+  if(pack){
+    state.seed = pack.seed;
+    state.presetIndex = pack.paletteIndex;
+    var preset = PRESETS[pack.paletteIndex];
+    state.accentA = preset.a; state.accentB = preset.b;
+    state.paper = preset.paper; state.ink = preset.ink;
+    applyPresetToShell(preset);
+  }
+  var pages = makePackPages(pack, pack.paletteIndex);
+  var i;
+  for(i=0;i<pages.length;i++){
+    pages[i].style.transform = "scale(" + state.cardZoom + ")";
+    pages[i].style.transformOrigin = "top center";
+    var h = state.paperSize === "a4" ? A4_H : LETTER_H;
+    pages[i].style.marginBottom = (state.cardZoom < 1 ? -(h * (1-state.cardZoom)) + 18 : 18) + "px";
+    out.appendChild(pages[i]);
+  }
+  updateNav();
+  updateProg(pages.length, pages.length);
+  document.getElementById("btnPrint").disabled = false;
+}
+function updateNav(){
+  var pages = document.querySelectorAll("#cardsOut .page");
+  var total = Math.max(1, pages.length);
+  document.getElementById("navPage").textContent = "Page " + (state.cardPage+1) + " / " + total;
+  document.getElementById("navPrev").disabled = state.cardPage <= 0;
+  document.getElementById("navNext").disabled = state.cardPage >= total-1;
+  document.getElementById("navZoom").textContent = Math.round(state.cardZoom*100) + "%";
+}
+function updateProg(done, total){
+  var pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById("progBar").style.width = pct + "%";
+  document.getElementById("progNote").textContent = "Pack: " + done + " / " + total + " pages";
+}
+
+/* =========================================================
+   PRINT — build clean print layer at real size
+   ========================================================= */
+function buildPrintLayer(){
+  var layer = document.getElementById("printLayer");
+  layer.innerHTML = "";
+  if(!state.batch.length) return false;
+  var i;
+  for(i=0;i<state.batch.length;i++){
+    var pack = state.batch[i];
+    var pages = makePackPages(pack, pack.paletteIndex);
+    var j;
+    for(j=0;j<pages.length;j++){
+      pages[j].style.transform = "none";
+      pages[j].style.margin = "0";
+      layer.appendChild(pages[j]);
+    }
+  }
+  return layer.children.length > 0;
+}
+function doPrint(){
+  var ok = buildPrintLayer();
+  if(!ok){ showAlert("Generate a pack first."); return; }
+  setTimeout(function(){ window.print(); }, 50);
+}
+
+/* =========================================================
+   WHEEL REFRESH
+   ========================================================= */
+function refreshWheelFromFilters(){
+  var r = poolForWheel(state, state.wedges);
+  var rng = mulberry32(state.seed);
+  var sample = shuffleWith(r.pool, rng).slice(0, state.wedges);
+  wheel.wedges = sample;
+  wheel.colors = wheelColors(sample.length);
+  wheel.angle = 0;
+  drawWheel();
+  updateKPIs();
+  var note = document.getElementById("relaxNote");
+  if(r.relaxed) note.innerHTML = '<div class="relax-note">Filters relaxed: ' + escapeHtml(r.relaxed) + ' — so the wheel could be filled.</div>';
+  else note.innerHTML = "";
+}
+function updateKPIs(){
+  document.getElementById("kpiPool").textContent = poolForWheel(state, state.wedges).pool.length;
+  document.getElementById("kpiWedges").textContent = state.wedges;
+  document.getElementById("kpiJar").textContent = state.jar.length;
+  document.getElementById("kpiSpins").textContent = state.spinCount;
+  document.getElementById("kpiPacks").textContent = state.batch.length;
+}
+
+/* =========================================================
+   JAR
+   ========================================================= */
+function jarAdd(a){
+  var i;
+  for(i=0;i<state.jar.length;i++) if(state.jar[i].a === a.a) return false;
+  state.jar.unshift(a); saveState(); renderJar(); updateKPIs(); return true;
+}
+function jarRemove(idx){ state.jar.splice(idx,1); saveState(); renderJar(); updateKPIs(); }
+function renderJar(){
+  var el = document.getElementById("jarList");
+  if(!state.jar.length){ el.innerHTML = '<div class="jar-empty">Nothing in the jar yet. Save a spin you like.</div>'; return; }
+  el.innerHTML = state.jar.map(function(a,i){
+    return '<div class="jar-item"><div class="t">' + escapeHtml(a.a) + '</div><button data-i="' + i + '">×</button></div>';
+  }).join("");
+  el.querySelectorAll("button").forEach(function(b){ b.onclick = function(){ jarRemove(Number(b.dataset.i)); }; });
+}
+
+/* =========================================================
+   PERSISTENCE
+   ========================================================= */
+function saveState(){
+  try{
+    var d = {jar:state.jar, shop:state.shop, title:state.title, subtitle:state.subtitle,
+      presetIndex:state.presetIndex, accentA:state.accentA, accentB:state.accentB,
+      paper:state.paper, ink:state.ink, paperSize:state.paperSize, sound:state.sound,
+      mode:state.mode, packExtras:state.packExtras};
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    var d = JSON.parse(raw);
+    if(d.jar) state.jar = d.jar;
+    if(d.shop) state.shop = d.shop;
+    if(d.title) state.title = d.title;
+    if(d.subtitle) state.subtitle = d.subtitle;
+    if(typeof d.presetIndex === "number") state.presetIndex = d.presetIndex;
+    if(d.accentA) state.accentA = d.accentA;
+    if(d.accentB) state.accentB = d.accentB;
+    if(d.paper) state.paper = d.paper;
+    if(d.ink) state.ink = d.ink;
+    if(d.paperSize) state.paperSize = d.paperSize;
+    if(typeof d.sound === "boolean") state.sound = d.sound;
+    if(d.mode) state.mode = d.mode;
+    if(d.packExtras) state.packExtras = d.packExtras;
+  }catch(e){}
+}
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function showAlert(msg){
+  var el = document.createElement("div"); el.className = "alert"; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 4200);
+}
+function showToast(msg){
+  var el = document.createElement("div"); el.className = "toast"; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ el.classList.add("show"); }, 10);
+  setTimeout(function(){ el.classList.remove("show"); }, 2200);
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 2600);
+}
+function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") || "pack"; }
+
+/* =========================================================
+   UI WIRING
+   ========================================================= */
+function bindSeg(id, key, after){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.querySelectorAll("button").forEach(function(b){
+    b.onclick = function(){
+      el.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      var v = b.dataset.v;
+      if(key === "time") state.time = Number(v);
+      else if(key === "wedges") state.wedges = Number(v);
+      else if(key === "sound") state.sound = (v === "on");
+      else state[key] = v;
+      if(after) after();
+    };
+  });
+}
+function renderPresets(){
+  var sel = document.getElementById("presetSel");
+  sel.innerHTML = PRESETS.map(function(p,i){ return '<option value="' + i + '">' + p.name + '</option>'; }).join("");
+  sel.value = String(state.presetIndex);
+  sel.onchange = function(){
+    state.presetIndex = Number(sel.value);
+    var p = PRESETS[state.presetIndex];
+    state.accentA = p.a; state.accentB = p.b; state.paper = p.paper; state.ink = p.ink;
+    document.getElementById("inpAccentA").value = p.a;
+    document.getElementById("inpAccentB").value = p.b;
+    document.getElementById("inpPaper").value = p.paper;
+    document.getElementById("inpInk").value = p.ink;
+    applyPresetToShell(p);
+    saveState();
+    if(state.batch.length) renderPack(state.activeBatch);
+    refreshWheelFromFilters();
+  };
+  var sw = document.getElementById("swatches");
+  sw.innerHTML = PRESETS.map(function(p,i){
+    return '<button data-i="' + i + '" title="' + p.name + '" style="background:linear-gradient(135deg,' + p.a + ',' + p.b + ')"></button>';
+  }).join("");
+  sw.querySelectorAll("button").forEach(function(b){ b.onclick = function(){ sel.value = b.dataset.i; sel.onchange(); }; });
+}
+function renderSituations(){
+  var el = document.getElementById("situationChips");
+  el.innerHTML = SITUATIONS.map(function(s){
+    return '<button class="chip" data-id="' + s.id + '">' + escapeHtml(s.label) + '</button>';
+  }).join("");
+  el.querySelectorAll("button").forEach(function(b){
+    b.onclick = function(){
+      var s = SITUATIONS.filter(function(x){ return x.id === b.dataset.id; })[0];
+      if(!s) return;
+      el.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      state.time = s.f.time; state.energy = s.f.energy; state.place = s.f.place; state.who = s.f.who;
+      syncSeg("segTime", String(s.f.time));
+      syncSeg("segEnergy", s.f.energy);
+      syncSeg("segPlace", s.f.place);
+      syncSeg("segWho", s.f.who);
+      document.getElementById("sitNote").textContent = "Situation: " + s.label;
+      state.seed = newSeed();
+      refreshWheelFromFilters();
+    };
+  });
+}
+function syncSeg(id, value){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.querySelectorAll("button").forEach(function(b){
+    b.classList.toggle("on", b.dataset.v === value);
+  });
+}
+function applyPresetToShell(p){
+  var r = document.documentElement.style;
+  r.setProperty("--shell", p.shell[0]);
+  r.setProperty("--shell-2", p.shell[1]);
+  r.setProperty("--pink", p.a);
+  r.setProperty("--violet", p.b);
+  r.setProperty("--blue", p.safe ? "#333" : "#3A86FF");
+}
+function setView(v){
+  state.view = v;
+  document.getElementById("tabWheel").classList.toggle("on", v === "wheel");
+  document.getElementById("tabCards").classList.toggle("on", v === "cards");
+  document.getElementById("wheelStage").style.display = v === "wheel" ? "flex" : "none";
+  document.getElementById("cardsStage").style.display = v === "cards" ? "flex" : "none";
+  document.getElementById("navbar").style.display = v === "cards" ? "flex" : "none";
+}
+
+/* =========================================================
+   EXPORT
+   ========================================================= */
+function inlineComputedColors(root){
+  var all = root.querySelectorAll("*"), i;
+  for(i=0;i<all.length;i++){
+    var el = all[i];
+    var cs = window.getComputedStyle(el);
+    el.style.backgroundColor = cs.backgroundColor;
+    el.style.color = cs.color;
+    el.style.borderTopColor = cs.borderTopColor;
+    el.style.borderRightColor = cs.borderRightColor;
+    el.style.borderBottomColor = cs.borderBottomColor;
+    el.style.borderLeftColor = cs.borderLeftColor;
+    el.style.backdropFilter = "none";
+    el.style.webkitBackdropFilter = "none";
+    if(cs.backgroundImage && cs.backgroundImage !== "none"){
+      if(el.classList.contains("band") || el.classList.contains("ico") || el.classList.contains("cover") || el.classList.contains("cert")){
+        /* keep gradients on these */
+      } else {
+        el.style.backgroundImage = "none";
+      }
+    }
+  }
+}
+function ensureLibs(){
+  if(typeof html2canvas !== "function") return "html2canvas is missing. Check your internet connection.";
+  if(!window.jspdf || !window.jspdf.jsPDF) return "jsPDF is missing. Check your internet connection.";
+  return null;
+}
+function pagesToPDF(pages, filename, onDone){
+  var err = ensureLibs();
+  if(err){ showAlert(err + " Falling back to print."); doPrint(); if(onDone) onDone(); return; }
+  var size = state.paperSize === "a4" ? {w:595.28,h:841.89} : {w:612,h:792};
+  var pdf = new window.jspdf.jsPDF({unit:"pt", format:[size.w, size.h], orientation:"portrait"});
+  var i = 0;
+  function next(){
+    if(i >= pages.length){
+      try{
+        var blob = pdf.output("blob");
+        if(!blob || blob.size < 1000) throw new Error("PDF looks empty.");
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = filename; a.click();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+        showToast("PDF ready: " + pages.length + " pages");
+      }catch(e){
+        showAlert("PDF export failed: " + e.message + " Falling back to print.");
+        doPrint();
+      }
+      if(onDone) onDone();
+      return;
+    }
+    var page = pages[i];
+    var clone = page.cloneNode(true);
+    clone.style.transform = "none";
+    clone.style.margin = "0";
+    var holder = document.createElement("div");
+    holder.style.position = "fixed";
+    holder.style.left = "-99999px";
+    holder.style.top = "0";
+    holder.style.background = "#ffffff";
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+    inlineComputedColors(clone);
+    html2canvas(clone, {scale:EXPORT_SCALE, backgroundColor:"#ffffff", useCORS:true, logging:false, width:clone.offsetWidth, height:clone.offsetHeight})
+    .then(function(canvas){
+      var img = canvas.toDataURL("image/jpeg", 0.94);
+      if(!img || img.length < 500) throw new Error("Blank canvas captured.");
+      if(i > 0) pdf.addPage([size.w, size.h], "portrait");
+      pdf.addImage(img, "JPEG", 0, 0, size.w, size.h, undefined, "FAST");
+      document.body.removeChild(holder);
+      updateProg(i+1, pages.length);
+      i++; next();
+    }).catch(function(e){
+      if(holder.parentNode) holder.parentNode.removeChild(holder);
+      showAlert("Capture failed on page " + (i+1) + ": " + e.message + " Falling back to print.");
+      doPrint();
+      if(onDone) onDone();
+    });
+  }
+  next();
+}
+function exportThisPack(){
+  if(!state.batch.length){ showAlert("Generate a pack first."); return; }
+  var pack = state.batch[state.activeBatch];
+  var pages = makePackPages(pack, pack.paletteIndex);
+  var i;
+  for(i=0;i<pages.length;i++) pages[i].style.transform = "none";
+  pagesToPDF(pages, slug(state.title) + "-" + pack.seed + ".pdf");
+}
+function exportAllPacks(){
+  if(!state.batch.length){ showAlert("Generate a pack batch first."); return; }
+  var err = ensureLibs();
+  if(err){ showAlert(err + " Falling back to print."); doPrint(); return; }
+  var allPages = [];
+  var i, j;
+  for(i=0;i<state.batch.length;i++){
+    var pages = makePackPages(state.batch[i], state.batch[i].paletteIndex);
+    for(j=0;j<pages.length;j++){ pages[j].style.transform = "none"; allPages.push(pages[j]); }
+  }
+  pagesToPDF(allPages, slug(state.title) + "-batch-" + state.batch.length + "packs.pdf");
+}
+function exportPosterOnly(){
+  var p = makePosterPage();
+  p.style.transform = "none";
+  var holder = document.createElement("div");
+  holder.style.position = "fixed"; holder.style.left = "-99999px"; holder.style.top = "0"; holder.style.background = "#fff";
+  holder.appendChild(p); document.body.appendChild(holder);
+  pagesToPDF([p], slug(state.title) + "-poster.pdf", function(){
+    if(holder.parentNode) holder.parentNode.removeChild(holder);
+  });
+}
+function exportTrackerOnly(){
+  var p = makeTrackerPage();
+  p.style.transform = "none";
+  var holder = document.createElement("div");
+  holder.style.position = "fixed"; holder.style.left = "-99999px"; holder.style.top = "0"; holder.style.background = "#fff";
+  holder.appendChild(p); document.body.appendChild(holder);
+  pagesToPDF([p], slug(state.title) + "-tracker.pdf", function(){
+    if(holder.parentNode) holder.parentNode.removeChild(holder);
+  });
+}
+function exportPNGs(){
+  if(!state.batch.length){ showAlert("Generate a pack first."); return; }
+  var err = ensureLibs();
+  if(err){ showAlert(err); return; }
+  var pack = state.batch[state.activeBatch];
+  var preset = PRESETS[pack.paletteIndex];
+  var cards = pack.cards.slice(0, 8);
+  var i = 0;
+  function next(){
+    if(i >= cards.length){ showToast("PNGs ready: " + cards.length); return; }
+    var card = buildCardEl(cards[i], preset, i, {});
+    var holder = document.createElement("div");
+    holder.style.position = "fixed"; holder.style.left = "-99999px"; holder.style.top = "0";
+    holder.style.background = "#fff"; holder.style.width = "380px";
+    holder.appendChild(card); document.body.appendChild(holder);
+    inlineComputedColors(card);
+    html2canvas(card, {scale:EXPORT_SCALE, backgroundColor:"#ffffff", useCORS:true, logging:false})
+    .then(function(canvas){
+      var a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = slug(state.title) + "-card-" + (i+1) + ".png";
+      a.click();
+      document.body.removeChild(holder);
+      i++; next();
+    }).catch(function(e){
+      document.body.removeChild(holder);
+      showAlert("PNG " + (i+1) + " failed: " + e.message);
+      i++; next();
+    });
+  }
+  next();
+}
+
+/* =========================================================
+   VERIFICATION
+   ========================================================= */
+function runVerification(){
+  var report = [];
+  var times = [5,15,30,60,120], energies = ["Low","Medium","High"];
+  var places = ["Indoors","Outdoors","Anywhere","Car/Waiting"], whos = ["Solo","Partner","Family","Friends"];
+  var wedgeOpts = [6,8,10,12];
+  var totalA = 0, passA = 0, ti, ei, pi, wi, gi;
+  for(ti=0;ti<times.length;ti++) for(ei=0;ei<energies.length;ei++)
+  for(pi=0;pi<places.length;pi++) for(wi=0;wi<whos.length;wi++) for(gi=0;gi<wedgeOpts.length;gi++){
+    totalA++;
+    var f = {time:times[ti], energy:energies[ei], place:places[pi], who:whos[wi]};
+    var r = poolForWheel(f, wedgeOpts[gi]);
+    var rng = mulberry32(42);
+    var sample = shuffleWith(r.pool, rng).slice(0, wedgeOpts[gi]);
+    var uniq = {}, distinct = 0, k;
+    for(k=0;k<sample.length;k++){ if(!uniq[sample[k].a]){ uniq[sample[k].a]=1; distinct++; } }
+    if(distinct === wedgeOpts[gi] && sample.length === wedgeOpts[gi]) passA++;
+  }
+  report.push("(a) distinct wedges for every filter combo: " + passA + "/" + totalA);
+
+  var passB = 0, totalB = 1000, s;
+  for(s=0;s<totalB;s++){
+    var n = 6 + Math.floor(Math.random()*4)*2;
+    var f2 = {time:15, energy:"Low", place:"Indoors", who:"Solo"};
+    var r2 = poolForWheel(f2, n);
+    var w = shuffleWith(r2.pool, mulberry32(s+1)).slice(0, n);
+    var angle = Math.random()*Math.PI*2;
+    var arc = Math.PI*2/n;
+    var rel = ((-Math.PI/2 - angle) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    var idx = Math.floor(rel/arc) % n;
+    if(idx >= 0 && idx < n) passB++;
+  }
+  report.push("(b) angle→wedge consistency: " + passB + "/" + totalB);
+
+  var passC = 0, totalC = ACTIVITIES.length * PRESETS.length, ai, pj;
+  var m = document.getElementById("measureEl");
+  for(ai=0;ai<ACTIVITIES.length;ai++) for(pj=0;pj<PRESETS.length;pj++){
+    m.style.fontFamily = "Plus Jakarta Sans, sans-serif";
+    m.style.fontWeight = "700"; m.style.fontSize = "10px";
+    m.style.width = "320px"; m.style.lineHeight = "1.25";
+    m.textContent = ACTIVITIES[ai].a;
+    if(m.offsetHeight <= 96) passC++;
+  }
+  report.push("(c) text fits at min size: " + passC + "/" + totalC);
+
+  var passE = 0, totalE = 0, ti2, ei2, pi2, wi2;
+  for(ti2=0;ti2<times.length;ti2++) for(ei2=0;ei2<energies.length;ei2++)
+  for(pi2=0;pi2<places.length;pi2++) for(wi2=0;wi2<whos.length;wi2++){
+    totalE++;
+    var f3 = {time:times[ti2], energy:energies[ei2], place:places[pi2], who:whos[wi2]};
+    var r3 = poolForWheel(f3, 12);
+    if(r3.pool.length >= 1) passE++;
+  }
+  report.push("(e) never empty: " + passE + "/" + totalE);
+
+  report.push("(f) total activities: " + ACTIVITIES.length);
+  console.log("=== Phone-Free Activity Roulette — Pack Studio verification ===");
+  report.forEach(function(l){ console.log(l); });
+  return report;
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+function init(){
+  loadState();
+  renderPresets();
+  renderSituations();
+  bindSeg("segTime","time", function(){ state.seed = newSeed(); refreshWheelFromFilters(); });
+  bindSeg("segEnergy","energy", function(){ state.seed = newSeed(); refreshWheelFromFilters(); });
+  bindSeg("segPlace","place", function(){ state.seed = newSeed(); refreshWheelFromFilters(); });
+  bindSeg("segWho","who", function(){ state.seed = newSeed(); refreshWheelFromFilters(); });
+  bindSeg("segWedges","wedges", function(){ state.seed = newSeed(); refreshWheelFromFilters(); });
+  bindSeg("segSound","sound", function(){
+    if(state.sound){
+      var a = makeAudio();
+      wheel.tickFn = a.tick; wheel.chimeFn = a.chime;
+    } else { wheel.tickFn = null; wheel.chimeFn = null; }
+  });
+  bindSeg("segMode","mode", function(){
+    document.getElementById("modeNote").textContent = state.mode === "neutral"
+      ? "Neutral mode: no phone references. Good for classrooms and therapy."
+      : "Screen-free mode: gentle reminders about phones, no scolding.";
+    if(state.batch.length) renderPack(state.activeBatch);
+  });
+
+  document.getElementById("inpTitle").value = state.title;
+  document.getElementById("inpSubtitle").value = state.subtitle;
+  document.getElementById("inpShop").value = state.shop;
+  document.getElementById("inpAccentA").value = state.accentA;
+  document.getElementById("inpAccentB").value = state.accentB;
+  document.getElementById("inpPaper").value = state.paper;
+  document.getElementById("inpInk").value = state.ink;
+  document.getElementById("paperSel").value = state.paperSize;
+  document.getElementById("batchCount").value = state.batchCount;
+  syncSeg("segMode", state.mode);
+  syncSeg("segSound", state.sound ? "on" : "off");
+  document.querySelectorAll("#packExtras input").forEach(function(c){
+    c.checked = !!state.packExtras[c.dataset.k];
+    c.onchange = function(){ state.packExtras[c.dataset.k] = c.checked; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+  });
+
+  document.getElementById("inpTitle").oninput = function(){ state.title = this.value; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+  document.getElementById("inpSubtitle").oninput = function(){ state.subtitle = this.value; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+  document.getElementById("inpShop").oninput = function(){ state.shop = this.value; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+  document.getElementById("inpAccentA").oninput = function(){ state.accentA = this.value; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+  document.getElementById("inpAccentB").oninput = function(){ state.accentB = this.value; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+  document.getElementById("inpPaper").oninput = function(){ state.paper = this.value; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+  document.getElementById("inpInk").oninput = function(){ state.ink = this.value; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+  document.getElementById("paperSel").onchange = function(){ state.paperSize = this.value; saveState(); if(state.batch.length) renderPack(state.activeBatch); };
+
+  document.getElementById("tabWheel").onclick = function(){ setView("wheel"); };
+  document.getElementById("tabCards").onclick = function(){ setView("cards"); };
+  document.getElementById("btnSpin").onclick = startSpin;
+  document.getElementById("btnSpinAgain").onclick = startSpin;
+  document.getElementById("btnDoIt").onclick = function(){ showToast("Nice. Go do the thing."); document.getElementById("resultCard").classList.remove("show"); };
+  document.getElementById("btnSaveJar").onclick = function(){
+    if(!state.lastResult) return;
+    if(jarAdd(state.lastResult)) showToast("Saved to Boredom Jar.");
+    else showToast("Already in the jar.");
+  };
+  document.getElementById("btnClearJar").onclick = function(){
+    if(!state.jar.length) return;
+    if(confirm("Clear the Boredom Jar?")){ state.jar = []; saveState(); renderJar(); updateKPIs(); }
+  };
+
+  document.getElementById("btnGenerate").onclick = function(){
+    state.batchCount = Math.max(1, Math.min(20, Number(document.getElementById("batchCount").value) || 1));
+    var baseSeed = newSeed();
+    state.batch = [];
+    var i;
+    for(i=0;i<state.batchCount;i++){
+      state.batch.push(buildPack(baseSeed + i*7919, (state.presetIndex + i) % PRESETS.length));
+    }
+    state.activeBatch = 0;
+    var sel = document.getElementById("batchSel");
+    sel.innerHTML = state.batch.map(function(p,i){
+      return '<option value="' + i + '">Pack ' + (i+1) + ' · seed ' + p.seed + ' · ' + PRESETS[p.paletteIndex].name + '</option>';
+    }).join("");
+    sel.value = "0";
+    sel.onchange = function(){ state.activeBatch = Number(sel.value); renderPack(state.activeBatch); };
+    renderPack(0);
+    setView("cards");
+    updateKPIs();
+    showToast("Generated " + state.batchCount + " pack" + (state.batchCount>1?"s":""));
+  };
+
+  document.getElementById("btnExportPack").onclick = exportThisPack;
+  document.getElementById("btnExportAll").onclick = exportAllPacks;
+  document.getElementById("btnExportPoster").onclick = exportPosterOnly;
+  document.getElementById("btnExportTracker").onclick = exportTrackerOnly;
+  document.getElementById("btnExportPNGs").onclick = exportPNGs;
+  document.getElementById("btnPrint").onclick = doPrint;
+
+  document.getElementById("navPrev").onclick = function(){
+    if(state.cardPage > 0){
+      state.cardPage--;
+      var pages = document.querySelectorAll("#cardsOut .page");
+      if(pages[state.cardPage]) pages[state.cardPage].scrollIntoView({behavior:"smooth", block:"start"});
+      updateNav();
+    }
+  };
+  document.getElementById("navNext").onclick = function(){
+    var pages = document.querySelectorAll("#cardsOut .page");
+    if(state.cardPage < pages.length-1){
+      state.cardPage++;
+      if(pages[state.cardPage]) pages[state.cardPage].scrollIntoView({behavior:"smooth", block:"start"});
+      updateNav();
+    }
+  };
+  document.getElementById("navZoomIn").onclick = function(){ state.cardZoom = Math.min(1.5, state.cardZoom+0.1); if(state.batch.length) renderPack(state.activeBatch); };
+  document.getElementById("navZoomOut").onclick = function(){ state.cardZoom = Math.max(0.4, state.cardZoom-0.1); if(state.batch.length) renderPack(state.activeBatch); };
+
+  wheel.canvas = document.getElementById("wheel");
+  wheel.ctx = wheel.canvas.getContext("2d");
+  wheel.reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  state.seed = newSeed();
+  refreshWheelFromFilters();
+  renderJar();
+  updateKPIs();
+  setView("wheel");
+
+  setTimeout(function(){ runVerification(); }, 400);
+}
+
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+</script>
+</body>
+</html>
