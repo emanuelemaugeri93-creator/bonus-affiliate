@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detox Product Idea Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --yellow:#FFD60A;
+    --black:#000000;
+    --white:#ffffff;
+    --red:#D62828;
+    --paper:#ffffff;
+    --ink:#000000;
+    --font-head:'Space Grotesk',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --font-body:'Space Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:var(--yellow); color:var(--black);
+    font-family:var(--font-body); font-size:13px; line-height:1.55;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  h1,h2,h3,h4,.head{font-family:var(--font-head); text-transform:uppercase; letter-spacing:.5px; font-weight:700}
+  .split{display:grid; grid-template-columns:420px 1fr; height:100vh; width:100vw}
+  @media (max-width:980px){
+    .split{grid-template-columns:1fr; grid-template-rows:auto 1fr; height:auto; min-height:100vh}
+    body{overflow:auto}
+  }
+
+  /* ---------- LEFT: controls ---------- */
+  .controls{
+    background:var(--yellow); border-right:4px solid var(--black);
+    overflow-y:auto; padding:22px 20px 60px;
+  }
+  .controls::-webkit-scrollbar{width:10px}
+  .controls::-webkit-scrollbar-thumb{background:var(--black)}
+  .kicker{
+    font-family:var(--font-head); font-size:11px; letter-spacing:3px;
+    text-transform:uppercase; font-weight:700;
+  }
+  h1.title{
+    font-family:var(--font-head); font-size:34px; line-height:1;
+    margin:6px 0 8px; text-transform:uppercase; letter-spacing:-.5px;
+  }
+  .tagline{font-size:12.5px; margin:0 0 6px; font-weight:700}
+  .desc{font-size:11.5px; margin:0 0 20px; max-width:420px}
+  .desc b{background:var(--black); color:var(--yellow); padding:0 4px}
+
+  .panel{
+    background:var(--white); border:4px solid var(--black);
+    box-shadow:8px 8px 0 0 var(--black); padding:16px 15px; margin-bottom:22px;
+  }
+  .panel h2{
+    font-size:12px; margin:0 0 14px; letter-spacing:2.4px;
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+  }
+  .panel h2 .badge{
+    background:var(--black); color:var(--yellow); font-family:var(--font-body);
+    font-size:10px; padding:2px 8px; letter-spacing:1.6px; font-weight:700;
+  }
+  .field{margin-bottom:13px}
+  .field label{
+    display:block; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    font-weight:700; margin-bottom:5px;
+  }
+  select, input[type=text], input[type=number]{
+    width:100%; padding:9px 10px; background:var(--white); color:var(--black);
+    border:3px solid var(--black); font-family:var(--font-body); font-size:12.5px;
+    outline:none; appearance:none; border-radius:0;
+    background-image:linear-gradient(45deg, transparent 50%, var(--black) 50%),
+                     linear-gradient(135deg, var(--black) 50%, transparent 50%);
+    background-position:calc(100% - 16px) calc(50% + 1px), calc(100% - 11px) calc(50% + 1px);
+    background-size:5px 5px, 5px 5px;
+    background-repeat:no-repeat;
+  }
+  select:focus, input:focus{box-shadow:4px 4px 0 0 var(--black)}
+  input[type=number]{background-image:none; appearance:textfield}
+
+  .seg{display:flex; flex-wrap:wrap; gap:5px}
+  .seg button{
+    flex:1 1 auto; min-width:44px; padding:7px 6px; background:var(--white);
+    color:var(--black); border:3px solid var(--black); font-family:var(--font-body);
+    font-weight:700; font-size:11px; cursor:pointer; text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  .seg button:hover{background:var(--yellow)}
+  .seg button.on{background:var(--black); color:var(--yellow)}
+
+  .chips{display:flex; flex-wrap:wrap; gap:5px; max-height:150px; overflow-y:auto; padding-right:4px}
+  .chip{
+    padding:5px 9px; background:var(--white); color:var(--black);
+    border:3px solid var(--black); font-family:var(--font-body); font-weight:700;
+    font-size:10.5px; cursor:pointer; text-transform:uppercase; letter-spacing:.3px;
+  }
+  .chip:hover{background:var(--yellow)}
+  .chip.on{background:var(--red); color:var(--white); border-color:var(--black)}
+  .chip.on::before{content:'✓ '}
+
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+
+  .btn{
+    width:100%; padding:13px 16px; background:var(--black); color:var(--yellow);
+    border:4px solid var(--black); font-family:var(--font-head); font-weight:700;
+    font-size:14px; text-transform:uppercase; letter-spacing:2px; cursor:pointer;
+    box-shadow:6px 6px 0 0 var(--black);
+  }
+  .btn:hover{transform:translate(2px, 2px); box-shadow:4px 4px 0 0 var(--black)}
+  .btn.alt{background:var(--red); color:var(--white)}
+  .btn.ghost{background:var(--white); color:var(--black); box-shadow:6px 6px 0 0 var(--black)}
+  .btn.small{padding:9px 12px; font-size:11px; letter-spacing:1.4px}
+  .btn:disabled{opacity:.4; cursor:not-allowed; transform:none}
+
+  /* ---------- RIGHT: results ---------- */
+  .results{
+    background:var(--yellow); overflow-y:auto; padding:22px 24px 80px;
+    position:relative;
+  }
+  .results::-webkit-scrollbar{width:12px}
+  .results::-webkit-scrollbar-thumb{background:var(--black)}
+  .results-top{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .results-top .meta{
+    font-size:11px; letter-spacing:1.6px; text-transform:uppercase; font-weight:700;
+  }
+  .results-top .meta b{background:var(--black); color:var(--yellow); padding:2px 8px; font-family:var(--font-body)}
+  .results-top .actions{display:flex; gap:8px; flex-wrap:wrap}
+  .results-top .actions .btn{width:auto; padding:9px 13px; font-size:11px; letter-spacing:1.4px}
+
+  .empty{
+    background:var(--white); border:4px solid var(--black); box-shadow:8px 8px 0 0 var(--black);
+    padding:44px 26px; text-align:center; max-width:680px; margin:0 auto;
+  }
+  .empty .big{
+    font-family:var(--font-head); font-size:22px; text-transform:uppercase;
+    margin-bottom:8px; line-height:1.2;
+  }
+  .empty .sub{font-size:12.5px}
+
+  .cards{display:grid; grid-template-columns:1fr; gap:22px}
+  @media (min-width:1400px){ .cards{grid-template-columns:1fr 1fr} }
+
+  .card{
+    background:var(--white); border:4px solid var(--black); box-shadow:8px 8px 0 0 var(--black);
+    padding:18px; position:relative; display:flex; flex-direction:column; gap:12px;
+  }
+  .card .num{
+    position:absolute; top:-4px; left:-4px;
+    background:var(--red); color:var(--white); padding:4px 10px;
+    font-family:var(--font-head); font-weight:700; font-size:12px; letter-spacing:1.6px;
+    border-right:4px solid var(--black); border-bottom:4px solid var(--black);
+  }
+  .card .card-head{padding-left:44px; min-height:30px}
+  .card h3{
+    font-size:16px; line-height:1.25; margin:0 0 6px; text-transform:none; letter-spacing:0;
+  }
+  .card .sub{
+    font-size:12px; font-style:italic; color:#333; margin:0;
+  }
+  .card .row{
+    display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;
+    border-top:3px solid var(--black); border-bottom:3px solid var(--black); padding:8px 0;
+    font-size:11px; text-transform:uppercase; letter-spacing:1.4px; font-weight:700;
+  }
+  .card .row .price{
+    background:var(--black); color:var(--yellow); padding:3px 9px; letter-spacing:1.6px;
+  }
+  .card .block{font-size:11.5px; line-height:1.5}
+  .card .block h4{
+    font-size:10.5px; letter-spacing:2px; margin:0 0 6px;
+  }
+  .card .block ul{margin:0; padding-left:16px}
+  .card .block ul li{margin-bottom:3px}
+  .card .tags{display:flex; flex-wrap:wrap; gap:4px}
+  .card .tags span{
+    background:var(--yellow); border:2px solid var(--black);
+    padding:2px 7px; font-size:10px; font-weight:700; letter-spacing:.4px;
+  }
+  .card .desc-box{
+    background:#f4f4f4; border:3px solid var(--black); padding:11px 12px;
+    font-size:11.5px; line-height:1.55; white-space:pre-wrap;
+  }
+  .card .small-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:11px;
+  }
+  .card .small-grid > div{border:3px solid var(--black); padding:8px 10px; background:#fafafa}
+  .card .small-grid b{display:block; font-size:9.5px; letter-spacing:1.6px; text-transform:uppercase; margin-bottom:4px}
+  .card .card-actions{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px}
+  .card .card-actions .btn{width:auto; flex:1 1 auto; padding:8px 10px; font-size:10px; letter-spacing:1.2px; box-shadow:4px 4px 0 0 var(--black)}
+
+  .card.tpt .row .price{background:var(--red); color:var(--white)}
+
+  /* ---------- Toast / alert ---------- */
+  .alert{
+    position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:999;
+    background:var(--red); color:var(--white); padding:12px 18px;
+    border:4px solid var(--black); box-shadow:6px 6px 0 0 var(--black);
+    font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:1.4px;
+    max-width:90vw;
+  }
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:999;
+    background:var(--black); color:var(--yellow); padding:12px 22px;
+    border:4px solid var(--black); box-shadow:6px 6px 0 0 var(--black);
+    font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:1.6px;
+    opacity:0; transition:opacity .2s;
+  }
+  .toast.show{opacity:1}
+
+  /* ---------- Brand panel ---------- */
+  .brand-panel{
+    background:var(--white); border:4px solid var(--black); box-shadow:8px 8px 0 0 var(--black);
+    padding:16px; margin-bottom:22px;
+  }
+  .brand-panel h2{font-size:12px; margin:0 0 12px; letter-spacing:2.4px}
+  .brand-panel .field{margin-bottom:10px}
+  .brand-panel .field input{
+    border-width:3px; font-size:12px; padding:8px 10px;
+  }
+  .brand-panel .actions{display:flex; gap:8px; margin-top:10px}
+  .brand-panel .actions .btn{flex:1; padding:9px; font-size:11px; letter-spacing:1.4px}
+
+  /* ---------- Focus & a11y ---------- */
+  *:focus-visible{outline:3px solid var(--red); outline-offset:2px}
+  .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0}
+
+  /* ---------- Animations ---------- */
+  @keyframes pop{
+    0%{transform:scale(.96); opacity:0}
+    100%{transform:scale(1); opacity:1}
+  }
+  .card.enter{animation:pop .3s ease-out both}
+  @media (prefers-reduced-motion:reduce){
+    .card.enter{animation:none}
+    *{transition-duration:.001ms !important}
+  }
+
+  @media (max-width:480px){
+    h1.title{font-size:26px}
+    .controls{padding:16px 14px 40px}
+    .results{padding:14px}
+    .card{padding:14px}
+    .card .card-head{padding-left:36px}
+    .card h3{font-size:14.5px}
+    .card .small-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="split">
+
+  <!-- =============== LEFT =============== -->
+  <aside class="controls">
+    <div class="kicker">Bonus #7 · Seller tool</div>
+    <h1 class="title">Detox Product<br>Idea Engine</h1>
+    <p class="tagline">What should I list next? Here are twelve answers.</p>
+    <p class="desc">Pick your audience, angle and season and get twelve printable product ideas, each with an <b>Etsy-ready title</b>, <b>13 tags</b>, a <b>listing description</b> and a <b>suggested price</b>.</p>
+
+    <div class="brand-panel">
+      <h2>Seller branding</h2>
+      <div class="field">
+        <label for="brandShop">Shop name</label>
+        <input type="text" id="brandShop" value="Your Shop" maxlength="40">
+      </div>
+      <div class="field">
+        <label for="brandHandle">Handle or link (optional)</label>
+        <input type="text" id="brandHandle" value="" maxlength="60" placeholder="@yourshop or yoursite.example">
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="btnClearBrand">Clear</button>
+        <button class="btn" id="btnSaveBrand">Save</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Setup <span class="badge" id="setupCount">12</span></h2>
+
+      <div class="field">
+        <label for="audienceSel">Audience</label>
+        <select id="audienceSel"></select>
+      </div>
+
+      <div class="field">
+        <label for="angleSel">Angle</label>
+        <select id="angleSel"></select>
+      </div>
+
+      <div class="field">
+        <label for="seasonSel">Season</label>
+        <select id="seasonSel"></select>
+      </div>
+
+      <div class="field">
+        <label for="platformSel">Platform</label>
+        <select id="platformSel">
+          <option value="etsy">Etsy</option>
+          <option value="tpt">Teachers Pay Teachers</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Tone</label>
+        <div class="seg" id="segTone">
+          <button data-v="Warm" class="on">Warm</button>
+          <button data-v="Playful">Playful</button>
+          <button data-v="Calm">Calm</button>
+          <button data-v="Professional">Professional</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Number of ideas</label>
+        <div class="seg" id="segCount">
+          <button data-v="6">6</button>
+          <button data-v="12" class="on">12</button>
+          <button data-v="18">18</button>
+          <button data-v="24">24</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Format preferences <span style="color:var(--red)">(multi-select)</span></label>
+        <div class="chips" id="formatChips"></div>
+      </div>
+    </div>
+
+    <button class="btn" id="btnGenerate">Generate 12 ideas</button>
+    <div style="height:10px"></div>
+    <button class="btn alt" id="btnShuffle">Shuffle ideas ↺</button>
+    <div style="height:10px"></div>
+    <div class="kicker" style="font-size:10px; letter-spacing:1.6px; margin-top:6px">
+      Seed: <span id="seedDisplay" style="color:var(--red)">—</span>
+    </div>
+    <div class="desc" style="margin-top:6px; font-size:10.5px">Shuffle picks a new seed. The seed is shown here and written into the exports.</div>
+  </aside>
+
+  <!-- =============== RIGHT =============== -->
+  <main class="results" aria-live="polite" id="resultsRoot">
+    <div class="results-top">
+      <div class="meta">Showing <b id="resCount">0</b> ideas · <span id="resMeta">—</span></div>
+      <div class="actions">
+        <button class="btn ghost small" id="btnCsv">Download CSV</button>
+        <button class="btn ghost small" id="btnTxt">Download TXT</button>
+        <button class="btn ghost small" id="btnCopyAll">Copy everything</button>
+      </div>
+    </div>
+
+    <div id="cardsRoot"></div>
+
+    <div style="margin-top:24px; padding:12px 14px; border:3px solid var(--black); background:#fff; font-size:11px">
+      <b>Note:</b> Platform policies and fees change. Always check the current rules of the platform you sell on before listing.
+    </div>
+  </main>
+</div>
+
+<div class="sr-only" id="ariaLive" aria-live="polite"></div>
+
+<script>
+/* =========================================================
+   Detox Product Idea Engine — ES5, no libs
+   ========================================================= */
+
+/* ---------- Seeded PRNG ---------- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function newSeed(){ return Math.floor(Math.random() * 1e9); }
+function pick(arr, rng){ return arr[Math.floor(rng() * arr.length)]; }
+function shuffleWith(arr, rng){
+  var a = arr.slice(), i, j, t;
+  for(i = a.length - 1; i > 0; i--){ j = Math.floor(rng() * (i + 1)); t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+
+/* =========================================================
+   CONTENT BANKS
+   ========================================================= */
+
+var AUDIENCES = [
+  "Parents of young kids","Parents of teens","Teachers","School counselors",
+  "Remote workers","Couples","Friends","Older adults","Students",
+  "Book lovers","Gardeners","Home cooks","Travelers"
+];
+
+var ANGLES = [
+  "Slow Mornings","Cozy Evenings","Handwritten Letters","Reading Corner",
+  "Family Game Night","Kitchen Table Time","Outdoor Play","Backyard Adventures",
+  "Rainy Day Rescue","Road Trip Boredom Busters","Waiting Room Kits","Homework Reset",
+  "Focus Sprints","Teen Offline Challenges","Couple Date Nights at Home",
+  "Friendship Rituals","Memory Keeping","Craft Hours","Music & Records",
+  "Decluttering Weekends"
+];
+
+var SEASONS = ["Any","Spring","Summer","Autumn","Winter","Back to School","Holidays"];
+
+var FORMATS = [
+  "7-day page","30-day page","Choice wheel","Bingo card","Checklist",
+  "Card deck","Passport","Scavenger hunt","Coupon book","Conversation cards",
+  "One-week planner","Pocket guide","Field log","Ritual builder","Menu of options",
+  "Low-energy version","Kit checklist","Certificate set","Tracker","Journal pages",
+  "Sticker chart","Prompt jar","Mini zine","Wall calendar"
+];
+
+var TONES = ["Warm","Playful","Calm","Professional"];
+
+/* ---------- Audience nouns / phrases ---------- */
+var AUDIENCE_NOUN = {
+  "Parents of young kids":"parent",
+  "Parents of teens":"parent of a teen",
+  "Teachers":"teacher",
+  "School counselors":"counselor",
+  "Remote workers":"remote worker",
+  "Couples":"couple",
+  "Friends":"friend group",
+  "Older adults":"older adult",
+  "Students":"student",
+  "Book lovers":"book lover",
+  "Gardeners":"gardener",
+  "Home cooks":"home cook",
+  "Travelers":"traveler"
+};
+var AUDIENCE_PHRASE = {
+  "Parents of young kids":"for parents of young kids",
+  "Parents of teens":"for parents of teens",
+  "Teachers":"for teachers",
+  "School counselors":"for school counselors",
+  "Remote workers":"for remote workers",
+  "Couples":"for couples",
+  "Friends":"for friend groups",
+  "Older adults":"for older adults",
+  "Students":"for students",
+  "Book lovers":"for book lovers",
+  "Gardeners":"for gardeners",
+  "Home cooks":"for home cooks",
+  "Travelers":"for travelers"
+};
+
+/* ---------- Angle phrases ---------- */
+var ANGLE_SHORT = {
+  "Slow Mornings":"slow mornings",
+  "Cozy Evenings":"cozy evenings",
+  "Handwritten Letters":"handwritten letters",
+  "Reading Corner":"a reading corner",
+  "Family Game Night":"family game night",
+  "Kitchen Table Time":"kitchen table time",
+  "Outdoor Play":"outdoor play",
+  "Backyard Adventures":"backyard adventures",
+  "Rainy Day Rescue":"rainy day rescue",
+  "Road Trip Boredom Busters":"road trip boredom busters",
+  "Waiting Room Kits":"waiting room kits",
+  "Homework Reset":"a homework reset",
+  "Focus Sprints":"focus sprints",
+  "Teen Offline Challenges":"teen offline challenges",
+  "Couple Date Nights at Home":"couple date nights at home",
+  "Friendship Rituals":"friendship rituals",
+  "Memory Keeping":"memory keeping",
+  "Craft Hours":"craft hours",
+  "Music & Records":"music & records",
+  "Decluttering Weekends":"decluttering weekends"
+};
+
+/* ---------- Season words ---------- */
+var SEASON_WORD = {
+  "Any":"year-round",
+  "Spring":"spring",
+  "Summer":"summer",
+  "Autumn":"autumn",
+  "Winter":"winter",
+  "Back to School":"back to school",
+  "Holidays":"holiday"
+};
+var SEASON_MONTH = {
+  "Any":"any month",
+  "Spring":"March to May",
+  "Summer":"June to August",
+  "Autumn":"September to November",
+  "Winter":"December to February",
+  "Back to School":"July to September",
+  "Holidays":"October to December"
+};
+
+/* ---------- Benefit phrases (40+) ---------- */
+var BENEFITS = [
+  "gentle prompts that fit a real day",
+  "small steps that build a calmer week",
+  "a soft start to the morning",
+  "a slow close to the evening",
+  "room for a quieter mind",
+  "a simple plan you can actually keep",
+  "an easy way to begin again",
+  "small rituals for a softer week",
+  "a kind structure for busy days",
+  "a way to make space for rest",
+  "an easy on-ramp for offline time",
+  "gentle prompts for real conversations",
+  "a plan that respects your energy",
+  "small moments worth keeping",
+  "a quiet corner of your day",
+  "a soft boundary with your phone",
+  "a slow hour that feels like yours",
+  "a calm end to a loud day",
+  "a gentle way to notice more",
+  "a small habit that sticks",
+  "a simple pause in a full day",
+  "a kinder start to the week",
+  "a slow weekend with room to breathe",
+  "an easy way to be present",
+  "a soft reset for the middle of the day",
+  "a plan you can pick up again",
+  "a small ritual for the family",
+  "a gentle way to reconnect",
+  "a calm first step into the evening",
+  "an easy way to slow a busy week",
+  "a soft landing at bedtime",
+  "a gentle way to be with friends",
+  "a small plan for the whole family",
+  "a plan for the days you have less energy",
+  "a slow start to a full day",
+  "an easy way to keep a small promise",
+  "a gentle shape for a flexible week",
+  "a small, warm daily ritual",
+  "a calm plan for the whole week",
+  "an easy way to be a bit more offline",
+  "a soft plan for a busy season",
+  "a small plan for the people you love"
+];
+
+/* ---------- Tag fragments (60+) ---------- */
+var TAG_FRAGMENTS = [
+  "printable","planner","challenge","offline","screen free","family","kids",
+  "teens","teacher","classroom","counselor","wellbeing","mindful","calm",
+  "quiet time","slow living","routine","ritual","habit","checklist",
+  "tracker","journal","prompts","conversation","date night","game night",
+  "reading","outdoor","backyard","rainy day","road trip","waiting room",
+  "homework","focus","memory keeping","craft hour","music","declutter",
+  "morning","evening","bedtime","weekend","holiday","gift","bundle",
+  "kit","cards","print at home","letter size","a4","pdf","instant download",
+  "for parents","for couples","for friends","for students","for adults",
+  "goal setting","habit tracker","daily planner","weekly planner","prompt jar"
+];
+
+/* ---------- Title templates (12) ---------- */
+var TITLE_TEMPLATES = [
+  "{angle} {format} {audiencePhrase}",
+  "{format} for {angle} {audiencePhrase}",
+  "{season} {angle} {format} {audiencePhrase}",
+  "The {angle} {format} — {audiencePhrase}",
+  "{angle} {format}: {benefit}",
+  "{format} — {angle} {audiencePhrase}",
+  "{season} {format} for {angle}",
+  "{angle} {format} set {audiencePhrase}",
+  "{audiencePhrase} {angle} {format}",
+  "{format} for {audiencePhrase} — {angle}",
+  "{angle} {format} with {benefit}",
+  "{season} {angle} {format} for {audience}"
+];
+
+/* ---------- Description templates per tone (8 each = 32) ---------- */
+var DESC_TEMPLATES = {
+  Warm:[
+    "A gentle {format} for {anglePhrase}, made {audiencePhrase}. {benefitCap}. Print it at home and use it one small step at a time. Includes: {included}. Designed for US Letter PDF and A4. Use it for yourself, your family, or your classroom — no pressure, no rush.",
+    "This {format} is a soft way to make room for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home, keep it somewhere you'll see it, and start with the first small step. Includes: {included}. US Letter PDF and A4. Made to be used kindly, at your own pace.",
+    "If you've been wanting more {anglePhrase}, this {format} is a warm place to start, {audiencePhrase}. {benefitCap}. Print at home and use it however fits your week. Includes: {included}. US Letter PDF and A4.",
+    "A small, warm plan for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print it, keep it close, and let it guide one gentle step at a time. Includes: {included}. US Letter PDF and A4.",
+    "Made for {audiencePhrase} who want a little more {anglePhrase}. This {format} pairs gentle prompts with a simple structure. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "A soft, printable {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home and use it as a small daily ritual. Includes: {included}. US Letter PDF and A4.",
+    "For {audiencePhrase} who want {anglePhrase} without the pressure. {benefitCap}. Print it, use it, and pick it up again whenever you like. Includes: {included}. US Letter PDF and A4.",
+    "This {format} is a warm companion for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home, use one small step at a time. Includes: {included}. US Letter PDF and A4."
+  ],
+  Playful:[
+    "A {format} that makes {anglePhrase} feel less like a chore and more like a small game, {audiencePhrase}. {benefitCap}. Print at home and start whenever you like. Includes: {included}. US Letter PDF and A4.",
+    "For {audiencePhrase} who want a little more {anglePhrase} without the fuss. This {format} keeps it light, keeps it fun, and keeps it printable. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "Print it, stick it on the fridge, and let the {format} do the nudging for {anglePhrase}. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "The {format} for {anglePhrase}, {audiencePhrase} — bright, simple, and easy to use. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "A friendly {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home, use it as you like. Includes: {included}. US Letter PDF and A4.",
+    "Say yes to a little more {anglePhrase} with this {format}. Made for {audiencePhrase}. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "This {format} turns {anglePhrase} into something to look forward to, {audiencePhrase}. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "A cheerful {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home and enjoy. Includes: {included}. US Letter PDF and A4."
+  ],
+  Calm:[
+    "A quiet {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home and use it slowly, one small step at a time. Includes: {included}. US Letter PDF and A4.",
+    "For {audiencePhrase} who want a calmer rhythm around {anglePhrase}. This {format} keeps it simple and unhurried. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "A soft {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print it, keep it nearby, and let it be a small anchor for your day. Includes: {included}. US Letter PDF and A4.",
+    "This {format} is a gentle structure for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home and use it at your own pace. Includes: {included}. US Letter PDF and A4.",
+    "A calm companion for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print it and use one small step at a time. Includes: {included}. US Letter PDF and A4.",
+    "For {audiencePhrase} who want a slower, softer version of {anglePhrase}. {benefitCap}. Print at home and begin whenever you're ready. Includes: {included}. US Letter PDF and A4.",
+    "A quietly useful {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "This {format} is a small, calm plan for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home and use it gently. Includes: {included}. US Letter PDF and A4."
+  ],
+  Professional:[
+    "A structured {format} for {anglePhrase}, designed {audiencePhrase}. {benefitCap}. Print at home; suitable for personal use, classrooms, and counseling sessions. Includes: {included}. US Letter PDF and A4.",
+    "This {format} supports {anglePhrase} for {audiencePhrase}. {benefitCap}. Ready to print at home. Includes: {included}. US Letter PDF and A4.",
+    "A ready-to-print {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "For {audiencePhrase} who want a clear plan for {anglePhrase}. This {format} pairs structure with flexibility. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "A practical {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home and use in classrooms, counseling, or at home. Includes: {included}. US Letter PDF and A4.",
+    "This {format} gives {audiencePhrase} a simple structure for {anglePhrase}. {benefitCap}. Includes: {included}. US Letter PDF and A4.",
+    "A clean, printable {format} for {anglePhrase}, {audiencePhrase}. {benefitCap}. Print at home. Includes: {included}. US Letter PDF and A4.",
+    "For {audiencePhrase} looking for a clear plan around {anglePhrase}. {benefitCap}. Includes: {included}. US Letter PDF and A4."
+  ]
+};
+
+/* ---------- What's included, by format ---------- */
+var INCLUDED_BY_FORMAT = {
+  "7-day page":["One-page 7-day plan","Daily prompts","Space for notes","Print-at-home PDF","US Letter and A4"],
+  "30-day page":["One-page 30-day plan","Daily checkboxes","Weekly reflection lines","Print-at-home PDF","US Letter and A4"],
+  "Choice wheel":["One printable wheel","6 to 8 activity wedges","Simple instructions","Print-at-home PDF","US Letter and A4"],
+  "Bingo card":["One 5x5 bingo card","24 activities","Instructions page","Print-at-home PDF","US Letter and A4"],
+  "Checklist":["One-page checklist","10 to 20 items","Two columns","Print-at-home PDF","US Letter and A4"],
+  "Card deck":["Cut-out cards","Round corners guide","Back design","Print-at-home PDF","US Letter and A4"],
+  "Passport":["Foldable passport","12 stamp pages","Simple instructions","Print-at-home PDF","US Letter and A4"],
+  "Scavenger hunt":["Outdoor prompt list","20 to 30 items","Score sheet","Print-at-home PDF","US Letter and A4"],
+  "Coupon book":["Cut-out coupons","Cover page","Staple guide","Print-at-home PDF","US Letter and A4"],
+  "Conversation cards":["Cut-out question cards","3 categories","Blank cards to add your own","Print-at-home PDF","US Letter and A4"],
+  "One-week planner":["One-week overview","Daily blocks","Notes section","Print-at-home PDF","US Letter and A4"],
+  "Pocket guide":["Foldable pocket guide","Quick prompts","Portable size","Print-at-home PDF","US Letter and A4"],
+  "Field log":["Log pages","Observation prompts","Sketch space","Print-at-home PDF","US Letter and A4"],
+  "Ritual builder":["Ritual worksheet","Prompt set","Weekly tracker","Print-at-home PDF","US Letter and A4"],
+  "Menu of options":["Menu-style page","12 to 20 options","Tick boxes","Print-at-home PDF","US Letter and A4"],
+  "Low-energy version":["Simplified one-page plan","Fewer prompts","Gentle structure","Print-at-home PDF","US Letter and A4"],
+  "Kit checklist":["Kit checklist page","Gather list","Notes section","Print-at-home PDF","US Letter and A4"],
+  "Certificate set":["3 printable certificates","Blank name field","Date line","Print-at-home PDF","US Letter and A4"],
+  "Tracker":["One-page tracker","30 to 90 boxes","Weekly review lines","Print-at-home PDF","US Letter and A4"],
+  "Journal pages":["5 to 10 journal pages","Prompt headers","Blank lines","Print-at-home PDF","US Letter and A4"],
+  "Sticker chart":["Chart page","Cut-out sticker sheet","Instructions","Print-at-home PDF","US Letter and A4"],
+  "Prompt jar":["Cut-out prompt strips","Jar label","Blank strips","Print-at-home PDF","US Letter and A4"],
+  "Mini zine":["Foldable mini zine","8 pages","Assembly guide","Print-at-home PDF","US Letter and A4"],
+  "Wall calendar":["12-month calendar","Large month blocks","Notes strip","Print-at-home PDF","US Letter and A4"]
+};
+
+/* ---------- Page counts by format ---------- */
+var PAGES_BY_FORMAT = {
+  "7-day page":1,"30-day page":1,"Choice wheel":1,"Bingo card":1,"Checklist":1,
+  "Card deck":4,"Passport":2,"Scavenger hunt":1,"Coupon book":2,"Conversation cards":3,
+  "One-week planner":2,"Pocket guide":1,"Field log":3,"Ritual builder":2,
+  "Menu of options":1,"Low-energy version":1,"Kit checklist":1,"Certificate set":1,
+  "Tracker":1,"Journal pages":6,"Sticker chart":1,"Prompt jar":3,"Mini zine":2,"Wall calendar":3
+};
+
+/* ---------- Base prices (USD) by format + page count ---------- */
+function basePriceFor(format, pages){
+  var p = 3.0;
+  if(format === "Card deck" || format === "Journal pages" || format === "Wall calendar") p = 6.5;
+  else if(format === "Conversation cards" || format === "Mini zine" || format === "Prompt jar" || format === "Field log") p = 5.5;
+  else if(format === "Passport" || format === "Coupon book" || format === "Ritual builder" || format === "One-week planner") p = 4.5;
+  else if(format === "Certificate set" || format === "Sticker chart") p = 3.5;
+  if(pages >= 6) p += 1.5;
+  else if(pages >= 3) p += 0.75;
+  return Math.round(p * 100) / 100;
+}
+function priceLadder(base){
+  var single = base;
+  var fivePack = Math.round((base * 5 * 0.85) * 100) / 100;
+  var journal = Math.round((base * 3 + 4) * 100) / 100;
+  return {single: single, five: fivePack, journal: journal};
+}
+
+/* ---------- Trademark / brand blocklist (60+) ---------- */
+var BLOCKLIST = [
+  "apple","iphone","ipad","macbook","airpods","siri","ios",
+  "android","google","pixel","chromebook","gmail","youtube","chrome",
+  "microsoft","windows","xbox","outlook","teams",
+  "samsung","galaxy","huawei","xiaomi",
+  "amazon","alexa","kindle","echo","prime",
+  "meta","facebook","instagram","whatsapp","messenger","threads",
+  "tiktok","snapchat","twitter","x.com","linkedin","pinterest","reddit",
+  "netflix","hulu","disney","spotify","twitch","discord","zoom",
+  "nintendo","playstation","fortnite","minecraft","roblox",
+  "starbucks","mcdonald","coca cola","pepsi","nike","adidas",
+  "lego","barbie","pokemon","marvel","star wars","harry potter",
+  "etsy","teachers pay teachers","tpt","canva","procreate","notion","evernote"
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+var state = {
+  audience:"Parents of young kids",
+  angle:"Slow Mornings",
+  season:"Any",
+  platform:"etsy",
+  tone:"Warm",
+  count:12,
+  formats:["Checklist","Card deck","Tracker","Prompt jar"],
+  ideas:[],
+  seed:0,
+  brand:{shop:"Your Shop", handle:""}
+};
+
+/* =========================================================
+   BRANDING (localStorage, try/catch)
+   ========================================================= */
+var BRAND_KEY = "dpie_brand_v1";
+function loadBrand(){
+  try{
+    var raw = localStorage.getItem(BRAND_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+function saveBrand(b){
+  try{ localStorage.setItem(BRAND_KEY, JSON.stringify(b)); }catch(e){ /* blocked */ }
+}
+
+/* =========================================================
+   GENERATOR
+   ========================================================= */
+function uniq(arr){ var s = {}, o = []; for(var i=0;i<arr.length;i++){ if(!s[arr[i]]){ s[arr[i]]=1; o.push(arr[i]); } } return o; }
+function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+function clampText(s, max){ s = String(s); return s.length > max ? s.slice(0, max - 1) + "…" : s; }
+
+/* Turn template + vars into a title */
+function buildTitle(audience, angle, season, format, benefit, rng){
+  var tpl = pick(TITLE_TEMPLATES, rng);
+  var seasonWord = SEASON_WORD[season];
+  var out = tpl
+    .replace("{audiencePhrase}", AUDIENCE_PHRASE[audience])
+    .replace("{audience}", audience.toLowerCase())
+    .replace("{angle}", ANGLE_SHORT[angle])
+    .replace("{format}", format.toLowerCase())
+    .replace("{benefit}", benefit)
+    .replace("{season}", seasonWord);
+  /* Trim to 140 chars */
+  if(out.length > 140) out = out.slice(0, 139).trim() + "…";
+  /* Capitalize first letter */
+  out = cap(out);
+  return out;
+}
+function checkTitleWords(title){
+  /* No word (length >= 4) repeated more than twice, case-insensitive, alphanumeric */
+  var words = title.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/);
+  var counts = {};
+  for(var i=0;i<words.length;i++){
+    var w = words[i];
+    if(w.length < 4) continue;
+    counts[w] = (counts[w] || 0) + 1;
+    if(counts[w] > 2) return false;
+  }
+  return true;
+}
+function buildSubtitle(audience, angle, season, tone, rng){
+  var forms = [
+    "A small, printable plan for " + ANGLE_SHORT[angle] + ", " + AUDIENCE_PHRASE[audience] + ".",
+    "Gentle prompts for " + ANGLE_SHORT[angle] + " — " + AUDIENCE_PHRASE[audience] + ".",
+    "Everything you need for " + ANGLE_SHORT[angle] + " in one printable.",
+    "Print at home. Use it kindly. " + cap(SEASON_WORD[season]) + " ready.",
+    "A soft, structured way to bring " + ANGLE_SHORT[angle] + " into your week."
+  ];
+  return pick(forms, rng);
+}
+function buildIncluded(format){
+  var base = INCLUDED_BY_FORMAT[format] || ["Print-at-home PDF","US Letter and A4","Simple instructions","Prompt pages","Notes section"];
+  return base.slice(0, 5);
+}
+function buildTags(audience, angle, season, format, title, rng){
+  /* 13 tags: mix broad and long-tail. Each <=20 chars, unique, no direct repeat of title words */
+  var titleWords = {};
+  title.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).forEach(function(w){
+    if(w.length >= 4) titleWords[w] = 1;
+  });
+  var pool = [];
+  /* broad tags */
+  pool.push("printable","planner","print at home","instant download","pdf","letter size","a4","bundle");
+  /* angle + season tags */
+  pool.push(ANGLE_SHORT[angle].split(" ").slice(0,2).join(" "));
+  pool.push(SEASON_WORD[season] + " printable");
+  /* audience tag */
+  var audienceTag = AUDIENCE_NOUN[audience];
+  if(audienceTag) pool.push("for " + audienceTag + "s");
+  /* format tag */
+  pool.push(format.toLowerCase());
+  /* fragments */
+  pool = pool.concat(TAG_FRAGMENTS);
+  /* Clean up: trim, cap 20 chars, filter title-word repeats, unique */
+  var cleaned = [];
+  var seen = {};
+  for(var i=0;i<pool.length;i++){
+    var t = String(pool[i]).toLowerCase().replace(/\s+/g," ").trim();
+    if(!t) continue;
+    if(t.length > 20) t = t.slice(0, 20).trim();
+    if(seen[t]) continue;
+    /* avoid exact repeat of a title word of length >= 4 */
+    if(titleWords[t]) continue;
+    /* avoid multi-word tags where all words are title words */
+    var parts = t.split(" ");
+    var allTitle = parts.every(function(p){ return p.length < 4 || titleWords[p]; });
+    if(allTitle && parts.length > 1) continue;
+    seen[t] = 1;
+    cleaned.push(t);
+  }
+  /* Shuffle for variety, keep first 13 */
+  cleaned = shuffleWith(cleaned, rng).slice(0, 13);
+  /* If fewer than 13, top up from broad tags with suffixes */
+  var suffixes = ["print","set","kit","pack","pdf","home","daily","weekly"];
+  var si = 0;
+  while(cleaned.length < 13 && si < 200){
+    var s = "printable " + suffixes[si % suffixes.length];
+    si++;
+    if(s.length > 20) s = s.slice(0, 20);
+    if(!seen[s]){ seen[s]=1; cleaned.push(s); }
+  }
+  return cleaned;
+}
+function buildDescription(audience, angle, season, tone, format, included, rng){
+  var list = DESC_TEMPLATES[tone] || DESC_TEMPLATES.Warm;
+  var tpl = pick(list, rng);
+  var includedText = included.join(", ");
+  var benefit = pick(BENEFITS, rng);
+  var out = tpl
+    .replace("{format}", format.toLowerCase())
+    .replace("{anglePhrase}", ANGLE_SHORT[angle])
+    .replace("{audiencePhrase}", AUDIENCE_PHRASE[audience])
+    .replace("{audience}", audience.toLowerCase())
+    .replace("{benefit}", benefit)
+    .replace("{benefitCap}", cap(benefit))
+    .replace("{season}", SEASON_WORD[season])
+    .replace("{included}", includedText);
+  return out;
+}
+function buildTptFields(audience, angle, format, pages, rng){
+  var gradeBands = ["Grades 3–5","Grades 6–8","Grades 9–12","Middle school","High school","Adults / staff"];
+  var goals = [
+    "Build a calm, offline routine.",
+    "Practice reflection and self-awareness.",
+    "Support focus and time management.",
+    "Encourage kind, screen-free connection.",
+    "Develop a simple daily wellbeing habit."
+  ];
+  return {
+    grade: pick(gradeBands, rng),
+    goal: pick(goals, rng),
+    tptTitle: cap(ANGLE_SHORT[angle]) + " — " + format + " (" + pages + " pages)"
+  };
+}
+function checkBlocklist(text){
+  var lower = String(text).toLowerCase();
+  for(var i=0;i<BLOCKLIST.length;i++){
+    var b = BLOCKLIST[i];
+    /* word boundary-ish: surround with non-alphanumeric or string edges */
+    var idx = lower.indexOf(b);
+    while(idx !== -1){
+      var before = idx === 0 ? " " : lower.charAt(idx - 1);
+      var after = idx + b.length >= lower.length ? " " : lower.charAt(idx + b.length);
+      var okBefore = !/[a-z0-9]/.test(before);
+      var okAfter = !/[a-z0-9]/.test(after);
+      if(okBefore && okAfter) return b;
+      idx = lower.indexOf(b, idx + 1);
+    }
+  }
+  return null;
+}
+function buildBundleIdea(idea, allIdeas, rng){
+  var others = allIdeas.filter(function(x){ return x.id !== idea.id; });
+  if(!others.length) return "Bundle this with a matching 7-day and 30-day version for a small set.";
+  var a = pick(others, rng);
+  var b = pick(others, rng);
+  if(a && b && a.id === b.id) b = others[(others.indexOf(a) + 1) % others.length];
+  return "Bundle with \"" + a.title + "\" and \"" + b.title + "\" as a 3-pack.";
+}
+function buildLibraryHint(angle, audience, format, rng){
+  var pool = [
+    ANGLE_SHORT[angle].split(" ")[0],
+    AUDIENCE_NOUN[audience],
+    format.toLowerCase().split(" ")[0],
+    SEASON_WORD[state.season].split(" ")[0]
+  ];
+  pool = shuffleWith(pool, rng);
+  return "Search your prompt library for: " + pool.slice(0,3).join(", ");
+}
+function makeIdea(seed, usedTitles, usedAngleFormat, allSoFar){
+  var rng = mulberry32(seed);
+  /* Pick format */
+  var pool = state.formats.length ? state.formats : FORMATS;
+  var format = pick(pool, rng);
+
+  /* Pick angle: if "any" pool, vary; else fixed */
+  var angle = state.angle;
+
+  /* Benefit */
+  var benefit = pick(BENEFITS, rng);
+
+  /* Build title until unique & blocklist-clean */
+  var title = buildTitle(state.audience, angle, state.season, format, benefit, rng);
+  var attempts = 0;
+  while((usedTitles[title] || checkBlocklist(title) || !checkTitleWords(title)) && attempts < 40){
+    benefit = pick(BENEFITS, rng);
+    title = buildTitle(state.audience, angle, state.season, format, benefit, rng);
+    attempts++;
+  }
+  usedTitles[title] = 1;
+
+  /* Unique (angle + format) pair */
+  var afKey = angle + "||" + format;
+  if(usedAngleFormat[afKey]){
+    /* try another format */
+    var tries = 0;
+    while(usedAngleFormat[afKey] && tries < 20){
+      format = pick(pool, rng);
+      afKey = angle + "||" + format;
+      tries++;
+    }
+  }
+  usedAngleFormat[afKey] = 1;
+
+  var subtitle = buildSubtitle(state.audience, angle, state.season, state.tone, rng);
+  var pages = PAGES_BY_FORMAT[format] || 1;
+  var included = buildIncluded(format);
+  var tags = buildTags(state.audience, angle, state.season, format, title, rng);
+  var description = buildDescription(state.audience, angle, state.season, state.tone, format, included, rng);
+  var base = basePriceFor(format, pages);
+  var ladder = priceLadder(base);
+  var tpt = buildTptFields(state.audience, angle, format, pages, rng);
+  var month = SEASON_MONTH[state.season];
+  var library = buildLibraryHint(angle, state.audience, format, rng);
+
+  var idea = {
+    id: seed,
+    title: title,
+    subtitle: subtitle,
+    format: format,
+    pages: pages,
+    included: included,
+    tags: tags,
+    description: description,
+    price: base,
+    ladder: ladder,
+    season: state.season,
+    month: month,
+    platform: state.platform,
+    tone: state.tone,
+    audience: state.audience,
+    angle: angle,
+    tpt: tpt,
+    library: library
+  };
+  return idea;
+}
+function generateIdeas(){
+  var rng = mulberry32(state.seed);
+  var n = state.count;
+  var usedTitles = {};
+  var usedAngleFormat = {};
+  var ideas = [];
+  var guard = 0;
+  while(ideas.length < n && guard < n * 60){
+    guard++;
+    var seed = state.seed + ideas.length * 7919 + guard;
+    var idea = makeIdea(seed, usedTitles, usedAngleFormat, ideas);
+    ideas.push(idea);
+  }
+  /* Attach bundle ideas */
+  for(var i=0;i<ideas.length;i++){
+    ideas[i].bundle = buildBundleIdea(ideas[i], ideas, mulberry32(state.seed + i * 31));
+  }
+  state.ideas = ideas;
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function render(){
+  var root = document.getElementById("cardsRoot");
+  document.getElementById("resCount").textContent = String(state.ideas.length);
+  document.getElementById("resMeta").textContent =
+    state.audience + " · " + state.angle + " · " + state.season + " · " + state.platform.toUpperCase();
+  document.getElementById("seedDisplay").textContent = String(state.seed);
+
+  if(!state.ideas.length){
+    root.innerHTML = '<div class="empty"><div class="big">Choose who you are selling to and what angle you like, then generate your next twelve listings.</div><div class="sub">A first result appears on its own. Press Shuffle ideas for a new set.</div></div>';
+    return;
+  }
+
+  var html = '<div class="cards">';
+  for(var i=0;i<state.ideas.length;i++){
+    var idea = state.ideas[i];
+    var isTpt = state.platform === "tpt" || state.platform === "both";
+    html += '<article class="card enter' + (isTpt ? " tpt" : "") + '" data-i="' + i + '">';
+    html += '<div class="num">#' + (i+1) + '</div>';
+    html += '<div class="card-head"><h3>' + esc(idea.title) + '</h3><p class="sub">' + esc(idea.subtitle) + '</p></div>';
+    html += '<div class="row"><span>' + esc(idea.format) + ' · ' + idea.pages + ' page' + (idea.pages === 1 ? '' : 's') + '</span><span class="price">$' + idea.price.toFixed(2) + '</span></div>';
+
+    /* What's included */
+    html += '<div class="block"><h4>What\'s included</h4><ul>';
+    for(var b=0;b<idea.included.length;b++) html += '<li>' + esc(idea.included[b]) + '</li>';
+    html += '</ul></div>';
+
+    /* Tags */
+    html += '<div class="block"><h4>13 Etsy tags</h4><div class="tags">';
+    for(var t=0;t<idea.tags.length;t++) html += '<span>' + esc(idea.tags[t]) + '</span>';
+    html += '</div></div>';
+
+    /* TPT block */
+    if(isTpt){
+      html += '<div class="small-grid">' +
+        '<div><b>TPT title</b>' + esc(idea.tpt.tptTitle) + '</div>' +
+        '<div><b>Grade band</b>' + esc(idea.tpt.grade) + '</div>' +
+        '<div><b>Learning goal</b>' + esc(idea.tpt.goal) + '</div>' +
+        '<div><b>Counselor use</b>Small group or one-to-one</div>' +
+      '</div>';
+    }
+
+    /* Description */
+    html += '<div class="block"><h4>Listing description</h4><div class="desc-box">' + esc(idea.description) + '</div></div>';
+
+    /* Price ladder, month, bundle, library */
+    html += '<div class="small-grid">' +
+      '<div><b>Price ladder</b>Single $' + idea.ladder.single.toFixed(2) +
+        '<br>5-pack $' + idea.ladder.five.toFixed(2) +
+        '<br>Journal bundle $' + idea.ladder.journal.toFixed(2) + '</div>' +
+      '<div><b>Best month</b>' + esc(idea.month) + '</div>' +
+      '<div style="grid-column:1/-1"><b>Bundle idea</b>' + esc(idea.bundle) + '</div>' +
+      '<div style="grid-column:1/-1"><b>Library hint</b>' + esc(idea.library) + '</div>' +
+    '</div>';
+
+    /* Card actions */
+    html += '<div class="card-actions">' +
+      '<button class="btn ghost" data-act="title" data-i="' + i + '">Copy title</button>' +
+      '<button class="btn ghost" data-act="tags" data-i="' + i + '">Copy tags</button>' +
+      '<button class="btn ghost" data-act="desc" data-i="' + i + '">Copy description</button>' +
+      '<button class="btn" data-act="all" data-i="' + i + '">Copy all</button>' +
+    '</div>';
+
+    html += '</article>';
+  }
+  html += '</div>';
+  root.innerHTML = html;
+
+  /* Wire buttons */
+  root.querySelectorAll("[data-act]").forEach(function(b){
+    b.onclick = function(){ copyCard(Number(b.dataset.i), b.dataset.act); };
+  });
+}
+
+/* =========================================================
+   CARD COPY
+   ========================================================= */
+function ideaToTitle(idea){ return idea.title; }
+function ideaToTags(idea){ return idea.tags.join(", "); }
+function ideaToDesc(idea){ return idea.description; }
+function ideaToAll(idea){
+  var lines = [];
+  lines.push(idea.title);
+  lines.push(idea.subtitle);
+  lines.push("");
+  lines.push("Format: " + idea.format + " · " + idea.pages + " page" + (idea.pages === 1 ? "" : "s"));
+  lines.push("Price: $" + idea.price.toFixed(2) + " (single) · $" + idea.ladder.five.toFixed(2) + " (5-pack) · $" + idea.ladder.journal.toFixed(2) + " (journal bundle)");
+  lines.push("");
+  lines.push("What's included:");
+  idea.included.forEach(function(x){ lines.push("  - " + x); });
+  lines.push("");
+  lines.push("13 Etsy tags: " + idea.tags.join(", "));
+  lines.push("");
+  lines.push("Description:");
+  lines.push(idea.description);
+  lines.push("");
+  if(idea.platform !== "etsy"){
+    lines.push("TPT title: " + idea.tpt.tptTitle);
+    lines.push("Grade band: " + idea.tpt.grade);
+    lines.push("Learning goal: " + idea.tpt.goal);
+    lines.push("");
+  }
+  lines.push("Best month: " + idea.month);
+  lines.push("Bundle idea: " + idea.bundle);
+  lines.push("Library hint: " + idea.library);
+  lines.push("");
+  lines.push(state.brand.shop || "Your Shop");
+  if(state.brand.handle) lines.push(state.brand.handle);
+  return lines.join("\n");
+}
+function copyCard(i, kind){
+  var idea = state.ideas[i];
+  if(!idea) return;
+  var text = "";
+  if(kind === "title") text = ideaToTitle(idea);
+  else if(kind === "tags") text = ideaToTags(idea);
+  else if(kind === "desc") text = ideaToDesc(idea);
+  else text = ideaToAll(idea);
+  copyToClipboard(text, "Copied " + kind + ".");
+}
+function copyEverything(){
+  if(!state.ideas.length){ showAlert("No ideas to copy yet."); return; }
+  var parts = state.ideas.map(function(idea, i){
+    return "--- IDEA " + (i+1) + " ---\n" + ideaToAll(idea);
+  });
+  var header = "Detox Product Idea Engine\n" +
+    "Seed: " + state.seed + "\n" +
+    "Audience: " + state.audience + "\n" +
+    "Angle: " + state.angle + "\n" +
+    "Season: " + state.season + "\n" +
+    "Platform: " + state.platform + "\n" +
+    "Tone: " + state.tone + "\n\n";
+  var footer = "\n\nNote: Platform policies and fees change. Check current rules before listing.\n";
+  copyToClipboard(header + parts.join("\n\n") + footer, "Copied everything.");
+}
+function copyToClipboard(text, okMsg){
+  var done = function(ok, err){
+    if(ok) showToast(okMsg || "Copied.");
+    else showAlert("Copy failed: " + (err || "unknown") + ". Select the text manually.");
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ fallback(); });
+  } else {
+    fallback();
+  }
+  function fallback(){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly","");
+      ta.style.position = "fixed";
+      ta.style.left = "-99999px";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      done(ok, ok ? null : "execCommand");
+    }catch(e){
+      done(false, e.message);
+    }
+  }
+}
+
+/* =========================================================
+   EXPORTS: CSV + TXT
+   ========================================================= */
+function csvEscape(s){
+  s = String(s == null ? "" : s);
+  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function buildCSV(){
+  var cols = ["title","subtitle","format","pages","tags","description","price","season","platform"];
+  var rows = [cols.join(",")];
+  state.ideas.forEach(function(idea){
+    rows.push([
+      idea.title,
+      idea.subtitle,
+      idea.format,
+      idea.pages,
+      idea.tags.join("; "),
+      idea.description,
+      idea.price.toFixed(2),
+      idea.season,
+      idea.platform
+    ].map(csvEscape).join(","));
+  });
+  return rows.join("\n");
+}
+function buildTXT(){
+  var header = "Detox Product Idea Engine\n" +
+    "Shop: " + (state.brand.shop || "Your Shop") + (state.brand.handle ? " (" + state.brand.handle + ")" : "") + "\n" +
+    "Seed: " + state.seed + "\n" +
+    "Audience: " + state.audience + "\n" +
+    "Angle: " + state.angle + "\n" +
+    "Season: " + state.season + "\n" +
+    "Platform: " + state.platform + "\n" +
+    "Tone: " + state.tone + "\n" +
+    "Ideas: " + state.ideas.length + "\n\n";
+  var body = state.ideas.map(function(idea, i){
+    return "=== IDEA " + (i+1) + " ===\n" + ideaToAll(idea);
+  }).join("\n\n");
+  var footer = "\n\nNote: Platform policies and fees change. Check current rules before listing.\n";
+  return header + body + footer;
+}
+function downloadBlob(content, filename, mime){
+  if(!content || content.length < 10) throw new Error("Export is empty.");
+  var blob = new Blob([content], {type: mime || "text/plain"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+}
+function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") || "ideas"; }
+
+function exportCSV(){
+  if(!state.ideas.length){ showAlert("Generate ideas first."); return; }
+  try{
+    downloadBlob(buildCSV(), slug(state.audience + "-" + state.angle) + "-ideas.csv", "text/csv");
+    showToast("CSV downloaded.");
+  }catch(e){ showAlert("CSV export failed: " + e.message); }
+}
+function exportTXT(){
+  if(!state.ideas.length){ showAlert("Generate ideas first."); return; }
+  try{
+    downloadBlob(buildTXT(), slug(state.audience + "-" + state.angle) + "-ideas.txt", "text/plain");
+    showToast("TXT downloaded.");
+  }catch(e){ showAlert("TXT export failed: " + e.message); }
+}
+
+/* =========================================================
+   TOAST / ALERT
+   ========================================================= */
+function showAlert(msg){
+  var el = document.createElement("div");
+  el.className = "alert";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 3800);
+}
+function showToast(msg){
+  var el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function(){ el.classList.add("show"); }, 10);
+  setTimeout(function(){ el.classList.remove("show"); }, 2000);
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 2300);
+}
+
+/* =========================================================
+   UI WIRING
+   ========================================================= */
+function renderSelects(){
+  var a = document.getElementById("audienceSel");
+  a.innerHTML = AUDIENCES.map(function(x){ return '<option>' + x + '</option>'; }).join("");
+  a.value = state.audience;
+  a.onchange = function(){ state.audience = this.value; };
+
+  var an = document.getElementById("angleSel");
+  an.innerHTML = ANGLES.map(function(x){ return '<option>' + x + '</option>'; }).join("");
+  an.value = state.angle;
+  an.onchange = function(){ state.angle = this.value; };
+
+  var s = document.getElementById("seasonSel");
+  s.innerHTML = SEASONS.map(function(x){ return '<option>' + x + '</option>'; }).join("");
+  s.value = state.season;
+  s.onchange = function(){ state.season = this.value; };
+
+  var p = document.getElementById("platformSel");
+  p.value = state.platform;
+  p.onchange = function(){ state.platform = this.value; render(); };
+}
+function renderFormats(){
+  var el = document.getElementById("formatChips");
+  el.innerHTML = FORMATS.map(function(f){
+    var on = state.formats.indexOf(f) !== -1;
+    return '<button class="chip ' + (on ? 'on' : '') + '" data-f="' + f + '">' + f + '</button>';
+  }).join("");
+  el.querySelectorAll("button").forEach(function(b){
+    b.onclick = function(){
+      var f = b.dataset.f;
+      var i = state.formats.indexOf(f);
+      if(i === -1) state.formats.push(f);
+      else state.formats.splice(i, 1);
+      if(!state.formats.length) state.formats = ["Checklist"];
+      renderFormats();
+    };
+  });
+}
+function renderSegs(){
+  document.querySelectorAll("#segTone button").forEach(function(b){
+    b.onclick = function(){
+      document.querySelectorAll("#segTone button").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      state.tone = b.dataset.v;
+      render();
+    };
+  });
+  document.querySelectorAll("#segCount button").forEach(function(b){
+    b.onclick = function(){
+      document.querySelectorAll("#segCount button").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      state.count = Number(b.dataset.v);
+      updateSetupCount();
+      generateIdeas();
+      render();
+    };
+  });
+}
+function updateSetupCount(){
+  document.getElementById("setupCount").textContent = String(state.count);
+  document.getElementById("btnGenerate").textContent = "Generate " + state.count + " ideas";
+}
+function renderBrandInputs(){
+  document.getElementById("brandShop").value = state.brand.shop || "Your Shop";
+  document.getElementById("brandHandle").value = state.brand.handle || "";
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+function init(){
+  var saved = loadBrand();
+  if(saved){
+    if(saved.shop) state.brand.shop = saved.shop;
+    if(typeof saved.handle === "string") state.brand.handle = saved.handle;
+  }
+  renderBrandInputs();
+
+  document.getElementById("btnSaveBrand").onclick = function(){
+    state.brand.shop = document.getElementById("brandShop").value || "Your Shop";
+    state.brand.handle = document.getElementById("brandHandle").value || "";
+    saveBrand(state.brand);
+    showToast("Branding saved.");
+  };
+  document.getElementById("btnClearBrand").onclick = function(){
+    state.brand = {shop:"Your Shop", handle:""};
+    saveBrand(state.brand);
+    renderBrandInputs();
+    showToast("Branding cleared.");
+  };
+
+  renderSelects();
+  renderFormats();
+  renderSegs();
+  updateSetupCount();
+
+  document.getElementById("btnGenerate").onclick = function(){
+    state.seed = newSeed();
+    generateIdeas();
+    render();
+  };
+  document.getElementById("btnShuffle").onclick = function(){
+    state.seed = newSeed();
+    generateIdeas();
+    render();
+    showToast("Shuffled. New seed: " + state.seed);
+  };
+  document.getElementById("btnCsv").onclick = exportCSV;
+  document.getElementById("btnTxt").onclick = exportTXT;
+  document.getElementById("btnCopyAll").onclick = copyEverything;
+
+  /* First paint: generate a first set automatically */
+  state.seed = newSeed();
+  generateIdeas();
+  render();
+
+  setTimeout(runVerification, 400);
+}
+
+/* =========================================================
+   VERIFICATION
+   ========================================================= */
+function runVerification(){
+  var report = [];
+  var pass = 0, total = 0;
+  function assert(name, cond){
+    total++;
+    if(cond){ pass++; report.push("  PASS  " + name); }
+    else { report.push("  FAIL  " + name); }
+  }
+
+  /* (a) title length <= 140 */
+  var allIdeas = [];
+  var s;
+  for(s=0;s<5;s++){
+    state.seed = newSeed();
+    generateIdeas();
+    allIdeas = allIdeas.concat(state.ideas);
+  }
+  assert("(a) every title <= 140 chars", allIdeas.every(function(i){ return i.title.length <= 140; }));
+
+  /* (b) exactly 13 tags, unique, <= 20 chars */
+  assert("(b) exactly 13 tags per idea", allIdeas.every(function(i){ return i.tags.length === 13; }));
+  assert("(b) all tags unique within idea", allIdeas.every(function(i){
+    var seen = {};
+    for(var k=0;k<i.tags.length;k++){ if(seen[i.tags[k]]) return false; seen[i.tags[k]] = 1; }
+    return true;
+  }));
+  assert("(b) all tags <= 20 chars", allIdeas.every(function(i){
+    for(var k=0;k<i.tags.length;k++) if(i.tags[k].length > 20) return false;
+    return true;
+  }));
+
+  /* (c) no blocklist word anywhere */
+  assert("(c) no trademark words in titles", allIdeas.every(function(i){ return checkBlocklist(i.title) === null; }));
+  assert("(c) no trademark words in descriptions", allIdeas.every(function(i){ return checkBlocklist(i.description) === null; }));
+  assert("(c) no trademark words in tags", allIdeas.every(function(i){
+    for(var k=0;k<i.tags.length;k++) if(checkBlocklist(i.tags[k]) !== null) return false;
+    return true;
+  }));
+
+  /* (d) price within range for page count */
+  assert("(d) price >= 2.5", allIdeas.every(function(i){ return i.price >= 2.5; }));
+  assert("(d) price <= 12", allIdeas.every(function(i){ return i.price <= 12; }));
+
+  /* (e) no unfilled {placeholders} */
+  assert("(e) no {placeholders} in descriptions", allIdeas.every(function(i){
+    return i.description.indexOf("{") === -1 && i.description.indexOf("}") === -1;
+  }));
+  assert("(e) no {placeholders} in titles", allIdeas.every(function(i){
+    return i.title.indexOf("{") === -1 && i.title.indexOf("}") === -1;
+  }));
+
+  /* (f) no duplicated ideas in a result */
+  state.seed = newSeed();
+  generateIdeas();
+  var seenT = {};
+  var dup = false;
+  state.ideas.forEach(function(i){ if(seenT[i.title]) dup = true; seenT[i.title] = 1; });
+  assert("(f) no duplicate titles in result", !dup);
+
+  /* (g) result covers >= 4 different formats when 4+ selected */
+  state.formats = ["Checklist","Card deck","Tracker","Prompt jar","Journal pages"];
+  state.seed = newSeed();
+  generateIdeas();
+  var fmts = {};
+  state.ideas.forEach(function(i){ fmts[i.format] = 1; });
+  assert("(g) >= 4 formats when 5 selected", Object.keys(fmts).length >= 4);
+
+  /* (h) content banks */
+  assert("(h) 13 audiences", AUDIENCES.length === 13);
+  assert("(h) 20+ angles", ANGLES.length >= 20);
+  assert("(h) 7 seasons", SEASONS.length === 7);
+  assert("(h) 24+ formats", FORMATS.length >= 24);
+  assert("(h) 40+ benefit phrases", BENEFITS.length >= 40);
+  assert("(h) 60+ tag fragments", TAG_FRAGMENTS.length >= 60);
+  assert("(h) 12 title templates", TITLE_TEMPLATES.length === 12);
+  assert("(h) 8 desc templates per tone", DESC_TEMPLATES.Warm.length >= 8 && DESC_TEMPLATES.Playful.length >= 8 && DESC_TEMPLATES.Calm.length >= 8 && DESC_TEMPLATES.Professional.length >= 8);
+  assert("(h) 60+ blocklist words", BLOCKLIST.length >= 60);
+
+  /* (i) exports non-empty */
+  state.seed = newSeed();
+  generateIdeas();
+  var csv = buildCSV();
+  var txt = buildTXT();
+  assert("(i) CSV non-empty", csv.length > 200);
+  assert("(i) TXT non-empty", txt.length > 400);
+  assert("(i) CSV header correct", csv.split("\n")[0] === "title,subtitle,format,pages,tags,description,price,season,platform");
+
+  report.unshift("=== Detox Product Idea Engine verification ===");
+  report.push("TOTAL: " + pass + " / " + total + " passed");
+  if(typeof console !== "undefined" && console.log){
+    for(var r=0;r<report.length;r++) console.log(report[r]);
+  }
+  return {pass:pass, total:total, report:report};
+}
+
+/* ---------- Boot ---------- */
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+</script>
+</body>
+</html>
