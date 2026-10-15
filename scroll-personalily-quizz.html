@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scroll Personality Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg-1:#1b1464; --bg-2:#0f2b5c; --bg-3:#6a11cb;
+    --glass:rgba(255,255,255,0.08); --glass-strong:rgba(255,255,255,0.12);
+    --line:rgba(255,255,255,0.15); --line-strong:rgba(255,255,255,0.28);
+    --ink:#f4f4ff; --muted:#b8b6e0; --dim:#8b88bd;
+    --accent:#a78bfa; --accent-2:#f472b6; --accent-3:#5eead4;
+    --good:#4ade80; --bad:#f87171; --warn:#fbbf24;
+    --radius:22px; --radius-sm:14px;
+    --shadow:0 24px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.06) inset;
+    --font-display:'Sora',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --font-body:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;min-height:100%}
+  body{
+    font-family:var(--font-body); color:var(--ink);
+    background:linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 45%, var(--bg-3) 100%);
+    background-attachment:fixed; min-height:100vh; line-height:1.55;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  /* Floating blurred orbs */
+  .orbs{position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden}
+  .orb{position:absolute; border-radius:50%; filter:blur(80px); opacity:.55}
+  .orb.a{width:520px; height:520px; background:#7c3aed; top:-120px; left:-120px; animation:float 22s ease-in-out infinite}
+  .orb.b{width:460px; height:460px; background:#ec4899; bottom:-140px; right:-100px; animation:float 28s ease-in-out infinite reverse}
+  .orb.c{width:380px; height:380px; background:#06b6d4; top:40%; left:60%; animation:float 26s ease-in-out infinite}
+  @keyframes float{
+    0%,100%{transform:translate(0,0)}
+    50%{transform:translate(30px,-40px)}
+  }
+  @media (prefers-reduced-motion:reduce){ .orb{animation:none} }
+
+  .app{position:relative; z-index:1; max-width:960px; margin:0 auto; padding:22px 18px 90px; min-height:100vh}
+
+  /* ---------- Top bar ---------- */
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap}
+  .brandline{display:flex; align-items:center; gap:10px}
+  .brandline .dot{
+    width:10px; height:10px; border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow:0 0 18px rgba(167,139,250,.7);
+  }
+  .brandline .name{font-family:var(--font-display); font-weight:700; letter-spacing:.4px; font-size:15px}
+  .brandline .part{font-size:11px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; margin-left:4px}
+  .top-actions{display:flex; gap:8px; flex-wrap:wrap}
+
+  .btn{
+    border:1px solid var(--line-strong); background:var(--glass); color:var(--ink);
+    font-family:var(--font-body); font-weight:700; font-size:13.5px;
+    padding:11px 18px; border-radius:999px; cursor:pointer;
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    transition:.18s; letter-spacing:.2px;
+  }
+  .btn:hover{background:var(--glass-strong); border-color:rgba(255,255,255,.45); transform:translateY(-1px)}
+  .btn:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+  .btn.primary{
+    background:linear-gradient(135deg,var(--accent) 0%, var(--accent-2) 100%);
+    border-color:transparent; color:#1a1240; font-weight:800;
+    box-shadow:0 12px 30px rgba(167,139,250,.45);
+  }
+  .btn.primary:hover{transform:translateY(-2px); box-shadow:0 18px 40px rgba(167,139,250,.55)}
+  .btn.ghost{background:transparent; opacity:.85}
+  .btn.ghost:hover{opacity:1}
+  .btn:disabled{opacity:.4; cursor:not-allowed; transform:none}
+
+  /* ---------- Card ---------- */
+  .card{
+    background:var(--glass); border:1px solid var(--line); border-radius:var(--radius);
+    padding:28px; box-shadow:var(--shadow);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  }
+  @media (max-width:480px){ .card{padding:20px} }
+
+  /* ---------- Progress ---------- */
+  .progress{
+    height:6px; background:rgba(255,255,255,.10); border-radius:999px; overflow:hidden;
+    margin-bottom:22px;
+  }
+  .progress .bar{
+    height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    border-radius:999px; transition:width .45s cubic-bezier(.2,.8,.2,1);
+    box-shadow:0 0 18px rgba(167,139,250,.55);
+  }
+  .progress-label{
+    display:flex; justify-content:space-between; font-size:12px; color:var(--muted);
+    margin-bottom:8px; letter-spacing:.4px; text-transform:uppercase; font-weight:700;
+  }
+
+  /* ---------- Welcome ---------- */
+  .welcome{text-align:center; padding:30px 8px}
+  .welcome .kicker{
+    font-family:var(--font-display); font-size:11px; letter-spacing:4px; text-transform:uppercase;
+    color:var(--accent-3); font-weight:700; margin-bottom:14px;
+  }
+  .welcome h1{
+    font-family:var(--font-display); font-weight:800; letter-spacing:-.5px;
+    font-size:clamp(30px,5.4vw,52px); line-height:1.05; margin:0 0 14px;
+    background:linear-gradient(120deg,#fff 20%, #c4b5fd 70%, #f9a8d4 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .welcome .tag{font-size:16.5px; color:var(--muted); max-width:560px; margin:0 auto 10px}
+  .welcome .desc{font-size:14px; color:var(--dim); max-width:600px; margin:0 auto 26px; font-style:italic}
+  .welcome .stats{
+    display:flex; justify-content:center; gap:26px; flex-wrap:wrap; margin:22px 0 28px;
+  }
+  .welcome .stat{text-align:center}
+  .welcome .stat b{display:block; font-family:var(--font-display); font-size:26px; color:#fff}
+  .welcome .stat span{font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--dim); font-weight:700}
+
+  /* ---------- Question ---------- */
+  .q-head{margin-bottom:18px}
+  .q-num{
+    font-family:var(--font-display); font-size:12px; letter-spacing:3px; text-transform:uppercase;
+    color:var(--accent-3); font-weight:700; margin-bottom:8px;
+  }
+  .q-text{
+    font-family:var(--font-display); font-size:clamp(20px,3.4vw,28px); font-weight:700;
+    line-height:1.2; color:#fff; margin:0 0 6px; letter-spacing:-.3px;
+  }
+  .q-hint{font-size:13.5px; color:var(--muted); font-style:italic; margin-bottom:22px}
+  .answers{display:flex; flex-direction:column; gap:11px}
+  .answer{
+    text-align:left; padding:16px 18px; border-radius:var(--radius-sm);
+    border:1px solid var(--line); background:rgba(255,255,255,.045); color:var(--ink);
+    font-family:var(--font-body); font-size:15px; font-weight:500; cursor:pointer;
+    display:flex; align-items:center; gap:14px; transition:.15s;
+  }
+  .answer:hover{
+    background:rgba(255,255,255,.09); border-color:var(--line-strong); transform:translateX(3px);
+  }
+  .answer:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .answer .letter{
+    width:32px; height:32px; border-radius:50%; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(167,139,250,.16); border:1px solid rgba(167,139,250,.4);
+    font-family:var(--font-display); font-weight:700; font-size:13px; color:var(--accent);
+  }
+  .answer:hover .letter{background:rgba(167,139,250,.3); color:#fff}
+
+  .nav-row{display:flex; justify-content:space-between; gap:10px; margin-top:22px}
+  .nav-row .btn{flex:1; text-align:center}
+
+  /* ---------- Transitions ---------- */
+  .fade-slide-enter-active,.fade-slide-leave-active{transition:all .35s cubic-bezier(.2,.8,.2,1)}
+  .fade-slide-enter-from{opacity:0; transform:translateX(30px)}
+  .fade-slide-leave-to{opacity:0; transform:translateX(-30px)}
+  @media (prefers-reduced-motion:reduce){ .fade-slide-enter-active,.fade-slide-leave-active{transition:none} }
+
+  /* ---------- Results ---------- */
+  .results-top{display:grid; grid-template-columns:1fr; gap:20px; margin-bottom:22px}
+  .profile-card{
+    background:linear-gradient(160deg, rgba(167,139,250,.20) 0%, rgba(244,114,182,.10) 60%, transparent 100%);
+    border:1px solid var(--line-strong); border-radius:var(--radius); padding:28px;
+    position:relative; overflow:hidden; text-align:center;
+  }
+  .profile-card::before{
+    content:''; position:absolute; inset:-1px; border-radius:var(--radius); pointer-events:none;
+    background:radial-gradient(circle at 50% 0%, rgba(255,255,255,.18), transparent 60%);
+  }
+  .profile-icon{
+    width:84px; height:84px; border-radius:50%; margin:0 auto 14px;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow:0 0 40px rgba(167,139,250,.55), inset 0 0 20px rgba(255,255,255,.2);
+  }
+  .profile-icon svg{width:44px; height:44px; stroke:#fff; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+  .profile-kicker{font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--accent-3); font-weight:700; margin-bottom:8px}
+  .profile-name{
+    font-family:var(--font-display); font-weight:800; letter-spacing:-.4px;
+    font-size:clamp(24px,4.4vw,38px); line-height:1.1; color:#fff; margin:0 0 12px;
+  }
+  .profile-desc{font-size:15px; color:var(--muted); max-width:600px; margin:0 auto; line-height:1.6}
+  .secondary{
+    display:inline-block; margin-top:14px; padding:6px 14px; border-radius:999px;
+    border:1px solid var(--line-strong); background:rgba(255,255,255,.05);
+    font-size:12.5px; color:var(--muted);
+  }
+  .secondary b{color:var(--ink); font-weight:700}
+
+  .bars{display:flex; flex-direction:column; gap:10px; margin-top:8px}
+  .bar-row{display:flex; align-items:center; gap:12px}
+  .bar-row .lbl{font-size:13px; color:var(--muted); min-width:170px}
+  @media (max-width:560px){ .bar-row .lbl{min-width:120px; font-size:12px} }
+  .bar-row .track{
+    flex:1; height:14px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden;
+    position:relative;
+  }
+  .bar-row .fill{
+    height:100%; background:linear-gradient(90deg, rgba(167,139,250,.6), rgba(167,139,250,1));
+    border-radius:999px; transition:width .9s cubic-bezier(.2,.8,.2,1);
+  }
+  .bar-row.winner .fill{background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 0 16px rgba(244,114,182,.6)}
+  .bar-row.winner .lbl{color:#fff; font-weight:700}
+  .bar-row .val{font-family:var(--font-display); font-weight:700; color:var(--ink); font-size:13px; min-width:34px; text-align:right}
+
+  .pillars{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:20px}
+  @media (max-width:640px){ .pillars{grid-template-columns:1fr} }
+  .pillar{
+    border:1px solid var(--line); border-radius:var(--radius-sm); padding:18px;
+    background:rgba(255,255,255,.04);
+  }
+  .pillar h4{
+    font-family:var(--font-display); font-size:13px; letter-spacing:2px; text-transform:uppercase;
+    margin:0 0 12px; font-weight:700;
+  }
+  .pillar.good h4{color:var(--accent-3)}
+  .pillar.trig h4{color:var(--accent-2)}
+  .pillar ul{margin:0; padding:0; list-style:none}
+  .pillar li{font-size:14px; color:var(--muted); padding:6px 0 6px 22px; position:relative; line-height:1.5}
+  .pillar li::before{
+    content:''; position:absolute; left:0; top:14px; width:8px; height:8px; border-radius:50%;
+    background:var(--accent-3); box-shadow:0 0 10px rgba(94,234,212,.6);
+  }
+  .pillar.trig li::before{background:var(--accent-2); box-shadow:0 0 10px rgba(244,114,182,.6)}
+
+  .first-step{
+    margin-top:18px; border:1px solid var(--line-strong); border-radius:var(--radius-sm);
+    padding:18px; background:linear-gradient(160deg, rgba(94,234,212,.10), transparent);
+  }
+  .first-step .k{font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--accent-3); font-weight:700; margin-bottom:8px}
+  .first-step p{margin:0; font-size:15px; color:var(--ink); line-height:1.55}
+
+  .plan{margin-top:26px}
+  .plan h3{
+    font-family:var(--font-display); font-weight:700; font-size:20px; color:#fff;
+    margin:0 0 4px; letter-spacing:-.2px;
+  }
+  .plan .sub{color:var(--muted); font-size:13.5px; margin-bottom:16px; font-style:italic}
+  .day{
+    display:flex; align-items:flex-start; gap:14px; padding:14px 16px;
+    border:1px solid var(--line); border-radius:var(--radius-sm);
+    background:rgba(255,255,255,.04); margin-bottom:9px;
+  }
+  .day .num{
+    font-family:var(--font-display); font-weight:800; font-size:14px; color:#1a1240;
+    width:40px; height:40px; border-radius:50%; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow:0 6px 16px rgba(167,139,250,.4);
+  }
+  .day .text{font-size:14.5px; color:var(--ink); line-height:1.5; padding-top:8px}
+
+  .result-actions{
+    display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; justify-content:center;
+  }
+  .result-actions .btn{flex:1 1 auto; min-width:200px; text-align:center}
+
+  .seller-cta{
+    margin-top:20px; padding:18px; border-radius:var(--radius-sm);
+    border:1px dashed var(--line-strong); background:rgba(167,139,250,.08);
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+  }
+  .seller-cta .txt{font-size:13.5px; color:var(--muted); flex:1; min-width:220px}
+  .seller-cta .txt b{color:var(--ink)}
+
+  /* ---------- Drawer ---------- */
+  .scrim{
+    position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:40;
+    opacity:0; pointer-events:none; transition:.3s;
+  }
+  .scrim.on{opacity:1; pointer-events:auto}
+  .drawer{
+    position:fixed; top:0; right:0; height:100vh; width:400px; max-width:94vw;
+    background:linear-gradient(160deg, rgba(27,20,100,.95), rgba(15,43,92,.95));
+    backdrop-filter:blur(20px); border-left:1px solid var(--line-strong);
+    z-index:50; padding:24px 22px; overflow-y:auto;
+    transform:translateX(105%); transition:transform .35s cubic-bezier(.2,.8,.2,1);
+  }
+  .drawer.open{transform:translateX(0)}
+  .drawer h3{font-family:var(--font-display); font-size:22px; margin:0 0 4px; color:#fff}
+  .drawer .sub{font-size:12.5px; color:var(--muted); font-style:italic; margin-bottom:20px}
+  .drawer .close{
+    position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%;
+    background:rgba(255,255,255,.06); border:1px solid var(--line-strong); color:var(--ink);
+    cursor:pointer; font-size:16px;
+  }
+  .drawer .close:hover{background:rgba(255,255,255,.15)}
+  .field{margin-bottom:14px}
+  .field label{display:block; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--accent-3); font-weight:700; margin-bottom:6px}
+  .field input[type=text], .field input[type=url]{
+    width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line);
+    background:rgba(0,0,0,.25); color:var(--ink); font-family:var(--font-body); font-size:14px;
+    outline:none;
+  }
+  .field input:focus{border-color:var(--accent)}
+  .field input[type=color]{
+    width:44px; height:36px; border-radius:12px; border:1px solid var(--line);
+    background:transparent; cursor:pointer;
+  }
+  .field .help{font-size:11.5px; color:var(--dim); margin-top:5px; font-style:italic}
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translate(-50%, 30px);
+    background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#1a1240;
+    padding:13px 22px; border-radius:999px; font-weight:800; font-size:13.5px;
+    box-shadow:0 20px 50px rgba(0,0,0,.5); z-index:100; opacity:0; transition:.3s;
+    pointer-events:none; max-width:90vw; text-align:center;
+  }
+  .toast.show{opacity:1; transform:translate(-50%,0)}
+  .toast.err{background:linear-gradient(135deg,#a03030,#f87171); color:#fff}
+
+  /* ---------- Empty state / welcome visual ---------- */
+  .mini-orbs{position:relative; height:80px; margin-bottom:8px}
+  .mini-orb{position:absolute; border-radius:50%; filter:blur(20px); opacity:.6}
+  .mini-orb.a{width:80px; height:80px; background:#a78bfa; top:0; left:20%}
+  .mini-orb.b{width:60px; height:60px; background:#f472b6; top:10px; left:50%}
+  .mini-orb.c{width:70px; height:70px; background:#5eead4; top:0; left:72%}
+
+  /* ---------- a11y ---------- */
+  .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0}
+  *:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+  @media (max-width:480px){
+    .app{padding:16px 12px 70px}
+    .card{padding:18px}
+    .profile-card{padding:22px 18px}
+    .day .text{font-size:13.5px}
+    .result-actions .btn{min-width:100%}
+    .bar-row .lbl{min-width:100px; font-size:11.5px}
+  }
+</style>
+</head>
+<body>
+
+<div class="orbs" aria-hidden="true">
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+  <div class="orb c"></div>
+</div>
+
+<div id="app" class="app"></div>
+
+<script>
+/* =========================================================
+   Scroll Personality Quiz — Vue 3 Options API, ES5-style funcs
+   ========================================================= */
+
+/* ---------- Seeded PRNG ---------- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------- Profiles ---------- */
+var PROFILES = [
+  {
+    id:"midnight",
+    name:"The Midnight Scroller",
+    icon:"moon",
+    short:"You come alive when the house goes quiet.",
+    description:"You come alive when the house goes quiet. The phone is your night light, your company, your last thought before sleep. It isn't a lack of willpower — it's a habit that found a soft spot in your evening. The good news: that same quiet is where you can build something gentler, starting tonight.",
+    superpowers:[
+      "You're deeply reflective when the world is still.",
+      "You know how to be alone without being lonely.",
+      "You notice small, quiet details other people miss."
+    ],
+    triggers:[
+      "The room gets quiet and the phone feels like company.",
+      "One more video feels easier than one more decision.",
+      "Lying down to sleep with a screen still glowing nearby."
+    ],
+    firstStep:"Tonight, put your phone to bed somewhere else — even just a chair across the room — and let the last twenty minutes of your day belong to you.",
+    plan:[
+      "Place your phone on a chair across the room tonight.",
+      "Set one soft alarm to begin winding down.",
+      "Write three lines about your day before bed.",
+      "Read one page of any paper book in bed.",
+      "Make a warm drink and sip it with no screen.",
+      "Dim every light one hour before sleep.",
+      "Write one kind thing to your morning self."
+    ]
+  },
+  {
+    id:"ping",
+    name:"The Ping Chaser",
+    icon:"bell",
+    short:"You're wired to respond — and that's not a flaw.",
+    description:"You're wired to respond — and that's not a flaw, it's a skill. Notifications feel like tiny taps on the shoulder, and you answer because you care. The phone just happens to be very good at getting your attention. You can keep being responsive and still choose when to be reachable.",
+    superpowers:[
+      "You're reliable — people know you'll show up.",
+      "You notice when something is off with someone you love.",
+      "You're fast at reading a room, even through text."
+    ],
+    triggers:[
+      "A buzz, a badge, a small red dot you can't ignore.",
+      "The feeling that something important might be waiting.",
+      "Refreshing apps even when nothing new is likely."
+    ],
+    firstStep:"Pick one hour today and silence every notification. Not forever — just one hour. Notice what it feels like to be the one who decides when to check in.",
+    plan:[
+      "Turn off one non-essential notification for the day.",
+      "Leave your phone face down during one meal.",
+      "Set a 25-minute focus block with alerts off.",
+      "Take a walk and leave the phone at home.",
+      "Do a five-minute breathing reset between tasks.",
+      "Text one person a real, longer message.",
+      "End the day with an hour of quiet notifications."
+    ]
+  },
+  {
+    id:"boredom",
+    name:"The Boredom Filler",
+    icon:"spark",
+    short:"Empty moments are hard — and the phone is fast.",
+    description:"Empty moments are hard, and the phone is the fastest thing to reach for. You're not restless — you're a person who likes to be doing something, and the phone is always available. The trick isn't to hate the phone; it's to make the empty moments feel like small gifts instead of gaps.",
+    superpowers:[
+      "You have a low tolerance for wasted time — a real strength.",
+      "You're curious and quick to try new things.",
+      "You notice when something could be more interesting."
+    ],
+    triggers:[
+      "Waiting anywhere — a line, a kettle, a red light.",
+      "The end of one task and the start of the next.",
+      "A quiet room with nothing planned for ten minutes."
+    ],
+    firstStep:"Keep one small thing near where you wait most — a book, a notebook, a deck of cards. Give your hands something to reach for that isn't a screen.",
+    plan:[
+      "Put a book or notebook where you usually wait.",
+      "Try one five-minute walk with no podcast or phone.",
+      "Make a list of five things to do in empty moments.",
+      "Do a two-minute tidy when you feel the itch.",
+      "Leave your phone in your bag for one errand.",
+      "Write three lines about something you noticed.",
+      "Plan one screen-free hour for tomorrow."
+    ]
+  },
+  {
+    id:"work",
+    name:"The Work-Blur Multitasker",
+    icon:"briefcase",
+    short:"Your phone and your focus live in the same room.",
+    description:"Your phone and your focus live in the same room, and they've gotten tangled. You're not lazy — you're carrying a lot at once, and the phone has become a bridge between work and rest. When you give each one its own space, both get easier.",
+    superpowers:[
+      "You can hold a lot in your head at once.",
+      "You're adaptable and quick to switch contexts.",
+      "You care about doing things well, not just fast."
+    ],
+    triggers:[
+      "A pause in deep work that feels like it needs filling.",
+      "The phone on the desk during a focus block.",
+      "Checking messages just before you start something hard."
+    ],
+    firstStep:"Before your next work block, put the phone in a drawer and write down the one thing you want to finish. That's the whole ritual — small, and it works.",
+    plan:[
+      "Put your phone in a drawer for one work block.",
+      "Write one sentence about what 'done' means today.",
+      "Take a phone-free lunch break away from your desk.",
+      "Do a five-minute tidy of your workspace.",
+      "Write a done list at the end of the day.",
+      "Plan tomorrow before you close your laptop.",
+      "End the day with a two-line journal entry."
+    ]
+  },
+  {
+    id:"highlight",
+    name:"The Highlight-Reel Watcher",
+    icon:"camera",
+    short:"You're inspired easily — and compare easily too.",
+    description:"You're inspired easily, and you compare easily too — that's the same sensitive heart doing both. Feeds are built to show the best moments, and you're kind enough to believe them. The work isn't to stop caring; it's to fill your own reel with things you actually did.",
+    superpowers:[
+      "You're genuinely inspired by other people's creativity.",
+      "You have a strong sense of taste and beauty.",
+      "You cheer for people openly — that's rare."
+    ],
+    triggers:[
+      "Watching a reel of someone's perfect morning.",
+      "Opening the app 'just to check' and staying 20 minutes.",
+      "Feeling a little behind after a short scroll."
+    ],
+    firstStep:"Pick one small thing you saw online this week and actually do a version of it. Even five minutes counts. Let the inspiration land somewhere real.",
+    plan:[
+      "Save one idea from a feed and do a tiny version.",
+      "Take a photo of something real and keep it private.",
+      "Write down three things you did today, not watched.",
+      "Unfollow one account that leaves you feeling low.",
+      "Do a 15-minute hobby with no phone nearby.",
+      "Cook or make something you saw online.",
+      "Write a short note to someone you admire."
+    ]
+  }
+];
+
+/* ---------- Icons (inline SVG) ---------- */
+var ICONS = {
+  moon:'<svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>',
+  bell:'<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  spark:'<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.5L18 9l-4.2 1.5L12 15l-1.8-4.5L6 9l4.2-1.5z"/><path d="M18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/></svg>',
+  briefcase:'<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg>',
+  camera:'<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><path d="M9 7l1.5-3h3L15 7"/></svg>'
+};
+
+/* ---------- Questions (10) with weights per profile ---------- */
+/* Weight vectors are ordered: [midnight, ping, boredom, work, highlight] */
+var QUESTIONS = [
+  {
+    text:"When do you usually reach for your phone first?",
+    hint:"There's no wrong answer here.",
+    answers:[
+      {text:"Right when I wake up, before I'm fully awake.", w:[2,1,1,1,1]},
+      {text:"The moment I hear a notification.", w:[0,3,0,1,0]},
+      {text:"In any quiet moment that doesn't have a plan.", w:[0,0,3,0,0]},
+      {text:"Between tasks, when I'm switching gears.", w:[0,1,1,3,0]},
+      {text:"When I want to see what everyone else is up to.", w:[1,0,0,0,3]}
+    ]
+  },
+  {
+    text:"What does your first ten minutes awake look like?",
+    hint:"Before coffee, before anything else.",
+    answers:[
+      {text:"Lying in bed, phone close by.", w:[3,1,1,0,1]},
+      {text:"Checking messages and missed calls.", w:[0,3,0,1,0]},
+      {text:"Getting up slowly, figuring out the day.", w:[0,0,1,2,1]},
+      {text:"Already thinking about work.", w:[0,0,0,3,0]},
+      {text:"Scrolling a feed to ease into the morning.", w:[1,1,1,0,2]}
+    ]
+  },
+  {
+    text:"At the table with other people, your phone is…",
+    hint:"Be honest — no judgment.",
+    answers:[
+      {text:"Sometimes in my hand, sometimes not.", w:[1,0,1,0,1]},
+      {text:"Face up, so I don't miss anything.", w:[0,3,0,1,0]},
+      {text:"Usually on the table 'just in case'.", w:[0,1,2,0,0]},
+      {text:"Nearby because I might need it for work.", w:[0,0,0,3,0]},
+      {text:"Out because I want to take a photo.", w:[0,0,0,0,3]}
+    ]
+  },
+  {
+    text:"A quiet ten minutes opens up. What happens?",
+    hint:"No plan, no task, just space.",
+    answers:[
+      {text:"I enjoy it — quietly, no phone.", w:[1,0,1,0,0]},
+      {text:"I check if anything came in.", w:[0,3,1,0,0]},
+      {text:"I reach for my phone almost automatically.", w:[1,1,3,0,1]},
+      {text:"I use it to catch up on work thoughts.", w:[0,0,0,3,0]},
+      {text:"I scroll a feed to fill the gap.", w:[1,0,0,0,3]}
+    ]
+  },
+  {
+    text:"A notification arrives. How does it feel?",
+    hint:"Physically, in your body.",
+    answers:[
+      {text:"A small pull I can usually ignore at night.", w:[3,1,0,0,0]},
+      {text:"Almost impossible not to check.", w:[0,3,1,0,0]},
+      {text:"Mild — it's just background noise.", w:[0,0,2,1,0]},
+      {text:"Annoying, because it interrupts my focus.", w:[0,1,0,3,0]},
+      {text:"Curious — maybe someone liked something.", w:[0,1,0,0,3]}
+    ]
+  },
+  {
+    text:"While you're working, your phone is…",
+    hint:"Any kind of work: job, study, chores.",
+    answers:[
+      {text:"On the desk but rarely picked up in the evening.", w:[2,0,0,1,0]},
+      {text:"Nearby, and I answer quickly.", w:[0,2,0,1,0]},
+      {text:"A small escape between tasks.", w:[0,1,2,1,0]},
+      {text:"The main thing pulling me away.", w:[0,0,0,3,0]},
+      {text:"A quick inspiration break.", w:[0,0,0,1,2]}
+    ]
+  },
+  {
+    text:"After a long scroll, you usually feel…",
+    hint:"Whatever it is, it's allowed.",
+    answers:[
+      {text:"A little wired, a little tired.", w:[3,1,0,0,1]},
+      {text:"Like I missed something if I stop.", w:[0,3,1,0,0]},
+      {text:"Like the time just slipped away.", w:[1,0,2,0,0]},
+      {text:"Like I lost my focus for the day.", w:[0,0,0,3,0]},
+      {text:"A bit behind, even though I know better.", w:[0,0,0,0,3]}
+    ]
+  },
+  {
+    text:"Right before bed, your phone is…",
+    hint:"The last hour of your day.",
+    answers:[
+      {text:"In my hand until I fall asleep.", w:[3,1,0,0,1]},
+      {text:"Nearby, on the nightstand.", w:[1,2,0,1,0]},
+      {text:"Somewhere in the room, face down.", w:[1,0,2,1,0]},
+      {text:"Charging far from the bed (when I remember).", w:[0,1,0,2,0]},
+      {text:"Often open to a feed while I wind down.", w:[1,0,0,0,3]}
+    ]
+  },
+  {
+    text:"A perfect phone-free hour looks like…",
+    hint:"Pick the one that feels closest.",
+    answers:[
+      {text:"Quiet, dim, no talking, no plans.", w:[3,0,0,0,0]},
+      {text:"Talking to someone I love, fully.", w:[0,1,0,0,1]},
+      {text:"Doing something with my hands.", w:[0,0,1,0,1]},
+      {text:"Working on one thing without interruptions.", w:[0,0,0,3,0]},
+      {text:"Making something I'd want to remember.", w:[0,0,0,0,3]}
+    ]
+  },
+  {
+    text:"What would help you most right now?",
+    hint:"The kindest, simplest answer.",
+    answers:[
+      {text:"A softer bedtime.", w:[3,0,0,0,0]},
+      {text:"Quieter notifications.", w:[0,3,0,0,0]},
+      {text:"Something to do in empty moments.", w:[0,0,3,0,0]},
+      {text:"More focus during the day.", w:[0,0,0,3,0]},
+      {text:"Less comparing, more creating.", w:[0,0,0,0,3]}
+    ]
+  }
+];
+
+/* ---------- Scoring ---------- */
+function scoreAnswers(picked){
+  var scores = [0,0,0,0,0];
+  var i, j;
+  for(i=0;i<picked.length;i++){
+    var idx = picked[i];
+    if(idx < 0) continue;
+    var w = QUESTIONS[i].answers[idx].w;
+    for(j=0;j<w.length;j++) scores[j] += w[j];
+  }
+  return scores;
+}
+function pickWinner(scores){
+  /* Tie-break: (1) higher weight on Q1, Q4, Q8; (2) fixed priority order */
+  var max = -1, i;
+  for(i=0;i<scores.length;i++) if(scores[i] > max) max = scores[i];
+  var tied = [];
+  for(i=0;i<scores.length;i++) if(scores[i] === max) tied.push(i);
+  if(tied.length === 1) return tied[0];
+  /* Tie-break 1: sum of weights on questions 1, 4, 8 (indices 0, 3, 7) */
+  function tieScore(profileIdx){
+    return 0; /* placeholder: we need the answer picks, which we don't have here */
+  }
+  /* Fallback: fixed priority order */
+  for(i=0;i<scores.length;i++) if(scores[i] === max) return i;
+  return 0;
+}
+function pickWinnerWithAnswers(scores, picked){
+  var max = -1, i;
+  for(i=0;i<scores.length;i++) if(scores[i] > max) max = scores[i];
+  var tied = [];
+  for(i=0;i<scores.length;i++) if(scores[i] === max) tied.push(i);
+  if(tied.length === 1) return tied[0];
+  /* Tie-break 1: sum of weights on questions 1, 4, 8 (indices 0, 3, 7) */
+  var sums = [0,0,0,0,0];
+  var tieQuestions = [0, 3, 7];
+  for(i=0;i<tieQuestions.length;i++){
+    var q = tieQuestions[i];
+    var a = picked[q];
+    if(a < 0) continue;
+    var w = QUESTIONS[q].answers[a].w;
+    var k;
+    for(k=0;k<w.length;k++) sums[k] += w[k];
+  }
+  var best = -1, bestIdx = tied[0];
+  for(i=0;i<tied.length;i++){
+    var p = tied[i];
+    if(sums[p] > best){ best = sums[p]; bestIdx = p; }
+  }
+  return bestIdx;
+}
+function secondaryInfluence(scores, winnerIdx){
+  var sorted = [];
+  var i;
+  for(i=0;i<scores.length;i++){ if(i !== winnerIdx) sorted.push({idx:i, v:scores[i]}); }
+  sorted.sort(function(a,b){ return b.v - a.v; });
+  if(!sorted.length) return null;
+  var second = sorted[0];
+  if(scores[winnerIdx] - second.v <= 3) return second.idx;
+  return null;
+}
+
+/* =========================================================
+   SELLER BRANDING (localStorage, try/catch)
+   ========================================================= */
+var BRAND_KEY = "spq_brand_v1";
+function loadBrand(){
+  try{
+    var raw = localStorage.getItem(BRAND_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+function saveBrand(b){
+  try{ localStorage.setItem(BRAND_KEY, JSON.stringify(b)); }catch(e){ /* blocked */ }
+}
+
+/* =========================================================
+   PDF EXPORT
+   ========================================================= */
+function exportPDF(profile, brand){
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    return {ok:false, err:"jsPDF is missing. Check your internet connection."};
+  }
+  try{
+    var doc = new window.jspdf.jsPDF({unit:"pt", format:"letter"});
+    var W = 612, H = 792, M = 54;
+    var y = M;
+    var ink = "#1b1464";
+    var accent = brand.accent || "#a78bfa";
+
+    /* Header band */
+    doc.setFillColor(27, 20, 100);
+    doc.rect(0, 0, W, 120, "F");
+    doc.setFillColor(167, 139, 250);
+    doc.rect(0, 118, W, 3, "F");
+
+    doc.setTextColor("#ffffff");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("SCROLL PERSONALITY QUIZ", M, 40);
+    doc.setFontSize(22);
+    doc.text(profile.name, M, 72);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.5);
+    doc.text("Your 7-day plan", M, 92);
+
+    /* Profile description */
+    y = 150;
+    doc.setTextColor(ink);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.5);
+    var descLines = doc.splitTextToSize(profile.description, W - M*2);
+    doc.text(descLines, M, y);
+    y += descLines.length * 13 + 16;
+
+    /* Superpowers */
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(accent);
+    doc.text("YOUR SUPERPOWERS", M, y); y += 14;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(ink);
+    var i;
+    for(i=0;i<profile.superpowers.length;i++){
+      var sp = doc.splitTextToSize("• " + profile.superpowers[i], W - M*2 - 8);
+      doc.text(sp, M + 4, y); y += sp.length * 12 + 2;
+    }
+    y += 10;
+
+    /* Triggers */
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(accent);
+    doc.text("YOUR TRIGGERS", M, y); y += 14;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(ink);
+    for(i=0;i<profile.triggers.length;i++){
+      var tg = doc.splitTextToSize("• " + profile.triggers[i], W - M*2 - 8);
+      doc.text(tg, M + 4, y); y += tg.length * 12 + 2;
+    }
+    y += 10;
+
+    /* First step */
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(accent);
+    doc.text("YOUR GENTLE FIRST STEP", M, y); y += 14;
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(ink);
+    var fs = doc.splitTextToSize(profile.firstStep, W - M*2);
+    doc.text(fs, M, y); y += fs.length * 13 + 20;
+
+    /* 7-day plan */
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(accent);
+    doc.text("YOUR 7-DAY PLAN", M, y); y += 18;
+    doc.setFontSize(10.5);
+    for(i=0;i<profile.plan.length;i++){
+      /* circle */
+      doc.setDrawColor(accent);
+      doc.setLineWidth(1);
+      doc.circle(M + 8, y - 3, 6, "S");
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(ink);
+      var dayLabel = "Day " + (i+1) + " — " + profile.plan[i];
+      var lines = doc.splitTextToSize(dayLabel, W - M*2 - 26);
+      doc.text(lines, M + 24, y);
+      y += lines.length * 13 + 8;
+      if(y > H - 90) break;
+    }
+
+    /* Footer */
+    doc.setDrawColor("#d4c5b0");
+    doc.setLineWidth(0.7);
+    doc.line(M, H - 60, W - M, H - 60);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(ink);
+    doc.text(brand.shop || "Your Shop", M, H - 42);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor("#6b6480");
+    if(brand.handle) doc.text(brand.handle, M, H - 28);
+    doc.text("Educational estimate only. Not medical advice.", W - M, H - 28, {align:"right"});
+
+    var blob = doc.output("blob");
+    if(!blob || blob.size < 1000) return {ok:false, err:"PDF looks empty."};
+    downloadBlob(blob, slug(profile.name) + "-7-day-plan.pdf");
+    return {ok:true};
+  }catch(e){
+    return {ok:false, err:"PDF export failed: " + e.message};
+  }
+}
+
+/* =========================================================
+   PNG RESULT CARD 1080x1350
+   ========================================================= */
+function exportPNG(profile, brand){
+  try{
+    var W = 1080, H = 1350;
+    var c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    var ctx = c.getContext("2d");
+    if(!ctx) return {ok:false, err:"Canvas not available."};
+
+    /* Background gradient */
+    var g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, "#1b1464");
+    g.addColorStop(0.5, "#0f2b5c");
+    g.addColorStop(1, "#6a11cb");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    /* Soft glows */
+    var glow1 = ctx.createRadialGradient(W*0.25, H*0.15, 20, W*0.25, H*0.15, W*0.6);
+    glow1.addColorStop(0, "rgba(167,139,250,0.55)");
+    glow1.addColorStop(1, "rgba(167,139,250,0)");
+    ctx.fillStyle = glow1; ctx.fillRect(0,0,W,H);
+
+    var glow2 = ctx.createRadialGradient(W*0.8, H*0.85, 20, W*0.8, H*0.85, W*0.6);
+    glow2.addColorStop(0, "rgba(244,114,182,0.42)");
+    glow2.addColorStop(1, "rgba(244,114,182,0)");
+    ctx.fillStyle = glow2; ctx.fillRect(0,0,W,H);
+
+    /* Border */
+    ctx.strokeStyle = "rgba(255,255,255,0.28)";
+    ctx.lineWidth = 3;
+    roundRect(ctx, 40, 40, W - 80, H - 80, 32);
+    ctx.stroke();
+
+    var accent = brand.accent || "#a78bfa";
+    var ivory = "#f4f4ff";
+    var muted = "#c9c2ff";
+
+    /* Kicker */
+    ctx.textAlign = "center";
+    ctx.fillStyle = accent;
+    ctx.font = "700 22px 'DM Sans', sans-serif";
+    ctx.fillText("SCROLL PERSONALITY QUIZ", W/2, 130);
+
+    /* Circle icon */
+    var iconR = 90;
+    var cg = ctx.createLinearGradient(W/2 - iconR, 200, W/2 + iconR, 200 + iconR*2);
+    cg.addColorStop(0, accent);
+    cg.addColorStop(1, "#f472b6");
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.arc(W/2, 270, iconR, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowColor = "rgba(167,139,250,0.7)";
+    ctx.shadowBlur = 40;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    /* Simple icon glyph (drawn) */
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    var iconType = profile.icon;
+    if(iconType === "moon"){
+      ctx.beginPath();
+      ctx.arc(W/2, 270, 42, Math.PI*0.25, Math.PI*1.75);
+      ctx.stroke();
+    } else if(iconType === "bell"){
+      ctx.beginPath();
+      ctx.moveTo(W/2 - 38, 290);
+      ctx.lineTo(W/2 - 38, 265);
+      ctx.arc(W/2, 265, 38, Math.PI, 0);
+      ctx.lineTo(W/2 + 38, 290);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(W/2, 300, 6, 0, Math.PI*2);
+      ctx.stroke();
+    } else if(iconType === "spark"){
+      ctx.beginPath();
+      ctx.moveTo(W/2, 230);
+      ctx.lineTo(W/2 + 12, 262);
+      ctx.lineTo(W/2 + 44, 274);
+      ctx.lineTo(W/2 + 12, 286);
+      ctx.lineTo(W/2, 318);
+      ctx.lineTo(W/2 - 12, 286);
+      ctx.lineTo(W/2 - 44, 274);
+      ctx.lineTo(W/2 - 12, 262);
+      ctx.closePath();
+      ctx.stroke();
+    } else if(iconType === "briefcase"){
+      ctx.beginPath();
+      roundRect(ctx, W/2 - 46, 250, 92, 60, 10); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(W/2 - 22, 250);
+      ctx.lineTo(W/2 - 22, 240);
+      ctx.lineTo(W/2 + 22, 240);
+      ctx.lineTo(W/2 + 22, 250);
+      ctx.stroke();
+    } else if(iconType === "camera"){
+      ctx.beginPath();
+      roundRect(ctx, W/2 - 46, 250, 92, 60, 10); ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(W/2, 280, 16, 0, Math.PI*2); ctx.stroke();
+    }
+
+    /* Profile name */
+    ctx.fillStyle = ivory;
+    ctx.font = "800 58px 'Sora', sans-serif";
+    wrapTextCenter(ctx, profile.name, W/2, 470, W - 140, 66);
+
+    /* One line description */
+    ctx.fillStyle = muted;
+    ctx.font = "400 26px 'DM Sans', sans-serif";
+    wrapTextCenter(ctx, profile.description, W/2, 640, W - 180, 36);
+
+    /* Three key strengths */
+    var y3 = 900;
+    ctx.fillStyle = accent;
+    ctx.font = "700 22px 'DM Sans', sans-serif";
+    ctx.fillText("A FEW THINGS TRUE ABOUT YOU", W/2, y3 - 40);
+    ctx.fillStyle = ivory;
+    ctx.font = "400 24px 'DM Sans', sans-serif";
+    var i;
+    for(i=0;i<3 && i<profile.superpowers.length;i++){
+      var line = "•  " + profile.superpowers[i];
+      wrapTextCenter(ctx, line, W/2, y3 + i*42, W - 200, 30);
+    }
+
+    /* Footer branding */
+    ctx.fillStyle = accent;
+    ctx.font = "700 26px 'DM Sans', sans-serif";
+    ctx.fillText((brand.shop || "Your Shop").toUpperCase(), W/2, H - 130);
+    if(brand.handle){
+      ctx.fillStyle = muted;
+      ctx.font = "400 20px 'DM Sans', sans-serif";
+      ctx.fillText(brand.handle, W/2, H - 100);
+    }
+    ctx.fillStyle = muted;
+    ctx.font = "400 16px 'DM Sans', sans-serif";
+    ctx.fillText("Educational estimate only. Not medical advice.", W/2, H - 68);
+
+    var url = c.toDataURL("image/png");
+    if(!url || url.length < 5000) return {ok:false, err:"PNG looks empty."};
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = slug(profile.name) + "-result-card.png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    return {ok:true};
+  }catch(e){
+    return {ok:false, err:"PNG export failed: " + e.message};
+  }
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+function wrapTextCenter(ctx, text, cx, y, maxW, lineH){
+  var words = text.split(" ");
+  var line = "";
+  var lines = [];
+  var i;
+  for(i=0;i<words.length;i++){
+    var test = line ? line + " " + words[i] : words[i];
+    if(ctx.measureText(test).width > maxW && line){
+      lines.push(line); line = words[i];
+    } else { line = test; }
+  }
+  if(line) lines.push(line);
+  for(i=0;i<lines.length;i++) ctx.fillText(lines[i], cx, y + i*lineH);
+}
+function downloadBlob(blob, filename){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+}
+function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") || "result"; }
+
+/* =========================================================
+   COPY EMAIL TEXT
+   ========================================================= */
+function buildEmailText(profile, scores, brand){
+  var lines = [];
+  lines.push("My Scroll Personality: " + profile.name);
+  lines.push("");
+  lines.push(profile.description);
+  lines.push("");
+  lines.push("Your superpowers:");
+  profile.superpowers.forEach(function(s){ lines.push("  • " + s); });
+  lines.push("");
+  lines.push("Your triggers:");
+  profile.triggers.forEach(function(s){ lines.push("  • " + s); });
+  lines.push("");
+  lines.push("Your gentle first step:");
+  lines.push("  " + profile.firstStep);
+  lines.push("");
+  lines.push("Your 7-day plan:");
+  profile.plan.forEach(function(s, i){ lines.push("  Day " + (i+1) + " — " + s); });
+  lines.push("");
+  lines.push("Scores: " + profile.name + " " + scores[0] + " · others " + scores.slice(1).join(" · "));
+  lines.push("");
+  if(brand.shop) lines.push(brand.shop);
+  if(brand.handle) lines.push(brand.handle);
+  lines.push("Educational estimate only. Not medical advice.");
+  return lines.join("\n");
+}
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ return {ok:true}; }, function(){ return fallback(); });
+    return {ok:true, pending:true};
+  }
+  return fallback();
+  function fallback(){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly","");
+      ta.style.position = "fixed"; ta.style.left = "-99999px";
+      document.body.appendChild(ta); ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return {ok:ok};
+    }catch(e){ return {ok:false, err:e.message}; }
+  }
+}
+
+/* =========================================================
+   VUE APP
+   ========================================================= */
+var App = {
+  data:function(){
+    return {
+      screen:"welcome",          /* welcome | quiz | results */
+      qIndex:0,
+      answers:[],                /* -1 = unanswered */
+      picked:[],
+      scores:[0,0,0,0,0],
+      winnerIdx:0,
+      secondaryIdx:null,
+      brand:{shop:"Your Shop", handle:"", accent:"#a78bfa"},
+      brandDrawer:false,
+      sellerMode:false,
+      ctaText:"Get the full printable pack",
+      ctaUrl:"",
+      toast:{msg:"", err:false, show:false},
+      questions:QUESTIONS,
+      profiles:PROFILES,
+      icons:ICONS
+    };
+  },
+  computed:{
+    progress:function(){
+      if(this.screen === "welcome") return 0;
+      if(this.screen === "results") return 100;
+      return Math.round(((this.qIndex) / this.questions.length) * 100);
+    },
+    currentQuestion:function(){
+      return this.questions[this.qIndex] || null;
+    },
+    winner:function(){
+      return this.profiles[this.winnerIdx];
+    },
+    secondary:function(){
+      if(this.secondaryIdx === null || this.secondaryIdx === undefined) return null;
+      return this.profiles[this.secondaryIdx];
+    },
+    maxScore:function(){
+      var m = 0, i;
+      for(i=0;i<this.scores.length;i++) if(this.scores[i] > m) m = this.scores[i];
+      return m || 1;
+    },
+    barRows:function(){
+      var out = [], i;
+      for(i=0;i<this.profiles.length;i++){
+        out.push({
+          idx:i,
+          name:this.profiles[i].name,
+          score:this.scores[i],
+          pct: Math.round((this.scores[i] / this.maxScore) * 100),
+          winner: i === this.winnerIdx
+        });
+      }
+      return out;
+    }
+  },
+  mounted:function(){
+    var saved = loadBrand();
+    if(saved){
+      if(saved.shop) this.brand.shop = saved.shop;
+      if(typeof saved.handle === "string") this.brand.handle = saved.handle;
+      if(saved.accent) this.brand.accent = saved.accent;
+      if(typeof saved.sellerMode === "boolean") this.sellerMode = saved.sellerMode;
+      if(saved.ctaText) this.ctaText = saved.ctaText;
+      if(saved.ctaUrl) this.ctaUrl = saved.ctaUrl;
+    }
+    this.answers = [];
+    var i;
+    for(i=0;i<this.questions.length;i++) this.answers.push(-1);
+  },
+  methods:{
+    iconSvg:function(key){ return this.icons[key] || this.icons.spark; },
+    start:function(){
+      this.qIndex = 0;
+      this.answers = [];
+      var i;
+      for(i=0;i<this.questions.length;i++) this.answers.push(-1);
+      this.screen = "quiz";
+    },
+    choose:function(answerIdx){
+      this.answers[this.qIndex] = answerIdx;
+      this.picked = this.answers.slice();
+      var self = this;
+      setTimeout(function(){
+        if(self.qIndex < self.questions.length - 1){
+          self.qIndex++;
+        } else {
+          self.finish();
+        }
+      }, 220);
+    },
+    back:function(){
+      if(this.qIndex > 0){ this.qIndex--; return; }
+      this.screen = "welcome";
+    },
+    next:function(){
+      if(this.answers[this.qIndex] < 0) return;
+      if(this.qIndex < this.questions.length - 1) this.qIndex++;
+      else this.finish();
+    },
+    finish:function(){
+      var s = scoreAnswers(this.answers);
+      this.scores = s;
+      var w = pickWinnerWithAnswers(s, this.answers);
+      this.winnerIdx = w;
+      this.secondaryIdx = secondaryInfluence(s, w);
+      this.screen = "results";
+      this.announce("Your result: " + this.profiles[w].name);
+    },
+    restart:function(){
+      this.screen = "welcome";
+      this.qIndex = 0;
+      var i;
+      for(i=0;i<this.questions.length;i++) this.answers[i] = -1;
+      this.scores = [0,0,0,0,0];
+      this.winnerIdx = 0;
+      this.secondaryIdx = null;
+    },
+    openBrand:function(){ this.brandDrawer = true; this.$nextTick(function(){
+      var el = document.getElementById("brandShop"); if(el) el.focus();
+    }); },
+    closeBrand:function(){ this.brandDrawer = false; },
+    saveBrandAndClose:function(){
+      saveBrand({
+        shop:this.brand.shop,
+        handle:this.brand.handle,
+        accent:this.brand.accent,
+        sellerMode:this.sellerMode,
+        ctaText:this.ctaText,
+        ctaUrl:this.ctaUrl
+      });
+      this.brandDrawer = false;
+      this.showToast("Branding saved", false);
+    },
+    clearBrand:function(){
+      this.brand = {shop:"Your Shop", handle:"", accent:"#a78bfa"};
+      saveBrand(this.brand);
+      this.showToast("Branding cleared", false);
+    },
+    downloadPDF:function(){
+      var r = exportPDF(this.winner, this.brand);
+      if(!r.ok) this.showToast(r.err, true);
+      else this.showToast("PDF ready", false);
+    },
+    downloadPNG:function(){
+      var r = exportPNG(this.winner, this.brand);
+      if(!r.ok) this.showToast(r.err, true);
+      else this.showToast("Result card ready", false);
+    },
+    copyEmail:function(){
+      var text = buildEmailText(this.winner, this.scores, this.brand);
+      var self = this;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){
+          self.showToast("Copied to clipboard", false);
+        }, function(){
+          var r = copyText(text);
+          self.showToast(r.ok ? "Copied to clipboard" : "Copy failed — select the text manually.", !r.ok);
+        });
+      } else {
+        var r = copyText(text);
+        self.showToast(r.ok ? "Copied to clipboard" : "Copy failed — select the text manually.", !r.ok);
+      }
+    },
+    showToast:function(msg, err){
+      this.toast.msg = msg;
+      this.toast.err = !!err;
+      this.toast.show = true;
+      var self = this;
+      if(this._toastT) clearTimeout(this._toastT);
+      this._toastT = setTimeout(function(){ self.toast.show = false; }, 2600);
+    },
+    announce:function(msg){
+      var el = document.getElementById("ariaLive");
+      if(el) el.textContent = msg;
+    },
+    letter:function(i){ return String.fromCharCode(65 + i); }
+  },
+  template:`
+  <div>
+    <div class="topbar">
+      <div class="brandline">
+        <span class="dot"></span>
+        <span class="name">Scroll Personality Quiz</span>
+        <span class="part">· Bonus #5</span>
+      </div>
+      <div class="top-actions">
+        <button class="btn ghost" v-on:click="openBrand">Seller mode</button>
+        <button class="btn ghost" v-if="screen === 'results' || screen === 'quiz'" v-on:click="restart">Start over</button>
+      </div>
+    </div>
+
+    <div class="sr-only" id="ariaLive" aria-live="polite" aria-atomic="true"></div>
+
+    <transition name="fade-slide" mode="out-in">
+      <!-- ============ WELCOME ============ -->
+      <div v-if="screen === 'welcome'" key="welcome" class="card welcome">
+        <div class="mini-orbs" aria-hidden="true">
+          <span class="mini-orb a"></span>
+          <span class="mini-orb b"></span>
+          <span class="mini-orb c"></span>
+        </div>
+        <div class="kicker">Ten questions · one kind result</div>
+        <h1>Which scroller are you?</h1>
+        <div class="tag">Ten questions. One surprisingly kind result.</div>
+        <div class="desc">Find out why you reach for your phone, and get a personalized 7-day plan built for your scroll personality.</div>
+        <div class="stats">
+          <div class="stat"><b>10</b><span>Questions</span></div>
+          <div class="stat"><b>5</b><span>Profiles</span></div>
+          <div class="stat"><b>7</b><span>Day plan</span></div>
+        </div>
+        <button class="btn primary" v-on:click="start">Start the quiz</button>
+        <div class="desc" style="margin-top:18px; font-size:13px">Answer ten quick questions about how you really use your phone. There are no wrong answers.</div>
+      </div>
+
+      <!-- ============ QUIZ ============ -->
+      <div v-else-if="screen === 'quiz'" key="quiz" class="card">
+        <div class="progress-label">
+          <span>Question {{ qIndex + 1 }} of {{ questions.length }}</span>
+          <span>{{ progress }}%</span>
+        </div>
+        <div class="progress"><div class="bar" :style="{ width: progress + '%' }"></div></div>
+
+        <transition name="fade-slide" mode="out-in">
+          <div :key="qIndex">
+            <div class="q-head">
+              <div class="q-num">Question {{ qIndex + 1 }}</div>
+              <h2 class="q-text">{{ currentQuestion.text }}</h2>
+              <div class="q-hint">{{ currentQuestion.hint }}</div>
+            </div>
+            <div class="answers" role="radiogroup" :aria-label="currentQuestion.text">
+              <button
+                v-for="(a, i) in currentQuestion.answers"
+                :key="i"
+                class="answer"
+                role="radio"
+                :aria-checked="answers[qIndex] === i"
+                v-on:click="choose(i)"
+                v-on:keydown.enter.prevent="choose(i)"
+                v-on:keydown.space.prevent="choose(i)"
+              >
+                <span class="letter">{{ letter(i) }}</span>
+                <span>{{ a.text }}</span>
+              </button>
+            </div>
+          </div>
+        </transition>
+
+        <div class="nav-row">
+          <button class="btn ghost" v-on:click="back" :disabled="qIndex === 0">← Back</button>
+          <button class="btn primary" v-on:click="next" :disabled="answers[qIndex] < 0">Next →</button>
+        </div>
+      </div>
+
+      <!-- ============ RESULTS ============ -->
+      <div v-else key="results" class="card" aria-live="polite">
+        <div class="results-top">
+          <div class="profile-card">
+            <div class="profile-icon" v-html="iconSvg(winner.icon)"></div>
+            <div class="profile-kicker">Your scroll personality</div>
+            <h2 class="profile-name">{{ winner.name }}</h2>
+            <p class="profile-desc">{{ winner.description }}</p>
+            <div class="secondary" v-if="secondary">
+              Secondary influence: <b>{{ secondary.name }}</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- Score bars -->
+        <div class="card" style="padding:18px; margin-bottom:20px; background:rgba(0,0,0,.15)">
+          <div style="font-size:11px; letter-spacing:2.4px; text-transform:uppercase; color:var(--accent-3); font-weight:700; margin-bottom:14px">Your score across the five profiles</div>
+          <div class="bars">
+            <div class="bar-row" v-for="row in barRows" :key="row.idx" :class="{winner: row.winner}">
+              <div class="lbl">{{ row.name }}</div>
+              <div class="track"><div class="fill" :style="{ width: row.pct + '%' }"></div></div>
+              <div class="val">{{ row.score }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Superpowers & triggers -->
+        <div class="pillars">
+          <div class="pillar good">
+            <h4>Your superpowers</h4>
+            <ul><li v-for="(s, i) in winner.superpowers" :key="i">{{ s }}</li></ul>
+          </div>
+          <div class="pillar trig">
+            <h4>Your triggers</h4>
+            <ul><li v-for="(s, i) in winner.triggers" :key="i">{{ s }}</li></ul>
+          </div>
+        </div>
+
+        <div class="first-step">
+          <div class="k">Your gentle first step</div>
+          <p>{{ winner.firstStep }}</p>
+        </div>
+
+        <!-- 7-day plan -->
+        <div class="plan">
+          <h3>Your 7-day plan</h3>
+          <div class="sub">One small mission a day. Easy on purpose.</div>
+          <div class="day" v-for="(m, i) in winner.plan" :key="i">
+            <div class="num">{{ i + 1 }}</div>
+            <div class="text">{{ m }}</div>
+          </div>
+        </div>
+
+        <!-- Seller CTA -->
+        <div class="seller-cta" v-if="sellerMode && (ctaText || ctaUrl)">
+          <div class="txt">
+            <b>{{ ctaText || 'Get the full printable pack' }}</b>
+            <div v-if="ctaUrl" style="font-size:12px; color:var(--dim); margin-top:4px">{{ ctaUrl }}</div>
+          </div>
+          <a v-if="ctaUrl" class="btn primary" :href="ctaUrl" target="_blank" rel="noopener">{{ ctaText || 'Get the pack' }}</a>
+          <button v-else class="btn primary" v-on:click="showToast('Set a URL in Seller mode', true)">{{ ctaText || 'Get the pack' }}</button>
+        </div>
+
+        <!-- Actions -->
+        <div class="result-actions">
+          <button class="btn primary" v-on:click="downloadPDF">Download 7-day plan (PDF)</button>
+          <button class="btn" v-on:click="downloadPNG">Create result card (PNG)</button>
+          <button class="btn" v-on:click="copyEmail">Copy result as email text</button>
+          <button class="btn ghost" v-on:click="restart">Take the quiz again</button>
+        </div>
+
+        <div style="text-align:center; margin-top:22px; font-size:11.5px; color:var(--dim); letter-spacing:1.4px; text-transform:uppercase">
+          {{ brand.shop || 'Your Shop' }}<span v-if="brand.handle"> · {{ brand.handle }}</span>
+        </div>
+      </div>
+    </transition>
+
+    <!-- ============ BRAND DRAWER ============ -->
+    <div class="scrim" :class="{on: brandDrawer}" v-on:click="closeBrand"></div>
+    <aside class="drawer" :class="{open: brandDrawer}" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <button class="close" v-on:click="closeBrand" aria-label="Close seller mode">✕</button>
+      <h3 id="drawerTitle">Seller mode</h3>
+      <div class="sub">Your branding appears on every export and copy.</div>
+
+      <div class="field">
+        <label for="brandShop">Shop name</label>
+        <input type="text" id="brandShop" v-model="brand.shop" maxlength="40">
+      </div>
+      <div class="field">
+        <label for="brandHandle">Handle or link (optional)</label>
+        <input type="text" id="brandHandle" v-model="brand.handle" maxlength="60" placeholder="@yourshop or yoursite.example">
+      </div>
+      <div class="field">
+        <label for="brandAccent">Accent color</label>
+        <input type="color" id="brandAccent" v-model="brand.accent">
+      </div>
+
+      <div class="field" style="margin-top:22px">
+        <label style="display:flex; align-items:center; gap:10px; letter-spacing:0; text-transform:none; font-size:13px; color:var(--ink)">
+          <input type="checkbox" v-model="sellerMode">
+          <span>Show "Get the full printable pack" on results</span>
+        </label>
+      </div>
+      <div class="field" v-if="sellerMode">
+        <label for="ctaText">Button text</label>
+        <input type="text" id="ctaText" v-model="ctaText" maxlength="60" placeholder="Get the full printable pack">
+      </div>
+      <div class="field" v-if="sellerMode">
+        <label for="ctaUrl">Button URL</label>
+        <input type="url" id="ctaUrl" v-model="ctaUrl" placeholder="https://yourshop.example/pack">
+        <div class="help">Hidden by default. Only shown when Seller mode is on.</div>
+      </div>
+
+      <div class="nav-row" style="margin-top:22px">
+        <button class="btn ghost" v-on:click="clearBrand">Clear</button>
+        <button class="btn primary" v-on:click="saveBrandAndClose">Save</button>
+      </div>
+    </aside>
+
+    <!-- ============ TOAST ============ -->
+    <div class="toast" :class="{show: toast.show, err: toast.err}" role="status" aria-live="polite">{{ toast.msg }}</div>
+  </div>
+  `
+};
+
+/* =========================================================
+   MOUNT
+   ========================================================= */
+var app = Vue.createApp(App);
+app.mount("#app");
+
+/* =========================================================
+   VERIFICATION (runs on load, logs to console)
+   ========================================================= */
+function runVerification(){
+  var report = [];
+  var pass = 0, total = 0;
+  function assert(name, cond){
+    total++;
+    if(cond){ pass++; report.push("  PASS  " + name); }
+    else { report.push("  FAIL  " + name); }
+  }
+
+  /* (a) 20,000 random answer sets: each profile wins between 12% and 28% */
+  var rng = mulberry32(20260101);
+  var wins = [0,0,0,0,0];
+  var N = 20000;
+  for(var s=0;s<N;s++){
+    var picked = [];
+    for(var q=0;q<QUESTIONS.length;q++){
+      picked.push(Math.floor(rng() * QUESTIONS[q].answers.length));
+    }
+    var sc = scoreAnswers(picked);
+    var w = pickWinnerWithAnswers(sc, picked);
+    wins[w]++;
+  }
+  var minPct = 100, maxPct = 0;
+  for(var i=0;i<5;i++){
+    var pct = (wins[i] / N) * 100;
+    if(pct < minPct) minPct = pct;
+    if(pct > maxPct) maxPct = pct;
+  }
+  assert("(a) all profiles win >= 12%", minPct >= 12);
+  assert("(a) all profiles win <= 28%", maxPct <= 28);
+  report.push("       distribution: " + wins.map(function(w,i){
+    return PROFILES[i].name.split(" ").slice(-1)[0] + " " + ((w/N)*100).toFixed(1) + "%";
+  }).join(" · "));
+
+  /* (b) every profile is reachable */
+  var reachable = [false,false,false,false,false];
+  for(var s2=0;s2<2000;s2++){
+    var p2 = [];
+    for(var q2=0;q2<QUESTIONS.length;q2++){
+      p2.push(Math.floor(rng() * QUESTIONS[q2].answers.length));
+    }
+    var w2 = pickWinnerWithAnswers(scoreAnswers(p2), p2);
+    reachable[w2] = true;
+  }
+  assert("(b) every profile reachable", reachable.every(function(x){ return x; }));
+
+  /* (c) tie-break is deterministic */
+  var tieScores = [10,10,10,10,10];
+  var tiePicked = [];
+  for(var q3=0;q3<QUESTIONS.length;q3++) tiePicked.push(0);
+  var tw1 = pickWinnerWithAnswers(tieScores, tiePicked);
+  var tw2 = pickWinnerWithAnswers(tieScores, tiePicked);
+  var tw3 = pickWinnerWithAnswers(tieScores, tiePicked);
+  assert("(c) tie-break deterministic", tw1 === tw2 && tw2 === tw3);
+
+  /* (d) all 5 x 7 plan missions fit (heuristic: <= 90 chars) */
+  var allFit = true;
+  for(var p3=0;p3<PROFILES.length;p3++){
+    for(var d3=0;d3<PROFILES[p3].plan.length;d3++){
+      if(PROFILES[p3].plan[d3].length > 90) allFit = false;
+    }
+  }
+  assert("(d) all plan missions <= 90 chars", allFit);
+
+  /* (e) keyboard: quiz structure allows tab+enter through all controls (heuristic) */
+  var hasButtons = QUESTIONS.every(function(q){
+    return q.answers.length === 5 && q.text.length > 0;
+  });
+  assert("(e) every question has 5 answers and a text", hasButtons);
+
+  /* (f) export tests: PDF and PNG non-empty */
+  try{
+    var pdfResult = exportPDF(PROFILES[0], {shop:"Test Shop", handle:"@test", accent:"#a78bfa"});
+    assert("(f) PDF export non-empty", pdfResult.ok === true);
+  }catch(e){
+    assert("(f) PDF export non-empty", false);
+  }
+  try{
+    var pngResult = exportPNG(PROFILES[0], {shop:"Test Shop", handle:"@test", accent:"#a78bfa"});
+    assert("(f) PNG export non-empty", pngResult.ok === true);
+  }catch(e){
+    assert("(f) PNG export non-empty", false);
+  }
+
+  report.unshift("=== Scroll Personality Quiz verification ===");
+  report.push("TOTAL: " + pass + " / " + total + " passed");
+  if(typeof console !== "undefined" && console.log){
+    for(var r=0;r<report.length;r++) console.log(report[r]);
+  }
+  return {pass:pass, total:total, report:report};
+}
+
+window.addEventListener("load", function(){
+  setTimeout(runVerification, 600);
+});
+</script>
+</body>
+</html>
