@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unplugged Bingo Card Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{font-family:Nunito,Arial,Helvetica,sans-serif;background:#e6f0ec;color:#33302a;overflow:hidden;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at 85% 8%,rgba(15,118,110,.10) 0%,transparent 40%),radial-gradient(circle at 8% 92%,rgba(233,161,59,.10) 0%,transparent 42%);}
+button{font-family:Nunito,Arial,sans-serif;cursor:pointer;transition:transform .06s ease,box-shadow .15s,background .15s;}
+button:active{transform:scale(.97);}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #123c38;outline-offset:2px;}
+input,select,textarea{font-family:Nunito,Arial,sans-serif;}
+h1,h2,h3,.ttl{font-family:"Baloo 2",Georgia,serif;}
+.app-shell{position:fixed;inset:0;display:grid;grid-template-columns:360px 1fr;z-index:1;height:100vh;}
+.sidebar{background:#fffdf6;border-right:1px solid #d9c8a8;overflow-y:auto;padding:18px 16px 30px;}
+.sidebar::-webkit-scrollbar{width:9px;}
+.sidebar::-webkit-scrollbar-thumb{background:#0f766e;border-radius:6px;}
+.web-app-nav{display:flex;gap:8px;margin-bottom:14px;}
+.web-app-nav a{flex:1;text-align:center;text-decoration:none;font-size:12px;padding:9px 6px;border-radius:9px;border:1px solid #0f766e;color:#0f766e;background:rgba(15,118,110,.07);}
+.brand{background:#fff3d9;border:2px solid #123c38;border-radius:12px;padding:16px 14px;margin-bottom:14px;color:#33302a;box-shadow:4px 4px 0 #123c38;}
+.brand .kicker{font-size:11px;letter-spacing:.2em;color:#d94f4a;text-transform:uppercase;font-weight:800;}
+.brand h1{margin:6px 0 4px;font-size:30px;color:#123c38;}
+.brand .tagline{font-size:15px;font-weight:700;color:#7a5c38;margin-bottom:8px;}
+.brand .desc{font-size:12.5px;line-height:1.65;color:#6b5f45;}
+.panel{border:2px solid #123c38;border-radius:12px;background:#fffdf6;margin-bottom:14px;overflow:hidden;}
+.panel-head{padding:12px 14px;border-bottom:2px solid #123c38;font-family:"Baloo 2",Georgia,serif;font-size:20px;color:#123c38;background:#fff3d9;}
+.panel-body{padding:14px;}
+.flabel{font-size:11px;font-weight:800;color:#7a5c38;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.06em;}
+.flabel:first-child{margin-top:0;}
+.ipt,.sel{width:100%;padding:9px 11px;border-radius:8px;border:2px solid #123c38;background:#fff;color:#33302a;font-size:13px;outline:none;}
+.ipt:focus,.sel:focus{border-color:#0f766e;box-shadow:0 0 0 3px rgba(15,118,110,.22);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;}
+.toggle-row span{font-size:13px;color:#3a3226;font-weight:600;}
+.sw{position:relative;width:42px;height:23px;flex-shrink:0;display:inline-block;}
+.sw input{opacity:0;width:0;height:0;}
+.sw .sl{position:absolute;inset:0;background:#d9c8a8;border:2px solid #123c38;border-radius:20px;transition:.2s;}
+.sw .sl:before{content:"";position:absolute;width:14px;height:14px;left:3px;top:2.5px;background:#fffdf6;border-radius:50%;transition:.2s;}
+.sw input:checked + .sl{background:#0f766e;}
+.sw input:checked + .sl:before{transform:translateX(18px);}
+.swatches{display:flex;gap:8px;margin-top:8px;}
+.swatch{width:38px;height:38px;border-radius:50%;border:2px solid transparent;padding:0;flex-shrink:0;}
+.swatch.active{border-color:#123c38;box-shadow:0 0 0 3px #fffdf6,0 0 0 5px #123c38;}
+.color-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;color:#3a3226;font-weight:600;}
+.color-row input[type=color]{width:44px;height:30px;border:2px solid #123c38;border-radius:7px;background:#fff;padding:2px;}
+.gen-btn{width:100%;padding:14px;border:2px solid #123c38;border-radius:10px;background:#0f766e;color:#fff;font-size:17px;font-family:"Baloo 2",Georgia,serif;font-weight:700;box-shadow:4px 4px 0 #123c38;margin-top:6px;}
+.gen-btn:disabled{opacity:.55;pointer-events:none;}
+.sub-btn{width:100%;padding:10px;border-radius:9px;border:2px solid #123c38;background:#fff;color:#123c38;font-size:12px;font-weight:800;margin-top:8px;}
+.sub-btn:hover{background:#fff3d9;}
+.progress-text{font-size:12px;color:#3a3226;margin-top:10px;min-height:18px;font-weight:600;}
+.progress-bar{height:9px;border-radius:6px;background:#e5d6b5;margin-top:6px;overflow:hidden;border:2px solid #123c38;}
+.progress-fill{height:100%;width:0%;background:#0f766e;}
+.progress-error{display:none;margin-top:8px;font-size:12px;font-weight:bold;color:#fff;background:#7f1d1d;border:2px solid #ef4444;border-radius:9px;padding:9px 10px;line-height:1.5;}
+.note{font-size:11px;color:#8a7a5c;line-height:1.6;margin-top:8px;}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;}
+.topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:2px solid #123c38;background:#fffdf6;flex-wrap:wrap;flex-shrink:0;}
+.chip{font-size:11px;font-weight:800;padding:6px 12px;border-radius:16px;border:2px solid #123c38;color:#3a3226;background:#fff;white-space:nowrap;}
+.chip.preset{border-color:#0f766e;color:#fff;background:#0f766e;}
+.view-toggle{display:flex;border:2px solid #123c38;border-radius:18px;overflow:hidden;background:#fff;}
+.view-toggle button{border:none;background:transparent;padding:7px 14px;font-size:12px;font-weight:800;color:#3a3226;}
+.view-toggle button.active{background:#123c38;color:#fff;}
+.topbar select{background:#fff;color:#3a3226;border:2px solid #123c38;border-radius:9px;padding:7px 9px;font-size:12px;font-weight:700;}
+.tb-btn{border:2px solid #123c38;background:#fff;color:#123c38;padding:8px 13px;border-radius:9px;font-size:12px;font-weight:800;}
+.tb-btn:hover{background:#fff3d9;}
+.tb-btn.primary{background:#0f766e;border-color:#123c38;color:#fff;}
+.preview-scroll{flex:1;min-height:0;overflow:auto;padding:26px 22px;display:flex;flex-direction:column;align-items:center;}
+.preview-host{display:flex;gap:26px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+.empty-card{max-width:520px;text-align:center;border:3px dashed #0f766e;border-radius:16px;padding:54px 40px;background:#fffdf6;}
+.empty-card h2{color:#123c38;margin:0 0 12px;font-size:32px;}
+.empty-card p{color:#6b5f45;font-size:13px;line-height:1.7;}
+.bottomnav{display:flex;align-items:center;gap:14px;justify-content:center;padding:12px;border-top:2px solid #123c38;background:#fffdf6;flex-shrink:0;flex-wrap:wrap;}
+.nav-btn{width:38px;height:38px;border-radius:50%;border:2px solid #0f766e;background:#fff;color:#0f766e;font-size:16px;font-weight:800;}
+.nav-btn:disabled{opacity:.3;}
+.sheet-pos{font-size:12px;color:#3a3226;font-weight:800;}
+.meta-line{font-size:11px;color:#8a7a5c;width:100%;text-align:center;}
+/* ===== PAPER ===== */
+.sheet-slot{flex-shrink:0;position:relative;}
+.sheet{width:816px;height:1056px;background:var(--ppp,#fffdf6);color:var(--ppk,#33302a);position:relative;flex-shrink:0;overflow:hidden;transform:scale(var(--paper-scale,0.7));transform-origin:top left;box-shadow:0 18px 60px rgba(233,161,59,.25);}
+.sheet-inner{position:absolute;inset:0;padding:40px 40px 40px;display:flex;flex-direction:column;}
+.top-strip{height:12px;background:var(--pp1,#0f766e);margin-bottom:12px;flex-shrink:0;border:2px solid var(--ppk,#33302a);}
+.hdr-badge{display:inline-block;align-self:flex-start;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;padding:6px 14px;margin-bottom:8px;background:var(--ppk,#33302a);color:var(--ppp,#fffdf6);}
+.hdr-capsule .hdr-badge{border-radius:18px;}
+.hdr-split .hdr-row{display:flex;align-items:center;justify-content:space-between;width:100%;}
+.hdr-classic .hdr-badge{background:transparent;color:var(--ppk,#33302a);border:2px solid var(--ppk,#33302a);}
+.hdr-ribbon .hdr-badge{background:var(--pp1,#0f766e);color:#fff;}
+.sheet-title{font-size:36px;margin:0 0 2px;color:var(--ppk,#33302a);max-height:92px;overflow:hidden;}
+.sheet-sub{font-size:14px;font-weight:600;color:var(--ppk,#33302a);opacity:.8;margin:0 0 6px;max-height:44px;overflow:hidden;}
+.level-line{font-size:12px;font-weight:800;color:var(--ppk,#33302a);opacity:.85;margin:0 0 10px;letter-spacing:.05em;}
+.bingo-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:8px;}
+.bcell{border:2px solid var(--ppk,#33302a);background:var(--ppp,#fffdf6);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px;min-height:0;min-width:0;overflow:hidden;}
+.bcell .btxt{font-size:12px;font-weight:700;line-height:1.3;color:var(--ppk,#33302a);max-height:100%;overflow:hidden;}
+.bcell .bdot{width:10px;height:10px;border-radius:50%;background:var(--pp1,#d94f4a);margin-top:3px;flex-shrink:0;}
+.bcell.free{background:var(--pp1,#0f766e);color:#fff;}
+.bcell.free .btxt{color:#fff;}
+.bcell.free .bstar{font-size:30px;line-height:1;color:#fff;}
+.call-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:7px;align-content:start;overflow:hidden;}
+.call-cell{border:2px dashed var(--ppk,#33302a);border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10.5px;font-weight:700;padding:3px;min-height:0;overflow:hidden;color:var(--ppk,#33302a);}
+.howto-box{border:2px solid var(--pp2,#123c38);border-radius:10px;background:var(--ppp,#fffdf6);padding:8px 13px;font-size:11px;line-height:1.55;color:var(--ppk,#33302a);margin-top:8px;flex-shrink:0;}
+.howto-box b{color:var(--ppk,#33302a);}
+.sheet-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding-top:7px;border-top:2px solid var(--pp2,#123c38);font-size:11px;color:var(--ppk,#33302a);flex-shrink:0;font-weight:600;}
+.sheet-footer>span:nth-child(2),.sheet-footer>span:nth-child(3){flex-shrink:0;}
+.footer-chip{background:var(--ppk,#33302a);color:var(--ppp,#fffdf6);font-size:11px;font-weight:bold;padding:4px 11px;border-radius:11px;white-space:nowrap;max-width:62%;overflow:hidden;text-overflow:ellipsis;}
+.shop-line{font-size:10px;opacity:.85;}
+.bd-glow{outline:3px solid var(--pp1,#0f766e);outline-offset:-3px;}
+.bd-frame{border:6px solid var(--ppk,#33302a);}
+.bd-double{border:10px double var(--ppk,#33302a);}
+.bd-dashed{border:3px dashed var(--ppk,#33302a);}
+.bd-clean{border:none;}
+.bgp-grid .sheet-inner{background-image:linear-gradient(rgba(51,48,42,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(51,48,42,.05) 1px,transparent 1px);background-size:28px 28px;}
+.bgp-dots .sheet-inner{background-image:radial-gradient(rgba(51,48,42,.10) 1.4px,transparent 1.4px);background-size:22px 22px;}
+.bgp-rays .sheet-inner{background-image:repeating-linear-gradient(45deg,rgba(15,118,110,.06) 0 12px,transparent 12px 24px);}
+.pv-bw.bgp-rays .sheet-inner{background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.04) 0 12px,transparent 12px 24px);}
+.help-overlay{position:fixed;inset:0;background:rgba(51,48,42,.6);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.help-overlay.show{display:flex;}
+.help-modal{background:#fffdf6;border:3px solid #123c38;border-radius:14px;width:620px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;color:#33302a;}
+.help-head{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:2px solid #123c38;}
+.help-head h3{margin:0;font-size:22px;}
+.help-close{border:2px solid #123c38;background:#fff;color:#33302a;width:32px;height:32px;border-radius:8px;font-size:15px;font-weight:bold;}
+.help-body{padding:18px 20px;overflow-y:auto;}
+.help-step{display:flex;gap:12px;margin-bottom:15px;}
+.help-num{width:26px;height:26px;border-radius:50%;background:#0f766e;color:#fff;font-weight:bold;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.help-step h4{margin:0 0 4px;font-size:14px;}
+.help-step p{margin:0;font-size:12px;line-height:1.65;color:#6b5f45;}
+#exportDeck{position:fixed;left:-99999px;top:0;width:820px;}
+.card-in{animation:cardin .45s ease both;}
+@keyframes cardin{from{opacity:0;transform:translateY(18px) scale(.98);}to{opacity:1;transform:none;}}
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:280px 1fr;}.brand h1{font-size:26px;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:2px solid #123c38;}}
+@media (prefers-reduced-motion:reduce){.card-in{animation:none !important;}*{transition:none !important;}}
+@media print{
+  body{background:#fff;}
+  body::before,.sidebar,.topbar,.bottomnav,.help-overlay{display:none !important;}
+  .app-shell{display:block;position:static;height:auto;}
+  .main{display:block;}
+  .preview-scroll{overflow:visible;display:block;padding:0;}
+  .preview-host{display:block;}
+  .sheet-slot{width:auto !important;height:auto !important;margin:0;}
+  .sheet{transform:none;box-shadow:none;page-break-after:always;margin:0;}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <nav class="web-app-nav" id="webAppNav" style="display:none;">
+      <a id="linkApp2" href="#" target="_blank" rel="noopener">App 2</a>
+      <a id="linkApp3" href="#" target="_blank" rel="noopener">App 3</a>
+    </nav>
+    <div class="brand">
+      <div class="kicker">Screen-Free Bingo Studio</div>
+      <h1>Unplugged Bingo</h1>
+      <div class="tagline">Daub a whole screen-free week.</div>
+      <div class="desc">Turn family time into a bingo game everyone can win. Every card is balanced, checked, and ready to print at home or list in your shop.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Generator</div>
+      <div class="panel-body">
+        <div class="flabel">Card count (1-12)</div>
+        <input class="ipt" type="number" id="inCount" value="4" min="1" max="12">
+        <div class="flabel">Week theme</div>
+        <select class="sel" id="inTheme">
+          <option value="family" selected>Family Unplugged Time</option>
+          <option value="garden">Garden &amp; Backyard</option>
+          <option value="kitchen">Kitchen Capers</option>
+          <option value="rainy">Rainy Day Indoors</option>
+          <option value="camp">Camp &amp; Campfire</option>
+        </select>
+        <div class="flabel">Card style</div>
+        <select class="sel" id="inStyle">
+          <option value="classic" selected>Classic grid</option>
+          <option value="chunky">Chunky kids</option>
+        </select>
+        <div class="toggle-row"><span>FREE center square</span><label class="sw"><input type="checkbox" id="inFree" checked><span class="sl"></span></label></div>
+        <div class="toggle-row"><span>Include calling sheet</span><label class="sw"><input type="checkbox" id="inCalling" checked><span class="sl"></span></label></div>
+        <div class="note" id="tightHint" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Style</div>
+      <div class="panel-body">
+        <div class="flabel">Visual preset</div>
+        <select class="sel" id="inPreset">
+          <option value="lagoon" selected>Lagoon Party</option>
+          <option value="coral">Coral Reef</option>
+          <option value="grape">Grape Soda</option>
+          <option value="lemon">Lemon Stand</option>
+          <option value="bw">Print-safe B/W</option>
+        </select>
+        <div class="swatches" id="swatches"></div>
+        <div class="flabel">Worksheet title</div>
+        <input class="ipt" id="inTitle" value="Family Unplugged Bingo">
+        <div class="flabel">Subtitle</div>
+        <input class="ipt" id="inSubtitle" value="Do five in a row — across, down, or diagonal!">
+        <div class="flabel">Header style</div>
+        <select class="sel" id="inHeader">
+          <option value="ribbon" selected>Ribbon</option>
+          <option value="capsule">Capsule</option>
+          <option value="split">Split</option>
+          <option value="classic">Classic</option>
+        </select>
+        <div class="flabel">Page border</div>
+        <select class="sel" id="inBorder">
+          <option value="glow" selected>Glow</option>
+          <option value="frame">Frame</option>
+          <option value="double">Double</option>
+          <option value="dashed">Dashed</option>
+          <option value="clean">Clean</option>
+        </select>
+        <div class="flabel">Shape style</div>
+        <select class="sel" id="inShape">
+          <option value="rounded" selected>Rounded</option>
+          <option value="square">Square</option>
+          <option value="soft">Soft</option>
+        </select>
+        <div class="flabel">Background pattern</div>
+        <select class="sel" id="inBg">
+          <option value="none">None</option>
+          <option value="grid" selected>Faint grid</option>
+          <option value="dots">Dots</option>
+          <option value="rays">Rays</option>
+        </select>
+        <div class="flabel">Accents &amp; paper</div>
+        <div class="color-row"><span>Primary accent</span><input type="color" id="inPrimary" value="#0f766e"></div>
+        <div class="color-row"><span>Secondary accent</span><input type="color" id="inSecondary" value="#123c38"></div>
+        <div class="color-row"><span>Paper</span><input type="color" id="inPaper" value="#fffdf6"></div>
+        <div class="color-row"><span>Ink</span><input type="color" id="inInk" value="#33302a"></div>
+        <div class="flabel">Wash strength (<span id="tintVal">8%</span>)</div>
+        <div class="range-row"><input type="range" id="inTint" min="0" max="100" value="8"></div>
+        <div class="toggle-row"><span>Show footer page numbers</span><label class="sw"><input type="checkbox" id="inFootNums" checked><span class="sl"></span></label></div>
+        <div class="flabel">Your shop name</div>
+        <input class="ipt" id="inShop" value="" placeholder="Optional — printed small in the footer">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Seller Branding</div>
+      <div class="panel-body">
+        <div class="flabel">Shop name (footer + exports)</div>
+        <input class="ipt" id="inBrandShop" value="" placeholder="e.g. Sunny Paper Shop">
+        <div class="flabel">Handle or link (optional)</div>
+        <input class="ipt" id="inBrandHandle" value="" placeholder="e.g. @sunnypaper or shop link">
+        <div class="flabel">Brand accent color</div>
+        <div class="color-row"><span>Accent</span><input type="color" id="inBrandColor" value="#0f766e"></div>
+        <div class="note">Branding is saved in this browser and printed in every footer, PNG, PDF and copied text. Works even if storage is blocked — it just will not persist.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">Export Deck</div>
+      <div class="panel-body">
+        <button class="gen-btn" id="btnGenerate">Generate 4 Cards</button>
+        <button class="sub-btn" id="btnApply">Apply Style Changes</button>
+        <button class="sub-btn" id="btnShuffle">Shuffle layout (selected card)</button>
+        <button class="sub-btn" id="btnPNG">Download Card PNG</button>
+        <button class="sub-btn" id="btnCSV">Download Calling CSV</button>
+        <button class="sub-btn" id="btnCopyCalling">Copy calling list</button>
+        <button class="sub-btn" id="btnCopyListing">Copy listing text</button>
+        <div class="progress-text" id="progressText" aria-live="polite">Idle. Pick a theme and hit generate.</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-error" id="progressError" role="alert"></div>
+        <div class="note">Bingo cards first, then the calling sheet. File name comes from the worksheet title.</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="chip" id="kpiDeck">No deck yet</span>
+      <span class="chip preset" id="kpiPreset">Lagoon Party</span>
+      <div class="view-toggle">
+        <button id="viewCards" class="active">Cards</button>
+        <button id="viewCalling">Calling Sheet</button>
+      </div>
+      <select id="selLayout">
+        <option value="single" selected>Single</option>
+        <option value="spread">2-page spread</option>
+        <option value="strip">3-up strip</option>
+        <option value="grid">2x2 grid</option>
+      </select>
+      <select id="selZoom"></select>
+      <button class="tb-btn" id="btnHelp">? How to use</button>
+      <button class="tb-btn primary" id="btnPDF">Download Exact PDF</button>
+      <button class="tb-btn" id="btnPrint">Exact Print</button>
+    </div>
+    <div class="preview-scroll"><div class="preview-host" id="previewHost"></div></div>
+    <div class="bottomnav">
+      <button class="nav-btn" id="btnPrev" aria-label="Previous sheet">&lt;</button>
+      <span class="sheet-pos" id="sheetPos">Sheet - / -</span>
+      <button class="nav-btn" id="btnNext" aria-label="Next sheet">&gt;</button>
+      <div class="meta-line" id="metaLine">Pick a theme, generate your bingo cards, and daub a screen-free week.</div>
+    </div>
+  </main>
+</div>
+<div id="exportDeck"></div>
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-modal">
+    <div class="help-head"><h3>How to use Unplugged Bingo</h3><button class="help-close" id="btnHelpClose">X</button></div>
+    <div class="help-body">
+      <div class="help-step"><div class="help-num">1</div><div><h4>Generate your cards</h4><p>Set the <b>card count (1-12)</b>, week theme and style. Press <b>Generate</b>. Every card is balanced across activity types and carries its <b>seed in the footer</b>, so any card can be reproduced exactly.</p></div></div>
+      <div class="help-step"><div class="help-num">2</div><div><h4>Read a card</h4><p>25 squares (or 24 plus a FREE star when enabled). Do an activity, daub the square. Five in a row — across, down or diagonal — wins the round.</p></div></div>
+      <div class="help-step"><div class="help-num">3</div><div><h4>Style it live</h4><p>Pick a <b>preset</b> (try <b>Print-safe B/W</b> for cheap interiors), set your <b>shop branding</b>, tune colors and borders. Every control <b>updates the preview instantly</b>.</p></div></div>
+      <div class="help-step"><div class="help-num">4</div><div><h4>Preview and export</h4><p><b>Download Exact PDF</b> renders cards first, then the calling sheet. <b>Card PNG</b>, <b>Calling CSV</b> and <b>Copy calling list</b> cover the rest. <b>Exact Print</b> gives one page per sheet.</p></div></div>
+      <div class="help-step"><div class="help-num">5</div><div><h4>Tips</h4><p>Arrow keys flip sheets, H opens this guide. Cut the calling sheet into strips and draw from a bowl. The seed in the footer reproduces that exact card.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+var LINK_APP_2 = "";
+var LINK_APP_3 = "";
+var EXPORT_SCALE = 3.125;
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffleWith(rng,arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(rng()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function slug(s){return String(s||"unplugged-bingo").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"unplugged-bingo";}
+function hexToRgba(hex,a){var h=String(hex||"#000000").replace("#","");if(h.length===3){h=h.charAt(0)+h.charAt(0)+h.charAt(1)+h.charAt(1)+h.charAt(2)+h.charAt(2);}var r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);if(isNaN(r)||isNaN(g)||isNaN(b)){return "rgba(0,0,0,"+a+")";}return "rgba("+r+","+g+","+b+","+a+")";}
+function storeGet(k){try{var v=window.localStorage?window.localStorage.getItem(k):null;return v;}catch(e){return null;}}
+function storeSet(k,v){try{if(window.localStorage){window.localStorage.setItem(k,v);return true;}}catch(e){}return false;}
+
+var CATS = ["move","make","notice","together","quiet","play"];
+var CAT_LABEL = {move:"Move",make:"Make",notice:"Notice",together:"Together",quiet:"Quiet",play:"Play"};
+var THEMES = {
+ family:[
+  {t:"Dance to one whole song",c:"move"},{t:"Hop to the mailbox and back",c:"move"},
+  {t:"Fold a paper boat",c:"make"},{t:"Draw your family as animals",c:"make"},
+  {t:"Find five different leaves",c:"notice"},{t:"Listen for three bird songs",c:"notice"},
+  {t:"Call a grandparent",c:"together"},{t:"Play one board game",c:"together"},
+  {t:"Read ten slow pages",c:"quiet"},{t:"Doodle for fifteen minutes",c:"quiet"},
+  {t:"Hide and seek, one round",c:"play"},{t:"Charades, your turn to mime",c:"play"},
+  {t:"Do ten jumping jacks",c:"move"},{t:"March around the house",c:"move"},
+  {t:"Build a blanket fort",c:"make"},{t:"Make a card for someone",c:"make"},
+  {t:"Spot something yellow outside",c:"notice"},{t:"Watch clouds for five minutes",c:"notice"},
+  {t:"Cook something together",c:"together"},{t:"Read aloud for ten minutes",c:"together"},
+  {t:"Take a slow bath",c:"quiet"},{t:"Write three gratitudes",c:"quiet"},
+  {t:"Tag, you are it",c:"play"},{t:"Hopscotch to ten and back",c:"play"},
+  {t:"Stretch tall like a tree",c:"move"},{t:"Balance a book on your head",c:"move"},
+  {t:"Mold something from clay or dough",c:"make"},{t:"Cut a paper snowflake",c:"make"},
+  {t:"Find the North Star tonight",c:"notice"},{t:"Smell three kitchen spices blindfolded",c:"notice"},
+  {t:"Plan a picnic",c:"together"},{t:"Tell a story round-robin",c:"together"},
+  {t:"Finish a puzzle corner",c:"quiet"},{t:"Listen to a full album",c:"quiet"},
+  {t:"Card game war, best of three",c:"play"},{t:"Simon says, silly edition",c:"play"},
+  {t:"Wiggle every toe",c:"move"},{t:"Race to the fence and back",c:"move"},
+  {t:"Paint one rock",c:"make"},{t:"Weave a friendship bracelet",c:"make"},
+  {t:"Count the colors in one room",c:"notice"},{t:"Find a heart-shaped rock",c:"notice"},
+  {t:"Have a candlelit dinner",c:"together"},{t:"Write thank-you notes",c:"together"},
+  {t:"Press flowers in a book",c:"quiet"},{t:"Sit quietly for five minutes",c:"quiet"},
+  {t:"Pillow fight, gentle rules",c:"play"},{t:"Flashlight tag after dark",c:"play"}
+ ],
+ garden:[
+  {t:"Water every thirsty pot",c:"move"},{t:"Race a wheelbarrow",c:"move"},
+  {t:"Press one perfect leaf",c:"make"},{t:"Build a twig teepee",c:"make"},
+  {t:"Find three kinds of bark",c:"notice"},{t:"Count ladybugs",c:"notice"},
+  {t:"Plant seeds in a row",c:"together"},{t:"Picnic under a tree",c:"together"},
+  {t:"Lie in the grass ten minutes",c:"quiet"},{t:"Draw one flower exactly",c:"quiet"},
+  {t:"Hide painted rocks to find",c:"play"},{t:"Bug safari with a jar",c:"play"},
+  {t:"Pull ten weeds, slowly",c:"move"},{t:"Carry the watering can twice",c:"move"},
+  {t:"Make mud pies",c:"make"},{t:"Weave a grass crown",c:"make"},
+  {t:"Watch one bee for a full minute",c:"notice"},{t:"Find the biggest leaf",c:"notice"},
+  {t:"Share lemonade outside",c:"together"},{t:"Read in the shade together",c:"together"},
+  {t:"Smell every herb you grow",c:"quiet"},{t:"Sit still until a bird lands near",c:"quiet"},
+  {t:"Frisbee, ten gentle throws",c:"play"},{t:"Hide and seek among trees",c:"play"},
+  {t:"Rake one small pile of leaves",c:"move"},{t:"Climb one safe branch",c:"move"},
+  {t:"Paint a pot",c:"make"},{t:"Make a daisy chain",c:"make"},
+  {t:"Follow one ant trail",c:"notice"},{t:"Find a feather",c:"notice"},
+  {t:"Invite a neighbor to see it",c:"together"},{t:"Eat one meal outdoors",c:"together"},
+  {t:"Cloud-watch from the lawn",c:"quiet"},{t:"Nap in the hammock",c:"quiet"},
+  {t:"Catch and release fireflies",c:"play"},{t:"Backyard Olympics: three events",c:"play"},
+  {t:"Sweep the patio clean",c:"move"},{t:"Dance in the sprinkler",c:"move"},
+  {t:"Chalk one big driveway mural",c:"make"},{t:"Build a fairy house",c:"make"},
+  {t:"Spot three cloud animals",c:"notice"},{t:"Find tonight's first star",c:"notice"},
+  {t:"Tell garden stories at dusk",c:"together"},{t:"Share berries you picked",c:"together"},
+  {t:"Listen to evening crickets",c:"quiet"},{t:"Press tonight's best leaf",c:"quiet"},
+  {t:"Flashlight moth watch",c:"play"},{t:"Catch falling leaves",c:"play"}
+ ],
+ kitchen:[
+  {t:"Stir the pot ten slow times",c:"move"},{t:"Knead dough for five minutes",c:"move"},
+  {t:"Cut paper placemats",c:"make"},{t:"Fold napkins fancy",c:"make"},
+  {t:"Find three round foods",c:"notice"},{t:"Smell every spice jar",c:"notice"},
+  {t:"Set the table for everyone",c:"together"},{t:"Taste-test together",c:"together"},
+  {t:"Watch bread rise quietly",c:"quiet"},{t:"Copy one recipe by hand",c:"quiet"},
+  {t:"Guess the mystery ingredient",c:"play"},{t:"Cookie decorating contest",c:"play"},
+  {t:"Wash ten dishes by hand",c:"move"},{t:"Sweep the kitchen floor",c:"move"},
+  {t:"Make funny-face pancakes",c:"make"},{t:"Build a fruit tower",c:"make"},
+  {t:"Sort the utensil drawer",c:"notice"},{t:"Count all the mugs",c:"notice"},
+  {t:"Serve someone else first",c:"together"},{t:"Compliment the cook",c:"together"},
+  {t:"Sip cocoa very slowly",c:"quiet"},{t:"Write the menu in best handwriting",c:"quiet"},
+  {t:"Pretend restaurant, you are server",c:"play"},{t:"Food trivia, five questions",c:"play"},
+  {t:"Carry groceries inside",c:"move"},{t:"Wipe the table twice",c:"move"},
+  {t:"Draw your dream cake",c:"make"},{t:"Make ice cubes with berries",c:"make"},
+  {t:"Find something red to taste",c:"notice"},{t:"Listen for the kettle song",c:"notice"},
+  {t:"Eat dessert together, no rushing",c:"together"},{t:"Thank the cook out loud",c:"together"},
+  {t:"Watch soup steam curl",c:"quiet"},{t:"Read one recipe for fun",c:"quiet"},
+  {t:"Blind taste test, three foods",c:"play"},{t:"Invent a silly sandwich",c:"play"},
+  {t:"Peel one whole apple in a strip",c:"move"},{t:"Crack eggs with one hand",c:"move"},
+  {t:"Shape bread rolls funny",c:"make"},{t:"Decorate a paper chef hat",c:"make"},
+  {t:"Find the oldest can in the pantry",c:"notice"},{t:"Smell vanilla with eyes closed",c:"notice"},
+  {t:"Share the last cookie fairly",c:"together"},{t:"Plan tomorrow's breakfast",c:"together"},
+  {t:"Hum while the timer ticks",c:"quiet"},{t:"Rest feet while oven works",c:"quiet"},
+  {t:"Kitchen drum solo on pots",c:"play"},{t:"Pretend the floor is lava",c:"play"}
+ ],
+ rainy:[
+  {t:"Puddle stomping, boots on",c:"move"},{t:"Indoor scavenger sprint",c:"move"},
+  {t:"Draw the rain on glass",c:"make"},{t:"Fold five paper boats",c:"make"},
+  {t:"Count raindrops racing down",c:"notice"},{t:"Find three grey things",c:"notice"},
+  {t:"Tell storm stories together",c:"together"},{t:"Hot cocoa for everyone",c:"together"},
+  {t:"Listen to rain for ten minutes",c:"quiet"},{t:"Read under a blanket",c:"quiet"},
+  {t:"Sock puppets, one scene",c:"play"},{t:"Indoor bowling with bottles",c:"play"},
+  {t:"Dance like lightning",c:"move"},{t:"Tidy one shelf fast",c:"move"},
+  {t:"Make paper airplanes",c:"make"},{t:"Build a card tower",c:"make"},
+  {t:"Watch one drip from leaf to ground",c:"notice"},{t:"Find the foggiest window",c:"notice"},
+  {t:"Call someone you miss",c:"together"},{t:"Bake something warm together",c:"together"},
+  {t:"Nap to rain sounds",c:"quiet"},{t:"Write a rainy-day poem",c:"quiet"},
+  {t:"Charades, rainy edition",c:"play"},{t:"Balloon volleyball",c:"play"},
+  {t:"March like thunder",c:"move"},{t:"Shake out the welcome mat",c:"move"},
+  {t:"Paint with rainwater colors",c:"make"},{t:"Make a newspaper hat",c:"make"},
+  {t:"Smell the rain through the door",c:"notice"},{t:"Find five blue things",c:"notice"},
+  {t:"Share umbrellas on a walk",c:"together"},{t:"Dry off together with cocoa",c:"together"},
+  {t:"Watch rain from the porch",c:"quiet"},{t:"Finish one puzzle row",c:"quiet"},
+  {t:"Living-room campout tonight",c:"play"},{t:"Flashlight shadow animals",c:"play"},
+  {t:"Splash in one last puddle",c:"move"},{t:"Wring out sponges fast",c:"move"},
+  {t:"Draw your dream umbrella",c:"make"},{t:"Make a rain gauge",c:"make"},
+  {t:"Spot the first sunbeam after",c:"notice"},{t:"Find a rainbow or try hard",c:"notice"},
+  {t:"Thank the rain for gardens",c:"together"},{t:"Plan a sunny-day picnic",c:"together"},
+  {t:"Breathe the clean-air smell",c:"quiet"},{t:"Rest while clothes dry",c:"quiet"},
+  {t:"Puddle-jump contest",c:"play"},{t:"Sing in the rain, briefly",c:"play"}
+ ],
+ camp:[
+  {t:"Gather ten perfect sticks",c:"move"},{t:"March the whole campsite loop",c:"move"},
+  {t:"Whittle a marshmallow point",c:"make"},{t:"Weave a grass bracelet",c:"make"},
+  {t:"Name three night sounds",c:"notice"},{t:"Find the Big Dipper",c:"notice"},
+  {t:"Tell one campfire story",c:"together"},{t:"Sing one round together",c:"together"},
+  {t:"Watch flames for ten minutes",c:"quiet"},{t:"Write one line in a logbook",c:"quiet"},
+  {t:"Flashlight tag, one round",c:"play"},{t:"Marshmallow roast-off",c:"play"},
+  {t:"Haul water from the pump",c:"move"},{t:"Stack firewood neatly",c:"move"},
+  {t:"Carve soap with a safe knife",c:"make"},{t:"Make a leaf rubbing",c:"make"},
+  {t:"Track one animal trail",c:"notice"},{t:"Find owl pellets",c:"notice"},
+  {t:"Cook foil dinners together",c:"together"},{t:"Share trail mix fairly",c:"together"},
+  {t:"Dawn watch in silence",c:"quiet"},{t:"Press one camp leaf",c:"quiet"},
+  {t:"Capture the flag at dusk",c:"play"},{t:"Glow-stick ring toss",c:"play"},
+  {t:"Swim one full lap",c:"move"},{t:"Climb the lookout rock",c:"move"},
+  {t:"Tie three useful knots",c:"make"},{t:"Build a mini lean-to",c:"make"},
+  {t:"Identify two constellations",c:"notice"},{t:"Find the North Star",c:"notice"},
+  {t:"Paddle across together",c:"together"},{t:"Trade one camp chore",c:"together"},
+  {t:"Listen to loons at dusk",c:"quiet"},{t:"Sketch the sunset fast",c:"quiet"},
+  {t:"Wide game in the dark",c:"play"},{t:"Sardines, one round",c:"play"},
+  {t:"Douse the fire safely",c:"move"},{t:"Pack one bag perfectly",c:"move"},
+  {t:"Burn your initials (supervised)",c:"make"},{t:"Make a nature crown",c:"make"},
+  {t:"Spot first morning mist",c:"notice"},{t:"Find three pinecones",c:"notice"},
+  {t:"Thank the campsite hosts",c:"together"},{t:"Plan next trip over cocoa",c:"together"},
+  {t:"Stare at embers till sleepy",c:"quiet"},{t:"Write tomorrow's wake-up note",c:"quiet"},
+  {t:"Midnight owl-hoot contest",c:"play"},{t:"Star-count competition",c:"play"}
+ ]
+};
+var THEME_LABEL = {family:"Family Unplugged Time",garden:"Garden & Backyard",kitchen:"Kitchen Capers",rainy:"Rainy Day Indoors",camp:"Camp & Campfire"};
+var CARD_TITLES = ["Family Unplugged Bingo","Screen-Free Bingo Night","The Great Unplug Game","Bingo Without Batteries","Dabbers Down Bingo","Analog Fun Bingo","One Week, One Card","No-Charger Bingo","Tabletop Bingo Time","Pencil & Paper Bingo","Slow Sunday Bingo","Porch Light Bingo"];
+var CARD_SUBS = ["Do five in a row — across, down, or diagonal!","Mark a square for every finished adventure.","Finish a row and shout BINGO from the porch.","One card, twenty-four tiny missions.","Daub your way through a screen-free week."];
+var PRESETS = {
+  lagoon:{name:"Lagoon Party",paper:"#fffdf4",ink:"#14332f",primary:"#0f766e",secondary:"#e9a13b",tint:8,sw:["#0f766e","#e9a13b"]},
+  coral:{name:"Coral Reef",paper:"#fff4ec",ink:"#5a2e22",primary:"#ef6f5a",secondary:"#0f766e",tint:8,sw:["#ef6f5a","#0f766e"]},
+  grape:{name:"Grape Soda",paper:"#f1ebf7",ink:"#3d2b56",primary:"#7c4dbb",secondary:"#3fa7a0",tint:8,sw:["#7c4dbb","#3fa7a0"]},
+  lemon:{name:"Lemon Stand",paper:"#fdf6dd",ink:"#5a4416",primary:"#d9a021",secondary:"#0f766e",tint:10,sw:["#d9a021","#0f766e"]},
+  bw:{name:"Print-safe B/W",paper:"#ffffff",ink:"#000000",primary:"#000000",secondary:"#555555",tint:0,sw:["#000000","#555555"]}
+};
+/* ================= ICONS (0-40 box, line style) ================= */
+function iconSVG(icon,pal,size){
+  var h='<svg width="'+size+'" height="'+size+'" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">';
+  h+=ICON_DRAW[icon](pal);
+  h+='</svg>';
+  return h;
+}
+function palFor(bw,main,dark,light,stroke){
+  if(bw){return {m:"#000000",d:"#000000",l:"#ffffff",s:"#000000"};}
+  return {m:main,d:dark,l:light,s:stroke};
+}
+var ICON_DRAW = {
+sun:function(p){return '<circle cx="20" cy="20" r="7" fill="none" stroke="'+p.s+'" stroke-width="2.6"/><path d="M20 5v4M20 31v4M5 20h4M31 20h4" stroke="'+p.s+'" stroke-width="2.6" stroke-linecap="round" fill="none"/>';},
+scissors:function(p){return '<circle cx="12" cy="12" r="4" fill="none" stroke="'+p.s+'" stroke-width="2.4"/><circle cx="12" cy="28" r="4" fill="none" stroke="'+p.s+'" stroke-width="2.4"/><path d="M15 15 L32 30 M15 25 L32 10" stroke="'+p.s+'" stroke-width="2.4" stroke-linecap="round"/>';},
+star:function(p){return '<path d="M20 6 L23.5 16 L34 16.5 L26 23 L28.5 33 L20 27.5 L11.5 33 L14 23 L6 16.5 L16.5 16 Z" fill="'+p.m+'" stroke="'+p.s+'" stroke-width="1.6" stroke-linejoin="round"/>';},
+check:function(p){return '<path d="M8 21 L17 30 L33 12" fill="none" stroke="'+p.s+'" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>';},
+dice:function(p){return '<rect x="8" y="8" width="24" height="24" rx="6" fill="none" stroke="'+p.s+'" stroke-width="2.6"/><circle cx="15" cy="15" r="2.2" fill="'+p.s+'"/><circle cx="25" cy="25" r="2.2" fill="'+p.s+'"/><circle cx="25" cy="15" r="2.2" fill="'+p.s+'"/><circle cx="15" cy="25" r="2.2" fill="'+p.s+'"/>';},
+ticket:function(p){return '<rect x="6" y="12" width="28" height="16" rx="3" fill="none" stroke="'+p.s+'" stroke-width="2.6"/><path d="M14 12v3M14 25v3M26 12v3M26 25v3" stroke="'+p.s+'" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="20" r="2.4" fill="'+p.m+'"/>';},
+gift:function(p){return '<rect x="9" y="16" width="22" height="17" fill="none" stroke="'+p.s+'" stroke-width="2.6"/><path d="M7 11 L33 11" stroke="'+p.s+'" stroke-width="2.6" stroke-linecap="round"/><circle cx="15" cy="8" r="3.4" fill="none" stroke="'+p.m+'" stroke-width="2.4"/><circle cx="25" cy="8" r="3.4" fill="none" stroke="'+p.m+'" stroke-width="2.4"/>';},
+bell:function(p){return '<path d="M12 28 C12 20 14 12 20 12 C26 12 28 20 28 28 Z" fill="'+p.m+'"/><rect x="10" y="28" width="20" height="3" fill="'+p.d+'"/><circle cx="20" cy="34" r="2.6" fill="'+p.d+'"/>';},
+grid:function(p){return '<rect x="8" y="8" width="24" height="24" rx="2" fill="none" stroke="'+p.s+'" stroke-width="2.6"/><path d="M16 8v24M24 8v24M8 16h24M8 24h24" stroke="'+p.s+'" stroke-width="1.8"/>';},
+spark:function(p){return '<path d="M20 5 L23 17 L35 20 L23 23 L20 35 L17 23 L5 20 L17 17 Z" fill="'+p.m+'"/>';},
+flag:function(p){return '<path d="M12 36 L12 6" stroke="'+p.s+'" stroke-width="2.6" stroke-linecap="round"/><path d="M12 8 L32 8 L28 14 L32 20 L12 20 Z" fill="'+p.m+'" stroke="'+p.s+'" stroke-width="1.6" stroke-linejoin="round"/>';},
+leaf:function(p){return '<path d="M20 5 C30 11 33 24 20 35 C7 24 10 11 20 5 Z" fill="none" stroke="'+p.s+'" stroke-width="2.6"/><path d="M20 10 L20 30" stroke="'+p.s+'" stroke-width="2" stroke-linecap="round"/>';}
+};
+
+/* ================= GENERATOR ================= */
+function dealCells(rng,theme,free){
+  var bank=THEMES[theme]||THEMES.family;
+  var perCat={}, i, c;
+  for(i=0;i<CATS.length;i++){perCat[CATS[i]]=[];}
+  for(i=0;i<bank.length;i++){perCat[bank[i].c].push(i);}
+  var picks=[];
+  for(c=0;c<CATS.length;c++){
+    var idxs=shuffleWith(rng,perCat[CATS[c]]);
+    var take=free?4:((c===0)?5:4);
+    for(i=0;i<take&&i<idxs.length;i++){picks.push(bank[idxs[i]]);}
+  }
+  return shuffleWith(rng,picks);
+}
+function generateOneCard(seed,opts){
+  var rng=mulberry32(seed>>>0);
+  var need=opts.free?24:25;
+  var theme=opts.theme;
+  var bank=THEMES[theme]||THEMES.family;
+  var titleIdx=Math.floor(rng()*CARD_TITLES.length);
+  var subIdx=Math.floor(rng()*CARD_SUBS.length);
+  var cells=[];
+  if(opts.free){
+    var picks=dealCells(rng,theme,true);
+    var k=0, r, cc;
+    for(r=0;r<5;r++){for(cc=0;cc<5;cc++){
+      if(r===2&&cc===2){cells.push({free:true});}
+      else{cells.push({t:picks[k].t,c:picks[k].c});k++;}
+    }}
+  }else{
+    var picks2=dealCells(rng,theme,false);
+    var k2=0, r2, c2;
+    for(r2=0;r2<5;r2++){for(c2=0;c2<5;c2++){cells.push({t:picks2[k2].t,c:picks2[k2].c});k2++;}}
+  }
+  var sig=[theme,opts.style,opts.free?"F":"N",titleIdx,subIdx,cells.map(function(x){return x.free?"FREE":x.t;}).join("~")].join("|");
+  return {seed:seed>>>0,theme:theme,style:opts.style,free:opts.free,
+    title:CARD_TITLES[titleIdx],subtitle:CARD_SUBS[subIdx],titleIdx:titleIdx,subIdx:subIdx,
+    cells:cells,signature:sig};
+}
+function verifyCard(card){
+  var issues=[];
+  var want=card.free?24:25;
+  var texts=[], i;
+  for(i=0;i<card.cells.length;i++){if(!card.cells[i].free){texts.push(card.cells[i].t);}}
+  if(texts.length!==want){issues.push("cell count "+texts.length+"!="+want);}
+  var seen={};
+  for(i=0;i<texts.length;i++){
+    if(!texts[i]||texts[i].length>64){issues.push("bad text");}
+    if(seen[texts[i]]){issues.push("dup text");}
+    seen[texts[i]]=1;
+  }
+  var counts={move:0,make:0,notice:0,together:0,quiet:0,play:0};
+  for(i=0;i<card.cells.length;i++){if(!card.cells[i].free){counts[card.cells[i].c]++;}}
+  for(var k in counts){if(counts[k]<2||counts[k]>6){issues.push("balance "+k+"="+counts[k]);}}
+  if(typeof card.seed!=="number"){issues.push("seed");}
+  return {ok:issues.length===0,issues:issues};
+}
+var state = {
+  count:4, theme:"family", style:"classic", free:true, calling:true,
+  preset:"lagoon", title:"Family Unplugged Bingo",
+  subtitle:"Do five in a row — across, down, or diagonal!",
+  headerStyle:"ribbon", border:"glow", shape:"rounded", bgPattern:"grid",
+  primary:"#0f766e", secondary:"#e9a13b",
+  paper:"#fffdf6", ink:"#14332f",
+  boardTint:8, showFooterNums:true, shop:"",
+  view:"cards", layout:"single", zoom:70
+};
+var brand = {shop:"",handle:"",color:"#0f766e"};
+var deck = [];
+var currentSheet = 0;
+
+function isBW(){return state.preset==="bw";}
+function loadBrand(){
+  var ok=true;
+  try{
+    if(window.localStorage){
+      var s=window.localStorage.getItem("bb-brand-v1");
+      if(s){var b=JSON.parse(s);brand.shop=b.shop||"";brand.handle=b.handle||"";brand.color=b.color||"#0f766e";}
+    }
+  }catch(e){ok=false;}
+  return ok;
+}
+function saveBrand(){
+  try{if(window.localStorage){window.localStorage.setItem("bb-brand-v1",JSON.stringify(brand));return true;}}catch(e){}
+  return false;
+}
+function brandLine(){
+  var bits=[];
+  if(brand.shop){bits.push(brand.shop);}
+  if(brand.handle){bits.push(brand.handle);}
+  return bits.join(" · ");
+}
+/* ---------- sheet render ---------- */
+function sheetVars(){
+  return 'style="--ppp:'+state.paper+';--ppk:'+state.ink+';--pp1:'+state.primary+';--pp2:'+state.secondary+';--paper-scale:1"';
+}
+function headerBadgeHTML(text){
+  return '<div class="hdr-row"><span class="hdr-badge">'+esc(text)+'</span></div>';
+}
+function footerHTML(chipText,idx,pageNo){
+  var shop=brandLine();
+  var h='<div class="sheet-footer"><span class="footer-chip">'+esc(chipText)+'</span>';
+  h+='<span>'+esc(state.title)+(shop?(" · "+esc(shop)):"")+'</span>';
+  h+='<span>'+(state.showFooterNums?("Page "+pageNo):"")+'</span></div>';
+  if(shop){
+    h+='<div class="shop-line" style="border-top:4px solid '+esc(brand.color)+';margin-top:6px;padding-top:4px;">'+esc(shop)+'</div>';
+  }
+  return h;
+}
+function cellHTML(cell){
+  if(cell.free){
+    return '<div class="bcell free"><span class="bstar">★</span><span class="btxt">FREE</span></div>';
+  }
+  return '<div class="bcell"><span class="btxt">'+esc(cell.t)+'</span><span class="bdot"></span></div>';
+}
+function cardSheetHTML(card,idx,pageNo){
+  var h='<div class="sheet-slot"><div class="sheet bd-'+state.border+' bgp-'+state.bgPattern+' hdr-'+state.headerStyle+' shp-'+state.shape+(isBW()?" pv-bw":"")+'" '+sheetVars()+'>';
+  h+='<div class="sheet-inner">';
+  h+='<div class="top-strip"></div>';
+  h+=headerBadgeHTML("SCREEN-FREE BINGO");
+  h+='<h2 class="sheet-title fit">'+esc(state.title)+'</h2>';
+  h+='<p class="sheet-sub fit">'+esc(state.subtitle)+'</p>';
+  h+='<p class="level-line">'+esc(THEME_LABEL[card.theme]||card.theme)+' · Card #'+(idx+1)+'</p>';
+  h+='<div class="bingo-grid">';
+  var i;
+  for(i=0;i<card.cells.length;i++){h+=cellHTML(card.cells[i]);}
+  h+='</div>';
+  h+='<div class="howto-box"><b>How to play:</b> Do an activity, daub the square. Five in a row — across, down or diagonal — wins the round. Grown-ups play free.</div>';
+  h+=footerHTML("Card #"+(idx+1)+" · Seed "+card.seed,idx,pageNo);
+  h+='</div></div></div>';
+  return h;
+}
+function callingSheetHTML(pageNo){
+  var bank=THEMES[state.theme]||THEMES.family;
+  var h='<div class="sheet-slot"><div class="sheet bd-'+state.border+' bgp-'+state.bgPattern+' hdr-'+state.headerStyle+' shp-'+state.shape+(isBW()?" pv-bw":"")+'" '+sheetVars()+'>';
+  h+='<div class="sheet-inner">';
+  h+='<div class="top-strip"></div>';
+  h+=headerBadgeHTML("CALLING SHEET — CUT APART");
+  h+='<h2 class="sheet-title fit">'+esc(state.title)+' — Calling Sheet</h2>';
+  h+='<p class="sheet-sub fit">Cut along the dotted lines. Fold the strips, drop them in a bowl, and draw one at a time.</p>';
+  h+='<div class="call-grid">';
+  var i;
+  for(i=0;i<bank.length;i++){h+='<div class="call-cell">'+esc(bank[i].t)+'</div>';}
+  h+='</div>';
+  h+='<div class="howto-box"><b>48 strips.</b> ✂︎ Cut, fold, draw. Read each strip aloud so every player hears it.</div>';
+  h+=footerHTML("Calling Sheet · 48 strips",0,pageNo);
+  h+='</div></div></div>';
+  return h;
+}
+/* ---------- fit ---------- */
+function fitBox(el){
+  if(!el||!el.clientHeight){return;}
+  var fs=parseFloat(window.getComputedStyle(el).fontSize)||12;
+  var guard=0;
+  while(el.scrollHeight>el.clientHeight+0.5&&fs>8.5&&guard<14){fs-=0.5;el.style.fontSize=fs+"px";guard++;}
+}
+function fitSheets(root){
+  var sels=[".sheet-title",".sheet-sub",".btxt",".call-cell"];
+  var i,j;
+  for(i=0;i<sels.length;i++){
+    var els=root.querySelectorAll(sels[i]);
+    for(j=0;j<els.length;j++){fitBox(els[j]);}
+  }
+}
+/* ---------- preview ---------- */
+function layoutScale(){
+  var z=state.zoom/100;
+  if(state.layout==="single"){return z;}
+  if(state.layout==="spread"){return z*0.62;}
+  return z*0.45;
+}
+function sheetList(){
+  var out=[], i;
+  if(state.view==="cards"){
+    for(i=0;i<deck.length;i++){out.push({kind:"c",idx:i});}
+  }else{
+    if(state.calling&&deck.length){out.push({kind:"k",idx:0});}
+  }
+  return out;
+}
+function renderPreview(){
+  var host=$("previewHost");
+  if(!deck.length){
+    host.innerHTML='<div class="empty-card"><h2>Unplugged Bingo</h2><p>Pick a theme, generate your bingo cards, and daub a screen-free week. Every card is balanced and carries its seed.</p></div>';
+    $("sheetPos").innerText="Sheet - / -";$("kpiDeck").innerText="No deck yet";updateMeta();return;
+  }
+  if(state.view==="calling"&&!state.calling){
+    host.innerHTML='<div class="empty-card"><h2>Calling sheet is off</h2><p>Flip the “Include calling sheet” switch in the Generator panel to preview it.</p></div>';
+    $("sheetPos").innerText="Sheet - / -";updateMeta();return;
+  }
+  var scale=layoutScale();
+  var perPage=1;
+  if(state.layout==="spread"){perPage=2;}
+  else if(state.layout==="strip"){perPage=3;}
+  else if(state.layout==="grid"){perPage=4;}
+  var sheets=sheetList();
+  if(currentSheet>=sheets.length){currentSheet=0;}
+  var vis=sheets.slice(currentSheet,currentSheet+perPage);
+  var html="", v, base=1;
+  for(v=0;v<vis.length;v++){
+    var pageNo=currentSheet+v+1;
+    var inner;
+    if(vis[v].kind==="c"){inner=cardSheetHTML(deck[vis[v].idx],vis[v].idx,pageNo);}
+    else{inner=callingSheetHTML(pageNo);}
+    inner=inner.replace('<div class="sheet-slot">','<div class="sheet-slot card-in" style="width:'+(816*scale).toFixed(0)+'px;height:'+(1056*scale).toFixed(0)+'px;overflow:hidden;">');
+    inner=inner.split("--paper-scale:1").join("--paper-scale:"+scale);
+    html+=inner;
+  }
+  host.innerHTML=html;
+  fitSheets(host);
+  $("sheetPos").innerText="Sheet "+(currentSheet+1)+" / "+sheets.length;
+  $("kpiDeck").innerText=deck.length+" cards \u2022 "+(THEME_LABEL[state.theme]||state.theme);
+  $("kpiPreset").innerText=PRESETS[state.preset].name;
+  updateMeta();
+}
+function updateMeta(){
+  if(!deck.length){return;}
+  if(state.view==="cards"){
+    var c=deck[currentSheet]||deck[0];
+    $("metaLine").innerText="Card "+(currentSheet+1)+"/"+deck.length+" \u2022 Seed "+c.seed+" \u2022 "+(c.free?"24 + FREE":"25 squares");
+  }else{
+    $("metaLine").innerText="Calling sheet \u2022 48 strips \u2022 cut, fold, draw from a bowl";
+  }
+}
+
+/* ---------- generation (one card per tick) ---------- */
+var genRunning=false;
+function setProgress(t,f){$("progressText").innerText=t;$("progressFill").style.width=(f*100).toFixed(0)+"%";}
+function showError(msg){
+  var e=$("progressError");
+  if(!msg){e.style.display="none";e.innerText="";return;}
+  e.style.display="block";e.innerText=msg;
+}
+function resolveOpts(){
+  return {theme:state.theme,style:state.style,free:state.free};
+}
+function startGeneration(){
+  if(genRunning){return;}
+  readControls();
+  showError("");
+  genRunning=true;
+  $("btnGenerate").disabled=true;
+  var baseSeed=(Math.random()*1000000000)|0;
+  var opts=resolveOpts();
+  var fresh=[];var seen={};var i=0;var guard=0;
+  currentSheet=0;
+  setProgress("Generating card 1 / "+state.count+" ...",0);
+  function tick(){
+    if(i>=state.count){
+      deck=fresh;
+      genRunning=false;
+      $("btnGenerate").disabled=false;
+      setProgress("Done. "+deck.length+" cards generated.",1);
+      renderPreview();
+      return;
+    }
+    guard++;
+    if(guard>state.count*80){
+      deck=fresh;genRunning=false;$("btnGenerate").disabled=false;
+      setProgress("Stopped: could not make all cards distinct.",1);
+      renderPreview();return;
+    }
+    var seed=(baseSeed+i*100003+guard*17)>>>0;
+    var p=generateOneCard(seed,opts);
+    var sig=p.signature;
+    if(seen[sig]){setTimeout(tick,0);return;}
+    seen[sig]=true;
+    fresh.push(p);i++;
+    setProgress("Generating card "+Math.min(i+1,state.count)+" / "+state.count+" ...",i/state.count);
+    setTimeout(tick,0);
+  }
+  setTimeout(tick,0);
+}
+function shuffleCurrentSheet(){
+  if(!deck.length){return;}
+  if(state.view!=="cards"){return;}
+  readControls();
+  var opts=resolveOpts();
+  var np=generateOneCard(((Math.random()*1000000000)|0),opts);
+  deck[currentSheet]=np;
+  setProgress("Card "+(currentSheet+1)+" reshuffled. New seed "+np.seed+".",1);
+  renderPreview();
+}
+/* ---------- controls + export ---------- */
+function readControls(){
+  state.count=Math.max(1,Math.min(12,parseInt($("inCount").value,10)||4));
+  state.theme=$("inTheme").value;
+  state.style=$("inStyle").value;
+  state.free=$("inFree").checked;
+  state.calling=$("inCalling").checked;
+  state.title=$("inTitle").value||"Family Unplugged Bingo";
+  state.subtitle=$("inSubtitle").value||"";
+  state.headerStyle=$("inHeader").value;
+  state.border=$("inBorder").value;
+  state.shape=$("inShape").value;
+  state.bgPattern=$("inBg").value;
+  state.primary=$("inPrimary").value;
+  state.secondary=$("inSecondary").value;
+  state.paper=$("inPaper").value;
+  state.ink=$("inInk").value;
+  state.boardTint=parseInt($("inTint").value,10);
+  state.showFooterNums=$("inFootNums").checked;
+  state.shop=$("inShop").value||"";
+  brand.shop=$("inBrandShop").value||"";
+  brand.handle=$("inBrandHandle").value||"";
+  brand.color=$("inBrandColor").value||"#0f766e";
+  saveBrand();
+  $("btnGenerate").innerText="Generate "+state.count+" Card"+(state.count===1?"":"s");
+  var th=$("tightHint");
+  if(!state.free){th.style.display="block";th.innerText="Heads up: with no FREE star the center square plays like any other — 25 activities per card.";}
+  else{th.style.display="none";}
+}
+function totalSheets(){return deck.length+(state.calling&&deck.length?1:0);}
+function inlineExportColors(root){
+  var paper=state.paper;
+  var els=root.querySelectorAll("*");
+  var i;
+  for(i=0;i<els.length;i++){
+    var el=els[i];
+    if(el.classList&&el.classList.contains("top-strip")){el.style.background=state.primary;continue;}
+    if(el.classList&&el.classList.contains("hdr-badge")){el.style.background=state.primary;el.style.color="#ffffff";continue;}
+    if(el.classList&&el.classList.contains("footer-chip")){el.style.background=state.ink;el.style.color=state.paper;continue;}
+    try{
+      var cs=window.getComputedStyle(el);
+      if(cs){
+        if(el.tagName!=="svg"&&el.tagName!=="polyline"&&el.tagName!=="line"&&el.tagName!=="rect"&&el.tagName!=="circle"&&el.tagName!=="text"&&el.tagName!=="path"&&el.tagName!=="marker"&&el.tagName!=="ellipse"&&el.tagName!=="g"){
+          var bg=cs.backgroundColor;
+          if(bg==="rgba(0, 0, 0, 0)"||bg==="transparent"){el.style.backgroundColor=paper;}
+          else{el.style.backgroundColor=bg;}
+          el.style.backgroundImage="none";
+          el.style.color=cs.color;
+          el.style.borderColor=cs.borderTopColor;
+        }
+        el.style.boxShadow="none";
+        el.style.textShadow="none";
+        el.style.backdropFilter="none";
+        el.style.webkitBackdropFilter="none";
+      }
+    }catch(e){}
+  }
+}
+function buildExportDeck(){
+  var host=$("exportDeck");
+  host.innerHTML="";
+  var i;
+  for(i=0;i<deck.length;i++){
+    var d=document.createElement("div");
+    d.innerHTML=cardSheetHTML(deck[i],i,i+1);
+    var slot=d.firstChild;
+    var sheet=slot.querySelector(".sheet");
+    sheet.style.setProperty("--paper-scale",1);
+    sheet.style.transform="none";
+    host.appendChild(slot);
+  }
+  if(state.calling&&deck.length){
+    var d2=document.createElement("div");
+    d2.innerHTML=callingSheetHTML(deck.length+1);
+    var slot2=d2.firstChild;
+    var sheet2=slot2.querySelector(".sheet");
+    sheet2.style.setProperty("--paper-scale",1);
+    sheet2.style.transform="none";
+    host.appendChild(slot2);
+  }
+  fitSheets(host);
+  inlineExportColors(host);
+  return host.querySelectorAll(".sheet");
+}
+function exportFail(msg){
+  showError(msg+" Falling back to Exact Print.");
+  setProgress(msg,1);
+  setTimeout(function(){exactPrint();},600);
+}
+async function exportPDF(){
+  showError("");
+  if(!deck.length){exportFail("Nothing to export: generate a deck first.");return;}
+  if(typeof window.html2canvas==="undefined"||!window.jspdf||!window.jspdf.jsPDF){
+    exportFail("PDF libraries did not load (you appear offline: html2canvas/jsPDF missing).");
+    return;
+  }
+  readControls();
+  setProgress("Rendering PDF ... 0/"+totalSheets(),0);
+  try{
+    var sheets=buildExportDeck();
+    var Ctor=window.jspdf.jsPDF;
+    var pdf=new Ctor({unit:"pt",format:[612,792]});
+    for(var i=0;i<sheets.length;i++){
+      var canvas=await window.html2canvas(sheets[i],{scale:EXPORT_SCALE,backgroundColor:state.paper,useCORS:true,logging:false});
+      if(!canvas||!canvas.width||!canvas.height){throw new Error("capture "+(i+1)+" came back blank.");}
+      var img=canvas.toDataURL("image/jpeg",0.92);
+      if(!img||img.length<20000){throw new Error("capture "+(i+1)+" looks empty.");}
+      if(i>0){pdf.addPage([612,792]);}
+      pdf.addImage(img,"JPEG",0,0,612,792);
+      setProgress("Rendering PDF ... "+(i+1)+"/"+sheets.length,(i+1)/sheets.length);
+    }
+    pdf.save(slug(state.title)+".pdf");
+    setProgress("Done. PDF downloaded ("+sheets.length+" pages).",1);
+  }catch(e){
+    exportFail("Export failed: "+(e&&e.message?e.message:String(e)));
+  }
+}
+function exportPNG(){
+  showError("");
+  if(!deck.length){exportFail("Nothing to export: generate a deck first.");return;}
+  if(typeof window.html2canvas==="undefined"){
+    exportFail("PNG library did not load (you appear offline: html2canvas missing).");
+    return;
+  }
+  readControls();
+  setProgress("Rendering PNG ...",0.3);
+  try{
+    var host=$("exportDeck");
+    host.innerHTML="";
+    var d=document.createElement("div");
+    d.innerHTML=cardSheetHTML(deck[currentSheet]||deck[0],currentSheet,currentSheet+1);
+    var slot=d.firstChild;
+    var sheet=slot.querySelector(".sheet");
+    sheet.style.setProperty("--paper-scale",1);
+    sheet.style.transform="none";
+    host.appendChild(slot);
+    fitSheets(host);
+    inlineExportColors(host);
+    window.html2canvas(sheet,{scale:2,backgroundColor:state.paper,useCORS:true,logging:false}).then(function(canvas){
+      if(!canvas||!canvas.width){exportFail("PNG capture came back blank.");return;}
+      var img=canvas.toDataURL("image/png");
+      if(!img||img.length<20000){exportFail("PNG capture looks empty.");return;}
+      var a=document.createElement("a");
+      a.href=img;a.download=slug(state.title)+"-card-"+(currentSheet+1)+".png";
+      document.body.appendChild(a);a.click();
+      setTimeout(function(){document.body.removeChild(a);},400);
+      setProgress("Done. Card PNG downloaded.",1);
+    },function(e){exportFail("PNG failed: "+(e&&e.message?e.message:String(e)));});
+  }catch(e){
+    exportFail("PNG failed: "+(e&&e.message?e.message:String(e)));
+  }
+}
+function callingCSV(){
+  var bank=THEMES[state.theme]||THEMES.family;
+  var L="Activity,Category\n";
+  var i;
+  for(i=0;i<bank.length;i++){
+    var t=bank[i].t.replace(/"/g,'""');
+    L+='"'+t+'",'+bank[i].c+"\n";
+  }
+  return L;
+}
+function downloadTextFile(name,content,mime){
+  var blob=new Blob([content],{type:mime||"text/plain"});
+  var u=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=u;a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);try{URL.revokeObjectURL(u);}catch(e){}},400);
+}
+function exportCSV(){
+  showError("");
+  if(!deck.length){exportFail("Nothing to export: generate a deck first.");return;}
+  try{
+    var csv=callingCSV();
+    if(!csv||csv.length<100){exportFail("Calling list came out empty.");return;}
+    downloadTextFile(slug(state.title)+"-calling-list.csv",csv,"text/csv");
+    setProgress("Done. Calling CSV downloaded.",1);
+  }catch(e){exportFail("CSV failed: "+(e&&e.message?e.message:String(e)));}
+}
+function callingText(){
+  var bank=THEMES[state.theme]||THEMES.family;
+  var L=(THEME_LABEL[state.theme]||"Unplugged Bingo")+" — calling list ("+bank.length+" activities):\n";
+  var i;
+  for(i=0;i<bank.length;i++){L+=(i+1)+". "+bank[i].t+" ["+CAT_LABEL[bank[i].c]+"]\n";}
+  var bl=brandLine();
+  if(bl){L+="\nFrom "+bl+".";}
+  return L;
+}
+function copyCalling(){
+  showError("");
+  if(!deck.length){showError("Nothing to copy yet: generate a deck first.");return;}
+  var t=callingText();
+  function doneTextarea(){
+    try{
+      var ta=document.createElement("textarea");
+      ta.value=t;ta.setAttribute("readonly","readonly");
+      ta.style.position="fixed";ta.style.left="-99999px";ta.style.top="0";
+      document.body.appendChild(ta);ta.select();
+      var ok=false;
+      try{ok=document.execCommand("copy");}catch(e){ok=false;}
+      document.body.removeChild(ta);
+      if(ok){setProgress("Calling list copied to clipboard.",1);}
+      else{showError("Clipboard blocked. The calling list is shown below — select and copy it manually.");setProgress("Clipboard blocked.",1);}
+    }catch(e){showError("Clipboard blocked: "+(e&&e.message?e.message:String(e)));}
+  }
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){setProgress("Calling list copied to clipboard.",1);},function(){doneTextarea();});
+    }else{doneTextarea();}
+  }catch(e){doneTextarea();}
+}
+function listingText(){
+  var size="US Letter size (8.5 x 11 in)";
+  var L=state.title+" — printable bingo game ("+deck.length+" unique cards + calling sheet).\n\n";
+  L+="WHAT IS INSIDE\n";
+  L+="Each card holds "+(state.free?"24 screen-free activities plus a FREE star":"25 screen-free activities")+", balanced across Move, Make, Notice, Together, Quiet and Play. ";
+  L+="Every card is unique in this deck. The calling sheet lists all 48 activities to cut apart and draw from a bowl.\n\n";
+  L+="DETAILS\n- Paper size: "+size+"\n- Print at home on regular paper or cardstock, black-and-white friendly\n";
+  L+="INSTANT DOWNLOAD\nYou receive a printable PDF to download and print as often as you like for personal use.";
+  var bl=brandLine();
+  if(bl){L+="\n\nFrom "+bl+".";}
+  return L;
+}
+function copyListing(){
+  showError("");
+  if(!deck.length){showError("Nothing to copy yet: generate a deck first.");return;}
+  var t=listingText();
+  function doneTextarea(){
+    try{
+      var ta=document.createElement("textarea");
+      ta.value=t;ta.setAttribute("readonly","readonly");
+      ta.style.position="fixed";ta.style.left="-99999px";ta.style.top="0";
+      document.body.appendChild(ta);ta.select();
+      var ok=false;
+      try{ok=document.execCommand("copy");}catch(e){ok=false;}
+      document.body.removeChild(ta);
+      if(ok){setProgress("Listing text copied to clipboard.",1);}
+      else{showError("Clipboard blocked. Select the text manually from the preview.");setProgress("Clipboard blocked.",1);}
+    }catch(e){showError("Clipboard blocked: "+(e&&e.message?e.message:String(e)));}
+  }
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){setProgress("Listing text copied to clipboard.",1);},function(){doneTextarea();});
+    }else{doneTextarea();}
+  }catch(e){doneTextarea();}
+}
+function printDocHTML(){
+  readControls();
+  var cssText=document.querySelector("style").innerHTML;
+  var html="<html><head><title>"+esc(state.title)+"</title>";
+  html+='<link rel="preconnect" href="https://fonts.googleapis.com">';
+  html+='<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">';
+  html+="<style>";
+  html+=cssText;
+  html+="@page{size:816px 1056px;margin:0;}";
+  html+="html,body{margin:0 !important;padding:0 !important;background:#ffffff !important;}";
+  html+="body::before{display:none !important;}";
+  html+=".sheet-slot{width:auto !important;min-width:auto !important;max-width:none !important;height:auto !important;overflow:visible !important;margin:0 !important;padding:0 !important;page-break-after:always !important;break-inside:avoid !important;}";
+  html+=".sheet{transform:none !important;box-shadow:none !important;outline:none !important;margin:0 !important;break-inside:avoid !important;}";
+  html+="</style></head><body>";
+  var i;var pageNo=0;
+  for(i=0;i<deck.length;i++){pageNo++;html+='<div class="sheet-slot">'+cardSheetHTML(deck[i],i,pageNo)+"</div>";}
+  if(state.calling&&deck.length){pageNo++;html+='<div class="sheet-slot">'+callingSheetHTML(pageNo)+"</div>";}
+  html+="</body></html>";
+  return html;
+}
+function exactPrint(){
+  if(!deck.length){showError("Nothing to print: generate a deck first.");return;}
+  var html=printDocHTML();
+  var w=window.open("","_blank");
+  if(!w){var pe=$("progressError");pe.style.display="block";pe.innerText=(pe.innerText?pe.innerText+" ":"")+"Popup blocked: printing the current view instead. Allow popups for the full-deck print document.";window.print();return;}
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},400);
+}
+
+/* ---------- wiring ---------- */
+function applyPreset(key){
+  state.preset=key;
+  var pr=PRESETS[key];
+  state.primary=pr.primary;state.secondary=pr.secondary;
+  state.paper=pr.paper;state.ink=pr.ink;state.boardTint=pr.tint;
+  $("inPreset").value=key;
+  $("inPrimary").value=pr.primary;$("inSecondary").value=pr.secondary;
+  $("inPaper").value=pr.paper;$("inInk").value=pr.ink;
+  $("inTint").value=pr.tint;$("tintVal").innerText=pr.tint+"%";
+  var sw=document.querySelectorAll(".swatch");
+  var i;
+  for(i=0;i<sw.length;i++){sw[i].classList.toggle("active",sw[i].getAttribute("data-preset")===key);}
+  readControls();renderPreview();
+}
+function buildSwatches(){
+  var host=$("swatches");host.innerHTML="";
+  var keys=["lagoon","coral","grape","lemon","bw"];
+  var i;
+  for(i=0;i<keys.length;i++){
+    (function(k){
+      var pr=PRESETS[k];
+      var b=document.createElement("button");
+      b.className="swatch"+(state.preset===k?" active":"");
+      b.setAttribute("data-preset",k);
+      b.title=pr.name;
+      b.setAttribute("aria-label","Preset "+pr.name);
+      b.style.background="linear-gradient(135deg,"+pr.sw[0]+" 50%,"+pr.sw[1]+" 50%)";
+      host.appendChild(b);
+      b.addEventListener("click",function(){applyPreset(k);});
+    })(keys[i]);
+  }
+}
+function buildZoom(){
+  var sel=$("selZoom");sel.innerHTML="";
+  var vals=[10,20,30,40,50,60,70,80,90,100,110,120,130];
+  var i;
+  for(i=0;i<vals.length;i++){
+    var o=document.createElement("option");
+    o.value=vals[i];o.innerText=vals[i]+"%";
+    if(vals[i]===state.zoom){o.selected=true;}
+    sel.appendChild(o);
+  }
+}
+function labelInputs(){
+  var map={inCount:"Card count",inTheme:"Week theme",inStyle:"Card style",inFree:"Free center square",inCalling:"Include calling sheet",inPreset:"Visual preset",inTitle:"Worksheet title",inSubtitle:"Subtitle",inHeader:"Header style",inBorder:"Page border",inShape:"Shape style",inBg:"Background pattern",inPrimary:"Primary accent",inSecondary:"Secondary accent",inPaper:"Paper",inInk:"Ink",inTint:"Wash strength",inFootNums:"Show footer page numbers",inShop:"Your shop name",inBrandShop:"Shop name",inBrandHandle:"Handle or link",inBrandColor:"Brand accent color",selLayout:"Preview layout",selZoom:"Zoom"};
+  for(var k in map){var el=$(k);if(el&&!el.getAttribute("aria-label")){el.setAttribute("aria-label",map[k]);}}
+}
+function initNav(){
+  if(LINK_APP_2||LINK_APP_3){
+    $("webAppNav").style.display="flex";
+    if(LINK_APP_2){$("linkApp2").href=LINK_APP_2;}
+    if(LINK_APP_3){$("linkApp3").href=LINK_APP_3;}
+    if(!LINK_APP_2){$("linkApp2").style.display="none";}
+    if(!LINK_APP_3){$("linkApp3").style.display="none";}
+  }else{$("webAppNav").style.display="none";}
+}
+function wire(){
+  var styles=document.querySelectorAll("#inStyle");
+  var i;
+  var live=["inCount","inTheme","inStyle","inFree","inCalling","inPreset","inTitle","inSubtitle","inHeader","inBorder","inShape","inBg","inPrimary","inSecondary","inPaper","inInk","inTint","inFootNums","inShop","inBrandShop","inBrandHandle","inBrandColor"];
+  for(i=0;i<live.length;i++){
+    (function(id){
+      $(id).addEventListener("input",function(){
+        if(id==="inTint"){$("tintVal").innerText=$(id).value+"%";}
+        readControls();renderPreview();
+      });
+      $(id).addEventListener("change",function(){readControls();renderPreview();});
+    })(live[i]);
+  }
+  $("inPreset").addEventListener("change",function(){applyPreset($("inPreset").value);});
+  $("btnGenerate").addEventListener("click",startGeneration);
+  $("btnApply").addEventListener("click",function(){readControls();renderPreview();setProgress("Style applied to preview.",1);});
+  $("btnShuffle").addEventListener("click",shuffleCurrentSheet);
+  $("btnPNG").addEventListener("click",exportPNG);
+  $("btnCSV").addEventListener("click",exportCSV);
+  $("btnCopyCalling").addEventListener("click",copyCalling);
+  $("btnCopyListing").addEventListener("click",copyListing);
+  $("viewCards").addEventListener("click",function(){state.view="cards";$("viewCards").classList.add("active");$("viewCalling").classList.remove("active");currentSheet=0;renderPreview();});
+  $("viewCalling").addEventListener("click",function(){state.view="calling";$("viewCalling").classList.add("active");$("viewCards").classList.remove("active");currentSheet=0;renderPreview();});
+  $("selLayout").addEventListener("change",function(){state.layout=$("selLayout").value;renderPreview();});
+  $("selZoom").addEventListener("change",function(){state.zoom=parseInt($("selZoom").value,10);renderPreview();});
+  $("btnPDF").addEventListener("click",exportPDF);
+  $("btnPrint").addEventListener("click",exactPrint);
+  $("btnHelp").addEventListener("click",function(){$("helpOverlay").classList.add("show");});
+  $("btnHelpClose").addEventListener("click",function(){$("helpOverlay").classList.remove("show");});
+  $("helpOverlay").addEventListener("click",function(e){if(e.target===$("helpOverlay")){$("helpOverlay").classList.remove("show");}});
+  document.addEventListener("keydown",function(e){
+    var a=document.activeElement;
+    if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")){return;}
+    if(e.key==="Escape"){$("helpOverlay").classList.remove("show");}
+    if(e.key==="h"||e.key==="H"){$("helpOverlay").classList.toggle("show");}
+  });
+  $("btnPrev").addEventListener("click",function(){if(currentSheet>0){currentSheet--;renderPreview();}});
+  $("btnNext").addEventListener("click",function(){
+    var max=state.view==="cards"?deck.length:1;
+    if(currentSheet<max-1){currentSheet++;renderPreview();}
+  });
+  document.addEventListener("keydown",function(e){
+    var a2=document.activeElement;
+    if(a2&&(a2.tagName==="INPUT"||a2.tagName==="TEXTAREA"||a2.tagName==="SELECT")){return;}
+    if(e.key==="ArrowLeft"&&currentSheet>0){currentSheet--;renderPreview();}
+    if(e.key==="ArrowRight"){var max2=state.view==="cards"?deck.length:1;if(currentSheet<max2-1){currentSheet++;renderPreview();}}
+  });
+  labelInputs();
+}
+
+window.BB = {
+  THEMES:THEMES, CATS:CATS, CAT_LABEL:CAT_LABEL, PRESETS:PRESETS,
+  generateOneCard:generateOneCard, verifyCard:verifyCard, resolveOpts:resolveOpts,
+  iconSVG:iconSVG, ICON_DRAW:ICON_DRAW, palFor:palFor, hexToRgba:hexToRgba,
+  callingText:callingText, callingCSV:callingCSV, listingText:listingText,
+  getState:function(){return state;}, getDeck:function(){return deck;},
+  setState:function(s){state=s;}, setDeck:function(d){deck=d;currentSheet=0;renderPreview();},
+  buildExportDeck:buildExportDeck, startGeneration:startGeneration, printDocHTML:printDocHTML
+};
+
+if(typeof document!=="undefined"&&document.getElementById){initNav();buildSwatches();buildZoom();loadBrand();$("inBrandShop").value=brand.shop;$("inBrandHandle").value=brand.handle;$("inBrandColor").value=brand.color;wire();readControls();renderPreview();}
+</script>
+</body>
+</html>
