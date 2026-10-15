@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screen Time Reality Calculator — Calendar Tracking Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg1:#0f0e0a;--bg2:#1a1810;--gold:#C9A84C;--ivory:#f5f0e8;--muted:#b9b0a0;--card:rgba(255,255,255,.04);--line:rgba(201,168,76,.28);--red:#e5604c;--radius:16px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--ivory);font-family:'Lato',system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh;line-height:1.55}
+h1,h2,h3,.big,.kpi-value,.cal-day,.stat-num{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600}
+a{color:var(--gold)}button,input,select{font:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1600px;margin:0 auto;padding:28px 20px 64px}
+header.top{text-align:center;margin-bottom:26px}
+.eyebrow{letter-spacing:.22em;text-transform:uppercase;font-size:12px;color:var(--gold);margin:0 0 10px}
+h1{font-size:clamp(34px,5vw,58px);margin:0 0 8px;line-height:1.05}
+.tagline{color:var(--muted);font-size:clamp(16px,2vw,20px);margin:0 auto;max-width:640px}
+.desc{color:var(--muted);max-width:760px;margin:14px auto 0;font-size:15px}
+.hero{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;text-align:center;box-shadow:0 0 34px rgba(201,168,76,.07)}
+.kpi-label{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.kpi-value{font-size:clamp(34px,4.4vw,56px);color:var(--gold);line-height:1.1;margin:6px 0 2px;text-shadow:0 0 24px rgba(201,168,76,.25)}
+.kpi-sub{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:18px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card h2{margin:0 0 4px;font-size:24px}.card .hint{color:var(--muted);font-size:13px;margin:0 0 16px}
+.field{margin-bottom:16px}.field label{display:flex;justify-content:space-between;gap:10px;font-size:14px;margin-bottom:6px}
+.field label span.val{color:var(--gold);font-weight:700}
+input[type=number],input[type=text],input[type=date]{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line);color:var(--ivory);border-radius:10px;padding:9px 12px;color-scheme:dark}
+input[type=range]{width:100%;accent-color:var(--gold);background:transparent}
+input[type=checkbox]{accent-color:var(--gold);width:18px;height:18px}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14px;margin:14px 0}
+.total-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:14px 0;background:rgba(201,168,76,.06)}
+.total-box strong{color:var(--gold);font-size:20px;font-family:'Cormorant Garamond',serif}
+.chip{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:999px;font-size:12px;background:rgba(229,96,76,.16);color:#ffb4a6;border:1px solid rgba(229,96,76,.45)}
+.chip.ok{background:rgba(201,168,76,.12);color:var(--gold);border-color:var(--line)}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:18px}.chart-card{min-width:0}
+.chart-box{position:relative;height:280px}.chart-fallback{color:var(--muted);font-size:14px;padding:24px 4px}
+.activities{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+.act{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(0,0,0,.18)}
+.act .icon{font-size:22px}.act .num{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--gold);line-height:1.1;margin:4px 0}
+.act p{margin:0;font-size:13px;color:var(--muted)}
+.tracker-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:14px}
+.tracker-tools .field{margin:0;flex:1 1 180px}
+.cal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 12px}
+.cal-head h3{margin:0;font-size:22px}
+.cal-nav{display:flex;gap:8px}.cal-nav button{background:transparent;border:1px solid var(--line);color:var(--gold);border-radius:8px;padding:5px 12px;cursor:pointer}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-dow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;padding:4px 0}
+.cal-day{aspect-ratio:1/1;border:1px solid rgba(201,168,76,.16);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;color:var(--ivory);cursor:pointer;background:rgba(0,0,0,.2);padding:2px;min-height:40px}
+.cal-day.blank{visibility:hidden;cursor:default}.cal-day.today{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.cal-day.selected{outline:2px solid var(--gold);outline-offset:1px}
+.cal-day .h{font-size:10px;color:var(--muted);line-height:1}.cal-day.none{opacity:.55}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.swatch{width:14px;height:14px;border-radius:4px;border:1px solid var(--line)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+.stat{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;background:rgba(0,0,0,.18)}
+.stat-num{font-size:26px;color:var(--gold);line-height:1.1}.stat p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+details.how{margin-top:18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+details.how summary{cursor:pointer;padding:16px 20px;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:20px}
+details.how .body{padding:0 20px 18px;color:var(--muted);font-size:14px}
+details.how code{color:var(--ivory);background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px;font-size:13px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.btn{background:linear-gradient(135deg,#d8b95e,#a8842f);color:#141209;border:none;border-radius:999px;padding:11px 20px;font-weight:700;cursor:pointer;font-size:14px}
+.btn.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.btn.danger{background:transparent;color:#ffb4a6;border:1px solid rgba(229,96,76,.5)}
+.btn:hover{filter:brightness(1.08)}
+.msg{margin-top:12px;font-size:14px;min-height:20px}.msg.error{color:#ffb4a6;font-weight:700}.msg.success{color:var(--gold)}
+.empty{text-align:center;padding:40px 16px;color:var(--muted)}.empty .big{font-size:30px;color:var(--ivory);margin-bottom:8px}
+.brand-btn{position:fixed;right:18px;bottom:18px;z-index:40}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(380px,92vw);background:#14120c;border-left:1px solid var(--line);padding:22px;transform:translateX(105%);transition:transform .3s ease;z-index:50;overflow-y:auto}
+.drawer.open{transform:translateX(0)}.drawer h2{margin-top:0}
+.drawer .close{position:absolute;top:14px;right:14px;background:none;border:1px solid var(--line);color:var(--gold);border-radius:8px;padding:4px 10px;cursor:pointer}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;display:none}.backdrop.show{display:block}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:980px){.grid{grid-template-columns:1fr}.charts{grid-template-columns:1fr}.activities{grid-template-columns:repeat(2,1fr)}.hero{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:480px){.activities{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.wrap{padding:20px 14px 80px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+<p class="eyebrow">Digital Detox Empire &middot; Bonus #4 &middot; V2</p>
+<h1>Screen Time Reality Calculator</h1>
+<p class="tagline">See your hours. Imagine what else they could hold.</p>
+<p class="desc">Enter your daily screen time, see what it adds up to over a year and a lifetime, and keep a gentle daily calendar of the hours you notice, reclaim, and redirect.</p>
+</header>
+<section class="hero" aria-label="Your screen time at a glance">
+<div class="kpi"><div class="kpi-label">Hours a year</div><div class="kpi-value" id="kpiYear">0</div><div class="kpi-sub" id="kpiYearSub">based on your current daily average</div></div>
+<div class="kpi"><div class="kpi-label">Days a year</div><div class="kpi-value" id="kpiDays">0</div><div class="kpi-sub">24-hour days spent on screens</div></div>
+<div class="kpi"><div class="kpi-label">Years on screens</div><div class="kpi-value" id="kpiLife">0</div><div class="kpi-sub" id="kpiLifeSub">across your remaining years</div></div>
+</section>
+<div class="grid">
+<aside class="card" aria-label="Your day">
+<h2>Your day</h2>
+<p class="hint">Slide the sliders to match a normal day. No judgment, just numbers. Your entries save automatically in this browser.</p>
+<div class="field"><label for="age">Age <span class="val" id="ageVal">35</span></label><input type="number" id="age" min="1" max="120" step="1" value="35"></div>
+<div class="field"><label for="life">Life expectancy assumption <span class="val" id="lifeVal">80</span></label><input type="number" id="life" min="60" max="100" step="1" value="80"></div>
+<div class="field"><label for="waking">Waking hours per day <span class="val" id="wakingVal">16</span></label><input type="range" id="waking" min="12" max="20" step="0.5" value="16"></div>
+<div class="toggle"><input type="checkbox" id="weekendToggle"><label for="weekendToggle" style="margin:0">Weekends are different</label></div>
+<div id="weekdayGroup"><h3 style="margin:14px 0 8px;font-size:18px">Typical weekday</h3><div id="weekdaySliders"></div></div>
+<div id="weekendGroup" hidden><h3 style="margin:14px 0 8px;font-size:18px">Typical weekend day</h3><div id="weekendSliders"></div></div>
+<div class="total-box">Daily screen time: <strong id="dailyTotal">0 hours</strong><div id="totalChip"></div></div>
+<div class="field"><label for="reclaim">Share of screen time to reclaim <span class="val" id="reclaimVal">30%</span></label><input type="range" id="reclaim" min="10" max="100" step="5" value="30"></div>
+</aside>
+<main>
+<div id="results" aria-live="polite">
+<div class="charts">
+<div class="card chart-card"><h2>Your waking day</h2><p class="hint">How a typical day splits between screens and everything else.</p><div class="chart-box"><canvas id="doughnut" role="img" aria-label="Doughnut chart of screen time versus other waking hours"></canvas></div><div class="chart-fallback" id="doughnutFallback" hidden>Charts are unavailable right now, but every number below is still calculated from your entries.</div></div>
+<div class="card chart-card"><h2>Hours per year</h2><p class="hint">Where a year of screen time goes, by category.</p><div class="chart-box"><canvas id="bars" role="img" aria-label="Horizontal bar chart of yearly hours by category"></canvas></div><div class="chart-fallback" id="barsFallback" hidden>Charts are unavailable right now, but every number below is still calculated from your entries.</div></div>
+<div class="card chart-card" style="grid-column:1/-1"><h2>The next 10 years</h2><p class="hint">Cumulative screen hours with and without the time you choose to reclaim.</p><div class="chart-box"><canvas id="line" role="img" aria-label="Line chart comparing cumulative screen hours with and without reclaiming time"></canvas></div><div class="chart-fallback" id="lineFallback" hidden>Charts are unavailable right now, but every number below is still calculated from your entries.</div></div>
+</div>
+<div class="card" style="margin-top:18px">
+<h2>What you could do with the reclaimed time in a year</h2>
+<p class="hint">Based on reclaiming <span id="reclaimEcho">30%</span> of your screen time.</p>
+<div class="activities" id="activities"></div>
+</div>
+<div class="card" style="margin-top:18px">
+<h2>Daily screen-time calendar</h2>
+<p class="hint">Save a day to build your own private history. Click any saved day to load its numbers back into the calculator.</p>
+<div class="tracker-tools">
+<div class="field"><label for="trackDate">Date</label><input type="date" id="trackDate"></div>
+<button class="btn" id="saveDay">Save this day</button>
+<button class="btn danger" id="deleteDay">Delete saved day</button>
+</div>
+<div class="cal-head"><h3 id="calTitle">Month</h3><div class="cal-nav"><button id="prevMonth" aria-label="Previous month">&larr;</button><button id="thisMonth">This month</button><button id="nextMonth" aria-label="Next month">&rarr;</button></div></div>
+<div class="cal-grid" id="calGrid" role="grid" aria-label="Monthly screen-time calendar"></div>
+<div class="legend"><span><i class="swatch" style="background:rgba(201,168,76,.15)"></i> Lighter day</span><span><i class="swatch" style="background:rgba(201,168,76,.85)"></i> Fuller screen day</span><span id="calSummary"></span></div>
+<div class="stats" id="logStats"></div>
+<div class="msg" id="trackMsg" role="status"></div>
+</div>
+<details class="how"><summary>How we calculated this</summary><div class="body">
+<p><code>dailyHours</code> = the sum of your category sliders. With weekends enabled: <code>(5 &times; weekday + 2 &times; weekend) &divide; 7</code>.</p>
+<p><code>yearHours</code> = <code>dailyHours &times; 365</code>. <code>yearDays</code> = <code>yearHours &divide; 24</code>.</p>
+<p><code>share of waking life</code> = <code>dailyHours &divide; wakingHours</code>. <code>yearsLeft</code> = <code>max(0, lifeExpectancy &minus; age)</code>.</p>
+<p><code>lifetimeYears</code> = <code>dailyHours &divide; 24 &times; yearsLeft</code>. <code>reclaimedDaily</code> = <code>dailyHours &times; reclaimShare</code>, and <code>reclaimedYear</code> = <code>reclaimedDaily &times; 365</code>.</p>
+<p>Calendar averages use only the days you have saved: <code>average = total hours &divide; days logged</code>. Your calendar stays in this browser unless you clear its data.</p>
+</div></details>
+<div class="actions">
+<button class="btn" id="storyBtn">Create share image (1080 &times; 1350)</button>
+<button class="btn ghost" id="squareBtn">Create share image (1080 &times; 1080)</button>
+<button class="btn ghost" id="copyBtn">Copy results as text</button>
+<button class="btn danger" id="clearLog">Clear calendar history</button>
+</div>
+<div class="msg" id="actionMsg" role="status"></div>
+</div>
+<div class="card empty" id="emptyState"><div class="big">Welcome</div><p>Slide the sliders to match a normal day. No judgment, just numbers.</p></div>
+</main>
+</div>
+</div>
+<button class="btn brand-btn" id="brandOpen" aria-haspopup="dialog">Branding</button>
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+<button class="close" id="brandClose" aria-label="Close branding panel">&times;</button>
+<h2 id="drawerTitle">Seller branding</h2>
+<p class="hint" style="color:var(--muted);font-size:13px">This appears in the small footer on share images and copied text.</p>
+<div class="field"><label for="shopName">Shop name</label><input type="text" id="shopName" placeholder="Your Shop Name"></div>
+<div class="field"><label for="shopHandle">Handle or link (optional)</label><input type="text" id="shopHandle" placeholder="@yourshop or yourshop.com"></div>
+<div class="field"><label for="accent">Accent color</label><input type="color" id="accent" value="#C9A84C" style="width:100%;height:42px;background:transparent;border:1px solid var(--line);border-radius:10px"></div>
+<button class="btn" id="saveBrand">Save branding</button>
+<div class="msg" id="brandMsg" role="status"></div>
+</aside>
+<div class="sr" aria-live="polite" id="liveRegion"></div>
+<script>
+/* CALC-START */
+var CATEGORIES=[{key:'social',label:'Social media'},{key:'video',label:'Video & streaming'},{key:'games',label:'Games'},{key:'messaging',label:'Messaging'},{key:'browsing',label:'Browsing & news'},{key:'other',label:'Other apps'}];
+var ACTIVITIES=[{key:'books',icon:'\uD83D\uDCD6',label:'read books',singular:'book',plural:'books',hours:6},{key:'walks',icon:'\uD83D\uDEB6',label:'take 3-mile walks',singular:'walk',plural:'walks',hours:1},{key:'journal',icon:'\u270D\uFE0F',label:'write journal entries',singular:'entry',plural:'entries',hours:0.5},{key:'meals',icon:'\uD83C\uDF73',label:'cook meals from scratch',singular:'meal',plural:'meals',hours:1},{key:'hobbies',icon:'\uD83C\uDFA8',label:'learn the basics of a hobby',singular:'hobby',plural:'hobbies',hours:50},{key:'connect',icon:'\u2764\uFE0F',label:'call or visit someone you love',singular:'hour',plural:'hours',hours:1}];
+function toNum(v){var n=Number(v);return isFinite(n)?n:0}
+function sumCategories(c){var t=0,i;for(i=0;i<CATEGORIES.length;i++){t+=Math.max(0,toNum(c[CATEGORIES[i].key]))}return t}
+function clamp(n,min,max){return Math.min(max,Math.max(min,n))}
+function computeMetrics(inp){var wd=sumCategories(inp.weekday),we=sumCategories(inp.weekend);var dailyHours=inp.useWeekends?(5*wd+2*we)/7:wd;var waking=Math.max(0,toNum(inp.wakingHours));var age=Math.max(0,toNum(inp.age));var life=Math.max(0,toNum(inp.lifeExpectancy));var reclaim=clamp(toNum(inp.reclaimShare),0,1);var overDaily=dailyHours>=24-1e-9;var zero=dailyHours<=1e-9;var yearHours=dailyHours*365,yearDays=yearHours/24;var wakingShare=waking>0?dailyHours/waking:0;var yearsLeft=Math.max(0,life-age);var lifetimeYears=dailyHours/24*yearsLeft;var wakingYears=wakingShare*yearsLeft*(waking/24);var reclaimedDaily=dailyHours*reclaim,reclaimedYear=reclaimedDaily*365;var acts={},i,a;for(i=0;i<ACTIVITIES.length;i++){a=ACTIVITIES[i];acts[a.key]=Math.floor(reclaimedYear/a.hours)}return{dailyHours:dailyHours,weekdayHours:wd,weekendHours:we,yearHours:yearHours,yearDays:yearDays,wakingShare:wakingShare,yearsLeft:yearsLeft,lifetimeYears:lifetimeYears,wakingYears:wakingYears,reclaimedDaily:reclaimedDaily,reclaimedYear:reclaimedYear,activities:acts,zero:zero,overDaily:overDaily,overWaking:(waking>0&&dailyHours>waking+1e-9)}}
+function doughnutSlices(m,waking){var screens=clamp(m.dailyHours,0,waking);return[screens,Math.max(0,waking-screens)]}
+function categoryYearHours(inp){var out=[],i,c,h;for(i=0;i<CATEGORIES.length;i++){c=CATEGORIES[i];h=inp.useWeekends?(5*toNum(inp.weekday[c.key])+2*toNum(inp.weekend[c.key]))/7:toNum(inp.weekday[c.key]);out.push({label:c.label,hours:h*365})}return out}
+function cumulativeSeries(m){var without=[],withR=[],i;for(i=1;i<=10;i++){without.push(m.dailyHours*365*i);withR.push((m.dailyHours-m.reclaimedDaily)*365*i)}return{without:without,withR:withR}}
+function plural(n,singular,pluralWord){return n===1?singular:(pluralWord||singular+'s')}
+function activityLine(m){var a=ACTIVITIES[0],n=m.activities[a.key];if(n<=0){return'Even a small amount of reclaimed time can hold something meaningful.'}return'You could '+a.label.replace('read books','read')+' about '+n.toLocaleString('en-US')+' '+plural(n,a.singular,a.plural)+' a year.'}
+function buildCopyText(m,brand){var lines=[];lines.push('Screen Time Reality Check','');lines.push('Daily screen time: '+m.dailyHours.toFixed(2)+' hours');lines.push('Per year: '+Math.round(m.yearHours).toLocaleString('en-US')+' hours ('+m.yearDays.toFixed(1)+' full days)');lines.push('Over your remaining years: '+m.lifetimeYears.toFixed(1)+' years of 24-hour days');lines.push('Reclaiming '+Math.round(m.reclaimedDaily/m.dailyHours*100)+'% gives you '+m.reclaimedYear.toFixed(0)+' hours a year.');lines.push('That could mean '+m.activities.books.toLocaleString('en-US')+' '+plural(m.activities.books,'book','books')+' read, or '+m.activities.walks.toLocaleString('en-US')+' '+plural(m.activities.walks,'walk','walks')+' taken.');if(brand&&(brand.shopName||brand.shopHandle)){lines.push('',(brand.shopName||'')+(brand.shopHandle?(brand.shopName?' \u00B7 ':'')+brand.shopHandle:''))}return lines.join('\n')}
+function pad2(n){return(n<10?'0':'')+n}
+function dateKey(d){return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())}
+function parseKey(k){var p=k.split('-');return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]))}
+function entryTotal(entry){if(!entry){return 0}var wd=sumCategories(entry.weekday),we=sumCategories(entry.weekend);var daily=entry.useWeekends?(5*wd+2*we)/7:wd;return Math.max(0,daily)}
+function logStats(log,todayKey){var keys=Object.keys(log),count=0,total=0,i,k,t;var today=parseKey(todayKey);var last7=0,c7=0,last30=0,c30=0,monthTotal=0,monthDays=0;var monthPrefix=todayKey.slice(0,7);for(i=0;i<keys.length;i++){k=keys[i];t=entryTotal(log[k]);var d=parseKey(k);var diff=Math.floor((today-d)/86400000);if(diff<0){continue}count++;total+=t;if(diff<7){last7+=t;c7++}if(diff<30){last30+=t;c30++}if(k.indexOf(monthPrefix)===0){monthTotal+=t;monthDays++}}return{count:count,totalHours:total,avgAll:count?total/count:0,avg7:c7?last7/c7:0,avg30:c30?last30/c30:0,monthTotal:monthTotal,monthDays:monthDays}}
+/* CALC-END */
+var DEFAULT_STATE={weekday:{social:1.5,video:2,games:0.5,messaging:0.75,browsing:0.75,other:0.5},weekend:{social:2,video:2.5,games:1,messaging:0.75,browsing:1,other:0.75},useWeekends:false,age:35,lifeExpectancy:80,wakingHours:16,reclaimShare:0.30};
+var state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+var brand={shopName:'',shopHandle:'',accent:'#C9A84C'};
+var log={};var charts={doughnut:null,bars:null,line:null};
+var hasChart=typeof Chart!=='undefined';
+var calYear,calMonth,selectedKey;
+function el(id){return document.getElementById(id)}
+function fmt(n,d){if(!isFinite(n)){return'0'}return n.toLocaleString('en-US',{maximumFractionDigits:d===undefined?0:d})}
+function prefersReduced(){return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches}
+function store(key,val){try{localStorage.setItem(key,JSON.stringify(val));return true}catch(e){return false}}
+function readStore(key,fallback){try{var raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(e){return fallback}}
+function saveState(){store('strc-state',state)}
+function saveLog(){store('strc-log',log)}
+function loadAll(){var savedState=readStore('strc-state',null),savedLog=readStore('strc-log',{}),savedBrand=readStore('strc-brand',null),k,i,c;if(savedState&&typeof savedState==='object'){for(i=0;i<CATEGORIES.length;i++){c=CATEGORIES[i];if(savedState.weekday&&savedState.weekday[c.key]!==undefined){state.weekday[c.key]=toNum(savedState.weekday[c.key])}if(savedState.weekend&&savedState.weekend[c.key]!==undefined){state.weekend[c.key]=toNum(savedState.weekend[c.key])}}if(savedState.useWeekends!==undefined){state.useWeekends=!!savedState.useWeekends}if(savedState.age!==undefined){state.age=clamp(toNum(savedState.age),1,120)}if(savedState.lifeExpectancy!==undefined){state.lifeExpectancy=clamp(toNum(savedState.lifeExpectancy),60,100)}if(savedState.wakingHours!==undefined){state.wakingHours=clamp(toNum(savedState.wakingHours),12,20)}if(savedState.reclaimShare!==undefined){state.reclaimShare=clamp(toNum(savedState.reclaimShare),0,1)}}if(savedLog&&typeof savedLog==='object'){log=savedLog}if(savedBrand&&typeof savedBrand==='object'){brand=savedBrand}}
+function animateValue(node,to,digits){var from=toNum(node.getAttribute('data-value')||0);node.setAttribute('data-value',to);if(prefersReduced()||from===to){node.textContent=fmt(to,digits);return}var start=null,dur=1200;function step(ts){if(!start){start=ts}var p=clamp((ts-start)/dur,0,1),eased=1-Math.pow(1-p,3);node.textContent=fmt(from+(to-from)*eased,digits);if(p<1){requestAnimationFrame(step)}}requestAnimationFrame(step)}
+function makeSlider(container,cat,scope){var wrap=document.createElement('div');wrap.className='field';var id=scope+'-'+cat.key;var lab=document.createElement('label');lab.setAttribute('for',id);var name=document.createElement('span');name.textContent=cat.label;var val=document.createElement('span');val.className='val';val.id=id+'Val';lab.appendChild(name);lab.appendChild(val);var input=document.createElement('input');input.type='range';input.id=id;input.min='0';input.max='12';input.step='0.25';input.value=state[scope][cat.key];function paint(){val.textContent=toNum(input.value).toFixed(2).replace(/\.00$/,'')+' h'}paint();input.addEventListener('input',function(){state[scope][cat.key]=toNum(input.value);paint();if(scope==='weekday'&&!state.useWeekends){syncWeekendFromWeekday()}saveState();render()});wrap.appendChild(lab);wrap.appendChild(input);container.appendChild(wrap)}
+function buildSliders(){var wd=el('weekdaySliders'),we=el('weekendSliders'),i;wd.innerHTML='';we.innerHTML='';for(i=0;i<CATEGORIES.length;i++){makeSlider(wd,CATEGORIES[i],'weekday')}for(i=0;i<CATEGORIES.length;i++){makeSlider(we,CATEGORIES[i],'weekend')}}
+function syncWeekendFromWeekday(){var i,c;for(i=0;i<CATEGORIES.length;i++){c=CATEGORIES[i];state.weekend[c.key]=state.weekday[c.key];var inp=el('weekend-'+c.key),val=el('weekend-'+c.key+'Val');if(inp){inp.value=state.weekend[c.key];val.textContent=toNum(state.weekend[c.key]).toFixed(2).replace(/\.00$/,'')+' h'}}}
+function syncControls(){el('age').value=state.age;el('ageVal').textContent=state.age;el('life').value=state.lifeExpectancy;el('lifeVal').textContent=state.lifeExpectancy;el('waking').value=state.wakingHours;el('wakingVal').textContent=state.wakingHours;el('reclaim').value=Math.round(state.reclaimShare*100);el('reclaimVal').textContent=Math.round(state.reclaimShare*100)+'%';el('weekendToggle').checked=state.useWeekends;el('weekendGroup').hidden=!state.useWeekends;var i,c;for(i=0;i<CATEGORIES.length;i++){c=CATEGORIES[i];el('weekday-'+c.key).value=state.weekday[c.key];el('weekday-'+c.key+'Val').textContent=toNum(state.weekday[c.key]).toFixed(2).replace(/\.00$/,'')+' h';el('weekend-'+c.key).value=state.weekend[c.key];el('weekend-'+c.key+'Val').textContent=toNum(state.weekend[c.key]).toFixed(2).replace(/\.00$/,'')+' h'}}
+function destroyCharts(){var k;for(k in charts){if(charts[k]){charts[k].destroy();charts[k]=null}}}
+function goldAlpha(a){return'rgba(201,168,76,'+a+')'}
+function renderCharts(m){var cats=categoryYearHours(state),cum=cumulativeSeries(m),slices=doughnutSlices(m,state.wakingHours);if(!hasChart){el('doughnutFallback').hidden=false;el('barsFallback').hidden=false;el('lineFallback').hidden=false;return}destroyCharts();charts.doughnut=new Chart(el('doughnut'),{type:'doughnut',data:{labels:['Screens','Everything else'],datasets:[{data:slices,backgroundColor:[brand.accent,'rgba(245,240,232,.14)'],borderColor:'rgba(201,168,76,.5)',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#f5f0e8'}}}}});charts.bars=new Chart(el('bars'),{type:'bar',data:{labels:cats.map(function(c){return c.label}),datasets:[{label:'Hours per year',data:cats.map(function(c){return Math.round(c.hours)}),backgroundColor:goldAlpha(.75),borderColor:goldAlpha(1),borderWidth:1}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#b9b0a0'},grid:{color:'rgba(255,255,255,.07)'}},y:{ticks:{color:'#f5f0e8'},grid:{display:false}}}}});charts.line=new Chart(el('line'),{type:'line',data:{labels:['1','2','3','4','5','6','7','8','9','10'],datasets:[{label:'Current pace',data:cum.without,borderColor:goldAlpha(1),backgroundColor:goldAlpha(.12),fill:true,tension:.3},{label:'With reclaim',data:cum.withR,borderColor:'rgba(245,240,232,.8)',backgroundColor:'rgba(245,240,232,.06)',fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#f5f0e8'}}},scales:{x:{ticks:{color:'#b9b0a0'},title:{display:true,text:'Years from now',color:'#b9b0a0'}},y:{ticks:{color:'#b9b0a0'},grid:{color:'rgba(255,255,255,.07)'}}}}})}
+function renderActivities(m){var box=el('activities'),html='',i,a,n,word;for(i=0;i<ACTIVITIES.length;i++){a=ACTIVITIES[i];n=m.activities[a.key];word=plural(n,a.singular,a.plural);html+='<div class="act"><div class="icon">'+a.icon+'</div><div class="num">'+fmt(n)+'</div><p>'+(n===1?'You could '+a.label.replace('read books','read one')+' this year.':'You could '+a.label+' \u2014 about '+fmt(n)+' '+word+' a year.')+'</p></div>'}box.innerHTML=html}
+function renderCalendar(){var grid=el('calGrid'),first=new Date(calYear,calMonth,1),start=first.getDay(),days=new Date(calYear,calMonth+1,0).getDate();var dows=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],html='',i,d,key,entry,total,intensity;el('calTitle').textContent=first.toLocaleString('en-US',{month:'long',year:'numeric'});for(i=0;i<dows.length;i++){html+='<div class="cal-dow">'+dows[i]+'</div>'}for(i=0;i<start;i++){html+='<div class="cal-day blank"></div>'}var todayKey=dateKey(new Date());for(d=1;d<=days;d++){key=calYear+'-'+pad2(calMonth+1)+'-'+pad2(d);entry=log[key];total=entry?entryTotal(entry):0;intensity=state.wakingHours>0?clamp(total/state.wakingHours,0,1):0;html+='<button type="button" class="cal-day'+(entry?'':' none')+(key===todayKey?' today':'')+(key===selectedKey?' selected':'')+'" data-key="'+key+'" style="background:rgba(201,168,76,'+(entry?(0.15+0.7*intensity).toFixed(2):'0.06')+')" aria-label="'+key+(entry?', '+total.toFixed(2)+' hours logged':'')+'">'+d+(entry?'<span class="h">'+total.toFixed(1)+'h</span>':'')+'</button>'}grid.innerHTML=html;var stats=logStats(log,todayKey);el('calSummary').textContent=stats.monthDays?'This month: '+fmt(stats.monthTotal,1)+' hours across '+stats.monthDays+' saved day'+plural(stats.monthDays,'day','days')+'.':'No days saved in this month yet.';var cells=grid.querySelectorAll('.cal-day[data-key]');for(i=0;i<cells.length;i++){cells[i].addEventListener('click',function(){loadDay(this.getAttribute('data-key'))})}}
+function renderLogStats(){var todayKey=dateKey(new Date()),s=logStats(log,todayKey),html='';html+='<div class="stat"><div class="stat-num">'+fmt(s.count)+'</div><p>Days saved</p></div>';html+='<div class="stat"><div class="stat-num">'+fmt(s.avg7,1)+'h</div><p>7-day average</p></div>';html+='<div class="stat"><div class="stat-num">'+fmt(s.avg30,1)+'h</div><p>30-day average</p></div>';html+='<div class="stat"><div class="stat-num">'+fmt(s.monthTotal,1)+'h</div><p>This month</p></div>';el('logStats').innerHTML=html}
+function render(){var m=computeMetrics(state),empty=m.zero;el('emptyState').style.display=empty?'block':'none';el('results').style.display=empty?'none':'block';el('dailyTotal').textContent=m.dailyHours.toFixed(2).replace(/\.00$/,'')+' hours';var chip=el('totalChip');if(m.overDaily){chip.innerHTML='<span class="chip">That adds up to a full 24-hour day. Try lowering a category to see your numbers.</span>'}else if(m.overWaking){chip.innerHTML='<span class="chip">This is more than your waking hours. Adjust your categories or waking hours for a closer fit.</span>'}else{chip.innerHTML='<span class="chip ok">'+Math.round(m.wakingShare*100)+'% of your waking hours</span>'}if(m.overDaily){el('kpiYear').textContent='\u2014';el('kpiDays').textContent='\u2014';el('kpiLife').textContent='\u2014';el('kpiYearSub').textContent='Adjust your sliders to continue';el('activities').innerHTML='<p class="hint">Lower your total below 24 hours to see what reclaimed time could hold.</p>';destroyCharts();renderCalendar();renderLogStats();return}animateValue(el('kpiYear'),Math.round(m.yearHours),0);animateValue(el('kpiDays'),m.yearDays,1);animateValue(el('kpiLife'),m.lifetimeYears,1);el('kpiYearSub').textContent='about '+fmt(m.dailyHours,2)+' hours a day';el('kpiLifeSub').textContent=m.yearsLeft+' years from age '+state.age+' to '+state.lifeExpectancy;el('reclaimEcho').textContent=Math.round(state.reclaimShare*100)+'%';renderActivities(m);renderCharts(m);renderCalendar();renderLogStats();el('liveRegion').textContent='Daily screen time '+m.dailyHours.toFixed(2)+' hours. Yearly '+Math.round(m.yearHours)+' hours.'}
+function saveCurrentDay(){var key=el('trackDate').value;if(!key){showTrackMsg('Choose a date to save first.','error');return}var m=computeMetrics(state);if(m.overDaily){showTrackMsg('Lower the total below 24 hours before saving this day.','error');return}log[key]=JSON.parse(JSON.stringify(state));selectedKey=key;saveLog();renderCalendar();renderLogStats();showTrackMsg('Saved '+key+'. Your calendar stays private in this browser.','success')}
+function loadDay(key){var entry=log[key];if(!entry){showTrackMsg('That day has not been saved yet. Adjust the sliders and choose Save this day.','error');return}state=JSON.parse(JSON.stringify(entry));selectedKey=key;el('trackDate').value=key;saveState();syncControls();render();showTrackMsg('Loaded '+key+'. Adjust anything you like, then save again to update it.','success')}
+function deleteSavedDay(){var key=el('trackDate').value;if(!key||!log[key]){showTrackMsg('Choose a saved date to delete.','error');return}delete log[key];saveLog();if(selectedKey===key){selectedKey=null}renderCalendar();renderLogStats();showTrackMsg('Removed '+key+' from your calendar.','success')}
+function clearLog(){if(!Object.keys(log).length){showMsg('Your calendar history is already empty.','error');return}log={};saveLog();renderCalendar();renderLogStats();showMsg('Calendar history cleared from this browser.','success')}
+function showTrackMsg(text,kind){var n=el('trackMsg');n.textContent=text;n.className='msg '+(kind||'')}
+function showMsg(text,kind){var n=el('actionMsg');n.textContent=text;n.className='msg '+(kind||'')}
+function drawShare(canvas,w,h,m){var ctx=canvas.getContext('2d');if(!ctx){throw new Error('Canvas is not available in this browser.')}var g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,'#0f0e0a');g.addColorStop(1,'#1a1810');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.strokeStyle=brand.accent;ctx.lineWidth=3;ctx.strokeRect(28,28,w-56,h-56);ctx.textAlign='center';ctx.fillStyle=brand.accent;ctx.font='600 34px "Cormorant Garamond", Georgia, serif';ctx.fillText('SCREEN TIME REALITY',w/2,130);ctx.fillStyle='#f5f0e8';ctx.font='700 '+Math.round(w*0.13)+'px "Cormorant Garamond", Georgia, serif';ctx.fillText(fmt(Math.round(m.yearHours))+' hours a year',w/2,h*0.30);ctx.font='400 30px Lato, sans-serif';ctx.fillStyle='#b9b0a0';ctx.fillText('That is '+m.yearDays.toFixed(1)+' full 24-hour days every year.',w/2,h*0.38);var keys=[[fmt(m.dailyHours,2)+' h','each day'],[fmt(m.lifetimeYears,1)+' yrs','on screens ahead'],[fmt(Math.round(m.reclaimedYear))+' h','you could reclaim a year']];var colW=(w-120)/3,i;for(i=0;i<3;i++){ctx.fillStyle=brand.accent;ctx.font='700 52px "Cormorant Garamond", Georgia, serif';ctx.fillText(keys[i][0],60+colW*i+colW/2,h*0.55);ctx.fillStyle='#b9b0a0';ctx.font='400 24px Lato, sans-serif';ctx.fillText(keys[i][1],60+colW*i+colW/2,h*0.55+38)}ctx.fillStyle='#f5f0e8';ctx.font='600 34px "Cormorant Garamond", Georgia, serif';var line=activityLine(m),words=line.split(' '),rows=[],cur='';for(i=0;i<words.length;i++){if(ctx.measureText(cur+' '+words[i]).width>w-160&&cur){rows.push(cur);cur=words[i]}else{cur=cur?cur+' '+words[i]:words[i]}}if(cur){rows.push(cur)}for(i=0;i<rows.length;i++){ctx.fillText(rows[i],w/2,h*0.70+i*44)}ctx.fillStyle='#b9b0a0';ctx.font='400 22px Lato, sans-serif';var footer=(brand.shopName||'Made with the Screen Time Reality Calculator')+(brand.shopHandle?' \u00B7 '+brand.shopHandle:'');ctx.fillText(footer,w/2,h-70);return canvas}
+function downloadCanvas(canvas,filename){try{var url=canvas.toDataURL('image/png');if(!url||url.length<200){throw new Error('The image came back empty.')}var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);showMsg('Your share image is downloading.','success')}catch(err){showMsg('Sorry, the image could not be created: '+err.message,'error')}}
+function makeShare(kind){var m=computeMetrics(state);if(m.zero||m.overDaily){showMsg('Add a screen-time total between 0 and 24 hours first.','error');return}var w=1080,h=kind==='story'?1350:1080,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;try{drawShare(canvas,w,h,m)}catch(err){showMsg('Sorry, the image could not be created: '+err.message,'error');return}downloadCanvas(canvas,'screen-time-reality-'+kind+'-'+w+'x'+h+'.png')}
+function copyText(){var m=computeMetrics(state);if(m.zero||m.overDaily){showMsg('Add a screen-time total between 0 and 24 hours first.','error');return}var text=buildCopyText(m,brand);function fallback(){try{var ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();var ok=document.execCommand('copy');document.body.removeChild(ta);if(!ok){throw new Error('Copy was blocked by the browser.')}showMsg('Results copied. Paste them into an email or post.','success')}catch(err){showMsg('Sorry, copying failed: '+err.message,'error')}}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){showMsg('Results copied. Paste them into an email or post.','success')},fallback)}else{fallback()}}
+function saveBrand(){brand.shopName=el('shopName').value.trim();brand.shopHandle=el('shopHandle').value.trim();brand.accent=el('accent').value;store('strc-brand',brand);el('brandMsg').textContent='Branding saved.';el('brandMsg').className='msg success';render()}
+function openDrawer(open){el('drawer').classList.toggle('open',open);el('backdrop').classList.toggle('show',open);if(open){el('shopName').focus()}}
+function bind(){el('age').addEventListener('input',function(){state.age=clamp(toNum(el('age').value),1,120);el('ageVal').textContent=state.age;saveState();render()});el('life').addEventListener('input',function(){state.lifeExpectancy=clamp(toNum(el('life').value),60,100);el('lifeVal').textContent=state.lifeExpectancy;saveState();render()});el('waking').addEventListener('input',function(){state.wakingHours=toNum(el('waking').value);el('wakingVal').textContent=state.wakingHours;saveState();render()});el('reclaim').addEventListener('input',function(){state.reclaimShare=toNum(el('reclaim').value)/100;el('reclaimVal').textContent=el('reclaim').value+'%';saveState();render()});el('weekendToggle').addEventListener('change',function(){state.useWeekends=el('weekendToggle').checked;el('weekendGroup').hidden=!state.useWeekends;if(!state.useWeekends){syncWeekendFromWeekday()}saveState();render()});el('saveDay').addEventListener('click',saveCurrentDay);el('deleteDay').addEventListener('click',deleteSavedDay);el('clearLog').addEventListener('click',clearLog);el('prevMonth').addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--}renderCalendar()});el('nextMonth').addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++}renderCalendar()});el('thisMonth').addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();renderCalendar()});el('storyBtn').addEventListener('click',function(){makeShare('story')});el('squareBtn').addEventListener('click',function(){makeShare('square')});el('copyBtn').addEventListener('click',copyText);el('brandOpen').addEventListener('click',function(){openDrawer(true)});el('brandClose').addEventListener('click',function(){openDrawer(false)});el('backdrop').addEventListener('click',function(){openDrawer(false)});el('saveBrand').addEventListener('click',saveBrand)}
+function init(){loadAll();var now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();el('trackDate').value=dateKey(now);buildSliders();syncControls();bind();if(!hasChart){el('doughnutFallback').hidden=false;el('barsFallback').hidden=false;el('lineFallback').hidden=false}render()}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+</script>
+</body>
+</html>
