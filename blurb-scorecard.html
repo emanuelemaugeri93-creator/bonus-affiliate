@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blurb Scorecard</title>
+<meta name="description" content="Paste your blurb and get a score for hook, stakes, genre signals, clarity, tone and length, with a radar chart, flagged weak sentences and a prioritized fix list.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--y:#FFD60A;--k:#000;--r:#D62828;--w:#fff;--head:'Space Grotesk','Arial Black',Arial,sans-serif;--mono:'Space Mono','Courier New',Courier,monospace}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--y);color:var(--k);font-family:var(--mono);font-size:15px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit;border-radius:0}
+:focus-visible{outline:4px solid var(--r);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+header.top{border-bottom:4px solid var(--k);background:var(--k);color:var(--y);padding:14px 22px}
+header.top h1{margin:0;font:700 clamp(24px,4vw,40px)/1 var(--head);text-transform:uppercase;letter-spacing:.06em}
+header.top p{margin:6px 0 0;font-size:15px;color:#fff}
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:0;align-items:start}
+.left{padding:22px;border-right:4px solid var(--k);min-width:0}
+.right{padding:22px;min-width:0}
+@media (max-width:1000px){.split{grid-template-columns:1fr}.left{border-right:0;border-bottom:4px solid var(--k)}}
+@media (max-width:520px){.left,.right{padding:14px}}
+.box{border:4px solid var(--k);background:var(--w);box-shadow:8px 8px 0 var(--k);padding:16px;margin:0 8px 22px 0}
+.box h2{margin:0 0 10px;font:700 18px var(--head);text-transform:uppercase;letter-spacing:.1em}
+.lbl{display:block;font:700 12px var(--head);text-transform:uppercase;letter-spacing:.14em;margin:12px 0 4px}
+textarea,input[type=text],select{width:100%;border:4px solid var(--k);background:#fff;padding:10px 12px;min-height:46px}
+textarea{min-height:260px;resize:vertical;line-height:1.55}
+.cnt{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap;font-size:13px;font-weight:700;margin-top:6px}
+.cnt .over{color:var(--r)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:4px solid var(--k);background:#fff;box-shadow:6px 6px 0 var(--k);padding:9px 16px;min-height:46px;cursor:pointer;font:700 13px var(--head);text-transform:uppercase;letter-spacing:.1em}
+.btn:hover:not(:disabled){background:var(--y)}
+.btn:active:not(:disabled){transform:translate(4px,4px);box-shadow:2px 2px 0 var(--k)}
+.btn.red{background:var(--r);color:#fff}
+.btn.red:hover:not(:disabled){background:#b81f1f}
+.btn.sm{padding:5px 12px;min-height:40px;font-size:12px;box-shadow:4px 4px 0 var(--k)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row.tight{gap:10px 14px}
+.grid2{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+.note{font-size:13px;margin:10px 0 0}
+.how{border:4px solid var(--k);background:#fff;box-shadow:8px 8px 0 var(--k);margin:0 8px 22px 0}
+.how summary{cursor:pointer;padding:12px 16px;font:700 14px var(--head);text-transform:uppercase;letter-spacing:.12em;list-style:none;min-height:46px;display:flex;align-items:center}
+.how summary::-webkit-details-marker{display:none}
+.how summary::after{content:"+";margin-left:auto;font-size:22px}
+.how[open] summary::after{content:"\2212"}
+.how .in{padding:4px 16px 16px;border-top:4px solid var(--k);font-size:13.5px}
+.how h3{margin:14px 0 4px;font:700 13px var(--head);text-transform:uppercase;letter-spacing:.1em}
+.how ul{margin:4px 0 0 18px;padding:0}
+
+/* dashboard */
+.overall{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.big{border:4px solid var(--k);background:var(--r);color:#fff;font:700 clamp(54px,9vw,88px)/1 var(--head);padding:6px 16px;min-width:150px;text-align:center;box-shadow:6px 6px 0 var(--k)}
+.big small{font-size:.3em;display:block;letter-spacing:.12em;margin-top:2px}
+.verdict{font:700 22px var(--head);text-transform:uppercase;letter-spacing:.06em}
+.radarbox{position:relative;max-width:440px;margin:6px auto 0;aspect-ratio:1/1;width:100%}
+.radarbox canvas{max-width:100%}
+.bars{margin:14px 0 0;padding:0;list-style:none}
+.bars li{border:4px solid var(--k);background:#fff;margin:0 0 10px;padding:8px 10px}
+.bars .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font:700 14px var(--head);text-transform:uppercase;letter-spacing:.1em}
+.bars .track{height:18px;border:3px solid var(--k);background:#fff;margin-top:6px}
+.bars .fill{height:100%;background:var(--k);width:0;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.bars .fill.low{background:var(--r)}
+.bars details{margin-top:6px;font-size:13px}
+.bars summary{cursor:pointer;font-weight:700;min-height:32px;display:flex;align-items:center}
+.parts{margin:4px 0 0;padding:0;list-style:none}
+.parts li{border:0;border-top:2px dashed #000;margin:0;padding:4px 0;display:flex;justify-content:space-between;gap:10px}
+.fold{border:4px solid var(--k);padding:12px;background:#fff;font-size:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.fold mark{background:var(--y);color:#000;padding:0 2px;box-decoration-break:clone}
+.fold .rest{opacity:.45}
+.sent{border:4px solid var(--k);padding:12px;background:#fff;font-size:14px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.weak{text-decoration:underline wavy var(--r) 2px;text-underline-offset:4px;cursor:help;background:rgba(214,40,40,.08)}
+.weak:focus{outline:3px solid var(--r)}
+.legend{font-size:13px;margin:6px 0 0}
+.fixes{margin:0;padding:0;list-style:none;counter-reset:fx}
+.fixes li{counter-increment:fx;border:4px solid var(--k);background:#fff;padding:10px 12px 10px 52px;margin:0 0 10px;position:relative}
+.fixes li::before{content:counter(fx);position:absolute;left:0;top:0;bottom:0;width:40px;background:var(--k);color:var(--y);font:700 22px var(--head);display:flex;align-items:center;justify-content:center}
+.fixes .tag{display:inline-block;background:var(--y);border:2px solid var(--k);font:700 11px var(--head);text-transform:uppercase;letter-spacing:.1em;padding:0 8px;margin-right:6px}
+.fixes .gain{display:inline-block;background:var(--r);color:#fff;font:700 11px var(--head);padding:0 8px;margin-left:6px;letter-spacing:.06em}
+table.cmp{width:100%;border-collapse:collapse;font-size:13.5px}
+table.cmp th,table.cmp td{border:3px solid var(--k);padding:6px 8px;text-align:center}
+table.cmp th{background:var(--k);color:var(--y);font:700 12px var(--head);text-transform:uppercase;letter-spacing:.1em}
+table.cmp td:first-child{text-align:left;font-weight:700;text-transform:uppercase;font-size:12px;letter-spacing:.08em}
+table.cmp td.best{background:var(--y);font-weight:700}
+.scrollx{overflow-x:auto}
+.empty{border:4px dashed var(--k);padding:28px 18px;text-align:center;background:#fff;margin:0 8px 22px 0}
+.empty h2{font:700 24px var(--head);text-transform:uppercase;margin:0 0 8px}
+.empty p{margin:0 0 16px;font-weight:700}
+.honest{border:4px solid var(--k);background:#fff;padding:10px 14px;font-size:13px;margin:0 8px 22px 0}
+.honest b{background:var(--r);color:#fff;padding:0 8px;font:700 12px var(--head);text-transform:uppercase;letter-spacing:.1em;margin-right:6px}
+.tip{position:fixed;z-index:80;pointer-events:none;max-width:300px;background:var(--k);color:#fff;border:3px solid var(--r);padding:8px 10px;font-size:13px;display:none}
+.status{position:fixed;z-index:90;left:50%;bottom:16px;transform:translateX(-50%);max-width:min(640px,92vw);padding:10px 18px;background:var(--k);color:var(--y);border:4px solid var(--k);box-shadow:6px 6px 0 var(--r);font-weight:700;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center}
+.status.on{opacity:1}
+.err{position:fixed;z-index:95;top:12px;left:50%;transform:translateX(-50%);width:min(640px,94vw);display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--r);color:#fff;border:4px solid var(--k);box-shadow:8px 8px 0 var(--k);font-weight:700}
+.err[hidden]{display:none}
+.err span{flex:1}
+.err button{background:#fff;color:#000;border:3px solid var(--k);cursor:pointer;padding:4px 10px;min-height:36px;font-weight:700}
+.modal{position:fixed;z-index:96;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6)}
+.modal[hidden]{display:none}
+.modal .bx{width:min(640px,100%);background:var(--y);border:4px solid var(--k);box-shadow:8px 8px 0 var(--k);padding:16px}
+.modal textarea{height:240px;min-height:0}
+.modal h3{margin:0 0 6px;font:700 18px var(--head);text-transform:uppercase}
+.flash{animation:flash .7s steps(2) 2}
+@keyframes flash{50%{background:var(--y)}}
+@media (prefers-reduced-motion:reduce){.bars .fill{transition:none}.flash{animation:none}}
+
+/* how to use */
+.how-backdrop{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(0,0,0,.62)}
+.how-backdrop[hidden]{display:none}
+.how-box{width:min(760px,100%);max-height:calc(100vh - 28px);display:flex;flex-direction:column;overflow:hidden}
+.how-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:16px 18px 12px}
+.how-head h2{margin:0;font-size:22px;line-height:1.2}
+.how-head p{margin:4px 0 0;font-size:14px}
+.how-body{overflow-y:auto;padding:4px 18px 18px;-webkit-overflow-scrolling:touch}
+.how-body h3{margin:20px 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.08em}
+.how-steps{list-style:none;margin:0;padding:0;counter-reset:hs}
+.how-steps li{counter-increment:hs;position:relative;margin:0 0 10px;padding:10px 12px 10px 52px;min-height:48px}
+.how-steps li::before{content:counter(hs);position:absolute;left:10px;top:10px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.how-steps li>b:first-child{display:block;margin-bottom:2px}
+.how-body ul{margin:0;padding-left:20px}
+.how-body li{margin:0 0 6px}
+.how-foot{padding:12px 18px 16px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+body.how-open{overflow:hidden}
+@media print{.how-backdrop{display:none!important}}
+@media (max-width:520px){.how-head h2{font-size:19px}.how-steps li{padding-left:48px}}
+
+.how-box{background:#FFD60A;border:4px solid #000;box-shadow:10px 10px 0 #000;color:#000;font-family:var(--mono)}
+.how-head{border-bottom:4px solid #000;background:#000;color:#FFD60A}
+.how-head h2{font-family:var(--head);text-transform:uppercase;letter-spacing:.08em}
+.how-head p{color:#fff}
+.how-body h3{font-family:var(--head);letter-spacing:.14em}
+.how-steps li{background:#fff;border:4px solid #000;box-shadow:5px 5px 0 #000}
+.how-steps li::before{background:#D62828;color:#fff;border:3px solid #000;font-family:var(--head);left:8px}
+.how-steps li{padding-left:54px}
+.how-head .btn,header.top .btn{color:#000}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <h1>Blurb Scorecard</h1>
+  <p>Score your book description before Amazon readers do.</p>
+  <button type="button" class="btn" id="btnHow" data-how-open aria-haspopup="dialog" style="margin-top:12px">? How to use</button>
+</header>
+<div class="split">
+  <section class="left" aria-label="Editor">
+    <div class="box">
+      <h2>Your blurb</h2>
+      <label class="lbl" for="tagline">Tagline (optional)</label>
+      <input type="text" id="tagline" maxlength="120" placeholder="One line above the description">
+      <label class="lbl" for="blurb">Book description</label>
+      <textarea id="blurb" maxlength="4000" placeholder="Paste your book description here"></textarea>
+      <div class="cnt" aria-live="polite"><span id="cWords">0 words</span><span id="cChars">0 / 4,000 characters</span></div>
+      <div class="grid2">
+        <div><label class="lbl" for="subtype">Genre subtype</label>
+          <select id="subtype">
+            <option value="detective">Detective urban fantasy</option>
+            <option value="noir">Paranormal city noir</option>
+            <option value="fae">Fae court intrigue</option>
+            <option value="witches">Witches and covens</option>
+            <option value="vampires">Vampire politics</option>
+            <option value="hunters">Monster hunters</option>
+          </select></div>
+        <div><label class="lbl" for="tone">Target tone</label>
+          <select id="tone">
+            <option value="noir">Dark noir</option>
+            <option value="witty">Witty</option>
+            <option value="thrilling">Thrilling</option>
+            <option value="atmospheric">Atmospheric</option>
+          </select></div>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button type="button" class="btn red" id="btnSample">Try a sample blurb</button>
+        <button type="button" class="btn" id="btnClear">Clear</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>Saved versions</h2>
+      <p class="note" style="margin-top:0">Save up to three versions and compare them side by side on the right.</p>
+      <div id="vers"></div>
+    </div>
+
+    <div class="box">
+      <h2>Branding for exports</h2>
+      <div class="grid2">
+        <div><label class="lbl" for="title">Book title</label><input type="text" id="title" maxlength="80" placeholder="Printed on the score card"></div>
+        <div><label class="lbl" for="author">Author / pen name</label><input type="text" id="author" maxlength="60" placeholder="Printed on the score card"></div>
+      </div>
+    </div>
+
+    <details class="how" id="how">
+      <summary>How scoring works</summary>
+      <div class="in">
+        <p>Every category is a pure function of your text, scored from 0 to 100. Nothing is sent anywhere: it all runs in this page.</p>
+        <h3>Weights</h3>
+        <p>Overall = Hook 25% + Stakes 20% + Genre 20% + Clarity 15% + Tone 10% + Length 10% (total 100%).</p>
+        <h3>Hook (100)</h3>
+        <ul><li>30: first sentence length. Full marks at 8 to 22 words, fewer points the further outside that range.</li><li>15: protagonist cue (a name or role) in the first 150 characters.</li><li>20: threat cue in the first 150 characters.</li><li>20: opens with a question or a stark, short statement.</li><li>15: no clich&eacute; opener (20 openers such as "In a world where...").</li></ul>
+        <h3>Stakes (100)</h3>
+        <ul><li>Up to 60: consequence cues, 12 per distinct cue (or die, before, unless, if she fails, last chance...).</li><li>20: a numbered deadline ("72 hours"); 12 for a softer time cue ("by midnight").</li><li>20: a named cost (what the hero will lose or pay); 10 for a bare cost word.</li></ul>
+        <h3>Genre signals (100)</h3>
+        <ul><li>Up to 70: 7 per distinct urban fantasy term from a bank of 150+.</li><li>Up to 15: terms that fit your chosen subtype (5 each).</li><li>Up to 15: specific setting words such as precinct, alley, rooftop (5 each).</li><li>Penalty: 6 per term strongly tied to another subtype beyond the first 2 (max 24), and 10 per off-genre term such as "spaceship" (max 20).</li></ul>
+        <h3>Clarity (100)</h3>
+        <ul><li>40: average sentence length, best at 12 to 20 words (4 points lost per word outside).</li><li>35: Flesch reading ease estimate, best from 55 to 85.</li><li>25: no more than 3 distinct capitalized names in the first 100 words (8 points lost per extra name).</li></ul>
+        <h3>Tone match (100)</h3>
+        <ul><li>60: distinct words from the list for your chosen tone, 15 each up to 4.</li><li>40: how close the balance of positive and negative words is to what the tone expects.</li></ul>
+        <h3>Length and structure (100)</h3>
+        <ul><li>40: best at 150 to 300 words.</li><li>15: tagline present.</li><li>20: 3 to 5 short paragraphs.</li><li>15: closing call to action.</li><li>10: simple formatting only (no HTML or markdown clutter).</li></ul>
+        <p class="note"><b>Honest limits:</b> this is a heuristic scorer. It counts patterns. It cannot predict sales, rankings or how a reader will feel.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="right" aria-label="Score dashboard" id="dash"></section>
+</div>
+<div class="tip" id="tip" role="tooltip"></div>
+<div class="status" id="status" role="status" aria-live="polite"></div>
+<div class="err" id="err" role="alert" hidden><span id="errMsg"></span><button type="button" id="errX">Dismiss</button></div>
+<div class="modal" id="fallback" hidden>
+  <div class="bx" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+    <h3 id="fbTitle">Copy manually</h3>
+    <p class="note" id="fbMsg"></p>
+    <label for="fbText" class="sr">Text to copy</label>
+    <textarea id="fbText" readonly></textarea>
+    <div class="row" style="margin-top:12px"><button type="button" class="btn" id="fbSel">Select all</button><button type="button" class="btn" id="fbClose">Close</button></div>
+  </div>
+</div>
+
+<script id="bs-engine">
+/* ===================== BLURB SCORECARD : ENGINE (no DOM, pure functions) ===================== */
+var BS = (function () {
+  'use strict';
+
+  var CATS = ['hook', 'stakes', 'genre', 'clarity', 'tone', 'length'];
+  var CAT_LABEL = { hook: 'Hook', stakes: 'Stakes', genre: 'Genre signals', clarity: 'Clarity', tone: 'Tone match', length: 'Length and structure' };
+  var WEIGHTS = { hook: 25, stakes: 20, genre: 20, clarity: 15, tone: 10, length: 10 };
+  var MAX_CHARS = 4000;
+
+  /* ---------- word banks ---------- */
+  var CLICHES = ['in a world where', 'in a world of', 'in a world', 'in a city where', 'in a land where', 'once upon a time', 'little did she know', 'little did he know', 'little did they know',
+    'when a mysterious stranger', 'everything changes when', 'everything changed when', 'life was perfect until', 'nothing could have prepared', 'she never expected', 'he never expected',
+    'they never expected', 'an ordinary girl', 'an ordinary life', 'an ordinary woman', 'what if everything you knew', 'what if i told you', 'for as long as she can remember', 'for as long as he can remember',
+    'it was a dark and stormy night', 'she was just a normal', 'he was just a normal'];
+  var ROLES = ['detective', 'investigator', 'inspector', 'officer', 'cop', 'agent', 'witch', 'wizard', 'mage', 'hunter', 'slayer', 'fixer', 'medium', 'psychic', 'necromancer', 'vampire', 'werewolf', 'shifter',
+    'coroner', 'sergeant', 'lieutenant', 'captain', 'rookie', 'profiler', 'journalist', 'reporter', 'bartender', 'apothecary', 'healer', 'courier', 'thief', 'bodyguard', 'guardian', 'warden', 'outcast', 'heir',
+    'enforcer', 'consultant', 'sorceress', 'warlock', 'private eye', 'bounty hunter', 'medical examiner', 'night shift'];
+  var THREAT = ['kill', 'killer', 'murder', 'murdered', 'murderer', 'dead', 'death', 'die', 'dies', 'dying', 'danger', 'dangerous', 'deadly', 'lethal', 'threat', 'threatens', 'hunted', 'stalk', 'stalker', 'curse',
+    'cursed', 'doom', 'doomed', 'vanish', 'vanished', 'missing', 'disappear', 'disappears', 'monster', 'monsters', 'blood', 'war', 'betray', 'betrayed', 'trap', 'trapped', 'haunt', 'haunted', 'destroy', 'destroys',
+    'ruin', 'collapse', 'poison', 'sacrifice', 'victim', 'victims', 'corpse', 'body', 'bodies', 'massacre', 'attack', 'attacked', 'sinister', 'wicked', 'demon', 'apocalypse', 'burn', 'scream', 'nightmare', 'assassin'];
+  var SENT_STARTERS = ['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'with', 'when', 'while', 'after', 'before', 'now', 'then', 'but', 'and', 'or', 'if', 'as', 'she', 'he', 'they', 'it', 'we', 'you', 'her', 'his', 'their',
+    'this', 'that', 'these', 'those', 'there', 'here', 'one', 'two', 'three', 'every', 'each', 'all', 'some', 'no', 'not', 'only', 'even', 'just', 'still', 'soon', 'once', 'by', 'from', 'into', 'through', 'until', 'unless',
+    'because', 'though', 'although', 'what', 'who', 'why', 'how', 'where', 'which', 'can', 'could', 'will', 'would', 'must', 'may', 'might', 'do', 'does', 'did', 'is', 'are', 'was', 'were', 'be', 'been', 'has', 'have', 'had',
+    'start', 'begin', 'step', 'join', 'grab', 'read', 'download', 'scroll', 'buy', 'get', 'find', 'meet', 'enter', 'discover', 'welcome', 'beneath', 'beyond', 'within', 'without', 'between', 'across', 'against', 'among',
+    'under', 'over', 'above', 'below', 'behind', 'beside', 'near', 'inside', 'outside', 'along', 'around', 'toward', 'my', 'your', 'our', 'its', 'so', 'yet', 'nor', 'both', 'either', 'neither', 'nothing', 'everything', 'something', 'anything', 'someone', 'everyone', 'anyone', 'nobody', 'somebody', 'everybody', 'sometimes', 'perhaps', 'maybe', 'however', 'instead', 'another', 'others', 'many', 'most', 'more', 'less', 'never', 'always', 'again', 'also', 'else', 'half', 'such', 'than', 'too', 'very', 'yes'];
+  var NOT_NAMES = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december', 'i'];
+
+  var GENRE_TERMS = ['city', 'hidden world', 'faction', 'factions', 'case', 'clue', 'clues', 'magic', 'curse', 'cursed', 'vampire', 'vampires', 'witch', 'witches', 'detective', 'precinct', 'coven', 'ward', 'wards', 'rift',
+    'fae', 'faerie', 'fairy court', 'werewolf', 'shifter', 'pack', 'alpha', 'necromancer', 'ghost', 'spirit', 'medium', 'seance', 'ritual', 'spell', 'charm', 'hex', 'sigil', 'grimoire', 'ledger', 'relic', 'artifact',
+    'talisman', 'amulet', 'potion', 'oracle', 'seer', 'demon', 'angel', 'gargoyle', 'golem', 'banshee', 'wraith', 'specter', 'haunted', 'haunting', 'occult', 'arcane', 'supernatural', 'paranormal', 'preternatural',
+    'otherworldly', 'underworld', 'veil', 'glamour', 'enchanted', 'enchantment', 'bargain', 'pact', 'oath', 'debt', 'favor', 'truce', 'treaty', 'court', 'embassy', 'envoy', 'council', 'guild', 'syndicate', 'clan',
+    'bloodline', 'blood', 'fang', 'fangs', 'silver', 'iron', 'salt', 'rowan', 'moon', 'full moon', 'midnight', 'nightfall', 'shadow', 'shadows', 'neon', 'alley', 'rooftop', 'subway', 'harbor', 'docks', 'warehouse',
+    'morgue', 'crime scene', 'murder', 'killer', 'victim', 'suspect', 'informant', 'stakeout', 'badge', 'interrogation', 'partner', 'rookie', 'captain', 'lieutenant', 'homicide', 'missing person', 'cold case',
+    'vigilante', 'hunter', 'monster', 'monsters', 'creature', 'creatures', 'beast', 'lair', 'nest', 'portal', 'gateway', 'crossroads', 'cemetery', 'graveyard', 'crypt', 'cathedral', 'nightclub', 'speakeasy',
+    'tavern', 'pawnshop', 'tenement', 'penthouse', 'skyline', 'downtown', 'underground', 'tunnels', 'sewers', 'secret society', 'cult', 'conspiracy', 'sorcerer', 'sorceress', 'warlock', 'mage', 'familiar',
+    'apothecary', 'alchemy', 'alchemist', 'elixir', 'prophecy', 'omen', 'ancient', 'immortal', 'undead', 'ghoul', 'revenant', 'shade', 'changeling', 'seelie', 'unseelie', 'coroner', 'medical examiner', 'urban fantasy',
+    'night court', 'blood price', 'true name', 'the dead', 'the veil', 'masquerade', 'thrall', 'bounty', 'slayer', 'tracker', 'fixer', 'safehouse', 'underbelly', 'streets', 'case file', 'evidence'];
+  var SETTING_TERMS = ['precinct', 'morgue', 'subway', 'rooftop', 'alley', 'back alley', 'harbor', 'docks', 'tenement', 'speakeasy', 'nightclub', 'neon', 'rain-slick', 'brownstone', 'fire escape', 'graveyard',
+    'cathedral', 'crypt', 'penthouse', 'warehouse', 'skyline', 'downtown', 'underground', 'tunnels', 'sewers', 'diner', 'pawnshop', 'crime scene', 'safehouse', 'tavern', 'cemetery', 'embassy', 'courthouse',
+    'apartment', 'stairwell', 'rooftops', 'bridge', 'canal', 'boardwalk', 'laundromat', 'basement', 'cellar'];
+  var OFF_GENRE = ['spaceship', 'starship', 'galaxy', 'alien', 'aliens', 'laser', 'cyborg', 'android', 'level up', 'xp', 'dungeon crawl', 'stat screen', 'mate bond', 'cozy village', 'dragon rider', 'elf kingdom',
+    'quest for the sword', 'medieval kingdom', 'post-apocalyptic', 'zombie apocalypse', 'dystopian', 'space station', 'hyperdrive', 'wasteland'];
+  var SUB_CORE = {
+    detective: ['detective', 'precinct', 'case', 'clue', 'clues', 'homicide', 'badge', 'partner', 'interrogation', 'informant', 'cold case', 'crime scene', 'stakeout', 'suspect', 'rookie', 'captain', 'lieutenant', 'missing person', 'file', 'evidence'],
+    noir: ['noir', 'rain-slick', 'neon', 'smoke', 'whiskey', 'femme fatale', 'shadows', 'alley', 'back alley', 'speakeasy', 'trench coat', 'rain', 'fedora', 'jazz', 'dive bar', 'private eye', 'fixer', 'betrayal', 'corrupt', 'nightclub'],
+    fae: ['fae', 'faerie', 'fairy', 'court', 'glamour', 'changeling', 'seelie', 'unseelie', 'bargain', 'true name', 'oath', 'debt', 'embassy', 'thorn', 'hollow hill', 'iron', 'crown', 'queen', 'king', 'favor'],
+    witches: ['witch', 'witches', 'coven', 'hex', 'spell', 'grimoire', 'familiar', 'ritual', 'sigil', 'potion', 'herb', 'apothecary', 'ward', 'wards', 'salt', 'moon', 'sabbat', 'circle', 'charm', 'hedge witch'],
+    vampires: ['vampire', 'vampires', 'fang', 'fangs', 'blood', 'court', 'bloodline', 'thirst', 'undead', 'immortal', 'masquerade', 'sire', 'elder', 'night', 'politics', 'throne', 'heir', 'consort', 'feeding', 'clan'],
+    hunters: ['monster', 'monsters', 'hunter', 'hunters', 'silver', 'stake', 'creature', 'beast', 'lair', 'nest', 'weapon', 'hunt', 'tracker', 'guild', 'bounty', 'kill', 'slayer', 'wolf', 'werewolf', 'cull']
+  };
+  var SUB_EXCL = {
+    detective: ['precinct', 'homicide', 'badge', 'interrogation', 'cold case', 'crime scene', 'stakeout', 'rookie'],
+    noir: ['femme fatale', 'trench coat', 'fedora', 'speakeasy', 'dive bar', 'private eye', 'whiskey', 'jazz'],
+    fae: ['seelie', 'unseelie', 'changeling', 'faerie', 'glamour', 'true name', 'hollow hill', 'fairy court'],
+    witches: ['coven', 'hedge witch', 'grimoire', 'sabbat', 'familiar', 'hex', 'potion', 'apothecary'],
+    vampires: ['sire', 'masquerade', 'fangs', 'bloodline', 'thirst', 'consort', 'feeding', 'undead'],
+    hunters: ['slayer', 'bounty', 'stake', 'lair', 'nest', 'silver bullet', 'tracker', 'cull']
+  };
+  var STAKES_CUES = ['before', 'unless', 'if she fails', 'if he fails', 'if they fail', 'if she can\'t', 'if he can\'t', 'if they can\'t', 'or else', 'by dawn', 'by midnight', 'by sunrise', 'by sunset', 'deadline',
+    'last chance', 'running out', 'ticking', 'only hope', 'at stake', 'everything to lose', 'lose everything', 'no time', 'time is running', 'one chance', 'too late', 'must stop', 'must find', 'must choose',
+    'or die', 'or lose', 'or face', 'final night', 'one more', 'before it\'s too late', 'the clock'];
+  var OR_CUE = /\bor\s+(die|lose|face|see|become|watch|never|else|risk|burn|vanish|pay|fall|be|join|forfeit|surrender|end|suffer)\b/;
+  var DEADLINE_NUM = /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty|forty|seventy|hundred)(?:[\s-]+(?:two|four|eight|five|one|three|six|seven|nine))?[\s-]*(hours?|days?|nights?|minutes?|weeks?|months?|years?|moons?)\b/;
+  var DEADLINE_SOFT = /\b(deadline|last chance|by (?:dawn|midnight|sunrise|sunset|friday|morning)|before (?:dawn|midnight|sunrise|sunset|the full moon|morning)|at dawn|tonight)\b/;
+  var COST_VERB = /\b(cost|costs|costing|price|pay|pays|paying|sacrifice|sacrifices|forfeit|surrender|lose|loses|lost|trade|trades|give up|gives up)\b/;
+  var COST_OBJ = /\b(her|his|their|my|your|everyone|everything|the city|a life|a soul|a year|a name)\b/;
+  var CTA = ['start the series', 'start the hunt', 'grab your copy', 'get your copy', 'read now', 'download', 'one-click', 'scroll up', 'buy now', 'pick up', 'begin the', 'dive in', 'step into', 'join the', 'start reading',
+    'order today', 'order now', 'your next obsession', 'turn the page', 'binge', 'read the first', 'begin the series', 'open the case'];
+
+  var POS = ['bright', 'brave', 'hope', 'hopeful', 'love', 'loyal', 'loyalty', 'trust', 'friend', 'friends', 'friendship', 'joy', 'joyful', 'laugh', 'laughter', 'smile', 'charm', 'charming', 'clever', 'witty', 'bold',
+    'courage', 'courageous', 'strong', 'kind', 'gentle', 'warm', 'glow', 'shine', 'brilliant', 'gifted', 'fun', 'funny', 'delight', 'delightful', 'wonder', 'wonderful', 'lucky', 'win', 'victory', 'triumph', 'free',
+    'freedom', 'heal', 'healing', 'safe', 'safety', 'protect', 'protector', 'save', 'rescue', 'hero', 'heroic', 'honor', 'honest', 'truth', 'faith', 'peace', 'calm', 'comfort', 'home', 'family', 'together', 'ally',
+    'allies', 'support', 'adventure', 'sweet', 'lively', 'spark', 'sparkle', 'golden', 'dream', 'inspire', 'resourceful', 'determined', 'fearless', 'steady', 'devoted', 'tender', 'merry', 'playful', 'cheerful',
+    'optimistic', 'radiant', 'graceful', 'noble', 'valiant', 'generous', 'grateful', 'blessed', 'treasure', 'reward', 'prize'];
+  var NEG = ['dark', 'darkness', 'death', 'dead', 'die', 'dying', 'kill', 'killer', 'murder', 'blood', 'bloody', 'bleed', 'fear', 'terror', 'dread', 'doom', 'doomed', 'curse', 'cursed', 'betray', 'betrayal', 'traitor',
+    'lie', 'liar', 'lies', 'deceit', 'danger', 'dangerous', 'deadly', 'lethal', 'threat', 'threaten', 'menace', 'sinister', 'wicked', 'evil', 'cruel', 'brutal', 'savage', 'vicious', 'grim', 'bleak', 'bitter', 'cold',
+    'empty', 'hollow', 'broken', 'shattered', 'ruin', 'ruined', 'destroy', 'destruction', 'collapse', 'fall', 'fail', 'failure', 'lose', 'lost', 'loss', 'grief', 'sorrow', 'pain', 'suffer', 'suffering', 'scar', 'scars',
+    'haunt', 'haunted', 'nightmare', 'scream', 'corrupt', 'corruption', 'rot', 'decay', 'ash', 'ashes', 'poison', 'toxic', 'trap', 'trapped', 'hunted', 'stalk', 'prey', 'victim', 'missing', 'vanish', 'vanished',
+    'disappear', 'war', 'violence', 'violent', 'desperate', 'despair', 'hopeless', 'hate', 'hatred', 'revenge', 'vengeance', 'wound', 'wounded', 'torture', 'damned', 'rotten', 'treachery', 'shadow'];
+  var TONE_WORDS = {
+    noir: ['rain', 'rain-slick', 'smoke', 'whiskey', 'shadow', 'shadows', 'gutter', 'grim', 'bleak', 'bitter', 'cold', 'corrupt', 'betray', 'betrayal', 'alley', 'neon', 'fixer', 'informant', 'femme', 'trench', 'fedora',
+      'jazz', 'cigarette', 'bourbon', 'gin', 'dive', 'crooked', 'dirty', 'seedy', 'grit', 'gritty', 'noir', 'hardboiled', 'cynic', 'cynical', 'regret', 'secrets', 'lies', 'debt', 'bribe', 'blackmail', 'streetlight',
+      'streetlights', 'midnight', 'ledger'],
+    witty: ['wry', 'snark', 'snarky', 'sarcastic', 'sarcasm', 'banter', 'quip', 'quips', 'ridiculous', 'absurd', 'charming', 'delightfully', 'accidentally', 'awkward', 'disaster', 'caffeine', 'coffee', 'unlikely',
+      'hilarious', 'funny', 'comedy', 'comic', 'joke', 'jokes', 'mischief', 'mischievous', 'cheeky', 'sassy', 'deadpan', 'irreverent', 'outrageous', 'ironic', 'irony', 'hapless', 'bumbling', 'reluctant', 'sidekick',
+      'trouble', 'chaos', 'mayhem', 'ridiculously', 'apparently', 'totally', 'supposedly', 'unfortunately', 'spectacularly'],
+    thrilling: ['race', 'racing', 'chase', 'chased', 'ticking', 'explosive', 'relentless', 'pulse-pounding', 'deadly', 'frantic', 'ambush', 'sprint', 'hunt', 'hunted', 'escape', 'trap', 'fast', 'adrenaline', 'countdown',
+      'strike', 'survive', 'survival', 'clock', 'deadline', 'fugitive', 'pursuit', 'flee', 'fleeing', 'gunfire', 'collide', 'collision', 'showdown', 'siege', 'breakneck', 'heart-stopping', 'edge', 'lethal', 'manhunt',
+      'stakes', 'seconds', 'hours', 'burn', 'hostage', 'rescue', 'assault', 'unleashed'],
+    atmospheric: ['fog', 'mist', 'moonlit', 'whisper', 'whispers', 'flicker', 'flickering', 'lantern', 'lanterns', 'hush', 'hushed', 'haunting', 'velvet', 'silence', 'silent', 'twilight', 'ember', 'embers', 'shimmer',
+      'gloom', 'murmur', 'echo', 'echoes', 'drift', 'drifting', 'candlelight', 'shadowed', 'rain-soaked', 'midnight', 'cobblestone', 'spectral', 'ghostly', 'eerie', 'uncanny', 'lingering', 'ancient', 'dusk', 'nightfall',
+      'moonlight', 'glow', 'fading', 'rustle', 'creak', 'perfume', 'smoke', 'silk']
+  };
+  var TONE_TARGET = { noir: -0.55, witty: 0.15, thrilling: -0.2, atmospheric: -0.1 };
+  var TONE_LABEL = { noir: 'Dark noir', witty: 'Witty', thrilling: 'Thrilling', atmospheric: 'Atmospheric' };
+  var SUB_LABEL = { detective: 'Detective urban fantasy', noir: 'Paranormal city noir', fae: 'Fae court intrigue', witches: 'Witches and covens', vampires: 'Vampire politics', hunters: 'Monster hunters' };
+
+  /* ---------- text utilities ---------- */
+  function set(list) { var o = {}, i; for (i = 0; i < list.length; i++) o[list[i]] = true; return o; }
+  var STARTERS = set(SENT_STARTERS), NOTNAME = set(NOT_NAMES);
+  function norm(text) { return String(text === undefined || text === null ? '' : text).replace(/\r\n?/g, '\n').substr(0, MAX_CHARS); }
+  function isBlank(text) { return norm(text).replace(/\s/g, '') === ''; }
+  function clamp(n) { n = Math.round(n); if (!isFinite(n)) return 0; return n < 0 ? 0 : (n > 100 ? 100 : n); }
+  function esc(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  var ABBR = set(['mr', 'mrs', 'ms', 'dr', 'st', 'vs', 'etc', 'prof', 'sr', 'jr']);
+  function isAbbrev(text, i) {
+    var j = i - 1, w = '';
+    while (j >= 0 && /[A-Za-z]/.test(text.charAt(j))) { w = text.charAt(j) + w; j--; }
+    if (!w) return false;
+    if (w.length === 1 && /[A-Z]/.test(w)) return true;
+    return !!ABBR[w.toLowerCase()];
+  }
+  function splitSentences(text) {
+    var res = [], start = 0, i, n = text.length;
+    function push(s, e) {
+      var seg = text.substring(s, e), lead = seg.match(/^\s*/)[0].length, trail = seg.match(/\s*$/)[0].length, a = s + lead, b = e - trail;
+      if (b > a) res.push({ start: a, end: b, text: text.substring(a, b) });
+    }
+    for (i = 0; i < n; i++) {
+      var c = text.charAt(i);
+      if (c === '\n') { push(start, i); start = i + 1; continue; }
+      if (c === '.' || c === '!' || c === '?') {
+        var j = i;
+        while (j + 1 < n && /[.!?"'”’)\]]/.test(text.charAt(j + 1))) j++;
+        var next = text.charAt(j + 1);
+        if (j + 1 >= n || /\s/.test(next)) {
+          if (c === '.' && j === i && isAbbrev(text, i)) { continue; }
+          push(start, j + 1); start = j + 1;
+        }
+        i = j;
+      }
+    }
+    if (start < n) push(start, n);
+    return res;
+  }
+  var WORD_RE = /[A-Za-z0-9À-ɏ][A-Za-z0-9À-ɏ'’-]*/g;
+  function wordList(text) {
+    var out = [], m, re = new RegExp(WORD_RE.source, 'g');
+    while ((m = re.exec(text)) !== null) out.push({ w: m[0], i: m.index, e: m.index + m[0].length });
+    return out;
+  }
+  function syllables(w) {
+    w = String(w).toLowerCase().replace(/[^a-z]/g, '');
+    if (!w) return 0;
+    if (w.length <= 3) return 1;
+    w = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '').replace(/^y/, '');
+    var m = w.match(/[aeiouy]{1,2}/g);
+    return Math.max(1, m ? m.length : 1);
+  }
+  function flesch(text) {
+    var ss = splitSentences(text), ws = wordList(text), syl = 0, i;
+    if (!ss.length || !ws.length) return 0;
+    for (i = 0; i < ws.length; i++) syl += syllables(ws[i].w);
+    return 206.835 - 1.015 * (ws.length / ss.length) - 84.6 * (syl / ws.length);
+  }
+  var termCache = {};
+  function termRe(t) {
+    if (termCache[t]) return termCache[t];
+    var single = t.indexOf(' ') < 0 && t.indexOf('-') < 0 && /^[a-z]+$/.test(t);
+    termCache[t] = new RegExp('(?:^|[^a-z0-9])' + esc(t).replace(/ /g, '[\\s-]+') + (single ? '(?:s|es)?' : '') + '(?![a-z0-9])');
+    return termCache[t];
+  }
+  function has(low, term) { return termRe(term).test(low); }
+  function distinct(low, list) { var seen = {}, c = 0, i; for (i = 0; i < list.length; i++) { if (!seen[list[i]] && has(low, list[i])) { seen[list[i]] = true; c++; } } return c; }
+  function found(low, list) { var out = [], i; for (i = 0; i < list.length; i++) { if (has(low, list[i]) && out.indexOf(list[i]) < 0) out.push(list[i]); } return out; }
+  function nameEntities(str) {
+    var ws = wordList(str), ents = [], cur = null, i;
+    for (i = 0; i < ws.length; i++) {
+      var w = ws[i].w, lower = w.toLowerCase(), cap = /^[A-Z][a-zÀ-ɏ'’-]+$/.test(w);
+      var prev = str.substring(0, ws[i].i).replace(/\s+$/, ''), pc = prev.charAt(prev.length - 1);
+      var atStart = prev === '' || /[.!?\n]$/.test(prev) || pc === '"' || pc === '“';
+      var isName = cap && !NOTNAME[lower] && !(atStart && STARTERS[lower]);
+      if (isName) {
+        var gapOk = cur && /^[ ]$/.test(str.substring(cur.end, ws[i].i));
+        if (cur && gapOk) { cur.text += ' ' + w; cur.end = ws[i].e; } else { cur = { text: w, end: ws[i].e }; ents.push(cur); }
+      } else cur = null;
+    }
+    var seen = {}, out = [];
+    ents.forEach(function (e) { var k = e.text.toLowerCase(); if (!seen[k]) { seen[k] = true; out.push(e.text); } });
+    return out;
+  }
+  function mkPart(label, pts, max, note) { return { label: label, pts: Math.round(pts * 10) / 10, max: max, note: note }; }
+  function sumParts(parts) { var s = 0, i; for (i = 0; i < parts.length; i++) s += parts[i].pts; return s; }
+
+  /* ---------- 1. HOOK ---------- */
+  function scoreHook(raw) {
+    var text = norm(raw), parts = [], issues = [];
+    if (isBlank(text)) return { score: 0, parts: [], issues: [], empty: true };
+    var ss = splitSentences(text), first = ss.length ? ss[0].text : '', wc = wordList(first).length, low = text.toLowerCase(), head = text.substr(0, 150), headLow = head.toLowerCase();
+    var lp;
+    if (wc >= 8 && wc <= 22) lp = 30; else if (wc < 8) lp = 30 * (wc / 8); else lp = Math.max(0, 30 - (wc - 22) * 2);
+    parts.push(mkPart('First sentence length', lp, 30, wc + ' words (best 8 to 22)'));
+    if (lp < 30) issues.push({ cat: 'hook', action: wc > 22 ? 'Cut the opening sentence to 8 to 22 words. It is ' + wc + ' now.' : 'Lengthen the opening sentence to at least 8 words. It is ' + wc + ' now.', lost: 30 - lp });
+    var roleHit = found(headLow, ROLES).length > 0 || nameEntities(head).length > 0;
+    parts.push(mkPart('Protagonist cue in first 150 characters', roleHit ? 15 : 0, 15, roleHit ? 'found a name or role' : 'no name or role'));
+    if (!roleHit) issues.push({ cat: 'hook', action: 'Name your protagonist or their job (detective, witch, fixer) within the first 150 characters.', lost: 15 });
+    var thr = found(headLow, THREAT).length > 0;
+    parts.push(mkPart('Threat cue in first 150 characters', thr ? 20 : 0, 20, thr ? 'found a threat' : 'no threat'));
+    if (!thr) issues.push({ cat: 'hook', action: 'Put the threat in the first 150 characters: a killer, a curse, a deadline, a missing person.', lost: 20 });
+    var q = /\?\s*["'”’)]*$/.test(first), stark = wc > 0 && wc <= 12 && /[.!]["'”’)]*$/.test(first) && (found(first.toLowerCase(), THREAT).length > 0 || /\d/.test(first));
+    var qp = q ? 20 : (stark ? 20 : ((wc > 0 && wc <= 16 && /\.$/.test(first)) ? 8 : 0));
+    parts.push(mkPart('Question or stark statement', qp, 20, q ? 'opens with a question' : (stark ? 'stark opening line' : (qp ? 'short, but not stark' : 'neither'))));
+    if (qp < 20) issues.push({ cat: 'hook', action: 'Open with a sharp question or a stark one-line statement (12 words or fewer, with a threat or a number).', lost: 20 - qp });
+    var cl = '', i, start = low.replace(/^[\s"'“‘]+/, '');
+    for (i = 0; i < CLICHES.length; i++) { if (start.indexOf(CLICHES[i]) === 0) { cl = CLICHES[i]; break; } }
+    parts.push(mkPart('No cliché opener', cl ? 0 : 15, 15, cl ? 'cliché: "' + cl + '"' : 'no cliché found'));
+    if (cl) issues.push({ cat: 'hook', action: 'Cut the cliché opener "' + cl + '" and start with a character already in trouble.', lost: 15 });
+    return { score: clamp(sumParts(parts)), parts: parts, issues: issues };
+  }
+
+  /* ---------- 2. STAKES ---------- */
+  function scoreStakes(raw) {
+    var text = norm(raw), parts = [], issues = [];
+    if (isBlank(text)) return { score: 0, parts: [], issues: [], empty: true };
+    var low = text.toLowerCase().replace(/’/g, '\''), cues = found(low, STAKES_CUES);
+    if (OR_CUE.test(low)) cues.push('or + consequence');
+    var cp = Math.min(60, 12 * cues.length);
+    parts.push(mkPart('Consequence cues', cp, 60, cues.length + ' distinct' + (cues.length ? ': ' + cues.slice(0, 5).join(', ') : '')));
+    if (cp < 60) issues.push({ cat: 'stakes', action: 'Add a consequence: say what happens if the hero fails ("or die", "before dawn", "unless she finds the ledger").', lost: 60 - cp });
+    var dp = DEADLINE_NUM.test(low) ? 20 : (DEADLINE_SOFT.test(low) ? 12 : 0);
+    parts.push(mkPart('Deadline', dp, 20, dp === 20 ? 'numbered deadline' : (dp ? 'soft time cue' : 'none')));
+    if (dp < 20) issues.push({ cat: 'stakes', action: dp ? 'Turn the vague time cue into a number ("72 hours", "three nights").' : 'Add a numbered deadline ("72 hours", "by midnight on the full moon").', lost: 20 - dp });
+    var cost = 0, m = COST_VERB.exec(low);
+    if (m) { var after = low.substr(m.index + m[0].length, 40); cost = COST_OBJ.test(after) ? 20 : 10; }
+    parts.push(mkPart('Named cost', cost, 20, cost === 20 ? 'names what is lost' : (cost ? 'cost word without an object' : 'none')));
+    if (cost < 20) issues.push({ cat: 'stakes', action: 'Name the cost: what exactly will the hero lose or pay (her sister, a year of memory, his badge)?', lost: 20 - cost });
+    return { score: clamp(sumParts(parts)), parts: parts, issues: issues };
+  }
+
+  /* ---------- 3. GENRE ---------- */
+  function scoreGenre(raw, subtype) {
+    var text = norm(raw), parts = [], issues = [], sub = SUB_CORE[subtype] ? subtype : 'detective';
+    if (isBlank(text)) return { score: 0, parts: [], issues: [], empty: true };
+    var low = text.toLowerCase(), terms = found(low, GENRE_TERMS), tp = Math.min(70, 7 * terms.length);
+    parts.push(mkPart('Urban fantasy terms', tp, 70, terms.length + ' distinct' + (terms.length ? ': ' + terms.slice(0, 6).join(', ') : '')));
+    if (tp < 70) issues.push({ cat: 'genre', action: 'Work in more genre signals a reader can spot at a glance (city name, faction, coven, ward, case, ledger). You have ' + terms.length + ', aim for 10.', lost: 70 - tp });
+    var core = found(low, SUB_CORE[sub]), cb = Math.min(15, 5 * core.length);
+    parts.push(mkPart('Fits ' + SUB_LABEL[sub], cb, 15, core.length + ' subtype term' + (core.length === 1 ? '' : 's')));
+    if (cb < 15) issues.push({ cat: 'genre', action: 'Add words that say "' + SUB_LABEL[sub] + '" (for example ' + SUB_CORE[sub].slice(0, 4).join(', ') + ').', lost: 15 - cb });
+    var sets = found(low, SETTING_TERMS), sb = Math.min(15, 5 * sets.length);
+    parts.push(mkPart('Specific setting words', sb, 15, sets.length + ' found'));
+    if (sb < 15) issues.push({ cat: 'genre', action: 'Anchor the story in concrete places (precinct, alley, rooftop, morgue, subway) instead of a generic "city".', lost: 15 - sb });
+    var foreign = [];
+    Object.keys(SUB_EXCL).forEach(function (k) { if (k !== sub) SUB_EXCL[k].forEach(function (t) { if (SUB_EXCL[sub].indexOf(t) < 0 && SUB_CORE[sub].indexOf(t) < 0 && has(low, t) && foreign.indexOf(t) < 0) foreign.push(t); }); });
+    var fp = Math.min(24, Math.max(0, foreign.length - 2) * 6);
+    parts.push(mkPart('Terms from other subtypes', -fp, 0, foreign.length + ' found (2 allowed)' + (foreign.length ? ': ' + foreign.slice(0, 4).join(', ') : '')));
+    if (fp > 0) issues.push({ cat: 'genre', action: 'Trim the terms that belong to other subtypes (' + foreign.slice(0, 4).join(', ') + ') or switch the subtype.', lost: fp });
+    var off = found(low, OFF_GENRE), op = Math.min(20, 10 * off.length);
+    parts.push(mkPart('Off-genre terms', -op, 0, off.length + ' found' + (off.length ? ': ' + off.join(', ') : '')));
+    if (op > 0) issues.push({ cat: 'genre', action: 'Remove the off-genre terms (' + off.join(', ') + '): they tell urban fantasy readers this is not their book.', lost: op });
+    return { score: clamp(sumParts(parts)), parts: parts, issues: issues };
+  }
+
+  /* ---------- 4. CLARITY ---------- */
+  function scoreClarity(raw) {
+    var text = norm(raw), parts = [], issues = [];
+    if (isBlank(text)) return { score: 0, parts: [], issues: [], empty: true };
+    var ss = splitSentences(text), ws = wordList(text), avg = ss.length ? ws.length / ss.length : 0;
+    var dev = avg < 12 ? 12 - avg : (avg > 20 ? avg - 20 : 0), ap = Math.max(0, 40 - 4 * dev);
+    parts.push(mkPart('Average sentence length', ap, 40, (Math.round(avg * 10) / 10) + ' words (best 12 to 20)'));
+    if (ap < 40) issues.push({ cat: 'clarity', action: avg > 20 ? 'Shorten your sentences: the average is ' + (Math.round(avg * 10) / 10) + ' words, aim for 12 to 20. Split the longest one first.' : 'Your sentences average ' + (Math.round(avg * 10) / 10) + ' words. Join a few fragments so the blurb flows (aim for 12 to 20).', lost: 40 - ap });
+    var fl = flesch(text), fd = fl < 55 ? 55 - fl : (fl > 85 ? fl - 85 : 0), fp = Math.max(0, 35 - fd);
+    parts.push(mkPart('Reading ease (Flesch)', fp, 35, (Math.round(fl * 10) / 10) + ' (best 55 to 85)'));
+    if (fp < 35) issues.push({ cat: 'clarity', action: fl < 55 ? 'Swap long, abstract words for plain ones: reading ease is ' + Math.round(fl) + ', aim for 55 or more.' : 'The prose is very simple (reading ease ' + Math.round(fl) + '). Add one or two sharper, more specific words.', lost: 35 - fp });
+    var w100 = ws.slice(0, 100), cut = w100.length ? w100[w100.length - 1].e : 0, names = nameEntities(text.substr(0, cut)), np = names.length > 3 ? Math.max(0, 25 - 8 * (names.length - 3)) : 25;
+    parts.push(mkPart('Names in the first 100 words', np, 25, names.length + ' distinct (max 3)' + (names.length ? ': ' + names.slice(0, 5).join(', ') : '')));
+    if (np < 25) issues.push({ cat: 'clarity', action: 'You introduce ' + names.length + ' names in the first 100 words (' + names.slice(0, 5).join(', ') + '). Keep three or fewer and push the rest later.', lost: 25 - np });
+    return { score: clamp(sumParts(parts)), parts: parts, issues: issues };
+  }
+
+  /* ---------- 5. TONE ---------- */
+  function scoreTone(raw, tone) {
+    var text = norm(raw), parts = [], issues = [], t = TONE_WORDS[tone] ? tone : 'noir';
+    if (isBlank(text)) return { score: 0, parts: [], issues: [], empty: true };
+    var low = text.toLowerCase().replace(/’/g, '\''), toks = wordList(low).map(function (x) { return x.w; }), P = set(POS), N = set(NEG), pos = 0, neg = 0, i;
+    for (i = 0; i < toks.length; i++) { if (P[toks[i]]) pos++; if (N[toks[i]]) neg++; }
+    var tw = found(low, TONE_WORDS[t]), tp = Math.min(60, 15 * tw.length);
+    parts.push(mkPart(TONE_LABEL[t] + ' words', tp, 60, tw.length + ' distinct' + (tw.length ? ': ' + tw.slice(0, 5).join(', ') : '')));
+    if (tp < 60) issues.push({ cat: 'tone', action: 'Use more ' + TONE_LABEL[t].toLowerCase() + ' vocabulary (for example ' + TONE_WORDS[t].slice(0, 5).join(', ') + '). You have ' + tw.length + ', aim for 4.', lost: 60 - tp });
+    var pol = (pos + neg) ? (pos - neg) / (pos + neg) : 0, target = TONE_TARGET[t], pp = (pos + neg) ? 40 * Math.max(0, 1 - Math.abs(pol - target) / 1.2) : 15;
+    parts.push(mkPart('Mood balance', pp, 40, pos + ' positive and ' + neg + ' negative words (target leans ' + (target < -0.3 ? 'dark' : (target > 0 ? 'light' : 'dark-ish')) + ')'));
+    if (pp < 34) issues.push({ cat: 'tone', action: pol > target ? 'The mood is lighter than "' + TONE_LABEL[t] + '". Swap a few warm words for darker, harder ones.' : 'The mood is heavier than "' + TONE_LABEL[t] + '". Let in a little relief, humor or momentum.', lost: 40 - pp });
+    return { score: clamp(sumParts(parts)), parts: parts, issues: issues };
+  }
+
+  /* ---------- 6. LENGTH AND STRUCTURE ---------- */
+  function scoreLength(raw, tagline) {
+    var text = norm(raw), parts = [], issues = [];
+    if (isBlank(text)) return { score: 0, parts: [], issues: [], empty: true };
+    var wc = wordList(text).length, wp = (wc >= 150 && wc <= 300) ? 40 : (wc < 150 ? 40 * (wc / 150) : Math.max(0, 40 - (wc - 300) * 0.2));
+    parts.push(mkPart('Word count', wp, 40, wc + ' words (best 150 to 300)'));
+    if (wp < 40) issues.push({ cat: 'length', action: wc < 150 ? 'Add about ' + (150 - wc) + ' more words: you are at ' + wc + ', and under 150 leaves the page feeling thin.' : 'Trim about ' + (wc - 300) + ' words: you are at ' + wc + ', and long blurbs lose readers before the call to action.', lost: 40 - wp });
+    var tg = String(tagline || '').replace(/\s/g, '') !== '';
+    parts.push(mkPart('Tagline present', tg ? 15 : 0, 15, tg ? 'yes' : 'no tagline'));
+    if (!tg) issues.push({ cat: 'length', action: 'Add a one-line tagline above the description.', lost: 15 });
+    var paras = text.split(/\n+/).map(function (p) { return p.replace(/^\s+|\s+$/g, ''); }).filter(function (p) { return p; }), allShort = paras.every(function (p) { return wordList(p).length <= 90; });
+    var pp = (paras.length >= 3 && paras.length <= 5 && allShort) ? 20 : ((paras.length === 2 || paras.length === 6 || ((paras.length >= 3 && paras.length <= 5) && !allShort)) ? 10 : 0);
+    parts.push(mkPart('Short paragraphs', pp, 20, paras.length + ' paragraph' + (paras.length === 1 ? '' : 's') + ' (best 3 to 5, each under 90 words)'));
+    if (pp < 20) issues.push({ cat: 'length', action: paras.length < 3 ? 'Break the blurb into 3 to 5 short paragraphs (you have ' + paras.length + ').' : (paras.length > 5 ? 'Merge paragraphs: you have ' + paras.length + ', aim for 3 to 5.' : 'Shorten the longest paragraph to under 90 words.'), lost: 20 - pp });
+    var tail = text.toLowerCase().substr(Math.max(0, text.length - 220)), cta = false, i;
+    for (i = 0; i < CTA.length; i++) { if (tail.indexOf(CTA[i]) >= 0) { cta = true; break; } }
+    parts.push(mkPart('Closing call to action', cta ? 15 : 0, 15, cta ? 'found' : 'none at the end'));
+    if (!cta) issues.push({ cat: 'length', action: 'End with a call to action such as "Start the series today."', lost: 15 });
+    var messy = /<\/?[a-z][^>]*>|\*\*|__|^#{1,6}\s|^\s*[-*]\s|\t|\|.+\|/m.test(text);
+    parts.push(mkPart('Simple formatting only', messy ? 0 : 10, 10, messy ? 'HTML, markdown or tabs found' : 'plain text'));
+    if (messy) issues.push({ cat: 'length', action: 'Remove HTML tags, markdown symbols, bullets and tabs: keep line breaks only.', lost: 10 });
+    return { score: clamp(sumParts(parts)), parts: parts, issues: issues };
+  }
+
+  /* ---------- overall, weak sentences, fold, fixes ---------- */
+  function overallScore(scores) {
+    var s = 0, i;
+    for (i = 0; i < CATS.length; i++) s += (scores[CATS[i]] || 0) * WEIGHTS[CATS[i]];
+    return clamp(s / 100);
+  }
+  function weakSentences(raw) {
+    var text = norm(raw), ss = splitSentences(text), out = [];
+    ss.forEach(function (s) {
+      var low = s.text.toLowerCase().replace(/’/g, '\''), wc = wordList(s.text).length;
+      var cue = found(low, THREAT).length > 0 || cue2(low) || nameEntities(s.text).length > 0 || found(low, ROLES).length > 0 || found(low, GENRE_TERMS).length > 0 || hasCta(low);
+      if (wc > 30) out.push({ start: s.start, end: s.end, kind: 'long', reason: 'Over 30 words (' + wc + '). Split it or cut a clause.' });
+      else if (!cue && wc > 3) out.push({ start: s.start, end: s.end, kind: 'nocue', reason: 'No story cue: no threat, stakes, genre term or named character. Make it earn its place.' });
+    });
+    return out;
+  }
+  function cue2(low) { return found(low, STAKES_CUES).length > 0 || OR_CUE.test(low) || DEADLINE_NUM.test(low); }
+  function hasCta(low) { var i; for (i = 0; i < CTA.length; i++) { if (low.indexOf(CTA[i]) >= 0) return true; } return false; }
+  function aboveFold(raw) {
+    var text = norm(raw), n = Math.min(250, text.length);
+    return { shown: text.substr(0, n), rest: text.substr(n), cut: n };
+  }
+  var EMPTY_MESSAGE = 'Paste your book description to see its score, or try the sample blurb.';
+  function analyze(input) {
+    input = input || {};
+    var text = norm(input.text), subtype = input.subtype || 'detective', tone = input.tone || 'noir', tagline = String(input.tagline || '');
+    if (isBlank(text)) return { empty: true, message: EMPTY_MESSAGE, overall: null, scores: null };
+    var r = {
+      hook: scoreHook(text), stakes: scoreStakes(text), genre: scoreGenre(text, subtype), clarity: scoreClarity(text), tone: scoreTone(text, tone), length: scoreLength(text, tagline)
+    };
+    var scores = {}, fixes = [], i;
+    CATS.forEach(function (c) { scores[c] = r[c].score; r[c].issues.forEach(function (is) { fixes.push({ cat: c, action: is.action, lost: is.lost, gain: Math.round(is.lost * WEIGHTS[c]) / 100 }); }); });
+    fixes.sort(function (a, b) { return (b.gain - a.gain) || (a.cat < b.cat ? -1 : 1); });
+    var overall = overallScore(scores);
+    return {
+      empty: false, overall: overall, scores: scores, details: r, weak: weakSentences(text), fold: aboveFold(text), fixes: fixes.slice(0, 5), allFixes: fixes,
+      words: wordList(text).length, chars: text.length, verdict: verdict(overall)
+    };
+  }
+  function verdict(o) { return o >= 80 ? 'Strong' : (o >= 60 ? 'Solid' : (o >= 40 ? 'Needs work' : 'Weak')); }
+  var HONEST = 'This is a heuristic scorer. It counts patterns in your text (hooks, stakes, genre words, sentence length, tone). It does not predict sales, rankings or reader reactions, and a high score is no promise of results.';
+
+  /* ---------- report ---------- */
+  function report(a, input, brand) {
+    brand = brand || {};
+    if (!a || a.empty) throw new Error('There is nothing to report: the blurb is empty.');
+    var L = [], i;
+    L.push('# Blurb scorecard' + (brand.title ? ': ' + brand.title : ''));
+    L.push('');
+    var meta = []; if (brand.author) meta.push('Author: ' + brand.author); if (brand.title) meta.push('Book: ' + brand.title);
+    if (meta.length) { L.push(meta.join(' | ')); L.push(''); }
+    L.push('- **Overall score:** ' + a.overall + ' / 100 (' + a.verdict + ')');
+    L.push('- **Genre subtype:** ' + SUB_LABEL[input.subtype || 'detective'] + ' | **Target tone:** ' + TONE_LABEL[input.tone || 'noir']);
+    L.push('- **Length:** ' + a.words + ' words, ' + a.chars + ' characters');
+    L.push('');
+    L.push('## Scores');
+    L.push('');
+    L.push('| Category | Score | Weight |');
+    L.push('|---|---|---|');
+    CATS.forEach(function (c) { L.push('| ' + CAT_LABEL[c] + ' | ' + a.scores[c] + ' | ' + WEIGHTS[c] + '% |'); });
+    L.push('');
+    L.push('## Top fixes');
+    L.push('');
+    if (!a.fixes.length) L.push('No fixes needed: every category is at its maximum.');
+    a.fixes.forEach(function (f, k) { L.push((k + 1) + '. **' + CAT_LABEL[f.cat] + ':** ' + f.action + ' _(expected gain: about +' + f.gain + ' overall)_'); });
+    L.push('');
+    L.push('## Weak sentences');
+    L.push('');
+    if (!a.weak.length) L.push('None flagged.');
+    var text = norm(input.text);
+    a.weak.forEach(function (w) { L.push('- "' + text.substring(w.start, w.end) + '" (' + w.reason + ')'); });
+    L.push('');
+    L.push('## Your blurb');
+    L.push('');
+    if (input.tagline) { L.push('**' + input.tagline + '**'); L.push(''); }
+    L.push(text);
+    L.push('');
+    L.push('---');
+    L.push('_' + HONEST + ' The above-the-fold cut (about 250 characters) is an approximation._');
+    return L.join('\n') + '\n';
+  }
+
+  /* ---------- sample ---------- */
+  var SAMPLE = {
+    tagline: 'The city keeps its worst secrets after dark.',
+    subtype: 'detective', tone: 'noir',
+    text: 'Detective Mara Quill has seventy-two hours to find a killer who leaves no body, only a trail of salt.\n\n' +
+      'When the Night Court\'s envoy turns up dead in a locked precinct cell, the hidden world of Marrowgate is ready to burn: vampire politics, witch covens and a fae embassy that never forgives a debt. Mara\'s only lead is a ledger that names the next victim, and the next name is her own.\n\n' +
+      'Before the full moon rises she must trade favors with the city\'s most dangerous factions, break a ward that has not cracked in a century and decide whom to trust, or lose everyone she has sworn to protect.\n\n' +
+      'A rain-slick case file, a curse that follows the bloodline, and a partner who may be playing both sides. Start the series today and step into the case that will not stay closed.'
+  };
+
+  return {
+    CATS: CATS, CAT_LABEL: CAT_LABEL, WEIGHTS: WEIGHTS, MAX_CHARS: MAX_CHARS, SUB_LABEL: SUB_LABEL, TONE_LABEL: TONE_LABEL, HONEST: HONEST, EMPTY_MESSAGE: EMPTY_MESSAGE, SAMPLE: SAMPLE,
+    banks: { CLICHES: CLICHES, ROLES: ROLES, THREAT: THREAT, GENRE_TERMS: GENRE_TERMS, SETTING_TERMS: SETTING_TERMS, OFF_GENRE: OFF_GENRE, POS: POS, NEG: NEG, TONE_WORDS: TONE_WORDS, SUB_CORE: SUB_CORE, SUB_EXCL: SUB_EXCL, CTA: CTA, STAKES_CUES: STAKES_CUES },
+    scoreHook: scoreHook, scoreStakes: scoreStakes, scoreGenre: scoreGenre, scoreClarity: scoreClarity, scoreTone: scoreTone, scoreLength: scoreLength,
+    overallScore: overallScore, analyze: analyze, report: report, weakSentences: weakSentences, splitSentences: splitSentences, wordList: wordList, flesch: flesch, nameEntities: nameEntities, aboveFold: aboveFold, verdict: verdict, isBlank: isBlank
+  };
+})();
+</script>
+
+<script id="bs-ui">
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function h(tag, attrs, kids) {
+    var e = document.createElement(tag), k;
+    if (attrs) { for (k in attrs) { if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue; if (k === 'text') e.textContent = attrs[k]; else if (k === 'class') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); } }
+    if (kids) { kids.forEach(function (c) { if (c !== null && c !== undefined && c !== false) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); }); }
+    return e;
+  }
+  var S = { input: { text: '', tagline: '', subtype: 'detective', tone: 'noir' }, brand: { title: '', author: '' }, versions: { A: null, B: null, C: null }, a: null, chart: null, shown: 0 };
+  var timer = null, statusTimer = null, saveTimer = null, tipEl = null, reduce = false, tickRaf = 0;
+  try { reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { reduce = false; }
+  var CAT_NAMES = ['Hook', 'Stakes', 'Genre', 'Clarity', 'Tone', 'Length'];
+
+  function say(msg) { var s = $('status'); s.textContent = msg; s.className = 'status on'; if (statusTimer) clearTimeout(statusTimer); statusTimer = setTimeout(function () { s.className = 'status'; }, 3600); }
+  function fail(msg) { $('errMsg').textContent = msg; $('err').hidden = false; $('status').textContent = 'Error: ' + msg; }
+  function clearFail() { $('err').hidden = true; }
+  function store(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage blocked: the tool keeps working */ } }
+  function load(k) { try { return window.localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function scheduleSave() { if (saveTimer) clearTimeout(saveTimer); saveTimer = setTimeout(function () { store('bsc.state', JSON.stringify({ input: S.input, brand: S.brand, versions: S.versions })); }, 300); }
+
+  /* ---------- inputs ---------- */
+  function readInputs() {
+    S.input.text = $('blurb').value; S.input.tagline = $('tagline').value; S.input.subtype = $('subtype').value; S.input.tone = $('tone').value;
+    S.brand.title = $('title').value; S.brand.author = $('author').value;
+  }
+  function counters() {
+    var t = $('blurb').value, w = BS.wordList(t).length;
+    $('cWords').textContent = w + (w === 1 ? ' word' : ' words');
+    var c = $('cChars'); c.textContent = t.length.toLocaleString('en-US') + ' / 4,000 characters'; c.className = t.length >= 3900 ? 'over' : '';
+  }
+  function schedule() { counters(); if (timer) clearTimeout(timer); timer = setTimeout(refresh, 250); }
+  function refresh() { readInputs(); S.a = BS.analyze(S.input); scheduleSave(); renderDash(); }
+
+  /* ---------- dashboard ---------- */
+  function tickTo(n) {
+    var el = $('bigNum'); if (!el) return;
+    if (tickRaf) { cancelAnimationFrame(tickRaf); tickRaf = 0; }
+    var from = S.shown, to = n, t0 = null;
+    if (reduce || from === to) { S.shown = to; el.firstChild.textContent = String(to); return; }
+    function step(ts) {
+      if (t0 === null) t0 = ts;
+      var p = Math.min(1, (ts - t0) / 700), v = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+      el.firstChild.textContent = String(v); S.shown = v;
+      if (p < 1) tickRaf = requestAnimationFrame(step); else { tickRaf = 0; S.shown = to; el.firstChild.textContent = String(to); }
+    }
+    tickRaf = requestAnimationFrame(step);
+  }
+  function versionAnalyses() {
+    var out = [];
+    ['A', 'B', 'C'].forEach(function (k) { if (S.versions[k]) out.push({ k: k, a: BS.analyze(S.versions[k]), v: S.versions[k] }); });
+    return out;
+  }
+  function renderDash() {
+    var d = $('dash'), a = S.a;
+    d.textContent = '';
+    renderVersions();
+    if (!a || a.empty) {
+      S.shown = 0;
+      var tryB = h('button', { type: 'button', 'class': 'btn red', id: 'emptySample', text: 'Try a sample blurb' }); tryB.addEventListener('click', loadSample);
+      d.appendChild(h('div', { 'class': 'empty' }, [h('h2', { text: 'No score yet' }), h('p', { text: BS.EMPTY_MESSAGE }), tryB, h('p', { style: 'margin:16px 0 0' }, [h('button', { type: 'button', 'class': 'btn sm', 'data-how-open': '', text: 'New here? How to use' })])]));
+      var ph = h('ul', { 'class': 'bars', 'aria-label': 'Scores' });
+      BS.CATS.forEach(function (c) { ph.appendChild(h('li', null, [h('div', { 'class': 'top' }, [h('span', { text: BS.CAT_LABEL[c] }), h('span', { text: '—' })]), h('div', { 'class': 'track' }, [h('div', { 'class': 'fill' })])])); });
+      d.appendChild(ph);
+      d.appendChild(honest());
+      destroyChart();
+      return;
+    }
+    /* overall */
+    var big = h('div', { 'class': 'big', id: 'bigNum', 'aria-label': 'Overall score ' + a.overall + ' out of 100' }, [document.createTextNode(String(S.shown)), h('small', { text: 'OUT OF 100' })]);
+    d.appendChild(h('div', { 'class': 'box' }, [h('h2', { text: 'Overall score' }), h('div', { 'class': 'overall' }, [big, h('div', null, [h('div', { 'class': 'verdict', text: a.verdict }), h('p', { 'class': 'note', style: 'margin:4px 0 0', text: a.words + ' words | ' + a.chars + ' characters | ' + BS.SUB_LABEL[S.input.subtype] + ' | ' + BS.TONE_LABEL[S.input.tone] })])])]));
+    tickTo(a.overall);
+    /* radar + bars */
+    var vs = versionAnalyses(), rb = h('div', { 'class': 'radarbox' }), cv = h('canvas', { id: 'radar', role: 'img', 'aria-label': 'Radar chart of the six scores' });
+    rb.appendChild(cv);
+    var note = h('p', { 'class': 'note', id: 'chartNote', hidden: 'hidden', text: 'The chart library did not load, so the scores are shown as bars below. Everything else works as normal.' });
+    var bars = h('ul', { 'class': 'bars', id: 'bars' });
+    BS.CATS.forEach(function (c) {
+      var sc = a.scores[c], det = a.details[c], fill = h('div', { 'class': 'fill' + (sc < 50 ? ' low' : '') });
+      fill.style.width = reduce ? sc + '%' : '0%';
+      var parts = h('ul', { 'class': 'parts' });
+      det.parts.forEach(function (p) { parts.appendChild(h('li', null, [h('span', { text: p.label + ': ' + p.note }), h('b', { text: (p.max ? p.pts + ' / ' + p.max : String(p.pts)) })])); });
+      bars.appendChild(h('li', { 'data-cat': c }, [
+        h('div', { 'class': 'top' }, [h('span', { text: BS.CAT_LABEL[c] + ' (' + BS.WEIGHTS[c] + '%)' }), h('span', { 'class': 'sc', text: String(sc) })]),
+        h('div', { 'class': 'track', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(sc), 'aria-label': BS.CAT_LABEL[c] }, [fill]),
+        h('details', null, [h('summary', { text: 'Why this score' }), parts])
+      ]));
+      if (!reduce) setTimeout(function () { fill.style.width = sc + '%'; }, 30);
+    });
+    d.appendChild(h('div', { 'class': 'box' }, [h('h2', { text: 'Category scores' }), rb, note, bars]));
+    drawRadar(a, vs);
+    /* above the fold */
+    var f = a.fold, fold = h('div', { 'class': 'fold', id: 'fold' }, [h('mark', { text: f.shown }), h('span', { 'class': 'rest', text: f.rest })]);
+    d.appendChild(h('div', { 'class': 'box' }, [h('h2', { text: 'Above the fold' }), fold, h('p', { 'class': 'note', text: 'The highlighted part (about the first 250 characters) is roughly what many readers see before "Read more" on a phone. This is an approximation: the real cut varies by device and by Amazon.' })]));
+    /* weak sentences */
+    var sent = h('div', { 'class': 'sent', id: 'sent' }), text = a.fold.shown + a.fold.rest, pos = 0;
+    a.weak.forEach(function (w, i) {
+      if (w.start > pos) sent.appendChild(document.createTextNode(text.substring(pos, w.start)));
+      var sp = h('span', { 'class': 'weak', tabindex: '0', 'data-reason': w.reason, 'aria-label': text.substring(w.start, w.end) + '. Weak sentence: ' + w.reason });
+      sp.textContent = text.substring(w.start, w.end); sent.appendChild(sp); pos = w.end;
+    });
+    if (pos < text.length) sent.appendChild(document.createTextNode(text.substring(pos)));
+    d.appendChild(h('div', { 'class': 'box' }, [h('h2', { text: 'Sentence check' }), sent, h('p', { 'class': 'legend', text: a.weak.length ? a.weak.length + ' sentence' + (a.weak.length > 1 ? 's' : '') + ' underlined: over 30 words, or no story cue. Hover or focus one to see why.' : 'No weak sentences flagged: nothing is over 30 words and every sentence carries a cue.' })]));
+    wireWeak(sent);
+    /* fixes */
+    var fx = h('ol', { 'class': 'fixes', id: 'fixes' });
+    if (!a.fixes.length) fx.appendChild(h('li', { text: 'Nothing to fix: every category is at its maximum.' }));
+    a.fixes.forEach(function (x) { fx.appendChild(h('li', null, [h('span', { 'class': 'tag', text: BS.CAT_LABEL[x.cat] }), x.action, h('span', { 'class': 'gain', text: 'about +' + x.gain + ' overall' })])); });
+    d.appendChild(h('div', { 'class': 'box' }, [h('h2', { text: 'Top 5 fixes' }), fx, h('p', { 'class': 'note', text: 'Ranked by how many overall points each fix could add if you applied it fully. Estimates, not guarantees.' })]));
+    /* compare */
+    if (vs.length) d.appendChild(compareBox(a, vs));
+    /* exports */
+    var cp = h('button', { type: 'button', 'class': 'btn red', id: 'btnCopy', text: 'Copy report' }); cp.addEventListener('click', doCopy);
+    var md = h('button', { type: 'button', 'class': 'btn', id: 'btnMD', text: 'Download report (.md)' }); md.addEventListener('click', doMD);
+    var png = h('button', { type: 'button', 'class': 'btn', id: 'btnPNG', text: 'Download score card (PNG)' }); png.addEventListener('click', doPNG);
+    d.appendChild(h('div', { 'class': 'box' }, [h('h2', { text: 'Export' }), h('div', { 'class': 'row' }, [cp, md, png]), h('p', { 'class': 'note', text: 'The report and the PNG carry your book title and author name (set them on the left).' })]));
+    d.appendChild(honest());
+  }
+  function honest() { return h('div', { 'class': 'honest' }, [h('b', { text: 'Honest note' }), BS.HONEST]); }
+  function compareBox(a, vs) {
+    var cols = [{ k: 'Now', a: a }].concat(vs.map(function (v) { return { k: 'Version ' + v.k, a: v.a }; }));
+    var t = h('table', { 'class': 'cmp' }), hr = h('tr', null, [h('th', { text: 'Category' })].concat(cols.map(function (c) { return h('th', { text: c.k }); })));
+    t.appendChild(h('thead', null, [hr]));
+    var tb = h('tbody');
+    BS.CATS.concat(['overall']).forEach(function (c) {
+      var vals = cols.map(function (x) { return c === 'overall' ? x.a.overall : x.a.scores[c]; }), best = Math.max.apply(null, vals);
+      tb.appendChild(h('tr', null, [h('td', { text: c === 'overall' ? 'Overall' : BS.CAT_LABEL[c] })].concat(vals.map(function (v) { return h('td', { 'class': (v === best && vals.length > 1) ? 'best' : '', text: String(v) }); }))));
+    });
+    t.appendChild(tb);
+    return h('div', { 'class': 'box' }, [h('h2', { text: 'Compare versions' }), h('div', { 'class': 'scrollx' }, [t]), h('p', { 'class': 'note', text: 'Highlighted cells hold the best score in each row.' })]);
+  }
+
+  /* ---------- radar (Chart.js, with a bar fallback) ---------- */
+  function destroyChart() { if (S.chart) { try { S.chart.destroy(); } catch (e) { /* already gone */ } S.chart = null; } }
+  function drawRadar(a, vs) {
+    var cv = $('radar'), note = $('chartNote');
+    destroyChart();
+    if (!cv) return;
+    if (typeof window.Chart !== 'function') { cv.parentNode.style.display = 'none'; if (note) note.hidden = false; return; }
+    var data = [{ label: 'Now', data: BS.CATS.map(function (c) { return a.scores[c]; }), borderColor: '#000000', backgroundColor: 'rgba(0,0,0,0.18)', borderWidth: 4, pointBackgroundColor: '#D62828', pointRadius: 5 }];
+    var cols = { A: '#D62828', B: '#1D3557', C: '#2B7A4B' };
+    vs.forEach(function (v) { data.push({ label: 'Version ' + v.k, data: BS.CATS.map(function (c) { return v.a.scores[c]; }), borderColor: cols[v.k], backgroundColor: 'rgba(0,0,0,0)', borderWidth: 3, borderDash: [6, 4], pointRadius: 3 }); });
+    try {
+      S.chart = new window.Chart(cv.getContext('2d'), {
+        type: 'radar', data: { labels: CAT_NAMES, datasets: data },
+        options: {
+          responsive: true, maintainAspectRatio: true, animation: reduce ? false : { duration: 500 },
+          scales: { r: { min: 0, max: 100, ticks: { stepSize: 25, color: '#000', backdropColor: 'rgba(255,255,255,0.85)', font: { family: 'Space Mono', size: 11 } }, grid: { color: '#000', lineWidth: 2 }, angleLines: { color: '#000', lineWidth: 2 }, pointLabels: { color: '#000', font: { family: 'Space Grotesk', weight: '700', size: 13 } } } },
+          plugins: { legend: { display: data.length > 1, labels: { color: '#000', font: { family: 'Space Mono', weight: '700' } } } }
+        }
+      });
+    } catch (e) { cv.parentNode.style.display = 'none'; if (note) note.hidden = false; S.chart = null; }
+  }
+
+  /* ---------- tooltip for weak sentences ---------- */
+  function wireWeak(sent) {
+    function show(el, x, y) { if (!tipEl) tipEl = $('tip'); tipEl.textContent = el.getAttribute('data-reason'); tipEl.style.display = 'block'; var w = tipEl.offsetWidth; tipEl.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x + 12)) + 'px'; tipEl.style.top = (y + 16) + 'px'; }
+    function hide() { if (!tipEl) tipEl = $('tip'); tipEl.style.display = 'none'; }
+    sent.addEventListener('mouseover', function (ev) { if (ev.target.classList && ev.target.classList.contains('weak')) show(ev.target, ev.clientX, ev.clientY); });
+    sent.addEventListener('mousemove', function (ev) { if (ev.target.classList && ev.target.classList.contains('weak')) show(ev.target, ev.clientX, ev.clientY); else hide(); });
+    sent.addEventListener('mouseleave', hide);
+    sent.addEventListener('focusin', function (ev) { if (ev.target.classList && ev.target.classList.contains('weak')) { var r = ev.target.getBoundingClientRect(); show(ev.target, r.left, r.bottom - 10); } });
+    sent.addEventListener('focusout', hide);
+  }
+
+  /* ---------- versions ---------- */
+  function renderVersions() {
+    var box = $('vers'); box.textContent = '';
+    ['A', 'B', 'C'].forEach(function (k) {
+      var v = S.versions[k], row = h('div', { 'class': 'row tight', style: 'margin:0 0 10px' });
+      var save = h('button', { type: 'button', 'class': 'btn sm', id: 'save' + k, text: 'Save as ' + k }); save.addEventListener('click', function () { saveVersion(k); });
+      row.appendChild(save);
+      if (v) {
+        var a = BS.analyze(v);
+        var ld = h('button', { type: 'button', 'class': 'btn sm', id: 'load' + k, text: 'Load ' + k }); ld.addEventListener('click', function () { loadVersion(k); });
+        var cl = h('button', { type: 'button', 'class': 'btn sm', id: 'clear' + k, text: 'Delete ' + k, 'aria-label': 'Delete version ' + k }); cl.addEventListener('click', function () { S.versions[k] = null; scheduleSave(); renderDash(); say('Version ' + k + ' deleted.'); });
+        row.appendChild(ld); row.appendChild(cl);
+        row.appendChild(h('span', { 'class': 'note', style: 'margin:0', text: a.empty ? 'empty' : 'score ' + a.overall + ', ' + a.words + ' words' }));
+      } else row.appendChild(h('span', { 'class': 'note', style: 'margin:0', text: 'empty slot' }));
+      box.appendChild(row);
+    });
+  }
+  function saveVersion(k) {
+    readInputs();
+    if (BS.isBlank(S.input.text)) { fail('Write or paste a blurb first, then save it as a version.'); return; }
+    S.versions[k] = { text: S.input.text, tagline: S.input.tagline, subtype: S.input.subtype, tone: S.input.tone };
+    clearFail(); scheduleSave(); renderDash(); say('Saved as version ' + k + '. It now appears in the comparison.');
+  }
+  function loadVersion(k) {
+    var v = S.versions[k]; if (!v) return;
+    $('blurb').value = v.text; $('tagline').value = v.tagline; $('subtype').value = v.subtype; $('tone').value = v.tone;
+    counters(); refresh(); say('Version ' + k + ' loaded into the editor.');
+  }
+
+  /* ---------- actions ---------- */
+  function loadSample() {
+    var sm = BS.SAMPLE;
+    $('blurb').value = sm.text; $('tagline').value = sm.tagline; $('subtype').value = sm.subtype; $('tone').value = sm.tone;
+    counters(); refresh(); say('Sample blurb loaded. Edit it and watch the score move.');
+  }
+  function doClear() { $('blurb').value = ''; $('tagline').value = ''; counters(); refresh(); say('Editor cleared.'); }
+
+  /* ---------- exports ---------- */
+  function slug(s) { return String(s || 'blurb').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'blurb'; }
+  function fileBase() { return slug(S.brand.title || 'blurb') + '-scorecard'; }
+  function download(name, mime, data) {
+    var blob = (typeof data === 'string') ? new Blob([data], { type: mime }) : data;
+    if (!blob || !blob.size) throw new Error('The export came out empty, so nothing was downloaded.');
+    if (window.BS_onDownload && window.BS_onDownload(name, blob, mime) === true) return;
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; a.style.display = 'none'; document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  }
+  function ready() { readInputs(); S.a = BS.analyze(S.input); if (S.a.empty) { fail('There is nothing to export yet. ' + BS.EMPTY_MESSAGE); return false; } return true; }
+  function reportText() { var t = BS.report(S.a, S.input, S.brand); if (!t || t.length < 200) throw new Error('The report came out empty.'); return t; }
+  function doMD() { if (!ready()) return; try { download(fileBase() + '.md', 'text/markdown', reportText()); clearFail(); say('Report saved.'); } catch (e) { fail('Report export failed: ' + e.message); } }
+  function showFallback(text, why) {
+    $('fbMsg').textContent = why + ' The text is selected below: press Ctrl+C (or Cmd+C) to copy it.';
+    $('fbText').value = text; $('fallback').hidden = false; $('fbText').focus(); $('fbText').select();
+  }
+  function copyText(text, label) {
+    function legacy(why) {
+      var ok = false, ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '-1000px';
+      document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) { clearFail(); say(label + ' copied to the clipboard.'); }
+      else { fail('Automatic copy was blocked. Use the box that just opened.'); showFallback(text, why); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { clearFail(); say(label + ' copied to the clipboard.'); }, function () { legacy('Clipboard permission was denied.'); });
+    else legacy('This browser has no clipboard API.');
+  }
+  function doCopy() { if (!ready()) return; try { copyText(reportText(), 'Report'); } catch (e) { fail('Copy failed: ' + e.message); } }
+
+  /* PNG score card, 1080 x 1350 */
+  function makePNG(cb) {
+    try {
+      var a = S.a; if (!a || a.empty) throw new Error('There is nothing to draw: the blurb is empty.');
+      var cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1350;
+      var c = cv.getContext('2d'); if (!c) throw new Error('Canvas is not available in this browser.');
+      var HEAD = '"Space Grotesk","Arial Black",Arial,sans-serif', MONO = '"Space Mono","Courier New",monospace';
+      c.fillStyle = '#FFD60A'; c.fillRect(0, 0, 1080, 1350);
+      c.strokeStyle = '#000'; c.lineWidth = 16; c.strokeRect(8, 8, 1064, 1334);
+      c.fillStyle = '#000'; c.fillRect(8, 8, 1064, 150);
+      c.fillStyle = '#FFD60A'; c.font = '700 64px ' + HEAD; c.textBaseline = 'alphabetic'; c.fillText('BLURB SCORECARD', 52, 98);
+      c.fillStyle = '#fff'; c.font = '400 26px ' + MONO; c.fillText((S.brand.title || 'Untitled book') + (S.brand.author ? '  |  ' + S.brand.author : ''), 52, 140);
+      /* overall */
+      c.fillStyle = '#000'; c.fillRect(62, 214, 330, 250); c.fillStyle = '#D62828'; c.fillRect(52, 204, 330, 250);
+      c.strokeStyle = '#000'; c.lineWidth = 8; c.strokeRect(52, 204, 330, 250);
+      c.fillStyle = '#fff'; c.font = '700 150px ' + HEAD; c.textAlign = 'center'; c.fillText(String(a.overall), 217, 372);
+      c.font = '700 26px ' + HEAD; c.fillText('OUT OF 100', 217, 424); c.textAlign = 'left';
+      c.fillStyle = '#000'; c.font = '700 48px ' + HEAD; c.fillText(a.verdict.toUpperCase(), 420, 262);
+      c.font = '400 24px ' + MONO; c.fillText(a.words + ' words | ' + a.chars + ' characters', 420, 304);
+      c.fillText(BS.SUB_LABEL[S.input.subtype], 420, 340); c.fillText('Tone: ' + BS.TONE_LABEL[S.input.tone], 420, 376);
+      /* radar polygon */
+      var cx = 860, cy = 330, R = 150, i, n = BS.CATS.length;
+      function pt(idx, f) { var ang = -Math.PI / 2 + idx * 2 * Math.PI / n; return [cx + Math.cos(ang) * R * f, cy + Math.sin(ang) * R * f]; }
+      c.strokeStyle = '#000'; c.lineWidth = 3;
+      [0.25, 0.5, 0.75, 1].forEach(function (f) { c.beginPath(); for (i = 0; i < n; i++) { var p = pt(i, f); if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); } c.closePath(); c.stroke(); });
+      for (i = 0; i < n; i++) { var p0 = pt(i, 1); c.beginPath(); c.moveTo(cx, cy); c.lineTo(p0[0], p0[1]); c.stroke(); }
+      c.beginPath(); for (i = 0; i < n; i++) { var pp = pt(i, a.scores[BS.CATS[i]] / 100); if (i) c.lineTo(pp[0], pp[1]); else c.moveTo(pp[0], pp[1]); }
+      c.closePath(); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fill(); c.lineWidth = 6; c.stroke();
+      c.fillStyle = '#000'; c.font = '700 20px ' + HEAD; c.textAlign = 'center';
+      for (i = 0; i < n; i++) { var pl = pt(i, 1.22); c.fillText(CAT_NAMES[i].toUpperCase(), pl[0], pl[1] + 6); }
+      c.textAlign = 'left';
+      /* bars */
+      var y = 560;
+      BS.CATS.forEach(function (cat) {
+        var sc = a.scores[cat];
+        c.fillStyle = '#000'; c.font = '700 30px ' + HEAD; c.fillText(BS.CAT_LABEL[cat].toUpperCase() + '  (' + BS.WEIGHTS[cat] + '%)', 52, y);
+        c.textAlign = 'right'; c.fillText(String(sc), 1028, y); c.textAlign = 'left';
+        c.fillStyle = '#fff'; c.fillRect(52, y + 14, 976, 34); c.fillStyle = sc < 50 ? '#D62828' : '#000'; c.fillRect(52, y + 14, 976 * sc / 100, 34);
+        c.strokeStyle = '#000'; c.lineWidth = 6; c.strokeRect(52, y + 14, 976, 34);
+        y += 84;
+      });
+      /* top fixes */
+      c.fillStyle = '#000'; c.fillRect(52, 1074, 976, 46); c.fillStyle = '#FFD60A'; c.font = '700 28px ' + HEAD; c.fillText('TOP FIXES', 70, 1108);
+      c.fillStyle = '#000'; c.font = '400 22px ' + MONO;
+      a.fixes.slice(0, 3).forEach(function (f, k) {
+        var line = (k + 1) + '. ' + f.action; if (line.length > 78) line = line.substr(0, 75) + '...';
+        c.fillText(line, 60, 1156 + k * 36);
+      });
+      c.fillStyle = '#000'; c.font = '400 19px ' + MONO;
+      c.fillText('Heuristic score, not a prediction of sales or rankings.', 52, 1308);
+      c.textAlign = 'right'; c.fillText('Made with Blurb Scorecard', 1028, 1308); c.textAlign = 'left';
+      cv.toBlob(function (b) { if (!b || !b.size) cb(new Error('PNG encoding returned an empty image.')); else cb(null, b); }, 'image/png');
+    } catch (e) { cb(e); }
+  }
+  function doPNG() {
+    if (!ready()) return;
+    makePNG(function (err, blob) {
+      if (err) { fail('Score card export failed: ' + err.message); return; }
+      try { download(fileBase() + '.png', 'image/png', blob); clearFail(); say('Score card saved (1080 x 1350).'); } catch (e) { fail('Score card export failed: ' + e.message); }
+    });
+  }
+
+  /* ---------- init ---------- */
+  function init() {
+    var saved = load('bsc.state');
+    if (saved) {
+      try {
+        var d = JSON.parse(saved);
+        if (d.input) { S.input.text = String(d.input.text || ''); S.input.tagline = String(d.input.tagline || ''); if (d.input.subtype) S.input.subtype = d.input.subtype; if (d.input.tone) S.input.tone = d.input.tone; }
+        if (d.brand) { S.brand.title = String(d.brand.title || ''); S.brand.author = String(d.brand.author || ''); }
+        if (d.versions) { ['A', 'B', 'C'].forEach(function (k) { var v = d.versions[k]; if (v && typeof v.text === 'string') S.versions[k] = { text: v.text, tagline: String(v.tagline || ''), subtype: v.subtype || 'detective', tone: v.tone || 'noir' }; }); }
+      } catch (e) { /* ignore a damaged draft */ }
+    }
+    $('blurb').value = S.input.text; $('tagline').value = S.input.tagline; $('subtype').value = S.input.subtype; $('tone').value = S.input.tone; $('title').value = S.brand.title; $('author').value = S.brand.author;
+    ['blurb', 'tagline', 'title', 'author'].forEach(function (id) { $(id).addEventListener('input', schedule); });
+    ['subtype', 'tone'].forEach(function (id) { $(id).addEventListener('change', function () { counters(); refresh(); }); });
+    $('btnSample').addEventListener('click', loadSample); $('btnClear').addEventListener('click', doClear);
+    $('errX').addEventListener('click', clearFail);
+    $('fbClose').addEventListener('click', function () { $('fallback').hidden = true; });
+    $('fbSel').addEventListener('click', function () { $('fbText').focus(); $('fbText').select(); });
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') $('fallback').hidden = true; });
+    counters();
+    var hs = (location.hash || '').replace(/^#/, '');
+    if (hs.indexOf('sample=1') >= 0) loadSample(); else refresh();
+  }
+  init();
+  window.BS_UI = { S: S, refresh: refresh, loadSample: loadSample, makePNG: makePNG, chartCount: function () { return window.Chart && window.Chart.instances ? Object.keys(window.Chart.instances).length : -1; } };
+})();
+</script>
+<div class="how-backdrop" id="howModal" hidden>
+  <div class="how-box" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+    <div class="how-head"><div><h2 id="howTitle">How to use Blurb Scorecard</h2><p>Paste your book description and see how it scores before readers see it. It is a guide, not a verdict.</p></div><button type="button" class="btn" id="howClose" aria-label="Close how to use">Close</button></div>
+    <div class="how-body">
+      <h3>Step by step</h3>
+      <ol class="how-steps"><li><b>Paste your blurb on the left.</b>Put the book description in the big box. You can add a one-line <b>tagline</b> above it. No blurb yet? Press <b>Try a sample blurb</b> to see how it works.</li><li><b>Choose your genre subtype and tone.</b>Pick the kind of urban fantasy you write (detective, noir, fae, witches, vampires, monster hunters) and the mood you want (dark noir, witty, thrilling, atmospheric). The score checks your words against these choices.</li><li><b>Read the score on the right.</b>The big number is the overall score. Below it are six category scores: <b>Hook, Stakes, Genre signals, Clarity, Tone match, Length and structure</b>. The radar chart shows them as one shape: the bigger and rounder, the better balanced.</li><li><b>Open "Why this score".</b>Under each bar, this button lists exactly what earned or lost points, so you know what to change instead of guessing.</li><li><b>Check the preview and the underlined sentences.</b>The highlighted part is roughly what readers see before "Read more" on a phone. Underlined sentences are too long or carry no story cue: hover (or Tab to) one to read why.</li><li><b>Fix the top 5.</b>The list ranks concrete actions by how many points they could add. Change one thing in the box on the left and the score updates by itself a moment later.</li><li><b>Compare versions.</b>Press <b>Save as A</b> (then B, C) before big changes. The right side then shows all versions side by side, in a table and on the radar chart. <b>Load A</b> brings a version back.</li><li><b>Add your branding and export.</b>Fill in <b>Book title</b> and <b>Author</b>, then use <b>Copy report</b>, <b>Download report (.md)</b> or <b>Download score card (PNG)</b> for a shareable picture.</li></ol>
+      <h3>Good to know</h3>
+      <ul><li>The scorer is a <b>heuristic</b>: it counts patterns in your text. It cannot predict sales or rankings, and a high score is not a promise of results.</li><li>Change one thing at a time. That way you can see which edit moved the score.</li><li>The open "How scoring works" panel on the left shows every formula in plain words.</li><li>Your draft, saved versions and names stay in this browser, so you can come back later.</li></ul>
+      <h3>If something looks wrong</h3>
+      <ul><li><b>No chart?</b> If your connection blocks the chart library, the scores still appear as bars. Everything else works.</li><li><b>A message says there is nothing to export?</b> The exports need some text in the blurb box first.</li><li><b>The score card PNG fonts look different?</b> It is drawn with fallback fonts when the web fonts are not available. The numbers and layout are the same.</li></ul>
+    </div>
+    <div class="how-foot"><button type="button" class="btn" id="howDone">Got it</button></div>
+  </div>
+</div>
+
+<script id="howto-js">
+(function () {
+  'use strict';
+  var modal = document.getElementById('howModal'), box = modal.querySelector('.how-box'), closeB = document.getElementById('howClose'), last = null;
+  function focusables() { return box.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'); }
+  function open() {
+    last = document.activeElement; modal.hidden = false; document.body.classList.add('how-open');
+    var b = modal.querySelector('.how-body'); if (b) b.scrollTop = 0;
+    closeB.focus();
+  }
+  function close() {
+    modal.hidden = true; document.body.classList.remove('how-open');
+    if (last && last.focus) { try { last.focus(); } catch (e) { /* element gone */ } }
+  }
+  document.addEventListener('click', function (ev) {
+    var n = ev.target;
+    while (n && n !== document) { if (n.getAttribute && n.getAttribute('data-how-open') !== null) { ev.preventDefault(); open(); return; } n = n.parentNode; }
+  });
+  closeB.addEventListener('click', close);
+  var done = document.getElementById('howDone'); if (done) done.addEventListener('click', close);
+  modal.addEventListener('click', function (ev) { if (ev.target === modal) close(); });
+  document.addEventListener('keydown', function (ev) {
+    if (modal.hidden) return;
+    if (ev.key === 'Escape') { ev.stopPropagation(); close(); return; }
+    if (ev.key === 'Tab') {
+      var f = focusables(); if (!f.length) return;
+      var first = f[0], lastEl = f[f.length - 1];
+      if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); lastEl.focus(); }
+      else if (!ev.shiftKey && document.activeElement === lastEl) { ev.preventDefault(); first.focus(); }
+    }
+  }, true);
+  window.HOWTO = { open: open, close: close };
+})();
+</script>
+</body>
+</html>
