@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon City Mapper</title>
+<meta name="description" content="Generate a fictional city with districts, rival factions, hidden doorways and street rumors, drawn as a map you can export for your book, your newsletter or your merch.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0b0620; --ink2:#1a0b3a; --pink:#ff2d78; --cyan:#00ffcc; --yellow:#ffe14d; --txt:#e8fbff; --mut:#9fb3d9;
+  --panel:rgba(14,7,38,.92); --line:rgba(0,255,204,.28);
+  --title:'Orbitron','Trebuchet MS','Segoe UI',Arial,sans-serif;
+  --ui:'Share Tech Mono','SFMono-Regular',Menlo,Consolas,'Courier New',monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(ellipse at 50% 115%,#47106e 0%,rgba(71,16,110,0) 58%),linear-gradient(180deg,var(--ink) 0%,var(--ink2) 100%);color:var(--txt);font-family:var(--ui);font-size:15px;line-height:1.45;overflow:hidden}
+.gridfloor{position:fixed;left:-50%;right:-50%;bottom:-8%;height:56%;pointer-events:none;opacity:.42;
+  background-image:linear-gradient(rgba(255,45,120,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,204,.4) 1px,transparent 1px);
+  background-size:64px 64px;transform:perspective(430px) rotateX(63deg);transform-origin:50% 100%;
+  -webkit-mask-image:linear-gradient(to top,#000,transparent 92%);mask-image:linear-gradient(to top,#000,transparent 92%)}
+@media (prefers-reduced-motion:no-preference){.gridfloor{animation:gridmove 7s linear infinite}}
+@keyframes gridmove{to{background-position:0 64px,0 0}}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* top bar */
+.bar{position:fixed;z-index:30;top:0;left:0;right:0;height:60px;display:flex;align-items:center;gap:10px;padding:0 12px;background:linear-gradient(180deg,rgba(11,6,32,.97),rgba(11,6,32,.82));border-bottom:1px solid var(--line)}
+.brand{flex:1;min-width:0}
+.brand h1{margin:0;font:900 clamp(15px,2.6vw,22px)/1.1 var(--title);letter-spacing:.12em;text-transform:uppercase;color:var(--pink);text-shadow:0 0 12px rgba(255,45,120,.7),0 0 28px rgba(255,45,120,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand p{margin:2px 0 0;font-size:12.5px;color:var(--cyan);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbtn{background:rgba(0,255,204,.06);border:1px solid var(--line);color:var(--cyan);border-radius:8px;padding:8px 12px;cursor:pointer;min-height:40px;letter-spacing:.04em}
+.tbtn:hover{box-shadow:0 0 14px rgba(0,255,204,.35);border-color:var(--cyan)}
+.tbtn[aria-expanded="true"]{background:rgba(0,255,204,.16);box-shadow:0 0 14px rgba(0,255,204,.3)}
+.zoomctl{display:none;gap:6px}
+body.has-city .zoomctl{display:flex}
+.zoomctl .tbtn{padding:8px 11px;min-width:40px}
+
+/* panels */
+.dock,.drawer{position:fixed;z-index:25;top:60px;bottom:0;background:var(--panel);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto;transition:transform .28s ease;scrollbar-width:thin;scrollbar-color:var(--pink) transparent}
+.dock{left:0;width:min(340px,92vw);transform:translateX(-102%);border-right:1px solid var(--line);padding:6px 14px 28px}
+.drawer{right:0;width:min(380px,94vw);transform:translateX(102%);border-left:1px solid var(--line);padding:10px 14px 28px}
+body.dock-open .dock,body.drawer-open .drawer{transform:none}
+@media (prefers-reduced-motion:reduce){.dock,.drawer{transition:none}}
+.dock fieldset{border:0;border-top:1px dashed var(--line);margin:12px 0 0;padding:10px 0 0;min-width:0}
+.dock legend{font:700 12px var(--title);letter-spacing:.16em;text-transform:uppercase;color:var(--yellow);padding:0 8px 0 0}
+.dock label{display:block;font-size:13px;color:var(--mut);margin:9px 0 3px}
+.dock input[type=text],.dock select{width:100%;background:rgba(5,2,18,.8);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--txt);min-height:40px}
+.dock input[type=text]:focus,.dock select:focus{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,255,204,.35)}
+.dock select option{background:#150a33}
+.row{display:flex;gap:8px;align-items:stretch}
+.row>input{flex:1;min-width:0}
+.rng{display:flex;align-items:center;gap:10px}
+.rng input{flex:1;accent-color:var(--pink);min-height:28px}
+.rng output{min-width:26px;text-align:right;color:var(--cyan);font-weight:700}
+.chk{display:flex;align-items:center;gap:10px;margin:8px 0!important;color:var(--txt)!important;cursor:pointer;min-height:30px}
+.chk input{width:20px;height:20px;accent-color:var(--cyan);flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:rgba(0,255,204,.07);border:1px solid var(--cyan);color:var(--cyan);border-radius:9px;padding:9px 12px;cursor:pointer;min-height:42px;letter-spacing:.04em;text-align:center}
+.btn:hover:not(:disabled){background:rgba(0,255,204,.18);box-shadow:0 0 16px rgba(0,255,204,.4)}
+.btn:disabled{opacity:.38;cursor:not-allowed;border-color:var(--line)}
+.btn.sm{padding:6px 10px;min-height:40px;font-size:13px;white-space:nowrap}
+.btn.primary{width:100%;margin-top:14px;font:900 15px var(--title);letter-spacing:.14em;text-transform:uppercase;color:#fff;border-color:var(--pink);background:linear-gradient(135deg,#ff2d78,#b0124f);box-shadow:0 0 18px rgba(255,45,120,.55),inset 0 0 12px rgba(255,255,255,.12);min-height:50px}
+.btn.primary:hover:not(:disabled){box-shadow:0 0 30px rgba(255,45,120,.9),inset 0 0 14px rgba(255,255,255,.2);background:linear-gradient(135deg,#ff4c90,#c4165a)}
+@media (prefers-reduced-motion:no-preference){.btn.primary.pulse{animation:pulse 1.8s ease-in-out infinite}}
+@keyframes pulse{50%{box-shadow:0 0 34px rgba(255,45,120,.95),inset 0 0 14px rgba(255,255,255,.2)}}
+.hint{font-size:12px;color:var(--mut);margin:6px 0 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.radios{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
+.radios label{display:flex;align-items:center;gap:7px;margin:0;color:var(--txt);cursor:pointer;min-height:30px}
+.radios input{accent-color:var(--cyan);width:18px;height:18px}
+
+/* stage */
+.stage{position:fixed;z-index:1;top:60px;left:0;right:0;bottom:0}
+@media (min-width:1100px){
+  body.dock-open .stage{left:340px}
+  body.drawer-open .stage{right:380px}
+}
+.welcome{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+.welcome .card{max-width:620px;padding:26px 24px;border:1px solid var(--line);border-radius:16px;background:rgba(14,7,38,.74);box-shadow:0 0 40px rgba(255,45,120,.18),inset 0 0 40px rgba(0,255,204,.05)}
+.welcome h2{margin:0 0 6px;font:900 clamp(22px,5vw,38px)/1.1 var(--title);letter-spacing:.1em;text-transform:uppercase;color:var(--pink);text-shadow:0 0 18px rgba(255,45,120,.8)}
+.welcome .tg{margin:0 0 14px;color:var(--cyan);font-size:17px}
+.welcome .ds{margin:0 0 16px;color:var(--txt)}
+.welcome .em{margin:0 0 18px;color:var(--yellow);font-size:16px}
+.welcome .btn.primary{width:auto;padding:12px 26px;margin:0}
+body.has-city .welcome{display:none}
+.mapscroll{position:absolute;inset:0;overflow:auto;display:none;cursor:grab;scrollbar-width:thin;scrollbar-color:var(--pink) transparent}
+.mapscroll.drag{cursor:grabbing}
+body.has-city .mapscroll{display:flex}
+.mapscroll svg{display:block;flex:none;margin:auto;height:auto;box-shadow:0 0 50px rgba(255,45,120,.22),0 0 0 1px rgba(0,255,204,.25)}
+.dist{cursor:pointer}
+.ent,.ent-in{cursor:pointer}
+.ncm-live .dist.hl .dshape,.ncm-live .dist.sel .dshape{stroke-width:4.2;fill-opacity:.62}
+.ncm-live .dshape:focus,.ncm-live .ent:focus{outline:none}
+.ncm-live .dist:focus-within .dshape{stroke:#ffe14d;stroke-width:4.4}
+.ncm-live .ent:focus .ent-in path,.ncm-live .ent:hover .ent-in path{stroke:#ffffff;stroke-width:3}
+.ent-in{transform-box:fill-box;transform-origin:center}
+.ncm-live.anim .dshape{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.5s cubic-bezier(.3,.7,.2,1) calc(var(--i)*90ms) forwards}
+.ncm-live.anim .dist{opacity:0;animation:fadein .7s ease calc(var(--i)*90ms + 250ms) forwards}
+.ncm-live.anim .road{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.3s ease calc(1.0s + var(--i)*70ms) forwards}
+.ncm-live.anim .late{opacity:0;animation:fadein .8s ease 2.2s forwards}
+.ncm-live.anim .ent-in{opacity:0;animation:pop .6s cubic-bezier(.2,1.6,.4,1) calc(2.4s + var(--i)*80ms) forwards}
+.ncm-live.anim .scan{animation:scan 2.4s ease-out .1s 1 forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fadein{to{opacity:1}}
+@keyframes pop{0%{opacity:0;transform:scale(.1)}100%{opacity:1;transform:scale(1)}}
+@keyframes scan{0%{transform:translateX(-1700px);opacity:.9}100%{transform:translateX(1700px);opacity:0}}
+.scan{opacity:0}
+@media (prefers-reduced-motion:reduce){
+  .ncm-live.anim .dshape,.ncm-live.anim .road{animation:none;stroke-dasharray:none;stroke-dashoffset:0}
+  .ncm-live.anim .dist,.ncm-live.anim .late,.ncm-live.anim .ent-in{animation:none;opacity:1}
+  .ncm-live.anim .scan{animation:none;opacity:0}
+}
+.tip{position:fixed;z-index:60;pointer-events:none;max-width:260px;padding:8px 10px;border-radius:8px;background:rgba(5,2,18,.96);border:1px solid var(--cyan);color:var(--txt);font-size:13px;box-shadow:0 0 18px rgba(0,255,204,.4);display:none}
+.tip b{display:block;color:var(--yellow);font-family:var(--title);font-size:12.5px;letter-spacing:.06em;margin-bottom:2px}
+
+/* messages */
+.status{position:fixed;z-index:40;left:50%;bottom:14px;transform:translateX(-50%);max-width:min(640px,92vw);padding:8px 14px;border-radius:999px;background:rgba(5,2,18,.92);border:1px solid var(--line);color:var(--cyan);font-size:13px;text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
+.status.on{opacity:1}
+.err{position:fixed;z-index:70;top:68px;left:50%;transform:translateX(-50%);width:min(620px,94vw);display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:#c1121f;border:2px solid #ff6b6b;color:#fff;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+.err[hidden]{display:none}
+.err span{flex:1}
+.err button{background:rgba(0,0,0,.25);border:1px solid #fff;color:#fff;border-radius:6px;cursor:pointer;padding:4px 10px;min-height:32px}
+.modal{position:fixed;z-index:80;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,2,18,.72)}
+.modal[hidden]{display:none}
+.modal .box{width:min(640px,100%);background:#150a33;border:1px solid var(--cyan);border-radius:12px;padding:16px;box-shadow:0 0 40px rgba(0,255,204,.3)}
+.modal textarea{width:100%;height:240px;background:#07031a;border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--txt);resize:vertical}
+.modal h3{margin:0 0 6px;font:700 15px var(--title);color:var(--yellow);letter-spacing:.08em}
+.modal p{margin:0 0 10px;color:var(--mut);font-size:13px}
+
+/* dossier */
+.drawer h2{margin:4px 0 2px;font:900 18px var(--title);letter-spacing:.08em;color:var(--pink);text-transform:uppercase}
+.drawer h3{margin:18px 0 6px;font:700 12px var(--title);letter-spacing:.18em;color:var(--yellow);text-transform:uppercase}
+.drawer .meta{color:var(--mut);font-size:13px;margin:0 0 6px}
+.dnote{color:var(--mut);padding:8px 2px}
+.dent{border:1px solid rgba(0,255,204,.22);border-radius:9px;margin:6px 0;background:rgba(255,255,255,.03)}
+.dent[open]{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,255,204,.2)}
+.dent summary{padding:9px 10px;cursor:pointer;display:flex;gap:8px;align-items:center;list-style:none;min-height:40px}
+.dent summary::-webkit-details-marker{display:none}
+.dent summary::before{content:"\25B8";color:var(--pink)}
+.dent[open] summary::before{content:"\25BE"}
+.dent .n{color:var(--yellow);font-weight:700;min-width:26px}
+.dent .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.dent .bd{padding:0 12px 12px 12px;font-size:13.5px}
+.dent .bd p{margin:5px 0}
+.dent .bd b{color:var(--cyan);font-weight:400}
+.pips{display:inline-flex;gap:3px;vertical-align:middle}
+.pips i{width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,.14);display:block}
+.pips i.on{background:var(--pink);box-shadow:0 0 6px var(--pink)}
+.sw{display:inline-block;width:13px;height:13px;border-radius:3px;border:1px solid #fff;vertical-align:-2px;margin-right:6px}
+.flash{animation:flash 1.1s ease}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(255,225,77,.9)}100%{box-shadow:0 0 0 14px rgba(255,225,77,0)}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none}}
+.dfoot{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+@media (max-width:520px){
+  .bar{gap:6px;padding:0 8px}
+  .tbtn{padding:8px 9px;font-size:13px}
+  .brand p{display:none}
+  .brand h1{font-size:13px;letter-spacing:.05em}
+  .lbl,#zFit{display:none}
+}
+
+/* how to use */
+.how-backdrop{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(0,0,0,.62)}
+.how-backdrop[hidden]{display:none}
+.how-box{width:min(760px,100%);max-height:calc(100vh - 28px);display:flex;flex-direction:column;overflow:hidden}
+.how-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:16px 18px 12px}
+.how-head h2{margin:0;font-size:22px;line-height:1.2}
+.how-head p{margin:4px 0 0;font-size:14px}
+.how-body{overflow-y:auto;padding:4px 18px 18px;-webkit-overflow-scrolling:touch}
+.how-body h3{margin:20px 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.08em}
+.how-steps{list-style:none;margin:0;padding:0;counter-reset:hs}
+.how-steps li{counter-increment:hs;position:relative;margin:0 0 10px;padding:10px 12px 10px 52px;min-height:48px}
+.how-steps li::before{content:counter(hs);position:absolute;left:10px;top:10px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.how-steps li>b:first-child{display:block;margin-bottom:2px}
+.how-body ul{margin:0;padding-left:20px}
+.how-body li{margin:0 0 6px}
+.how-foot{padding:12px 18px 16px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+body.how-open{overflow:hidden}
+@media print{.how-backdrop{display:none!important}}
+@media (max-width:520px){.how-head h2{font-size:19px}.how-steps li{padding-left:48px}}
+
+.how-box{background:#120a30;border:1px solid rgba(0,255,204,.5);border-radius:14px;box-shadow:0 0 40px rgba(255,45,120,.35);color:#e8fbff;font-family:var(--ui)}
+.how-head{border-bottom:1px dashed rgba(0,255,204,.3)}
+.how-head h2{font-family:var(--title);color:#ff2d78;text-transform:uppercase;letter-spacing:.08em;text-shadow:0 0 12px rgba(255,45,120,.6)}
+.how-head p{color:#00ffcc}
+.how-body h3{font-family:var(--title);color:#ffe14d}
+.how-steps li{border:1px solid rgba(0,255,204,.28);border-radius:10px;background:rgba(255,255,255,.04)}
+.how-steps li::before{background:#ff2d78;color:#fff;border-radius:50%;font-family:var(--title);box-shadow:0 0 12px rgba(255,45,120,.6)}
+.how-steps li>b:first-child{color:#00ffcc;font-weight:400}.how-steps b{color:#ffe14d;font-weight:400}
+.how-foot .btn{margin:0}
+</style>
+</head>
+<body>
+<div class="gridfloor" aria-hidden="true"></div>
+
+<header class="bar">
+  <button type="button" class="tbtn" id="btnDock" aria-expanded="true" aria-controls="dock">&#9776;<span class="lbl"> Controls</span></button>
+  <div class="brand">
+    <h1>Neon City Mapper</h1>
+    <p>Every city has a second map. Draw yours.</p>
+  </div>
+  <div class="zoomctl" role="group" aria-label="Map zoom">
+    <button type="button" class="tbtn" id="zOut" aria-label="Zoom out">&minus;</button>
+    <button type="button" class="tbtn" id="zIn" aria-label="Zoom in">+</button>
+    <button type="button" class="tbtn" id="zFit" aria-label="Fit map to screen">Fit</button>
+  </div>
+  <button type="button" class="tbtn" id="btnHow" data-how-open aria-haspopup="dialog" aria-label="How to use">?<span class="lbl"> How to use</span></button>
+  <button type="button" class="tbtn" id="btnDoss" aria-expanded="false" aria-controls="drawer">Dossier</button>
+</header>
+
+<aside class="dock" id="dock" aria-label="City controls">
+  <form id="form" autocomplete="off">
+    <fieldset>
+      <legend>City</legend>
+      <label for="cityName">City name</label>
+      <div class="row">
+        <input type="text" id="cityName" maxlength="40" placeholder="Leave empty to auto-name">
+        <button type="button" class="btn sm" id="btnName">Name it for me</button>
+      </div>
+      <label for="type">City type</label>
+      <select id="type">
+        <option value="port">Rain-soaked port</option>
+        <option value="desert">Desert sprawl</option>
+        <option value="river">Old-world river city</option>
+        <option value="mountain">Mountain frontier</option>
+        <option value="island">Island metropolis</option>
+        <option value="rust">Industrial rust belt</option>
+        <option value="boardwalk">Coastal boardwalk town</option>
+      </select>
+      <label for="size">Size</label>
+      <select id="size">
+        <option value="small">Small (6 districts)</option>
+        <option value="medium" selected>Medium (10 districts)</option>
+        <option value="large">Large (14 districts)</option>
+      </select>
+      <label for="tone">Tone</label>
+      <select id="tone">
+        <option value="noir">Noir</option>
+        <option value="gritty">Gritty</option>
+        <option value="glamorous">Glamorous</option>
+        <option value="eerie">Eerie</option>
+      </select>
+    </fieldset>
+    <fieldset>
+      <legend>Layout</legend>
+      <label for="factions">Factions</label>
+      <div class="rng"><input type="range" id="factions" min="2" max="6" value="4"><output id="factionsOut" for="factions">4</output></div>
+      <label for="entrances">Hidden entrances</label>
+      <div class="rng"><input type="range" id="entrances" min="3" max="12" value="7"><output id="entrancesOut" for="entrances">7</output></div>
+      <label class="chk"><input type="checkbox" id="optWater" checked> River / coast</label>
+      <label class="chk"><input type="checkbox" id="optRail" checked> Rail lines</label>
+      <label class="chk"><input type="checkbox" id="optLabels" checked> Labels</label>
+      <label class="chk"><input type="checkbox" id="optGrid"> Grid overlay</label>
+      <label for="seed">Seed</label>
+      <div class="row">
+        <input type="text" id="seed" maxlength="32" spellcheck="false">
+        <button type="button" class="btn sm" id="btnReroll">Reroll</button>
+      </div>
+      <p class="hint">Same seed + same settings = the same city. Type one to reproduce a map.</p>
+      <button type="button" class="btn primary pulse" id="btnBuild">Build City</button>
+    </fieldset>
+    <fieldset>
+      <legend>Map style</legend>
+      <label for="style" class="sr">Map style</label>
+      <select id="style">
+        <option value="neon">Neon Noir</option>
+        <option value="parchment">Ink on Parchment</option>
+        <option value="blueprint">Blueprint</option>
+        <option value="print">Print B/W</option>
+      </select>
+      <p class="hint">Print B/W uses only black, white and greys, ready for a paperback interior.</p>
+    </fieldset>
+    <fieldset>
+      <legend>Author branding</legend>
+      <label for="author">Author / pen name</label>
+      <input type="text" id="author" maxlength="40" placeholder="Printed in every legend">
+      <label for="series">Series name</label>
+      <input type="text" id="series" maxlength="40" placeholder="e.g. The Lantern Wars">
+    </fieldset>
+    <fieldset>
+      <legend>Export</legend>
+      <div class="radios" role="radiogroup" aria-label="PNG background">
+        <label><input type="radio" name="bg" value="paper" checked> Paper background</label>
+        <label><input type="radio" name="bg" value="transparent"> Transparent</label>
+      </div>
+      <div class="grid2">
+        <button type="button" class="btn" id="expPNG" disabled>PNG 3000px</button>
+        <button type="button" class="btn" id="expSVG" disabled>SVG</button>
+        <button type="button" class="btn" id="expMD" disabled>Dossier .md</button>
+        <button type="button" class="btn" id="expCopy" disabled>Copy story bible</button>
+      </div>
+    </fieldset>
+  </form>
+</aside>
+
+<main class="stage" id="stage">
+  <section class="welcome" id="welcome" aria-label="Welcome">
+    <div class="card">
+      <h2>Neon City Mapper</h2>
+      <p class="tg">Every city has a second map. Draw yours.</p>
+      <p class="ds">Generate a fictional city with districts, rival factions, hidden doorways and street rumors, drawn as a map you can export for your book, your newsletter or your merch.</p>
+      <p class="em">Pick a city type and press Build City. Your hidden map appears in seconds.</p>
+      <button type="button" class="btn primary" id="btnBuild2">Build City</button>
+      <p style="margin:16px 0 0"><button type="button" class="tbtn" data-how-open>New here? How to use this tool</button></p>
+    </div>
+  </section>
+  <div class="mapscroll" id="mapscroll" aria-label="City map"></div>
+</main>
+
+<aside class="drawer" id="drawer" aria-label="City dossier">
+  <div id="dossier"><p class="dnote">Build a city to open its dossier.</p></div>
+</aside>
+
+<div class="tip" id="tip" role="tooltip"></div>
+<div class="status" id="status" role="status" aria-live="polite"></div>
+<div class="err" id="err" role="alert" hidden><span id="errMsg"></span><button type="button" id="errX">Dismiss</button></div>
+<div class="modal" id="fallback" hidden>
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+    <h3 id="fbTitle">Copy manually</h3>
+    <p id="fbMsg">Your browser blocked automatic copying. The text is selected below: press Ctrl+C (or Cmd+C).</p>
+    <label for="fbText" class="sr">Text to copy</label>
+    <textarea id="fbText" readonly></textarea>
+    <div class="dfoot"><button type="button" class="btn" id="fbSel">Select all</button><button type="button" class="btn" id="fbClose">Close</button></div>
+  </div>
+</div>
+
+<script id="ncm-engine">
+/* ===================== NEON CITY MAPPER : ENGINE (no DOM) ===================== */
+var NCM = (function () {
+  'use strict';
+  var W = 1600, H = 1000, LEG = 120, VH = H + LEG;
+  var SIZES = { small: 6, medium: 10, large: 14 };
+  var TONES = ['noir', 'gritty', 'glamorous', 'eerie'];
+
+  var TYPES = {
+    port:      { label: 'Rain-soaked port',       coast: true,  jag: 1.0, decor: '',      river: false, sea: true },
+    desert:    { label: 'Desert sprawl',          coast: false, jag: 1.2, decor: 'dunes', river: true,  sea: false },
+    river:     { label: 'Old-world river city',   coast: false, jag: 0.9, decor: '',      river: true,  sea: false },
+    mountain:  { label: 'Mountain frontier',      coast: false, jag: 1.8, decor: 'peaks', river: true,  sea: false },
+    island:    { label: 'Island metropolis',      coast: false, jag: 0.8, decor: '',      river: false, sea: true },
+    rust:      { label: 'Industrial rust belt',   coast: false, jag: 1.1, decor: '',      river: true,  sea: false },
+    boardwalk: { label: 'Coastal boardwalk town', coast: true,  jag: 0.7, decor: '',      river: false, sea: true }
+  };
+
+  /* ---------- CONTENT BANKS ---------- */
+  var D_PRE = ['Ember', 'Gutter', 'Lantern', 'Hollow', 'Cinder', 'Velvet', 'Sable', 'Marrow', 'Chrome', 'Gilt',
+    'Rook', 'Tallow', 'Vesper', 'Ashen', 'Larkspur', 'Tin', 'Bramble', 'Midnight', 'Sodium', 'Copper',
+    'Pale', 'Wren', 'Foxglove', 'Quiet', 'Saint Orrin', 'Thorn', 'Static', 'Halo', 'Raven', 'Nickel'];
+  var D_SUF = ['Row', 'Quarter', 'Heights', 'Wharf', 'Yards', 'Court', 'Flats', 'Gardens', 'Reach', 'Market',
+    'Terrace', 'Hill', 'Crossing', 'Bend', 'Steps', 'Docks', 'Park', 'Alley', 'Square', 'End',
+    'Works', 'Mile', 'Gate', 'Commons', 'Lane', 'Banks', 'Ward', 'Fields', 'Arcade', 'Spur'];
+
+  var LANDMARKS = ['The Drowned Piano Bar', 'Cobalt Clocktower', 'Saint Maro Infirmary', 'The Paper Lantern Arcade',
+    'Greywater Pumping Station', 'The Last Tram Depot', 'Hollow Crown Hotel', 'Mercy Street Laundromat',
+    'The Glass Aquarium Annex', 'Foxglove Funeral Parlor', 'Nine Bells Cathedral', 'The Velvet Rope Casino',
+    'Old Mill Pawnbrokers', 'The Salt Exchange', 'Midnight Postal Annex', 'Cinder Hall Ballroom',
+    'The Neon Reliquary', 'Orchard Street Morgue', 'The Brass Pigeon Cafe', 'Ferryman\'s Rest Motel',
+    'The Whispering Switchboard', 'Archivist\'s Stairwell', 'Chalk Line Gym', 'The Sodium Lounge',
+    'Wren & Ash Bookbinders', 'The Locksmith\'s Chapel', 'Tin Saint Pawn', 'Rooftop Garden of Sparrows',
+    'The Umbrella Museum', 'Black Orchid Greenhouse', 'Two-Fingers Tattoo Parlor', 'The Cartographers\' Club',
+    'Gaslight Records Office', 'Lowtide Chapel', 'The Mirror Factory', 'Lantern Oil Refinery',
+    'The Rusted Carousel', 'Vesper Night School', 'The Hourglass Pharmacy', 'Ivory Stairs Opera House',
+    'The Salt & Pepper Diner', 'Crow\'s Nest Billiards', 'The Understudy Theater', 'Gravel Road Roadhouse',
+    'The Candle Exchange', 'Pale Horse Stables', 'The Cuckoo Clock Shop', 'Marlowe Street Bathhouse',
+    'The Velvet Basement Jazz Club', 'Seventh Floor Observatory', 'The Quiet Library', 'Kestrel Tower',
+    'Old Penny Arcade', 'The Reservoir Gardens', 'The Lost-and-Found Depot', 'Iron Lily Tavern',
+    'Candlewick Bakery', 'The Silent Cinema', 'Dockhand\'s Union Hall', 'The Wishing Fountain',
+    'Ghostlight Studio', 'The Sundial Hotel', 'Copperhead Auto Shop', 'The Midnight Florist',
+    'Parable Street Chapel', 'Thimble & Thread Tailors', 'The Smoke Room', 'Saltmarsh Fish Market',
+    'The Antler Lounge', 'Pinwheel Skatepark', 'The Broken Bell Foundry', 'Moth Lamp Repair',
+    'The Cold Storage Cathedral', 'Lacewing Dance Hall', 'The Ninth Elevator', 'Hush Clinic',
+    'Stonecutter\'s Steps', 'The Evening Edition Press', 'Thistle & Crow Pub', 'The Underpass Chapel'];
+
+  var VIBES = {
+    noir: ['Rain on neon, cigarette smoke in every doorway.', 'Quiet streets that listen back.',
+      'Backroom deals and half-lit stairwells.', 'Trench coats, wet pavement and a long memory.',
+      'Jazz seeping through the brick.', 'Every window has someone watching.',
+      'A place where debts are older than the buildings.', 'Shadows pool where the lamps give up.'],
+    gritty: ['Cracked asphalt, boarded windows, hard people.', 'Smoke from the foundry never really clears.',
+      'Graffiti three layers deep and still arguing.', 'Fights end at dawn and start again by dusk.',
+      'Rust, diesel and stubborn loyalty.', 'Cheap rent, expensive mistakes.',
+      'Chain-link, razor wire and a corner store that never closes.', 'Everyone knows a guy, and everyone owes him.'],
+    glamorous: ['Champagne light spilling from velvet doorways.', 'Every face is polished and every smile is priced.',
+      'Rooftop parties above a very old secret.', 'Marble lobbies that never ask your name twice.',
+      'Chandeliers, whispered invitations and sharp tailoring.', 'Cars idle at the curb, engines humming a lie.',
+      'Boutiques that sell more than clothes.', 'A velvet rope stands between you and everything.'],
+    eerie: ['Fog that lingers a little too deliberately.', 'Streetlights hum a note just below hearing.',
+      'Empty windows that seem to track you.', 'Silence that arrives all at once.',
+      'Old buildings lean in as you pass.', 'Footsteps that echo half a beat late.',
+      'The kind of quiet that has opinions.', 'Every shadow is slightly the wrong shape.']
+  };
+  var TONE_DANGER = { noir: 3, gritty: 4, glamorous: 2, eerie: 3 };
+
+  var RUMORS = [
+    'The night bus on this route never has a driver, but it always has a seat for you.',
+    'Streetlights here flicker in the pattern of a name nobody will say aloud.',
+    'Locals leave a coin on the windowsill so the rain does not follow them home.',
+    'A courier delivers envelopes here addressed to people who died this week.',
+    'Every Friday a stranger buys a round and leaves before the drinks arrive.',
+    'The mural on the east wall changes when no one is looking.',
+    'Cabbies refuse fares after midnight, and none will say why.',
+    'A pawnbroker pays double for anything that belonged to someone who vanished.',
+    'Dogs will not cross the old tram tracks.',
+    'There is a payphone that rings on the hour. Picking up costs more than a dime.',
+    'The church bell rings thirteen times on the first of the month.',
+    'Someone pays the rent on an apartment nobody has ever seen occupied.',
+    'The graffiti here is a map, if you read it from the rooftops.',
+    'A woman in a green coat asks for directions to a street that was demolished.',
+    'The fountain grants wishes and sends the bill to a relative.',
+    'The cops here look the other way on Thursdays.',
+    'The bartender remembers every drink you will ever order.',
+    'The elevator in the tallest building stops at a floor that is not on the panel.',
+    'If you hear piano from the empty theater, leave your name at the door.',
+    'Mist rolls in exactly when someone on the block tells a lie.',
+    'A vendor sells umbrellas that only work against one specific kind of weather.',
+    'The rooftop pigeons are paid informants. Do not feed the wrong ones.',
+    'Nobody has seen the landlord, but the rent is always collected in person.',
+    'The lights in the old cinema come on when someone is about to be followed.',
+    'A locksmith here cuts keys for doors that have not been built yet.',
+    'People swear the river runs backward for one minute each dawn.',
+    'The all-night diner serves a special that is not on the menu and not quite food.',
+    'Whoever sleeps in the back booth wakes up knowing a stranger\'s secrets.',
+    'Tourists vanish from the same corner on the same night every year and return in spring with no memory of winter.',
+    'A tattoo artist inks warnings. The clients never learn what they were warned about.',
+    'The new subway line was dug around something, not through it.',
+    'Sirens go quiet when they pass the old cannery.',
+    'Someone keeps repainting a door that opens onto a wall.',
+    'The street sweepers collect more than litter.',
+    'Wedding photos from this block always have one extra guest.',
+    'A radio station broadcasts tomorrow\'s news, slightly wrong, at 4:44 a.m.',
+    'The ice cream truck circles at midnight in winter and nobody hears the jingle twice.',
+    'A debt collector accepts favors in lieu of cash, and favors compound.',
+    'Rain falls harder on anyone carrying a secret.',
+    'The old bookshop sells titles that have not been written yet.',
+    'The doorman works every shift and has never once been seen eating or sleeping.',
+    'A staircase appears in the alley on moonless nights, descending.',
+    'Someone is hiding a body of water under the parking structure.',
+    'No one remembers who owns the corner building, but everyone pays.',
+    'Fog follows the same woman from block to block. She sells matches.',
+    'The statue in the plaza has moved three feet since spring.',
+    'Parking tickets here come with handwritten warnings.',
+    'A busker plays a song that makes strangers confess.',
+    'The clocks in the market run seven minutes slow and nobody dares fix them.',
+    'Taxis that pick up from the hospital steps never run their meters.',
+    'A florist sends white lilies to the living days before they are needed.',
+    'There is one rule on this block: never answer the first knock.',
+    'Laundry hung on these rooftops is never dry and never stolen.',
+    'A child\'s chalk drawings predict who leaves town next.',
+    'The alley cats gather on one rooftop whenever a deal goes bad.',
+    'Someone sells maps of the city that show the other city.',
+    'The overnight janitor of the courthouse files cases that were never opened.',
+    'You can rent a quiet booth at the bar by the hour, soundproofed against more than sound.',
+    'Electric bills here are paid in favors, and they always come due.',
+    'The last train never arrives, but its schedule is always on time.'
+  ];
+
+  var ENTRANCES = [
+    { n: 'The 3:07 Dryer', d: 'a laundromat dryer that opens at 3:07 a.m. onto a warm brick stair' },
+    { n: 'Freezer Number Nine', d: 'a walk-in freezer behind the fish market whose back wall is a doorway to somewhere dry' },
+    { n: 'The Borrowed Elevator', d: 'an elevator button for a floor that does not exist, pressed in the right order' },
+    { n: 'Chalk Door', d: 'a door drawn in chalk on a brick wall, solid only on rainy nights' },
+    { n: 'Mirror Tailor', d: 'a tailor\'s three-way mirror whose center panel swings open' },
+    { n: 'The Bus That Isn\'t', d: 'a bus-stop bench that sinks into the pavement when the 66 passes empty' },
+    { n: 'Pawn Counter Seven', d: 'a trapdoor under the pawnbroker\'s counter, opened with a ticket stamped in red' },
+    { n: 'The Jukebox Stairwell', d: 'a diner jukebox where one particular song unlocks the back stairs' },
+    { n: 'Locker 214', d: 'a train station locker that holds a corridor instead of luggage' },
+    { n: 'Cinema Aisle Zero', d: 'the aisle before the first row of a silent cinema; sit down and the floor sinks' },
+    { n: 'Wishing Well Reverse', d: 'a dry fountain where dropping in a key opens a spiral stair' },
+    { n: 'Church Cellar Bell', d: 'pull the third bell rope and the cellar opens onto a candlelit hall' },
+    { n: 'The Revolving Door', d: 'spin a hotel door thirteen times and step out into an older lobby' },
+    { n: 'Hydrant Gate', d: 'a rusted fire hydrant with a keyhole beneath the cap' },
+    { n: 'Newsstand Fold', d: 'the back wall of a newsstand that folds like a paper map' },
+    { n: 'The Ferris Wheel Gap', d: 'a missing seat on the old pier wheel that arrives at a different pier' },
+    { n: 'Sewer Cover Sixteen', d: 'a manhole that is always warm, stamped with an unfamiliar crest' },
+    { n: 'Cathedral Confessional', d: 'the priest\'s side leads to a hall of folding chairs and low conversation' },
+    { n: 'Dumbwaiter to Nowhere', d: 'a restaurant dumbwaiter big enough for a person and quiet enough for a secret' },
+    { n: 'The Umbrella Stand', d: 'an umbrella stand in a lobby that hides a slim door behind the coats' },
+    { n: 'Florist\'s Cold Room', d: 'a refrigerated flower cooler that opens onto a greenhouse in permanent summer' },
+    { n: 'Payphone Echo', d: 'dial the correct seven digits and the booth slides downward' },
+    { n: 'Rooftop Water Tank', d: 'a water tank with a ladder that leads down into dry, quiet air' },
+    { n: 'The Bookshop Ladder', d: 'a rolling ladder that reaches a shelf of doors' },
+    { n: 'The Tattooist\'s Chair', d: 'the chair rotates to a hidden consultation room' },
+    { n: 'Level Minus Four', d: 'a parking structure level that is not on any directory' },
+    { n: 'The Moon Token Turnstile', d: 'a subway turnstile that only swallows tokens stamped with a moon' },
+    { n: 'Night Market Awning', d: 'an awning that casts a shadow where there is no stall' },
+    { n: 'Carousel Horse Eleven', d: 'pull the brass pole of one horse and the whole platform rises' },
+    { n: 'The Boarded Lighthouse Shop', d: 'a boarded storefront with a spiral stair that smells of the sea' },
+    { n: 'Library Return Slot', d: 'a return slot wide enough to crawl through, answered by a cold draft' },
+    { n: 'The Footbridge Toll', d: 'a toll booth on a footbridge that takes payment in memories' },
+    { n: 'Bakery Oven Four', d: 'an oven door that opens onto a loading dock at dawn' },
+    { n: 'Marquee Stage Door', d: 'a theater stage door that opens into any theater at all' },
+    { n: 'The Steamed Mirror', d: 'a gym mirror that writes an address in the condensation' },
+    { n: 'The Gutter Grate', d: 'a storm drain that exhales perfume' },
+    { n: 'The Bathhouse Plunge', d: 'step into the cold pool and surface in a warm one somewhere else' },
+    { n: 'Street Lamp Twelve', d: 'touch the base of the twelfth lamp three times and a panel slides open' },
+    { n: 'The Cab With No Meter', d: 'a taxi that only arrives when called by the wrong name' },
+    { n: 'Vending Machine Hatch', d: 'a vending machine whose lowest row slides aside' }
+  ];
+
+  var TABOOS = [
+    'Never speak a bargain aloud in the rain.', 'No member crosses the river at night alone.',
+    'Iron is never carried past the front door.', 'A debt unpaid at dawn belongs to the whole house.',
+    'Never learn the true name of an ally.', 'No blood is spilled under a working streetlight.',
+    'Every meeting begins and ends with salt on the table.', 'Never answer a question asked by a mirror.',
+    'The first drink at any table belongs to the dead.', 'No contracts are signed on a Tuesday.',
+    'Never turn your back on an open door at midnight.', 'Rooftops are neutral ground until the last bell.',
+    'No one enters a rival\'s territory wearing their own colors.', 'A favor owed to an outsider outranks a favor owed to a friend.',
+    'Never count the members of the council aloud.', 'Silver stays in the pocket, never on the table.',
+    'Do not whistle after the lamps come on.', 'Never accept a gift wrapped in the color of the giver\'s house.',
+    'No promises are made on a bridge.', 'The oldest member always sits facing the door.'
+  ];
+
+  var ARCHS = [
+    { id: 'hunters', label: 'Hunters',
+      names: ['Silver Thread Hunters', 'The Ninth Hour Brigade', 'Ironbell Hunters', 'Cold Iron Society', 'Red Ledger Hunters'],
+      goals: ['Hunt the thing that has been feeding on the east side before the city notices.',
+        'Seize every relic that surfaces in the night markets and lock it away.',
+        'Prove the other factions are breaking the old truce, and collect the evidence.'] },
+    { id: 'vampire', label: 'Vampire court',
+      names: ['The Velvet Court', 'House Calloway Vesper', 'The Night Ledger Court', 'Court of Pale Lamps', 'House of Seven Mirrors'],
+      goals: ['Hold the nightlife economy and turn every debt into a lifelong favor.',
+        'Find the traitor inside the court before the next masquerade.',
+        'Buy the city\'s best lawyers, one signature at a time.'] },
+    { id: 'coven', label: 'Witch coven',
+      names: ['The Salt & Rowan Coven', 'Thorn Sister Circle', 'The Hollow Candle Coven', 'Moth-Wing Coven', 'The Three Kettles'],
+      goals: ['Seal the leaking doorways before the next new moon.',
+        'Trade charms for secrets until every faction owes the coven.',
+        'Reclaim a stolen heirloom from a rival\'s vault.'] },
+    { id: 'fae', label: 'Fae embassy',
+      names: ['The Gilded Embassy', 'Embassy of the Unseen Hill', 'Thistledown Legation', 'The Glass Orchard Consulate', 'The Courtesy Under the Bridge'],
+      goals: ['Win a favorable treaty before the embassy lease runs out.',
+        'Collect one true name from every faction, politely.',
+        'Turn a mortal landlord\'s goodwill into a permanent foothold.'] },
+    { id: 'wolves', label: 'Wolf pack',
+      names: ['Gutterline Pack', 'The Redtail Pack', 'Ashfang Pack', 'The Dockside Howl', 'Moonrent Pack'],
+      goals: ['Keep the pack fed, housed and off the radar.',
+        'Defend the pack\'s tavern from a hostile buyout.',
+        'Hunt the stranger who has been marking pack territory.'] },
+    { id: 'wardens', label: 'Wardens',
+      names: ['Wardens of the Fourth Bell', 'The Threshold Office', 'Lamplighter Wardens', 'The Sealkeepers', 'Bureau of Quiet Doors'],
+      goals: ['Keep the Veil quiet and the news boring.',
+        'Inventory every hidden doorway, then lock the dangerous ones.',
+        'Expose the informant inside the office.'] },
+    { id: 'necro', label: 'Necromancers',
+      names: ['The Grey Ledger Society', 'Bone Orchard Syndicate', 'The Late Hour Circle', 'Mourning Dove Collective', 'Order of the Pale Ink'],
+      goals: ['Archive the dead before the living rewrite their stories.',
+        'Secure a ghostly witness for an upcoming trial.',
+        'Rebuild the old ledger of the dead, page by missing page.'] },
+    { id: 'smugglers', label: 'Smugglers',
+      names: ['The Backroom Syndicate', 'Salt Road Runners', 'Nine Fingers Freight', 'Blackout Couriers', 'The Counterfeit Saints'],
+      goals: ['Move a crate that must never be opened across three territories.',
+        'Corner the market on contraband charms before the festival.',
+        'Find out who sold out the last shipment.'] }
+  ];
+
+  var CITY_BASE = ['Vellmoor', 'Corvane', 'Ashenmere', 'Halloran', 'Dunmarrow', 'Greywick', 'Thornwall', 'Lowenmere',
+    'Marrowgate', 'Cindermoor', 'Veyra', 'Ravenhollow', 'Saltmarrow', 'Evenfall', 'Gallowmere', 'Quillon',
+    'Harrowdene', 'Duskwater', 'Wrenfield', 'Lanternhill', 'Candlemarsh', 'Mournhaven', 'Ironvale', 'Starling Cross',
+    'Blackthistle', 'Opaline', 'Hollowbrook', 'Nettlefen', 'Sablewick', 'Orrinmoor'];
+  var CITY_SUF = {
+    port: ['Harbor', 'Port', 'Landing', 'Docks'], desert: ['Springs', 'Wells', 'Flats', 'Mesa'],
+    river: ['Crossing', 'Falls', 'Bridge', 'Ford'], mountain: ['Ridge', 'Pass', 'Gulch', 'Summit'],
+    island: ['Isle', 'Cay', 'Haven', 'Point'], rust: ['Works', 'Junction', 'Furnace', 'Yards'],
+    boardwalk: ['Beach', 'Pier', 'Shore', 'Strand']
+  };
+
+  var STYLES = {
+    neon: { label: 'Neon Noir', bg: '#0b0620', sea: '#0a0522', land: '#1a0b3a', coast: '#ff2d78', coastW: 3, dline: '#00ffcc', major: '#ff2d78', minor: '#00ffcc',
+      river: '#2b1fa8', riverEdge: '#00ffcc', rail: '#ffe14d', text: '#e8fbff', halo: '#0b0620', ent: '#ffe14d', entText: '#0b0620',
+      grid: '#00ffcc', legendBg: '#0f0728', legendText: '#e8fbff', accent: '#ff2d78', decor: '#3a1f7a', neutral: '#e8fbff', neutralOp: 0.04, tint: 0.3, glow: true,
+      fcolors: [{ hex: '#ff2d78', name: 'Hot pink' }, { hex: '#00ffcc', name: 'Electric cyan' }, { hex: '#ffe14d', name: 'Solar yellow' },
+        { hex: '#b46cff', name: 'Ultra violet' }, { hex: '#7dff4f', name: 'Acid green' }, { hex: '#ff8a2d', name: 'Ember orange' }] },
+    parchment: { label: 'Ink on Parchment', bg: '#cbb88f', sea: '#a9c0bd', land: '#ecdcb4', coast: '#4a3520', coastW: 3, dline: '#4a3520', major: '#3a2412', minor: '#6b5238',
+      river: '#8fb2b5', riverEdge: '#4a3520', rail: '#3a2412', text: '#2b1d10', halo: '#ecdcb4', ent: '#a3281c', entText: '#fff3d6',
+      grid: '#4a3520', legendBg: '#e2d0a2', legendText: '#2b1d10', accent: '#a3281c', decor: '#8a7650', neutral: '#2b1d10', neutralOp: 0.04, tint: 0.34, glow: false,
+      fcolors: [{ hex: '#a3281c', name: 'Oxblood' }, { hex: '#2f8f83', name: 'Verdigris' }, { hex: '#c98a1a', name: 'Ochre' },
+        { hex: '#3b3f8f', name: 'Indigo' }, { hex: '#5c7a2a', name: 'Moss' }, { hex: '#b5541f', name: 'Rust' }] },
+    blueprint: { label: 'Blueprint', bg: '#0a2f55', sea: '#0a2f55', land: '#134a80', coast: '#e8f4ff', coastW: 3, dline: '#a9d6ff', major: '#ffffff', minor: '#7fc3ff',
+      river: '#06284a', riverEdge: '#a9d6ff', rail: '#ffe08a', text: '#eaf6ff', halo: '#134a80', ent: '#ffe08a', entText: '#06284a',
+      grid: '#a9d6ff', legendBg: '#082a4d', legendText: '#eaf6ff', accent: '#ffe08a', decor: '#1b5c9c', neutral: '#ffffff', neutralOp: 0.03, tint: 0.3, glow: false,
+      fcolors: [{ hex: '#ffffff', name: 'Chalk white' }, { hex: '#7fe3ff', name: 'Sky' }, { hex: '#9bffd8', name: 'Mint' },
+        { hex: '#d3a6ff', name: 'Lilac' }, { hex: '#ffe08a', name: 'Gold' }, { hex: '#ff9fb8', name: 'Rose' }] },
+    print: { label: 'Print B/W', bg: '#ffffff', sea: '#e6e6e6', land: '#ffffff', coast: '#000000', coastW: 3, dline: '#000000', major: '#000000', minor: '#555555',
+      river: '#cccccc', riverEdge: '#000000', rail: '#000000', text: '#000000', halo: '#ffffff', ent: '#000000', entText: '#ffffff',
+      grid: '#000000', legendBg: '#ffffff', legendText: '#000000', accent: '#000000', decor: '#999999', neutral: '#000000', neutralOp: 0.02, tint: 1, glow: false,
+      fcolors: [{ hex: '#222222', name: 'Diagonal hatch /' }, { hex: '#333333', name: 'Diagonal hatch \\' }, { hex: '#444444', name: 'Horizontal lines' },
+        { hex: '#555555', name: 'Vertical lines' }, { hex: '#222222', name: 'Dots' }, { hex: '#000000', name: 'Fine crosshatch' }] }
+  };
+  var HATCH = [
+    { rot: 45, cross: false }, { rot: -45, cross: false }, { rot: 90, cross: false },
+    { rot: 0, cross: false }, { dots: true }, { rot: 0, cross: true }
+  ];
+
+  /* ---------- PRNG ---------- */
+  function hashStr(s) {
+    var h = 2166136261, i;
+    s = String(s);
+    for (i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h >>> 0;
+  }
+  function makeRng(seed) {
+    var a = seed >>> 0, r = {};
+    r.f = function () {
+      a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    r.int = function (lo, hi) { return lo + Math.floor(r.f() * (hi - lo + 1)); };
+    r.pick = function (arr) { return arr[Math.floor(r.f() * arr.length)]; };
+    r.shuffle = function (arr) {
+      var c = arr.slice(), i, j, t;
+      for (i = c.length - 1; i > 0; i--) { j = Math.floor(r.f() * (i + 1)); t = c[i]; c[i] = c[j]; c[j] = t; }
+      return c;
+    };
+    return r;
+  }
+  function randomSeed() {
+    var s = '', abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', i;
+    for (i = 0; i < 6; i++) { s += abc.charAt(Math.floor(Math.random() * abc.length)); }
+    return s;
+  }
+
+  /* ---------- GEOMETRY ---------- */
+  function f1(n) { return Math.round(n * 10) / 10; }
+  function dist(a, b) { var dx = a[0] - b[0], dy = a[1] - b[1]; return Math.sqrt(dx * dx + dy * dy); }
+  function polyArea(p) { var s = 0, i, n = p.length; for (i = 0; i < n; i++) { var a = p[i], b = p[(i + 1) % n]; s += a[0] * b[1] - b[0] * a[1]; } return s / 2; }
+  function polyCentroid(p) {
+    var A = polyArea(p), cx = 0, cy = 0, i, n = p.length;
+    if (Math.abs(A) < 1e-6) { for (i = 0; i < n; i++) { cx += p[i][0]; cy += p[i][1]; } return [cx / n, cy / n]; }
+    for (i = 0; i < n; i++) { var a = p[i], b = p[(i + 1) % n], c = a[0] * b[1] - b[0] * a[1]; cx += (a[0] + b[0]) * c; cy += (a[1] + b[1]) * c; }
+    return [cx / (6 * A), cy / (6 * A)];
+  }
+  function bbox(p) {
+    var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, i;
+    for (i = 0; i < p.length; i++) { if (p[i][0] < x0) x0 = p[i][0]; if (p[i][0] > x1) x1 = p[i][0]; if (p[i][1] < y0) y0 = p[i][1]; if (p[i][1] > y1) y1 = p[i][1]; }
+    return { x0: x0, y0: y0, x1: x1, y1: y1 };
+  }
+  function pointInPoly(p, x, y) {
+    var inside = false, i, j = p.length - 1;
+    for (i = 0; i < p.length; i++) {
+      var xi = p[i][0], yi = p[i][1], xj = p[j][0], yj = p[j][1];
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+      j = i;
+    }
+    return inside;
+  }
+  function distSeg(px, py, a, b) {
+    var dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy, t = 0;
+    if (l2 > 0) { t = ((px - a[0]) * dx + (py - a[1]) * dy) / l2; if (t < 0) t = 0; else if (t > 1) t = 1; }
+    var qx = a[0] + t * dx, qy = a[1] + t * dy;
+    return Math.sqrt((px - qx) * (px - qx) + (py - qy) * (py - qy));
+  }
+  function distToPoly(p, x, y) { var m = 1e9, i, n = p.length; for (i = 0; i < n; i++) { var d = distSeg(x, y, p[i], p[(i + 1) % n]); if (d < m) m = d; } return m; }
+  function distToLine(pts, x, y) { var m = 1e9, i; for (i = 0; i < pts.length - 1; i++) { var d = distSeg(x, y, pts[i], pts[i + 1]); if (d < m) m = d; } return m; }
+  function segInter(p1, p2, p3, p4) {
+    var d1x = p2[0] - p1[0], d1y = p2[1] - p1[1], d2x = p4[0] - p3[0], d2y = p4[1] - p3[1];
+    var den = d1x * d2y - d1y * d2x;
+    if (Math.abs(den) < 1e-9) return null;
+    var t = ((p3[0] - p1[0]) * d2y - (p3[1] - p1[1]) * d2x) / den;
+    var u = ((p3[0] - p1[0]) * d1y - (p3[1] - p1[1]) * d1x) / den;
+    if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+    return [p1[0] + t * d1x, p1[1] + t * d1y];
+  }
+  function clipHalf(poly, a, b, c) {
+    var out = [], n = poly.length, i;
+    for (i = 0; i < n; i++) {
+      var cur = poly[i], prev = poly[(i + n - 1) % n];
+      var dc = a * cur[0] + b * cur[1] - c, dp = a * prev[0] + b * prev[1] - c;
+      if (dc <= 0) {
+        if (dp > 0) { var t = dp / (dp - dc); out.push([prev[0] + t * (cur[0] - prev[0]), prev[1] + t * (cur[1] - prev[1])]); }
+        out.push(cur);
+      } else if (dp <= 0) {
+        var t2 = dp / (dp - dc); out.push([prev[0] + t2 * (cur[0] - prev[0]), prev[1] + t2 * (cur[1] - prev[1])]);
+      }
+    }
+    return out;
+  }
+  function cleanPoly(p) {
+    var out = [], i;
+    for (i = 0; i < p.length; i++) {
+      if (!out.length || dist(out[out.length - 1], p[i]) > 0.05) out.push(p[i]);
+    }
+    if (out.length > 1 && dist(out[0], out[out.length - 1]) <= 0.05) out.pop();
+    return out;
+  }
+  function cellFor(sites, i, outline) {
+    var poly = outline.slice(), p = sites[i], j;
+    for (j = 0; j < sites.length && poly.length; j++) {
+      if (j === i) continue;
+      var q = sites[j];
+      poly = clipHalf(poly, q[0] - p[0], q[1] - p[1], (q[0] * q[0] + q[1] * q[1] - p[0] * p[0] - p[1] * p[1]) / 2);
+    }
+    return cleanPoly(poly);
+  }
+  function findNeighbors(cells, sites) {
+    var nb = [], i, j, k;
+    for (i = 0; i < sites.length; i++) nb.push([]);
+    for (i = 0; i < sites.length; i++) {
+      for (j = i + 1; j < sites.length; j++) {
+        var p = sites[i], q = sites[j], a = q[0] - p[0], b = q[1] - p[1], len = Math.sqrt(a * a + b * b);
+        var c = (q[0] * q[0] + q[1] * q[1] - p[0] * p[0] - p[1] * p[1]) / 2, poly = cells[i], found = false;
+        for (k = 0; k < poly.length; k++) {
+          var A = poly[k], B = poly[(k + 1) % poly.length];
+          var dA = (a * A[0] + b * A[1] - c) / len, dB = (a * B[0] + b * B[1] - c) / len;
+          if (Math.abs(dA) < 0.8 && Math.abs(dB) < 0.8 && dist(A, B) > 6) { found = true; break; }
+        }
+        if (found) { nb[i].push(j); nb[j].push(i); }
+      }
+    }
+    return nb;
+  }
+
+  /* ---------- OUTLINE ---------- */
+  function makeOutline(type, R) {
+    var T = TYPES[type], cx = W / 2, cy = H / 2, n = 170, i;
+    var rx = T.coast ? 860 : 570, ry = T.coast ? 640 : 360;
+    var ph = [R.f() * 6.283, R.f() * 6.283, R.f() * 6.283, R.f() * 6.283, R.f() * 6.283, R.f() * 6.283];
+    var a1 = (0.06 + R.f() * 0.06) * T.jag, a2 = (0.04 + R.f() * 0.04) * T.jag, a3 = (0.025 + R.f() * 0.03) * T.jag, a4 = (0.012 + R.f() * 0.02) * T.jag;
+    var nx = 0, ny = 0, coastC = 0;
+    if (T.coast) {
+      var sides = [0, Math.PI / 2, Math.PI, Math.PI * 1.5], th = sides[R.int(0, 3)] + (R.f() - 0.5) * 0.5;
+      nx = Math.cos(th); ny = Math.sin(th); coastC = 110 + R.f() * 140;
+    }
+    var pts = [], coastRun = [];
+    for (i = 0; i < n; i++) {
+      var t = (i / n) * Math.PI * 2;
+      var rr = 1 + a1 * Math.sin(2 * t + ph[0]) + a2 * Math.sin(3 * t + ph[1]) + a3 * Math.sin(5 * t + ph[2]) + a4 * Math.sin(7 * t + ph[3]);
+      var vx = Math.cos(t) * rx * rr, vy = Math.sin(t) * ry * rr, isCoast = false;
+      if (T.coast) {
+        var d = vx * nx + vy * ny, tt = -vx * ny + vy * nx;
+        var cp = coastC + 26 * Math.sin(tt * 0.011 + ph[4]) + 14 * Math.sin(tt * 0.029 + ph[5]);
+        if (d > cp) { vx += (cp - d) * nx; vy += (cp - d) * ny; isCoast = true; }
+      }
+      var x = Math.max(34, Math.min(W - 34, cx + vx)), y = Math.max(34, Math.min(H - 34, cy + vy));
+      pts.push([x, y]);
+      coastRun.push(isCoast);
+    }
+    var coastPts = null;
+    if (T.coast) {
+      /* rotate so the run is contiguous, then collect it */
+      var start = -1;
+      for (i = 0; i < n; i++) { if (coastRun[i] && !coastRun[(i + n - 1) % n]) { start = i; break; } }
+      coastPts = [];
+      if (start >= 0) {
+        for (i = 0; i < n; i++) { var idx = (start + i) % n; if (!coastRun[idx]) break; coastPts.push(pts[idx]); }
+      }
+      if (coastPts.length < 3) coastPts = null;
+    }
+    return { pts: pts, coastPts: coastPts, nx: nx, ny: ny };
+  }
+
+  function smoothClosed(p) {
+    var n = p.length, s = '', i;
+    var m0 = [(p[n - 1][0] + p[0][0]) / 2, (p[n - 1][1] + p[0][1]) / 2];
+    s = 'M' + f1(m0[0]) + ' ' + f1(m0[1]);
+    for (i = 0; i < n; i++) {
+      var a = p[i], b = p[(i + 1) % n];
+      s += 'Q' + f1(a[0]) + ' ' + f1(a[1]) + ' ' + f1((a[0] + b[0]) / 2) + ' ' + f1((a[1] + b[1]) / 2);
+    }
+    return s + 'Z';
+  }
+  function smoothOpen(p) {
+    var s = 'M' + f1(p[0][0]) + ' ' + f1(p[0][1]), i, n = p.length;
+    if (n < 3) { for (i = 1; i < n; i++) s += 'L' + f1(p[i][0]) + ' ' + f1(p[i][1]); return s; }
+    for (i = 1; i < n - 1; i++) {
+      s += 'Q' + f1(p[i][0]) + ' ' + f1(p[i][1]) + ' ' + f1((p[i][0] + p[i + 1][0]) / 2) + ' ' + f1((p[i][1] + p[i + 1][1]) / 2);
+    }
+    s += 'L' + f1(p[n - 1][0]) + ' ' + f1(p[n - 1][1]);
+    return s;
+  }
+  function pathD(p, close) {
+    var s = '', i;
+    for (i = 0; i < p.length; i++) s += (i ? 'L' : 'M') + f1(p[i][0]) + ' ' + f1(p[i][1]);
+    return s + (close ? 'Z' : '');
+  }
+
+  /* ---------- GENERATION ---------- */
+  function norm(o) {
+    o = o || {};
+    var r = {};
+    r.type = TYPES[o.type] ? o.type : 'port';
+    r.sizeKey = SIZES[o.size] ? o.size : 'medium';
+    r.size = SIZES[r.sizeKey];
+    r.tone = TONES.indexOf(o.tone) >= 0 ? o.tone : 'noir';
+    r.factions = Math.max(2, Math.min(6, parseInt(o.factions, 10) || 4));
+    r.entrances = Math.max(3, Math.min(12, parseInt(o.entrances, 10) || 7));
+    r.water = o.water !== false;
+    r.rail = o.rail !== false;
+    r.name = String(o.name || '').replace(/^\s+|\s+$/g, '').substr(0, 40);
+    r.seed = String(o.seed === undefined || o.seed === null || String(o.seed).replace(/\s/g, '') === '' ? randomSeed() : o.seed).replace(/^\s+|\s+$/g, '').substr(0, 32);
+    return r;
+  }
+
+  function cityName(type, R) {
+    var nm = R.pick(CITY_BASE);
+    if (R.f() < 0.55) nm += ' ' + R.pick(CITY_SUF[type]);
+    return nm;
+  }
+
+  function flatten(a, c, b, segs) {
+    var pts = [], i;
+    for (i = 0; i <= segs; i++) {
+      var t = i / segs, u = 1 - t;
+      pts.push([u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]]);
+    }
+    return pts;
+  }
+
+  function makeRiver(R) {
+    var horiz = R.f() < 0.6, n = 50, i, pts = [];
+    var p1 = R.f() * 6.28, p2 = R.f() * 6.28, a1 = 70 + R.f() * 60, a2 = 22 + R.f() * 28, off = (R.f() - 0.5) * 180;
+    for (i = 0; i <= n; i++) {
+      var t = i / n, w = off + a1 * Math.sin(t * 5.2 + p1) + a2 * Math.sin(t * 13 + p2);
+      if (horiz) pts.push([-40 + t * (W + 80), H / 2 + w * 0.8]);
+      else pts.push([W / 2 + w * 1.5, -40 + t * (H + 80)]);
+    }
+    return pts;
+  }
+
+  function tryCity(o, R) {
+    var T = TYPES[o.type], N = o.size, i, j, k;
+    var ol = makeOutline(o.type, R), outline = ol.pts;
+    var bb = bbox(outline), area = Math.abs(polyArea(outline));
+    /* sites */
+    var sites = [], tries = 0, dmin = Math.sqrt(area / N) * 0.62;
+    while (sites.length < N && tries < 8000) {
+      tries++;
+      if (tries % 1500 === 0) dmin *= 0.88;
+      var x = bb.x0 + R.f() * (bb.x1 - bb.x0), y = bb.y0 + R.f() * (bb.y1 - bb.y0);
+      if (!pointInPoly(outline, x, y)) continue;
+      if (distToPoly(outline, x, y) < 22) continue;
+      var ok = true;
+      for (j = 0; j < sites.length; j++) { if (dist(sites[j], [x, y]) < dmin) { ok = false; break; } }
+      if (ok) sites.push([x, y]);
+    }
+    if (sites.length < N) return null;
+    /* Lloyd relaxation */
+    var it, cells = [];
+    for (it = 0; it < 4; it++) {
+      cells = [];
+      for (i = 0; i < N; i++) cells.push(cellFor(sites, i, outline));
+      for (i = 0; i < N; i++) {
+        if (cells[i].length < 3) return null;
+        var c = polyCentroid(cells[i]);
+        if (pointInPoly(outline, c[0], c[1]) && pointInPoly(cells[i], c[0], c[1])) sites[i] = c;
+      }
+    }
+    cells = [];
+    for (i = 0; i < N; i++) { var cl = cellFor(sites, i, outline); if (cl.length < 3) return null; cells.push(cl); }
+    for (i = 0; i < N; i++) { if (Math.abs(polyArea(cells[i])) < 0.2 * area / N) return null; }
+    var nb = findNeighbors(cells, sites);
+
+    /* districts */
+    var districts = [];
+    for (i = 0; i < N; i++) {
+      districts.push({ i: i, num: i + 1, site: sites[i], poly: cells[i], area: Math.abs(polyArea(cells[i])), owner: -1, contested: -1, nb: nb[i], entrances: [] });
+    }
+
+    /* roads: MST + subset of the rest, then force connectivity */
+    var edges = [];
+    for (i = 0; i < N; i++) for (k = 0; k < nb[i].length; k++) { j = nb[i][k]; if (i < j) edges.push({ a: i, b: j, len: dist(sites[i], sites[j]) + R.f() * 20 }); }
+    edges.sort(function (p, q) { return p.len - q.len; });
+    var uf = [];
+    for (i = 0; i < N; i++) uf.push(i);
+    function find(x) { while (uf[x] !== x) { uf[x] = uf[uf[x]]; x = uf[x]; } return x; }
+    var roads = [], used = {};
+    for (k = 0; k < edges.length; k++) {
+      var ea = find(edges[k].a), eb = find(edges[k].b);
+      if (ea !== eb) { uf[ea] = eb; roads.push({ a: edges[k].a, b: edges[k].b, kind: 'major' }); used[edges[k].a + '-' + edges[k].b] = true; }
+    }
+    for (k = 0; k < edges.length; k++) {
+      if (!used[edges[k].a + '-' + edges[k].b] && R.f() < 0.7) roads.push({ a: edges[k].a, b: edges[k].b, kind: 'minor' });
+    }
+    var guard = 0;
+    while (guard++ < 40) {
+      var roots = {}, cnt = 0;
+      for (i = 0; i < N; i++) { var rt = find(i); if (!roots[rt]) { roots[rt] = true; cnt++; } }
+      if (cnt <= 1) break;
+      var best = null;
+      for (i = 0; i < N; i++) for (j = i + 1; j < N; j++) {
+        if (find(i) !== find(j)) { var dd = dist(sites[i], sites[j]); if (!best || dd < best.d) best = { a: i, b: j, d: dd }; }
+      }
+      uf[find(best.a)] = find(best.b);
+      roads.push({ a: best.a, b: best.b, kind: 'link' });
+    }
+    for (k = 0; k < roads.length; k++) {
+      var p = sites[roads[k].a], q = sites[roads[k].b], dx = q[0] - p[0], dy = q[1] - p[1], len = Math.sqrt(dx * dx + dy * dy);
+      var offc = (R.f() - 0.5) * len * 0.26, cc = [(p[0] + q[0]) / 2 - dy / len * offc, (p[1] + q[1]) / 2 + dx / len * offc];
+      roads[k].c = cc;
+      roads[k].pts = flatten(p, cc, q, 14);
+      roads[k].d = 'M' + f1(p[0]) + ' ' + f1(p[1]) + 'Q' + f1(cc[0]) + ' ' + f1(cc[1]) + ' ' + f1(q[0]) + ' ' + f1(q[1]);
+    }
+
+    /* ring road on large cities */
+    var ring = null;
+    if (o.sizeKey === 'large') {
+      var oc = polyCentroid(outline), rpts = [];
+      for (i = 0; i < 20; i++) {
+        var op = outline[Math.floor(i * outline.length / 20)], sc = 0.56 + (R.f() - 0.5) * 0.06;
+        rpts.push([oc[0] + (op[0] - oc[0]) * sc, oc[1] + (op[1] - oc[1]) * sc]);
+      }
+      ring = rpts;
+    }
+
+    /* river + bridges */
+    var river = null, bridges = [];
+    if (o.water && T.river) {
+      river = makeRiver(R);
+      for (k = 0; k < roads.length; k++) {
+        var rp = roads[k].pts, hits = [];
+        for (i = 0; i < rp.length - 1; i++) {
+          for (j = 0; j < river.length - 1; j++) {
+            var hp = segInter(rp[i], rp[i + 1], river[j], river[j + 1]);
+            if (hp) {
+              var dup = false, h;
+              for (h = 0; h < hits.length; h++) { if (dist(hits[h], hp) < 40) dup = true; }
+              if (!dup) { hits.push(hp); bridges.push({ x: hp[0], y: hp[1], ang: Math.atan2(rp[i + 1][1] - rp[i][1], rp[i + 1][0] - rp[i][0]) * 180 / Math.PI }); }
+            }
+          }
+        }
+      }
+    }
+
+    /* rails */
+    var rails = [];
+    if (o.rail) {
+      var nrails = N >= 10 ? 2 : 1, rr;
+      for (rr = 0; rr < nrails; rr++) {
+        var cur = R.int(0, N - 1), chain = [cur], target = R.int(3, 5), seen = {};
+        seen[cur] = true;
+        while (chain.length < target) {
+          var cand = [];
+          for (k = 0; k < nb[cur].length; k++) { if (!seen[nb[cur][k]]) cand.push(nb[cur][k]); }
+          if (!cand.length) break;
+          cur = R.pick(cand); seen[cur] = true; chain.push(cur);
+        }
+        if (chain.length >= 2) {
+          var rpts2 = [];
+          for (k = 0; k < chain.length; k++) rpts2.push([sites[chain[k]][0] + 11, sites[chain[k]][1] + 11]);
+          rails.push({ pts: rpts2, ds: chain });
+        }
+      }
+    }
+
+    /* factions: farthest-point seeds, then region growing */
+    var F = o.factions, fSeeds = [R.int(0, N - 1)];
+    while (fSeeds.length < F) {
+      var bestD = -1, bestI = 0;
+      for (i = 0; i < N; i++) {
+        var md = 1e9;
+        for (j = 0; j < fSeeds.length; j++) { var dq = dist(sites[i], sites[fSeeds[j]]); if (dq < md) md = dq; }
+        if (md > bestD) { bestD = md; bestI = i; }
+      }
+      fSeeds.push(bestI);
+    }
+    for (k = 0; k < F; k++) districts[fSeeds[k]].owner = k;
+    var claimedN = F, targetN = Math.max(F, Math.min(N, Math.round(N * 0.72))), prog = true;
+    while (claimedN < targetN && prog) {
+      prog = false;
+      var ord = R.shuffle(range(F));
+      for (var oi = 0; oi < ord.length && claimedN < targetN; oi++) {
+        var fk = ord[oi], cand2 = [];
+        for (i = 0; i < N; i++) {
+          if (districts[i].owner !== fk) continue;
+          for (j = 0; j < nb[i].length; j++) { var nd = nb[i][j]; if (districts[nd].owner === -1 && cand2.indexOf(nd) < 0) cand2.push(nd); }
+        }
+        if (cand2.length) { districts[R.pick(cand2)].owner = fk; claimedN++; prog = true; }
+      }
+    }
+    /* contested districts */
+    var counts = [];
+    for (k = 0; k < F; k++) counts.push(0);
+    for (i = 0; i < N; i++) { if (districts[i].owner >= 0) counts[districts[i].owner]++; }
+    var cpool = [];
+    for (i = 0; i < N; i++) {
+      if (districts[i].owner < 0 || counts[districts[i].owner] < 2) continue;
+      for (j = 0; j < nb[i].length; j++) {
+        var ow = districts[nb[i][j]].owner;
+        if (ow >= 0 && ow !== districts[i].owner) { cpool.push({ d: i, rival: ow }); break; }
+      }
+    }
+    cpool = R.shuffle(cpool);
+    var wantC = R.f() < 0.5 ? 1 : 2, cdone = 0;
+    for (k = 0; k < cpool.length && cdone < wantC; k++) {
+      if (districts[cpool[k].d].contested === -1) { districts[cpool[k].d].contested = cpool[k].rival; cdone++; }
+    }
+
+    /* names + content (all unique) */
+    var usedNames = {};
+    function claim(nm) { usedNames[nm.toLowerCase()] = true; }
+    function isFree(nm) { return !usedNames[nm.toLowerCase()]; }
+    var cname = o.name || cityName(o.type, R);
+    claim(cname);
+    var landmarks = R.shuffle(LANDMARKS), vibes = R.shuffle(VIBES[o.tone]), rumors = R.shuffle(RUMORS);
+    for (i = 0; i < N; i++) {
+      var dn = '', tr = 0;
+      do { dn = R.pick(D_PRE) + ' ' + R.pick(D_SUF); tr++; } while (!isFree(dn) && tr < 400);
+      claim(dn);
+      districts[i].name = dn;
+      var lm = landmarks[i];
+      claim(lm);
+      districts[i].landmark = lm;
+      districts[i].vibe = vibes[i % vibes.length];
+      districts[i].rumor = rumors[i];
+      var dg = TONE_DANGER[o.tone] + (R.f() * 2 - 1) * 1.5 + (districts[i].contested >= 0 ? 1 : 0) + (districts[i].owner < 0 ? 0.4 : 0);
+      districts[i].danger = Math.max(1, Math.min(5, Math.round(dg)));
+    }
+    var streetRumors = rumors.slice(N, N + 5);
+
+    var archOrder = R.shuffle(range(ARCHS.length)), taboos = R.shuffle(TABOOS), factions = [];
+    for (k = 0; k < F; k++) {
+      var ar = ARCHS[archOrder[k]], fname = '', ft = 0;
+      var fnames = R.shuffle(ar.names);
+      for (ft = 0; ft < fnames.length; ft++) { if (isFree(fnames[ft])) { fname = fnames[ft]; break; } }
+      if (!fname) fname = ar.names[0] + ' ' + (k + 1);
+      claim(fname);
+      factions.push({ i: k, name: fname, arch: ar.id, archLabel: ar.label, goal: R.pick(ar.goals), taboo: taboos[k], color: k, districts: [] });
+    }
+    for (i = 0; i < N; i++) { if (districts[i].owner >= 0) factions[districts[i].owner].districts.push(i); }
+
+    /* labels with collision pass */
+    placeLabels(districts, outline);
+
+    /* entrances */
+    var ents = [], entBank = R.shuffle(ENTRANCES), dOrder = R.shuffle(range(N)), E = o.entrances;
+    for (k = 0; k < E; k++) {
+      var dd2 = districts[dOrder[k % N]], pt = null, tt2;
+      for (tt2 = 0; tt2 < 120 && !pt; tt2++) {
+        var bb2 = bbox(dd2.poly), ex = bb2.x0 + R.f() * (bb2.x1 - bb2.x0), ey = bb2.y0 + R.f() * (bb2.y1 - bb2.y0);
+        if (!pointInPoly(dd2.poly, ex, ey) || !pointInPoly(outline, ex, ey)) continue;
+        if (distToPoly(dd2.poly, ex, ey) < (tt2 < 70 ? 16 : 5)) continue;
+        if (river && distToLine(river, ex, ey) < 20) continue;
+        var clash = false;
+        for (j = 0; j < ents.length; j++) { if (dist([ents[j].x, ents[j].y], [ex, ey]) < 32) { clash = true; break; } }
+        if (clash) continue;
+        if (tt2 < 90) {
+          for (j = 0; j < districts.length; j++) {
+            var lb = districts[j].label;
+            if (lb && lb.visible && ex > lb.x0 - 12 && ex < lb.x1 + 12 && ey > lb.y0 - 12 && ey < lb.y1 + 12) { clash = true; break; }
+          }
+          if (clash) continue;
+        }
+        pt = [ex, ey];
+      }
+      if (!pt) pt = [dd2.site[0], dd2.site[1]];
+      var eb2 = entBank[k];
+      claim(eb2.n);
+      ents.push({ i: k, x: pt[0], y: pt[1], d: dd2.i, name: eb2.n, desc: eb2.d });
+      dd2.entrances.push(k);
+    }
+
+    /* decor */
+    var decor = [];
+    if (T.decor) {
+      var dn2 = 0, dtries = 0;
+      while (dn2 < (T.decor === 'peaks' ? 18 : 14) && dtries < 600) {
+        dtries++;
+        var dx2 = 40 + R.f() * (W - 80), dy2 = 40 + R.f() * (H - 100);
+        if (pointInPoly(outline, dx2, dy2) || distToPoly(outline, dx2, dy2) < 34) continue;
+        decor.push({ k: T.decor, x: dx2, y: dy2, s: 0.7 + R.f() * 0.8 });
+        dn2++;
+      }
+    }
+
+    return {
+      name: cname, seed: o.seed, type: o.type, typeLabel: T.label, sizeKey: o.sizeKey, size: N, tone: o.tone,
+      outline: outline, coastPts: ol.coastPts, coastN: [ol.nx, ol.ny], bbox: bb, hasSea: T.sea,
+      districts: districts, factions: factions, entrances: ents, roads: roads, ring: ring,
+      river: river, bridges: bridges, rails: rails, decor: decor, streetRumors: streetRumors,
+      opts: { water: o.water, rail: o.rail, factions: F, entrances: E }
+    };
+  }
+
+  function range(n) { var a = [], i; for (i = 0; i < n; i++) a.push(i); return a; }
+
+  var LBL_FS = 18;
+  function labelRect(name, cx, cy) {
+    var w = name.length * LBL_FS * 0.62 + 8, h = LBL_FS * 1.4;
+    return { x0: cx - w / 2, y0: cy - h / 2, x1: cx + w / 2, y1: cy + h / 2, cx: cx, cy: cy, w: w, h: h };
+  }
+  function rectsOverlap(a, b, pad) { return !(a.x1 + pad <= b.x0 || b.x1 + pad <= a.x0 || a.y1 + pad <= b.y0 || b.y1 + pad <= a.y0); }
+  function placeLabels(districts, outline) {
+    var order = range(districts.length), placed = [], i, c, k;
+    order.sort(function (a, b) { return districts[b].area - districts[a].area; });
+    var cands = [[0, 0], [0, -22], [0, 22], [0, -44], [0, 44], [-60, 0], [60, 0], [-60, -22], [60, 22], [-60, 22], [60, -22], [-100, 0], [100, 0]];
+    for (k = 0; k < order.length; k++) {
+      var d = districts[order[k]], done = false;
+      for (c = 0; c < cands.length && !done; c++) {
+        var cx = d.site[0] + cands[c][0], cy = d.site[1] + cands[c][1], r = labelRect(d.name, cx, cy), clash = false;
+        if (r.x0 < 8 || r.x1 > W - 8 || r.y0 < 8 || r.y1 > H - 8) continue;
+        if (!pointInPoly(d.poly, cx, cy) || !pointInPoly(d.poly, r.x0, cy) || !pointInPoly(d.poly, r.x1, cy)) { if (c > 2) continue; if (!pointInPoly(d.poly, cx, cy)) continue; }
+        for (i = 0; i < placed.length; i++) { if (rectsOverlap(r, placed[i], 4)) { clash = true; break; } }
+        if (!clash) { r.visible = true; d.label = r; placed.push(r); done = true; }
+      }
+      if (!done) { var rh = labelRect(d.name, d.site[0], d.site[1]); rh.visible = false; d.label = rh; }
+    }
+  }
+
+  function generate(opts) {
+    var o = norm(opts), attempt = 0, city = null, base = hashStr(o.seed + '|' + o.type + '|' + o.size + '|' + o.tone + '|' + o.factions + '|' + o.entrances + '|' + (o.water ? 1 : 0) + (o.rail ? 1 : 0));
+    while (attempt < 14) {
+      city = tryCity(o, makeRng(base + attempt * 7919));
+      if (city) break;
+      attempt++;
+    }
+    if (!city) throw new Error('No valid city for this seed. Try another seed.');
+    city.attempt = attempt;
+    return city;
+  }
+
+  function nameCity(seed, type, n) {
+    return cityName(TYPES[type] ? type : 'port', makeRng(hashStr(String(seed) + '#name' + (n || 0))));
+  }
+
+  /* ---------- SVG RENDER ---------- */
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  function trunc(s, n) { s = String(s); return s.length > n ? s.substr(0, n - 1) + '…' : s; }
+  var FONT_UI = "'Share Tech Mono','Courier New',monospace";
+  var FONT_TITLE = "Orbitron,'Trebuchet MS',Arial,sans-serif";
+
+  function hatchPattern(id, S, i) {
+    var h = HATCH[i % HATCH.length], col = S.fcolors[i % 6].hex, s = '';
+    s += '<pattern id="' + id + '" width="10" height="10" patternUnits="userSpaceOnUse"' + (h.dots ? '' : ' patternTransform="rotate(' + h.rot + ')"') + '>';
+    s += '<rect width="10" height="10" fill="#ffffff"/>';
+    if (h.dots) s += '<circle cx="5" cy="5" r="1.7" fill="' + col + '"/>';
+    else if (h.cross) s += '<line x1="0" y1="0" x2="0" y2="10" stroke="' + col + '" stroke-width="1"/><line x1="0" y1="0" x2="10" y2="0" stroke="' + col + '" stroke-width="1"/>';
+    else s += '<line x1="0" y1="0" x2="0" y2="10" stroke="' + col + '" stroke-width="1.8"/>';
+    return s + '</pattern>';
+  }
+
+  function renderSVG(city, ro) {
+    ro = ro || {};
+    var S = STYLES[ro.style] || STYLES.neon, live = !!ro.live, transparent = !!ro.transparent, isPrint = ro.style === 'print';
+    var o = [], i, k, F = city.factions.length;
+    o.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + VH + '" width="' + W + '" height="' + VH + '" font-family="' + FONT_UI + '"' +
+      (live ? ' class="ncm-live" id="ncmsvg"' : '') + ' role="img" aria-label="' + esc('Map of ' + city.name) + '">');
+    /* defs */
+    o.push('<defs>');
+    o.push('<clipPath id="ncm-clip"><path d="' + pathD(city.outline, true) + '"/></clipPath>');
+    if (S.glow) o.push('<filter id="ncm-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>');
+    if (isPrint) {
+      for (k = 0; k < F; k++) o.push(hatchPattern('ncm-f' + k, S, k));
+      o.push('<pattern id="ncm-cx" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#ffffff"/><line x1="0" y1="0" x2="0" y2="7" stroke="#000000" stroke-width="2.4"/><line x1="0" y1="0" x2="7" y2="0" stroke="#000000" stroke-width="2.4"/></pattern>');
+    } else {
+      for (i = 0; i < city.districts.length; i++) {
+        var dd = city.districts[i];
+        if (dd.contested >= 0 && dd.owner >= 0) {
+          o.push('<pattern id="ncm-c' + i + '" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="16" fill="' + S.fcolors[dd.owner % 6].hex + '" fill-opacity="0.55"/><rect x="8" width="8" height="16" fill="' + S.fcolors[dd.contested % 6].hex + '" fill-opacity="0.55"/></pattern>');
+        }
+      }
+    }
+    o.push('</defs>');
+    /* background + sea */
+    if (!transparent) {
+      o.push('<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="' + S.bg + '"/>');
+      if (city.hasSea) o.push('<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="' + S.sea + '"/>');
+    }
+    /* ripples */
+    if (ro.water !== false && city.hasSea && !transparent) {
+      var rk;
+      if (city.coastPts) {
+        for (rk = 1; rk <= 3; rk++) {
+          var sh = [], q;
+          for (q = 0; q < city.coastPts.length; q++) sh.push([city.coastPts[q][0] + city.coastN[0] * rk * 16, city.coastPts[q][1] + city.coastN[1] * rk * 16]);
+          o.push('<path d="' + pathD(sh, false) + '" fill="none" stroke="' + S.coast + '" stroke-opacity="' + (0.3 - rk * 0.07).toFixed(2) + '" stroke-width="1.6" stroke-linejoin="round" pointer-events="none"/>');
+        }
+      } else {
+        var oc = polyCentroid(city.outline);
+        for (rk = 1; rk <= 3; rk++) {
+          var sp = [], q2;
+          for (q2 = 0; q2 < city.outline.length; q2 += 2) sp.push([oc[0] + (city.outline[q2][0] - oc[0]) * (1 + rk * 0.04), oc[1] + (city.outline[q2][1] - oc[1]) * (1 + rk * 0.05)]);
+          o.push('<path d="' + pathD(sp, true) + '" fill="none" stroke="' + S.coast + '" stroke-opacity="' + (0.3 - rk * 0.07).toFixed(2) + '" stroke-width="1.6" stroke-linejoin="round" pointer-events="none"/>');
+        }
+      }
+    }
+    /* decor */
+    for (i = 0; i < city.decor.length; i++) {
+      var dc = city.decor[i];
+      if (dc.k === 'peaks') o.push('<path d="M' + f1(dc.x - 16 * dc.s) + ' ' + f1(dc.y + 10 * dc.s) + 'L' + f1(dc.x) + ' ' + f1(dc.y - 14 * dc.s) + 'L' + f1(dc.x + 16 * dc.s) + ' ' + f1(dc.y + 10 * dc.s) + 'Z" fill="none" stroke="' + S.decor + '" stroke-width="2" stroke-linejoin="round" pointer-events="none"/>');
+      else o.push('<path d="M' + f1(dc.x - 22 * dc.s) + ' ' + f1(dc.y) + 'q' + f1(11 * dc.s) + ' ' + f1(-12 * dc.s) + ' ' + f1(22 * dc.s) + ' 0q' + f1(11 * dc.s) + ' ' + f1(10 * dc.s) + ' ' + f1(22 * dc.s) + ' 0" fill="none" stroke="' + S.decor + '" stroke-width="2" stroke-linecap="round" pointer-events="none"/>');
+    }
+    /* land */
+    o.push('<path d="' + pathD(city.outline, true) + '" fill="' + S.land + '" stroke="' + S.coast + '" stroke-width="' + S.coastW + '" stroke-linejoin="round"' + (S.glow ? ' filter="url(#ncm-glow)"' : '') + ' pointer-events="none"/>');
+    /* districts */
+    o.push('<g id="ncm-districts">');
+    for (i = 0; i < city.districts.length; i++) {
+      var d = city.districts[i], fill, fo = 1;
+      if (d.owner >= 0 && d.contested >= 0) { fill = isPrint ? 'url(#ncm-cx)' : 'url(#ncm-c' + i + ')'; }
+      else if (d.owner >= 0) { if (isPrint) fill = 'url(#ncm-f' + d.owner + ')'; else { fill = S.fcolors[d.owner % 6].hex; fo = S.tint; } }
+      else { fill = isPrint ? '#f2f2f2' : S.neutral; fo = isPrint ? 1 : S.neutralOp; }
+      var ownerName = d.owner >= 0 ? city.factions[d.owner].name : 'Neutral ground';
+      var aria = d.num + '. ' + d.name + ', ' + ownerName + ', danger ' + d.danger + ' of 5';
+      o.push('<g class="dist" data-i="' + i + '"' + (live ? ' style="--i:' + i + '"' : '') + '>');
+      o.push('<path class="dshape" d="' + pathD(d.poly, true) + '" fill="' + fill + '" fill-opacity="' + fo + '" stroke="' + S.dline + '" stroke-width="2.2" stroke-linejoin="round" pathLength="1"' +
+        (live ? ' tabindex="0" role="button" aria-label="' + esc(aria) + '"' : '') + '/>');
+      o.push('</g>');
+    }
+    o.push('</g>');
+    /* grid overlay */
+    if (ro.grid) {
+      var gx, gy, gl = '';
+      for (gx = 100; gx < W; gx += 100) gl += 'M' + gx + ' 0V' + H;
+      for (gy = 100; gy < H; gy += 100) gl += 'M0 ' + gy + 'H' + W;
+      o.push('<g clip-path="url(#ncm-clip)" pointer-events="none"><path d="' + gl + '" fill="none" stroke="' + S.grid + '" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="4 6"/></g>');
+      var gt = '';
+      for (gx = 0; gx < 16; gx++) gt += '<text x="' + (gx * 100 + 50) + '" y="24" text-anchor="middle" font-size="12" fill="' + S.text + '" fill-opacity="0.75">' + String.fromCharCode(65 + gx) + '</text>';
+      for (gy = 0; gy < 10; gy++) gt += '<text x="14" y="' + (gy * 100 + 54) + '" text-anchor="middle" font-size="12" fill="' + S.text + '" fill-opacity="0.75">' + (gy + 1) + '</text>';
+      o.push('<g pointer-events="none">' + gt + '</g>');
+    }
+    /* river */
+    if (city.river) {
+      o.push('<g clip-path="url(#ncm-clip)" pointer-events="none"><path d="' + smoothOpen(city.river) + '" fill="none" stroke="' + S.riverEdge + '" stroke-opacity="0.75" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/><path d="' + smoothOpen(city.river) + '" fill="none" stroke="' + S.river + '" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/></g>');
+    }
+    /* rails */
+    for (i = 0; i < city.rails.length; i++) {
+      var rl = city.rails[i], rd = smoothOpen(rl.pts), st = '';
+      o.push('<g class="late" pointer-events="none"><path d="' + rd + '" fill="none" stroke="' + S.rail + '" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="' + rd + '" fill="none" stroke="' + S.rail + '" stroke-width="10" stroke-dasharray="2 9" stroke-opacity="0.85"/>');
+      for (k = 0; k < rl.pts.length; k++) st += '<rect x="' + f1(rl.pts[k][0] - 5) + '" y="' + f1(rl.pts[k][1] - 5) + '" width="10" height="10" fill="' + S.land + '" stroke="' + S.rail + '" stroke-width="2.4"/>';
+      o.push(st + '</g>');
+    }
+    /* roads */
+    o.push('<g pointer-events="none"' + (S.glow ? ' filter="url(#ncm-glow)"' : '') + '>');
+    for (i = 0; i < city.roads.length; i++) {
+      var rd2 = city.roads[i], mj = rd2.kind === 'major';
+      o.push('<path class="road" d="' + rd2.d + '" fill="none" stroke="' + (mj ? S.major : S.minor) + '" stroke-width="' + (mj ? 3.6 : 2) + '" stroke-opacity="' + (mj ? 1 : 0.8) + '" stroke-linecap="round" pathLength="1"' + (live ? ' style="--i:' + i + '"' : '') + '/>');
+    }
+    if (city.ring) o.push('<path class="road" d="' + smoothClosed(city.ring) + '" fill="none" stroke="' + S.major + '" stroke-width="3" stroke-dasharray="14 7" stroke-opacity="0.9"' + (live ? ' style="--i:20"' : '') + '/>');
+    o.push('</g>');
+    /* bridges */
+    if (city.bridges.length) {
+      var bs = '';
+      for (i = 0; i < city.bridges.length; i++) {
+        var br = city.bridges[i];
+        bs += '<rect x="-17" y="-8" width="34" height="16" rx="3" transform="translate(' + f1(br.x) + ' ' + f1(br.y) + ') rotate(' + f1(br.ang) + ')" fill="' + S.land + '" stroke="' + S.major + '" stroke-width="2.4"/>';
+      }
+      o.push('<g class="late" pointer-events="none">' + bs + '</g>');
+    }
+    /* labels */
+    if (ro.labels !== false) {
+      var lb = '';
+      for (i = 0; i < city.districts.length; i++) {
+        var dl = city.districts[i], L = dl.label;
+        if (L.visible && isPrint) lb += '<rect x="' + f1(L.x0) + '" y="' + f1(L.y0) + '" width="' + f1(L.w) + '" height="' + f1(L.h) + '" rx="3" fill="#ffffff" fill-opacity="0.88"/>';
+        if (L.visible) lb += '<text x="' + f1(L.cx) + '" y="' + f1(L.cy + LBL_FS * 0.35) + '" text-anchor="middle" font-size="' + LBL_FS + '" fill="' + S.text + '" stroke="' + S.halo + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' + esc(dl.name) + '</text>';
+        else lb += '<circle cx="' + f1(dl.site[0]) + '" cy="' + f1(dl.site[1]) + '" r="11" fill="' + S.halo + '" stroke="' + S.text + '" stroke-width="1.6"/><text x="' + f1(dl.site[0]) + '" y="' + f1(dl.site[1] + 4) + '" text-anchor="middle" font-size="11" fill="' + S.text + '">' + dl.num + '</text>';
+      }
+      o.push('<g class="late" pointer-events="none">' + lb + '</g>');
+    }
+    /* entrances */
+    o.push('<g id="ncm-ents"' + (S.glow ? ' filter="url(#ncm-glow)"' : '') + '>');
+    for (i = 0; i < city.entrances.length; i++) {
+      var en = city.entrances[i];
+      o.push('<g transform="translate(' + f1(en.x) + ' ' + f1(en.y) + ')"><g class="ent ent-in" data-e="' + i + '"' + (live ? ' style="--i:' + i + '" tabindex="0" role="button" aria-label="' + esc('Hidden entrance ' + (i + 1) + ': ' + en.name) + '"' : '') + '>' +
+        '<path d="M0 -13L13 0L0 13L-13 0Z" fill="' + S.ent + '" stroke="' + S.halo + '" stroke-width="2"/><text y="4" text-anchor="middle" font-size="11" fill="' + S.entText + '" pointer-events="none">' + (i + 1) + '</text></g></g>');
+    }
+    o.push('</g>');
+    /* compass */
+    o.push('<g transform="translate(' + (W - 80) + ' 84)" opacity="0.85" pointer-events="none"><circle r="30" fill="none" stroke="' + S.text + '" stroke-width="1.5"/><path d="M0 -40L8 -4L0 -12L-8 -4Z" fill="' + S.accent + '"/><path d="M0 40L6 6L0 12L-6 6Z" fill="none" stroke="' + S.text + '" stroke-width="1.4"/><text y="-48" text-anchor="middle" font-size="13" fill="' + S.text + '">N</text></g>');
+    /* animated scan line (live only) */
+    if (live) o.push('<rect class="scan" x="0" y="0" width="14" height="' + H + '" fill="' + S.major + '" fill-opacity="0.55" pointer-events="none"/>');
+    /* legend */
+    var by = H, ly = '';
+    o.push('<g pointer-events="none">');
+    o.push('<rect x="0" y="' + by + '" width="' + W + '" height="' + LEG + '" fill="' + S.legendBg + '"/>');
+    o.push('<rect x="0" y="' + by + '" width="' + W + '" height="3" fill="' + S.accent + '"/>');
+    var author = ro.author ? trunc(ro.author, 34) : '', series = ro.series ? trunc(ro.series, 34) : '';
+    ly += '<text x="28" y="' + (by + 40) + '" font-size="32" font-weight="700" font-family="' + FONT_TITLE + '" fill="' + S.legendText + '">' + esc(trunc(city.name.toUpperCase(), 24)) + '</text>';
+    ly += '<text x="28" y="' + (by + 70) + '" font-size="18" fill="' + S.legendText + '">Author: ' + (author ? esc(author) : '—') + '</text>';
+    ly += '<text x="28" y="' + (by + 92) + '" font-size="18" fill="' + S.legendText + '">Series: ' + (series ? esc(series) : '—') + '</text>';
+    ly += '<text x="28" y="' + (by + 112) + '" font-size="14" fill="' + S.legendText + '" fill-opacity="0.75">' + esc(city.typeLabel + ' · ' + city.tone + ' · seed ' + city.seed) + '</text>';
+    for (i = 0; i < F; i++) {
+      var col = i % 3, row = Math.floor(i / 3), lx = 500 + col * 290, lyy = by + 30 + row * 36, fsw;
+      fsw = isPrint ? 'url(#ncm-f' + i + ')' : S.fcolors[i % 6].hex;
+      ly += '<rect x="' + lx + '" y="' + (lyy - 14) + '" width="20" height="20" fill="' + fsw + '"' + (isPrint ? '' : ' fill-opacity="0.7"') + ' stroke="' + S.legendText + '" stroke-width="1.4"/>';
+      ly += '<text x="' + (lx + 30) + '" y="' + (lyy + 3) + '" font-size="17" fill="' + S.legendText + '">' + esc(trunc(city.factions[i].name, 21)) + '</text>';
+    }
+    ly += '<text x="500" y="' + (by + 112) + '" font-size="14" fill="' + S.legendText + '" fill-opacity="0.75">' + F + ' factions · ' + city.districts.length + ' districts · ' + city.entrances.length + ' hidden entrances</text>';
+    var kx = 1390;
+    ly += '<path d="M' + (kx + 8) + ' ' + (by + 20) + 'l8 8l-8 8l-8 -8z" fill="' + S.ent + '" stroke="' + S.legendText + '" stroke-width="1"/><text x="' + (kx + 28) + '" y="' + (by + 33) + '" font-size="15" fill="' + S.legendText + '">Hidden entrance</text>';
+    ly += '<rect x="' + (kx - 2) + '" y="' + (by + 46) + '" width="22" height="10" rx="2" fill="' + S.legendBg + '" stroke="' + S.major + '" stroke-width="2"/><text x="' + (kx + 28) + '" y="' + (by + 56) + '" font-size="15" fill="' + S.legendText + '">Bridge</text>';
+    ly += '<path d="M' + (kx - 2) + ' ' + (by + 73) + 'h22" stroke="' + S.rail + '" stroke-width="3"/><path d="M' + (kx - 2) + ' ' + (by + 73) + 'h22" stroke="' + S.rail + '" stroke-width="9" stroke-dasharray="2 5"/><text x="' + (kx + 28) + '" y="' + (by + 78) + '" font-size="15" fill="' + S.legendText + '">Rail line</text>';
+    ly += '<rect x="' + (kx - 2) + '" y="' + (by + 90) + '" width="22" height="14" fill="' + (isPrint ? 'url(#ncm-cx)' : S.accent) + '"' + (isPrint ? '' : ' fill-opacity="0.5"') + ' stroke="' + S.legendText + '" stroke-width="1"/><text x="' + (kx + 28) + '" y="' + (by + 101) + '" font-size="15" fill="' + S.legendText + '">Contested</text>';
+    o.push(ly + '</g>');
+    o.push('</svg>');
+    return o.join('');
+  }
+
+  /* ---------- TEXT EXPORTS ---------- */
+  function dangerBar(n) { var s = '', i; for (i = 0; i < 5; i++) s += i < n ? '■' : '□'; return s; }
+  function brandLine(b) {
+    b = b || {};
+    var parts = [];
+    if (b.author) parts.push('Author: ' + b.author);
+    if (b.series) parts.push('Series: ' + b.series);
+    return parts.join(' | ');
+  }
+  function ownerLabel(city, d) {
+    if (d.owner < 0) return 'Neutral ground';
+    var s = city.factions[d.owner].name;
+    if (d.contested >= 0) s += ' (contested by ' + city.factions[d.contested].name + ')';
+    return s;
+  }
+  function mdDossier(city, brand, styleKey) {
+    var L = [], i, S = STYLES[styleKey] || STYLES.neon;
+    L.push('# ' + city.name);
+    L.push('');
+    L.push('*' + city.typeLabel + ' · ' + city.tone + ' tone · seed `' + city.seed + '`*');
+    if (brandLine(brand)) { L.push(''); L.push(brandLine(brand)); }
+    L.push('');
+    L.push('## Districts');
+    for (i = 0; i < city.districts.length; i++) {
+      var d = city.districts[i];
+      L.push('');
+      L.push('### ' + d.num + '. ' + d.name);
+      L.push('- **Vibe:** ' + d.vibe);
+      L.push('- **Danger:** ' + d.danger + '/5 ' + dangerBar(d.danger));
+      L.push('- **Held by:** ' + ownerLabel(city, d));
+      L.push('- **Notable place:** ' + d.landmark);
+      L.push('- **Rumor:** "' + d.rumor + '"');
+      if (d.entrances.length) {
+        var en = [], k;
+        for (k = 0; k < d.entrances.length; k++) en.push('E' + (d.entrances[k] + 1) + ' ' + city.entrances[d.entrances[k]].name);
+        L.push('- **Hidden entrances:** ' + en.join('; '));
+      }
+    }
+    L.push('');
+    L.push('## Factions');
+    for (i = 0; i < city.factions.length; i++) {
+      var f = city.factions[i], dn = [], j;
+      for (j = 0; j < f.districts.length; j++) dn.push(city.districts[f.districts[j]].name);
+      L.push('');
+      L.push('### ' + f.name + ' (' + f.archLabel + ')');
+      L.push('- **Goal:** ' + f.goal);
+      L.push('- **Taboo:** ' + f.taboo);
+      L.push('- **Map color:** ' + S.fcolors[f.color % 6].name);
+      L.push('- **Districts held:** ' + dn.join(', '));
+    }
+    L.push('');
+    L.push('## Hidden entrances');
+    for (i = 0; i < city.entrances.length; i++) {
+      var e = city.entrances[i];
+      L.push('');
+      L.push('### E' + (i + 1) + '. ' + e.name);
+      L.push('- **Location:** ' + city.districts[e.d].name);
+      L.push('- **How it works:** ' + e.desc.charAt(0).toUpperCase() + e.desc.substr(1) + '.');
+    }
+    L.push('');
+    L.push('## Street rumors');
+    for (i = 0; i < city.streetRumors.length; i++) L.push('- ' + city.streetRumors[i]);
+    L.push('');
+    L.push('---');
+    L.push('Generated with Neon City Mapper.');
+    return L.join('\n') + '\n';
+  }
+  function storyText(city, brand) {
+    var L = [], i, j;
+    L.push('STORY BIBLE ENTRY: SETTING');
+    L.push('City: ' + city.name + ' (' + city.typeLabel + ', ' + city.tone + ' tone)');
+    if (brandLine(brand)) L.push(brandLine(brand));
+    L.push('Districts: ' + city.districts.length + ' | Factions: ' + city.factions.length + ' | Hidden entrances: ' + city.entrances.length);
+    L.push('');
+    L.push('DISTRICTS');
+    for (i = 0; i < city.districts.length; i++) {
+      var d = city.districts[i];
+      L.push('- ' + d.name + ' [danger ' + d.danger + '/5, ' + ownerLabel(city, d) + ']: ' + d.vibe + ' Notable place: ' + d.landmark + '. Rumor: "' + d.rumor + '"');
+    }
+    L.push('');
+    L.push('FACTIONS');
+    for (i = 0; i < city.factions.length; i++) {
+      var f = city.factions[i], dn = [];
+      for (j = 0; j < f.districts.length; j++) dn.push(city.districts[f.districts[j]].name);
+      L.push('- ' + f.name + ' (' + f.archLabel + '). Goal: ' + f.goal + ' Taboo: ' + f.taboo + ' Holds: ' + dn.join(', ') + '.');
+    }
+    L.push('');
+    L.push('HIDDEN ENTRANCES');
+    for (i = 0; i < city.entrances.length; i++) {
+      var e = city.entrances[i];
+      L.push('- ' + e.name + ' (' + city.districts[e.d].name + '): ' + e.desc + '.');
+    }
+    L.push('');
+    L.push('STREET RUMORS');
+    for (i = 0; i < city.streetRumors.length; i++) L.push('- ' + city.streetRumors[i]);
+    return L.join('\n') + '\n';
+  }
+
+  return {
+    W: W, H: H, LEG: LEG, VH: VH, TYPES: TYPES, SIZES: SIZES, TONES: TONES, STYLES: STYLES,
+    banks: { D_PRE: D_PRE, D_SUF: D_SUF, LANDMARKS: LANDMARKS, ARCHS: ARCHS, ENTRANCES: ENTRANCES, RUMORS: RUMORS, TABOOS: TABOOS, VIBES: VIBES },
+    generate: generate, renderSVG: renderSVG, mdDossier: mdDossier, storyText: storyText,
+    randomSeed: randomSeed, nameCity: nameCity, esc: esc, pointInPoly: pointInPoly, rectsOverlap: rectsOverlap
+  };
+})();
+</script>
+
+<script id="ncm-ui">
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  var state = { city: null, style: 'neon', labels: true, grid: false, zoom: 1, nameCount: 0 };
+  var svgEl = null, errTimer = null, statusTimer = null, dragMoved = false;
+
+  /* ---------- messages ---------- */
+  function say(msg) {
+    var s = $('status');
+    s.textContent = msg; s.className = 'status on';
+    if (statusTimer) clearTimeout(statusTimer);
+    statusTimer = setTimeout(function () { s.className = 'status'; }, 4200);
+  }
+  function fail(msg) {
+    $('errMsg').textContent = msg; $('err').hidden = false;
+    $('status').textContent = 'Error: ' + msg;
+  }
+  function clearFail() { $('err').hidden = true; }
+
+  /* ---------- storage (blocked-safe) ---------- */
+  function store(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage blocked: tool keeps working */ } }
+  function load(k) { try { return window.localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+
+  /* ---------- panels ---------- */
+  function setDock(open) {
+    document.body.classList[open ? 'add' : 'remove']('dock-open');
+    $('btnDock').setAttribute('aria-expanded', open ? 'true' : 'false');
+    $('dock').setAttribute('aria-hidden', open ? 'false' : 'true');
+    setTimeout(fit, 300);
+  }
+  function setDrawer(open) {
+    document.body.classList[open ? 'add' : 'remove']('drawer-open');
+    $('btnDoss').setAttribute('aria-expanded', open ? 'true' : 'false');
+    $('drawer').setAttribute('aria-hidden', open ? 'false' : 'true');
+    setTimeout(fit, 300);
+  }
+  function isOpen(c) { return document.body.classList.contains(c); }
+
+  /* ---------- options ---------- */
+  function readOpts() {
+    return {
+      type: $('type').value, size: $('size').value, tone: $('tone').value,
+      factions: $('factions').value, entrances: $('entrances').value,
+      water: $('optWater').checked, rail: $('optRail').checked,
+      name: $('cityName').value, seed: $('seed').value
+    };
+  }
+  function brand() { return { author: $('author').value.replace(/^\s+|\s+$/g, ''), series: $('series').value.replace(/^\s+|\s+$/g, '') }; }
+  function renderOpts(extra) {
+    var b = brand(), r = { style: state.style, labels: state.labels, grid: state.grid, author: b.author, series: b.series, water: $('optWater').checked };
+    var k;
+    if (extra) { for (k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) r[k] = extra[k]; } }
+    return r;
+  }
+
+  /* ---------- build + render ---------- */
+  function build() {
+    var opts = readOpts();
+    if (!String(opts.seed).replace(/\s/g, '')) { opts.seed = NCM.randomSeed(); $('seed').value = opts.seed; }
+    var city;
+    try { city = NCM.generate(opts); }
+    catch (e) { fail('Could not build this city: ' + e.message); return; }
+    clearFail();
+    state.city = city;
+    document.body.classList.add('has-city');
+    $('btnBuild').classList.remove('pulse');
+    render(true);
+    fillDossier();
+    var ids = ['expPNG', 'expSVG', 'expMD', 'expCopy'], i;
+    for (i = 0; i < ids.length; i++) $(ids[i]).disabled = false;
+    if (window.innerWidth < 1100) setDock(false);
+    if (window.innerWidth >= 1700) setDrawer(true);
+    say(city.name + ' built: ' + city.districts.length + ' districts, ' + city.factions.length + ' factions, ' + city.entrances.length + ' hidden entrances. Seed ' + city.seed + '.');
+  }
+  function render(animate) {
+    if (!state.city) return;
+    var holder = $('mapscroll');
+    holder.innerHTML = NCM.renderSVG(state.city, renderOpts({ live: true }));
+    svgEl = holder.firstChild;
+    if (animate) {
+      svgEl.setAttribute('class', 'ncm-live anim');
+      setTimeout(function () { if (svgEl) svgEl.setAttribute('class', 'ncm-live'); }, 6500);
+    }
+    fit();
+    if (animate) { holder.scrollLeft = Math.max(0, (holder.scrollWidth - holder.clientWidth) / 2); holder.scrollTop = 0; }
+  }
+  function fit() {
+    if (!svgEl) return;
+    var st = $('stage'), cw = st.clientWidth, ch = st.clientHeight;
+    var base = Math.min(cw, ch * 1600 / 1120);
+    if (window.innerWidth < 700) base = Math.max(base, 900);
+    svgEl.style.width = Math.round(base * state.zoom) + 'px';
+  }
+  function zoomBy(f) { state.zoom = Math.max(0.6, Math.min(3, state.zoom * f)); fit(); }
+
+  /* ---------- dossier ---------- */
+  function pips(n) { var s = '<span class="pips" role="img" aria-label="Danger ' + n + ' of 5">', i; for (i = 0; i < 5; i++) s += '<i' + (i < n ? ' class="on"' : '') + '></i>'; return s + '</span>'; }
+  function fillDossier() {
+    var c = state.city, e = NCM.esc, i, k, h = '', S = NCM.STYLES[state.style];
+    h += '<h2>' + e(c.name) + '</h2><p class="meta">' + e(c.typeLabel) + ' &middot; ' + e(c.tone) + ' &middot; seed ' + e(c.seed) + '</p>';
+    h += '<h3>Districts</h3>';
+    for (i = 0; i < c.districts.length; i++) {
+      var d = c.districts[i], ow = d.owner < 0 ? 'Neutral ground' : c.factions[d.owner].name + (d.contested >= 0 ? ' (contested by ' + c.factions[d.contested].name + ')' : '');
+      h += '<details class="dent" id="dd-' + i + '"><summary><span class="n">' + d.num + '</span><span class="nm">' + e(d.name) + '</span>' + pips(d.danger) + '</summary><div class="bd">' +
+        '<p>' + e(d.vibe) + '</p><p><b>Held by:</b> ' + e(ow) + '</p><p><b>Notable place:</b> ' + e(d.landmark) + '</p><p><b>Rumor:</b> &ldquo;' + e(d.rumor) + '&rdquo;</p>';
+      if (d.entrances.length) {
+        var en = [];
+        for (k = 0; k < d.entrances.length; k++) en.push('E' + (d.entrances[k] + 1) + ' ' + e(c.entrances[d.entrances[k]].name));
+        h += '<p><b>Hidden entrances:</b> ' + en.join('; ') + '</p>';
+      }
+      h += '</div></details>';
+    }
+    h += '<h3>Factions</h3>';
+    for (i = 0; i < c.factions.length; i++) {
+      var f = c.factions[i], dn = [];
+      for (k = 0; k < f.districts.length; k++) dn.push(e(c.districts[f.districts[k]].name));
+      h += '<details class="dent" id="df-' + i + '" data-f="' + i + '"><summary><span class="sw" style="background:' + S.fcolors[f.color % 6].hex + '"></span><span class="nm">' + e(f.name) + '</span></summary><div class="bd">' +
+        '<p><b>Archetype:</b> ' + e(f.archLabel) + '</p><p><b>Goal:</b> ' + e(f.goal) + '</p><p><b>Taboo:</b> ' + e(f.taboo) + '</p><p><b>Map color:</b> ' + e(S.fcolors[f.color % 6].name) + '</p><p><b>Districts held:</b> ' + dn.join(', ') + '</p></div></details>';
+    }
+    h += '<h3>Hidden entrances</h3>';
+    for (i = 0; i < c.entrances.length; i++) {
+      var x = c.entrances[i];
+      h += '<details class="dent" id="de-' + i + '"><summary><span class="n">E' + (i + 1) + '</span><span class="nm">' + e(x.name) + '</span></summary><div class="bd"><p><b>Location:</b> ' + e(c.districts[x.d].name) + '</p><p>' + e(x.desc.charAt(0).toUpperCase() + x.desc.substr(1)) + '.</p></div></details>';
+    }
+    h += '<h3>Street rumors</h3><ul>';
+    for (i = 0; i < c.streetRumors.length; i++) h += '<li>' + e(c.streetRumors[i]) + '</li>';
+    h += '</ul>';
+    $('dossier').innerHTML = h;
+  }
+  function openEntry(id) {
+    var el = $(id);
+    if (!el) return;
+    if (!isOpen('drawer-open')) setDrawer(true);
+    el.open = true;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    try { el.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }); } catch (err) { el.scrollIntoView(); }
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  }
+
+  /* ---------- map interaction ---------- */
+  function climb(node, cls) {
+    while (node && node !== document) { if (node.classList && node.classList.contains(cls)) return node; node = node.parentNode; }
+    return null;
+  }
+  function clearHl() {
+    if (!svgEl) return;
+    var hl = svgEl.querySelectorAll('.dist.hl'), i;
+    for (i = 0; i < hl.length; i++) hl[i].classList.remove('hl');
+  }
+  function hlDistrict(i) { var g = svgEl && svgEl.querySelector('.dist[data-i="' + i + '"]'); if (g) g.classList.add('hl'); }
+  function showTip(html, x, y) {
+    var t = $('tip');
+    t.innerHTML = html; t.style.display = 'block';
+    var w = t.offsetWidth, h = t.offsetHeight;
+    t.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, x + 14)) + 'px';
+    t.style.top = Math.max(66, Math.min(window.innerHeight - h - 6, y + 14)) + 'px';
+  }
+  function hideTip() { $('tip').style.display = 'none'; }
+  function tipFor(node) {
+    var c = state.city, e = NCM.esc, g;
+    if ((g = climb(node, 'ent'))) { var en = c.entrances[+g.getAttribute('data-e')]; return '<b>E' + (+g.getAttribute('data-e') + 1) + ' &middot; ' + e(en.name) + '</b>' + e(c.districts[en.d].name); }
+    if ((g = climb(node, 'dist'))) {
+      var d = c.districts[+g.getAttribute('data-i')];
+      return '<b>' + d.num + '. ' + e(d.name) + '</b>' + e(d.owner < 0 ? 'Neutral ground' : c.factions[d.owner].name) + ' &middot; danger ' + d.danger + '/5';
+    }
+    return '';
+  }
+  function activate(node) {
+    var g;
+    if ((g = climb(node, 'ent'))) { openEntry('de-' + g.getAttribute('data-e')); return; }
+    if ((g = climb(node, 'dist'))) {
+      var i = g.getAttribute('data-i'), prev = svgEl.querySelectorAll('.dist.sel'), k;
+      for (k = 0; k < prev.length; k++) prev[k].classList.remove('sel');
+      g.classList.add('sel');
+      openEntry('dd-' + i);
+    }
+  }
+  function wireMap() {
+    var holder = $('mapscroll');
+    holder.addEventListener('mouseover', function (ev) {
+      if (!state.city) return;
+      clearHl();
+      var g = climb(ev.target, 'dist'), en = climb(ev.target, 'ent');
+      if (en) { var d = state.city.entrances[+en.getAttribute('data-e')].d; hlDistrict(d); }
+      else if (g) g.classList.add('hl');
+      var html = tipFor(ev.target);
+      if (html) showTip(html, ev.clientX, ev.clientY); else hideTip();
+    });
+    holder.addEventListener('mousemove', function (ev) {
+      if ($('tip').style.display === 'block') showTip($('tip').innerHTML, ev.clientX, ev.clientY);
+    });
+    holder.addEventListener('mouseleave', function () { clearHl(); hideTip(); });
+    holder.addEventListener('click', function (ev) { if (dragMoved) { dragMoved = false; return; } activate(ev.target); });
+    holder.addEventListener('focusin', function (ev) {
+      clearHl();
+      var g = climb(ev.target, 'dist'), en = climb(ev.target, 'ent');
+      if (g) g.classList.add('hl');
+      if (en) hlDistrict(state.city.entrances[+en.getAttribute('data-e')].d);
+      var html = tipFor(ev.target);
+      if (html && ev.target.getBoundingClientRect) { var r = ev.target.getBoundingClientRect(); showTip(html, r.left + r.width / 2, r.top + r.height / 2); }
+    });
+    holder.addEventListener('focusout', function () { clearHl(); hideTip(); });
+    holder.addEventListener('keydown', function (ev) {
+      if ((ev.key === 'Enter' || ev.key === ' ') && (climb(ev.target, 'dist') || climb(ev.target, 'ent'))) { ev.preventDefault(); activate(ev.target); }
+    });
+    /* mouse drag-to-pan */
+    var down = null;
+    holder.addEventListener('mousedown', function (ev) { if (ev.button === 0) down = { x: ev.clientX, y: ev.clientY, sl: holder.scrollLeft, st: holder.scrollTop }; dragMoved = false; });
+    window.addEventListener('mousemove', function (ev) {
+      if (!down) return;
+      var dx = ev.clientX - down.x, dy = ev.clientY - down.y;
+      if (Math.abs(dx) + Math.abs(dy) > 5) { dragMoved = true; holder.classList.add('drag'); holder.scrollLeft = down.sl - dx; holder.scrollTop = down.st - dy; }
+    });
+    window.addEventListener('mouseup', function () { down = null; holder.classList.remove('drag'); setTimeout(function () { dragMoved = false; }, 0); });
+    /* faction entries light up their districts */
+    $('dossier').addEventListener('toggle', function (ev) {
+      var det = ev.target;
+      if (!det || !det.getAttribute || det.getAttribute('data-f') === null || !det.open || !state.city) return;
+      clearHl();
+      var f = state.city.factions[+det.getAttribute('data-f')], k;
+      for (k = 0; k < f.districts.length; k++) hlDistrict(f.districts[k]);
+      setTimeout(clearHl, 2600);
+    }, true);
+  }
+
+  /* ---------- exports (fail loudly) ---------- */
+  function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'city'; }
+  function download(name, mime, data) {
+    var blob = (typeof data === 'string') ? new Blob([data], { type: mime }) : data;
+    if (!blob || !blob.size) throw new Error('The export came out empty, so nothing was downloaded.');
+    if (window.NCM_onDownload && window.NCM_onDownload(name, blob, mime) === true) return;
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  }
+  function needCity() { if (!state.city) { fail('Build a city first, then export.'); return false; } return true; }
+  function exportOpts(transparent) { return renderOpts({ live: false, transparent: !!transparent }); }
+  function svgString(transparent) {
+    var s = NCM.renderSVG(state.city, exportOpts(transparent));
+    if (!s || s.length < 800 || s.indexOf('</svg>') < 0 || s.indexOf('NaN') >= 0) throw new Error('The SVG could not be generated correctly.');
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + s;
+  }
+  function makePNG(transparent, cb) {
+    var city = state.city, pw = 3000, ph = Math.round(pw * NCM.VH / NCM.W), url, img;
+    try {
+      var blob = new Blob([svgString(transparent)], { type: 'image/svg+xml;charset=utf-8' });
+      url = URL.createObjectURL(blob);
+    } catch (e) { cb(e); return; }
+    img = new Image();
+    img.onload = function () {
+      try {
+        var cv = document.createElement('canvas'); cv.width = pw; cv.height = ph;
+        var ctx = cv.getContext('2d');
+        if (!ctx) throw new Error('Canvas is not available in this browser.');
+        ctx.drawImage(img, 0, 0, pw, ph);
+        cv.toBlob(function (b) {
+          URL.revokeObjectURL(url);
+          if (!b || !b.size) { cb(new Error('PNG encoding returned an empty image.')); return; }
+          cb(null, b, pw, ph);
+        }, 'image/png');
+      } catch (e2) { URL.revokeObjectURL(url); cb(e2); }
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); cb(new Error('The browser could not draw the map to an image.')); };
+    img.src = url;
+  }
+  function transparentChosen() { var r = document.getElementsByName('bg'), i; for (i = 0; i < r.length; i++) { if (r[i].checked) return r[i].value === 'transparent'; } return false; }
+
+  function doPNG() {
+    if (!needCity()) return;
+    say('Rendering 3000 px PNG...');
+    makePNG(transparentChosen(), function (err, b, w, h) {
+      if (err) { fail('PNG export failed: ' + err.message); return; }
+      try { download(slug(state.city.name) + '-map.png', 'image/png', b); clearFail(); say('PNG saved (' + w + ' x ' + h + ' px).'); }
+      catch (e) { fail('PNG export failed: ' + e.message); }
+    });
+  }
+  function doSVG() {
+    if (!needCity()) return;
+    try { download(slug(state.city.name) + '-map.svg', 'image/svg+xml', svgString(transparentChosen())); clearFail(); say('SVG saved.'); }
+    catch (e) { fail('SVG export failed: ' + e.message); }
+  }
+  function mdString() {
+    var s = NCM.mdDossier(state.city, brand(), state.style);
+    if (!s || s.length < 200) throw new Error('The dossier text came out empty.');
+    return s;
+  }
+  function doMD() {
+    if (!needCity()) return;
+    try { download(slug(state.city.name) + '-dossier.md', 'text/markdown', mdString()); clearFail(); say('Dossier saved.'); }
+    catch (e) { fail('Dossier export failed: ' + e.message); }
+  }
+  function showFallback(text, why) {
+    $('fbMsg').textContent = why + ' The text is selected below: press Ctrl+C (or Cmd+C) to copy it.';
+    $('fbText').value = text;
+    $('fallback').hidden = false;
+    $('fbText').focus(); $('fbText').select();
+  }
+  function copyText(text, label) {
+    if (!text) { fail('Nothing to copy.'); return; }
+    function legacy(why) {
+      var ok = false, ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '-1000px';
+      document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) { clearFail(); say(label + ' copied to the clipboard.'); }
+      else { fail('Automatic copy was blocked. Use the box that just opened.'); showFallback(text, why); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { clearFail(); say(label + ' copied to the clipboard.'); }, function () { legacy('Clipboard permission was denied.'); });
+    } else legacy('This browser has no clipboard API.');
+  }
+  function doCopy() {
+    if (!needCity()) return;
+    try { copyText(NCM.storyText(state.city, brand()), 'Story bible text'); } catch (e) { fail('Copy failed: ' + e.message); }
+  }
+
+  /* ---------- init ---------- */
+  function bind() {
+    $('btnDock').addEventListener('click', function () { setDock(!isOpen('dock-open')); });
+    $('btnDoss').addEventListener('click', function () { setDrawer(!isOpen('drawer-open')); });
+    $('btnBuild').addEventListener('click', build);
+    $('btnBuild2').addEventListener('click', build);
+    $('btnReroll').addEventListener('click', function () { $('seed').value = NCM.randomSeed(); state.nameCount = 0; build(); });
+    $('btnName').addEventListener('click', function () {
+      state.nameCount++;
+      $('cityName').value = NCM.nameCity($('seed').value || 'seed', $('type').value, state.nameCount);
+      say('Name set: ' + $('cityName').value + '. Press Build City to apply.');
+    });
+    $('factions').addEventListener('input', function () { $('factionsOut').textContent = this.value; });
+    $('entrances').addEventListener('input', function () { $('entrancesOut').textContent = this.value; });
+    $('style').addEventListener('change', function () { state.style = this.value; store('ncm.style', this.value); render(false); if (state.city) fillDossier(); });
+    $('optLabels').addEventListener('change', function () { state.labels = this.checked; render(false); });
+    $('optGrid').addEventListener('change', function () { state.grid = this.checked; render(false); });
+    $('optWater').addEventListener('change', function () { if (state.city) say('River / coast changed. Press Build City to apply.'); });
+    $('optRail').addEventListener('change', function () { if (state.city) say('Rail lines changed. Press Build City to apply.'); });
+    var brandEvt = function () { store('ncm.author', $('author').value); store('ncm.series', $('series').value); render(false); };
+    $('author').addEventListener('input', brandEvt);
+    $('series').addEventListener('input', brandEvt);
+    $('zIn').addEventListener('click', function () { zoomBy(1.25); });
+    $('zOut').addEventListener('click', function () { zoomBy(0.8); });
+    $('zFit').addEventListener('click', function () { state.zoom = 1; fit(); var h = $('mapscroll'); h.scrollLeft = 0; h.scrollTop = 0; });
+    $('expPNG').addEventListener('click', doPNG);
+    $('expSVG').addEventListener('click', doSVG);
+    $('expMD').addEventListener('click', doMD);
+    $('expCopy').addEventListener('click', doCopy);
+    $('errX').addEventListener('click', clearFail);
+    $('fbClose').addEventListener('click', function () { $('fallback').hidden = true; });
+    $('fbSel').addEventListener('click', function () { $('fbText').focus(); $('fbText').select(); });
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { $('fallback').hidden = true; hideTip(); } });
+    window.addEventListener('resize', fit);
+    wireMap();
+  }
+  function hashParams() {
+    var out = {}, h = (location.hash || '').replace(/^#/, ''), parts = h ? h.split('&') : [], i;
+    for (i = 0; i < parts.length; i++) { var kv = parts[i].split('='); if (kv[0]) { try { out[kv[0]] = decodeURIComponent(kv[1] || ''); } catch (e) { out[kv[0]] = kv[1] || ''; } } }
+    return out;
+  }
+  function init() {
+    $('author').value = load('ncm.author');
+    $('series').value = load('ncm.series');
+    var st = load('ncm.style');
+    if (st && NCM.STYLES[st]) { state.style = st; $('style').value = st; }
+    $('seed').value = NCM.randomSeed();
+    var hp = hashParams();
+    if (hp.seed) $('seed').value = hp.seed;
+    if (hp.type && NCM.TYPES[hp.type]) $('type').value = hp.type;
+    if (hp.size && NCM.SIZES[hp.size]) $('size').value = hp.size;
+    if (hp.tone) $('tone').value = hp.tone;
+    if (hp.style && NCM.STYLES[hp.style]) { state.style = hp.style; $('style').value = hp.style; }
+    bind();
+    setDock(true);
+    setDrawer(false);
+    if (hp.build === '1') build();
+  }
+  init();
+  window.NCM_UI = { build: build, state: state, makePNG: makePNG, svgString: svgString, mdString: mdString };
+})();
+</script>
+<div class="how-backdrop" id="howModal" hidden>
+  <div class="how-box" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+    <div class="how-head"><div><h2 id="howTitle">How to use Neon City Mapper</h2><p>Build a fictional city map for your book in about a minute. No account, nothing to install.</p></div><button type="button" class="tbtn" id="howClose" aria-label="Close how to use">Close</button></div>
+    <div class="how-body">
+      <h3>Step by step</h3>
+      <ol class="how-steps"><li><b>Open the Controls panel.</b>Tap the <b>Controls</b> button (top left) if the panel is closed. This is where you choose what kind of city you want.</li><li><b>Pick a city type, size and tone.</b>The type changes the shape (a coast, a river, mountains). The size is the number of districts: 6, 10 or 14. The tone only changes the mood of the names and descriptions.</li><li><b>Choose how many factions and hidden entrances.</b>Factions are the rival groups that own districts (2 to 6). Hidden entrances are the secret doorways your characters can use (3 to 12).</li><li><b>Press Build City.</b>Your map draws itself. Do not like it? Press <b>Reroll</b> for a brand new city. Like it? Copy the <b>seed</b> (the short code): typing the same seed with the same settings gives you the same city back.</li><li><b>Explore the map.</b>Hover a district to light it up. Click it (or a numbered diamond) and the <b>Dossier</b> opens on the right with its mood, danger level, a landmark, a street rumor and the hidden entrances inside it. Click a faction to see all its districts glow.</li><li><b>Name the city and add your branding.</b>Type your own city name, or press <b>Name it for me</b>. Fill in <b>Author</b> and <b>Series</b>: they are printed in the legend of every export.</li><li><b>Choose a look.</b><b>Neon Noir</b> for screens and social media, <b>Ink on Parchment</b> for a fantasy feel, <b>Blueprint</b> for something technical, and <b>Print B/W</b> for the inside of a paperback (pure black, white and greys).</li><li><b>Export what you need.</b><b>PNG</b> (3000 px wide, with paper or transparent background) for newsletters and merch, <b>SVG</b> for editing, <b>Dossier .md</b> for your notes, and <b>Copy story bible</b> to paste straight into the Story Bible step of the Urban Fantasy Royalties Bot.</li></ol>
+      <h3>Good to know</h3>
+      <ul><li>On a phone the map is wider than the screen: slide it with your finger, or use the + and - buttons at the top.</li><li>Use <b>Labels</b> and <b>Grid overlay</b> to simplify or add detail to the picture. They do not change the city, only how it is drawn.</li><li>Change a setting such as the size or the number of factions, then press <b>Build City</b> again: settings apply when you build.</li><li>Your author and series names are remembered on this computer, so you only type them once.</li></ul>
+      <h3>If something looks wrong</h3>
+      <ul><li><b>Nothing downloads?</b> A red message at the top tells you what went wrong. Check that your browser is allowed to download files from this page, then try again.</li><li><b>The PNG uses a different font from the screen?</b> That is normal: the picture is drawn without the web fonts. The map and the text are all there.</li><li><b>A label is missing on a small district?</b> It was hidden to avoid overlapping. Its number badge is still on the map, and its name is in the Dossier.</li></ul>
+    </div>
+    <div class="how-foot"><button type="button" class="tbtn" id="howDone">Got it</button></div>
+  </div>
+</div>
+
+<script id="howto-js">
+(function () {
+  'use strict';
+  var modal = document.getElementById('howModal'), box = modal.querySelector('.how-box'), closeB = document.getElementById('howClose'), last = null;
+  function focusables() { return box.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'); }
+  function open() {
+    last = document.activeElement; modal.hidden = false; document.body.classList.add('how-open');
+    var b = modal.querySelector('.how-body'); if (b) b.scrollTop = 0;
+    closeB.focus();
+  }
+  function close() {
+    modal.hidden = true; document.body.classList.remove('how-open');
+    if (last && last.focus) { try { last.focus(); } catch (e) { /* element gone */ } }
+  }
+  document.addEventListener('click', function (ev) {
+    var n = ev.target;
+    while (n && n !== document) { if (n.getAttribute && n.getAttribute('data-how-open') !== null) { ev.preventDefault(); open(); return; } n = n.parentNode; }
+  });
+  closeB.addEventListener('click', close);
+  var done = document.getElementById('howDone'); if (done) done.addEventListener('click', close);
+  modal.addEventListener('click', function (ev) { if (ev.target === modal) close(); });
+  document.addEventListener('keydown', function (ev) {
+    if (modal.hidden) return;
+    if (ev.key === 'Escape') { ev.stopPropagation(); close(); return; }
+    if (ev.key === 'Tab') {
+      var f = focusables(); if (!f.length) return;
+      var first = f[0], lastEl = f[f.length - 1];
+      if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); lastEl.focus(); }
+      else if (!ev.shiftKey && document.activeElement === lastEl) { ev.preventDefault(); first.focus(); }
+    }
+  }, true);
+  window.HOWTO = { open: open, close: close };
+})();
+</script>
+</body>
+</html>
