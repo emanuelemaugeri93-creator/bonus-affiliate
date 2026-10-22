@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advent Puzzle Calendar Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--tx:#eaf4ff;--tx2:#a9c3d8;--acc:#f5d680;--acc2:#7fd1e0;--gl:rgba(255,255,255,.08);--glb:rgba(255,255,255,.15);--field:rgba(8,22,44,.55);}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:var(--tx);background:linear-gradient(155deg,#0b1d3a 0%,#124559 100%);overflow:hidden;}
+h1,h2,h3,h4,.hd-ui{font-family:'Sora','DM Sans',system-ui,sans-serif;}
+button{font-family:inherit;cursor:pointer;color:inherit;}
+button:active{transform:scale(.97);}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px;}
+.orbs span{position:fixed;border-radius:50%;filter:blur(70px);opacity:.42;pointer-events:none;z-index:0;animation:drift 24s ease-in-out infinite alternate;}
+.orbs .o1{width:420px;height:420px;background:#2b7fa6;left:-120px;top:10%;}
+.orbs .o2{width:360px;height:360px;background:#d9a93c;right:-100px;top:55%;animation-duration:30s;}
+.orbs .o3{width:300px;height:300px;background:#5a4fcf;left:45%;top:-100px;animation-duration:27s;}
+@keyframes drift{from{transform:translate(0,0);}to{transform:translate(60px,40px);}}
+@media (prefers-reduced-motion:reduce){.orbs span{animation:none;}}
+.app-shell{position:fixed;left:0;right:0;top:0;bottom:0;display:grid;grid-template-columns:360px 1fr;z-index:1;}
+.sidebar{overflow-y:auto;padding:16px 14px 30px;border-right:1px solid var(--glb);background:rgba(8,22,44,.35);}
+.sidebar::-webkit-scrollbar{width:9px;}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:6px;}
+.brand{display:flex;gap:12px;align-items:center;margin-bottom:14px;padding:14px;border-radius:16px;background:var(--gl);border:1px solid var(--glb);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);}
+.brand svg{width:56px;height:56px;flex-shrink:0;}
+.brand .kicker{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc);font-weight:700;}
+.brand h1{margin:2px 0 2px;font-size:21px;line-height:1.1;}
+.brand .tag{font-size:12px;color:var(--tx2);line-height:1.4;}
+.panel{border-radius:16px;background:var(--gl);border:1px solid var(--glb);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);margin-bottom:14px;overflow:hidden;}
+.panel-head{padding:12px 14px;border-bottom:1px solid var(--glb);font-family:'Sora',sans-serif;font-size:15px;font-weight:600;margin:0;}
+.panel-body{padding:14px;}
+.sub-head{font-family:'Sora',sans-serif;font-size:12px;font-weight:600;color:var(--acc);margin:18px 0 8px;padding-top:12px;border-top:1px solid var(--glb);text-transform:uppercase;letter-spacing:.08em;}
+.panel-body>.sub-head:first-child{margin-top:0;border-top:none;padding-top:0;}
+label.fl,.fl{display:block;font-size:11px;font-weight:700;color:var(--tx2);margin:11px 0 5px;text-transform:uppercase;letter-spacing:.06em;}
+.ipt,.sel,textarea.ipt{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--glb);background:var(--field);color:var(--tx);font-size:13px;font-family:inherit;}
+textarea.ipt{resize:vertical;min-height:70px;}
+.ipt:focus,.sel:focus{border-color:var(--acc2);}
+.sel option{color:#0b1d3a;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.seg{display:grid;gap:6px;grid-auto-flow:column;grid-auto-columns:1fr;}
+.seg button{border:1px solid var(--glb);background:var(--field);border-radius:10px;padding:9px 2px;font-size:12px;font-weight:700;color:var(--tx2);}
+.seg button[aria-pressed=true]{background:var(--acc);color:#0b1d3a;border-color:var(--acc);}
+.tgl{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:13px;gap:8px;}
+.tgl input{width:18px;height:18px;accent-color:#f5d680;flex-shrink:0;}
+.mixgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;}
+.swatches{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.swatch{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.25);padding:0;}
+.swatch[aria-pressed=true]{border-color:#fff;box-shadow:0 0 0 3px rgba(245,214,128,.6);}
+.crow{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:8px;}
+.crow input[type=color]{width:44px;height:30px;border:1px solid var(--glb);border-radius:8px;background:var(--field);padding:2px;}
+.btn{width:100%;padding:10px;border-radius:11px;border:1px solid var(--glb);background:var(--gl);font-size:12.5px;font-weight:700;margin-top:8px;}
+.btn:hover{border-color:var(--acc2);}
+.btn:disabled{opacity:.4;pointer-events:none;}
+.btn.gen{padding:14px;font-size:16px;font-family:'Sora',sans-serif;background:linear-gradient(180deg,#f7dd92,#d9a93c);color:#0b1d3a;border-color:var(--acc);margin-top:4px;}
+.btn.half{width:auto;}
+.note{font-size:11px;color:var(--tx2);line-height:1.55;margin-top:8px;}
+.prog-text{font-size:12px;margin-top:10px;min-height:18px;}
+.prog-bar{height:9px;border-radius:6px;background:rgba(255,255,255,.12);margin-top:6px;overflow:hidden;}
+.prog-fill{height:100%;width:0;background:linear-gradient(90deg,#7fd1e0,#f5d680);}
+.prog-err{display:none;margin-top:8px;font-size:12px;font-weight:700;color:#fff;background:#8a1c1c;border:1px solid #ef4444;border-radius:10px;padding:9px 10px;line-height:1.5;}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;}
+.topbar{display:flex;align-items:center;gap:8px;padding:10px 14px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--glb);background:rgba(8,22,44,.45);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);}
+.chip{font-size:11px;font-weight:700;padding:6px 12px;border-radius:16px;border:1px solid var(--glb);background:var(--gl);white-space:nowrap;}
+.chip.preset{background:var(--acc);color:#0b1d3a;border-color:var(--acc);}
+.vt{display:flex;border:1px solid var(--glb);border-radius:18px;overflow:hidden;background:var(--field);}
+.vt button{border:none;background:transparent;padding:7px 13px;font-size:12px;font-weight:700;color:var(--tx2);}
+.vt button[aria-pressed=true]{background:var(--acc);color:#0b1d3a;}
+.topbar select{background:var(--field);color:var(--tx);border:1px solid var(--glb);border-radius:10px;padding:7px 9px;font-size:12px;font-family:inherit;}
+.topbar select option{color:#0b1d3a;}
+.tb-btn{border:1px solid var(--glb);background:var(--gl);padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;}
+.tb-btn:hover{border-color:var(--acc2);}
+.tb-btn.primary{background:linear-gradient(180deg,#f7dd92,#d9a93c);color:#0b1d3a;border-color:var(--acc);}
+.preview-scroll{flex:1;min-height:0;overflow:auto;padding:22px;display:flex;flex-direction:column;align-items:center;}
+.preview-host{display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+.empty-card{max-width:520px;text-align:center;border:1px dashed var(--glb);border-radius:18px;padding:48px 36px;background:var(--gl);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);}
+.empty-card svg{width:90px;height:90px;}
+.empty-card h2{margin:12px 0;font-size:26px;}
+.empty-card p{color:var(--tx2);font-size:13px;line-height:1.7;}
+.bottomnav{display:flex;align-items:center;gap:14px;justify-content:center;padding:10px;flex-shrink:0;flex-wrap:wrap;border-top:1px solid var(--glb);background:rgba(8,22,44,.45);}
+.nav-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--glb);background:var(--gl);font-size:16px;}
+.nav-btn:disabled{opacity:.3;}
+.sheet-pos{font-size:12px;font-weight:700;}
+.meta-line{font-size:11px;color:var(--tx2);width:100%;text-align:center;}
+.help-overlay{position:fixed;inset:0;background:rgba(5,14,30,.75);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.help-overlay.show{display:flex;}
+.help-modal{background:#12304d;border:1px solid var(--glb);border-radius:16px;width:640px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+.help-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--glb);}
+.help-head h3{margin:0;font-size:18px;}
+.help-close{border:1px solid var(--glb);background:var(--gl);width:32px;height:32px;border-radius:8px;font-weight:700;}
+.help-body{padding:16px 18px;overflow-y:auto;}
+.help-step{display:flex;gap:12px;margin-bottom:14px;}
+.help-num{width:26px;height:26px;border-radius:50%;background:var(--acc);color:#0b1d3a;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.help-step h4{margin:0 0 3px;font-size:14px;}
+.help-step p{margin:0;font-size:12.5px;line-height:1.65;color:var(--tx2);}
+kbd{background:var(--field);border:1px solid var(--glb);border-radius:5px;padding:1px 6px;font-size:11px;}
+#exportDeck{position:fixed;left:-99999px;top:0;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+/* ===== PAPER (printables: solid colors only) ===== */
+.sheet-slot{flex-shrink:0;position:relative;}
+.sheet{position:relative;overflow:hidden;background:var(--paper,#fff);color:var(--ink,#000);transform-origin:top left;transform:scale(var(--paper-scale,1));box-shadow:0 18px 60px rgba(0,0,0,.5);flex-shrink:0;}
+.sheet .bgpat{position:absolute;left:0;top:0;}
+.sheet .trim{position:absolute;overflow:hidden;}
+.sheet .wm{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;z-index:1;}
+.sheet .frame{position:absolute;z-index:1;}
+.sheet .guide-safe{position:absolute;border:1px dashed #1e90ff;z-index:5;pointer-events:none;}
+.sheet .guide-gutter{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed #e0306a;z-index:5;pointer-events:none;}
+.sheet .guide-trim{position:absolute;left:0;top:0;right:0;bottom:0;border:1px dashed #e0306a;z-index:5;pointer-events:none;}
+.sheet .guide-tag{position:absolute;z-index:6;font:10px Arial,sans-serif;color:#e0306a;background:#ffffff;padding:1px 4px;}
+.pg{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;overflow:hidden;z-index:2;font-family:'DM Sans',Arial,Helvetica,sans-serif;color:var(--ink);--ts:1;}
+.pg *{box-sizing:border-box;}
+.hd{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-bottom:calc(8px*var(--ts));}
+.hd .dbadge{flex-shrink:0;width:calc(62px*var(--ts));height:calc(72px*var(--ts));}
+.hd .dbadge svg{width:100%;height:100%;display:block;}
+.hd .htxt{flex:1;min-width:0;}
+.hd .lvl{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;font-size:calc(10px*var(--ts));font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.hd .lvl svg{display:block;margin-top:3px;}
+.hd-ribbon{background:var(--p1);color:#ffffff;padding:calc(8px*var(--ts)) calc(12px*var(--ts));border-radius:6px;}
+.hd-ribbon .kick,.hd-ribbon .ttl,.hd-ribbon .lvl{color:#ffffff;}
+.hd-plain{border-bottom:2px solid var(--p1);padding-bottom:calc(6px*var(--ts));}
+.kick{font-size:calc(11px*var(--ts));letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--p1);white-space:nowrap;overflow:hidden;}
+.ttl{font-family:'Sora','DM Sans',Arial,sans-serif;font-weight:700;font-size:calc(26px*var(--ts));line-height:1.12;margin:2px 0 0;white-space:nowrap;overflow:hidden;color:var(--ink);}
+.instr{font-size:calc(12.5px*var(--ts));line-height:1.45;margin:0 0 calc(6px*var(--ts));flex-shrink:0;}
+.board-wrap{position:relative;flex:1;min-height:0;}
+.board-wrap svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}
+.wordlist{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(3px*var(--ts)) calc(14px*var(--ts));font-size:calc(12px*var(--ts));font-weight:700;letter-spacing:.07em;margin-top:calc(6px*var(--ts));flex-shrink:0;}
+.digit-row{display:flex;align-items:center;justify-content:center;gap:12px;font-family:'Sora',Arial,sans-serif;font-weight:700;font-size:calc(16px*var(--ts));margin-top:calc(8px*var(--ts));flex-shrink:0;}
+.dbox{width:calc(46px*var(--ts));height:calc(46px*var(--ts));border:3px solid var(--ink);border-radius:10px;background:var(--paper);text-align:center;line-height:calc(40px*var(--ts));font-size:calc(26px*var(--ts));}
+.pf{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;margin-top:calc(8px*var(--ts));padding-top:calc(5px*var(--ts));border-top:1px solid var(--p2);font-size:calc(10px*var(--ts));}
+.pf .pl{flex-shrink:0;white-space:nowrap;}
+.pf .pm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+.pf .pr{flex-shrink:0;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.pf .pr svg{width:calc(16px*var(--ts));height:calc(16px*var(--ts));}
+.txt-page{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;}
+.txt-page h3{font-family:'Sora',Arial,sans-serif;font-size:calc(18px*var(--ts));margin:calc(10px*var(--ts)) 0 calc(4px*var(--ts));color:var(--p1);}
+.txt-page p,.txt-page li{font-size:calc(12.5px*var(--ts));line-height:1.5;margin:0 0 calc(4px*var(--ts));}
+.txt-page ul{margin:0;padding-left:calc(18px*var(--ts));}
+.cover{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:calc(10px*var(--ts));}
+.cover .big{width:calc(190px*var(--ts));height:calc(190px*var(--ts));}
+.cover .ttl{font-size:calc(40px*var(--ts));white-space:normal;text-align:center;}
+.cover .sub{font-size:calc(16px*var(--ts));max-width:90%;}
+.ans-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:calc(8px*var(--ts));}
+.tile{border:2px solid var(--ink);border-radius:8px;padding:calc(5px*var(--ts));display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--paper);}
+.tile .tt{font-size:calc(10.5px*var(--ts));font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tile .board-wrap{flex:1;}
+.keytile{font-size:calc(11px*var(--ts));line-height:1.5;overflow:hidden;}
+.keytile b{color:var(--p1);}
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:280px 1fr;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:1px solid var(--glb);}}
+@media print{
+  body{background:#fff;overflow:visible;}
+  .orbs,.sidebar,.topbar,.bottomnav,.help-overlay,.guide-safe,.guide-gutter,.guide-trim,.guide-tag{display:none !important;}
+  .app-shell{display:block;position:static;}
+  .main{display:block;}
+  .preview-scroll{overflow:visible;display:block;padding:0;}
+  .preview-host{display:block;}
+  .sheet-slot{width:auto !important;height:auto !important;margin:0;page-break-after:always;}
+  .sheet{transform:none;box-shadow:none;}
+}
+</style>
+</head>
+<body>
+<div class="orbs" aria-hidden="true"><span class="o1"></span><span class="o2"></span><span class="o3"></span></div>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Controls">
+    <div class="brand">
+      <span id="brandLogo" aria-hidden="true"></span>
+      <div><div class="kicker">Printable Puzzle Studio</div><h1>Advent Puzzle Calendar</h1><div class="tag">24 or 25 days of puzzles. Each one hands you a digit. Together they open the treasure chest.</div></div>
+    </div>
+
+    <section class="panel" aria-labelledby="hGen">
+      <h2 class="panel-head" id="hGen">Generator</h2>
+      <div class="panel-body">
+        <div class="fl" id="lblDays">Days</div>
+        <div class="seg" id="segDays" role="group" aria-labelledby="lblDays"><button data-val="24" aria-pressed="true">24 days</button><button data-val="25" aria-pressed="false">25 days</button></div>
+        <div class="fl" id="lblRamp">Difficulty ramp</div>
+        <div class="seg" id="segRamp" role="group" aria-labelledby="lblRamp"><button data-val="gentle" aria-pressed="false">Gentle</button><button data-val="steady" aria-pressed="true">Steady</button><button data-val="challenge" aria-pressed="false">Challenge</button></div>
+        <div class="note" id="rampNote">Steady: easy to hard.</div>
+        <div class="fl" id="lblAud">Audience</div>
+        <div class="seg" id="segAud" role="group" aria-labelledby="lblAud"><button data-val="kids" aria-pressed="false">Kids</button><button data-val="family" aria-pressed="true">Family</button><button data-val="adults" aria-pressed="false">Adults</button></div>
+        <div class="fl">Puzzle mix</div>
+        <div class="mixgrid">
+          <label class="tgl"><span>Mini sudoku</span><input type="checkbox" id="mixSudoku" checked></label>
+          <label class="tgl"><span>Word search</span><input type="checkbox" id="mixWord" checked></label>
+          <label class="tgl"><span>Maze</span><input type="checkbox" id="mixMaze" checked></label>
+          <label class="tgl"><span>Cryptogram</span><input type="checkbox" id="mixCrypto" checked></label>
+          <label class="tgl"><span>Number path</span><input type="checkbox" id="mixNum" checked></label>
+        </div>
+        <label class="fl" for="inFinale">Finale code days (comma separated)</label>
+        <input class="ipt" id="inFinale" value="6,12,18,24" maxlength="40">
+        <div class="sub-head">Content Lock</div>
+        <label class="fl" for="inTitle">Custom title</label>
+        <input class="ipt" id="inTitle" value="Advent Puzzle Calendar" maxlength="60">
+        <label class="fl" for="inWords">Festive word list (up to 40, used in word searches)</label>
+        <textarea class="ipt" id="inWords" placeholder="e.g. snowman, lantern, cocoa" aria-describedby="wordCount"></textarea>
+        <div class="note" id="wordCount">0 / 40 words</div>
+        <label class="fl" for="inMsg">Finale message (max 60 characters)</label>
+        <input class="ipt" id="inMsg" maxlength="60" value="You opened every door. Merry everything!">
+        <div class="sub-head">Seed</div>
+        <label class="fl" for="inSeed">Seed (blank = random)</label>
+        <div style="display:flex;gap:6px;"><input class="ipt" id="inSeed" inputmode="numeric" placeholder="random"><button class="btn half" id="btnDice" style="margin-top:0;" aria-label="Random seed">Dice</button></div>
+        <label class="fl" for="inCode">Seed code (share to rebuild this deck)</label>
+        <div style="display:flex;gap:6px;"><input class="ipt" id="inCode" placeholder="APC-..."><button class="btn half" id="btnCode" style="margin-top:0;">Use</button></div>
+        <div class="note">The code holds days, ramp, audience, mix, look, trim and seed. Custom words and message are not inside it; use Save .json for those.</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="hSty">
+      <h2 class="panel-head" id="hSty">Style</h2>
+      <div class="panel-body">
+        <label class="fl" for="inPreset">Palette</label>
+        <select class="sel" id="inPreset"></select>
+        <div class="swatches" id="swatches" role="group" aria-label="Palette swatches"></div>
+        <div class="fl">Colors</div>
+        <div class="crow"><label for="inP1">Primary</label><input type="color" id="inP1" value="#1f6b4a"></div>
+        <div class="crow"><label for="inP2">Secondary</label><input type="color" id="inP2" value="#b3282d"></div>
+        <div class="crow"><label for="inPaper">Paper</label><input type="color" id="inPaper" value="#f5f8f1"></div>
+        <div class="crow"><label for="inInk">Ink</label><input type="color" id="inInk" value="#14372a"></div>
+        <label class="fl" for="inSub">Subtitle</label>
+        <input class="ipt" id="inSub" value="One door. One puzzle. One digit." maxlength="70">
+        <div class="row2">
+          <div><label class="fl" for="inHeader">Header</label><select class="sel" id="inHeader"><option value="door">Door badge</option><option value="ribbon">Ribbon</option><option value="plain">Plain</option></select></div>
+          <div><label class="fl" for="inBorder">Border</label><select class="sel" id="inBorder"><option value="none">None</option><option value="solid">Solid</option><option value="double">Double</option><option value="dotted">Dotted</option></select></div>
+        </div>
+        <label class="fl" for="inPattern">Background pattern</label>
+        <select class="sel" id="inPattern"><option value="none">None</option><option value="snow">Snow dots</option><option value="stars">Tiny stars</option><option value="grid">Faint grid</option></select>
+        <label class="fl" for="inWm">Logo mark</label>
+        <select class="sel" id="inWm"><option value="none">None</option><option value="footer">Footer mark</option><option value="faint">Faint watermark</option></select>
+        <label class="tgl"><span>Show page numbers</span><input type="checkbox" id="inNums" checked></label>
+
+        <div class="sub-head">KDP Trim Studio</div>
+        <label class="fl" for="inTrim">Trim size</label>
+        <select class="sel" id="inTrim"><option value="6x9">6 x 9 in</option><option value="8x10">8 x 10 in</option><option value="8.5x11">8.5 x 11 in</option><option value="a4">A4 (8.27 x 11.69 in)</option></select>
+        <label class="tgl"><span>Add bleed (0.125 in)</span><input type="checkbox" id="inBleed"></label>
+        <div class="row3">
+          <div><label class="fl" for="inMIn">Inside</label><input class="ipt" type="number" id="inMIn" min="0.25" max="1.25" step="0.125" value="0.625"></div>
+          <div><label class="fl" for="inMOut">Outside</label><input class="ipt" type="number" id="inMOut" min="0.25" max="1.25" step="0.125" value="0.5"></div>
+          <div><label class="fl" for="inMTb">Top/btm</label><input class="ipt" type="number" id="inMTb" min="0.25" max="1.25" step="0.125" value="0.5"></div>
+        </div>
+        <label class="tgl"><span>Mirror margins (facing pages)</span><input type="checkbox" id="inMirror" checked></label>
+        <label class="tgl"><span>Show safe-area and gutter guides</span><input type="checkbox" id="inGuides" checked></label>
+        <div class="note" id="trimNote"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="hExp">
+      <h2 class="panel-head" id="hExp">Export Deck</h2>
+      <div class="panel-body">
+        <button class="btn gen" id="btnGenerate">Generate Deck</button>
+        <div class="prog-text" id="progressText" role="status" aria-live="polite">Idle. Set up your calendar and hit generate.</div>
+        <div class="prog-bar"><div class="prog-fill" id="progressFill"></div></div>
+        <div class="prog-err" id="progressError" role="alert"></div>
+        <div class="sub-head">Book Builder</div>
+        <label class="tgl"><span>Front matter (title, copyright, how-to)</span><input type="checkbox" id="inBook" checked></label>
+        <label class="tgl"><span>Door grid cover page</span><input type="checkbox" id="inDoor" checked></label>
+        <label class="tgl"><span>Append answer section</span><input type="checkbox" id="inAns" checked></label>
+        <div class="note" id="bookNote"></div>
+        <label class="fl" for="inSeller">Seller branding: "Created by"</label>
+        <input class="ipt" id="inSeller" maxlength="50" placeholder="optional, e.g. Cozy Press">
+        <div class="sub-head">Export</div>
+        <button class="btn" id="btnPDF2">Download Exact PDF (whole book)</button>
+        <button class="btn" id="btnZip">Download PNG ZIP (one per page)</button>
+        <button class="btn" id="btnSVG">Download this page's board as SVG</button>
+        <div class="sub-head">Project</div>
+        <div class="row2"><button class="btn" id="btnUndo" style="margin-top:0">Undo</button><button class="btn" id="btnRedo" style="margin-top:0">Redo</button></div>
+        <div class="row2"><button class="btn" id="btnSave">Save .json</button><button class="btn" id="btnLoad">Load .json</button></div>
+        <input type="file" id="fileLoad" accept=".json,application/json" class="sr" aria-label="Load project file">
+        <div class="note" id="autoNote">Autosave on.</div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="chip" id="kpiDeck">No deck yet</span>
+      <span class="chip preset" id="kpiPreset">Pine</span>
+      <div class="vt" role="group" aria-label="View"><button id="viewPuzzle" aria-pressed="true">Puzzle</button><button id="viewAnswer" aria-pressed="false">Answer</button></div>
+      <select id="selLayout" aria-label="Layout"><option value="single">Single</option><option value="spread">2-page spread</option><option value="strip">3-up strip</option><option value="grid">2x2 grid</option></select>
+      <select id="selZoom" aria-label="Zoom"></select>
+      <button class="tb-btn" id="btnHelp">? How to use</button>
+      <button class="tb-btn primary" id="btnPDF">Download Exact PDF</button>
+      <button class="tb-btn" id="btnPrint">Exact Print</button>
+    </div>
+    <div class="preview-scroll" id="previewScroll"><div class="preview-host" id="previewHost"></div></div>
+    <div class="bottomnav">
+      <button class="nav-btn" id="btnPrev" aria-label="Previous page">&lt;</button>
+      <span class="sheet-pos" id="sheetPos">Page - / -</span>
+      <button class="nav-btn" id="btnNext" aria-label="Next page">&gt;</button>
+      <div class="meta-line" id="metaLine">Generate a deck to see your pages.</div>
+    </div>
+  </main>
+</div>
+<div id="exportDeck"></div>
+<div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-modal">
+    <div class="help-head"><h3 id="helpTitle">How to use Advent Puzzle Calendar</h3><button class="help-close" id="btnHelpClose" aria-label="Close help">X</button></div>
+    <div class="help-body">
+      <div class="help-step"><div class="help-num">1</div><div><h4>Pick your calendar</h4><p>Choose 24 or 25 days, a difficulty ramp (Gentle, Steady, Challenge), an audience and which puzzle types to mix. Press <b>Generate Deck</b>. The seed in every footer rebuilds the same deck.</p></div></div>
+      <div class="help-step"><div class="help-num">2</div><div><h4>Every day gives one digit</h4><p>Sudoku: the digit in the starred cell. Maze: corners on the route. Word search: words found backward. Cryptogram: different letters used. Number path: last digit of the highest number. Readers write it in the "Today's digit" box.</p></div></div>
+      <div class="help-step"><div class="help-num">3</div><div><h4>The finale</h4><p>Digits from your chosen days (default 6, 12, 18, 24) open the treasure chest on the last page. Set the days and the prize message under Content Lock.</p></div></div>
+      <div class="help-step"><div class="help-num">4</div><div><h4>Make it a book</h4><p>Pick a KDP trim, toggle bleed, check the dashed safe-area and gutter guides. Book Builder adds title, copyright and how-to pages and appends the answers. Export one PDF or a PNG ZIP.</p></div></div>
+      <div class="help-step"><div class="help-num">5</div><div><h4>Shortcuts</h4><p><kbd>G</kbd> generate, <kbd>A</kbd> puzzle/answer view, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> pages, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>Ctrl</kbd>+<kbd>Y</kbd> redo, <kbd>H</kbd> help. Your work autosaves in this browser.</p></div></div>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+var EXPORT_SCALE = 3;
+
+/* ================= utils ================= */
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function mixSeed(a,b){var h=(a>>>0)^Math.imul((b|0)+0x7f4a7c15,0x9e3779b1);h=Math.imul(h^(h>>>15),0x85ebca6b);h^=h>>>13;h=Math.imul(h,0xc2b2ae35);return(h^(h>>>16))>>>0;}
+function shuffleWith(rng,arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(rng()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function slug(s){return String(s||"advent-puzzle-calendar").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"advent-puzzle-calendar";}
+function hex2rgb(h){h=String(h).replace("#","");if(h.length===3){h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];}return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function mix(a,b,t){var x=hex2rgb(a),y=hex2rgb(b),o="#",i,v,s;for(i=0;i<3;i++){v=Math.round(x[i]+(y[i]-x[i])*t);s=v.toString(16);if(s.length<2){s="0"+s;}o+=s;}return o;}
+function zeros(n){var a=[],i;for(i=0;i<n;i++){a.push(0);}return a;}
+function starPts(cx,cy,R,r){var p=[],i,a,rr;for(i=0;i<10;i++){a=-Math.PI/2+i*Math.PI/5;rr=(i%2===0)?R:r;p.push((cx+Math.cos(a)*rr).toFixed(1)+","+(cy+Math.sin(a)*rr).toFixed(1));}return p.join(" ");}
+
+/* ================= logo ================= */
+function logoSVG(size,c1,c2,c3,id){
+  /* c1 tile, c2 window/door light, c3 star */
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 64 64"'+(id?' id="'+id+'"':'')+'>'+
+    '<rect width="64" height="64" rx="15" fill="'+c1+'"/>'+
+    '<rect x="13" y="10" width="38" height="44" rx="4" fill="'+mix(c1,"#000000",0.35)+'" stroke="'+c2+'" stroke-width="3"/>'+
+    '<polygon points="'+starPts(40,31,9,4)+'" fill="'+c3+'"/>'+
+    '<polygon points="13,10 29,16 29,48 13,54" fill="'+c2+'"/>'+
+    '<circle cx="26" cy="32" r="1.8" fill="'+c1+'"/>'+
+    '</svg>';
+}
+
+/* ================= word & phrase banks ================= */
+var W_KIDS = "SNOW SLED STAR GIFT BELL TREE ELF TOYS SANTA SNOWMAN CANDY CAROL COCOA MITTEN SCARF BOOTS WINTER REINDEER SLEIGH STOCKING CANDLE COOKIE ANGEL FROST HOLLY WREATH TINSEL PRESENT RIBBON CHIMNEY PENGUIN POLAR BEAR ICICLE LIGHTS MUSIC SING JOLLY MERRY COZY WARM GINGER BREAD SNACK SPARKLE GLITTER JINGLE SKATES SKI HAT COAT GLOVES PINE CONE MOON NIGHT DREAM WISH ELVES NORTH POLE CHEER SNOWBALL ANTLERS FIREPLACE MUFFIN PUPPY KITTEN HOCKEY SNOWDAY TEDDY PAJAMAS".split(" ");
+var W_FAM = "ORNAMENT MISTLETOE EGGNOG FIREWOOD SNOWSHOE CHESTNUT PEPPERMINT GUMDROP NUTCRACKER EVERGREEN BLIZZARD SNOWDRIFT FLURRY HEARTH LANTERN TWINKLE GARLAND CRANBERRY TRADITION FAMILY GATHERING FEAST PUDDING STUFFING HOLIDAY SEASON FESTIVE CHIMES CHORUS CAROLER CIDER NUTMEG CINNAMON CLOVE MARZIPAN NOUGAT TOFFEE SHORTBREAD PARCEL WRAPPING SURPRISE CELEBRATE FIRESIDE BLANKET SWEATER FLANNEL SNOWSUIT TOBOGGAN SNOWDROP DECEMBER MIDNIGHT STARLIGHT MANGER SHEPHERD JOURNEY BONFIRE WOODLAND REUNION LAUGHTER KINDNESS GENEROUS BLESSING CHARITY HARMONY GRATITUDE SNOWY MEMORIES".split(" ");
+var W_ADU = "SOLSTICE WASSAIL YULETIDE MULLED NOSTALGIA REVELRY HIBERNATE MIDWINTER FROSTBITE AURORA EVENTIDE MERRIMENT FESTIVITY PANETTONE STOLLEN BRANDY SHERRY PUNCH MARMALADE TRUFFLE ROASTING SIMMER SAVORY SPICED CLEMENTINE TANGERINE JUNIPER ROSEMARY THYME SAGE EMBERS HEARTHSIDE WOODSMOKE CANDLEWICK TABLEAU LINENS ARTISAN KEEPSAKE HEIRLOOM RITUAL GENEROSITY REFLECTION RENEWAL SERENITY STILLNESS GLISTEN SHIMMER LUMINARY BEACON VIGIL NOCTURNE LULLABY LEGEND FOLKLORE MYTHIC SNOWBOUND DRIFTWOOD FIRELIGHT HOMEWARD TOGETHER REJOICE".split(" ");
+var PHRASES = [
+"SNOWFLAKES DANCE WHEN NOBODY IS WATCHING","EVERY CANDLE STARTS WITH ONE SMALL SPARK","COCOA TASTES BEST AFTER A SNOWBALL FIGHT",
+"THE NORTH STAR KEEPS THE BEST SECRETS","WARM MITTENS AND COLD NOSES MEAN WINTER","GINGERBREAD HOUSES NEVER LOCK THEIR DOORS",
+"A QUIET NIGHT IS THE BEST PRESENT","ICICLES SING WHEN THE SUN COMES OUT","BAKE A DOZEN COOKIES AND SHARE THEM ALL",
+"SLEIGH BELLS RING WHERE KINDNESS GOES","THE TALLEST TREE HOLDS THE BRIGHTEST STAR","HOT SOUP AND GOOD FRIENDS BEAT ANY STORM",
+"WINTER WRITES IN FROST ON EVERY WINDOW","LIGHT ONE LAMP AND THE DARK STEPS BACK","SNOW MAKES THE WHOLE TOWN WHISPER",
+"A SCARF IS A HUG YOU CAN WEAR","THE BEST GIFTS COME WITH NO RIBBON","COUNT THE DAYS BUT SAVOR THE NIGHTS",
+"PINE NEEDLES SMELL LIKE A FRESH START","SING LOUD AND LET THE ROOFTOPS LISTEN","EVERY DOOR OPENS ON SOMETHING NEW",
+"SMALL FOOTPRINTS LEAD TO BIG ADVENTURES","THE FIRE CRACKLES AND THE STORIES GROW","FROSTY MORNINGS MAKE WARM KITCHENS",
+"WRAP THE PRESENT AND KEEP THE SURPRISE","STARS ARE JUST THE SKY'S OWN LANTERNS","A SNOWMAN NEEDS ONLY A CARROT AND A SMILE",
+"GRATITUDE IS THE SWEETEST SEASONING","BRING A CANDLE TO THE LONGEST NIGHT","COZY BLANKETS BEAT THE COLDEST WIND",
+"MAKE A WISH ON THE FIRST FALLING FLAKE","THE MOON WEARS SILVER IN DECEMBER","FRIENDS ARE THE REAL SPARKLE OF THE SEASON",
+"THE CHIMNEY HUMS A SLEEPY LULLABY","LAUGHTER TRAVELS FARTHER THAN SLEIGHS","PEPPERMINT AND PINE PERFUME THE HALLS",
+"ONE MORE COOKIE WON'T HURT ANYONE","WINTER IS A BOOK WRITTEN IN WHITE","HANG THE LIGHTS AND HANG ON TO JOY",
+"A HOME IS WARMEST WHEN IT IS SHARED","THE SNOW KEEPS EVERY SECRET UNTIL SPRING","GENTLE SNOWFALL SOFTENS EVERY SHARP EDGE",
+"TOGETHER WE BUILD THE TALLEST SNOWMAN","JINGLE JANGLE GOES THE SLEIGH TONIGHT","SPREAD KINDNESS LIKE FRESH POWDER SNOW",
+"THE LONGEST NIGHT BRINGS THE BRIGHTEST LIGHTS","TINSEL CATCHES THE GLOW OF EVERY SMILE","STIR THE CIDER AND SPICE THE EVENING",
+"EVERY MITTEN WANTS ITS MATCHING PARTNER","SKATE ACROSS THE POND AT SUNRISE","LEAVE A LIGHT ON FOR THE TRAVELERS",
+"WONDER LIVES IN THE FIRST SNOWY MORNING","A WREATH ON THE DOOR SAYS COME ON IN","DECEMBER DAYS ARE SHORT BUT SWEET",
+"MAKE ROOM AT THE TABLE FOR ONE MORE","THE HUSH OF SNOW IS A GIFT OF ITS OWN","BE THE WARMTH IN SOMEONE'S WINTER",
+"GLITTER CLINGS TO EVERYTHING WE LOVE","CAROLS FLOAT ON THE FROSTY AIR",
+"EVERY FLAKE IS A TINY WORK OF ART"
+];
+var AUD_OFF = {kids:-1,family:0,adults:1};
+
+/* ================= sudoku ================= */
+var SD_CLUES = {4:[10,8,7,5],6:[21,18,15,13]};
+var SD_SIZE = {kids:[4,4,4,6],family:[4,4,6,6],adults:[4,6,6,6]};
+function popc(m){var c=0;while(m){m&=m-1;c++;}return c;}
+function sdCands(g,n,bh,bw,i){
+  var r=(i/n)|0,c=i%n,m=0,k,a,b,v;
+  for(k=0;k<n;k++){if(g[r*n+k]){m|=1<<(g[r*n+k]-1);}if(g[k*n+c]){m|=1<<(g[k*n+c]-1);}}
+  var br=r-r%bh,bc=c-c%bw;
+  for(a=0;a<bh;a++){for(b=0;b<bw;b++){v=g[(br+a)*n+bc+b];if(v){m|=1<<(v-1);}}}
+  return ((1<<n)-1)&~m;
+}
+function sdSolve(g,n,bh,bw,limit,rng,out){
+  var count=0;
+  function rec(){
+    var best=-1,bm=0,bc=99,i,m,pc;
+    for(i=0;i<n*n;i++){
+      if(!g[i]){m=sdCands(g,n,bh,bw,i);pc=popc(m);if(pc===0){return;}if(pc<bc){bc=pc;best=i;bm=m;if(pc===1){break;}}}
+    }
+    if(best<0){count++;if(out&&count===1){for(i=0;i<n*n;i++){out[i]=g[i];}}return;}
+    var vals=[],v,k;
+    for(v=1;v<=n;v++){if(bm&(1<<(v-1))){vals.push(v);}}
+    if(rng){vals=shuffleWith(rng,vals);}
+    for(k=0;k<vals.length;k++){g[best]=vals[k];rec();g[best]=0;if(count>=limit){return;}}
+  }
+  rec();
+  return count;
+}
+function genSudoku(rng,lvl,aud){
+  var n=SD_SIZE[aud][lvl-1],bh=2,bw=(n===4)?2:3,sol=zeros(n*n),i;
+  sdSolve(zeros(n*n),n,bh,bw,1,rng,sol);
+  var g=sol.slice(),order=[];
+  for(i=0;i<n*n;i++){order.push(i);}
+  order=shuffleWith(rng,order);
+  var target=SD_CLUES[n][lvl-1],clues=n*n,v;
+  for(i=0;i<order.length;i++){
+    if(clues<=target){break;}
+    v=g[order[i]];g[order[i]]=0;
+    if(sdSolve(g.slice(),n,bh,bw,2,null,null)!==1){g[order[i]]=v;}else{clues--;}
+  }
+  var empt=[];
+  for(i=0;i<n*n;i++){if(!g[i]){empt.push(i);}}
+  return {type:"sudoku",n:n,bh:bh,bw:bw,givens:g,sol:sol,star:empt[Math.floor(rng()*empt.length)],clues:clues};
+}
+
+/* ================= word search ================= */
+var WS_DIRS=[[1,0],[0,1],[1,1],[-1,0],[0,-1],[1,-1],[-1,1],[-1,-1]];
+var WS_NDIRS=[4,5,6,8], WS_SIZE=[10,11,12,13], WS_CNT=[7,9,11,12];
+function wsSize(lvl,aud){return clamp(WS_SIZE[lvl-1]+AUD_OFF[aud],9,14);}
+function isBack(dx,dy){return dx<0||dy<0;}
+function revStr(s){return s.split("").reverse().join("");}
+function wsCompat(a,b){var rb=revStr(b);return !(a.indexOf(b)>=0||b.indexOf(a)>=0||a.indexOf(rb)>=0||rb.indexOf(a)>=0);}
+function wsCount(grid,sz,word){
+  var cnt=0,r,c,d,k,L=word.length,x,y,ok;
+  for(r=0;r<sz;r++){for(c=0;c<sz;c++){for(d=0;d<8;d++){
+    ok=true;
+    for(k=0;k<L;k++){x=c+WS_DIRS[d][0]*k;y=r+WS_DIRS[d][1]*k;if(x<0||y<0||x>=sz||y>=sz||grid[y*sz+x]!==word.charAt(k)){ok=false;break;}}
+    if(ok){cnt++;if(cnt>1){return cnt;}}
+  }}}
+  return cnt;
+}
+function bankFor(aud){
+  var a=aud==="kids"?W_KIDS:(aud==="family"?W_FAM:W_ADU.concat(W_FAM));
+  return a;
+}
+function cleanWords(raw){
+  var parts=String(raw||"").toUpperCase().split(/[^A-Z]+/),out=[],seen={},i,w;
+  for(i=0;i<parts.length;i++){w=parts[i];if(w.length>=3&&w.length<=14&&!seen[w]&&w!==revStr(w)){seen[w]=1;out.push(w);}if(out.length>=40){break;}}
+  return out;
+}
+function genWord(rng,lvl,aud,custom){
+  var sz=wsSize(lvl,aud),cnt=WS_CNT[lvl-1],nd=WS_NDIRS[lvl-1],att,i,j,k;
+  var pool=bankFor(aud).filter(function(w){return w.length<=sz&&w!==revStr(w);});
+  for(att=0;att<80;att++){
+    var want=att>40?cnt-1:cnt,chosen=[];
+    var cw=(custom||[]).filter(function(w){return w.length<=sz;});
+    for(i=0;i<cw.length&&chosen.length<want;i++){
+      var okc=true;for(j=0;j<chosen.length;j++){if(!wsCompat(cw[i],chosen[j])){okc=false;break;}}
+      if(okc){chosen.push(cw[i]);}
+    }
+    var sp=shuffleWith(rng,pool);
+    for(i=0;i<sp.length&&chosen.length<want;i++){
+      var ok2=true;for(j=0;j<chosen.length;j++){if(!wsCompat(sp[i],chosen[j])||sp[i]===chosen[j]){ok2=false;break;}}
+      if(ok2){chosen.push(sp[i]);}
+    }
+    var order=chosen.slice().sort(function(a,b){return b.length-a.length;});
+    var grid=[],placed=[],fail=false;
+    for(i=0;i<sz*sz;i++){grid.push("");}
+    for(i=0;i<order.length&&!fail;i++){
+      var w=order[i],done=false,t;
+      for(t=0;t<400&&!done;t++){
+        var d=WS_DIRS[Math.floor(rng()*nd)],r=Math.floor(rng()*sz),c=Math.floor(rng()*sz),ex=c+d[0]*(w.length-1),ey=r+d[1]*(w.length-1);
+        if(ex<0||ey<0||ex>=sz||ey>=sz){continue;}
+        var fit=true;
+        for(k=0;k<w.length;k++){var cur=grid[(r+d[1]*k)*sz+c+d[0]*k];if(cur!==""&&cur!==w.charAt(k)){fit=false;break;}}
+        if(!fit){continue;}
+        for(k=0;k<w.length;k++){grid[(r+d[1]*k)*sz+c+d[0]*k]=w.charAt(k);}
+        placed.push({w:w,r:r,c:c,dx:d[0],dy:d[1],back:isBack(d[0],d[1])});
+        done=true;
+      }
+      if(!done){fail=true;}
+    }
+    if(fail){continue;}
+    var letters=order.join(""),fillTry,good=false,AL="ABCDEFGHIJKLMNOPQRSTUVWXYZ",g2;
+    for(fillTry=0;fillTry<40&&!good;fillTry++){
+      g2=grid.slice();
+      for(i=0;i<sz*sz;i++){if(g2[i]===""){g2[i]=(rng()<0.45)?letters.charAt(Math.floor(rng()*letters.length)):AL.charAt(Math.floor(rng()*26));}}
+      good=true;
+      for(i=0;i<order.length;i++){if(wsCount(g2,sz,order[i])!==1){good=false;break;}}
+    }
+    if(good){
+      placed.sort(function(a,b){return a.w<b.w?-1:1;});
+      return {type:"word",sz:sz,grid:g2,words:placed,nd:nd};
+    }
+  }
+  return null;
+}
+
+/* ================= maze ================= */
+var MZ_SIZE=[[8,10],[10,13],[13,17],[16,21]];
+function mzDims(lvl,aud){
+  var s=MZ_SIZE[lvl-1],f=aud==="kids"?0.82:(aud==="adults"?1.1:1);
+  return [Math.max(6,Math.round(s[0]*f)),Math.max(8,Math.round(s[1]*f))];
+}
+function genMaze(rng,w,h){
+  var N=w*h,g=zeros(N),vis=zeros(N),stack=[Math.floor(rng()*N)],DX=[0,1,0,-1],DY=[-1,0,1,0],B=[1,2,4,8],O=[4,8,1,2];
+  vis[stack[0]]=1;
+  while(stack.length){
+    var cur=stack[stack.length-1],cx=cur%w,cy=(cur/w)|0,opts=[],d;
+    for(d=0;d<4;d++){var nx=cx+DX[d],ny=cy+DY[d];if(nx>=0&&ny>=0&&nx<w&&ny<h&&!vis[ny*w+nx]){opts.push(d);}}
+    if(!opts.length){stack.pop();continue;}
+    d=opts[Math.floor(rng()*opts.length)];
+    var nn=(cy+DY[d])*w+cx+DX[d];
+    g[cur]|=B[d];g[nn]|=O[d];vis[nn]=1;stack.push(nn);
+  }
+  var s=Math.floor(rng()*w),e=(h-1)*w+Math.floor(rng()*w);
+  var par=[],q=[s],i;
+  for(i=0;i<N;i++){par.push(-2);}
+  par[s]=-1;
+  while(q.length){
+    var c2=q.shift();if(c2===e){break;}
+    for(d=0;d<4;d++){
+      if(g[c2]&B[d]){var n2=((c2/w)|0)+DY[d];var m2=c2%w+DX[d];var id=n2*w+m2;if(par[id]===-2){par[id]=c2;q.push(id);}}
+    }
+  }
+  var path=[],p=e;
+  while(p!==-1){path.push(p);p=par[p];}
+  path.reverse();
+  return {type:"maze",w:w,h:h,g:g,s:s,e:e,path:path};
+}
+function mazeTurns(path){
+  var t=0,i;
+  for(i=1;i<path.length-1;i++){if(path[i]-path[i-1]!==path[i+1]-path[i]){t++;}}
+  return t;
+}
+
+/* ================= cryptogram ================= */
+var CR_HINTS=[5,4,3,2];
+function phraseTiers(){
+  var idx=[],i;for(i=0;i<PHRASES.length;i++){idx.push(i);}
+  idx.sort(function(a,b){return PHRASES[a].length-PHRASES[b].length||a-b;});
+  var q=[[],[],[],[]];
+  for(i=0;i<idx.length;i++){q[Math.min(3,Math.floor(i/15))].push(idx[i]);}
+  return q;
+}
+function genCrypto(rng,lvl,phraseIdx){
+  var plain=PHRASES[phraseIdx],AL="ABCDEFGHIJKLMNOPQRSTUVWXYZ",used={},i,ch;
+  var letters=[];
+  for(i=0;i<plain.length;i++){ch=plain.charAt(i);if(ch>="A"&&ch<="Z"&&!used[ch]){used[ch]=1;letters.push(ch);}}
+  var perm,tries=0,okd;
+  do{
+    perm=shuffleWith(rng,AL.split(""));okd=true;
+    for(i=0;i<26;i++){if(perm[i]===AL.charAt(i)){okd=false;break;}}
+    tries++;
+  }while(!okd&&tries<200);
+  var map={};
+  for(i=0;i<26;i++){map[AL.charAt(i)]=perm[i];}
+  var cipher="";
+  for(i=0;i<plain.length;i++){ch=plain.charAt(i);cipher+=(ch>="A"&&ch<="Z")?map[ch]:ch;}
+  var hints=shuffleWith(rng,letters).slice(0,CR_HINTS[lvl-1]);
+  return {type:"crypto",plain:plain,cipher:cipher,hints:hints};
+}
+
+/* ================= number path ================= */
+var NP_SIZE=[[3,4],[4,4],[3,5],[4,5]];
+var NP_SIZES=[[[3,4],[4,4],[3,5],[4,5]],[[4,5],[5,5],[4,6],[5,6]],[[5,6],[6,6],[5,7],[6,7]],[[6,7],[7,7],[6,8],[7,8]]];
+var NP_FRAC=[0.55,0.42,0.32,0.24];
+function npPath(rng,r,c){
+  var N=r*c,path=[],i,x,y;
+  for(y=0;y<r;y++){for(x=0;x<c;x++){path.push(y*c+((y%2===0)?x:(c-1-x)));}}
+  var it=40*N,DX=[1,-1,0,0],DY=[0,0,1,-1];
+  for(i=0;i<it;i++){
+    if(rng()<0.5){path.reverse();}
+    var head=path[0],hx=head%c,hy=(head/c)|0,d=Math.floor(rng()*4),nx=hx+DX[d],ny=hy+DY[d];
+    if(nx<0||ny<0||nx>=c||ny>=r){continue;}
+    var nb=ny*c+nx,k=path.indexOf(nb);
+    if(k<2){continue;}
+    path=path.slice(0,k).reverse().concat(path.slice(k));
+  }
+  return path;
+}
+function npCount(r,c,clues,limit,budget){
+  var N=r*c,posOf=[],i,nxt=[];
+  for(i=0;i<=N+1;i++){posOf.push(-1);nxt.push(0);}
+  for(i=0;i<N;i++){if(clues[i]){posOf[clues[i]]=i;}}
+  var last=0;
+  for(i=N;i>=0;i--){nxt[i]=last;if(i>=1&&posOf[i]>=0){last=i;}}
+  var vis=zeros(N),count=0,nodes=0,abort=false,DX=[1,-1,0,0],DY=[0,0,1,-1];
+  function man(a,b){return Math.abs(((a/c)|0)-((b/c)|0))+Math.abs(a%c-b%c);}
+  function rec(cell,k){
+    if(abort){return;}
+    if(++nodes>budget){abort=true;return;}
+    if(k===N){count++;return;}
+    var want=posOf[k+1],cx=cell%c,cy=(cell/c)|0,d,nx,ny,nb;
+    for(d=0;d<4;d++){
+      nx=cx+DX[d];ny=cy+DY[d];
+      if(nx<0||ny<0||nx>=c||ny>=r){continue;}
+      nb=ny*c+nx;
+      if(vis[nb]){continue;}
+      if(want>=0){if(nb!==want){continue;}}else if(clues[nb]){continue;}
+      var jn=nxt[k+1];
+      if(jn){var dd=man(nb,posOf[jn]),rem=jn-(k+1);if(dd>rem||((rem-dd)&1)){continue;}}
+      vis[nb]=1;rec(nb,k+1);vis[nb]=0;
+      if(count>=limit||abort){return;}
+    }
+  }
+  if(posOf[1]<0){return -1;}
+  vis[posOf[1]]=1;rec(posOf[1],1);
+  return abort?-1:count;
+}
+function genNumPath(rng,lvl,aud){
+  var opts=NP_SIZES[clamp(lvl-1+(aud==="kids"?-1:0),0,3)];
+  var sz=opts[Math.floor(rng()*opts.length)],r=sz[0],c=sz[1],N=r*c,path=npPath(rng,r,c),i;
+  var num=zeros(N);
+  for(i=0;i<N;i++){num[path[i]]=i+1;}
+  var clues=num.slice(),order=[];
+  for(i=0;i<N;i++){if(num[i]!==1&&num[i]!==N){order.push(i);}}
+  order=shuffleWith(rng,order);
+  var count=N,target=Math.max(4,Math.round(N*NP_FRAC[lvl-1])),s;
+  for(i=0;i<order.length;i++){
+    if(count<=target){break;}
+    s=clues[order[i]];clues[order[i]]=0;
+    if(npCount(r,c,clues,2,12000)!==1){clues[order[i]]=s;}else{count--;}
+  }
+  return {type:"numpath",r:r,c:c,path:path,clues:clues,nclues:count};
+}
+
+/* ================= digit rules (computed from the ANSWER only) ================= */
+function digitOf(p){
+  var i,n=0;
+  if(p.type==="sudoku"){return p.sol[p.star];}
+  if(p.type==="maze"){return mazeTurns(p.path)%10;}
+  if(p.type==="word"){for(i=0;i<p.words.length;i++){if(p.words[i].dx<0||p.words[i].dy<0){n++;}}return n%10;}
+  if(p.type==="crypto"){var seen={};for(i=0;i<p.plain.length;i++){var ch=p.plain.charAt(i);if(ch>="A"&&ch<="Z"&&!seen[ch]){seen[ch]=1;n++;}}return n%10;}
+  if(p.type==="numpath"){return p.path.length%10;}
+  return 0;
+}
+var TYPE_NAME={sudoku:"Mini Sudoku",word:"Word Search",maze:"Maze",crypto:"Cryptogram",numpath:"Number Path"};
+var TYPE_RULE={
+  sudoku:"Fill every row, column and box with each digit once. The digit that belongs in the star cell is today's digit.",
+  word:"Find every word in the list. Some run backward: right to left or upward. Count the backward words. Today's digit is the last digit of that count.",
+  maze:"Draw a path from START to the star exit. Count the corners on your route. Today's digit is the last digit of that count.",
+  crypto:"Each letter stands for another. Decode the message. Count how many different letters it uses. Today's digit is the last digit of that count.",
+  numpath:"Draw one path through every square, counting up from 1 in order, one step up, down, left or right. Today's digit is the last digit of the highest number."
+};
+var LVL_NAME=["","Easy","Medium","Hard","Expert"];
+var RAMPS={gentle:[1,2],steady:[1,3],challenge:[2,4]};
+var RAMP_NOTE={gentle:"Gentle: easy to medium.",steady:"Steady: easy to hard.",challenge:"Challenge: medium to expert."};
+
+/* ================= deck planning & generation ================= */
+function typesFromMix(mix){var t=[];if(mix.sudoku){t.push("sudoku");}if(mix.word){t.push("word");}if(mix.maze){t.push("maze");}if(mix.crypto){t.push("crypto");}if(mix.numpath){t.push("numpath");}return t;}
+function planDeck(P){
+  var rng=mulberry32(mixSeed(P.seed,0xA11)),T=typesFromMix(P.mix),days=P.days,types=[],levels=[],i,bag=[],prev="";
+  var rp=RAMPS[P.ramp];
+  for(i=0;i<days;i++){
+    var t=days>1?i/(days-1):0;
+    levels.push(Math.round(rp[0]+(rp[1]-rp[0])*t));
+    if(!bag.length){bag=shuffleWith(rng,T);if(bag.length>1&&bag[0]===prev){bag.push(bag.shift());}}
+    var pick=bag.shift();types.push(pick);prev=pick;
+  }
+  var custom=cleanWords(P.words),wsCustom={},tiers=phraseTiers(),phrase={},used={};
+  for(i=0;i<days;i++){
+    if(types[i]==="word"){wsCustom[i]=[];}
+    if(types[i]==="crypto"){
+      var qi=clamp(levels[i]-1+(P.aud==="kids"?-1:0),0,3),pool=tiers[qi].filter(function(x){return !used[x];});
+      if(!pool.length){pool=tiers[qi];}
+      var ix=pool[Math.floor(rng()*pool.length)];used[ix]=1;phrase[i]=ix;
+    }
+  }
+  var wsDays=[];
+  for(i=0;i<days;i++){if(types[i]==="word"){wsDays.push(i);}}
+  var cs=shuffleWith(rng,custom),placedCount=0,cur=0,w,k,tryD,dd;
+  for(w=0;w<cs.length&&wsDays.length;w++){
+    for(k=0;k<wsDays.length;k++){
+      dd=wsDays[(cur+k)%wsDays.length];
+      if(cs[w].length<=wsSize(levels[dd],P.aud)&&wsCustom[dd].length<WS_CNT[levels[dd]-1]-2){wsCustom[dd].push(cs[w]);cur=(cur+k+1)%wsDays.length;placedCount++;break;}
+    }
+  }
+  return {types:types,levels:levels,wsCustom:wsCustom,phrase:phrase,customTotal:custom.length,customPlaced:placedCount};
+}
+function makeDay(P,plan,i){
+  var seed=mixSeed(P.seed,i+1),rng=mulberry32(seed),t=plan.types[i],lvl=plan.levels[i],p=null,guard=0;
+  if(t==="sudoku"){p=genSudoku(rng,lvl,P.aud);}
+  else if(t==="word"){
+    while(!p&&guard<6){p=genWord(rng,lvl,P.aud,plan.wsCustom[i]);guard++;}
+    if(!p){p=genWord(rng,lvl,P.aud,[]);}
+  }
+  else if(t==="maze"){var dm=mzDims(lvl,P.aud);p=genMaze(rng,dm[0],dm[1]);}
+  else if(t==="crypto"){p=genCrypto(rng,lvl,plan.phrase[i]);}
+  else{p=genNumPath(rng,lvl,P.aud);}
+  p.day=i+1;p.level=lvl;p.seed=seed;p.digit=digitOf(p);
+  return p;
+}
+function measureOf(p){
+  if(p.type==="sudoku"){var tot=p.n*p.n;return ((tot-p.clues)/tot)*(p.n===6?1:0.7);}
+  if(p.type==="word"){return (p.sz/14+p.words.length/12+p.nd/8)/3;}
+  if(p.type==="maze"){return p.w*p.h/(21*23);}
+  if(p.type==="crypto"){return (p.plain.length/60+(1-p.hints.length/6))/2;}
+  return (p.r*p.c/56+(1-p.nclues/(p.r*p.c)))/2;
+}
+function makeDeckSync(P){
+  var plan=planDeck(P),days=[],i;
+  for(i=0;i<P.days;i++){days.push(makeDay(P,plan,i));}
+  return {params:P,plan:plan,days:days};
+}
+function finaleDaysFrom(str,n){
+  var parts=String(str||"").split(/[^0-9]+/),out=[],i,v;
+  for(i=0;i<parts.length;i++){if(parts[i]===""){continue;}v=parseInt(parts[i],10);if(v>=1&&v<=n){out.push(v);}if(out.length>=8){break;}}
+  if(!out.length){out=[6,12,18,24].filter(function(x){return x<=n;});}
+  return out;
+}
+function finaleCode(deck,str){
+  var ds=finaleDaysFrom(str,deck.days.length),code=[],i;
+  for(i=0;i<ds.length;i++){code.push(deck.days[ds[i]-1].digit);}
+  return {days:ds,digits:code};
+}
+
+/* ================= state ================= */
+var PRESETS = {
+  pine:{name:"Pine",paper:"#f5f8f1",ink:"#14372a",p1:"#1f6b4a",p2:"#b3282d",sw:["#1f6b4a","#b3282d"]},
+  candy:{name:"Candy Cane",paper:"#fffafa",ink:"#6b0f1d",p1:"#c8102e",p2:"#2d7a52",sw:["#c8102e","#ffffff"]},
+  midnight:{name:"Midnight Gold",paper:"#10203f",ink:"#f4e7bd",p1:"#e2b13c",p2:"#8fb4e8",sw:["#10203f","#e2b13c"]},
+  snow:{name:"Snowfall",paper:"#f3f8fc",ink:"#1b3552",p1:"#3f86c2",p2:"#8fb7d9",sw:["#3f86c2","#dcebf6"]},
+  bw:{name:"Print-safe B/W",paper:"#ffffff",ink:"#000000",p1:"#000000",p2:"#555555",sw:["#000000","#ffffff"]}
+};
+var PRESET_KEYS=["pine","candy","midnight","snow","bw"];
+var TRIMS={"6x9":[6,9],"8x10":[8,10],"8.5x11":[8.5,11],"a4":[8.27,11.69]};
+var TRIM_KEYS=["6x9","8x10","8.5x11","a4"];
+var BLEED_PX=12;
+function defaultState(){
+  return {
+    days:24,ramp:"steady",aud:"family",mix:{sudoku:true,word:true,maze:true,crypto:true,numpath:true},
+    words:"",msg:"You opened every door. Merry everything!",title:"Advent Puzzle Calendar",sub:"One door. One puzzle. One digit.",finale:"6,12,18,24",
+    seedInput:"",preset:"pine",paper:"#f5f8f1",ink:"#14372a",p1:"#1f6b4a",p2:"#b3282d",
+    header:"door",border:"double",pattern:"snow",wm:"footer",nums:true,
+    trim:"6x9",bleed:false,mIn:0.625,mOut:0.5,mTb:0.5,mirror:true,guides:true,
+    book:true,door:true,ans:true,seller:"",
+    view:"puzzle",layout:"single",zoom:100
+  };
+}
+var S=defaultState();
+var deck=null, curPage=0, genRunning=false;
+
+function pal(){
+  var bw=S.preset==="bw";
+  return {ink:S.ink,paper:S.paper,p1:S.p1,p2:S.p2,
+    soft:mix(S.paper,S.ink,bw?0.08:0.08),tp:mix(S.paper,S.p1,bw?0.16:0.3),ts:mix(S.paper,S.p2,bw?0.3:0.32),
+    mid:mix(S.paper,S.ink,0.55),line:mix(S.paper,S.ink,0.35)};
+}
+
+/* ================= board SVGs ================= */
+function svgOpen(w,h){return '<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+w+' '+h+'" data-w="'+w+'" data-h="'+h+'" width="'+w+'" height="'+h+'" preserveAspectRatio="xMidYMid meet" font-family="Arial, Helvetica, sans-serif">';}
+function txt(x,y,s,size,fill,weight,anchor,extra){return '<text x="'+x+'" y="'+y+'" dy=".35em" text-anchor="'+(anchor||"middle")+'" font-size="'+size+'" font-weight="'+(weight||700)+'" fill="'+fill+'"'+(extra||"")+'>'+esc(s)+'</text>';}
+
+function sudokuSVG(p,ans,C){
+  var n=p.n,cs=62,pad=8,W=n*cs+pad*2,h='',r,c,i,v,x,y;
+  h+=svgOpen(W,W);
+  for(r=0;r<n;r++){for(c=0;c<n;c++){
+    i=r*n+c;x=pad+c*cs;y=pad+r*cs;
+    var fill=p.givens[i]?C.soft:C.paper;
+    if(i===p.star){fill=C.ts;}
+    h+='<rect x="'+x+'" y="'+y+'" width="'+cs+'" height="'+cs+'" fill="'+fill+'"/>';
+  }}
+  for(i=0;i<=n;i++){
+    var thick=(i%p.bh===0),thickC=(i%p.bw===0);
+    h+='<line x1="'+pad+'" y1="'+(pad+i*cs)+'" x2="'+(pad+n*cs)+'" y2="'+(pad+i*cs)+'" stroke="'+(thick?C.ink:C.line)+'" stroke-width="'+(thick?5:1.5)+'"/>';
+    h+='<line x1="'+(pad+i*cs)+'" y1="'+pad+'" x2="'+(pad+i*cs)+'" y2="'+(pad+n*cs)+'" stroke="'+(thickC?C.ink:C.line)+'" stroke-width="'+(thickC?5:1.5)+'"/>';
+  }
+  for(r=0;r<n;r++){for(c=0;c<n;c++){
+    i=r*n+c;x=pad+c*cs+cs/2;y=pad+r*cs+cs/2;
+    if(p.givens[i]){h+=txt(x,y,p.givens[i],36,C.ink,700);}
+    else if(ans){h+=txt(x,y,p.sol[i],36,i===p.star?C.ink:C.p1,700);}
+    if(i===p.star){h+='<polygon points="'+starPts(pad+c*cs+12,pad+r*cs+12,8,3.6)+'" fill="'+C.p1+'" stroke="'+C.ink+'" stroke-width="1"/>';}
+  }}
+  return h+'</svg>';
+}
+
+function wordSVG(p,ans,C){
+  var sz=p.sz,cs=40,pad=10,W=sz*cs+pad*2,h=svgOpen(W,W),i,r,c;
+  h+='<rect x="'+(pad-4)+'" y="'+(pad-4)+'" width="'+(sz*cs+8)+'" height="'+(sz*cs+8)+'" rx="8" fill="'+C.paper+'" stroke="'+C.ink+'" stroke-width="3"/>';
+  if(ans){
+    for(i=0;i<p.words.length;i++){
+      var w=p.words[i],L=w.w.length;
+      h+='<line x1="'+(pad+w.c*cs+cs/2)+'" y1="'+(pad+w.r*cs+cs/2)+'" x2="'+(pad+(w.c+w.dx*(L-1))*cs+cs/2)+'" y2="'+(pad+(w.r+w.dy*(L-1))*cs+cs/2)+'" stroke="'+(w.back?C.ts:C.tp)+'" stroke-width="'+(cs*0.78)+'" stroke-linecap="round"/>';
+    }
+  }
+  for(r=0;r<sz;r++){for(c=0;c<sz;c++){h+=txt(pad+c*cs+cs/2,pad+r*cs+cs/2,p.grid[r*sz+c],cs*0.6,C.ink,700);}}
+  return h+'</svg>';
+}
+
+function mazeSVG(p,ans,C){
+  var cs=30,m=34,w=p.w,h=p.h,W=w*cs+m*2,H=h*cs+m*2,o=svgOpen(W,H),d='',x,y,i;
+  for(y=0;y<h;y++){for(x=0;x<w;x++){
+    i=y*w+x;var g=p.g[i],px=m+x*cs,py=m+y*cs;
+    if(!(g&1)&&!(y===0&&x===p.s)){d+='M'+px+' '+py+'h'+cs;}
+    if(!(g&8)){d+='M'+px+' '+py+'v'+cs;}
+    if(y===h-1&&!(g&4)&&i!==p.e){d+='M'+px+' '+(py+cs)+'h'+cs;}
+    if(x===w-1){d+='M'+(px+cs)+' '+py+'v'+cs;}
+  }}
+  o+='<path d="'+d+'" stroke="'+C.ink+'" stroke-width="4" stroke-linecap="square" fill="none"/>';
+  if(ans){
+    var pts=[(m+p.s*cs+cs/2)+","+(m-14)],k;
+    for(k=0;k<p.path.length;k++){pts.push((m+(p.path[k]%w)*cs+cs/2)+","+(m+((p.path[k]/w)|0)*cs+cs/2));}
+    pts.push((m+(p.e%w)*cs+cs/2)+","+(m+h*cs+14));
+    o+='<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+C.p1+'" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  var sx=m+p.s*cs+cs/2,ex=m+(p.e%w)*cs+cs/2;
+  o+='<polygon points="'+(sx-9)+','+(m-26)+' '+(sx+9)+','+(m-26)+' '+sx+','+(m-11)+'" fill="'+C.p2+'"/>';
+  o+=txt(sx+14,m-20,"START",10,C.ink,700,"start");
+  o+='<polygon points="'+starPts(ex,m+h*cs+19,10,4.4)+'" fill="'+C.p1+'" stroke="'+C.ink+'" stroke-width="1.2"/>';
+  o+=txt(ex+14,m+h*cs+19,"EXIT",10,C.ink,700,"start");
+  return o+'</svg>';
+}
+
+function cryptoLayout(plain){
+  var words=plain.split(" "),lines=[[]],cw=42,gap=22,cur=0,i,wl;
+  for(i=0;i<words.length;i++){
+    wl=words[i].length*cw;
+    if(lines[lines.length-1].length&&cur+gap+wl>600){lines.push([]);cur=0;}
+    if(lines[lines.length-1].length){cur+=gap;}
+    lines[lines.length-1].push(words[i]);cur+=wl;
+  }
+  return lines;
+}
+function cryptoSVG(p,ans,C){
+  var cw=42,gap=22,lines=cryptoLayout(p.cipher),plainWords=p.plain.split(" "),W=640,lh=92,top=14,o='',li,wi,ci,wc=0,x,y,ch,pc;
+  var H=top+lines.length*lh+150;
+  o=svgOpen(W,H);
+  var hint={};for(ci=0;ci<p.hints.length;ci++){hint[p.hints[ci]]=1;}
+  for(li=0;li<lines.length;li++){
+    var lw=0;for(wi=0;wi<lines[li].length;wi++){lw+=lines[li][wi].length*cw+(wi?gap:0);}
+    x=(W-lw)/2;y=top+li*lh;
+    for(wi=0;wi<lines[li].length;wi++){
+      var cwd=lines[li][wi],pwd=plainWords[wc];wc++;
+      for(ci=0;ci<cwd.length;ci++){
+        ch=cwd.charAt(ci);pc=pwd.charAt(ci);
+        if(ch>="A"&&ch<="Z"){
+          o+=txt(x+cw/2,y+20,ch,28,C.ink,700);
+          o+='<line x1="'+(x+3)+'" y1="'+(y+64)+'" x2="'+(x+cw-3)+'" y2="'+(y+64)+'" stroke="'+C.ink+'" stroke-width="2.5"/>';
+          if(ans||hint[pc]){o+=txt(x+cw/2,y+48,pc,28,C.p1,700);}
+        }else{o+=txt(x+cw/2,y+56,ch,28,C.ink,700);}
+        x+=cw;
+      }
+      x+=gap;
+    }
+  }
+  var AL="ABCDEFGHIJKLMNOPQRSTUVWXYZ",by=top+lines.length*lh+14,k;
+  o+=txt(W/2,by,"LETTER HELPER",11,C.mid,700);
+  for(k=0;k<26;k++){
+    var rr=(k<13)?0:1,cc=k%13,bx=(W-13*44)/2+cc*44,byy=by+14+rr*56;
+    o+='<rect x="'+(bx+2)+'" y="'+byy+'" width="40" height="48" rx="5" fill="'+C.paper+'" stroke="'+C.line+'" stroke-width="1.5"/>';
+    o+=txt(bx+22,byy+12,AL.charAt(k),13,C.ink,700);
+  }
+  return o+'</svg>';
+}
+
+function numpathSVG(p,ans,C){
+  var r=p.r,c=p.c,cs=70,pad=10,W=c*cs+pad*2,H=r*cs+pad*2,o=svgOpen(W,H),i,N=r*c,x,y;
+  var num=zeros(N);for(i=0;i<N;i++){num[p.path[i]]=i+1;}
+  for(i=0;i<N;i++){
+    x=pad+(i%c)*cs;y=pad+((i/c)|0)*cs;
+    var f=C.paper;if(num[i]===1||num[i]===N){f=C.tp;}else if(p.clues[i]){f=C.soft;}
+    o+='<rect x="'+x+'" y="'+y+'" width="'+cs+'" height="'+cs+'" fill="'+f+'" stroke="'+C.ink+'" stroke-width="2.5"/>';
+  }
+  if(ans){
+    var pts=[];for(i=0;i<N;i++){pts.push((pad+(p.path[i]%c)*cs+cs/2)+","+(pad+((p.path[i]/c)|0)*cs+cs/2));}
+    o+='<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+C.p1+'" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  for(i=0;i<N;i++){
+    x=pad+(i%c)*cs+cs/2;y=pad+((i/c)|0)*cs+cs/2;
+    if(p.clues[i]){o+=txt(x,y,p.clues[i],num[i]>=10?30:36,C.ink,700);}
+    else if(ans){o+='<circle cx="'+x+'" cy="'+y+'" r="19" fill="'+C.paper+'" stroke="'+C.p1+'" stroke-width="2.5"/>'+txt(x,y,num[i],num[i]>=10?19:22,C.ink,700);}
+  }
+  var s0=p.path[0];
+  o+='<polygon points="'+starPts(pad+(s0%c)*cs+13,pad+((s0/c)|0)*cs+13,9,4)+'" fill="'+C.p1+'" stroke="'+C.ink+'" stroke-width="1"/>';
+  return o+'</svg>';
+}
+
+function boardSVG(p,ans,C){
+  if(p.type==="sudoku"){return sudokuSVG(p,ans,C);}
+  if(p.type==="word"){return wordSVG(p,ans,C);}
+  if(p.type==="maze"){return mazeSVG(p,ans,C);}
+  if(p.type==="crypto"){return cryptoSVG(p,ans,C);}
+  return numpathSVG(p,ans,C);
+}
+
+function doorGridSVG(n,keyDays,C){
+  var cols=(n===24)?4:5,rows=Math.ceil(n/cols),cw=132,ch=158,W=cols*cw+20,H=rows*ch+20,o=svgOpen(W,H),i,x,y;
+  for(i=0;i<n;i++){
+    x=10+(i%cols)*cw;y=10+((i/cols)|0)*ch;
+    var key=keyDays.indexOf(i+1)>=0;
+    o+='<rect x="'+(x+14)+'" y="'+(y+8)+'" width="104" height="112" rx="10" fill="'+C.paper+'" stroke="'+C.ink+'" stroke-width="3.5"/>';
+    o+='<polygon points="'+(x+22)+','+(y+16)+' '+(x+84)+','+(y+22)+' '+(x+84)+','+(y+112)+' '+(x+22)+','+(y+110)+'" fill="'+(key?C.ts:C.tp)+'" stroke="'+C.ink+'" stroke-width="2.5"/>';
+    o+='<rect x="'+(x+90)+'" y="'+(y+22)+'" width="20" height="90" fill="'+C.soft+'"/>';
+    o+=txt(x+53,y+64,i+1,34,C.ink,700);
+    o+='<circle cx="'+(x+76)+'" cy="'+(y+68)+'" r="3.2" fill="'+C.ink+'"/>';
+    if(key){o+='<polygon points="'+starPts(x+100,y+30,10,4.4)+'" fill="'+C.p1+'" stroke="'+C.ink+'" stroke-width="1.2"/>';}
+    o+='<circle cx="'+(x+66)+'" cy="'+(y+138)+'" r="11" fill="'+C.paper+'" stroke="'+C.ink+'" stroke-width="2.5"/>';
+  }
+  return o+'</svg>';
+}
+
+function finaleSVG(fin,msg,C,reveal){
+  var k=fin.days.length,W=600,H=600,o=svgOpen(W,H),i;
+  var bw=Math.min(78,Math.floor((560-(k-1)*12)/k)),tot=k*bw+(k-1)*12,x0=(W-tot)/2;
+  o+=txt(W/2,14,"THE CODE",12,C.mid,700);
+  for(i=0;i<k;i++){
+    var x=x0+i*(bw+12);
+    o+='<rect x="'+x+'" y="30" width="'+bw+'" height="92" rx="12" fill="'+C.paper+'" stroke="'+C.ink+'" stroke-width="4.5"/>';
+    if(reveal){o+=txt(x+bw/2,76,fin.digits[i],54,C.p1,700);}
+    o+=txt(x+bw/2,142,"Day "+fin.days[i],13,C.ink,700);
+  }
+  o+='<path d="M170 300 Q170 215 300 215 Q430 215 430 300 Z" fill="'+C.ts+'" stroke="'+C.ink+'" stroke-width="4.5"/>';
+  o+='<rect x="170" y="300" width="260" height="120" rx="6" fill="'+C.tp+'" stroke="'+C.ink+'" stroke-width="4.5"/>';
+  o+='<rect x="170" y="296" width="260" height="14" fill="'+C.p1+'" stroke="'+C.ink+'" stroke-width="3"/>';
+  o+='<rect x="278" y="288" width="44" height="52" rx="8" fill="'+C.p1+'" stroke="'+C.ink+'" stroke-width="3.5"/>';
+  o+='<circle cx="300" cy="308" r="7" fill="'+C.paper+'"/><rect x="297" y="310" width="6" height="16" fill="'+C.paper+'"/>';
+  o+='<polygon points="'+starPts(300,250,16,7)+'" fill="'+C.p1+'" stroke="'+C.ink+'" stroke-width="2"/>';
+  o+='<rect x="40" y="440" width="520" height="146" rx="16" fill="'+C.soft+'" stroke="'+C.p1+'" stroke-width="4" stroke-dasharray="14 8"/>';
+  o+=txt(W/2,466,"PRIZE REVEAL",14,C.p1,700);
+  var words=String(msg).split(" "),lines=[""],j;
+  for(j=0;j<words.length;j++){
+    if((lines[lines.length-1]+" "+words[j]).length>26&&lines[lines.length-1]){lines.push(words[j]);}
+    else{lines[lines.length-1]=(lines[lines.length-1]?lines[lines.length-1]+" ":"")+words[j];}
+  }
+  var fs=lines.length>2?24:30,ty=(lines.length===1)?526:(512-(lines.length-1)*0)-0;
+  var g='<g'+(reveal?'':' transform="rotate(180 300 523)"')+'>';
+  for(j=0;j<lines.length;j++){g+=txt(W/2,523+(j-(lines.length-1)/2)*(fs+6),lines[j],fs,C.ink,700);}
+  o+=g+'</g>';
+  if(!reveal){o+=txt(W/2,578,"Open the chest, then turn the page upside down.",11,C.mid,400);}
+  return o+'</svg>';
+}
+
+/* ================= page chrome ================= */
+function dimsFor(pi){
+  var t=TRIMS[S.trim],tw=Math.round(t[0]*96),th=Math.round(t[1]*96),b=S.bleed?BLEED_PX:0,recto=(pi%2===0);
+  var inn=S.mIn*96,out=S.mOut*96,ml,mr;
+  if(S.mirror){ml=recto?inn:out;mr=recto?out:inn;}else{ml=mr=(inn+out)/2;}
+  return {W:tw+b,H:th+2*b,tx:(S.bleed&&!recto)?b:0,ty:b,tw:tw,th:th,ml:Math.round(ml),mr:Math.round(mr),mt:Math.round(S.mTb*96),mb:Math.round(S.mTb*96),recto:recto,bleed:S.bleed};
+}
+function patternSVG(d,C){
+  if(S.pattern==="none"){return "";}
+  var o='<svg class="bgpat" xmlns="http://www.w3.org/2000/svg" width="'+d.W+'" height="'+d.H+'" viewBox="0 0 '+d.W+' '+d.H+'"><defs>';
+  var col=mix(S.paper,S.ink,S.preset==="bw"?0.1:0.09);
+  if(S.pattern==="snow"){o+='<pattern id="ptn" width="52" height="52" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="2.2" fill="'+col+'"/><circle cx="34" cy="34" r="1.6" fill="'+col+'"/></pattern>';}
+  else if(S.pattern==="stars"){o+='<pattern id="ptn" width="84" height="84" patternUnits="userSpaceOnUse"><polygon points="'+starPts(14,14,6,2.6)+'" fill="'+col+'"/><polygon points="'+starPts(56,56,4.5,2)+'" fill="'+col+'"/></pattern>';}
+  else{o+='<pattern id="ptn" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="'+col+'" stroke-width="1"/></pattern>';}
+  return o+'</defs><rect width="'+d.W+'" height="'+d.H+'" fill="url(#ptn)"/></svg>';
+}
+function frameHTML(d,C){
+  if(S.border==="none"){return "";}
+  var st=(S.border==="solid")?"2px solid":(S.border==="double")?"5px double":"3px dotted";
+  return '<div class="frame" style="left:'+(d.ml-9)+'px;top:'+(d.mt-9)+'px;right:'+(d.mr-9)+'px;bottom:'+(d.mb-9)+'px;border:'+st+' '+C.p1+';border-radius:6px;"></div>';
+}
+function guidesHTML(d){
+  var h='<div class="guide-safe" style="left:'+d.ml+'px;top:'+d.mt+'px;right:'+d.mr+'px;bottom:'+d.mb+'px;"></div>';
+  var gx=d.recto?d.ml:(d.tw-d.mr);
+  h+='<div class="guide-gutter" style="left:'+gx+'px;"></div>';
+  if(d.bleed){h+='<div class="guide-trim"></div><div class="guide-tag" style="left:2px;top:2px;">trim</div>';}
+  return h;
+}
+function sheetHTML(pi,inner,kind,forExport){
+  var d=dimsFor(pi),C=pal(),ts=(0.82+0.18*Math.min(1,d.tw/816)).toFixed(3);
+  var vars='--paper:'+S.paper+';--ink:'+S.ink+';--p1:'+S.p1+';--p2:'+S.p2+';--paper-scale:1;';
+  var h='<div class="sheet-slot"><div class="sheet" data-kind="'+kind+'" data-pi="'+pi+'" style="width:'+d.W+'px;height:'+d.H+'px;'+vars+'">';
+  h+=patternSVG(d,C);
+  h+='<div class="trim" style="left:'+d.tx+'px;top:'+d.ty+'px;width:'+d.tw+'px;height:'+d.th+'px;">';
+  if(S.wm==="faint"){h+='<div class="wm">'+logoSVG(Math.round(d.tw*0.6),mix(S.paper,S.ink,0.05),mix(S.paper,S.ink,0.1),mix(S.paper,S.ink,0.16))+'</div>';}
+  h+=frameHTML(d,C);
+  h+='<div class="pg" data-ts="'+ts+'" data-mb="'+d.mb+'" data-mr="'+d.mr+'" style="--ts:'+ts+';padding:'+d.mt+'px '+d.mr+'px '+d.mb+'px '+d.ml+'px;">'+inner+'</div>';
+  if(!forExport&&S.guides){h+=guidesHTML(d);}
+  h+='</div></div></div>';
+  return h;
+}
+function footHTML(pi,label,showNum){
+  var C=pal(),sd=deck?deck.params.seed:0;
+  var left='Seed '+sd+(label?' '+label:'');
+  var mid=S.seller?('Created by '+esc(S.seller)):'';
+  var right=(showNum&&S.nums)?('<span class="pno">'+(pi+1)+'</span>'):'';
+  if(S.wm==="footer"){right+=logoSVG(16,C.p1,C.paper,C.paper);}
+  return '<div class="pf"><span class="pl">'+esc(left)+'</span><span class="pm">'+mid+'</span><span class="pr">'+right+'</span></div>';
+}
+function starsLevel(lvl,C){
+  var o='<svg xmlns="http://www.w3.org/2000/svg" width="64" height="15" viewBox="0 0 64 15">',i;
+  for(i=0;i<4;i++){o+='<polygon points="'+starPts(8+i*16,8,7,3.1)+'" fill="'+(i<lvl?C.p1:C.paper)+'" stroke="'+C.p1+'" stroke-width="1.2"/>';}
+  return o+'</svg>';
+}
+function doorBadge(num,C){
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 72"><rect x="4" y="8" width="54" height="62" rx="8" fill="'+C.paper+'" stroke="'+C.ink+'" stroke-width="3.5"/><polygon points="9,13 40,18 40,65 9,65" fill="'+C.p1+'"/><text x="24" y="42" dy=".35em" text-anchor="middle" font-size="'+(num>=10?20:26)+'" font-weight="700" font-family="Arial, Helvetica, sans-serif" fill="'+C.paper+'">'+num+'</text><polygon points="'+starPts(48,24,8,3.4)+'" fill="'+C.p1+'" stroke="'+C.ink+'" stroke-width="1.2"/></svg>';
+}
+function headHTML(kick,title,lvl,num){
+  var C=pal(),h='<div class="hd hd-'+S.header+'">';
+  if(S.header==="door"&&num){h+='<div class="dbadge">'+doorBadge(num,C)+'</div>';}
+  h+='<div class="htxt"><div class="kick fit1">'+esc(kick)+'</div><h2 class="ttl fit1">'+esc(title)+'</h2></div>';
+  if(lvl){h+='<div class="lvl">'+LVL_NAME[lvl]+starsLevel(lvl,C)+'</div>';}
+  return h+'</div>';
+}
+
+/* ================= page list ================= */
+function buildPages(dk){
+  var L=[],i,n=dk.days.length;
+  if(S.book){L.push({k:"title"},{k:"copy"},{k:"howto"});}
+  if(S.door){L.push({k:"doors"});}
+  for(i=0;i<n;i++){L.push({k:"day",i:i});}
+  L.push({k:"finale"});
+  var puzzleCount=L.length,per=5,pages=Math.ceil(n/per);
+  if(S.ans){for(i=0;i<pages;i++){L.push({k:"ans",from:i*per,to:Math.min(n,i*per+per),last:i===pages-1});}}
+  return {list:L,puzzleCount:puzzleCount};
+}
+function viewList(dk){
+  var b=buildPages(dk),idx=[],i;
+  for(i=0;i<b.list.length;i++){
+    var isAns=b.list[i].k==="ans";
+    if((S.view==="answer")===isAns){idx.push(i);}
+  }
+  if(!idx.length){for(i=0;i<b.puzzleCount;i++){idx.push(i);}}
+  return {all:b.list,idx:idx};
+}
+function pageInner(dk,desc,pi){
+  var C=pal(),P=dk.params,n=dk.days.length,h='',noNum=S.book&&(desc.k==="title"||desc.k==="copy");
+  if(desc.k==="title"){
+    h+='<div class="cover">'+logoSVG(190,S.p1,S.paper,S.paper).replace('width="190" height="190"','class="big" width="190" height="190"')+'<div class="kick fit1">'+n+' days of puzzles</div><h2 class="ttl fit1" style="font-size:calc(40px*var(--ts));">'+esc(S.title)+'</h2><div class="sub fit2">'+esc(S.sub)+'</div></div>';
+    h+=footHTML(pi,"",false);
+  }else if(desc.k==="copy"){
+    var yr=new Date().getFullYear(),who=S.seller||"the publisher";
+    h+=headHTML("Copyright","Legal notes",0,0)+'<div class="txt-page fit2"><p><b>'+esc(S.title)+'</b></p><p>Copyright &copy; '+yr+' '+esc(who)+'. All rights reserved.</p><p>No part of this book may be reproduced or transmitted without written permission, except that the purchaser may make copies of the puzzle pages for personal use.</p><p>All puzzles, words and phrases in this book are original. Puzzle set seed: '+P.seed+'.</p><p>First edition.</p></div>';
+    h+=footHTML(pi,"",false);
+  }else if(desc.k==="howto"){
+    var T=typesFromMix(P.mix),li='',t;
+    for(t=0;t<T.length;t++){li+='<li><b>'+TYPE_NAME[T[t]]+':</b> '+esc(TYPE_RULE[T[t]])+'</li>';}
+    h+=headHTML("Before you start","How this calendar works",0,0)+'<div class="txt-page fit2"><p>Open one door a day. Each door hides one puzzle, and every puzzle gives you a single digit from 0 to 9. Write it in the "Today\'s digit" box and tick the door on the cover page.</p><h3>Puzzles inside</h3><ul>'+li+'</ul><h3>The finale</h3><p>Collect the digits from the key days (the doors marked with a star). Enter them in order on the treasure chest page to open the lock and reveal the prize. Answers are at the back.</p></div>';
+    h+=footHTML(pi,"",true);
+  }else if(desc.k==="doors"){
+    var fin=finaleCode(dk,S.finale);
+    h+=headHTML("Your calendar",S.title,0,0)+'<p class="instr fit2">Tick a door after you solve its puzzle. Starred doors hold the digits for the treasure chest code.</p><div class="board-wrap">'+doorGridSVG(n,fin.days,C)+'</div>'+footHTML(pi,"",true);
+  }else if(desc.k==="day"){
+    var p=dk.days[desc.i];
+    h+=headHTML("Day "+p.day+" of "+n+" - "+TYPE_NAME[p.type],TYPE_NAME[p.type]+" "+p.day,p.level,p.day);
+    h+='<p class="instr fit2">'+esc(TYPE_RULE[p.type])+'</p>';
+    h+='<div class="board-wrap">'+boardSVG(p,false,C)+'</div>';
+    if(p.type==="word"){
+      var ws=[],q;for(q=0;q<p.words.length;q++){ws.push('<span>'+esc(p.words[q].w)+'</span>');}
+      h+='<div class="wordlist fit2">'+ws.join("")+'</div>';
+    }
+    h+='<div class="digit-row">Today\'s digit <span class="dbox"></span></div>';
+    h+=footHTML(pi,"D"+p.day,true);
+  }else if(desc.k==="finale"){
+    var f2=finaleCode(dk,S.finale);
+    h+=headHTML("The finale","The Treasure Chest",0,0)+'<p class="instr fit2">Write the digit from each key day in order to open the lock.</p><div class="board-wrap">'+finaleSVG(f2,S.msg||"Merry everything!",C,false)+'</div>'+footHTML(pi,"",true);
+  }else{
+    var rows='',i2,tiles='';
+    for(i2=desc.from;i2<desc.to;i2++){
+      var pp=dk.days[i2];
+      tiles+='<div class="tile"><div class="tt">Day '+pp.day+' - '+TYPE_NAME[pp.type]+' - digit '+pp.digit+'</div><div class="board-wrap">'+boardSVG(pp,true,C)+'</div></div>';
+      rows+='Day '+pp.day+': <b>'+pp.digit+'</b><br>';
+    }
+    if(desc.last){var f3=finaleCode(dk,S.finale);rows+='<br>Finale code:<br><b>'+f3.digits.join(" - ")+'</b>';}
+    tiles+='<div class="tile keytile fit2"><div class="tt">Digit key</div>'+rows+'</div>';
+    h+=headHTML("Answer section","Answers "+(desc.from+1)+" to "+desc.to,0,0)+'<div class="ans-grid">'+tiles+'</div>'+footHTML(pi,"",true);
+  }
+  return {html:h,noNum:noNum};
+}
+function pageSheet(dk,list,pi,forExport){
+  var desc=list[pi],inner=pageInner(dk,desc,pi);
+  return sheetHTML(pi,inner.html,desc.k,forExport);
+}
+
+/* ================= fit (measure and shrink) ================= */
+function fitSheet(sheet){
+  var pgs=sheet.querySelectorAll(".pg"),a;
+  for(a=0;a<pgs.length;a++){
+    var pg=pgs[a],ts0=parseFloat(pg.getAttribute("data-ts"))||1,mb=parseFloat(pg.getAttribute("data-mb"))||0,mr=parseFloat(pg.getAttribute("data-mr"))||0;
+    var s=ts0,guard=0;
+    var over=function(){
+      var last=pg.lastElementChild;if(!last){return false;}
+      if(last.offsetTop+last.offsetHeight>pg.clientHeight-mb+1){return true;}
+      var kids=pg.children,k;
+      for(k=0;k<kids.length;k++){if(kids[k].offsetLeft+kids[k].offsetWidth>pg.clientWidth-mr+2){return true;}}
+      var bwp=pg.querySelector(".board-wrap");
+      if(bwp&&!pg.querySelector(".tile")&&bwp.clientHeight<pg.clientHeight*0.3){return true;}
+      return false;
+    };
+    while(over()&&s>0.4&&guard<40){s-=0.03;pg.style.setProperty("--ts",s.toFixed(3));guard++;}
+    var f1=pg.querySelectorAll(".fit1"),i;
+    for(i=0;i<f1.length;i++){
+      var fs=parseFloat(window.getComputedStyle(f1[i]).fontSize),g2=0;
+      while(f1[i].scrollWidth>f1[i].clientWidth+1&&fs>6&&g2<60){fs-=0.5;f1[i].style.fontSize=fs+"px";g2++;}
+    }
+    var f2=pg.querySelectorAll(".fit2");
+    for(i=0;i<f2.length;i++){
+      var fe=f2[i],g3=0,fz=parseFloat(window.getComputedStyle(fe).fontSize);
+      while(fe.scrollHeight>fe.clientHeight+1&&fz>6&&g3<40){fz-=0.4;fe.style.fontSize=fz+"px";g3++;}
+    }
+    var bws=pg.querySelectorAll(".board-wrap");
+    for(i=0;i<bws.length;i++){
+      var sv=bws[i].querySelector("svg");if(!sv){continue;}
+      var vw=parseFloat(sv.getAttribute("data-w")),vh=parseFloat(sv.getAttribute("data-h")),aw=bws[i].clientWidth,ah=bws[i].clientHeight;
+      var sc=Math.max(0,Math.min(aw/vw,ah/vh));
+      sv.style.width=Math.floor(vw*sc)+"px";sv.style.height=Math.floor(vh*sc)+"px";
+      sv.setAttribute("width",Math.floor(vw*sc));sv.setAttribute("height",Math.floor(vh*sc));
+    }
+  }
+}
+function fitAll(root){var sh=root.querySelectorAll(".sheet"),i;for(i=0;i<sh.length;i++){fitSheet(sh[i]);}}
+
+/* ================= seed & code ================= */
+function parseSeed(v){
+  v=String(v||"").replace(/^\s+|\s+$/g,"");
+  if(v===""){return null;}
+  if(/^[0-9]+$/.test(v)){return (parseInt(v,10)>>>0);}
+  var h=2166136261,i;for(i=0;i<v.length;i++){h=Math.imul(h^v.charCodeAt(i),16777619);}
+  return h>>>0;
+}
+function randomSeed(){return (Math.floor(Math.random()*900000000)+100000);}
+var AUDS=["kids","family","adults"],RAMPKEYS=["gentle","steady","challenge"],MIXKEYS=["sudoku","word","maze","crypto","numpath"];
+function encodeCode(s,seed){
+  var mm=0,i;for(i=0;i<5;i++){if(s.mix[MIXKEYS[i]]){mm|=(1<<i);}}
+  var o=(s.days===25?1:0)|(RAMPKEYS.indexOf(s.ramp)<<1)|(AUDS.indexOf(s.aud)<<3)|(mm<<5)|(Math.max(0,PRESET_KEYS.indexOf(s.preset))<<10)|(Math.max(0,TRIM_KEYS.indexOf(s.trim))<<13)|((s.bleed?1:0)<<15);
+  var a=o.toString(36).toUpperCase();while(a.length<4){a="0"+a;}
+  return "APC-"+a+"-"+(seed>>>0).toString(36).toUpperCase();
+}
+function decodeCode(code){
+  var m=/^APC-([0-9A-Z]{4})-([0-9A-Z]{1,8})$/i.exec(String(code||"").replace(/\s+/g,""));
+  if(!m){return null;}
+  var o=parseInt(m[1],36),seed=parseInt(m[2],36)>>>0,mm=(o>>5)&31,mix={},i;
+  for(i=0;i<5;i++){mix[MIXKEYS[i]]=!!(mm&(1<<i));}
+  var ri=(o>>1)&3,ai=(o>>3)&3,pi=(o>>10)&7,ti=(o>>13)&3;
+  if(ri>2||ai>2||pi>4){return null;}
+  return {days:(o&1)?25:24,ramp:RAMPKEYS[ri],aud:AUDS[ai],mix:mix,preset:PRESET_KEYS[pi],trim:TRIM_KEYS[ti],bleed:!!((o>>15)&1),seed:seed};
+}
+
+/* ================= controls <-> state ================= */
+function segSet(id,val){var b=$(id).querySelectorAll("button"),i;for(i=0;i<b.length;i++){b[i].setAttribute("aria-pressed",b[i].getAttribute("data-val")===String(val)?"true":"false");}}
+function wordsCountText(){var w=cleanWords($("inWords").value);var raw=String($("inWords").value||"").toUpperCase().split(/[^A-Z]+/).filter(function(x){return x.length>=3;}).length;return w.length+" / 40 words"+(raw>w.length?(" ("+(raw-w.length)+" skipped: duplicate, palindrome, over 40 or too long)"):"");}
+function readControls(){
+  S.mix={sudoku:$("mixSudoku").checked,word:$("mixWord").checked,maze:$("mixMaze").checked,crypto:$("mixCrypto").checked,numpath:$("mixNum").checked};
+  S.words=$("inWords").value;S.msg=$("inMsg").value.slice(0,60);S.title=$("inTitle").value||"Advent Puzzle Calendar";S.sub=$("inSub").value;S.finale=$("inFinale").value;
+  S.seedInput=$("inSeed").value;
+  S.preset=$("inPreset").value;S.p1=$("inP1").value;S.p2=$("inP2").value;S.paper=$("inPaper").value;S.ink=$("inInk").value;
+  S.header=$("inHeader").value;S.border=$("inBorder").value;S.pattern=$("inPattern").value;S.wm=$("inWm").value;S.nums=$("inNums").checked;
+  S.trim=$("inTrim").value;S.bleed=$("inBleed").checked;
+  S.mIn=clamp(parseFloat($("inMIn").value)||0.625,0.25,1.25);S.mOut=clamp(parseFloat($("inMOut").value)||0.5,0.25,1.25);S.mTb=clamp(parseFloat($("inMTb").value)||0.5,0.25,1.25);
+  S.mirror=$("inMirror").checked;S.guides=$("inGuides").checked;
+  S.book=$("inBook").checked;S.door=$("inDoor").checked;S.ans=$("inAns").checked;S.seller=$("inSeller").value;
+  S.layout=$("selLayout").value;S.zoom=parseInt($("selZoom").value,10)||100;
+  $("wordCount").innerText=wordsCountText();
+}
+function writeControls(){
+  segSet("segDays",S.days);segSet("segRamp",S.ramp);segSet("segAud",S.aud);
+  $("mixSudoku").checked=!!S.mix.sudoku;$("mixWord").checked=!!S.mix.word;$("mixMaze").checked=!!S.mix.maze;$("mixCrypto").checked=!!S.mix.crypto;$("mixNum").checked=!!S.mix.numpath;
+  $("inWords").value=S.words;$("inMsg").value=S.msg;$("inTitle").value=S.title;$("inSub").value=S.sub;$("inFinale").value=S.finale;$("inSeed").value=S.seedInput;
+  $("inPreset").value=S.preset;$("inP1").value=S.p1;$("inP2").value=S.p2;$("inPaper").value=S.paper;$("inInk").value=S.ink;
+  $("inHeader").value=S.header;$("inBorder").value=S.border;$("inPattern").value=S.pattern;$("inWm").value=S.wm;$("inNums").checked=S.nums;
+  $("inTrim").value=S.trim;$("inBleed").checked=S.bleed;$("inMIn").value=S.mIn;$("inMOut").value=S.mOut;$("inMTb").value=S.mTb;
+  $("inMirror").checked=S.mirror;$("inGuides").checked=S.guides;
+  $("inBook").checked=S.book;$("inDoor").checked=S.door;$("inAns").checked=S.ans;$("inSeller").value=S.seller;
+  $("selLayout").value=S.layout;$("selZoom").value=String(S.zoom);
+  $("viewPuzzle").setAttribute("aria-pressed",S.view==="puzzle"?"true":"false");$("viewAnswer").setAttribute("aria-pressed",S.view==="answer"?"true":"false");
+  $("rampNote").innerText=RAMP_NOTE[S.ramp];
+  var sw=document.querySelectorAll(".swatch"),i;for(i=0;i<sw.length;i++){sw[i].setAttribute("aria-pressed",sw[i].getAttribute("data-preset")===S.preset?"true":"false");}
+  $("wordCount").innerText=wordsCountText();
+}
+function extend(a,b){var k;for(k in b){if(Object.prototype.hasOwnProperty.call(b,k)){a[k]=b[k];}}return a;}
+function applyPreset(k){
+  var pr=PRESETS[k];S.preset=k;S.paper=pr.paper;S.ink=pr.ink;S.p1=pr.p1;S.p2=pr.p2;
+  writeControls();
+}
+
+/* ================= history / autosave ================= */
+var hist=[],hidx=-1,STORE_KEY="apc-project-v1";
+function snapshot(){return {s:JSON.stringify(S),deck:deck};}
+function updateUndoBtns(){$("btnUndo").disabled=hidx<=0;$("btnRedo").disabled=hidx>=hist.length-1;}
+function commit(){
+  readControls();
+  var sn=snapshot();
+  if(hidx>=0&&hist[hidx].s===sn.s&&hist[hidx].deck===sn.deck){return;}
+  hist=hist.slice(0,hidx+1);hist.push(sn);
+  if(hist.length>31){hist.shift();}
+  hidx=hist.length-1;updateUndoBtns();autosave();
+}
+function restore(i){
+  var sn=hist[i],keep={view:S.view,layout:S.layout,zoom:S.zoom};
+  S=extend(defaultState(),JSON.parse(sn.s));S.view=keep.view;S.layout=keep.layout;S.zoom=keep.zoom;
+  deck=sn.deck;curPage=0;writeControls();updateUndoBtns();renderPreview();autosave();
+  setProgress("History step "+(i+1)+" / "+hist.length+" restored.",1);
+}
+function undo(){if(hidx>0){hidx--;restore(hidx);}}
+function redo(){if(hidx<hist.length-1){hidx++;restore(hidx);}}
+function projectJSON(){return JSON.stringify({v:1,app:"advent-puzzle-calendar",state:S,params:deck?deck.params:null});}
+function autosave(){
+  try{window.localStorage.setItem(STORE_KEY,projectJSON());$("autoNote").innerText="Autosaved "+new Date().toLocaleTimeString()+".";}
+  catch(e){$("autoNote").innerText="Autosave unavailable in this browser. Use Save .json.";}
+}
+function applyProject(obj){
+  if(!obj||obj.app!=="advent-puzzle-calendar"||!obj.state){throw new Error("Not an Advent Puzzle Calendar project file.");}
+  S=extend(defaultState(),obj.state);
+  writeControls();
+  if(obj.params){generateFromParams(obj.params,function(){commit();});}
+  else{deck=null;curPage=0;renderPreview();commit();}
+}
+
+/* ================= preview ================= */
+function setProgress(t,f){$("progressText").innerText=t;$("progressFill").style.width=(f*100).toFixed(0)+"%";}
+function showError(msg){var e=$("progressError");if(!msg){e.style.display="none";e.innerText="";return;}e.style.display="block";e.innerText=msg;}
+function layoutDims(){
+  var L=S.layout;
+  if(L==="spread"){return {c:2,r:1};}
+  if(L==="strip"){return {c:3,r:1};}
+  if(L==="grid"){return {c:2,r:2};}
+  return {c:1,r:1};
+}
+function previewScale(){
+  var sc=$("previewScroll"),ld=layoutDims(),d=dimsFor(0),aw=sc.clientWidth-44,ah=sc.clientHeight-44,gap=24;
+  var s=Math.min((aw-(ld.c-1)*gap)/(ld.c*d.W),(ah-(ld.r-1)*gap)/(ld.r*d.H));
+  return clamp(s,0.08,2)*S.zoom/100;
+}
+function emptyHTML(){return '<div class="empty-card">'+logoSVG(90,"#124559","#f5d680","#f5d680")+'<h2>Advent Puzzle Calendar</h2><p>Choose 24 or 25 days, pick your puzzle mix and press <b>Generate Deck</b>. Each day hands out one digit; together they open the treasure chest.</p></div>';}
+function renderPreview(){
+  var host=$("previewHost");
+  updateNotes();
+  if(!deck){host.innerHTML=emptyHTML();$("sheetPos").innerText="Page - / -";$("kpiDeck").innerText="No deck yet";$("kpiPreset").innerText=PRESETS[S.preset]?PRESETS[S.preset].name:"Custom";$("btnPrev").disabled=true;$("btnNext").disabled=true;return;}
+  var vl=viewList(deck),ld=layoutDims(),per=ld.c*ld.r,scale=previewScale(),html="",v;
+  if(curPage>=vl.idx.length){curPage=Math.max(0,vl.idx.length-1);}
+  var d0=dimsFor(0);
+  for(v=curPage;v<Math.min(vl.idx.length,curPage+per);v++){
+    var pi=vl.idx[v],h=pageSheet(deck,vl.all,pi,false);
+    h=h.replace('<div class="sheet-slot">','<div class="sheet-slot" style="width:'+Math.round(d0.W*scale)+'px;height:'+Math.round(d0.H*scale)+'px;overflow:hidden;">');
+    h=h.replace("--paper-scale:1;","--paper-scale:"+scale.toFixed(4)+";");
+    html+=h;
+  }
+  host.innerHTML=html;
+  fitAll(host);
+  $("sheetPos").innerText="Page "+(curPage+1)+" / "+vl.idx.length+(S.view==="answer"?" (answers)":"");
+  $("btnPrev").disabled=curPage<=0;$("btnNext").disabled=curPage>=vl.idx.length-1;
+  $("kpiDeck").innerText=deck.days.length+" days • "+LVLRAMP(deck.params.ramp)+" • "+deck.params.aud;
+  $("kpiPreset").innerText=PRESETS[S.preset]?PRESETS[S.preset].name:"Custom";
+  $("metaLine").innerText="Seed "+deck.params.seed+" • "+vl.all.length+" pages in book • trim "+S.trim+(S.bleed?" + bleed":"");
+}
+function LVLRAMP(r){return r.charAt(0).toUpperCase()+r.slice(1);}
+function updateNotes(){
+  var d=dimsFor(0);
+  $("trimNote").innerText="Sheet: "+(d.W/96).toFixed(3)+" x "+(d.H/96).toFixed(3)+" in"+(S.bleed?" (trim + 0.125 in bleed; width +0.125, height +0.25 per KDP)":"")+". Dashed blue = safe area, pink = gutter"+(S.bleed?"/trim":"")+". Guides never print.";
+  if(deck){var b=buildPages(deck);$("bookNote").innerText="Book: "+b.list.length+" pages ("+b.puzzleCount+" puzzle pages + "+(b.list.length-b.puzzleCount)+" answer pages).";}
+  else{$("bookNote").innerText="Generate a deck to see the page count.";}
+}
+
+/* ================= generation ================= */
+function paramsFromState(seed){
+  var m={sudoku:!!S.mix.sudoku,word:!!S.mix.word,maze:!!S.mix.maze,crypto:!!S.mix.crypto,numpath:!!S.mix.numpath};
+  return {days:S.days,ramp:S.ramp,aud:S.aud,mix:m,words:S.words,seed:seed>>>0};
+}
+function generateFromParams(P,done){
+  if(genRunning){return;}
+  if(!typesFromMix(P.mix).length){showError("Pick at least one puzzle type.");setProgress("Nothing to generate.",0);return;}
+  showError("");genRunning=true;$("btnGenerate").disabled=true;
+  var plan=planDeck(P),days=[],i=0,t0=Date.now();
+  setProgress("Building day 1 / "+P.days+" ...",0);
+  function tick(){
+    if(i>=P.days){
+      deck={params:P,plan:plan,days:days};curPage=0;genRunning=false;$("btnGenerate").disabled=false;
+      $("inSeed").value=String(P.seed);S.seedInput=String(P.seed);
+      $("inCode").value=encodeCode(S,P.seed);
+      var msg="Done. "+P.days+" puzzles in "+((Date.now()-t0)/1000).toFixed(1)+"s.";
+      if(plan.customTotal){msg+=" Custom words placed: "+plan.customPlaced+" / "+plan.customTotal+".";}
+      setProgress(msg,1);renderPreview();
+      if(done){done();}
+      return;
+    }
+    try{days.push(makeDay(P,plan,i));}
+    catch(e){genRunning=false;$("btnGenerate").disabled=false;showError("Generation failed on day "+(i+1)+": "+(e&&e.message?e.message:e));setProgress("Stopped.",0);return;}
+    i++;
+    setProgress("Building day "+Math.min(i+1,P.days)+" / "+P.days+" ...",i/P.days);
+    setTimeout(tick,0);
+  }
+  setTimeout(tick,0);
+}
+function startGeneration(){
+  if(genRunning){return;}
+  readControls();
+  var v=String($("inSeed").value||"").replace(/\s+/g,""),seed=null;
+  if(/^APC-/i.test(v)){var dc=decodeCode(v);if(!dc){showError("That seed code is not valid.");return;}applyCode(dc);seed=dc.seed;}
+  else{seed=parseSeed(v);}
+  if(seed===null){seed=randomSeed();}
+  generateFromParams(paramsFromState(seed),function(){commit();});
+}
+function applyCode(dc){
+  S.days=dc.days;S.ramp=dc.ramp;S.aud=dc.aud;S.mix=dc.mix;S.bleed=dc.bleed;S.trim=dc.trim;
+  var keepWords=S.words,pr=PRESETS[dc.preset];S.preset=dc.preset;S.paper=pr.paper;S.ink=pr.ink;S.p1=pr.p1;S.p2=pr.p2;S.words=keepWords;
+  S.seedInput=String(dc.seed);writeControls();
+}
+
+/* ================= export ================= */
+function inlineExportColors(root){
+  var els=root.querySelectorAll("*"),i,el,cs;
+  for(i=0;i<els.length;i++){
+    el=els[i];
+    if(el.namespaceURI==="http://www.w3.org/2000/svg"){continue;}
+    try{
+      cs=window.getComputedStyle(el);
+      var bg=cs.backgroundColor;
+      if(bg&&bg!=="rgba(0, 0, 0, 0)"&&bg!=="transparent"){el.style.backgroundColor=bg;}
+      el.style.backgroundImage="none";
+      el.style.color=cs.color;
+      if(cs.borderTopStyle!=="none"&&parseFloat(cs.borderTopWidth)>0){el.style.borderColor=cs.borderTopColor;}
+      el.style.boxShadow="none";el.style.textShadow="none";el.style.webkitBackdropFilter="none";el.style.backdropFilter="none";
+    }catch(e){}
+  }
+}
+function buildExportDeck(){
+  var host=$("exportDeck"),bp=buildPages(deck),list=bp.list,i,html="";
+  if(!S.ans){list=list.filter(function(x){return x.k!=="ans";});}
+  host.innerHTML="";
+  for(i=0;i<list.length;i++){html+=pageSheet(deck,list,i,true);}
+  host.innerHTML=html;
+  var sh=host.querySelectorAll(".sheet");
+  for(i=0;i<sh.length;i++){sh[i].style.transform="none";sh[i].style.setProperty("--paper-scale","1");sh[i].style.boxShadow="none";}
+  fitAll(host);
+  inlineExportColors(host);
+  return sh;
+}
+function exportFail(msg){showError(msg+" Falling back to Exact Print.");setProgress(msg,1);setTimeout(function(){exactPrint();},600);}
+function libsOK(){return typeof window.html2canvas!=="undefined"&&window.jspdf&&window.jspdf.jsPDF;}
+function waitFonts(cb){try{if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){cb();},function(){cb();});return;}}catch(e){}cb();}
+function download(blob,name){
+  var a=document.createElement("a"),url=URL.createObjectURL(blob);
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1500);
+}
+function capturePages(onPage,onDone,onFail){
+  waitFonts(function(){
+    var sheets;
+    try{sheets=buildExportDeck();}catch(e){onFail("Could not build pages: "+(e&&e.message?e.message:e));return;}
+    var i=0,n=sheets.length;
+    function next(){
+      if(i>=n){onDone(n);return;}
+      window.html2canvas(sheets[i],{scale:EXPORT_SCALE,backgroundColor:S.paper,useCORS:true,logging:false}).then(function(canvas){
+        if(!canvas||!canvas.width||!canvas.height){throw new Error("capture "+(i+1)+" came back blank.");}
+        onPage(canvas,i,n,sheets[i]);
+        i++;setProgress("Rendering page "+i+" / "+n+" ...",i/n);
+        setTimeout(next,0);
+      }).then(null,function(e){onFail("Export failed on page "+(i+1)+": "+(e&&e.message?e.message:String(e)));});
+    }
+    setProgress("Rendering page 1 / "+n+" ...",0);next();
+  });
+}
+function exportPDF(){
+  showError("");
+  if(!deck){exportFail("Nothing to export: generate a deck first.");return;}
+  if(!libsOK()){exportFail("PDF libraries did not load (offline? html2canvas/jsPDF missing).");return;}
+  readControls();
+  var pdf=null;
+  capturePages(function(canvas,i,n,sheet){
+    var wpt=sheet.offsetWidth*0.75,hpt=sheet.offsetHeight*0.75;
+    var img=canvas.toDataURL("image/jpeg",0.92);
+    if(!img||img.length<4000){throw new Error("capture "+(i+1)+" looks empty.");}
+    if(!pdf){pdf=new window.jspdf.jsPDF({unit:"pt",format:[wpt,hpt],orientation:"portrait"});}else{pdf.addPage([wpt,hpt],"portrait");}
+    pdf.addImage(img,"JPEG",0,0,wpt,hpt);
+  },function(n){
+    try{
+      var blob=pdf.output("blob");download(blob,slug(S.title)+".pdf");
+      window.__lastPDF={pages:n,bytes:blob.size};
+      setProgress("Done. PDF downloaded ("+n+" pages).",1);
+    }catch(e){exportFail("PDF save failed: "+(e&&e.message?e.message:e));}
+  },exportFail);
+}
+function exportZip(){
+  showError("");
+  if(!deck){exportFail("Nothing to export: generate a deck first.");return;}
+  if(typeof window.html2canvas==="undefined"||typeof window.JSZip==="undefined"){exportFail("ZIP libraries did not load (offline? html2canvas/JSZip missing).");return;}
+  readControls();
+  var zip=new window.JSZip(),pending=0,finished=false,total=0,doneCb=null;
+  function pad(n){n=String(n);while(n.length<3){n="0"+n;}return n;}
+  capturePages(function(canvas,i){
+    pending++;
+    canvas.toBlob(function(b){zip.file("page-"+pad(i+1)+".png",b);pending--;if(finished&&!pending&&doneCb){doneCb();}},"image/png");
+  },function(n){
+    total=n;finished=true;
+    doneCb=function(){
+      zip.generateAsync({type:"blob"}).then(function(blob){
+        download(blob,slug(S.title)+"-png.zip");window.__lastZip={pages:total,bytes:blob.size};
+        setProgress("Done. ZIP downloaded ("+total+" PNG pages).",1);
+      }).then(null,function(e){exportFail("ZIP failed: "+(e&&e.message?e.message:e));});
+    };
+    if(!pending){doneCb();}
+  },exportFail);
+}
+function exportSVG(){
+  showError("");
+  if(!deck){showError("Generate a deck first.");return;}
+  var vl=viewList(deck),pi=vl.idx[curPage],host=document.createElement("div");
+  host.innerHTML=pageSheet(deck,vl.all,pi,true);
+  var svgs=host.querySelectorAll(".board-wrap > svg");
+  if(!svgs.length){showError("This page has no puzzle board. Open a puzzle page and try again.");return;}
+  var C=pal(),sv=svgs[0],vw=sv.getAttribute("data-w"),vh=sv.getAttribute("data-h");
+  sv.setAttribute("width",vw);sv.setAttribute("height",vh);
+  var inner=sv.innerHTML,out='<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+vw+' '+vh+'" width="'+vw+'" height="'+vh+'" font-family="Arial, Helvetica, sans-serif"><rect width="'+vw+'" height="'+vh+'" fill="'+C.paper+'"/>'+inner+'</svg>';
+  download(new Blob([out],{type:"image/svg+xml"}),"page-"+(pi+1)+"-board.svg");
+  setProgress("SVG downloaded (board of page "+(pi+1)+").",1);
+}
+function exactPrint(){
+  if(!deck){showError("Nothing to print: generate a deck first.");return;}
+  readControls();
+  var d=dimsFor(0),sheets;
+  try{sheets=buildExportDeck();}catch(e){showError("Print build failed: "+e.message);window.print();return;}
+  var css=document.querySelector("style").innerHTML,body=$("exportDeck").innerHTML;
+  var html="<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>"+esc(S.title)+"</title><link href=\"https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@400;600;700&display=swap\" rel=\"stylesheet\"><style>"+css+
+    "@page{size:"+d.W+"px "+d.H+"px;margin:0;}html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important;}.sheet-slot{width:"+d.W+"px;height:"+d.H+"px;overflow:hidden;page-break-after:always;break-after:page;}.sheet{transform:none!important;box-shadow:none!important;}</style></head><body>"+body+"</body></html>";
+  var w=null;try{w=window.open("","_blank");}catch(e2){w=null;}
+  if(!w){showError(($("progressError").innerText?$("progressError").innerText+" ":"")+"Popup blocked: printing the current view instead. Allow popups for the full-book print.");window.print();return;}
+  w.document.open();w.document.write(html);w.document.close();w.focus();
+  setTimeout(function(){w.print();},500);
+}
+
+/* ================= wiring ================= */
+function afterChange(commitNow){
+  readControls();renderPreview();
+  if(commitNow){commit();}else{autosave();}
+}
+function wireSeg(id,key,numeric){
+  var b=$(id).querySelectorAll("button"),i;
+  for(i=0;i<b.length;i++){(function(btn){btn.addEventListener("click",function(){
+    S[key]=numeric?parseInt(btn.getAttribute("data-val"),10):btn.getAttribute("data-val");
+    segSet(id,S[key]);if(key==="ramp"){$("rampNote").innerText=RAMP_NOTE[S.ramp];}
+    readControls();renderPreview();commit();
+  });})(b[i]);}
+}
+function buildSwatches(){
+  var host=$("swatches"),i;host.innerHTML="";
+  var sel=$("inPreset");sel.innerHTML="";
+  for(i=0;i<PRESET_KEYS.length;i++){
+    (function(k){
+      var pr=PRESETS[k],b=document.createElement("button"),o=document.createElement("option");
+      b.className="swatch";b.setAttribute("data-preset",k);b.setAttribute("aria-label",pr.name);b.title=pr.name;b.setAttribute("aria-pressed",S.preset===k?"true":"false");
+      b.style.background="linear-gradient(135deg,"+pr.sw[0]+" 50%,"+pr.sw[1]+" 50%)";
+      host.appendChild(b);b.addEventListener("click",function(){applyPreset(k);readControls();renderPreview();commit();});
+      o.value=k;o.innerText=pr.name;sel.appendChild(o);
+    })(PRESET_KEYS[i]);
+  }
+  sel.addEventListener("change",function(){applyPreset(sel.value);readControls();renderPreview();commit();});
+}
+function buildZoom(){
+  var sel=$("selZoom"),vals=[50,75,100,125,150,200],i;
+  for(i=0;i<vals.length;i++){var o=document.createElement("option");o.value=vals[i];o.innerText=vals[i]===100?"Fit (100%)":vals[i]+"%";sel.appendChild(o);}
+  sel.value="100";
+}
+function setView(v){S.view=v;curPage=0;$("viewPuzzle").setAttribute("aria-pressed",v==="puzzle"?"true":"false");$("viewAnswer").setAttribute("aria-pressed",v==="answer"?"true":"false");renderPreview();}
+function openHelp(){$("helpOverlay").classList.add("show");$("btnHelpClose").focus();}
+function closeHelp(){$("helpOverlay").classList.remove("show");$("btnHelp").focus();}
+function movePage(dlt){
+  if(!deck){return;}
+  var vl=viewList(deck),ld=layoutDims(),step=1;
+  var np=clamp(curPage+dlt*step,0,Math.max(0,vl.idx.length-1));
+  if(np!==curPage){curPage=np;renderPreview();}
+}
+function wire(){
+  wireSeg("segDays","days",true);wireSeg("segRamp","ramp",false);wireSeg("segAud","aud",false);
+  var live=["mixSudoku","mixWord","mixMaze","mixCrypto","mixNum","inWords","inMsg","inTitle","inSub","inFinale","inP1","inP2","inPaper","inInk","inHeader","inBorder","inPattern","inWm","inNums","inTrim","inBleed","inMIn","inMOut","inMTb","inMirror","inGuides","inBook","inDoor","inAns","inSeller","selLayout","selZoom"];
+  var i;
+  for(i=0;i<live.length;i++){(function(id){
+    var el=$(id);
+    el.addEventListener("input",function(){afterChange(false);});
+    el.addEventListener("change",function(){afterChange(true);});
+  })(live[i]);}
+  $("inSeed").addEventListener("change",function(){readControls();autosave();});
+  $("btnDice").addEventListener("click",function(){$("inSeed").value=String(randomSeed());readControls();autosave();});
+  $("btnCode").addEventListener("click",function(){
+    var dc=decodeCode($("inCode").value);
+    if(!dc){showError("That seed code is not valid. It looks like APC-XXXX-XXXXXX.");return;}
+    showError("");applyCode(dc);generateFromParams(paramsFromState(dc.seed),function(){commit();});
+  });
+  $("btnGenerate").addEventListener("click",startGeneration);
+  $("viewPuzzle").addEventListener("click",function(){setView("puzzle");});
+  $("viewAnswer").addEventListener("click",function(){setView("answer");});
+  $("btnPDF").addEventListener("click",exportPDF);$("btnPDF2").addEventListener("click",exportPDF);
+  $("btnZip").addEventListener("click",exportZip);$("btnSVG").addEventListener("click",exportSVG);
+  $("btnPrint").addEventListener("click",exactPrint);
+  $("btnUndo").addEventListener("click",undo);$("btnRedo").addEventListener("click",redo);
+  $("btnSave").addEventListener("click",function(){readControls();download(new Blob([projectJSON()],{type:"application/json"}),slug(S.title)+"-project.json");setProgress("Project saved as .json.",1);});
+  $("btnLoad").addEventListener("click",function(){$("fileLoad").click();});
+  $("fileLoad").addEventListener("change",function(){
+    var f=$("fileLoad").files[0];if(!f){return;}
+    var rd=new FileReader();
+    rd.onload=function(){try{applyProject(JSON.parse(String(rd.result)));setProgress("Project loaded.",1);}catch(e){showError("Could not load project: "+(e&&e.message?e.message:e));}};
+    rd.onerror=function(){showError("Could not read that file.");};
+    rd.readAsText(f);$("fileLoad").value="";
+  });
+  $("btnPrev").addEventListener("click",function(){movePage(-1);});
+  $("btnNext").addEventListener("click",function(){movePage(1);});
+  $("btnHelp").addEventListener("click",openHelp);$("btnHelpClose").addEventListener("click",closeHelp);
+  $("helpOverlay").addEventListener("click",function(e){if(e.target===$("helpOverlay")){closeHelp();}});
+  document.addEventListener("keydown",function(e){
+    var a=document.activeElement,typing=a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT");
+    if(e.key==="Escape"&&$("helpOverlay").classList.contains("show")){closeHelp();return;}
+    if(typing){return;}
+    var k=e.key;
+    if((e.ctrlKey||e.metaKey)&&(k==="z"||k==="Z")){e.preventDefault();if(e.shiftKey){redo();}else{undo();}return;}
+    if((e.ctrlKey||e.metaKey)&&(k==="y"||k==="Y")){e.preventDefault();redo();return;}
+    if(e.ctrlKey||e.metaKey||e.altKey){return;}
+    if(k==="g"||k==="G"){startGeneration();}
+    else if(k==="a"||k==="A"){setView(S.view==="puzzle"?"answer":"puzzle");}
+    else if(k==="ArrowLeft"){movePage(-1);}
+    else if(k==="ArrowRight"){movePage(1);}
+    else if(k==="h"||k==="H"||k==="?"){if($("helpOverlay").classList.contains("show")){closeHelp();}else{openHelp();}}
+  });
+  var rt=null;
+  window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(renderPreview,120);});
+}
+
+/* ================= init ================= */
+function initFavicon(){
+  var l=document.createElement("link");l.rel="icon";l.type="image/svg+xml";
+  l.href="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(logoSVG(64,"#124559","#f5d680","#f5d680"));
+  document.head.appendChild(l);
+}
+function init(){
+  initFavicon();
+  $("brandLogo").innerHTML=logoSVG(56,"#124559","#f5d680","#f5d680");
+  buildSwatches();buildZoom();wire();
+  var restored=false;
+  try{
+    var raw=window.localStorage.getItem(STORE_KEY);
+    if(raw){var obj=JSON.parse(raw);S=extend(defaultState(),obj.state);S.view="puzzle";writeControls();restored=true;
+      if(obj.params){generateFromParams(obj.params,function(){commit();});}}
+  }catch(e){restored=false;}
+  if(!restored){writeControls();}
+  readControls();renderPreview();commit();
+  waitFonts(function(){if(deck){renderPreview();}});
+}
+
+window.APC={
+  get S(){return S;},setS:function(o){S=extend(defaultState(),o);writeControls();},
+  getDeck:function(){return deck;},setDeck:function(d){deck=d;curPage=0;renderPreview();},
+  defaultState:defaultState,makeDeckSync:makeDeckSync,planDeck:planDeck,makeDay:makeDay,digitOf:digitOf,
+  genSudoku:genSudoku,sdSolve:sdSolve,genWord:genWord,genMaze:genMaze,genCrypto:genCrypto,genNumPath:genNumPath,npCount:npCount,
+  mulberry32:mulberry32,mixSeed:mixSeed,mazeTurns:mazeTurns,wsCount:wsCount,measureOf:measureOf,
+  buildPages:buildPages,buildExportDeck:buildExportDeck,finaleCode:finaleCode,encodeCode:encodeCode,decodeCode:decodeCode,
+  W_KIDS:W_KIDS,W_FAM:W_FAM,W_ADU:W_ADU,PHRASES:PHRASES,cleanWords:cleanWords,
+  undo:undo,redo:redo,commit:commit,histLen:function(){return hist.length;},histIdx:function(){return hidx;},
+  startGeneration:startGeneration,isRunning:function(){return genRunning;},applyProject:applyProject,projectJSON:projectJSON,
+  readControls:readControls,renderPreview:renderPreview,exportPDF:exportPDF,exportZip:exportZip,exportSVG:exportSVG,setCur:function(n){curPage=n;renderPreview();},
+  viewList:function(){return viewList(deck);},pal:pal,dimsFor:dimsFor
+};
+init();
+</script>
+</body>
+</html>
