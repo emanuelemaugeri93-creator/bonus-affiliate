@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cozy Case Files Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@400;500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAF8;--ink:#111111;--red:#D62828;--mute:#5b5b55;--field:#ffffff;--rule:#111111;--hair:#d9d9d2;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{font-family:'Inter',Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);overflow:hidden;font-size:13.5px;line-height:1.45;}
+h1,h2,h3,h4{font-family:'Playfair Display',Georgia,serif;margin:0;font-weight:700;}
+.gl,.gp{color:var(--ink);}
+button{font-family:inherit;cursor:pointer;color:inherit;}
+button:active{transform:translateY(1px);}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px;}
+.app-shell{position:fixed;left:0;right:0;top:0;bottom:0;display:grid;grid-template-columns:360px 1fr;z-index:1;}
+.sidebar{overflow-y:auto;padding:0 18px 30px;border-right:1px solid var(--rule);background:var(--bg);}
+.sidebar::-webkit-scrollbar{width:9px;}.sidebar::-webkit-scrollbar-thumb{background:var(--ink);}
+.brand{display:flex;gap:12px;align-items:center;margin:0 0 18px;padding:16px 0 14px;border-top:6px solid var(--ink);border-bottom:1px solid var(--rule);}
+.brand svg{width:56px;height:56px;flex-shrink:0;}
+.brand .kicker{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:700;}
+.brand h1{margin:2px 0;font-size:25px;line-height:1.02;letter-spacing:-.01em;}
+.brand .tag{font-size:12px;color:var(--mute);line-height:1.4;}
+.panel{border-top:3px solid var(--ink);margin-bottom:22px;background:transparent;}
+.panel-head{padding:8px 0;border-bottom:1px solid var(--rule);font-family:'Inter',Arial,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;}
+.panel-body{padding:12px 0;}
+.sub-head{font-family:'Playfair Display',Georgia,serif;font-size:16px;margin:20px 0 6px;padding-top:10px;border-top:1px solid var(--rule);font-style:italic;}
+.panel-body>.sub-head:first-child{margin-top:0;border-top:none;padding-top:0;}
+.fl{display:block;font-size:10.5px;color:var(--mute);margin:12px 0 5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.ipt,.sel,textarea.ipt{width:100%;padding:8px 10px;border:1px solid var(--ink);background:var(--field);color:var(--ink);font-size:13px;font-family:inherit;border-radius:0;}
+textarea.ipt{resize:vertical;min-height:84px;}
+.ipt:focus,.sel:focus{outline:3px solid var(--red);outline-offset:0;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.tgl{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:13px;gap:8px;border-bottom:1px solid var(--hair);}
+.tgl input{width:17px;height:17px;accent-color:#D62828;flex-shrink:0;}
+.mixgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;}
+.swatches{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.swatch{width:34px;height:34px;border-radius:0;border:1px solid var(--ink);padding:0;}
+.swatch[aria-pressed=true]{outline:3px solid var(--red);outline-offset:2px;}
+.btn{width:100%;padding:10px;border:1px solid var(--ink);background:#fff;color:var(--ink);font-size:11.5px;margin-top:8px;font-weight:700;border-radius:0;text-transform:uppercase;letter-spacing:.1em;}
+.btn:hover{background:var(--ink);color:#fff;}
+.btn:disabled{opacity:.4;pointer-events:none;}
+.btn.gen{padding:14px;font-size:13px;background:var(--red);color:#fff;border-color:var(--red);margin-top:4px;}
+.btn.gen:hover{background:#b01f1f;}
+.btn.half{width:auto;padding:9px 14px;}
+.note{font-size:11.5px;color:var(--mute);line-height:1.55;margin-top:8px;}
+.report{font-size:12px;margin-top:8px;line-height:1.5;}
+.report ul.bad{margin:6px 0 0;padding:8px 10px 8px 26px;border:1px solid var(--red);background:#fdeceb;color:#8a1414;}
+.prog-text{font-size:12.5px;margin-top:10px;min-height:18px;}
+.prog-bar{height:6px;border:1px solid var(--ink);background:#fff;margin-top:6px;overflow:hidden;}
+.prog-fill{height:100%;width:0;background:var(--red);}
+.prog-err{display:none;margin-top:8px;font-size:12px;font-weight:700;color:#fff;background:#b42318;border:1px solid #ef4444;padding:9px 10px;line-height:1.5;}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;}
+.topbar{display:flex;align-items:center;gap:8px;padding:10px 16px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--rule);background:var(--bg);}
+.chip{font-size:10.5px;padding:6px 10px;border:1px solid var(--ink);white-space:nowrap;background:#fff;text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+.chip.preset{background:var(--red);color:#fff;border-color:var(--red);}
+.vt{display:flex;border:1px solid var(--ink);background:#fff;}
+.vt button{border:none;background:transparent;padding:7px 14px;font-size:11.5px;color:var(--ink);font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.vt button[aria-pressed=true]{background:var(--ink);color:#fff;}
+.topbar select{background:#fff;color:var(--ink);border:1px solid var(--ink);padding:7px 10px;font-size:12px;font-family:inherit;border-radius:0;}
+.tb-btn{border:1px solid var(--ink);background:#fff;color:var(--ink);padding:8px 11px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.tb-btn:hover{background:var(--ink);color:#fff;}
+.tb-btn.primary{background:var(--red);color:#fff;border-color:var(--red);}
+.preview-scroll{flex:1;min-height:0;overflow:auto;padding:22px;display:flex;flex-direction:column;align-items:center;background:#e9e9e4 repeating-linear-gradient(90deg,transparent 0,transparent 95px,rgba(0,0,0,.05) 95px,rgba(0,0,0,.05) 96px);}
+.preview-host{display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+.empty-card{max-width:540px;text-align:left;border-top:6px solid var(--ink);border-bottom:1px solid var(--ink);padding:28px 4px;background:transparent;}
+.empty-card svg{width:84px;height:84px;}
+.empty-card h2{margin:12px 0 8px;font-size:34px;line-height:1.05;}
+.empty-card p{color:var(--mute);font-size:14px;line-height:1.7;column-count:1;}
+.bottomnav{display:flex;align-items:center;gap:14px;justify-content:center;padding:10px;flex-shrink:0;flex-wrap:wrap;border-top:1px solid var(--rule);background:var(--bg);}
+.nav-btn{width:38px;height:38px;border:1px solid var(--ink);background:#fff;color:var(--ink);font-size:16px;font-weight:800;border-radius:0;}
+.nav-btn:disabled{opacity:.3;}
+.sheet-pos{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.meta-line{font-size:11.5px;color:var(--mute);width:100%;text-align:center;}
+.help-overlay{position:fixed;inset:0;background:rgba(17,17,17,.6);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.help-overlay.show{display:flex;}
+.help-modal{background:var(--bg);border-top:6px solid var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.4);width:640px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+.help-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--rule);}
+.help-head h3{font-size:22px;}
+.help-close{border:1px solid var(--ink);background:#fff;color:var(--ink);width:34px;height:34px;font-weight:800;}
+.help-body{padding:16px 18px;overflow-y:auto;}
+.help-step{display:flex;gap:12px;margin-bottom:14px;}
+.help-num{width:30px;height:30px;background:var(--red);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Playfair Display',Georgia,serif;}
+.help-step h4{font-size:16px;margin:0 0 3px;}
+.help-step p{margin:0;font-size:13px;line-height:1.65;color:var(--mute);}
+kbd{border:1px solid var(--ink);padding:1px 6px;font-size:11px;background:#fff;}
+#exportDeck{position:fixed;left:-99999px;top:0;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:290px 1fr;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:1px solid var(--rule);}}
+/* ===== PAPER (printables: solid colors only) ===== */
+.sheet-slot{flex-shrink:0;position:relative;}
+.sheet{position:relative;overflow:hidden;background:var(--paper,#fff);color:var(--ink,#000);transform-origin:top left;transform:scale(var(--paper-scale,1));box-shadow:0 18px 60px rgba(0,0,0,.5);flex-shrink:0;}
+.sheet .bgpat{position:absolute;left:0;top:0;}
+.sheet .trim{position:absolute;overflow:hidden;}
+.sheet .wm{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;z-index:1;}
+.sheet .frame{position:absolute;z-index:1;}
+.sheet .guide-safe{position:absolute;border:1px dashed #1e90ff;z-index:5;pointer-events:none;}
+.sheet .guide-gutter{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed #e0306a;z-index:5;pointer-events:none;}
+.sheet .guide-trim{position:absolute;left:0;top:0;right:0;bottom:0;border:1px dashed #e0306a;z-index:5;pointer-events:none;}
+.sheet .guide-tag{position:absolute;z-index:6;font:10px Arial,sans-serif;color:#e0306a;background:#ffffff;padding:1px 4px;}
+.pg{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;overflow:hidden;z-index:2;font-family:'Inter',Arial,Helvetica,sans-serif;color:var(--ink);--ts:1;}
+.pg *{box-sizing:border-box;}
+.hd{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-bottom:calc(8px*var(--ts));}
+.hd .dbadge{flex-shrink:0;width:calc(62px*var(--ts));height:calc(72px*var(--ts));}
+.hd .dbadge svg{width:100%;height:100%;display:block;}
+.hd .htxt{flex:1;min-width:0;}
+.hd .lvl{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;font-size:calc(10px*var(--ts));font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.hd .lvl svg{display:block;margin-top:3px;}
+.hd-ribbon{background:var(--p1);color:#ffffff;padding:calc(8px*var(--ts)) calc(12px*var(--ts));border-radius:6px;}
+.hd-ribbon .kick,.hd-ribbon .ttl,.hd-ribbon .lvl{color:#ffffff;}
+.hd-plain{border-bottom:2px solid var(--p1);padding-bottom:calc(6px*var(--ts));}
+.kick{font-size:calc(11px*var(--ts));letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--p1);white-space:nowrap;overflow:hidden;}
+.ttl{font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:calc(24px*var(--ts));line-height:1.12;margin:2px 0 0;white-space:nowrap;overflow:hidden;color:var(--ink);}
+.instr{font-size:calc(12.5px*var(--ts));line-height:1.45;margin:0 0 calc(6px*var(--ts));flex-shrink:0;}
+.board-wrap{position:relative;flex:1;min-height:0;}
+.board-wrap svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}
+.wordlist{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(3px*var(--ts)) calc(14px*var(--ts));font-size:calc(12px*var(--ts));font-weight:700;letter-spacing:.07em;margin-top:calc(6px*var(--ts));flex-shrink:0;}
+.digit-row{display:flex;align-items:center;justify-content:center;gap:12px;font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:calc(16px*var(--ts));margin-top:calc(8px*var(--ts));flex-shrink:0;}
+.dbox{width:calc(46px*var(--ts));height:calc(46px*var(--ts));border:3px solid var(--ink);border-radius:10px;background:var(--paper);text-align:center;line-height:calc(40px*var(--ts));font-size:calc(26px*var(--ts));}
+.pf{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;margin-top:calc(8px*var(--ts));padding-top:calc(5px*var(--ts));border-top:1px solid var(--p2);font-size:calc(10px*var(--ts));}
+.pf .pl{flex-shrink:0;white-space:nowrap;}
+.pf .pm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+.pf .pr{flex-shrink:0;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.pf .pr svg{width:calc(16px*var(--ts));height:calc(16px*var(--ts));}
+.txt-page{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;}
+.txt-page h3{font-family:'Playfair Display',Georgia,serif;font-size:calc(18px*var(--ts));margin:calc(10px*var(--ts)) 0 calc(4px*var(--ts));color:var(--p1);}
+.txt-page p,.txt-page li{font-size:calc(12.5px*var(--ts));line-height:1.5;margin:0 0 calc(4px*var(--ts));}
+.txt-page ul{margin:0;padding-left:calc(18px*var(--ts));}
+.cover{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:calc(10px*var(--ts));}
+.cover .big{width:calc(190px*var(--ts));height:calc(190px*var(--ts));}
+.cover .ttl{font-size:calc(40px*var(--ts));white-space:normal;text-align:center;}
+.cover .sub{font-size:calc(16px*var(--ts));max-width:90%;}
+.ans-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:calc(8px*var(--ts));}
+.tile{border:2px solid var(--ink);border-radius:8px;padding:calc(5px*var(--ts));display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--paper);}
+.tile .tt{font-size:calc(10.5px*var(--ts));font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tile .board-wrap{flex:1;}
+.keytile{font-size:calc(11px*var(--ts));line-height:1.5;overflow:hidden;}
+.keytile b{color:var(--p1);}
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:280px 1fr;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:1px solid var(--glb);}}
+@media print{
+  body{background:#fff;overflow:visible;}
+  .orbs,.top-app-bar,.sidebar,.topbar,.bottomnav,.help-overlay,.guide-safe,.guide-gutter,.guide-trim,.guide-tag{display:none !important;}
+  .app-shell{display:block;position:static;}
+  .main{display:block;}
+  .preview-scroll{overflow:visible;display:block;padding:0;}
+  .preview-host{display:block;}
+  .sheet-slot{width:auto !important;height:auto !important;margin:0;page-break-after:always;}
+  .sheet{transform:none;box-shadow:none;}
+}
+
+.sheet-slot{color:#000;}
+.hd-block{background:var(--p1);color:var(--paper);padding:calc(8px*var(--ts)) calc(14px*var(--ts));border-radius:calc(12px*var(--ts));}
+.hd-block .kick,.hd-block .ttl{color:var(--paper);}
+.hd-underline{border-bottom:calc(4px*var(--ts)) solid var(--p1);padding-bottom:calc(6px*var(--ts));}
+.lvlchip{flex-shrink:0;font-size:calc(11px*var(--ts));font-weight:700;border:2px solid var(--p1);color:var(--p1);border-radius:calc(12px*var(--ts));padding:calc(3px*var(--ts)) calc(9px*var(--ts));white-space:nowrap;font-family:'Playfair Display',Georgia,serif;}
+.hd-block .lvlchip{border-color:var(--paper);color:var(--paper);}
+.hd .htxt .ttl{font-size:calc(21px*var(--ts));}
+.kick{letter-spacing:.06em;}
+
+
+.stamp{flex-shrink:0;font-family:'Special Elite','Courier New',monospace;font-size:calc(12px*var(--ts));color:var(--red);border:2px solid var(--red);padding:calc(2px*var(--ts)) calc(8px*var(--ts));transform:rotate(-3deg);letter-spacing:.08em;background:transparent;white-space:nowrap;}
+.hd-block .stamp{color:var(--paper);border-color:var(--paper);}
+.stamp.big{font-size:calc(22px*var(--ts));padding:calc(4px*var(--ts)) calc(16px*var(--ts));}
+.namerow{display:flex;gap:calc(24px*var(--ts));font-size:calc(11px*var(--ts));margin-bottom:calc(5px*var(--ts));flex-shrink:0;}
+.ico{display:inline-block;vertical-align:middle;flex-shrink:0;}
+.brief{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+.story{font-size:calc(15px*var(--ts));line-height:1.6;margin:0 0 calc(6px*var(--ts));text-align:justify;}
+.brief h3,.ansbox h3{font-family:'Playfair Display',Georgia,serif;font-size:calc(20px*var(--ts));margin:calc(4px*var(--ts)) 0 calc(3px*var(--ts));border-bottom:1px solid var(--ink);padding-bottom:calc(2px*var(--ts));}
+.clues{margin:0;padding-left:calc(22px*var(--ts));}
+.clues li{font-size:calc(14.5px*var(--ts));line-height:1.45;margin-bottom:calc(6px*var(--ts));break-inside:avoid;}
+.clues.two{column-count:2;column-gap:calc(22px*var(--ts));}
+.notes{flex-shrink:0;font-size:calc(10.5px*var(--ts));margin-top:calc(4px*var(--ts));}
+.notes .nl{display:block;border-bottom:1px solid var(--ink);height:calc(16px*var(--ts));}
+.ft{width:100%;border-collapse:collapse;margin-top:calc(6px*var(--ts));flex-shrink:0;table-layout:fixed;}
+.ft th,.ft td{border:1.5px solid var(--ink);font-size:calc(11.5px*var(--ts));padding:calc(2px*var(--ts)) calc(4px*var(--ts));height:calc(21px*var(--ts));text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.ft thead th{background:var(--soft);font-family:'Playfair Display',Georgia,serif;}
+.ft td.ans{color:var(--red);font-weight:700;}
+.culp{flex-shrink:0;font-size:calc(13px*var(--ts));margin-top:calc(8px*var(--ts));line-height:2;}
+.bl{display:inline-block;border-bottom:2px solid var(--ink);text-align:center;font-weight:700;vertical-align:baseline;}
+.bl.ans{color:var(--red);border-bottom-color:var(--red);}
+.ansbox{flex-shrink:0;}
+.ansbox .finl{font-family:'Playfair Display',Georgia,serif;font-size:calc(15px*var(--ts));font-weight:700;color:var(--red);margin:0 0 calc(4px*var(--ts));}
+.ansbox ol{margin:0;padding-left:calc(22px*var(--ts));}.ansbox li{font-size:calc(11.5px*var(--ts));line-height:1.4;}
+.cards{flex:1;min-height:0;display:grid;gap:0;overflow:hidden;}
+.ec{border:1.5px dashed var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:calc(2px*var(--ts));padding:calc(3px*var(--ts));min-width:0;min-height:0;overflow:hidden;}
+.ec .ico{width:calc(22px*var(--ts));height:calc(22px*var(--ts));}
+.ecc{font-size:calc(8px*var(--ts));text-transform:uppercase;letter-spacing:.12em;color:var(--p1);font-weight:700;}
+.ect{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:calc(13px*var(--ts));line-height:1.15;word-break:break-word;}
+.caselist{max-width:86%;text-align:left;}.caselist ul{margin:0;padding-left:calc(18px*var(--ts));columns:2;column-gap:calc(20px*var(--ts));}.caselist li{font-size:calc(11px*var(--ts));line-height:1.5;break-inside:avoid;}
+.exwrap{text-align:center;}.exwrap svg{width:62%;height:auto;max-height:calc(250px*var(--ts));}
+.excap{font-size:calc(11px*var(--ts));font-style:italic;margin:calc(2px*var(--ts)) 0 0;}
+.board-wrap svg{filter:none;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Controls">
+    <div class="brand">
+      <span id="brandLogo" aria-hidden="true"></span>
+      <div><div class="kicker">Printable Mystery Studio</div><h1 class="gl">Cozy Case Files</h1><div class="tag">Logic-grid mysteries with a story, suspects and clues. Every case has exactly one solution.</div></div>
+    </div>
+
+    <section class="panel" aria-labelledby="hGen">
+      <h2 class="panel-head gp" id="hGen">Generator</h2>
+      <div class="panel-body">
+        <label class="fl" for="selCases">Casebook size</label>
+        <select class="sel" id="selCases"><option value="6">6 cases</option><option value="9">9 cases</option><option value="12">12 cases</option><option value="15">15 cases</option><option value="18">18 cases</option><option value="24">24 cases</option><option value="30">30 cases</option></select>
+        <div class="fl" id="lblDf">Difficulty ramp</div>
+        <div class="mixgrid" id="dfGrid" role="group" aria-labelledby="lblDf"></div>
+        <div class="note" id="dfNote"></div>
+        <div class="fl" id="lblSt">Cozy settings</div>
+        <div class="mixgrid" id="stGrid" role="group" aria-labelledby="lblSt"></div>
+        <div class="sub-head">Content Lock</div>
+        <label class="fl" for="inTitle">Book title</label>
+        <input class="ipt" id="inTitle" value="Cozy Case Files" maxlength="60">
+        <label class="fl" for="inNames">Suspect names (comma or one per line, up to 40)</label>
+        <textarea class="ipt" id="inNames" placeholder="Maya, Leo, Priya, Tomas" aria-describedby="nameReport"></textarea>
+        <div class="report" id="nameReport" aria-live="polite"></div>
+        <label class="fl" for="inItems">Items for the cast (one per line, up to 60)</label>
+        <textarea class="ipt" id="inItems" placeholder="brass bell&#10;knitted scarf" aria-describedby="itemReport"></textarea>
+        <div class="report" id="itemReport" aria-live="polite"></div>
+        <label class="fl" for="inSetName">My own setting: name</label>
+        <input class="ipt" id="inSetName" placeholder="Willow Creek Market" maxlength="30">
+        <label class="fl" for="inSetLocs">My own setting: locations (one per line, 6 to 10)</label>
+        <textarea class="ipt" id="inSetLocs" placeholder="in the flower stall&#10;by the fountain&#10;at the cheese cart" aria-describedby="setReport"></textarea>
+        <div class="report" id="setReport" aria-live="polite"></div>
+        <div class="note">Tick "My setting" above once the name and six locations are valid. Your names and items are used in every case.</div>
+        <div class="sub-head">Seed</div>
+        <label class="fl" for="inSeed">Seed (blank = random)</label>
+        <div style="display:flex;gap:6px;"><input class="ipt" id="inSeed" inputmode="numeric" placeholder="random"><button class="btn half" id="btnDice" style="margin-top:0;" aria-label="Random seed">Dice</button></div>
+        <label class="fl" for="inCode">Seed code (share to rebuild this casebook)</label>
+        <div style="display:flex;gap:6px;"><input class="ipt" id="inCode" placeholder="CF-..."><button class="btn half" id="btnCode" style="margin-top:0;">Use</button></div>
+        <div class="note">The code holds case count, difficulty, settings, look, trim and seed. Your names, items and setting are not inside it; use Save .json.</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="hSty">
+      <h2 class="panel-head gp" id="hSty">Style</h2>
+      <div class="panel-body">
+        <label class="fl" for="inPreset">Page style</label>
+        <select class="sel" id="inPreset"></select>
+        <div class="swatches" id="swatches" role="group" aria-label="Style swatches"></div>
+        <label class="fl" for="inSub">Subtitle</label>
+        <input class="ipt" id="inSub" value="Cozy logic mysteries. Every case has exactly one solution." maxlength="70">
+        <div class="row2">
+          <div><label class="fl" for="inHeader">Header</label><select class="sel" id="inHeader"><option value="block">Color block</option><option value="underline">Underline</option><option value="plain">Plain</option></select></div>
+          <div><label class="fl" for="inBorder">Border</label><select class="sel" id="inBorder"><option value="rounded">Rounded</option><option value="solid">Solid</option><option value="double">Double</option><option value="none">None</option></select></div>
+        </div>
+        <label class="fl" for="inPattern">Background pattern</label>
+        <select class="sel" id="inPattern"><option value="none">None</option><option value="grain">Paper grain</option><option value="lines">Ruled lines</option><option value="grid">Faint grid</option></select>
+        <label class="fl" for="inWm">Logo mark</label>
+        <select class="sel" id="inWm"><option value="none">None</option><option value="footer">Footer mark</option><option value="faint">Faint watermark</option></select>
+        <label class="tgl"><span>Show page numbers</span><input type="checkbox" id="inNums" checked></label>
+
+        <div class="sub-head">KDP Trim Studio</div>
+        <label class="fl" for="inTrim">Trim size</label>
+        <select class="sel" id="inTrim"><option value="6x9">6 x 9 in</option><option value="8x10">8 x 10 in</option><option value="8.5x11" selected>8.5 x 11 in</option><option value="a4">A4 (8.27 x 11.69 in)</option></select>
+        <label class="tgl"><span>Add bleed (0.125 in)</span><input type="checkbox" id="inBleed"></label>
+        <div class="row3">
+          <div><label class="fl" for="inMIn">Inside</label><input class="ipt" type="number" id="inMIn" min="0.25" max="1.25" step="0.125" value="0.625"></div>
+          <div><label class="fl" for="inMOut">Outside</label><input class="ipt" type="number" id="inMOut" min="0.25" max="1.25" step="0.125" value="0.5"></div>
+          <div><label class="fl" for="inMTb">Top/btm</label><input class="ipt" type="number" id="inMTb" min="0.25" max="1.25" step="0.125" value="0.5"></div>
+        </div>
+        <label class="tgl"><span>Mirror margins (facing pages)</span><input type="checkbox" id="inMirror" checked></label>
+        <label class="tgl"><span>Show safe-area and gutter guides</span><input type="checkbox" id="inGuides" checked></label>
+        <div class="note" id="trimNote"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="hExp">
+      <h2 class="panel-head gp" id="hExp">Export Deck</h2>
+      <div class="panel-body">
+        <button class="btn gen" id="btnGenerate">Generate Casebook</button>
+        <div class="prog-text" id="progressText" role="status" aria-live="polite">Idle. Pick a casebook size and difficulty, then generate.</div>
+        <div class="prog-bar"><div class="prog-fill" id="progressFill"></div></div>
+        <div class="prog-err" id="progressError" role="alert"></div>
+        <div class="sub-head">Book Builder</div>
+        <label class="tgl"><span>Front matter (title, copyright, how-to-solve)</span><input type="checkbox" id="inBook" checked></label>
+        <label class="tgl"><span>Case section pages</span><input type="checkbox" id="inSections" checked></label>
+        <label class="tgl"><span>Evidence card pages</span><input type="checkbox" id="inCards" checked></label>
+        <label class="tgl"><span>Append answer pages</span><input type="checkbox" id="inAns" checked></label>
+        <div class="note" id="bookNote"></div>
+        <label class="fl" for="inSeller">Seller branding: "Created by"</label>
+        <input class="ipt" id="inSeller" maxlength="50" placeholder="optional, e.g. Penny Press">
+        <div class="sub-head">Export</div>
+        <button class="btn" id="btnPDF2">Download Exact PDF (whole book)</button>
+        <button class="btn" id="btnZip">Download PNG ZIP (one per page)</button>
+        <button class="btn" id="btnSVG">Download this page logic grid as SVG</button>
+        <div class="sub-head">Project</div>
+        <div class="row2"><button class="btn" id="btnUndo" style="margin-top:0">Undo</button><button class="btn" id="btnRedo" style="margin-top:0">Redo</button></div>
+        <div class="row2"><button class="btn" id="btnSave">Save .json</button><button class="btn" id="btnLoad">Load .json</button></div>
+        <input type="file" id="fileLoad" accept=".json,application/json" class="sr" aria-label="Load project file">
+        <div class="note" id="autoNote">Autosave on.</div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="chip" id="kpiDeck">No casebook yet</span>
+      <span class="chip preset" id="kpiPreset">Arcade Bright</span>
+      <div class="vt" role="group" aria-label="View"><button id="viewPuzzle" aria-pressed="true">Puzzle</button><button id="viewAnswer" aria-pressed="false">Answer</button></div>
+      <select id="selLayout" aria-label="Page layout"><option value="single">Single</option><option value="spread">2-page spread</option><option value="strip">3-up strip</option><option value="grid">2x2 grid</option></select>
+      <select id="selZoom" aria-label="Zoom"></select>
+      <button class="tb-btn" id="btnHelp">? How to use</button>
+      <button class="tb-btn primary" id="btnPDF">Download Exact PDF</button>
+      <button class="tb-btn" id="btnPrint">Exact Print</button>
+    </div>
+    <div class="preview-scroll" id="previewScroll"><div class="preview-host" id="previewHost"></div></div>
+    <div class="bottomnav">
+      <button class="nav-btn" id="btnPrev" aria-label="Previous page">&lt;</button>
+      <span class="sheet-pos" id="sheetPos">Page - / -</span>
+      <button class="nav-btn" id="btnNext" aria-label="Next page">&gt;</button>
+      <div class="meta-line" id="metaLine">Generate a casebook to see your pages.</div>
+    </div>
+  </main>
+</div>
+<div id="exportDeck"></div>
+<div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-modal">
+    <div class="help-head"><h3 class="gl" id="helpTitle">How to use Cozy Case Files</h3><button class="help-close" id="btnHelpClose" aria-label="Close help">X</button></div>
+    <div class="help-body">
+      <div class="help-step"><div class="help-num">1</div><div><h4>Build a casebook</h4><p>Pick 6 to 30 cases and the difficulty levels. Cases ramp from easy to expert, and each one is set in a different cozy place. Press <b>Generate Casebook</b>.</p></div></div>
+      <div class="help-step"><div class="help-num">2</div><div><h4>One solution, no filler</h4><p>A logic solver builds every case from a hidden solution, adds true clues until only one answer remains, then removes any clue that is not needed.</p></div></div>
+      <div class="help-step"><div class="help-num">3</div><div><h4>Your own cast</h4><p>Add suspect names, items for the cast and a setting of your own with six or more locations. Lines that cannot be used are listed in red.</p></div></div>
+      <div class="help-step"><div class="help-num">4</div><div><h4>Make a book</h4><p>Choose a KDP trim and bleed. Book Builder adds title, copyright and how-to-solve pages, case sections, evidence cards and an answer key with the first deductions. Export one PDF or a PNG ZIP. The seed in every footer rebuilds the same casebook.</p></div></div>
+      <div class="help-step"><div class="help-num">5</div><div><h4>Shortcuts</h4><p><kbd>G</kbd> generate, <kbd>A</kbd> puzzle/answer view, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> pages, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>Ctrl</kbd>+<kbd>Y</kbd> redo, <kbd>H</kbd> help.</p></div></div>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+
+/* ================= utils ================= */
+var EXPORT_SCALE = 3;
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function mixSeed(a,b){var h=(a>>>0)^Math.imul((b|0)+0x7f4a7c15,0x9e3779b1);h=Math.imul(h^(h>>>15),0x85ebca6b);h^=h>>>13;h=Math.imul(h,0xc2b2ae35);return(h^(h>>>16))>>>0;}
+function shuffleWith(rng,arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(rng()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function ri(rng,a,b){return a+Math.floor(rng()*(b-a+1));}
+function pick(rng,arr){return arr[Math.floor(rng()*arr.length)];}
+function slug(s){return String(s||"cozy-case-files").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"cozy-case-files";}
+function hex2rgb(h){h=String(h).replace("#","");if(h.length===3){h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];}return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function rgb2hex(r,g,b){var o="#",a=[r,g,b],i,s;for(i=0;i<3;i++){s=Math.max(0,Math.min(255,Math.round(a[i]))).toString(16);if(s.length<2){s="0"+s;}o+=s;}return o;}
+function mix(a,b,t){var x=hex2rgb(a),y=hex2rgb(b);return rgb2hex(x[0]+(y[0]-x[0])*t,x[1]+(y[1]-x[1])*t,x[2]+(y[2]-x[2])*t);}
+function gray(c){var x=hex2rgb(c),g=Math.round(0.3*x[0]+0.59*x[1]+0.11*x[2]);return rgb2hex(g,g,g);}
+function starPts(cx,cy,R,r){var p=[],i,a,rr;for(i=0;i<10;i++){a=-Math.PI/2+i*Math.PI/5;rr=(i%2===0)?R:r;p.push((cx+Math.cos(a)*rr).toFixed(1)+","+(cy+Math.sin(a)*rr).toFixed(1));}return p.join(" ");}
+function pad2(n){return n<10?"0"+n:String(n);}
+
+
+/* ================= logo: magnifying glass over a steaming teacup (line art) ================= */
+function logoSVG(size,c1,c2,c3){
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 64 64">'+
+    '<rect width="64" height="64" rx="12" fill="'+c3+'"/>'+
+    '<g fill="none" stroke="'+c1+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+
+    '<path d="M12 30H44V38C44 46 38 52 28 52C18 52 12 46 12 38Z"/>'+
+    '<path d="M44 33H48C52 33 52 41 46 42"/>'+
+    '<path d="M8 56H48"/>'+
+    '<path d="M20 24C17 21 23 18 20 14M28 24C25 21 31 18 28 14M36 24C33 21 39 18 36 14"/>'+
+    '</g>'+
+    '<circle cx="43" cy="22" r="11" fill="none" stroke="'+c2+'" stroke-width="3.4"/>'+
+    '<path d="M51 30L59 38" stroke="'+c2+'" stroke-width="5" stroke-linecap="round"/>'+
+    '</svg>';
+}
+
+/* ================= settings ================= */
+var NAME_BANK=[
+ "Maya Leo Priya Tomas Wen Hana Oscar Nina Felix Ada Rosa Ivan Lila Hugo Mina Jonas Cora Dev Elsie Marcus Tilly Anders Zoe Basil Greta Kofi Ines Rudy Pia Silas Nell Arlo Dora Emil Fern Gus Hattie Ike Juno Kit",
+ "Wanda Amos Beatrix Cyrus Delia Edmund Flora Gideon Harriet Isaac Jessa Kenji Lottie Milo Nadia Orla Percy Quinn Rhoda Stan Thea Ulrich Vera Winnie Xavier Yara Zeke Agnes Bruno Clara Dexter Eliza Frank Gwen Heath Imogen Jasper Kira Lars Marta",
+ "Noel Odette Pablo Rosalind Sven Tessa Uma Victor Willa Yusuf Zelda Abel Bridget Caleb Daphne Eamon Fiona Gabe Helga Ignatius Joan Klaus Lena Moe Nora Otis Paloma Rex Sadie Theo Una Viggo Winston Xena Yvette Zara Alma Boris Cleo Dmitri",
+ "Elmer Faye Gil Hazel Ira Jules Kara Lorne Mabel Ned Olive Pete Rita Sam Trudy Ulla Vic Wade Xia Yolanda Zack Anya Bram Cass Dina Ewan Freya Gordon Hilda Ivo Jada Kalen Lucy Mort Nico Opal Pru Quentin Reva Seth",
+ "Tamsin Umberto Verity Walt Ximena Yoko Zane Aldo Bea Cedric Dolly Enzo Fenella Giles Hope Ilsa Jago Kay Lionel Maeve Nigel Odile Pim Ronan Sybil Tobias Ulysses Venus Wilf Xanthe Yves Zita Alba Bertie Colm Dara Elio Fabia Gavin Heidi",
+ "Jory Kelda Lazlo Mira Neville Oona Piers Queenie Rafe Saskia Tavish Ursa Vance Wren Xan Yael Zephyr Alder Briar Clove Dale Ember Fable Gale Haven Indigo Jett Kestrel Lark Maple Nettle Onyx Pearl Quill Robin Sage Thistle Umber Vesper Wisp",
+ "Abner Brina Corin Declan Edda Fitch Galen Hester Ilya Jolene Kellan Lorna Murdo Nessa Orrin Perrin Quincy Rhiannon Seamus Tegan Uriah Valda Wyatt Xerxes Yannick Zorah Aiden Bryn Ciara Dougal Efua Finn Greer Hamish Iona Jerome Kaia Lowell Moira Niall",
+ "Jocelyn Keiko Leopold Marisol Nathaniel Ophelia Phineas Rosemary Sorcha Thaddeus Ursula Valentin Wilhelmina Xiomara Yolande Zinnia Amelie Barnaby Camilla Desmond Evangeline Ferdinand Gemma Humphrey Isadora Jethro Kiara Lucian Magnolia Napoleon Octavia Peregrine Rosalie Sebastian Tabitha Ulick Violet Wallace Xanthippe Yardley"
+];
+var TREATS="lemon tart,oat cookie,cinnamon bun,ginger biscuit,scone with jam,shortbread,apple slice,honey toast,plum cake,mint chocolate,banana loaf,almond cake,buttered crumpet,cherry pie slice,carrot cupcake,jam doughnut,walnut brownie,pistachio biscuit,peach cobbler,toffee square".split(",");
+/* time slots: start minute, step minutes -> 30 ordered labels */
+function slotLabels(start,step){
+  var out=[],i,m,h,mm,ap;
+  for(i=0;i<30;i++){m=start+i*step;h=Math.floor(m/60);mm=m%60;ap=h>=12?"pm":"am";h=h%12;if(h===0){h=12;}out.push(h+":"+(mm<10?"0":"")+mm+" "+ap);}
+  return out;
+}
+function mkSetting(id,name,open,locs,jobs,items,crimes,start,step,nameIdx){
+  var cr=[],i,p;
+  crimes=crimes.split(";");
+  for(i=0;i<crimes.length;i++){p=crimes[i].split("|");cr.push({obj:p[0],deed:p[1]});}
+  return {id:id,name:name,open:open,locs:locs.split(","),jobs:jobs.split(","),items:items.split(","),crimes:cr,times:slotLabels(start,step),names:nameIdx===null?[]:NAME_BANK[nameIdx].split(" ")};
+}
+var SETTINGS=[
+ mkSetting("bakery","Village Bakery","Morning was warming up at the Village Bakery, and the whole street smelled of cinnamon.",
+  "in the front shop,in the kitchen,in the pantry,in the cold cellar,on the back step,in the flour store,at the cooling racks,in the tea corner",
+  "baker,apprentice,delivery driver,cake decorator,pastry chef,shop clerk,flour miller,dishwasher,cashier,jam maker,tea server,window dresser,dough shaper,oven keeper,supplier,food writer,local mayor,retired baker,honey seller,milkman,bookkeeper,florist,window cleaner,bicycle courier,sugar merchant,schoolteacher,church organist,candle maker,basket weaver,tea taster",
+  "rolling pin,flour sack,copper whisk,brass scale,oven mitt,recipe tin,piping bag,cake stand,wooden spoon,sugar bowl,butter dish,cookie cutter,loaf pan,tea towel,pocket watch,cinnamon jar,honey pot,jam ladle,bread knife,ball of twine,order book,ribbon spool,dough scraper,flour sifter,pie dish,candle stub,sprinkle shaker,chalkboard menu,silver tray,lemon zester",
+  "blueberry pie|vanished from the cooling rack;prize sourdough starter|went missing from its jar;wedding cake topper|disappeared before the big day;secret cinnamon recipe|was swapped for a shopping list;tray of shortbread|was gone by morning break;golden rolling pin|was taken from its display shelf;birthday cake|lost every one of its candles;jar of strawberry jam|was found switched with pickles;seeded loaf|walked right out of the shop;bakery bell|stopped ringing because it was taken;honey cake|was nibbled down to the plate;recipe book|vanished from the kitchen shelf;basket of scones|was traded for a basket of rolls;apple tart|disappeared from the window display;trophy for best bun|was missing before the judging;sugar cookie jar|was refilled with buttons;chocolate eclairs|were swapped for plain ones;cherry cupcakes|went missing from the party table;festival cake|was delivered to the wrong address;family cookbook|turned up in the wrong bag",
+  270,20,0),
+ mkSetting("inn","Seaside Inn","The tide was out and the Seaside Inn was humming with guests drinking cocoa by the windows.",
+  "in the lobby,in the dining room,on the veranda,in the kitchen,in the boat shed,on the lookout deck,in the reading nook,at the front desk",
+  "innkeeper,cook,fisher,porter,housekeeper,gardener,sailor,painter,boat builder,ferry captain,postman,harbor master,net mender,lamp keeper,ice cream seller,kite maker,shell collector,bird watcher,travel writer,retired captain,baker,cobbler,fiddler,mapmaker,beach cleaner,tide watcher,photographer,rope maker,accordion player,schoolteacher",
+  "brass key,guest book,sea glass jar,tin lantern,woolly blanket,teapot,seashell,binoculars,driftwood sign,rope coil,fishing net,oar,folded map,barometer,tide chart,mug of cocoa,umbrella,deck chair,bell rope,welcome mat,postcard stack,hot water bottle,boot brush,trunk strap,sailing cap,spyglass,sand bucket,coat hook,picnic basket,compass",
+  "guest book|vanished from the front desk;prize lobster pot|went missing from the porch;room twelve key|disappeared at breakfast;captain's telescope|was gone from its bracket;seashell collection|was rearranged overnight;chowder recipe|was swapped for a tide table;brass bell|stopped ringing because it was taken;painting of the harbor|was hung upside down;pot of cocoa|was emptied and refilled with soup;welcome basket|was left at the wrong door;beach umbrella|blew away with a helping hand;ship in a bottle|was found in the teapot;sailing trophy|was missing before the regatta;lantern from the veranda|vanished at dusk;pie from the pantry|was nibbled to the crust;fishing rod|was found tied to the flagpole;doormat|was swapped for a very fancy rug;kite from the lobby|was gone before the wind picked up;hot water bottle|was hidden in the wrong bed;jar of sea glass|went missing from the windowsill",
+  360,30,1),
+ mkSetting("bookshop","Corner Bookshop","Rain tapped on the windows of the Corner Bookshop, and the reading lamps glowed like small moons.",
+  "in the poetry aisle,in the mystery corner,at the front counter,in the children's nook,in the back office,on the rolling ladder,in the window display,in the cellar stacks",
+  "bookseller,clerk,poet,librarian,illustrator,author,printer,bookbinder,critic,storyteller,reader,cartoonist,editor,teacher,historian,translator,mapmaker,calligrapher,courier,cafe owner,stationer,proofreader,collector,reviewer,typewriter repairer,bookmark maker,painter,cat sitter,night watchman,tea seller",
+  "brass bookend,fountain pen,reading lamp,leather satchel,bookmark,ink bottle,magnifying lens,paper knife,sticky note,rubber stamp,price tag,library card,velvet cushion,quill,first edition,paperback,stack of postcards,reading glasses,desk bell,wax seal,tin of tea,sliding ladder,cash drawer key,dust jacket,pencil case,umbrella stand,wall clock,catalog card,map scroll,cat toy",
+  "first edition|vanished from the glass case;signed poem|went missing from the window;chapter of a new mystery|was swapped for a grocery list;brass bookend|was gone from the shelf;reading lamp|stopped glowing because it was taken;shop cat's cushion|disappeared at noon;rare map|was missing from the back room;tin of tea|was found in the wrong aisle;storytime book|was hidden before the children came;prize bookmark|was swapped for a leaf;shelf of cookbooks|was rearranged by someone sneaky;author's pen|vanished before the signing;poetry collection|was found in the cellar;ledger of sales|went missing from the counter;umbrella stand|was emptied during the shower;best-seller stack|was moved to the wrong table;crossword page|was finished by an unknown hand;shop bell|was missing from its hook;costume for the book club|disappeared overnight;limited edition atlas|was traded for a dictionary",
+  540,20,2),
+ mkSetting("garden","Garden Show","Bunting fluttered over the Garden Show, and the judges were already sipping lemonade by the roses.",
+  "in the rose tent,by the pond,in the herb maze,at the plant sale,under the apple tree,in the greenhouse,at the tea stall,by the front gate",
+  "judge,gardener,beekeeper,florist,seed seller,landscaper,pottery maker,jam judge,photographer,scarecrow maker,reporter,musician,volunteer,botanist,tea seller,beetle expert,topiary artist,compost expert,retired teacher,fence painter,mayor,kite flyer,hedge trimmer,basket weaver,rose grower,mushroom picker,pie baker,cloud watcher,bird feeder,garden gnome painter",
+  "watering can,trowel,seed packet,flower pot,garden glove,straw hat,pruning shears,wheelbarrow,garden gnome,twine ball,blue ribbon,rain gauge,bee smoker,sun umbrella,wicker basket,bulb bag,rose clipping,plant label,sprinkler,knee pad,hedge clipper,butterfly net,bucket of soil,seed tray,folding stool,garden fork,lemonade jug,magnifying glass,tape measure,show program",
+  "prize trophy|vanished from the judges' table;best-in-show rose|was nipped off at the stem;champion pumpkin|rolled away overnight;golden trowel|went missing from the stall;hedge sculpture|was trimmed into a silly shape;jam jar ribbon|was moved to the wrong jar;blue ribbon|was found pinned to a scarecrow;tomato crate|was swapped for a crate of apples;herb maze map|was scribbled over;garden gnome|was found wearing a tiny hat;sunflower banner|was hung upside down;seed catalog|went missing from the plant sale;bee house|was moved behind the tea tent;winning pie|was nibbled before the judging;prized dahlia|was replanted in the wrong bed;wind chime|stopped chiming because it was taken;scarecrow's hat|vanished in the breeze;lemonade pitcher|was refilled with iced tea;show bell|was missing at the opening;rainbow of tulips|was rearranged by morning",
+  480,20,3),
+ mkSetting("library","Small-Town Library","The Small-Town Library was hushed and golden, with dust dancing in the afternoon light.",
+  "at the checkout desk,in the reading room,in the local history room,in the children's corner,in the archive,in the map room,by the fireplace,in the quiet garden",
+  "librarian,archivist,page,historian,volunteer,storyteller,mayor,teacher,cartoonist,baker,gardener,retired judge,student,knitter,chess player,clock repairer,poet,painter,nurse,courier,musician,newspaper editor,crossword maker,tea lady,bookmobile driver,carpenter,beekeeper,genealogist,cat lover,night reader",
+  "date stamp,library card,reading glasses,card catalog,brass lamp,scroll of maps,book trolley,pencil stub,velvet rope,desk bell,leather journal,world globe,rubber stamp,paper clip tin,ink pad,bookmark ribbon,newspaper clipping,old photograph,knitting needles,chess piece,tea tray,magnifier,returns slip,step stool,dictionary,wooden ruler,pocket watch,shelf marker,quilted cushion,silver spoon",
+  "overdue book|vanished from the returns bin;town history ledger|went missing from the archive;date stamp|was found in the garden;rare atlas|disappeared from the map room;storytime puppet|was swapped for a mitten;fireplace clock|stopped ticking because it was taken;librarian's spectacles|were found in the teapot;card catalog drawer|went missing at noon;children's rug|was rolled up and moved;poetry night poster|was hung in the wrong window;chess set|lost its queen;prize for best bookworm|was missing before the party;rare recipe book|was found in the reading room;library cat's bowl|was filled with books;winter quilt|vanished from the chair;school project|was handed in to the wrong desk;old photograph|went missing from its frame;volunteer badge|was swapped for a sticker;bookmobile key|disappeared on a rainy day;silent bell|was gone from the front desk",
+  540,20,4),
+ mkSetting("caravan","Train Caravan","The little train rolled along the valley, and every caravan car smelled of toast and tea.",
+  "in the dining car,in the observation car,in the luggage van,in the engine cab,on the rear platform,in the sleeper car,in the tea galley,in the games car",
+  "conductor,driver,cook,porter,ticket seller,mapmaker,photographer,musician,stationmaster,mail clerk,gardener,painter,knitter,author,magician,tea trolley server,wanderer,botanist,clockmaker,signalman,cartoonist,baker,storyteller,sailor,teacher,beekeeper,chess champion,cloud painter,balloonist,retired judge",
+  "brass whistle,ticket punch,luggage tag,pocket watch,tea trolley,leather suitcase,hat box,signal flag,timetable,lantern,wool blanket,picnic hamper,railway map,travel pillow,teacup,brass compass,cuckoo clock,gramophone record,chess board,postcard,coat peg,stamp album,umbrella,conductor's cap,toast rack,thermos,carpet bag,whistle chain,seat cushion,coal bucket",
+  "golden whistle|vanished from the engine cab;ticket punch|went missing at the first stop;tea trolley|rolled off with a very cheerful rattle;lost suitcase|turned up in the dining car;conductor's cap|was found on the signal post;travel diary|was swapped for a recipe;timetable|had every page rearranged;picnic hamper|was emptied before lunch;cuckoo clock|stopped chirping because it was taken;prize teapot|vanished from the galley;mail sack|was delivered to the wrong carriage;gramophone record|went missing from the games car;chess queen|disappeared mid-game;brass compass|was lost at the mountain stop;wool blanket|was found in the luggage van;stamp album|went missing overnight;bag of toast|was swapped for a bag of buns;lantern|was gone before the tunnel;balloon basket|was moved to the wrong car;train bell|stopped ringing because it was taken",
+  420,30,5),
+ mkSetting("lighthouse","Lighthouse","Gulls wheeled over the Lighthouse, and the keeper's kettle sang as the sun slid down the sky.",
+  "in the lamp room,on the spiral stairs,in the keeper's kitchen,on the gallery,in the oil store,on the rocky path,in the fog bell hut,in the cozy library",
+  "keeper,assistant keeper,cook,boat pilot,painter,weather watcher,rope maker,radio operator,baker,visiting artist,sailor,bird counter,postman,mapmaker,cartographer,beekeeper,knitter,fisher,harbor clerk,author,clockmaker,tinsmith,tea seller,photographer,lamp polisher,schoolteacher,retired captain,fiddler,diver,cloud painter",
+  "brass lens,signal lamp,oil can,logbook,telescope,fog bell,storm lantern,cocoa mug,knitted scarf,chart table,oilskin coat,barometer,teapot,rope coil,compass,kettle,harbor map,whistle,bucket of paint,shell box,wooden ladder,telegram,wall clock,seagull feather,stack of pancakes,cushion,keeper's key,radio,quilt,window cloth",
+  "brass lens|vanished from the lamp room;logbook|went missing from the chart table;keeper's key|disappeared at sunset;fog bell|stopped ringing because it was taken;cocoa kettle|was gone from the stove;storm lantern|was found on the rocky path;painted sign|was turned to face the sea;prize pancakes|vanished from the kitchen;seagull statue|was swapped for a driftwood duck;weather chart|was drawn over with a smiley face;brass telescope|was found in the library;spare lamp|went missing from the oil store;visitor's book|disappeared before breakfast;keeper's scarf|was knotted to the stair rail;cake for the festival|was moved to the gallery;compass|was found in the teapot;harbor map|was swapped for a recipe;wind chime|stopped chiming because it was taken;boat whistle|went missing at low tide;lighthouse cat's cushion|disappeared overnight",
+  900,15,6),
+ mkSetting("tearoom","Tea Room","Teacups clinked softly in the Tea Room, where lace curtains swayed above little round tables.",
+  "at the window table,in the rose garden,at the pastry counter,in the back parlor,by the piano,at the tea bar,on the porch swing,in the kitchen",
+  "tea master,pianist,pastry chef,waiter,gardener,florist,cashier,postmistress,seamstress,teacup painter,author,retired colonel,dancer,milliner,baker,doorkeeper,historian,nurse,harpist,antique seller,teacher,cartoonist,clockmaker,knitter,librarian,jeweler,tailor,traveler,beekeeper,fortune teller",
+  "silver teapot,sugar tongs,lace napkin,china teacup,tiered stand,cake fork,tea strainer,flower vase,piano key,menu card,tea cozy,cookie tin,silver spoon,porcelain saucer,honey jar,jam pot,floral hat,gold watch,fan,umbrella,silk glove,pearl brooch,order pad,milk jug,tea caddy,reading glasses,candle,sheet music,rose petal,doily",
+  "silver teapot|vanished from the window table;sugar tongs|went missing at teatime;prize scone|was gone from the tiered stand;secret tea blend|was swapped for plain leaves;lace tablecloth|was found on the porch swing;piano music|disappeared from the stand;teacup collection|was rearranged by a mystery guest;cake knife|was found in the rose garden;honey jar|was refilled with marmalade;gold watch|was left in the sugar bowl;tea cozy|went missing before the party;china saucer|was swapped for a plate;flower arrangement|was moved to the kitchen;cookie tin|was emptied and refilled with buttons;birthday cake|was delivered to the wrong table;fortune cards|were shuffled overnight;rosebud vase|vanished from the counter;menu board|was drawn over with smiley faces;tea strainer|was found in the garden;little brass bell|stopped ringing because it was taken",
+  600,20,7)
+];
+var GENERIC_SETTING_BASE={jobs:"keeper,baker,teacher,gardener,painter,musician,clerk,neighbor,mayor,author,florist,tailor,nurse,carpenter,cook,courier,farmer,fisher,librarian,mechanic,potter,tinsmith,poet,photographer,beekeeper,clockmaker,weaver,tea seller,retired judge,storyteller",
+  crimes:"prize pie|vanished from the windowsill;golden trophy|went missing before the judging;secret recipe|was swapped for a shopping list;front door key|disappeared overnight;garden hat|was found on a scarecrow;jar of honey|was refilled with jam;silver bell|stopped ringing because it was taken;family album|went missing from its shelf;birthday cake|lost all its candles;wooden clock|stopped ticking because it was taken;basket of apples|was swapped for pears;painted sign|was turned upside down;best-in-show ribbon|was moved to the wrong prize;picnic blanket|was found in a tree;kettle|went missing from the stove;lost letter|turned up in the wrong mailbox;box of cookies|was emptied and refilled with buttons;prize pumpkin|rolled away overnight;warm scarf|was found on the lamppost;town festival banner|was hung in the wrong street"};
+var CAT_KEYS_FOR={3:["suspect","item","time"],4:["suspect","item","location","time"],5:["suspect","item","location","time","job"],6:["suspect","item","location","time","job","treat"]};
+var CAT_NAME={suspect:"Suspect",item:"Item",location:"Location",time:"Time",job:"Job",treat:"Treat"};
+var DIFFS=["easy","medium","hard","expert"];
+var DIFF_NAME={easy:"Easy",medium:"Medium",hard:"Hard",expert:"Expert"};
+var TIER_NAME={easy:"Warm-up Cases",medium:"Casework",hard:"Detective Desk",expert:"Master Sleuth"};
+var DIFF_INFO={easy:"3-4 categories, 4 entries, mostly direct clues",medium:"4-5 categories, 4-5 entries, a mix of clue types",hard:"5-6 categories, 5-6 entries, mostly indirect clues",expert:"5-6 categories, 6 entries, subtle clues only"};
+var DIFF_SIZES={easy:[[3,4],[4,4],[4,4],[3,5]],medium:[[4,5],[5,4],[4,5],[5,5]],hard:[[5,5],[4,6],[5,6],[6,5]],expert:[[5,6],[6,6],[6,6],[6,5]]};
+var DIFF_W={
+ easy:{direct:0.42,negative:0.22,either:0.12,before:0.1,adjacent:0.05,apart:0.05,count:0.04},
+ medium:{direct:0.24,negative:0.18,either:0.2,before:0.14,adjacent:0.08,apart:0.08,count:0.08},
+ hard:{direct:0.1,negative:0.14,either:0.24,before:0.2,adjacent:0.1,apart:0.1,count:0.12},
+ expert:{direct:0.04,negative:0.1,either:0.24,before:0.22,adjacent:0.14,apart:0.12,count:0.14}
+};
+var CLUE_TYPES=["direct","negative","either","before","adjacent","apart","count"];
+
+/* ================= clue phrasing: 10 lead-ins x 6 cores = 60 templates per type ================= */
+var LEADS=["","Somebody swears that ","The notebook says that ","The housekeeper recalls that ","A neighbor insists that ","The ledger shows that ","It is well known that ","Witnesses agree that ","The tea leaves hint that ","Everyone remembers that "];
+var CORES={
+ direct:["{X} was {P}","{X} was positively {P}","{X} was, without a doubt, {P}","{X} was in fact {P}","{X} was definitely {P}","{X} was absolutely {P}"],
+ negative:["{X} was not {P}","{X} was certainly not {P}","{X} was never {P}","{X} could not have been {P}","{X} was definitely not {P}","{X} was surely not {P}"],
+ either:["{X} was either {P1} or {P2}","{X} was {P1} or else {P2}","{X} was possibly {P1}, possibly {P2}","{X} was either {P1} or perhaps {P2}","{X} was {P1} or possibly {P2}","{X} was, depending on who you ask, {P1} or {P2}"],
+ before:["{X} was seen before {Y}","{X} showed up earlier than {Y}","{X} was spotted ahead of {Y}","{X} came in before {Y}","{X} was around earlier than {Y}","{Y} was seen only after {X}"],
+ adjacent:["{X} and {Y} were seen one slot apart","{X} came right before or right after {Y}","{X} and {Y} came one after the other","{Y} was seen in the slot right next to {X}","{X} and {Y} were back to back in the day's order","{X} and {Y} were seen in neighboring slots"],
+ apart:["{X} and {Y} were not the same person","{X} and {Y} never shared a room","{X} and {Y} were never in the same room together","{X} and {Y} kept apart that day","{X} and {Y} never crossed paths","{X} and {Y} were not seen together"],
+ count:["{X} was seen after exactly {kw} other{s}","{X} had exactly {kw} other{s} ahead in the order","{X} came after {kw} other{s}","only {kw} other{s} came before {X}","{X} followed exactly {kw} other{s}","{X} was preceded by {kw} other{s}"]
+};
+var TEMPLATES={};
+(function(){var t,c,l;for(t in CORES){TEMPLATES[t]=[];for(l=0;l<LEADS.length;l++){for(c=0;c<CORES[t].length;c++){TEMPLATES[t].push({lead:LEADS[l],core:CORES[t][c]});}}}})();
+var NUM_WORDS=["zero","one","two","three","four","five","six"];
+var ORD_WORDS=["first","second","third","fourth","fifth","sixth"];
+
+/* ================= story parts ================= */
+var STORY_MARKER=[
+ "Whoever was holding the {M} is the one who did it.",
+ "The only clue left behind was a {M}, and it belongs to the culprit.",
+ "Everyone agrees the culprit was the person with the {M}.",
+ "The culprit can be found by following the {M}.",
+ "Whoever carried the {M} is the one you are looking for.",
+ "A {M} was found at the scene, and its owner is the culprit."
+];
+var STORY_CAST=[
+ "Our suspects are {L}.",
+ "Everyone present had a story: {L}.",
+ "On the guest list were {L}.",
+ "The people in the room were {L}.",
+ "The usual crowd had gathered: {L}.",
+ "Under the lamplight stood {L}."
+];
+var STORY_CLOSE=[
+ "Pour a cup of tea, sharpen your pencil and work out {G}.",
+ "Use the clues to find out {G}. Every clue is true, and there is exactly one answer.",
+ "Sort through the clues and discover {G}.",
+ "Take your time and a biscuit, and figure out {G}.",
+ "Nothing scary here, just a puzzle: find {G}.",
+ "Put on your detective hat and decide {G}."
+];
+var TITLE_PATTERNS=["The Case of the {O}","The {O} Mystery","The Great {O} Mix-Up","The Vanishing {O}","A Question of the {O}","The {O} Affair"];
+var GENERIC_ITEMS="brass key,wooden spoon,paper fan,silver bell,tin whistle,woolen scarf,pocket watch,picnic basket,small lantern,wicker hat,ink pen,ball of yarn,tea tin,flower vase,magnifier,garden shears,leather glove,painted tile,music box,quilt square,candle,spice jar,brass compass,butter dish,fishing float,umbrella,notebook,rain boot,clock key,bar of soap".split(",");
+
+/* ================= phrase helpers ================= */
+function ucfirst(s){s=String(s);return s.charAt(0).toUpperCase()+s.slice(1);}
+function stripPrep(p){return String(p).replace(/^(in|on|at|by|under|inside|behind)\s+(the\s+)?/,"");}
+function entryLabel(key,s){
+  if(key==="suspect"||key==="time"){return s;}
+  if(key==="location"){return ucfirst(stripPrep(s));}
+  return ucfirst(s);
+}
+function subjOf(key,s){
+  if(key==="suspect"){return s;}
+  if(key==="item"){return "the person holding the "+s;}
+  if(key==="location"){return "whoever was "+s;}
+  if(key==="time"){return "the one seen at "+s;}
+  if(key==="job"){return "the "+s;}
+  return "the one nibbling "+s;
+}
+function predOf(key,s){
+  if(key==="suspect"){return s;}
+  if(key==="item"){return "holding the "+s;}
+  if(key==="location"){return s;}
+  if(key==="time"){return "seen at "+s;}
+  if(key==="job"){return "the "+s;}
+  return "nibbling "+s;
+}
+
+/* ================= custom content parsing (Content Lock) ================= */
+function parseNames(text){
+  var out=[],bad=[],seen={},parts=String(text||"").split(/[\n,;]+/),i,s;
+  for(i=0;i<parts.length;i++){
+    s=parts[i].replace(/^\s+|\s+$/g,"").replace(/\s+/g," ");
+    if(!s){continue;}
+    if(!/^[A-Za-z][A-Za-z '\-]{0,17}$/.test(s)){bad.push({n:i+1,line:s,why:"names use letters only, up to 18 characters"});continue;}
+    s=ucfirst(s);
+    if(seen[s.toLowerCase()]){bad.push({n:i+1,line:s,why:"duplicate name"});continue;}
+    if(out.length>=40){bad.push({n:i+1,line:s,why:"over the 40-name limit"});continue;}
+    seen[s.toLowerCase()]=1;out.push(s);
+  }
+  return {names:out,bad:bad};
+}
+function parseItems(text){
+  var out=[],bad=[],seen={},parts=String(text||"").split(/\r?\n/),i,s;
+  for(i=0;i<parts.length;i++){
+    s=parts[i].replace(/^\s+|\s+$/g,"").replace(/\s+/g," ");
+    if(!s){continue;}
+    if(!/^[A-Za-z][A-Za-z '\-]{0,27}$/.test(s)){bad.push({n:i+1,line:s,why:"items use letters only, up to 28 characters"});continue;}
+    s=s.toLowerCase();
+    if(seen[s]){bad.push({n:i+1,line:s,why:"duplicate item"});continue;}
+    if(out.length>=60){bad.push({n:i+1,line:s,why:"over the 60-item limit"});continue;}
+    seen[s]=1;out.push(s);
+  }
+  return {items:out,bad:bad};
+}
+function parseSetting(name,locText){
+  var bad=[],locs=[],seen={},parts=String(locText||"").split(/\r?\n/),i,s,nm=String(name||"").replace(/^\s+|\s+$/g,"").replace(/\s+/g," ");
+  if(!nm&&!String(locText||"").replace(/\s+/g,"")){return {setting:null,bad:[],active:false};}
+  if(!/^[A-Za-z][A-Za-z '\-]{0,29}$/.test(nm)){bad.push({n:0,line:nm,why:"give the setting a name (letters, up to 30 characters)"});}
+  for(i=0;i<parts.length;i++){
+    s=parts[i].replace(/^\s+|\s+$/g,"").replace(/\s+/g," ");
+    if(!s){continue;}
+    if(!/^[A-Za-z][A-Za-z '\-]{0,33}$/.test(s)){bad.push({n:i+1,line:s,why:"locations use letters only, up to 34 characters"});continue;}
+    s=s.toLowerCase();
+    if(!/^(in|on|at|by|under|inside|behind) /.test(s)){s="in the "+s;}
+    if(seen[s]){bad.push({n:i+1,line:s,why:"duplicate location"});continue;}
+    if(locs.length>=10){bad.push({n:i+1,line:s,why:"over the 10-location limit"});continue;}
+    seen[s]=1;locs.push(s);
+  }
+  if(locs.length<6){bad.push({n:0,line:locs.length+" locations",why:"a custom setting needs at least 6 locations"});}
+  if(bad.length){return {setting:null,bad:bad,active:true};}
+  var all=[],k;for(k=0;k<NAME_BANK.length;k++){all=all.concat(NAME_BANK[k].split(" "));}
+  var cr=[],ps=GENERIC_SETTING_BASE.crimes.split(";"),p;
+  for(i=0;i<ps.length;i++){p=ps[i].split("|");cr.push({obj:p[0],deed:p[1]});}
+  return {setting:{id:"custom",name:ucfirst(nm),open:"It was a calm, golden day at the "+ucfirst(nm)+", and everyone was in a good mood.",locs:locs,jobs:GENERIC_SETTING_BASE.jobs.split(","),items:GENERIC_ITEMS.slice(),crimes:cr,times:slotLabels(540,20),names:all},bad:[],active:true};
+}
+
+/* ================= constraint solver (domains as row bitmasks) ================= */
+function popc(m){var c=0;while(m){m&=m-1;c++;}return c;}
+function bitIdx(x){var i=0;while(x>1){x>>=1;i++;}return i;}
+function lowBit(x){return bitIdx(x&-x);}
+function initDom(K,N,tci){
+  var dom=[],c,e,full=(1<<N)-1;
+  for(c=0;c<K;c++){for(e=0;e<N;e++){dom.push(c===tci?(1<<e):full);}}
+  return dom;
+}
+function propagate(dom,cl,K,N,tci,log){
+  var full=(1<<N)-1,changed=true,guard=0,ok=true,i,c,e,w,r,cnt,only,k;
+  function setDom(v,nd,cause){
+    nd&=dom[v];
+    if(nd===dom[v]){return true;}
+    if(!nd){ok=false;return false;}
+    if(log){
+      var rem=dom[v]&~nd,b;
+      for(b=0;b<N;b++){if((rem>>b)&1){log.push({k:"elim",v:v,r:b,cause:cause});}}
+      if((nd&(nd-1))===0){log.push({k:"assign",v:v,r:bitIdx(nd),cause:cause});}
+    }
+    dom[v]=nd;changed=true;return true;
+  }
+  function id(x){return x[0]*N+x[1];}
+  while(changed&&guard<200){
+    changed=false;guard++;
+    for(i=0;i<cl.length;i++){
+      var q=cl[i],a=id(q.a),b=q.b?id(q.b):-1,b2=q.b2?id(q.b2):-1,cause=i+1,m;
+      if(q.t==="direct"){m=dom[a]&dom[b];if(!setDom(a,m,cause)||!setDom(b,m,cause)){return false;}}
+      else if(q.t==="negative"||q.t==="apart"){
+        if((dom[a]&(dom[a]-1))===0){if(!setDom(b,dom[b]&~dom[a],cause)){return false;}}
+        if((dom[b]&(dom[b]-1))===0){if(!setDom(a,dom[a]&~dom[b],cause)){return false;}}
+      }else if(q.t==="either"){
+        if(!setDom(a,dom[b]|dom[b2],cause)){return false;}
+        if(!(dom[a]&dom[b])){if(!setDom(b2,dom[a],cause)||!setDom(a,dom[b2],cause)){return false;}}
+        else if(!(dom[a]&dom[b2])){if(!setDom(b,dom[a],cause)||!setDom(a,dom[b],cause)){return false;}}
+      }else if(q.t==="before"){
+        if(!setDom(a,(1<<bitIdx(dom[b]))-1,cause)){return false;}
+        if(!setDom(b,full&~((1<<(lowBit(dom[a])+1))-1),cause)){return false;}
+      }else if(q.t==="adjacent"){
+        if(!setDom(a,((dom[b]<<1)|(dom[b]>>1))&full,cause)){return false;}
+        if(!setDom(b,((dom[a]<<1)|(dom[a]>>1))&full,cause)){return false;}
+      }else if(q.t==="count"){
+        if(!setDom(a,1<<q.k,cause)){return false;}
+      }
+    }
+    for(c=0;c<K;c++){
+      for(e=0;e<N;e++){
+        var v=c*N+e;
+        if((dom[v]&(dom[v]-1))===0){
+          for(w=0;w<N;w++){if(w!==e&&(dom[c*N+w]&dom[v])){if(!setDom(c*N+w,dom[c*N+w]&~dom[v],0)){return false;}}}
+        }
+      }
+      for(r=0;r<N;r++){
+        cnt=0;only=-1;
+        for(e=0;e<N;e++){if((dom[c*N+e]>>r)&1){cnt++;only=e;}}
+        if(cnt===0){return false;}
+        if(cnt===1&&(dom[c*N+only]&(dom[c*N+only]-1))!==0){if(!setDom(c*N+only,1<<r,0)){return false;}}
+      }
+    }
+  }
+  return ok;
+}
+function solveCount(K,N,tci,clues,max,limit){
+  var res={count:0,first:null,nodes:0,limited:false};
+  function rec(dom){
+    if(res.count>=max||res.limited){return;}
+    res.nodes++;if(res.nodes>limit){res.limited=true;return;}
+    if(!propagate(dom,clues,K,N,tci,null)){return;}
+    var best=-1,bc=99,v,pc,r,nd;
+    for(v=0;v<dom.length;v++){pc=popc(dom[v]);if(pc>1&&pc<bc){bc=pc;best=v;}}
+    if(best<0){res.count++;if(!res.first){res.first=dom.slice();}return;}
+    for(r=0;r<N;r++){
+      if((dom[best]>>r)&1){nd=dom.slice();nd[best]=1<<r;rec(nd);if(res.count>=max||res.limited){return;}}
+    }
+  }
+  rec(initDom(K,N,tci));
+  return res;
+}
+function domScore(K,N,tci,clues){
+  var dom=initDom(K,N,tci),i,s=0;
+  if(!propagate(dom,clues,K,N,tci,null)){return 1e9;}
+  for(i=0;i<dom.length;i++){s+=popc(dom[i]);}
+  return s;
+}
+
+/* ================= case generation ================= */
+function weightedType(rng,w){
+  var r=rng(),acc=0,i;
+  for(i=0;i<CLUE_TYPES.length;i++){acc+=w[CLUE_TYPES[i]];if(r<acc){return CLUE_TYPES[i];}}
+  return "direct";
+}
+function clueKey(q){
+  function ek(x){return x[0]+"."+x[1];}
+  if(q.t==="direct"||q.t==="negative"||q.t==="apart"||q.t==="adjacent"){var p=[ek(q.a),ek(q.b)].sort();return q.t.replace("negative","neg")+":"+p.join("|");}
+  if(q.t==="either"){var o=[ek(q.b),ek(q.b2)].sort();return "either:"+ek(q.a)+"|"+o.join("|");}
+  if(q.t==="before"){return "before:"+ek(q.a)+"|"+ek(q.b);}
+  return "count:"+ek(q.a)+"|"+q.k;
+}
+function genCandidate(rng,cs,type){
+  var K=cs.K,N=cs.N,inv=cs.inv,tci=cs.tci,c1,c2,r1,r2,tries=0;
+  while(tries++<30){
+    if(type==="direct"){
+      r1=ri(rng,0,N-1);c1=ri(rng,0,K-1);c2=ri(rng,0,K-1);if(c1===c2){continue;}
+      return {t:type,a:[c1,inv[c1][r1]],b:[c2,inv[c2][r1]]};
+    }
+    if(type==="negative"||type==="apart"){
+      r1=ri(rng,0,N-1);r2=ri(rng,0,N-1);c1=ri(rng,0,K-1);c2=ri(rng,0,K-1);if(c1===c2||r1===r2){continue;}
+      return {t:type,a:[c1,inv[c1][r1]],b:[c2,inv[c2][r2]]};
+    }
+    if(type==="either"){
+      r1=ri(rng,0,N-1);r2=ri(rng,0,N-1);c1=ri(rng,0,K-1);c2=ri(rng,0,K-1);if(c1===c2||r1===r2){continue;}
+      var t1=[c2,inv[c2][r1]],f1=[c2,inv[c2][r2]];
+      return rng()<0.5?{t:type,a:[c1,inv[c1][r1]],b:t1,b2:f1}:{t:type,a:[c1,inv[c1][r1]],b:f1,b2:t1};
+    }
+    if(type==="before"){
+      r1=ri(rng,0,N-2);r2=ri(rng,r1+1,N-1);c1=ri(rng,0,K-1);c2=ri(rng,0,K-1);if(c1===tci&&c2===tci){continue;}
+      return {t:type,a:[c1,inv[c1][r1]],b:[c2,inv[c2][r2]]};
+    }
+    if(type==="adjacent"){
+      r1=ri(rng,0,N-2);c1=ri(rng,0,K-1);c2=ri(rng,0,K-1);if(c1===tci&&c2===tci){continue;}
+      var q={t:type,a:[c1,inv[c1][r1]],b:[c2,inv[c2][r1+1]]};
+      if(rng()<0.5){var tmp=q.a;q.a=q.b;q.b=tmp;}
+      return q;
+    }
+    if(type==="count"){
+      c1=ri(rng,0,K-1);if(c1===tci||N<3){continue;}
+      r1=ri(rng,1,N-1);
+      return {t:type,a:[c1,inv[c1][r1]],k:r1};
+    }
+  }
+  return null;
+}
+function clueText(cs,q,tpl){
+  var cats=cs.cats,A=cats[q.a[0]],B=q.b?cats[q.b[0]]:null,B2=q.b2?cats[q.b2[0]]:null,core=tpl.core,s;
+  function sub(x){return subjOf(cats[x[0]].key,cats[x[0]].entries[x[1]]);}
+  function pr(x){return predOf(cats[x[0]].key,cats[x[0]].entries[x[1]]);}
+  if(q.t==="direct"||q.t==="negative"){s=core.replace("{X}",sub(q.a)).replace("{P}",pr(q.b));}
+  else if(q.t==="either"){s=core.replace("{X}",sub(q.a)).replace("{P1}",pr(q.b)).replace("{P2}",pr(q.b2));}
+  else if(q.t==="count"){s=core.replace("{X}",sub(q.a)).replace("{kw}",NUM_WORDS[q.k]).replace("{s}",q.k===1?"":"s");}
+  else{s=core.replace("{X}",sub(q.a)).replace("{Y}",sub(q.b));}
+  s=tpl.lead+s;
+  return ucfirst(s)+".";
+}
+function pickUnique(rng,list,n,fixed){
+  var out=[],seen={},i,a=shuffleWith(rng,list);
+  if(fixed){for(i=0;i<fixed.length&&out.length<n;i++){if(!seen[fixed[i].toLowerCase()]){seen[fixed[i].toLowerCase()]=1;out.push(fixed[i]);}}}
+  for(i=0;i<a.length&&out.length<n;i++){if(!seen[a[i].toLowerCase()]){seen[a[i].toLowerCase()]=1;out.push(a[i]);}}
+  return out;
+}
+function makeContent(rng,K,N,st,custom){
+  var keys=CAT_KEYS_FOR[K],cats=[],i,ent;
+  for(i=0;i<keys.length;i++){
+    var k=keys[i];
+    if(k==="suspect"){ent=pickUnique(rng,st.names,N,shuffleWith(rng,custom.names||[]).slice(0,N));}
+    else if(k==="item"){ent=(custom.items&&custom.items.length)?pickUnique(rng,st.items,N,shuffleWith(rng,custom.items).slice(0,N)):pickUnique(rng,st.items,N,null);}
+    else if(k==="location"){ent=shuffleWith(rng,st.locs).slice(0,N);}
+    else if(k==="time"){var ix=shuffleWith(rng,st.times.map(function(x,j){return j;})).slice(0,N).sort(function(a,b){return a-b;});ent=ix.map(function(j){return st.times[j];});}
+    else if(k==="job"){ent=pickUnique(rng,st.jobs,N,null);}
+    else{ent=pickUnique(rng,TREATS,N,null);}
+    cats.push({key:k,name:CAT_NAME[k],entries:ent});
+  }
+  return cats;
+}
+function perm(rng,N){var a=[],i;for(i=0;i<N;i++){a.push(i);}return shuffleWith(rng,a);}
+function nameList(a){
+  if(a.length<=1){return a.join("");}
+  return a.slice(0,a.length-1).join(", ")+" and "+a[a.length-1];
+}
+function genCase(rng,opt){
+  var K=opt.K,N=opt.N,st=opt.setting,diff=opt.diff,attempt;
+  for(attempt=0;attempt<8;attempt++){
+    var cats=makeContent(rng,K,N,st,opt.custom||{}),tci=-1,i,c,sol=[],inv=[];
+    for(c=0;c<K;c++){if(cats[c].key==="time"){tci=c;}}
+    for(c=0;c<K;c++){
+      var p=(c===tci)?perm(rng,N).map(function(x,ix){return ix;}):perm(rng,N);
+      sol.push(p);var iv=[];for(i=0;i<N;i++){iv.push(0);}for(i=0;i<N;i++){iv[p[i]]=i;}inv.push(iv);
+    }
+    var cs={K:K,N:N,cats:cats,tci:tci,sol:sol,inv:inv},w=DIFF_W[diff],clues=[],seen={},steps=0,done=false;
+    while(steps<120&&!done){
+      steps++;
+      var ww=w;
+      if(steps>45){ww=DIFF_W.easy;}
+      var type=weightedType(rng,ww),best=null,bs=1e9,t;
+      for(t=0;t<5;t++){
+        var cand=genCandidate(rng,cs,type);if(!cand){continue;}
+        var key=clueKey(cand);if(seen[key]){continue;}
+        var sc=domScore(K,N,tci,clues.concat([cand]));
+        if(sc<bs||(sc===bs&&rng()<0.5)){bs=sc;best=cand;}
+      }
+      if(!best){continue;}
+      seen[clueKey(best)]=1;clues.push(best);
+      var r=solveCount(K,N,tci,clues,2,30000);
+      if(r.count===1&&!r.limited){done=true;}
+    }
+    if(!done){continue;}
+    /* prune to a minimal set */
+    var order=shuffleWith(rng,clues.map(function(x,ix){return ix;})),keep=clues.slice(),j,removed={};
+    for(j=0;j<order.length;j++){
+      var cl=clues[order[j]],test=keep.filter(function(x){return x!==cl;});
+      var rr=solveCount(K,N,tci,test,2,60000);
+      if(rr.count===1&&!rr.limited){keep=test;}
+    }
+    clues=keep;
+    /* order clues: direct-ish first, then a shuffle for natural reading */
+    clues=shuffleWith(rng,clues);
+    var texts={},ci;
+    for(ci=0;ci<clues.length;ci++){
+      var tp=null,tr=0,tx;
+      while(tr++<40){tp=pick(rng,TEMPLATES[clues[ci].t]);tx=clueText(cs,clues[ci],tp);if(!texts[tx]){break;}}
+      clues[ci].text=tx;texts[tx]=1;
+    }
+    cs.clues=clues;
+    /* story and final deduction */
+    var ic=-1,sc2=-1,lc=-1;
+    for(c=0;c<K;c++){if(cats[c].key==="item"){ic=c;}if(cats[c].key==="suspect"){sc2=c;}if(cats[c].key==="location"){lc=c;}}
+    var mi=ri(rng,0,N-1),mrow=sol[ic][mi],culE=inv[sc2][mrow];
+    cs.marker={cat:ic,entry:mi};cs.culprit={row:mrow,suspect:culE};
+    var crime=pick(rng,st.crimes),objT=crime.obj.replace(/\b\w+/g,function(w,ix){return (ix>0&&/^(of|the|a|an|for|and|in|on|with|to)$/.test(w))?w:w.charAt(0).toUpperCase()+w.slice(1);});
+    cs.title=pick(rng,TITLE_PATTERNS).replace("{O}",objT);
+    var goal=(lc>=0)?"who did it, what they held, where they were and when":"who did it, what they held and when";
+    var mk=pick(rng,STORY_MARKER).replace("{M}",cats[ic].entries[mi]);
+    cs.story=[st.open,"The "+crime.obj+" "+crime.deed+".",pick(rng,STORY_CAST).replace("{L}",nameList(cats[sc2].entries)),mk,pick(rng,STORY_CLOSE).replace("{G}",goal)];
+    cs.settingName=st.name;cs.settingId=st.id;cs.diff=diff;
+    /* final deduction line */
+    var parts=[],sName=cats[sc2].entries[culE];
+    parts.push(sName);
+    cs.finalLine=sName+" took the "+crime.obj+", holding the "+cats[ic].entries[mi]+(lc>=0?" "+cats[lc].entries[inv[lc][mrow]]:"")+" at "+cats[tci].entries[mrow]+".";
+    /* first deductions from the solver (root propagation, no guessing) */
+    var log=[],dom=initDom(K,N,tci);
+    propagate(dom,clues,K,N,tci,log);
+    var ds=[],seenD={},z;
+    function who(v){var cc=Math.floor(v/N),ee=v%N;return subjOf(cats[cc].key,cats[cc].entries[ee]);}
+    for(z=0;z<log.length&&ds.length<3;z++){
+      var ev=log[z];if(Math.floor(ev.v/N)===tci||ev.k!=="assign"){continue;}
+      ds.push({k:"assign",text:(ev.cause?"Clue "+ev.cause+" settles it: ":"By elimination, ")+who(ev.v)+" was seen at "+cats[tci].entries[ev.r]+"."});
+    }
+    for(z=0;z<log.length&&ds.length<3;z++){
+      var ev2=log[z];if(Math.floor(ev2.v/N)===tci||ev2.k!=="elim"||!ev2.cause){continue;}
+      var kk=ev2.v+"_"+ev2.cause;if(seenD[kk]){continue;}seenD[kk]=1;
+      ds.push({k:"elim",text:"Clue "+ev2.cause+" rules out "+who(ev2.v)+" at "+cats[tci].entries[ev2.r]+"."});
+    }
+    cs.deductions=ds;
+    return cs;
+  }
+  throw new Error("could not build a "+K+" x "+N+" case. Try another seed.");
+}
+
+/* ================= deck planning ================= */
+function planDeck(P){
+  var tasks=[],i,diffs=DIFFS.filter(function(d){return P.diffs.indexOf(d)>=0;}),n=P.cases,settings=[],nm=parseNames(P.customNames),it=parseItems(P.customItems),cs=parseSetting(P.customSetName,P.customSetLocs),sid;
+  for(i=0;i<SETTINGS.length;i++){if(P.settings.indexOf(SETTINGS[i].id)>=0){settings.push(SETTINGS[i]);}}
+  if(P.settings.indexOf("custom")>=0&&cs.setting){settings.push(cs.setting);}
+  if(!settings.length){settings.push(SETTINGS[0]);}
+  for(i=0;i<n;i++){
+    var di=diffs.length?Math.min(diffs.length-1,Math.floor(i*diffs.length/n)):0;
+    tasks.push({idx:i,diff:diffs.length?diffs[di]:"easy",setting:settings[i%settings.length]});
+  }
+  var tiers=[];for(i=0;i<diffs.length;i++){tiers.push(diffs[i]);}
+  return {tasks:tasks,tiers:tiers,names:nm,items:it,customSetting:cs,total:n};
+}
+function runTask(P,plan,ti){
+  var tk=plan.tasks[ti],rng=mulberry32(mixSeed(P.seed,ti+101)),sz=pick(rng,DIFF_SIZES[tk.diff]);
+  var cs=genCase(rng,{K:sz[0],N:sz[1],diff:tk.diff,setting:tk.setting,custom:{names:plan.names.names,items:plan.items.items}});
+  cs.idx=ti;cs.seed=mixSeed(P.seed,ti+101);
+  return cs;
+}
+function makeDeckSync(P){
+  var plan=planDeck(P),pages=[],i;
+  for(i=0;i<plan.tasks.length;i++){pages.push(runTask(P,plan,i));}
+  return {params:P,plan:plan,pages:pages};
+}
+
+/* ================= state ================= */
+var PRESETS={
+  manila:{name:"Manila Folder",ink:"#2b2118",paper:"#fbf5e4",a:"#9a3b26",line:"#dcccaa",red:"#c62828",sw:["#9a3b26","#e8d9ae"]},
+  tea:{name:"Tea Room Rose",ink:"#3b2330",paper:"#fff8f6",a:"#b04a6a",line:"#ecd3da",red:"#b3261e",sw:["#b04a6a","#f0c9d3"]},
+  harbor:{name:"Harbor Blue",ink:"#10303f",paper:"#f5fafc",a:"#1f6f8b",line:"#c9dde5",red:"#c0392b",sw:["#1f6f8b","#bcd9e4"]},
+  garden:{name:"Garden Green",ink:"#213a1c",paper:"#f6faee",a:"#4f8a3c",line:"#d3e0c4",red:"#b5432e",sw:["#4f8a3c","#cfe3b8"]},
+  bw:{name:"Print-safe B/W",ink:"#000000",paper:"#ffffff",a:"#000000",line:"#bdbdbd",red:"#000000",sw:["#000000","#ffffff"]}
+};
+var PRESET_KEYS=["manila","tea","harbor","garden","bw"];
+var TRIMS={"6x9":[6,9],"8x10":[8,10],"8.5x11":[8.5,11],"a4":[8.27,11.69]};
+var TRIM_KEYS=["6x9","8x10","8.5x11","a4"];
+var BLEED_PX=12;
+var CASE_OPTS=[6,9,12,15,18,24,30];
+var SETTING_IDS=["bakery","inn","bookshop","garden","library","caravan","lighthouse","tearoom","custom"];
+function defaultState(){
+  return {
+    cases:12,diffs:["easy","medium","hard","expert"],settings:["bakery","inn","bookshop","garden","library","caravan","lighthouse","tearoom"],
+    customNames:"",customSetName:"",customSetLocs:"",customItems:"",
+    title:"Cozy Case Files",sub:"Cozy logic mysteries. Every case has exactly one solution.",seedInput:"",
+    preset:"manila",header:"block",border:"rounded",pattern:"none",wm:"footer",nums:true,
+    trim:"8.5x11",bleed:false,mIn:0.5,mOut:0.5,mTb:0.5,mirror:true,guides:true,
+    book:true,sections:true,cards:true,ans:true,seller:"",
+    view:"puzzle",layout2:"single",zoom:100
+  };
+}
+var S=defaultState();
+var deck=null, curPage=0, genRunning=false;
+function gameTitle(){return S.title||"Cozy Case Files";}
+function pal(){
+  var p=PRESETS[S.preset]||PRESETS.manila,bw=S.preset==="bw";
+  var C={bw:bw,ink:p.ink,paper:p.paper,a:p.a,line:p.line,red:p.red};
+  C.soft=mix(C.paper,C.ink,0.07);C.mid=mix(C.paper,C.ink,0.55);C.tint=bw?"#eeeeee":mix(C.paper,C.a,0.12);
+  return C;
+}
+
+/* ================= logic grid (classic triangular layout) ================= */
+function labelsOf(cs,c){var o=[],e;for(e=0;e<cs.N;e++){o.push(entryLabel(cs.cats[c].key,cs.cats[c].entries[e]));}return o;}
+function gridSVG(cs,C,ans){
+  var K=cs.K,N=cs.N,u=24,cw=5.6,c,e,ri,cj,mr=0,mc=0,o,L=[];
+  for(c=0;c<K;c++){L.push(labelsOf(cs,c));}
+  for(c=1;c<K;c++){for(e=0;e<N;e++){mr=Math.max(mr,L[c][e].length);}}
+  for(c=0;c<K-1;c++){for(e=0;e<N;e++){mc=Math.max(mc,L[c][e].length);}}
+  var LW=20+Math.max(56,Math.round(mr*cw)+10),TH=22+Math.max(46,Math.round(mc*cw)+10),W=LW+(K-1)*N*u+4,H=TH+(K-1)*N*u+4;
+  var ink=C.ink,faint=mix(C.paper,C.ink,C.bw?0.45:0.5);
+  o='<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" data-w="'+W+'" data-h="'+H+'" data-k="'+K+'" data-n="'+N+'" preserveAspectRatio="xMidYMid meet" font-family="Inter, Arial, Helvetica, sans-serif">';
+  for(cj=0;cj<K-1;cj++){
+    var gx=LW+cj*N*u;
+    o+='<text x="'+(gx+N*u/2)+'" y="12" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="1" fill="'+ink+'">'+esc(cs.cats[cj].name.toUpperCase())+'</text>';
+    for(e=0;e<N;e++){o+='<text transform="translate('+(gx+e*u+u/2+4)+' '+(TH-4)+') rotate(-90)" font-size="11" fill="'+ink+'">'+esc(L[cj][e])+'</text>';}
+  }
+  for(ri=0;ri<K-1;ri++){
+    var rc=K-1-ri,gy=TH+ri*N*u;
+    o+='<text transform="translate(10 '+(gy+N*u/2)+') rotate(-90)" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="1" fill="'+ink+'">'+esc(cs.cats[rc].name.toUpperCase())+'</text>';
+    for(e=0;e<N;e++){o+='<text x="'+(LW-5)+'" y="'+(gy+e*u+u/2+4)+'" text-anchor="end" font-size="11" fill="'+ink+'">'+esc(L[rc][e])+'</text>';}
+    for(cj=0;cj<K-1;cj++){
+      if(cj>=rc){continue;}
+      var bx=LW+cj*N*u,er,ec;
+      o+='<g data-block="'+rc+'_'+cj+'">';
+      for(er=0;er<N;er++){for(ec=0;ec<N;ec++){
+        var x=bx+ec*u,y=gy+er*u,match=cs.sol[rc][er]===cs.sol[cj][ec];
+        o+='<rect x="'+x+'" y="'+y+'" width="'+u+'" height="'+u+'" fill="'+C.paper+'" stroke="'+ink+'" stroke-width="1"/>';
+        if(ans){
+          if(match){o+='<circle cx="'+(x+u/2)+'" cy="'+(y+u/2)+'" r="'+(u*0.3)+'" fill="none" stroke="'+C.red+'" stroke-width="2.6"/>';}
+          else{o+='<path d="M'+(x+u*0.3)+' '+(y+u*0.3)+'L'+(x+u*0.7)+' '+(y+u*0.7)+'M'+(x+u*0.7)+' '+(y+u*0.3)+'L'+(x+u*0.3)+' '+(y+u*0.7)+'" stroke="'+faint+'" stroke-width="1.5" fill="none"/>';}
+        }
+      }}
+      o+='<rect x="'+bx+'" y="'+gy+'" width="'+(N*u)+'" height="'+(N*u)+'" fill="none" stroke="'+ink+'" stroke-width="2.4"/></g>';
+    }
+  }
+  return o+'</svg>';
+}
+function finalTable(cs,ans){
+  var o='<table class="ft"><thead><tr>',c,r;
+  o+='<th>'+esc(cs.cats[cs.tci].name)+'</th>';
+  for(c=0;c<cs.K;c++){if(c!==cs.tci){o+='<th>'+esc(cs.cats[c].name)+'</th>';}}
+  o+='</tr></thead><tbody>';
+  for(r=0;r<cs.N;r++){
+    o+='<tr><th>'+esc(cs.cats[cs.tci].entries[r])+'</th>';
+    for(c=0;c<cs.K;c++){if(c!==cs.tci){o+='<td'+(ans?' class="ans"':'')+'>'+(ans?esc(entryLabel(cs.cats[c].key,cs.cats[c].entries[cs.inv[c][r]])):'&nbsp;')+'</td>';}}
+    o+='</tr>';
+  }
+  return o+'</tbody></table>';
+}
+function culpritLine(cs,ans){
+  var sc=0,ic=0,lc=-1,c;
+  for(c=0;c<cs.K;c++){if(cs.cats[c].key==="suspect"){sc=c;}if(cs.cats[c].key==="item"){ic=c;}if(cs.cats[c].key==="location"){lc=c;}}
+  var row=cs.culprit.row,w1=ans?esc(cs.cats[sc].entries[cs.culprit.suspect]):'&nbsp;',w2=ans?esc(entryLabel("item",cs.cats[ic].entries[cs.marker.entry]).toLowerCase()):'&nbsp;',w3=ans&&lc>=0?esc(stripPrep(cs.cats[lc].entries[cs.inv[lc][row]])):'&nbsp;',w4=ans?esc(cs.cats[cs.tci].entries[row]):'&nbsp;';
+  var o='<div class="culp"><b>Final answer:</b> the culprit is <span class="bl'+(ans?' ans':'')+'" style="min-width:90px">'+w1+'</span>, holding the <span class="bl'+(ans?' ans':'')+'" style="min-width:90px">'+w2+'</span>';
+  if(lc>=0){o+=', in the <span class="bl'+(ans?' ans':'')+'" style="min-width:80px">'+w3+'</span>';}
+  return o+', at <span class="bl'+(ans?' ans':'')+'" style="min-width:70px">'+w4+'</span>.</div>';
+}
+
+/* ================= page chrome ================= */
+function patternSVG(d,C){
+  if(S.pattern==="none"){return "";}
+  var o='<svg class="bgpat" xmlns="http://www.w3.org/2000/svg" width="'+d.W+'" height="'+d.H+'" viewBox="0 0 '+d.W+' '+d.H+'"><defs>';
+  var col=mix(C.paper,C.ink,C.bw?0.08:0.06);
+  if(S.pattern==="grain"){o+='<pattern id="ptn" width="37" height="41" patternUnits="userSpaceOnUse"><circle cx="5" cy="7" r="1" fill="'+col+'"/><circle cx="21" cy="19" r="1.2" fill="'+col+'"/><circle cx="31" cy="33" r="0.9" fill="'+col+'"/><circle cx="12" cy="36" r="0.8" fill="'+col+'"/><circle cx="29" cy="6" r="0.7" fill="'+col+'"/></pattern>';}
+  else if(S.pattern==="lines"){o+='<pattern id="ptn" width="30" height="26" patternUnits="userSpaceOnUse"><path d="M0 25H30" fill="none" stroke="'+col+'" stroke-width="1"/></pattern>';}
+  else{o+='<pattern id="ptn" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" fill="none" stroke="'+col+'" stroke-width="1"/></pattern>';}
+  return o+'</defs><rect width="'+d.W+'" height="'+d.H+'" fill="url(#ptn)"/></svg>';
+}
+function frameHTML(d,C){
+  if(S.border==="none"){return "";}
+  var st=(S.border==="solid")?"3px solid":(S.border==="double")?"6px double":"4px solid",rad=(S.border==="rounded")?"16px":"0";
+  return '<div class="frame" style="left:'+(d.ml-10)+'px;top:'+(d.mt-10)+'px;right:'+(d.mr-10)+'px;bottom:'+(d.mb-10)+'px;border:'+st+' '+(S.border==="rounded"?C.a:C.ink)+';border-radius:'+rad+';"></div>';
+}
+function headHTML(kick,title,stamp){
+  var h='<div class="hd hd-'+S.header+'"><div class="htxt"><div class="kick fit1">'+esc(kick)+'</div><h2 class="ttl fit1">'+esc(title)+'</h2></div>';
+  if(stamp){h+='<div class="stamp">'+esc(stamp)+'</div>';}
+  return h+'</div>';
+}
+
+/* ================= page list ================= */
+function buildPages(dk){
+  var L=[],i,t,wi;
+  if(S.book){L.push({k:"title"},{k:"copy"},{k:"howto"});}
+  for(t=0;t<dk.plan.tiers.length;t++){
+    var tier=dk.plan.tiers[t],ids=[];
+    for(wi=0;wi<dk.pages.length;wi++){if(dk.pages[wi].diff===tier){ids.push(wi);}}
+    if(!ids.length){continue;}
+    if(S.book&&S.sections){L.push({k:"section",tier:tier,ids:ids,no:t+1});}
+    for(i=0;i<ids.length;i++){L.push({k:"case",wi:ids[i]},{k:"grid",wi:ids[i]});if(S.cards){L.push({k:"cards",wi:ids[i]});}}
+  }
+  var puzzleCount=L.length;
+  if(S.ans){for(wi=0;wi<dk.pages.length;wi++){L.push({k:"ans",wi:wi});}}
+  return {list:L,puzzleCount:puzzleCount};
+}
+function viewList(dk){
+  var b=buildPages(dk),idx=[],i;
+  for(i=0;i<b.list.length;i++){if((S.view==="answer")===(b.list[i].k==="ans")){idx.push(i);}}
+  if(!idx.length){for(i=0;i<b.puzzleCount;i++){idx.push(i);}}
+  return {all:b.list,idx:idx};
+}
+
+/* ================= evidence cards ================= */
+function catIcon(key,C,px){
+  var ink=C.ink,s='<svg xmlns="http://www.w3.org/2000/svg" class="ico" width="'+px+'" height="'+px+'" viewBox="0 0 24 24" fill="none" stroke="'+ink+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+  if(key==="suspect"){s+='<circle cx="12" cy="8" r="4"/><path d="M4 21C4 15 8 13 12 13C16 13 20 15 20 21Z"/>';}
+  else if(key==="item"){s+='<path d="M4 9L12 4L20 9V19H4Z"/><path d="M9 19V13H15V19"/>';}
+  else if(key==="location"){s+='<path d="M12 21C6 14 5 11 5 9C5 5 8 3 12 3C16 3 19 5 19 9C19 11 18 14 12 21Z"/><circle cx="12" cy="9" r="2.5"/>';}
+  else if(key==="time"){s+='<circle cx="12" cy="12" r="9"/><path d="M12 7V12L15 14"/>';}
+  else if(key==="job"){s+='<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5H15V8M3 13H21"/>';}
+  else{s+='<path d="M5 11H19C19 16 16 19 12 19C8 19 5 16 5 11Z"/><path d="M19 12H21C21 15 20 16 18 16M9 8C8 6 10 5 9 3M13 8C12 6 14 5 13 3"/>';}
+  return s+'</svg>';
+}
+function cardsHTML(cs,C){
+  var o='<div class="cards fit2" style="grid-template-columns:repeat('+cs.N+',1fr);grid-template-rows:repeat('+cs.K+',1fr);">',c,e;
+  for(c=0;c<cs.K;c++){for(e=0;e<cs.N;e++){
+    o+='<div class="ec">'+catIcon(cs.cats[c].key,C,22)+'<div class="ecc">'+esc(cs.cats[c].name)+'</div><div class="ect">'+esc(entryLabel(cs.cats[c].key,cs.cats[c].entries[e]))+'</div></div>';
+  }}
+  return o+'</div>';
+}
+
+/* ================= pages ================= */
+function exampleCase(){
+  var cats=[{key:"suspect",name:"Suspect",entries:["Ana","Ben","Cy"]},{key:"item",name:"Item",entries:["kettle","lamp","key"]},{key:"time",name:"Time",entries:["9:00 am","9:30 am","10:00 am"]}];
+  return {K:3,N:3,cats:cats,tci:2,sol:[[1,0,2],[2,1,0],[0,1,2]]};
+}
+function pageInner(dk,desc,pi){
+  var C=pal(),P=dk.params,h='',noNum=S.book&&(desc.k==="title"||desc.k==="copy"),i,cs;
+  if(desc.k==="title"){
+    h+='<div class="cover">'+logoSVG(170,C.ink,C.a,C.paper).replace('width="170" height="170"','class="big" width="170" height="170"')+'<div class="stamp big">CASE FILES</div><h2 class="ttl fit1" style="font-size:calc(42px*var(--ts));">'+esc(gameTitle())+'</h2><div class="sub fit2">'+esc(S.sub)+'</div><div class="kick fit1">'+dk.pages.length+' cozy cases</div></div>'+footHTML(pi,"",false);
+  }else if(desc.k==="copy"){
+    var yr=new Date().getFullYear(),who=S.seller||"the publisher";
+    h+=headHTML("Copyright","Legal notes","")+'<div class="txt-page fit2"><p><b>'+esc(gameTitle())+'</b></p><p>Copyright &copy; '+yr+' '+esc(who)+'. All rights reserved.</p><p>No part of this book may be reproduced or transmitted without written permission, except that the purchaser may copy the puzzles for personal use.</p><p>All characters, places and events are invented for entertainment. Any resemblance to real people is coincidental. Every case is a gentle puzzle with a cozy tone and no violence.</p><p>Each case was checked by a logic solver: it has exactly one solution and no clue is redundant. Puzzle set seed: '+P.seed+'.</p><p>First edition.</p></div>'+footHTML(pi,"",false);
+  }else if(desc.k==="howto"){
+    var ex=exampleCase();
+    h+=headHTML("Before you start","How to solve a case","")+'<div class="txt-page fit2" style="justify-content:flex-start;"><p>Every case gives you a story, a list of suspects and a set of true clues. Use the logic grid to keep track of what you know.</p><ul><li>Put an <b>O</b> in a box when two things belong together.</li><li>Put an <b>X</b> in a box when two things cannot belong together.</li><li>When a row or column has only one empty box left, that box must be an O.</li><li>Every row of the final table has one entry from each group.</li></ul><div class="exwrap">'+gridSVG(ex,C,true)+'<p class="excap">Example: Ana had the lamp at 9:30 am. Each O ties two entries together, and the X marks show everything else ruled out.</p></div><h3>Tips</h3><ul><li>Cross off each clue as you use it.</li><li>Time clues about order (before, after, next to) use the order of the time slots.</li><li>Each case has exactly one solution, so you never need to guess.</li></ul></div>'+footHTML(pi,"",true);
+  }else if(desc.k==="section"){
+    var items="",q;
+    for(q=0;q<desc.ids.length&&q<30;q++){items+='<li>Case '+(desc.ids[q]+1)+': '+esc(dk.pages[desc.ids[q]].title)+'</li>';}
+    var blurb={easy:"Gentle puzzles to warm up your pencil.",medium:"A little more to untangle, a lot more satisfying.",hard:"Clues that hint rather than tell.",expert:"The finest mysteries in the casebook."};
+    h+='<div class="cover"><div class="stamp big">SECTION '+desc.no+'</div><h2 class="ttl fit1" style="font-size:calc(40px*var(--ts));">'+esc(TIER_NAME[desc.tier])+'</h2><div class="sub fit2">'+esc(blurb[desc.tier])+'</div><div class="caselist fit2"><ul>'+items+'</ul></div></div>'+footHTML(pi,"",true);
+  }else{
+    cs=dk.pages[desc.wi];var n=desc.wi+1,stampTxt="FILE No. "+pad(n,2);
+    if(desc.k==="case"){
+      var paras="",j,cl="";
+      for(j=0;j<cs.story.length;j++){paras+=esc(cs.story[j])+" ";}
+      for(j=0;j<cs.clues.length;j++){cl+='<li>'+esc(cs.clues[j].text)+'</li>';}
+      h+=headHTML(cs.settingName+" - "+DIFF_NAME[cs.diff]+" - "+cs.K+" groups of "+cs.N,"Case "+n+": "+cs.title,stampTxt)+'<div class="brief fit2"><p class="story">'+paras+'</p><h3>Clues</h3><ol class="clues'+(cs.clues.length>9?' two':'')+'">'+cl+'</ol></div><div class="notes"><b>Detective notes</b><span class="nl"></span></div>'+footHTML(pi,"C"+n,true);
+    }else if(desc.k==="grid"){
+      h+=headHTML("Case "+n+" - logic grid",cs.title,"")+'<p class="instr">Mark O for a match and X for a mismatch. Then fill the final table and name the culprit.</p><div class="board-wrap">'+gridSVG(cs,C,false)+'</div>'+finalTable(cs,false)+culpritLine(cs,false)+footHTML(pi,"C"+n,true);
+    }else if(desc.k==="cards"){
+      h+=headHTML("Case "+n+" - evidence cards",cs.title,"")+'<p class="instr">Cut along the dashed lines. Slide the cards into place to test your ideas.</p>'+cardsHTML(cs,C)+footHTML(pi,"C"+n,true);
+    }else{
+      var hint="",d2;
+      for(d2=0;d2<cs.deductions.length;d2++){hint+='<li>'+esc(cs.deductions[d2].text)+'</li>';}
+      h+=headHTML("Answer key - case "+n,cs.title,"SOLVED")+'<div class="ansbox fit2"><p class="finl">'+esc(cs.finalLine)+'</p><h3>First deductions</h3><ol>'+(hint||'<li>Start with the direct clues, then cross off what they rule out.</li>')+'</ol></div><div class="board-wrap">'+gridSVG(cs,C,true)+'</div>'+finalTable(cs,true)+footHTML(pi,"A"+n,true);
+    }
+  }
+  return {html:h,noNum:noNum};
+}
+function pageSheet(dk,list,pi,forExport){
+  var desc=list[pi],inner=pageInner(dk,desc,pi);
+  return sheetHTML(pi,inner.html,desc.k,forExport);
+}
+function dimsFor(pi){
+  var t=TRIMS[S.trim],tw=Math.round(t[0]*96),th=Math.round(t[1]*96),b=S.bleed?BLEED_PX:0,recto=(pi%2===0);
+  var inn=S.mIn*96,out=S.mOut*96,ml,mr;
+  if(S.mirror){ml=recto?inn:out;mr=recto?out:inn;}else{ml=mr=(inn+out)/2;}
+  return {W:tw+b,H:th+2*b,tx:(S.bleed&&!recto)?b:0,ty:b,tw:tw,th:th,ml:Math.round(ml),mr:Math.round(mr),mt:Math.round(S.mTb*96),mb:Math.round(S.mTb*96),recto:recto,bleed:S.bleed};
+}
+function guidesHTML(d){
+  var h='<div class="guide-safe" style="left:'+d.ml+'px;top:'+d.mt+'px;right:'+d.mr+'px;bottom:'+d.mb+'px;"></div>';
+  var gx=d.recto?d.ml:(d.tw-d.mr);
+  h+='<div class="guide-gutter" style="left:'+gx+'px;"></div>';
+  if(d.bleed){h+='<div class="guide-trim"></div><div class="guide-tag" style="left:2px;top:2px;">trim</div>';}
+  return h;
+}
+function sheetHTML(pi,inner,kind,forExport){
+  var d=dimsFor(pi),C=pal(),ts=(0.82+0.18*Math.min(1,Math.min(d.tw,d.th)/720)).toFixed(3);
+  var vars='--paper:'+C.paper+';--ink:'+C.ink+';--p1:'+C.a+';--p2:'+C.line+';--red:'+C.red+';--soft:'+C.soft+';--paper-scale:1;';
+  var h='<div class="sheet-slot"><div class="sheet" data-kind="'+kind+'" data-pi="'+pi+'" style="width:'+d.W+'px;height:'+d.H+'px;'+vars+'">';
+  h+=patternSVG(d,C);
+  h+='<div class="trim" style="left:'+d.tx+'px;top:'+d.ty+'px;width:'+d.tw+'px;height:'+d.th+'px;">';
+  if(S.wm==="faint"){h+='<div class="wm">'+logoSVG(Math.round(Math.min(d.tw,d.th)*0.6),mix(C.paper,C.ink,0.05),mix(C.paper,C.ink,0.1),mix(C.paper,C.ink,0.16))+'</div>';}
+  h+=frameHTML(d,C);
+  h+='<div class="pg" data-ts="'+ts+'" data-mb="'+d.mb+'" data-mr="'+d.mr+'" style="--ts:'+ts+';padding:'+d.mt+'px '+d.mr+'px '+d.mb+'px '+d.ml+'px;">'+inner+'</div>';
+  if(!forExport&&S.guides){h+=guidesHTML(d);}
+  h+='</div></div></div>';
+  return h;
+}
+function footHTML(pi,label,showNum){
+  var C=pal(),sd=deck?deck.params.seed:0;
+  var left='Seed '+sd+(label?' '+label:'');
+  var mid=S.seller?('Created by '+esc(S.seller)):'';
+  var right=(showNum&&S.nums)?('<span class="pno">'+(pi+1)+'</span>'):'';
+  if(S.wm==="footer"){right+=logoSVG(18,C.a,C.paper,C.ink);}
+  return '<div class="pf"><span class="pl">'+esc(left)+'</span><span class="pm">'+mid+'</span><span class="pr">'+right+'</span></div>';
+}
+function fitSheet(sheet){
+  var pgs=sheet.querySelectorAll(".pg"),a;
+  for(a=0;a<pgs.length;a++){
+    var pg=pgs[a],ts0=parseFloat(pg.getAttribute("data-ts"))||1,mb=parseFloat(pg.getAttribute("data-mb"))||0,mr=parseFloat(pg.getAttribute("data-mr"))||0;
+    var s=ts0,guard=0;
+    var over=function(){
+      var last=pg.lastElementChild;if(!last){return false;}
+      if(last.offsetTop+last.offsetHeight>pg.clientHeight-mb+1){return true;}
+      var kids=pg.children,k;
+      for(k=0;k<kids.length;k++){if(kids[k].offsetLeft+kids[k].offsetWidth>pg.clientWidth-mr+2){return true;}}
+      var f2=pg.querySelectorAll(".fit2");
+      for(k=0;k<f2.length;k++){if(f2[k].scrollHeight>f2[k].clientHeight+1||f2[k].scrollWidth>f2[k].clientWidth+1){return true;}}
+      var bwp=pg.querySelector(".board-wrap");
+      if(bwp&&bwp.clientHeight<pg.clientHeight*0.3){return true;}
+      return false;
+    };
+    while(over()&&s>0.3&&guard<70){s-=0.025;pg.style.setProperty("--ts",s.toFixed(3));guard++;}
+    var f1=pg.querySelectorAll(".fit1"),i;
+    for(i=0;i<f1.length;i++){
+      var fs=parseFloat(window.getComputedStyle(f1[i]).fontSize),g2=0;
+      while(f1[i].scrollWidth>f1[i].clientWidth+1&&fs>6&&g2<60){fs-=0.5;f1[i].style.fontSize=fs+"px";g2++;}
+    }
+    var bws=pg.querySelectorAll(".board-wrap");
+    for(i=0;i<bws.length;i++){
+      var sv=bws[i].querySelector("svg");if(!sv){continue;}
+      var vw=parseFloat(sv.getAttribute("data-w")),vh=parseFloat(sv.getAttribute("data-h")),aw=bws[i].clientWidth,ah=bws[i].clientHeight;
+      var sc=Math.max(0,Math.min(aw/vw,ah/vh));
+      sv.style.width=Math.floor(vw*sc)+"px";sv.style.height=Math.floor(vh*sc)+"px";
+      sv.setAttribute("width",Math.floor(vw*sc));sv.setAttribute("height",Math.floor(vh*sc));
+    }
+  }
+}
+function fitAll(root){var sh=root.querySelectorAll(".sheet"),i;for(i=0;i<sh.length;i++){fitSheet(sh[i]);}}
+function parseSeed(v){
+  v=String(v||"").replace(/^\s+|\s+$/g,"");
+  if(v===""){return null;}
+  if(/^[0-9]+$/.test(v)){return (parseInt(v,10)>>>0);}
+  var h=2166136261,i;for(i=0;i<v.length;i++){h=Math.imul(h^v.charCodeAt(i),16777619);}
+  return h>>>0;
+}
+function randomSeed(){return (Math.floor(Math.random()*900000000)+100000);}
+function pad(s,n){s=String(s);while(s.length<n){s="0"+s;}return s;}
+function segSet(id,val){var b=$(id).querySelectorAll("button"),i;for(i=0;i<b.length;i++){b[i].setAttribute("aria-pressed",b[i].getAttribute("data-val")===String(val)?"true":"false");}}
+function extend(a,b){var k;for(k in b){if(Object.prototype.hasOwnProperty.call(b,k)){a[k]=b[k];}}return a;}
+function snapshot(){return {s:JSON.stringify(S),deck:deck};}
+function updateUndoBtns(){$("btnUndo").disabled=hidx<=0;$("btnRedo").disabled=hidx>=hist.length-1;}
+function commit(){
+  readControls();
+  var sn=snapshot();
+  if(hidx>=0&&hist[hidx].s===sn.s&&hist[hidx].deck===sn.deck){return;}
+  hist=hist.slice(0,hidx+1);hist.push(sn);
+  if(hist.length>31){hist.shift();}
+  hidx=hist.length-1;updateUndoBtns();autosave();
+}
+function restore(i){
+  var sn=hist[i],keep={view:S.view,layout2:S.layout2,zoom:S.zoom};
+  S=extend(defaultState(),JSON.parse(sn.s));S.view=keep.view;S.layout2=keep.layout2;S.zoom=keep.zoom;
+  deck=sn.deck;curPage=0;writeControls();updateUndoBtns();renderSim();renderPreview();autosave();
+  setProgress("History step "+(i+1)+" / "+hist.length+" restored.",1);
+}
+function undo(){if(hidx>0){hidx--;restore(hidx);}}
+function redo(){if(hidx<hist.length-1){hidx++;restore(hidx);}}
+function setProgress(t,f){$("progressText").innerText=t;$("progressFill").style.width=(f*100).toFixed(0)+"%";}
+function showError(msg){var e=$("progressError");if(!msg){e.style.display="none";e.innerText="";return;}e.style.display="block";e.innerText=msg;}
+function layoutDims(){var L=S.layout2;if(L==="spread"){return {c:2,r:1};}if(L==="strip"){return {c:3,r:1};}if(L==="grid"){return {c:2,r:2};}return {c:1,r:1};}
+function previewScale(){
+  var sc=$("previewScroll"),ld=layoutDims(),d=dimsFor(0),aw=sc.clientWidth-44,ah=sc.clientHeight-44,gap=24;
+  var s=Math.min((aw-(ld.c-1)*gap)/(ld.c*d.W),(ah-(ld.r-1)*gap)/(ld.r*d.H));
+  return clamp(s,0.08,2)*S.zoom/100;
+}
+function inlineExportColors(root){
+  var els=root.querySelectorAll("*"),i,el,cs;
+  for(i=0;i<els.length;i++){
+    el=els[i];
+    if(el.namespaceURI==="http://www.w3.org/2000/svg"){continue;}
+    try{
+      cs=window.getComputedStyle(el);
+      var bg=cs.backgroundColor;
+      if(bg&&bg!=="rgba(0, 0, 0, 0)"&&bg!=="transparent"){el.style.backgroundColor=bg;}
+      el.style.backgroundImage="none";
+      el.style.color=cs.color;
+      if(cs.borderTopStyle!=="none"&&parseFloat(cs.borderTopWidth)>0){el.style.borderColor=cs.borderTopColor;}
+      el.style.boxShadow="none";el.style.textShadow="none";el.style.webkitBackdropFilter="none";el.style.backdropFilter="none";
+    }catch(e){}
+  }
+}
+function exportFail(msg){showError(msg+" Falling back to Exact Print.");setProgress(msg,1);setTimeout(function(){exactPrint();},600);}
+function libsOK(){return typeof window.html2canvas!=="undefined"&&window.jspdf&&window.jspdf.jsPDF;}
+function waitFonts(cb){try{if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){cb();},function(){cb();});return;}}catch(e){}cb();}
+function download(blob,name){
+  var a=document.createElement("a"),url=URL.createObjectURL(blob);
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1500);
+}
+function capturePages(onPage,onDone,onFail){
+  waitFonts(function(){
+    var sheets;
+    try{sheets=buildExportDeck();}catch(e){onFail("Could not build pages: "+(e&&e.message?e.message:e));return;}
+    var i=0,n=sheets.length;
+    function next(){
+      if(i>=n){onDone(n);return;}
+      window.html2canvas(sheets[i],{scale:EXPORT_SCALE,backgroundColor:pal().paper,useCORS:true,logging:false,ignoreElements:keepFor(sheets[i])}).then(function(canvas){
+        if(!canvas||!canvas.width||!canvas.height){throw new Error("capture "+(i+1)+" came back blank.");}
+        onPage(canvas,i,n,sheets[i]);
+        i++;setProgress("Rendering page "+i+" / "+n+" ...",i/n);
+        setTimeout(next,0);
+      }).then(null,function(e){onFail("Export failed on page "+(i+1)+": "+(e&&e.message?e.message:String(e)));});
+    }
+    setProgress("Rendering page 1 / "+n+" ...",0);next();
+  });
+}
+function exportPDF(){
+  showError("");
+  if(!deck){exportFail("Nothing to export: generate a kit first.");return;}
+  if(!libsOK()){exportFail("PDF libraries did not load (offline? html2canvas/jsPDF missing).");return;}
+  readControls();
+  var pdf=null;
+  capturePages(function(canvas,i,n,sheet){
+    var wpt=sheet.offsetWidth*0.75,hpt=sheet.offsetHeight*0.75,orient=wpt>hpt?"landscape":"portrait";
+    var img=canvas.toDataURL("image/jpeg",0.92);
+    if(!img||img.length<4000){throw new Error("capture "+(i+1)+" looks empty.");}
+    if(!pdf){pdf=new window.jspdf.jsPDF({unit:"pt",format:[wpt,hpt],orientation:orient});}else{pdf.addPage([wpt,hpt],orient);}
+    pdf.addImage(img,"JPEG",0,0,wpt,hpt);
+  },function(n){
+    try{
+      var blob=pdf.output("blob");download(blob,slug(gameTitle())+".pdf");
+      window.__lastPDF={pages:n,bytes:blob.size};
+      setProgress("Done. PDF downloaded ("+n+" pages).",1);
+    }catch(e){exportFail("PDF save failed: "+(e&&e.message?e.message:e));}
+  },exportFail);
+}
+function exportZip(){
+  showError("");
+  if(!deck){exportFail("Nothing to export: generate a kit first.");return;}
+  if(typeof window.html2canvas==="undefined"||typeof window.JSZip==="undefined"){exportFail("ZIP libraries did not load (offline? html2canvas/JSZip missing).");return;}
+  readControls();
+  var zip=new window.JSZip(),pending=0,finished=false,total=0,doneCb=null;
+  capturePages(function(canvas,i){
+    pending++;
+    canvas.toBlob(function(b){zip.file("page-"+pad(i+1,3)+".png",b);pending--;if(finished&&!pending&&doneCb){doneCb();}},"image/png");
+  },function(n){
+    total=n;finished=true;
+    doneCb=function(){
+      zip.generateAsync({type:"blob"}).then(function(blob){
+        download(blob,slug(gameTitle())+"-png.zip");window.__lastZip={pages:total,bytes:blob.size};
+        setProgress("Done. ZIP downloaded ("+total+" PNG pages).",1);
+      }).then(null,function(e){exportFail("ZIP failed: "+(e&&e.message?e.message:e));});
+    };
+    if(!pending){doneCb();}
+  },exportFail);
+}
+function exactPrint(){
+  if(!deck){showError("Nothing to print: generate a kit first.");return;}
+  readControls();
+  var d=dimsFor(0),sheets;
+  try{sheets=buildExportDeck();}catch(e){showError("Print build failed: "+e.message);window.print();return;}
+  var css=document.querySelector("style").innerHTML,body=$("exportDeck").innerHTML;
+  var html="<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>"+esc(gameTitle())+"</title><link href=\"https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=Inter:wght@400;500;600;700&family=Special+Elite&display=swap\" rel=\"stylesheet\"><style>"+css+
+    "@page{size:"+d.W+"px "+d.H+"px;margin:0;}html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important;}.sheet-slot{width:"+d.W+"px;height:"+d.H+"px;overflow:hidden;page-break-after:always;break-after:page;}.sheet{transform:none!important;box-shadow:none!important;}</style></head><body>"+body+"</body></html>";
+  var w=null;try{w=window.open("","_blank");}catch(e2){w=null;}
+  if(!w){showError(($("progressError").innerText?$("progressError").innerText+" ":"")+"Popup blocked: printing the current view instead. Allow popups for the full-kit print.");window.print();return;}
+  w.document.open();w.document.write(html);w.document.close();w.focus();
+  setTimeout(function(){w.print();},500);
+}
+function afterChange(commitNow){readControls();renderPreview();if(commitNow){commit();}else{autosave();}}
+function wireSeg(id,key,numeric){
+  var b=$(id).querySelectorAll("button"),i;
+  for(i=0;i<b.length;i++){(function(btn){btn.addEventListener("click",function(){
+    var v=btn.getAttribute("data-val");S[key]=numeric?parseInt(v,10):v;segSet(id,S[key]);
+    readControls();renderPreview();commit();
+  });})(b[i]);}
+}
+function setView(v){S.view=v;curPage=0;$("viewPuzzle").setAttribute("aria-pressed",v==="puzzle"?"true":"false");$("viewAnswer").setAttribute("aria-pressed",v==="answer"?"true":"false");renderPreview();}
+function openHelp(){$("helpOverlay").classList.add("show");$("btnHelpClose").focus();}
+function closeHelp(){$("helpOverlay").classList.remove("show");$("btnHelp").focus();}
+function movePage(dlt){
+  if(!deck){return;}
+  var vl=viewList(deck),np=clamp(curPage+dlt,0,Math.max(0,vl.idx.length-1));
+  if(np!==curPage){curPage=np;renderPreview();}
+}
+
+function keepFor(sheet){
+  return function(el){
+    var t=el.tagName;
+    if(t==="HTML"||t==="BODY"||t==="HEAD"||t==="STYLE"||t==="LINK"||t==="META"||t==="TITLE"||t==="SCRIPT"){return false;}
+    return !(el===sheet||el.contains(sheet)||sheet.contains(el));
+  };
+}
+
+/* ================= seed code ================= */
+var hist=[],hidx=-1,STORE_KEY="cf-project-v1";
+function renderSim(){}
+function encodeCode(s,seed){
+  var df=0,st=0,i;
+  for(i=0;i<4;i++){if(s.diffs.indexOf(DIFFS[i])>=0){df|=(1<<i);}}
+  for(i=0;i<9;i++){if(s.settings.indexOf(SETTING_IDS[i])>=0){st|=(1<<i);}}
+  var a=Math.max(0,CASE_OPTS.indexOf(s.cases))+df*8+st*128+Math.max(0,PRESET_KEYS.indexOf(s.preset))*65536+Math.max(0,TRIM_KEYS.indexOf(s.trim))*524288+(s.bleed?1:0)*2097152+(s.cards?1:0)*4194304;
+  return "CF-"+pad(a.toString(36).toUpperCase(),5)+"-"+(seed>>>0).toString(36).toUpperCase();
+}
+function decodeCode(code){
+  var m=/^CF-([0-9A-Z]{5,6})-([0-9A-Z]{1,8})$/i.exec(String(code||"").replace(/\s+/g,""));
+  if(!m){return null;}
+  var a=parseInt(m[1],36),seed=parseInt(m[2],36)>>>0,i;
+  var ci=a%8,df=Math.floor(a/8)%16,st=Math.floor(a/128)%512,pr=Math.floor(a/65536)%8,tr=Math.floor(a/524288)%4,bd=Math.floor(a/2097152)%2,cd=Math.floor(a/4194304)%2;
+  if(ci>6||pr>4){return null;}
+  var diffs=[],settings=[];
+  for(i=0;i<4;i++){if(df&(1<<i)){diffs.push(DIFFS[i]);}}
+  for(i=0;i<9;i++){if(st&(1<<i)){settings.push(SETTING_IDS[i]);}}
+  return {cases:CASE_OPTS[ci],diffs:diffs,settings:settings,preset:PRESET_KEYS[pr],trim:TRIM_KEYS[tr],bleed:!!bd,cards:!!cd,seed:seed};
+}
+
+/* ================= controls <-> state ================= */
+function reportBox(id,okText,count,errs){
+  var h="",i;
+  if(count){h+='<span style="color:#111;font-weight:700;">'+count+' '+okText+'</span>';}
+  if(errs.length){
+    h+=' <span style="color:#8a1414;font-weight:700;">'+errs.length+' need fixing:</span><ul class="bad">';
+    for(i=0;i<errs.length;i++){h+='<li>'+(errs[i].n?'Line '+errs[i].n+': ':'')+esc(errs[i].why)+(errs[i].line?' ('+esc(errs[i].line.length>34?errs[i].line.slice(0,34)+"...":errs[i].line)+')':'')+'</li>';}
+    h+='</ul>';
+  }
+  $(id).innerHTML=h;
+}
+function renderReports(){
+  var nm=parseNames($("inNames").value),it=parseItems($("inItems").value),st=parseSetting($("inSetName").value,$("inSetLocs").value);
+  reportBox("nameReport","name"+(nm.names.length===1?"":"s")+" ready",nm.names.length,nm.bad);
+  reportBox("itemReport","item"+(it.items.length===1?"":"s")+" ready",it.items.length,it.bad);
+  reportBox("setReport",st.setting?"setting ready: "+st.setting.name+" ("+st.setting.locs.length+" locations)":"",st.setting?1:0,st.bad);
+  return {nm:nm,it:it,st:st};
+}
+function readControls(){
+  var i;
+  S.cases=clamp(parseInt($("selCases").value,10)||12,6,30);
+  S.diffs=[];for(i=0;i<DIFFS.length;i++){if($("df_"+DIFFS[i]).checked){S.diffs.push(DIFFS[i]);}}
+  S.settings=[];for(i=0;i<SETTING_IDS.length;i++){if($("st_"+SETTING_IDS[i]).checked){S.settings.push(SETTING_IDS[i]);}}
+  S.title=$("inTitle").value;S.customNames=$("inNames").value;S.customItems=$("inItems").value;S.customSetName=$("inSetName").value;S.customSetLocs=$("inSetLocs").value;
+  S.sub=$("inSub").value;S.seedInput=$("inSeed").value;
+  S.preset=$("inPreset").value;S.header=$("inHeader").value;S.border=$("inBorder").value;S.pattern=$("inPattern").value;S.wm=$("inWm").value;S.nums=$("inNums").checked;
+  S.trim=$("inTrim").value;S.bleed=$("inBleed").checked;
+  S.mIn=clamp(parseFloat($("inMIn").value)||0.5,0.25,1.25);S.mOut=clamp(parseFloat($("inMOut").value)||0.5,0.25,1.25);S.mTb=clamp(parseFloat($("inMTb").value)||0.5,0.25,1.25);
+  S.mirror=$("inMirror").checked;S.guides=$("inGuides").checked;
+  S.book=$("inBook").checked;S.sections=$("inSections").checked;S.cards=$("inCards").checked;S.ans=$("inAns").checked;S.seller=$("inSeller").value;
+  S.layout2=$("selLayout").value;S.zoom=parseInt($("selZoom").value,10)||100;
+  var d=[];for(i=0;i<S.diffs.length;i++){d.push(DIFF_NAME[S.diffs[i]]+": "+DIFF_INFO[S.diffs[i]]);}
+  $("dfNote").innerText=d.join(". ");
+}
+function writeControls(){
+  var i;
+  $("selCases").value=String(S.cases);
+  for(i=0;i<DIFFS.length;i++){$("df_"+DIFFS[i]).checked=S.diffs.indexOf(DIFFS[i])>=0;}
+  for(i=0;i<SETTING_IDS.length;i++){$("st_"+SETTING_IDS[i]).checked=S.settings.indexOf(SETTING_IDS[i])>=0;}
+  $("inTitle").value=S.title;$("inNames").value=S.customNames;$("inItems").value=S.customItems;$("inSetName").value=S.customSetName;$("inSetLocs").value=S.customSetLocs;
+  $("inSub").value=S.sub;$("inSeed").value=S.seedInput;
+  $("inPreset").value=S.preset;$("inHeader").value=S.header;$("inBorder").value=S.border;$("inPattern").value=S.pattern;$("inWm").value=S.wm;$("inNums").checked=S.nums;
+  $("inTrim").value=S.trim;$("inBleed").checked=S.bleed;$("inMIn").value=S.mIn;$("inMOut").value=S.mOut;$("inMTb").value=S.mTb;
+  $("inMirror").checked=S.mirror;$("inGuides").checked=S.guides;
+  $("inBook").checked=S.book;$("inSections").checked=S.sections;$("inCards").checked=S.cards;$("inAns").checked=S.ans;$("inSeller").value=S.seller;
+  $("selLayout").value=S.layout2;$("selZoom").value=String(S.zoom);
+  $("viewPuzzle").setAttribute("aria-pressed",S.view==="puzzle"?"true":"false");$("viewAnswer").setAttribute("aria-pressed",S.view==="answer"?"true":"false");
+  var sw=document.querySelectorAll(".swatch");for(i=0;i<sw.length;i++){sw[i].setAttribute("aria-pressed",sw[i].getAttribute("data-preset")===S.preset?"true":"false");}
+  renderReports();readControls();
+}
+
+/* ================= project ================= */
+function projectJSON(){return JSON.stringify({v:1,app:"cozy-case-files",state:S,params:deck?deck.params:null});}
+function autosave(){
+  try{window.localStorage.setItem(STORE_KEY,projectJSON());$("autoNote").innerText="Autosaved "+new Date().toLocaleTimeString()+".";}
+  catch(e){$("autoNote").innerText="Autosave unavailable in this browser. Use Save .json.";}
+}
+function applyProject(obj){
+  if(!obj||obj.app!=="cozy-case-files"||!obj.state){throw new Error("Not a Cozy Case Files project file.");}
+  S=extend(defaultState(),obj.state);
+  writeControls();
+  if(obj.params){generateFromParams(obj.params,function(){commit();});}
+  else{deck=null;curPage=0;renderPreview();commit();}
+}
+
+/* ================= preview ================= */
+function emptyHTML(){return '<div class="empty-card">'+logoSVG(84,"#111111","#D62828","#FAFAF8")+'<h2 class="gl">Cozy Case Files</h2><p>Pick the size of your casebook and the difficulty, then press <b>Generate Casebook</b>. Every case has a story, suspects, true clues and exactly one solution.</p></div>';}
+function renderPreview(){
+  var host=$("previewHost");
+  updateNotes();
+  if(!deck){host.innerHTML=emptyHTML();$("sheetPos").innerText="Page - / -";$("kpiDeck").innerText="No book yet";$("kpiPreset").innerText=PRESETS[S.preset].name;$("btnPrev").disabled=true;$("btnNext").disabled=true;return;}
+  var vl=viewList(deck),ld=layoutDims(),per=ld.c*ld.r,scale=previewScale(),html="",v;
+  if(curPage>=vl.idx.length){curPage=Math.max(0,vl.idx.length-1);}
+  var d0=dimsFor(0);
+  for(v=curPage;v<Math.min(vl.idx.length,curPage+per);v++){
+    var pi=vl.idx[v],h=pageSheet(deck,vl.all,pi,false);
+    h=h.replace('<div class="sheet-slot">','<div class="sheet-slot" style="width:'+Math.round(d0.W*scale)+'px;height:'+Math.round(d0.H*scale)+'px;overflow:hidden;">');
+    h=h.replace("--paper-scale:1;","--paper-scale:"+scale.toFixed(4)+";");
+    html+=h;
+  }
+  host.innerHTML=html;
+  fitAll(host);
+  $("sheetPos").innerText="Page "+(curPage+1)+" / "+vl.idx.length+(S.view==="answer"?" (answers)":"");
+  $("btnPrev").disabled=curPage<=0;$("btnNext").disabled=curPage>=vl.idx.length-1;
+  $("kpiDeck").innerText=deck.pages.length+" cases";
+  $("kpiPreset").innerText=PRESETS[S.preset].name;
+  $("metaLine").innerText="Seed "+deck.params.seed+" • "+vl.all.length+" pages in book • trim "+S.trim+(S.bleed?" + bleed":"");
+}
+function insideNeed(pages){return pages<=150?0.375:(pages<=300?0.5:(pages<=500?0.625:0.75));}
+function updateNotes(){
+  var d=dimsFor(0),txt="Sheet: "+(d.W/96).toFixed(3)+" x "+(d.H/96).toFixed(3)+" in"+(S.bleed?" (trim + 0.125 in bleed; width +0.125, height +0.25 per KDP)":"")+". Dashed blue = safe area, pink = gutter. Guides never print.";
+  if(deck){
+    var b=buildPages(deck),need=insideNeed(b.list.length);
+    $("bookNote").innerText="Book: "+b.list.length+" pages ("+b.puzzleCount+" front/case pages + "+(b.list.length-b.puzzleCount)+" answer pages).";
+    txt+=" KDP inside margin for "+b.list.length+" pages: at least "+need+" in."+(S.mIn+1e-9<need?" Your inside margin is smaller: raise it before uploading.":" Your inside margin is OK.");
+  }else{$("bookNote").innerText="Generate a book to see the page count.";}
+  $("trimNote").innerText=txt;
+}
+
+/* ================= generation (one puzzle per tick) ================= */
+function paramsFromState(seed){
+  return {cases:S.cases,diffs:S.diffs.slice(),settings:S.settings.slice(),customNames:S.customNames,customItems:S.customItems,customSetName:S.customSetName,customSetLocs:S.customSetLocs,seed:seed>>>0};
+}
+function generateFromParams(P,done){
+  if(genRunning){return;}
+  if(!P.diffs.length||!P.settings.length){showError("Pick at least one difficulty and one setting.");setProgress("Nothing to generate.",0);return;}
+  var plan=planDeck(P),N=plan.tasks.length;
+  if(P.settings.length===1&&P.settings[0]==="custom"&&!plan.customSetting.setting){showError("Your own setting needs a name and at least 6 valid locations. Fix the red lines or pick another setting.");setProgress("Nothing to generate.",0);return;}
+  showError("");genRunning=true;$("btnGenerate").disabled=true;
+  var pages=[],k=0,t0=Date.now();
+  setProgress("Building case 1 / "+N+" ...",0);
+  function tick(){
+    if(k>=N){
+      deck={params:P,plan:plan,pages:pages};curPage=0;genRunning=false;$("btnGenerate").disabled=false;
+      $("inSeed").value=String(P.seed);S.seedInput=String(P.seed);
+      $("inCode").value=encodeCode(S,P.seed);
+      var msg="Done. "+N+" cases in "+((Date.now()-t0)/1000).toFixed(1)+"s, each with exactly one solution.";
+      setProgress(msg,1);renderPreview();
+      if(done){done();}
+      return;
+    }
+    try{pages.push(runTask(P,plan,k));}
+    catch(e){genRunning=false;$("btnGenerate").disabled=false;showError("Generation failed on case "+(k+1)+": "+(e&&e.message?e.message:e));setProgress("Stopped.",0);return;}
+    k++;
+    setProgress("Building case "+Math.min(k+1,N)+" / "+N+" ...",k/N);
+    setTimeout(tick,0);
+  }
+  setTimeout(tick,0);
+}
+function startGeneration(){
+  if(genRunning){return;}
+  readControls();
+  var v=String($("inSeed").value||"").replace(/\s+/g,""),seed=null;
+  if(/^CF-/i.test(v)){var dc=decodeCode(v);if(!dc){showError("That seed code is not valid.");return;}applyCode(dc);seed=dc.seed;}
+  else{seed=parseSeed(v);}
+  if(seed===null){seed=randomSeed();}
+  generateFromParams(paramsFromState(seed),function(){commit();});
+}
+function applyCode(dc){
+  S.cases=dc.cases;S.diffs=dc.diffs;S.settings=dc.settings;S.preset=dc.preset;S.trim=dc.trim;S.bleed=dc.bleed;S.cards=dc.cards;
+  S.seedInput=String(dc.seed);writeControls();
+}
+
+/* ================= export ================= */
+function buildExportDeck(){
+  var host=$("exportDeck"),i,html="",list=buildPages(deck).list;
+  host.innerHTML="";
+  for(i=0;i<list.length;i++){html+=pageSheet(deck,list,i,true);}
+  host.innerHTML=html;
+  var sh=host.querySelectorAll(".sheet");
+  for(i=0;i<sh.length;i++){sh[i].style.transform="none";sh[i].style.setProperty("--paper-scale","1");sh[i].style.boxShadow="none";}
+  fitAll(host);
+  inlineExportColors(host);
+  return sh;
+}
+function exportSVG(){
+  showError("");
+  var C=pal(),svg=null,name="logic-grid.svg";
+  if(deck){
+    var vl=viewList(deck),pi=vl.idx[curPage],desc=vl.all[pi],cs=null;
+    if(desc&&desc.wi!==undefined){cs=deck.pages[desc.wi];name="case-"+(desc.wi+1)+(S.view==="answer"?"-answer":"")+"-grid.svg";}
+    if(!cs){cs=deck.pages[0];name="case-1-grid.svg";}
+    svg=gridSVG(cs,C,S.view==="answer");
+    svg=svg.replace('<svg class="board" ','<svg ').replace('preserveAspectRatio','width="'+(parseFloat(svg.match(/data-w="([0-9.]+)"/)[1])*2)+'" height="'+(parseFloat(svg.match(/data-h="([0-9.]+)"/)[1])*2)+'" preserveAspectRatio');
+  }else{svg=gridSVG(exampleCase(),C,true);}
+  download(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+svg],{type:"image/svg+xml"}),name);
+  setProgress("SVG downloaded ("+name+").",1);
+}
+
+/* ================= wiring ================= */
+function buildSelects(){
+  var i,dg=$("dfGrid"),sg=$("stGrid");dg.innerHTML="";sg.innerHTML="";
+  for(i=0;i<DIFFS.length;i++){var l2=document.createElement("label");l2.className="tgl";l2.innerHTML='<span>'+DIFF_NAME[DIFFS[i]]+'</span><input type="checkbox" id="df_'+DIFFS[i]+'">';dg.appendChild(l2);}
+  for(i=0;i<SETTING_IDS.length;i++){
+    var nm=i<SETTINGS.length?SETTINGS[i].name:"My setting",l3=document.createElement("label");l3.className="tgl";l3.innerHTML='<span>'+esc(nm)+'</span><input type="checkbox" id="st_'+SETTING_IDS[i]+'">';sg.appendChild(l3);
+  }
+  var host=$("swatches"),sel=$("inPreset");host.innerHTML="";sel.innerHTML="";
+  for(i=0;i<PRESET_KEYS.length;i++){
+    (function(k){
+      var pr=PRESETS[k],b=document.createElement("button"),op=document.createElement("option");
+      b.className="swatch";b.setAttribute("data-preset",k);b.setAttribute("aria-label",pr.name);b.title=pr.name;b.setAttribute("aria-pressed",S.preset===k?"true":"false");
+      b.style.background="linear-gradient(135deg,"+pr.sw[0]+" 50%,"+pr.sw[1]+" 50%)";
+      host.appendChild(b);b.addEventListener("click",function(){S.preset=k;writeControls();renderPreview();commit();});
+      op.value=k;op.textContent=pr.name;sel.appendChild(op);
+    })(PRESET_KEYS[i]);
+  }
+  var z=$("selZoom"),vals=[50,75,100,125,150,200];
+  for(i=0;i<vals.length;i++){var oz=document.createElement("option");oz.value=vals[i];oz.textContent=vals[i]===100?"Fit (100%)":vals[i]+"%";z.appendChild(oz);}
+  z.value="100";
+}
+function wire(){
+  var i,live=["selCases","inTitle","inNames","inItems","inSetName","inSetLocs","inSub","inPreset","inHeader","inBorder","inPattern","inWm","inNums","inTrim","inBleed","inMIn","inMOut","inMTb","inMirror","inGuides","inBook","inSections","inCards","inAns","inSeller","selLayout","selZoom"];
+  for(i=0;i<DIFFS.length;i++){live.push("df_"+DIFFS[i]);}
+  for(i=0;i<SETTING_IDS.length;i++){live.push("st_"+SETTING_IDS[i]);}
+  for(i=0;i<live.length;i++){(function(id){
+    var el=$(id);
+    el.addEventListener("input",function(){if(id==="inNames"||id==="inItems"||id==="inSetName"||id==="inSetLocs"){renderReports();}afterChange(false);});
+    el.addEventListener("change",function(){afterChange(true);});
+  })(live[i]);}
+  $("inSeed").addEventListener("change",function(){readControls();autosave();});
+  $("btnDice").addEventListener("click",function(){$("inSeed").value=String(randomSeed());readControls();autosave();});
+  $("btnCode").addEventListener("click",function(){
+    var dc=decodeCode($("inCode").value);
+    if(!dc){showError("That seed code is not valid. It looks like CF-XXXXX-XXXXXX.");return;}
+    showError("");applyCode(dc);generateFromParams(paramsFromState(dc.seed),function(){commit();});
+  });
+  $("btnGenerate").addEventListener("click",startGeneration);
+  $("viewPuzzle").addEventListener("click",function(){setView("puzzle");});
+  $("viewAnswer").addEventListener("click",function(){setView("answer");});
+  $("btnPDF").addEventListener("click",exportPDF);$("btnPDF2").addEventListener("click",exportPDF);
+  $("btnZip").addEventListener("click",exportZip);$("btnSVG").addEventListener("click",exportSVG);
+  $("btnPrint").addEventListener("click",exactPrint);
+  $("btnUndo").addEventListener("click",undo);$("btnRedo").addEventListener("click",redo);
+  $("btnSave").addEventListener("click",function(){readControls();download(new Blob([projectJSON()],{type:"application/json"}),slug(gameTitle())+"-project.json");setProgress("Project saved as .json.",1);});
+  $("btnLoad").addEventListener("click",function(){$("fileLoad").click();});
+  $("fileLoad").addEventListener("change",function(){
+    var f=$("fileLoad").files[0];if(!f){return;}
+    var rd=new FileReader();
+    rd.onload=function(){try{applyProject(JSON.parse(String(rd.result)));setProgress("Project loaded.",1);}catch(e){showError("Could not load project: "+(e&&e.message?e.message:e));}};
+    rd.onerror=function(){showError("Could not read that file.");};
+    rd.readAsText(f);$("fileLoad").value="";
+  });
+  $("btnPrev").addEventListener("click",function(){movePage(-1);});
+  $("btnNext").addEventListener("click",function(){movePage(1);});
+  $("btnHelp").addEventListener("click",openHelp);$("btnHelpClose").addEventListener("click",closeHelp);
+  $("helpOverlay").addEventListener("click",function(e){if(e.target===$("helpOverlay")){closeHelp();}});
+  document.addEventListener("keydown",function(e){
+    var a=document.activeElement,typing=a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT");
+    if(e.key==="Escape"&&$("helpOverlay").classList.contains("show")){closeHelp();return;}
+    if(typing){return;}
+    var k=e.key;
+    if((e.ctrlKey||e.metaKey)&&(k==="z"||k==="Z")){e.preventDefault();if(e.shiftKey){redo();}else{undo();}return;}
+    if((e.ctrlKey||e.metaKey)&&(k==="y"||k==="Y")){e.preventDefault();redo();return;}
+    if(e.ctrlKey||e.metaKey||e.altKey){return;}
+    if(k==="g"||k==="G"){startGeneration();}
+    else if(k==="a"||k==="A"){setView(S.view==="puzzle"?"answer":"puzzle");}
+    else if(k==="ArrowLeft"){movePage(-1);}
+    else if(k==="ArrowRight"){movePage(1);}
+    else if(k==="h"||k==="H"||k==="?"){if($("helpOverlay").classList.contains("show")){closeHelp();}else{openHelp();}}
+  });
+  var rt=null;
+  window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(renderPreview,120);});
+}
+
+/* ================= init ================= */
+function initFavicon(){
+  var l=document.createElement("link");l.rel="icon";l.type="image/svg+xml";
+  l.href="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(logoSVG(64,"#111111","#D62828","#FAFAF8"));
+  document.head.appendChild(l);
+}
+function init(){
+  initFavicon();
+  $("brandLogo").innerHTML=logoSVG(56,"#111111","#D62828","#FAFAF8");
+  buildSelects();wire();
+  var restored=false;
+  try{
+    var raw=window.localStorage.getItem(STORE_KEY);
+    if(raw){var obj=JSON.parse(raw);S=extend(defaultState(),obj.state);S.view="puzzle";writeControls();restored=true;
+      if(obj.params){generateFromParams(obj.params,function(){commit();});}}
+  }catch(e){restored=false;}
+  if(!restored){writeControls();}
+  readControls();renderPreview();commit();
+  waitFonts(function(){if(deck){renderPreview();}});
+}
+
+window.CF={
+  get S(){return S;},setS:function(o){S=extend(defaultState(),o);writeControls();},
+  getDeck:function(){return deck;},setDeck:function(d){deck=d;curPage=0;renderPreview();},
+  defaultState:defaultState,makeDeckSync:makeDeckSync,planDeck:planDeck,runTask:runTask,genCase:genCase,solveCount:solveCount,propagate:propagate,initDom:initDom,
+  parseNames:parseNames,parseItems:parseItems,parseSetting:parseSetting,SETTINGS:SETTINGS,TEMPLATES:TEMPLATES,LEADS:LEADS,CORES:CORES,DIFF_SIZES:DIFF_SIZES,DIFFS:DIFFS,CLUE_TYPES:CLUE_TYPES,
+  NAME_BANK:NAME_BANK,TREATS:TREATS,STORY_MARKER:STORY_MARKER,
+  gridSVG:gridSVG,pal:pal,pageInner:pageInner,
+  buildPages:buildPages,buildExportDeck:buildExportDeck,encodeCode:encodeCode,decodeCode:decodeCode,dimsFor:dimsFor,
+  undo:undo,redo:redo,commit:commit,histLen:function(){return hist.length;},histIdx:function(){return hidx;},
+  startGeneration:startGeneration,isRunning:function(){return genRunning;},applyProject:applyProject,projectJSON:projectJSON,
+  readControls:readControls,renderPreview:renderPreview,exportPDF:exportPDF,exportZip:exportZip,exportSVG:exportSVG,setCur:function(n){curPage=n;renderPreview();},
+  viewList:function(){return viewList(deck);},mulberry32:mulberry32,mixSeed:mixSeed,PRESET_KEYS:PRESET_KEYS
+};
+init();
+</script>
+</body>
+</html>
