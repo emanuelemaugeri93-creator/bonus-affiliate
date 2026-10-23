@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden Companion Logic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Josefin+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAF3E8;--sage:#7B9E87;--terra:#C17767;--forest:#2D5016;--bd:#d4c5b0;--card:#fffaf2;--field:#ffffff;--tx2:#6b6a4a;--sage2:#e4ede6;--shadow:0 6px 18px rgba(45,80,22,.10);}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{font-family:'Nunito',Arial,Helvetica,sans-serif;color:var(--forest);background:var(--bg);overflow:hidden;font-size:14px;}
+h1,h2,h3,h4{font-family:'Josefin Sans','Nunito',Arial,sans-serif;margin:0;letter-spacing:.02em;}
+.gl{color:var(--forest);}.gp{color:var(--forest);}
+button{font-family:inherit;cursor:pointer;color:inherit;transition:transform .08s,box-shadow .15s;}
+button:active{transform:scale(.97);}
+:focus-visible{outline:3px solid var(--terra);outline-offset:2px;}
+.app-shell{position:fixed;left:0;right:0;top:0;bottom:0;display:grid;grid-template-columns:360px 1fr;z-index:1;}
+.sidebar{overflow-y:auto;padding:16px 14px 30px;border-right:2px solid var(--bd);background:#f3e9d6;}
+.sidebar::-webkit-scrollbar{width:9px;}.sidebar::-webkit-scrollbar-thumb{background:var(--sage);border-radius:6px;}
+.brand{display:flex;gap:12px;align-items:center;margin-bottom:16px;padding:14px;border:2px solid var(--bd);border-radius:20px;background:var(--card);box-shadow:var(--shadow);}
+.brand svg{width:58px;height:58px;flex-shrink:0;border-radius:14px;}
+.brand .kicker{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--terra);font-weight:800;}
+.brand h1{margin:2px 0;font-size:21px;line-height:1.05;color:var(--forest);}
+.brand .tag{font-size:12px;color:var(--tx2);line-height:1.4;}
+.panel{border:2px solid var(--bd);margin-bottom:16px;overflow:hidden;background:var(--card);border-radius:20px;box-shadow:var(--shadow);}
+.panel-head{padding:11px 16px;border-bottom:2px solid var(--bd);font-size:16px;background:var(--sage2);color:var(--forest);}
+.panel-body{padding:14px 16px;}
+.sub-head{font-family:'Josefin Sans','Nunito',sans-serif;font-size:13px;margin:18px 0 8px;padding-top:12px;border-top:2px dashed var(--bd);color:var(--terra);letter-spacing:.08em;text-transform:uppercase;font-weight:700;}
+.panel-body>.sub-head:first-child{margin-top:0;border-top:none;padding-top:0;}
+.fl{display:block;font-size:11.5px;color:var(--tx2);margin:11px 0 5px;font-weight:700;letter-spacing:.03em;}
+.ipt,.sel,textarea.ipt{width:100%;padding:9px 12px;border:2px solid var(--bd);background:var(--field);color:var(--forest);font-size:13px;font-family:inherit;border-radius:14px;}
+textarea.ipt{resize:vertical;min-height:84px;}
+.ipt:focus,.sel:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(123,158,135,.3);outline:none;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.tgl{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:13px;gap:8px;}
+.tgl input{width:18px;height:18px;accent-color:#7B9E87;flex-shrink:0;}
+.mixgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;}
+.swatches{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.swatch{width:36px;height:36px;border-radius:50%;border:2px solid var(--bd);padding:0;}
+.swatch[aria-pressed=true]{outline:3px solid var(--terra);outline-offset:2px;}
+.btn{width:100%;padding:10px;border:2px solid var(--sage);background:#fff;color:var(--forest);font-size:13px;margin-top:8px;font-weight:700;border-radius:14px;}
+.btn:hover{background:var(--sage2);}
+.btn:disabled{opacity:.45;pointer-events:none;}
+.btn.gen{padding:14px;font-size:16px;font-family:'Josefin Sans','Nunito',sans-serif;background:var(--terra);color:#fff;border-color:var(--terra);margin-top:4px;box-shadow:0 6px 14px rgba(193,119,103,.35);}
+.btn.gen:hover{background:#b3665a;}
+.btn.half{width:auto;padding:9px 14px;}
+.note{font-size:11.5px;color:var(--tx2);line-height:1.55;margin-top:8px;}
+.report{font-size:12px;margin-top:8px;line-height:1.5;}
+.report ul.bad{margin:6px 0 0;padding:8px 10px 8px 26px;border:2px solid #d98a7a;background:#fdeae6;color:#8a2c1c;border-radius:12px;}
+.prog-text{font-size:12.5px;margin-top:10px;min-height:18px;}
+.prog-bar{height:10px;border:2px solid var(--bd);background:#fff;margin-top:6px;overflow:hidden;border-radius:8px;}
+.prog-fill{height:100%;width:0;background:linear-gradient(90deg,var(--sage),var(--terra));}
+.prog-err{display:none;margin-top:8px;font-size:12px;font-weight:700;color:#fff;background:#b42318;border:1px solid #ef4444;padding:9px 10px;line-height:1.5;border-radius:12px;}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;}
+.topbar{display:flex;align-items:center;gap:8px;padding:10px 14px;flex-wrap:wrap;flex-shrink:0;border-bottom:2px solid var(--bd);background:var(--card);}
+.chip{font-size:12px;padding:6px 13px;border:2px solid var(--bd);border-radius:20px;white-space:nowrap;background:#fff;}
+.chip.preset{background:var(--sage);color:#fff;border-color:var(--sage);font-weight:700;}
+.vt{display:flex;border:2px solid var(--bd);border-radius:20px;overflow:hidden;background:#fff;}
+.vt button{border:none;background:transparent;padding:7px 14px;font-size:12.5px;color:var(--tx2);font-weight:700;}
+.vt button[aria-pressed=true]{background:var(--forest);color:#fff;}
+.topbar select{background:#fff;color:var(--forest);border:2px solid var(--bd);padding:7px 10px;font-size:12.5px;font-family:inherit;border-radius:20px;}
+.tb-btn{border:2px solid var(--sage);background:#fff;color:var(--forest);padding:8px 14px;font-size:12.5px;border-radius:20px;font-weight:700;}
+.tb-btn.primary{background:var(--terra);color:#fff;border-color:var(--terra);}
+.preview-scroll{flex:1;min-height:0;overflow:auto;padding:22px;display:flex;flex-direction:column;align-items:center;background:#efe4d0;}
+.preview-host{display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+.empty-card{max-width:520px;text-align:center;border:2px solid var(--bd);border-radius:20px;padding:44px 34px;background:var(--card);box-shadow:var(--shadow);}
+.empty-card svg{width:96px;height:96px;border-radius:22px;}
+.empty-card h2{margin:12px 0;font-size:26px;}
+.empty-card p{color:var(--tx2);font-size:13.5px;line-height:1.7;}
+.bottomnav{display:flex;align-items:center;gap:14px;justify-content:center;padding:10px;flex-shrink:0;flex-wrap:wrap;border-top:2px solid var(--bd);background:var(--card);}
+.nav-btn{width:40px;height:40px;border:2px solid var(--sage);background:#fff;color:var(--forest);font-size:16px;border-radius:50%;font-weight:800;}
+.nav-btn:disabled{opacity:.3;}
+.sheet-pos{font-size:13px;font-weight:700;}
+.meta-line{font-size:11.5px;color:var(--tx2);width:100%;text-align:center;}
+.help-overlay{position:fixed;inset:0;background:rgba(45,80,22,.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.help-overlay.show{display:flex;}
+.help-modal{background:var(--card);border:2px solid var(--bd);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:640px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+.help-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:2px solid var(--bd);background:var(--sage2);}
+.help-head h3{font-size:18px;}
+.help-close{border:2px solid var(--sage);background:#fff;color:var(--forest);width:34px;height:34px;border-radius:50%;font-weight:800;}
+.help-body{padding:16px 18px;overflow-y:auto;}
+.help-step{display:flex;gap:12px;margin-bottom:14px;}
+.help-num{width:30px;height:30px;background:var(--terra);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:50%;}
+.help-step h4{font-size:15px;margin:0 0 3px;color:var(--forest);}
+.help-step p{margin:0;font-size:13px;line-height:1.65;color:var(--tx2);}
+kbd{border:2px solid var(--bd);padding:1px 6px;font-size:11px;background:#fff;border-radius:6px;}
+#exportDeck{position:fixed;left:-99999px;top:0;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:290px 1fr;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:2px solid var(--bd);}}
+/* ===== PAPER (printables: solid colors only) ===== */
+.sheet-slot{flex-shrink:0;position:relative;}
+.sheet{position:relative;overflow:hidden;background:var(--paper,#fff);color:var(--ink,#000);transform-origin:top left;transform:scale(var(--paper-scale,1));box-shadow:0 18px 60px rgba(0,0,0,.5);flex-shrink:0;}
+.sheet .bgpat{position:absolute;left:0;top:0;}
+.sheet .trim{position:absolute;overflow:hidden;}
+.sheet .wm{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;z-index:1;}
+.sheet .frame{position:absolute;z-index:1;}
+.sheet .guide-safe{position:absolute;border:1px dashed #1e90ff;z-index:5;pointer-events:none;}
+.sheet .guide-gutter{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed #e0306a;z-index:5;pointer-events:none;}
+.sheet .guide-trim{position:absolute;left:0;top:0;right:0;bottom:0;border:1px dashed #e0306a;z-index:5;pointer-events:none;}
+.sheet .guide-tag{position:absolute;z-index:6;font:10px Arial,sans-serif;color:#e0306a;background:#ffffff;padding:1px 4px;}
+.pg{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;overflow:hidden;z-index:2;font-family:'Nunito',Arial,Helvetica,sans-serif;color:var(--ink);--ts:1;}
+.pg *{box-sizing:border-box;}
+.hd{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-bottom:calc(8px*var(--ts));}
+.hd .dbadge{flex-shrink:0;width:calc(62px*var(--ts));height:calc(72px*var(--ts));}
+.hd .dbadge svg{width:100%;height:100%;display:block;}
+.hd .htxt{flex:1;min-width:0;}
+.hd .lvl{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;font-size:calc(10px*var(--ts));font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.hd .lvl svg{display:block;margin-top:3px;}
+.hd-ribbon{background:var(--p1);color:#ffffff;padding:calc(8px*var(--ts)) calc(12px*var(--ts));border-radius:6px;}
+.hd-ribbon .kick,.hd-ribbon .ttl,.hd-ribbon .lvl{color:#ffffff;}
+.hd-plain{border-bottom:2px solid var(--p1);padding-bottom:calc(6px*var(--ts));}
+.kick{font-size:calc(11px*var(--ts));letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--p1);white-space:nowrap;overflow:hidden;}
+.ttl{font-family:'Josefin Sans','Nunito',Arial,sans-serif;font-weight:800;font-size:calc(24px*var(--ts));line-height:1.12;margin:2px 0 0;white-space:nowrap;overflow:hidden;color:var(--ink);}
+.instr{font-size:calc(12.5px*var(--ts));line-height:1.45;margin:0 0 calc(6px*var(--ts));flex-shrink:0;}
+.board-wrap{position:relative;flex:1;min-height:0;}
+.board-wrap svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}
+.wordlist{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(3px*var(--ts)) calc(14px*var(--ts));font-size:calc(12px*var(--ts));font-weight:700;letter-spacing:.07em;margin-top:calc(6px*var(--ts));flex-shrink:0;}
+.digit-row{display:flex;align-items:center;justify-content:center;gap:12px;font-family:'Josefin Sans','Nunito',Arial,sans-serif;font-weight:700;font-size:calc(16px*var(--ts));margin-top:calc(8px*var(--ts));flex-shrink:0;}
+.dbox{width:calc(46px*var(--ts));height:calc(46px*var(--ts));border:3px solid var(--ink);border-radius:10px;background:var(--paper);text-align:center;line-height:calc(40px*var(--ts));font-size:calc(26px*var(--ts));}
+.pf{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;margin-top:calc(8px*var(--ts));padding-top:calc(5px*var(--ts));border-top:1px solid var(--p2);font-size:calc(10px*var(--ts));}
+.pf .pl{flex-shrink:0;white-space:nowrap;}
+.pf .pm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+.pf .pr{flex-shrink:0;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.pf .pr svg{width:calc(16px*var(--ts));height:calc(16px*var(--ts));}
+.txt-page{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;}
+.txt-page h3{font-family:'Josefin Sans','Nunito',Arial,sans-serif;font-size:calc(18px*var(--ts));margin:calc(10px*var(--ts)) 0 calc(4px*var(--ts));color:var(--p1);}
+.txt-page p,.txt-page li{font-size:calc(12.5px*var(--ts));line-height:1.5;margin:0 0 calc(4px*var(--ts));}
+.txt-page ul{margin:0;padding-left:calc(18px*var(--ts));}
+.cover{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:calc(10px*var(--ts));}
+.cover .big{width:calc(190px*var(--ts));height:calc(190px*var(--ts));}
+.cover .ttl{font-size:calc(40px*var(--ts));white-space:normal;text-align:center;}
+.cover .sub{font-size:calc(16px*var(--ts));max-width:90%;}
+.ans-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:calc(8px*var(--ts));}
+.tile{border:2px solid var(--ink);border-radius:8px;padding:calc(5px*var(--ts));display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--paper);}
+.tile .tt{font-size:calc(10.5px*var(--ts));font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tile .board-wrap{flex:1;}
+.keytile{font-size:calc(11px*var(--ts));line-height:1.5;overflow:hidden;}
+.keytile b{color:var(--p1);}
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:280px 1fr;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:1px solid var(--glb);}}
+@media print{
+  body{background:#fff;overflow:visible;}
+  .orbs,.top-app-bar,.sidebar,.topbar,.bottomnav,.help-overlay,.guide-safe,.guide-gutter,.guide-trim,.guide-tag{display:none !important;}
+  .app-shell{display:block;position:static;}
+  .main{display:block;}
+  .preview-scroll{overflow:visible;display:block;padding:0;}
+  .preview-host{display:block;}
+  .sheet-slot{width:auto !important;height:auto !important;margin:0;page-break-after:always;}
+  .sheet{transform:none;box-shadow:none;}
+}
+
+.sheet-slot{color:#000;}
+.hd-block{background:var(--p1);color:var(--paper);padding:calc(8px*var(--ts)) calc(14px*var(--ts));border-radius:calc(12px*var(--ts));}
+.hd-block .kick,.hd-block .ttl{color:var(--paper);}
+.hd-underline{border-bottom:calc(4px*var(--ts)) solid var(--p1);padding-bottom:calc(6px*var(--ts));}
+.lvlchip{flex-shrink:0;font-size:calc(11px*var(--ts));font-weight:700;border:2px solid var(--p1);color:var(--p1);border-radius:calc(12px*var(--ts));padding:calc(3px*var(--ts)) calc(9px*var(--ts));white-space:nowrap;font-family:'Josefin Sans','Nunito',Arial,sans-serif;}
+.hd-block .lvlchip{border-color:var(--paper);color:var(--paper);}
+.hd .htxt .ttl{font-size:calc(21px*var(--ts));}
+.kick{letter-spacing:.06em;}
+
+.namerow{display:flex;gap:calc(24px*var(--ts));font-size:calc(11px*var(--ts));margin-bottom:calc(5px*var(--ts));flex-shrink:0;}
+.namerow span{flex:1;border-bottom:1px solid var(--ink);padding-bottom:2px;}
+.ico{display:inline-block;vertical-align:middle;flex-shrink:0;}
+.rules{flex-shrink:0;border:2px solid var(--ink);border-radius:calc(12px*var(--ts));padding:calc(5px*var(--ts)) calc(10px*var(--ts));margin-bottom:calc(6px*var(--ts));background:var(--paper);}
+.rules .rt{font-family:'Josefin Sans','Nunito',Arial,sans-serif;font-weight:700;font-size:calc(12px*var(--ts));color:var(--p1);text-transform:uppercase;letter-spacing:.08em;margin-bottom:calc(2px*var(--ts));}
+.rules ol{margin:0;padding-left:calc(18px*var(--ts));}
+.rules li{font-size:calc(11px*var(--ts));line-height:1.35;margin-bottom:calc(2px*var(--ts));}
+.chs{display:inline-flex;flex-wrap:wrap;gap:calc(3px*var(--ts)) calc(6px*var(--ts));vertical-align:middle;}
+.ch{display:inline-flex;align-items:center;gap:calc(2px*var(--ts));border:1.5px solid var(--ink);border-radius:calc(9px*var(--ts));padding:0 calc(4px*var(--ts));background:var(--paper);}
+.ch .ico{width:calc(22px*var(--ts));height:calc(22px*var(--ts));}
+.ch i{font-style:normal;font-weight:800;font-size:calc(13px*var(--ts));min-width:calc(9px*var(--ts));text-align:center;color:var(--ink);}
+.ch.foe{border-style:dashed;}
+.disc{font-size:calc(9.5px*var(--ts));font-style:italic;color:var(--ink);margin-top:calc(2px*var(--ts));}
+.leg{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(2px*var(--ts)) calc(10px*var(--ts));margin-top:calc(5px*var(--ts));flex-shrink:0;}
+.lg{display:inline-flex;align-items:center;gap:calc(3px*var(--ts));font-size:calc(10.5px*var(--ts));}
+.lg .ico{width:calc(26px*var(--ts));height:calc(26px*var(--ts));}
+.tip{flex-shrink:0;font-size:calc(11px*var(--ts));line-height:1.4;margin-top:calc(5px*var(--ts));padding:calc(3px*var(--ts)) calc(8px*var(--ts));border-left:calc(4px*var(--ts)) solid var(--p1);background:var(--soft);}
+.notes{flex-shrink:0;font-size:calc(10.5px*var(--ts));margin-top:calc(3px*var(--ts));}
+.notes .nl{display:block;border-bottom:1px solid var(--ink);height:calc(14px*var(--ts));}
+.board-wrap svg{filter:none;}
+.covicons{display:flex;gap:calc(12px*var(--ts));justify-content:center;align-items:center;flex-wrap:wrap;}
+.covicons .ico{width:calc(60px*var(--ts));height:calc(60px*var(--ts));}
+.seasontips{max-width:84%;text-align:left;margin-top:calc(8px*var(--ts));border:2px solid var(--p1);border-radius:calc(14px*var(--ts));padding:calc(8px*var(--ts)) calc(14px*var(--ts));}
+.seasontips h3{font-family:'Josefin Sans','Nunito',Arial,sans-serif;font-size:calc(15px*var(--ts));margin:0 0 calc(3px*var(--ts));color:var(--p1);}
+.seasontips ul{margin:0;padding-left:calc(18px*var(--ts));}.seasontips li{font-size:calc(12px*var(--ts));line-height:1.45;margin-bottom:calc(3px*var(--ts));}
+.gcards{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;grid-auto-rows:1fr;gap:calc(7px*var(--ts));overflow:hidden;}
+.gc{border:2px solid var(--ink);border-radius:calc(12px*var(--ts));padding:calc(5px*var(--ts));overflow:hidden;min-height:0;min-width:0;display:flex;flex-direction:column;gap:calc(2px*var(--ts));}
+.gct{display:flex;align-items:center;gap:calc(6px*var(--ts));}
+.gct .ico{width:calc(46px*var(--ts));height:calc(46px*var(--ts));}
+.gn{font-family:'Josefin Sans','Nunito',Arial,sans-serif;font-size:calc(14px*var(--ts));color:var(--p1);}
+.gs{font-size:calc(9.5px*var(--ts));}
+.gl2{font-size:calc(9.5px*var(--ts));line-height:1.3;}
+.gnote{font-size:calc(9px*var(--ts));font-style:italic;line-height:1.3;margin-top:auto;}
+.mwrap{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;gap:calc(4px*var(--ts));}
+.mh{font-family:'Josefin Sans','Nunito',Arial,sans-serif;font-weight:700;font-size:calc(12.5px*var(--ts));color:var(--p1);margin-top:calc(3px*var(--ts));}
+.mcols{flex:1.2;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:calc(14px*var(--ts));}.mcol{display:flex;flex-direction:column;justify-content:space-evenly;}.qcol{flex:1.4;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly;}
+.mrow,.qrow{display:flex;align-items:center;gap:calc(6px*var(--ts));padding:calc(2px*var(--ts)) 0;border-bottom:1px dotted var(--p2);}
+.mrow .n,.qrow .n{font-family:'Josefin Sans','Nunito',Arial,sans-serif;font-weight:700;font-size:calc(13px*var(--ts));color:var(--p1);min-width:calc(16px*var(--ts));}
+.mrow .ico{width:calc(34px*var(--ts));height:calc(34px*var(--ts));}
+.qrow .ico{width:calc(30px*var(--ts));height:calc(30px*var(--ts));}
+.mn{font-size:calc(13.5px*var(--ts));flex:1;min-width:0;}
+.qrow .mn{flex:0 1 auto;}.amp{font-style:normal;font-weight:700;}
+.opts{margin-left:auto;display:flex;gap:calc(8px*var(--ts));}.opt{display:inline-flex;align-items:center;gap:calc(3px*var(--ts));font-size:calc(11.5px*var(--ts));white-space:nowrap;}
+.bl{display:inline-block;border-bottom:2px solid var(--ink);text-align:center;font-weight:700;vertical-align:baseline;}
+.bl.ans{color:var(--red,#c1503a);border-bottom-color:var(--red,#c1503a);}
+.cbx2{display:inline-block;width:calc(15px*var(--ts));height:calc(15px*var(--ts));border:2px solid var(--ink);background:var(--paper);vertical-align:middle;border-radius:3px;}
+.cbx2.on{background:var(--ink);box-shadow:inset 0 0 0 calc(2px*var(--ts)) var(--paper);}
+.ans-grid2{flex:1;min-height:0;display:flex;flex-direction:column;gap:calc(8px*var(--ts));}
+.ans-grid2 .tile{flex:1;min-height:0;}
+.tile .leg{margin-top:calc(2px*var(--ts));}
+.tile .lg{font-size:calc(9px*var(--ts));}.tile .lg .ico{width:calc(16px*var(--ts));height:calc(16px*var(--ts));}
+.keytile div{font-size:calc(11px*var(--ts));}.kgap{height:calc(6px*var(--ts));}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Controls">
+    <div class="brand">
+      <span id="brandLogo" aria-hidden="true"></span>
+      <div><div class="kicker">Printable Garden Puzzle Studio</div><h1 class="gl">Garden Companion Logic</h1><div class="tag">Place plants so foes never touch and friends sit side by side. Every puzzle has exactly one solution.</div></div>
+    </div>
+
+    <section class="panel" aria-labelledby="hGen">
+      <h2 class="panel-head gp" id="hGen">Generator</h2>
+      <div class="panel-body">
+        <div class="fl" id="lblSz">Garden sizes (rows x columns)</div>
+        <div class="mixgrid" id="szGrid" role="group" aria-labelledby="lblSz"></div>
+        <div class="fl" id="lblDf">Difficulty</div>
+        <div class="mixgrid" id="dfGrid" role="group" aria-labelledby="lblDf"></div>
+        <div class="note" id="dfNote"></div>
+        <div class="fl" id="lblTy">Puzzle types</div>
+        <div class="mixgrid" style="grid-template-columns:1fr;" role="group" aria-labelledby="lblTy">
+          <label class="tgl"><span>Garden Grid (classic)</span><input type="checkbox" id="tyClassic" checked></label>
+          <label class="tgl"><span>Plan the Raised Bed (3 x 4)</span><input type="checkbox" id="tyRaised" checked></label>
+          <label class="tgl"><span>Companion Match (quiz)</span><input type="checkbox" id="tyMatch" checked></label>
+        </div>
+        <div class="row2">
+          <div><label class="fl" for="selRule">Rule style</label><select class="sel" id="selRule"><option value="latin">Latin (once per row and column)</option><option value="count">Count (each plant k times)</option><option value="mixed">Mixed</option></select></div>
+          <div><label class="fl" for="selPages">Puzzles per set</label><select class="sel" id="selPages"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+        </div>
+        <label class="tgl"><span>Blocked squares (path, pond, shed)</span><input type="checkbox" id="inBlocked" checked></label>
+        <div class="fl" id="lblSe">Season sections</div>
+        <div class="mixgrid" id="seGrid" role="group" aria-labelledby="lblSe"></div>
+        <div class="sub-head">Content Lock</div>
+        <label class="fl" for="inTitle">Book title</label>
+        <input class="ipt" id="inTitle" value="Garden Companion Logic" maxlength="60">
+        <label class="fl" for="inCustom">My plants: "name = icon", one per line (up to 12)</label>
+        <textarea class="ipt" id="inCustom" placeholder="dahlia = flower&#10;apple tree = tree" aria-describedby="customReport"></textarea>
+        <div class="note">Icons: sprout, flower, apple, turnip, bush, tree, mushroom, clover.</div>
+        <div class="report" id="customReport" aria-live="polite"></div>
+        <label class="fl" for="inRules">Friend and foe table edits: "plant + plant = friend | foe | none"</label>
+        <textarea class="ipt" id="inRules" placeholder="tomato + sage = foe&#10;dahlia + basil = friend&#10;tomato + corn = none" aria-describedby="ruleReport"></textarea>
+        <div class="report" id="ruleReport" aria-live="polite"></div>
+        <label class="tgl"><span>Use my plants in every garden</span><input type="checkbox" id="inUseCustom" checked></label>
+        <div class="note">Traditional gardening guidance, not scientific guarantees. Edit the table to match your own experience.</div>
+        <div class="sub-head">Seed</div>
+        <label class="fl" for="inSeed">Seed (blank = random)</label>
+        <div style="display:flex;gap:6px;"><input class="ipt" id="inSeed" inputmode="numeric" placeholder="random"><button class="btn half" id="btnDice" style="margin-top:0;" aria-label="Random seed">Dice</button></div>
+        <label class="fl" for="inCode">Seed code (share to rebuild this deck)</label>
+        <div style="display:flex;gap:6px;"><input class="ipt" id="inCode" placeholder="GC-..."><button class="btn half" id="btnCode" style="margin-top:0;">Use</button></div>
+        <div class="note">The code holds sizes, difficulty, types, rule style, seasons, look, trim and seed. Your plants and table edits are not inside it; use Save .json.</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="hSty">
+      <h2 class="panel-head gp" id="hSty">Style</h2>
+      <div class="panel-body">
+        <label class="fl" for="inPreset">Page style</label>
+        <select class="sel" id="inPreset"></select>
+        <div class="swatches" id="swatches" role="group" aria-label="Style swatches"></div>
+        <label class="fl" for="inSub">Subtitle</label>
+        <input class="ipt" id="inSub" value="Plant smart. Keep foes apart. Seat friends together." maxlength="70">
+        <div class="row2">
+          <div><label class="fl" for="inHeader">Header</label><select class="sel" id="inHeader"><option value="block">Color block</option><option value="underline">Underline</option><option value="plain">Plain</option></select></div>
+          <div><label class="fl" for="inBorder">Border</label><select class="sel" id="inBorder"><option value="rounded">Rounded</option><option value="solid">Solid</option><option value="double">Double</option><option value="none">None</option></select></div>
+        </div>
+        <label class="fl" for="inPattern">Background pattern</label>
+        <select class="sel" id="inPattern"><option value="none">None</option><option value="leaves">Leaves</option><option value="dots">Dots</option><option value="grid">Faint grid</option></select>
+        <label class="fl" for="inWm">Logo mark</label>
+        <select class="sel" id="inWm"><option value="none">None</option><option value="footer">Footer mark</option><option value="faint">Faint watermark</option></select>
+        <label class="tgl"><span>Show page numbers</span><input type="checkbox" id="inNums" checked></label>
+
+        <div class="sub-head">KDP Trim Studio</div>
+        <label class="fl" for="inTrim">Trim size</label>
+        <select class="sel" id="inTrim"><option value="6x9">6 x 9 in</option><option value="8x10">8 x 10 in</option><option value="8.5x11" selected>8.5 x 11 in</option><option value="a4">A4 (8.27 x 11.69 in)</option></select>
+        <label class="tgl"><span>Add bleed (0.125 in)</span><input type="checkbox" id="inBleed"></label>
+        <div class="row3">
+          <div><label class="fl" for="inMIn">Inside</label><input class="ipt" type="number" id="inMIn" min="0.25" max="1.25" step="0.125" value="0.625"></div>
+          <div><label class="fl" for="inMOut">Outside</label><input class="ipt" type="number" id="inMOut" min="0.25" max="1.25" step="0.125" value="0.5"></div>
+          <div><label class="fl" for="inMTb">Top/btm</label><input class="ipt" type="number" id="inMTb" min="0.25" max="1.25" step="0.125" value="0.5"></div>
+        </div>
+        <label class="tgl"><span>Mirror margins (facing pages)</span><input type="checkbox" id="inMirror" checked></label>
+        <label class="tgl"><span>Show safe-area and gutter guides</span><input type="checkbox" id="inGuides" checked></label>
+        <div class="note" id="trimNote"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="hExp">
+      <h2 class="panel-head gp" id="hExp">Export Deck</h2>
+      <div class="panel-body">
+        <button class="btn gen" id="btnGenerate">Generate Garden Book</button>
+        <div class="prog-text" id="progressText" role="status" aria-live="polite">Idle. Pick sizes and puzzle types, then generate.</div>
+        <div class="prog-bar"><div class="prog-fill" id="progressFill"></div></div>
+        <div class="prog-err" id="progressError" role="alert"></div>
+        <div class="sub-head">Book Builder</div>
+        <label class="tgl"><span>Front matter (title, copyright, how-to)</span><input type="checkbox" id="inBook" checked></label>
+        <label class="tgl"><span>Season section pages</span><input type="checkbox" id="inSeasonPages" checked></label>
+        <label class="tgl"><span>Plant guide pages</span><input type="checkbox" id="inGuide" checked></label>
+        <label class="tgl"><span>Append answer pages</span><input type="checkbox" id="inAns" checked></label>
+        <div class="note" id="bookNote"></div>
+        <label class="fl" for="inSeller">Seller branding: "Created by"</label>
+        <input class="ipt" id="inSeller" maxlength="50" placeholder="optional, e.g. Penny Press">
+        <div class="sub-head">Export</div>
+        <button class="btn" id="btnPDF2">Download Exact PDF (whole book)</button>
+        <button class="btn" id="btnZip">Download PNG ZIP (one per page)</button>
+        <button class="btn" id="btnSVG">Download this page board as SVG</button>
+        <div class="sub-head">Project</div>
+        <div class="row2"><button class="btn" id="btnUndo" style="margin-top:0">Undo</button><button class="btn" id="btnRedo" style="margin-top:0">Redo</button></div>
+        <div class="row2"><button class="btn" id="btnSave">Save .json</button><button class="btn" id="btnLoad">Load .json</button></div>
+        <input type="file" id="fileLoad" accept=".json,application/json" class="sr" aria-label="Load project file">
+        <div class="note" id="autoNote">Autosave on.</div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="chip" id="kpiDeck">No book yet</span>
+      <span class="chip preset" id="kpiPreset">Arcade Bright</span>
+      <div class="vt" role="group" aria-label="View"><button id="viewPuzzle" aria-pressed="true">Puzzle</button><button id="viewAnswer" aria-pressed="false">Answer</button></div>
+      <select id="selLayout" aria-label="Page layout"><option value="single">Single</option><option value="spread">2-page spread</option><option value="strip">3-up strip</option><option value="grid">2x2 grid</option></select>
+      <select id="selZoom" aria-label="Zoom"></select>
+      <button class="tb-btn" id="btnHelp">? How to use</button>
+      <button class="tb-btn primary" id="btnPDF">Download Exact PDF</button>
+      <button class="tb-btn" id="btnPrint">Exact Print</button>
+    </div>
+    <div class="preview-scroll" id="previewScroll"><div class="preview-host" id="previewHost"></div></div>
+    <div class="bottomnav">
+      <button class="nav-btn" id="btnPrev" aria-label="Previous page">&lt;</button>
+      <span class="sheet-pos" id="sheetPos">Page - / -</span>
+      <button class="nav-btn" id="btnNext" aria-label="Next page">&gt;</button>
+      <div class="meta-line" id="metaLine">Generate a book to see your pages.</div>
+    </div>
+  </main>
+</div>
+<div id="exportDeck"></div>
+<div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-modal">
+    <div class="help-head"><h3 class="gl" id="helpTitle">How to use Garden Companion Logic</h3><button class="help-close" id="btnHelpClose" aria-label="Close help">X</button></div>
+    <div class="help-body">
+      <div class="help-step"><div class="help-num">1</div><div><h4>Choose your puzzles</h4><p>Pick garden sizes from 4 x 4 to 8 x 8, the difficulty levels and the puzzle types, then press <b>Generate Garden Book</b>. Harder puzzles have fewer beds filled in.</p></div></div>
+      <div class="help-step"><div class="help-num">2</div><div><h4>One solution, always</h4><p>A solver checks every puzzle and keeps only those with exactly one answer. Foes never touch side by side, and the listed friends must touch at least once.</p></div></div>
+      <div class="help-step"><div class="help-num">3</div><div><h4>Your own plants and rules</h4><p>Add custom plants with a simple icon and edit the friend and foe table with lines such as "tomato + sage = foe". Mistakes are listed in red. The table is traditional guidance, not scientific guarantees.</p></div></div>
+      <div class="help-step"><div class="help-num">4</div><div><h4>Make a book</h4><p>Choose a KDP trim and bleed. Book Builder adds title, copyright and how-to pages, season sections, a plant guide and answers. Export one PDF or a PNG ZIP. The seed in every footer rebuilds the same book.</p></div></div>
+      <div class="help-step"><div class="help-num">5</div><div><h4>Shortcuts</h4><p><kbd>G</kbd> generate, <kbd>A</kbd> puzzle/answer view, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> pages, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>Ctrl</kbd>+<kbd>Y</kbd> redo, <kbd>H</kbd> help.</p></div></div>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+
+/* ================= utils ================= */
+var EXPORT_SCALE = 3;
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function mixSeed(a,b){var h=(a>>>0)^Math.imul((b|0)+0x7f4a7c15,0x9e3779b1);h=Math.imul(h^(h>>>15),0x85ebca6b);h^=h>>>13;h=Math.imul(h,0xc2b2ae35);return(h^(h>>>16))>>>0;}
+function shuffleWith(rng,arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(rng()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function ri(rng,a,b){return a+Math.floor(rng()*(b-a+1));}
+function pick(rng,arr){return arr[Math.floor(rng()*arr.length)];}
+function slug(s){return String(s||"garden-companion-logic").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"garden-companion-logic";}
+function hex2rgb(h){h=String(h).replace("#","");if(h.length===3){h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];}return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function rgb2hex(r,g,b){var o="#",a=[r,g,b],i,s;for(i=0;i<3;i++){s=Math.max(0,Math.min(255,Math.round(a[i]))).toString(16);if(s.length<2){s="0"+s;}o+=s;}return o;}
+function mix(a,b,t){var x=hex2rgb(a),y=hex2rgb(b);return rgb2hex(x[0]+(y[0]-x[0])*t,x[1]+(y[1]-x[1])*t,x[2]+(y[2]-x[2])*t);}
+function gray(c){var x=hex2rgb(c),g=Math.round(0.3*x[0]+0.59*x[1]+0.11*x[2]);return rgb2hex(g,g,g);}
+function starPts(cx,cy,R,r){var p=[],i,a,rr;for(i=0;i<10;i++){a=-Math.PI/2+i*Math.PI/5;rr=(i%2===0)?R:r;p.push((cx+Math.cos(a)*rr).toFixed(1)+","+(cy+Math.sin(a)*rr).toFixed(1));}return p.join(" ");}
+function pad2(n){return n<10?"0"+n:String(n);}
+
+/* ================= logo: seedling in a 2x2 grid of squares ================= */
+function logoSVG(size,c1,c2,c3){
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 64 64">'+
+    '<rect width="64" height="64" rx="14" fill="'+c3+'"/>'+
+    '<rect x="8" y="8" width="23" height="23" rx="4" fill="none" stroke="'+c1+'" stroke-width="2.6"/>'+
+    '<rect x="33" y="8" width="23" height="23" rx="4" fill="none" stroke="'+c1+'" stroke-width="2.6"/>'+
+    '<rect x="8" y="33" width="23" height="23" rx="4" fill="none" stroke="'+c1+'" stroke-width="2.6"/>'+
+    '<rect x="33" y="33" width="23" height="23" rx="4" fill="none" stroke="'+c1+'" stroke-width="2.6"/>'+
+    '<path d="M32 54V34" fill="none" stroke="'+c2+'" stroke-width="3.4" stroke-linecap="round"/>'+
+    '<path d="M32 38C22 38 18 30 19 22C28 22 33 28 32 38Z" fill="'+c2+'"/>'+
+    '<path d="M32 34C41 34 46 27 45 19C37 19 31 25 32 34Z" fill="'+c1+'"/>'+
+    '</svg>';
+}
+
+/* ================= 36 plants ================= */
+var PLANTS=[
+ ["tomato","Tomato","summer","Loves sun and warm soil. Give it a sturdy stake."],
+ ["basil","Basil","summer","Pinch the tips often so it grows bushy."],
+ ["carrot","Carrot","spring","Needs loose, stone-free soil to grow straight."],
+ ["onion","Onion","spring","Plant in full sun and keep the bed weed-free."],
+ ["bean","Bean","summer","Climbs a pole fast and fixes nitrogen in the soil."],
+ ["lettuce","Lettuce","spring","Likes cool weather and some afternoon shade."],
+ ["marigold","Marigold","summer","Cheerful flowers that brighten any bed."],
+ ["cucumber","Cucumber","summer","Trellis the vines to save space and keep fruit clean."],
+ ["pepper","Pepper","summer","Needs a long warm season and steady water."],
+ ["dill","Dill","spring","Feathery leaves and flower heads that pollinators love."],
+ ["fennel","Fennel","autumn","Keep it in its own corner. Most neighbors dislike it."],
+ ["radish","Radish","spring","Ready in about a month. Great for quick wins."],
+ ["spinach","Spinach","autumn","Cool-season leaves that bolt in summer heat."],
+ ["strawberry","Strawberry","spring","Mulch with straw to keep the berries clean."],
+ ["mint","Mint","spring","Spreads fast. A pot keeps it in check."],
+ ["rosemary","Rosemary","spring","Hardy herb that wants sun and sharp drainage."],
+ ["sage","Sage","spring","Silvery leaves that return year after year."],
+ ["potato","Potato","spring","Hill the soil around the stems as they grow."],
+ ["squash","Squash","summer","Sprawling vines need plenty of room."],
+ ["corn","Corn","summer","Plant in blocks so the wind can pollinate it."],
+ ["pea","Pea","spring","Sow early. Pods love a cool start."],
+ ["beet","Beet","spring","Eat the roots and the leafy tops."],
+ ["garlic","Garlic","autumn","Plant cloves in autumn for summer bulbs."],
+ ["chive","Chive","spring","Easy perennial with edible purple blooms."],
+ ["parsley","Parsley","spring","Slow to sprout. Soak the seeds overnight."],
+ ["cabbage","Cabbage","spring","Heavy feeder that likes firm, rich soil."],
+ ["kale","Kale","autumn","Tastes sweeter after the first frost."],
+ ["broccoli","Broccoli","autumn","Cut the main head and side shoots keep coming."],
+ ["zucchini","Zucchini","summer","One or two plants feed a whole family."],
+ ["eggplant","Eggplant","summer","Wants heat. Wait until nights stay warm."],
+ ["sunflower","Sunflower","summer","Tall and sunny. Plant it on the north edge."],
+ ["nasturtium","Nasturtium","summer","Edible flowers and leaves with a peppery bite."],
+ ["lavender","Lavender","spring","Thrives on sun and poor, dry soil."],
+ ["thyme","Thyme","spring","Low and tough. Perfect between stepping stones."],
+ ["cilantro","Cilantro","spring","Sow in succession because it bolts quickly."],
+ ["borage","Borage","summer","Blue star flowers that bees adore."]
+];
+var PLANT_KEYS=[],PLANT_NAME={},PLANT_SEASON={},PLANT_NOTE={};
+(function(){var i;for(i=0;i<PLANTS.length;i++){PLANT_KEYS.push(PLANTS[i][0]);PLANT_NAME[PLANTS[i][0]]=PLANTS[i][1];PLANT_SEASON[PLANTS[i][0]]=PLANTS[i][2];PLANT_NOTE[PLANTS[i][0]]=PLANTS[i][3];}})();
+
+/* Traditional companion planting lists (commonly cited guidance, not scientific guarantees). Symmetric by construction. */
+var FRIEND_SRC=[
+ "tomato:basil,carrot,onion,marigold,parsley,garlic,chive,nasturtium,borage,thyme,mint,cilantro,lettuce",
+ "basil:pepper",
+ "carrot:onion,lettuce,radish,pea,chive,sage,rosemary,garlic,pepper",
+ "onion:lettuce,beet,cabbage,kale,broccoli,strawberry,pepper,dill",
+ "bean:corn,squash,cucumber,radish,strawberry,marigold,potato,rosemary,eggplant,zucchini",
+ "lettuce:radish,strawberry,cucumber,chive,dill,garlic",
+ "marigold:cucumber,squash,pepper,eggplant,zucchini,potato,cabbage,kale,broccoli",
+ "cucumber:pea,dill,nasturtium,sunflower,corn,radish",
+ "pepper:parsley",
+ "dill:cabbage,kale,broccoli",
+ "radish:pea,spinach,nasturtium",
+ "spinach:strawberry,pea,cilantro",
+ "strawberry:borage,thyme",
+ "mint:cabbage,pea,kale,broccoli",
+ "rosemary:cabbage,sage,broccoli",
+ "sage:cabbage,broccoli",
+ "potato:corn,cabbage",
+ "squash:corn,nasturtium,borage",
+ "corn:zucchini,pea",
+ "beet:cabbage,kale,garlic",
+ "garlic:cabbage,kale",
+ "cabbage:thyme,nasturtium,borage,lavender",
+ "kale:nasturtium,thyme",
+ "broccoli:thyme,nasturtium,lavender",
+ "eggplant:thyme",
+ "zucchini:nasturtium,borage"
+];
+var FOE_SRC=[
+ "fennel:tomato,bean,pepper,carrot,dill,cucumber,eggplant,lettuce,cabbage,kale,broccoli,pea,squash,potato,zucchini",
+ "onion:bean,pea,sage",
+ "garlic:bean,pea",
+ "chive:bean,pea",
+ "tomato:potato,corn,cabbage,broccoli,kale,eggplant,dill",
+ "potato:squash,cucumber,sunflower,zucchini",
+ "carrot:dill",
+ "cabbage:strawberry",
+ "kale:strawberry",
+ "broccoli:strawberry",
+ "cucumber:sage"
+];
+function baseEdges(src){
+  var out={},i,j,p,a,list;
+  for(i=0;i<src.length;i++){
+    p=src[i].split(":");a=p[0];list=p[1].split(",");
+    if(!out[a]){out[a]={};}
+    for(j=0;j<list.length;j++){if(!out[list[j]]){out[list[j]]={};}out[a][list[j]]=1;out[list[j]][a]=1;}
+  }
+  return out;
+}
+var BASE_FRIEND=baseEdges(FRIEND_SRC),BASE_FOE=baseEdges(FOE_SRC);
+
+/* generic icons for custom plants */
+var GENERIC_ICONS=["sprout","flower","apple","turnip","bush","tree","mushroom","clover"];
+var CUSTOM_MAX=12;
+
+/* ================= plant icon artwork (64x64 box). @x tokens = flat colors; B/W swaps to outline + grey ================= */
+function petals(cx,cy,n,dist,rx,ry,tok,round){
+  var o="",i,a;
+  for(i=0;i<n;i++){a=(360/n*i).toFixed(1);o+=round?'<circle cx="'+cx+'" cy="'+(cy-dist)+'" r="'+rx+'" transform="rotate('+a+' '+cx+' '+cy+')" fill="@'+tok+'"/>':'<ellipse cx="'+cx+'" cy="'+(cy-dist)+'" rx="'+rx+'" ry="'+ry+'" transform="rotate('+a+' '+cx+' '+cy+')" fill="@'+tok+'"/>';}
+  return o;
+}
+function lf(x,y,ang,len,w,tok){return '<path d="M0 0C'+(len*0.2)+' '+(-w*1.3)+' '+(len*0.7)+' '+(-w*1.3)+' '+len+' 0C'+(len*0.7)+' '+(w*1.3)+' '+(len*0.2)+' '+(w*1.3)+' 0 0Z" transform="translate('+x+' '+y+') rotate('+ang+')" fill="@'+tok+'"/>';}
+var ICON_SRC={
+ tomato:function(){return '<circle cx="32" cy="38" r="19" fill="@r"/><path d="M19 28L27 30L29 21L32 29L35 21L37 30L45 28L39 35H25Z" fill="@g"/><path d="M32 28V15" fill="none" stroke-width="3"/>';},
+ basil:function(){return '<path d="M32 60V14" fill="none" stroke-width="3"/><ellipse cx="21" cy="46" rx="11" ry="6" transform="rotate(-30 21 46)" fill="@g"/><ellipse cx="43" cy="46" rx="11" ry="6" transform="rotate(30 43 46)" fill="@g"/><ellipse cx="22" cy="32" rx="10" ry="5.5" transform="rotate(-30 22 32)" fill="@l"/><ellipse cx="42" cy="32" rx="10" ry="5.5" transform="rotate(30 42 32)" fill="@l"/><ellipse cx="32" cy="15" rx="5" ry="10" fill="@g"/>';},
+ carrot:function(){return '<path d="M20 24Q32 18 44 24L33 58Q32 60 31 58Z" fill="@o"/><path d="M26 32H33M30 41H37M29 49H34" fill="none"/><path d="M32 22C26 14 22 10 19 5M32 22V5M32 22C38 14 42 10 45 5" fill="none" stroke="@G" stroke-width="3.5"/>';},
+ onion:function(){return '<path d="M32 12C34 22 50 26 50 40C50 52 42 58 32 58C22 58 14 52 14 40C14 26 30 22 32 12Z" fill="@p"/><path d="M32 14V58M24 25C18 35 18 48 26 56M40 25C46 35 46 48 38 56" fill="none"/><path d="M32 12V4M28 58L26 62M32 58V62M36 58L38 62" fill="none" stroke-width="2.5"/>';},
+ bean:function(){return '<path d="M12 44C10 26 28 12 50 14C54 14 54 20 50 22C34 26 28 38 26 48C25 54 14 54 12 44Z" fill="@g"/><circle cx="25" cy="38" r="3.5" fill="@l"/><circle cx="35" cy="28" r="3.5" fill="@l"/><circle cx="45" cy="21" r="3" fill="@l"/><path d="M50 14C56 11 58 8 61 5" fill="none"/>';},
+ lettuce:function(){return '<circle cx="19" cy="38" r="12" fill="@l"/><circle cx="45" cy="38" r="12" fill="@l"/><circle cx="32" cy="26" r="13" fill="@l"/><circle cx="32" cy="42" r="15" fill="@g"/><path d="M32 30V56M24 36Q26 46 29 54M40 36Q38 46 35 54" fill="none"/>';},
+ marigold:function(){return '<path d="M32 42V62" fill="none" stroke-width="3"/>'+petals(32,28,14,13,5.5,0,"o",true)+'<circle cx="32" cy="28" r="7" fill="@y"/>'+lf(32,56,-150,16,4.5,"g");},
+ cucumber:function(){return '<g transform="rotate(25 32 32)"><rect x="22" y="6" width="20" height="52" rx="10" fill="@G"/><circle cx="28" cy="18" r="1.8" fill="@l" stroke="none"/><circle cx="36" cy="26" r="1.8" fill="@l" stroke="none"/><circle cx="28" cy="34" r="1.8" fill="@l" stroke="none"/><circle cx="36" cy="44" r="1.8" fill="@l" stroke="none"/><circle cx="29" cy="50" r="1.8" fill="@l" stroke="none"/></g><path d="M44 7L50 2" fill="none" stroke-width="3"/>';},
+ pepper:function(){return '<path d="M18 26C18 18 30 18 32 22C34 18 46 18 46 26C48 38 44 54 32 56C20 54 16 38 18 26Z" fill="@r"/><path d="M25 24C22 36 24 48 28 54M39 24C42 36 40 48 36 54" fill="none"/><path d="M32 22C32 14 36 10 43 10" fill="none" stroke="@G" stroke-width="4"/>';},
+ dill:function(){return '<path d="M32 62V30" fill="none" stroke-width="3"/><path d="M32 30L12 18M32 30L18 10M32 30L26 6M32 30L38 6M32 30L46 10M32 30L52 18" fill="none" stroke-width="2"/><circle cx="12" cy="18" r="3.4" fill="@y"/><circle cx="18" cy="10" r="3.4" fill="@y"/><circle cx="26" cy="6" r="3.4" fill="@y"/><circle cx="38" cy="6" r="3.4" fill="@y"/><circle cx="46" cy="10" r="3.4" fill="@y"/><circle cx="52" cy="18" r="3.4" fill="@y"/><path d="M32 52L20 46M32 52L44 46M32 42L22 37M32 42L42 37" fill="none" stroke="@G" stroke-width="2.5"/>';},
+ fennel:function(){return '<path d="M26 31L20 12M32 30V8M38 31L44 12" fill="none" stroke="@l" stroke-width="3"/><path d="M20 12L15 9M20 12L25 9M32 8L27 5M32 8L37 5M44 12L39 9M44 12L49 9" fill="none" stroke="@G" stroke-width="2"/><path d="M16 46C16 34 24 30 32 30C40 30 48 34 48 46C48 54 40 58 32 58C24 58 16 54 16 46Z" fill="@w"/><path d="M32 32V58M24 34Q22 46 26 56M40 34Q42 46 38 56" fill="none"/>';},
+ radish:function(){return '<path d="M20 44C20 34 44 34 44 44C44 52 38 56 35 60L32 64L29 60C26 56 20 52 20 44Z" fill="@r"/><path d="M22 48C26 52 38 52 42 48C40 54 36 56 34 60L32 64L30 60C28 56 24 54 22 48Z" fill="@w"/><path d="M32 36C24 30 14 28 8 16C20 14 30 22 32 36Z" fill="@g"/><path d="M32 36C40 30 50 28 56 16C44 14 34 22 32 36Z" fill="@g"/><path d="M32 36C28 26 28 14 32 3C36 14 36 26 32 36Z" fill="@G"/>';},
+ spinach:function(){return '<path d="M32 62V50" fill="none" stroke-width="3"/><path d="M32 50C16 48 10 32 20 18C26 10 32 5 32 5C32 5 38 10 44 18C54 32 48 48 32 50Z" fill="@G"/><path d="M32 50V12M32 40L22 30M32 40L42 30M32 30L25 22M32 30L39 22" fill="none"/>';},
+ strawberry:function(){return '<path d="M12 22C12 18 24 16 32 20C40 16 52 18 52 22C52 38 40 56 32 59C24 56 12 38 12 22Z" fill="@r"/><path d="M19 20L26 26L28 16L32 24L36 16L38 26L45 20L39 14L32 9L25 14Z" fill="@g"/><circle cx="22" cy="33" r="1.8" fill="@y" stroke="none"/><circle cx="32" cy="36" r="1.8" fill="@y" stroke="none"/><circle cx="42" cy="33" r="1.8" fill="@y" stroke="none"/><circle cx="27" cy="44" r="1.8" fill="@y" stroke="none"/><circle cx="37" cy="44" r="1.8" fill="@y" stroke="none"/><circle cx="32" cy="52" r="1.8" fill="@y" stroke="none"/>';},
+ mint:function(){return '<path d="M32 62V12" fill="none" stroke-width="3"/><path d="M0 0L9 -9L22 0L9 9Z" transform="translate(32 54) rotate(-35)" fill="@g"/><path d="M0 0L9 -9L22 0L9 9Z" transform="translate(32 54) rotate(215)" fill="@g"/><path d="M0 0L9 -9L22 0L9 9Z" transform="translate(32 40) rotate(-35)" fill="@l"/><path d="M0 0L9 -9L22 0L9 9Z" transform="translate(32 40) rotate(215)" fill="@l"/><path d="M0 0L8 -8L18 0L8 8Z" transform="translate(32 26) rotate(-35)" fill="@g"/><path d="M0 0L8 -8L18 0L8 8Z" transform="translate(32 26) rotate(215)" fill="@g"/><circle cx="32" cy="10" r="4" fill="@p"/>';},
+ rosemary:function(){var o='<path d="M32 62V6" fill="none" stroke-width="3"/>',i,y;for(i=0;i<8;i++){y=14+i*6.5;o+='<path d="M32 '+y+'L21 '+(y-8)+'M32 '+y+'L43 '+(y-8)+'" fill="none" stroke="@G" stroke-width="3"/>';}return o+'<circle cx="32" cy="7" r="3" fill="@u"/>';},
+ sage:function(){var o="",a=[-38,0,38],i;for(i=0;i<3;i++){o+='<g transform="rotate('+a[i]+' 32 60)"><ellipse cx="32" cy="38" rx="8" ry="20" fill="@s"/><path d="M32 58V20" fill="none"/></g>';}return o;},
+ potato:function(){return '<path d="M10 36C10 22 24 13 40 15C54 17 57 32 53 43C49 55 34 57 23 53C14 50 10 44 10 36Z" fill="@t"/><circle cx="25" cy="30" r="2.2" fill="@k"/><circle cx="40" cy="26" r="2.2" fill="@k"/><circle cx="36" cy="43" r="2.2" fill="@k"/><circle cx="21" cy="42" r="2.2" fill="@k"/>';},
+ squash:function(){return '<path d="M26 8H38C38 18 40 24 46 32C54 42 50 58 32 58C14 58 10 42 18 32C24 24 26 18 26 8Z" fill="@a"/><path d="M32 12V56M24 34Q22 46 26 54M40 34Q42 46 38 54" fill="none"/><path d="M32 8V3" fill="none" stroke-width="3"/>';},
+ corn:function(){return '<ellipse cx="32" cy="30" rx="11" ry="24" fill="@y"/><path d="M24 17H40M22 25H42M22 33H42M22 41H42M25 49H39M32 8V54M27 10V52M37 10V52" fill="none" stroke-width="1.2"/><path d="M32 62C14 54 12 30 21 20C20 36 28 50 32 62Z" fill="@g"/><path d="M32 62C50 54 52 30 43 20C44 36 36 50 32 62Z" fill="@g"/>';},
+ pea:function(){return '<path d="M6 30C6 20 24 16 56 23C59 24 58 36 52 38C28 47 6 42 6 30Z" fill="@g"/><circle cx="19" cy="31" r="6" fill="@l"/><circle cx="32" cy="31" r="6" fill="@l"/><circle cx="45" cy="29" r="6" fill="@l"/><path d="M56 23L62 18M14 40C8 46 12 54 20 52" fill="none"/>';},
+ beet:function(){return '<path d="M32 26C46 26 52 36 48 46C44 54 36 58 32 63C28 58 20 54 16 46C12 36 18 26 32 26Z" fill="@P"/><path d="M32 26L24 10M32 26V7M32 26L40 10" fill="none" stroke="@r" stroke-width="3"/><ellipse cx="23" cy="9" rx="6" ry="9" transform="rotate(-18 23 9)" fill="@G"/><ellipse cx="41" cy="9" rx="6" ry="9" transform="rotate(18 41 9)" fill="@G"/><ellipse cx="32" cy="6" rx="5" ry="7" fill="@g"/>';},
+ garlic:function(){return '<path d="M32 6C34 16 36 19 44 24C54 32 54 50 44 54C38 58 26 58 20 54C10 50 10 32 20 24C28 19 30 16 32 6Z" fill="@w"/><path d="M32 12V58M24 26C18 36 18 48 26 56M40 26C46 36 46 48 38 56" fill="none"/>';},
+ chive:function(){var o="",a=[-30,-20,-10,0,10,20,30],i,x2;for(i=0;i<7;i++){o+='<path d="M32 62L'+(32+Math.sin(a[i]*Math.PI/180)*52).toFixed(1)+' '+(62-Math.cos(a[i]*Math.PI/180)*54).toFixed(1)+'" fill="none" stroke="@G" stroke-width="3"/>';}return o+'<circle cx="32" cy="9" r="5.5" fill="@p"/><circle cx="14" cy="14" r="4.5" fill="@p"/><circle cx="50" cy="14" r="4.5" fill="@p"/>';},
+ parsley:function(){var L='M0 0L-8 -8L-6 -16L-12 -22L-4 -24L0 -32L4 -24L12 -22L6 -16L8 -8Z';return '<path d="M32 62V40" fill="none" stroke-width="3"/><path d="'+L+'" transform="translate(32 40) rotate(-62)" fill="@g"/><path d="'+L+'" transform="translate(32 40) rotate(62)" fill="@g"/><path d="'+L+'" transform="translate(32 40)" fill="@G"/>';},
+ cabbage:function(){return '<circle cx="32" cy="34" r="24" fill="@l"/><path d="M32 10C20 20 20 48 32 58M32 10C44 20 44 48 32 58M12 30C22 36 42 36 52 30M14 43C24 47 40 47 50 43" fill="none"/>';},
+ kale:function(){return '<path d="M32 62V52" fill="none" stroke-width="3"/><path d="M32 52C24 52 18 46 22 40C14 38 16 30 22 28C14 24 18 16 24 16C22 8 30 6 32 4C34 6 42 8 40 16C46 16 50 24 42 28C48 30 50 38 42 40C46 46 40 52 32 52Z" fill="@G"/><path d="M32 52V10M32 41L24 36M32 41L40 36M32 29L25 24M32 29L39 24" fill="none"/>';},
+ broccoli:function(){return '<path d="M25 62L28 44H36L39 62Z" fill="@l"/><circle cx="17" cy="34" r="11" fill="@G"/><circle cx="47" cy="34" r="11" fill="@G"/><circle cx="32" cy="21" r="13" fill="@G"/><circle cx="32" cy="38" r="12" fill="@G"/><circle cx="29" cy="19" r="2" fill="@g" stroke="none"/><circle cx="17" cy="32" r="2" fill="@g" stroke="none"/><circle cx="47" cy="32" r="2" fill="@g" stroke="none"/>';},
+ zucchini:function(){return '<g transform="rotate(-35 32 32)"><rect x="3" y="22" width="52" height="20" rx="10" fill="@G"/><path d="M12 28H46M12 36H46" fill="none" stroke="@l" stroke-width="2"/></g><circle cx="52" cy="14" r="7" fill="@y"/><circle cx="52" cy="14" r="2.5" fill="@a" stroke="none"/>';},
+ eggplant:function(){return '<path d="M26 14H38C40 24 52 30 52 44C52 54 44 60 34 60C22 60 12 54 12 44C12 34 24 28 26 14Z" fill="@p"/><path d="M21 16L27 21L32 12L37 21L43 16L40 25H24Z" fill="@g"/><path d="M32 12V5" fill="none" stroke-width="3"/><path d="M20 44Q20 52 27 55" fill="none" stroke-width="1.6"/>';},
+ sunflower:function(){var o='<path d="M32 40V62" fill="none" stroke-width="3.5"/>'+lf(32,56,-30,22,7,"g")+petals(32,26,14,15,4.2,10,"y",false);var i,a,r;o+='<circle cx="32" cy="26" r="12" fill="@b"/>';for(i=0;i<8;i++){a=i*Math.PI/4;o+='<circle cx="'+(32+Math.cos(a)*6).toFixed(1)+'" cy="'+(26+Math.sin(a)*6).toFixed(1)+'" r="1.4" fill="@k" stroke="none"/>';}return o+'<circle cx="32" cy="26" r="1.6" fill="@k" stroke="none"/>';},
+ nasturtium:function(){return '<circle cx="26" cy="38" r="20" fill="@g"/><path d="M26 38V18M26 38H46M26 38L12 24M26 38L12 52M26 38L40 52M26 38L40 24" fill="none"/><path d="M44 12C50 8 59 10 59 19C59 26 51 28 47 26C42 23 40 16 44 12Z" fill="@o"/><circle cx="51" cy="18" r="2.6" fill="@r" stroke="none"/>';},
+ lavender:function(){var o='<path d="M32 62V14" fill="none" stroke="@G" stroke-width="3"/><path d="M32 58C26 52 22 49 17 49M32 54C38 48 42 45 47 45" fill="none" stroke="@G" stroke-width="2.5"/>',i,y;for(i=0;i<8;i++){y=16+i*5.5;o+='<ellipse cx="27.5" cy="'+y+'" rx="4" ry="3.2" fill="@p"/><ellipse cx="36.5" cy="'+y+'" rx="4" ry="3.2" fill="@p"/>';}return o+'<ellipse cx="32" cy="9" rx="3.4" ry="5" fill="@p"/>';},
+ thyme:function(){return '<path d="M32 50V62" fill="none" stroke-width="3"/><path d="M8 52C8 34 20 24 32 24C44 24 56 34 56 52Z" fill="@s"/><ellipse cx="22" cy="38" rx="5" ry="3" fill="@l"/><ellipse cx="34" cy="33" rx="5" ry="3" fill="@l"/><ellipse cx="44" cy="42" rx="5" ry="3" fill="@l"/><ellipse cx="28" cy="46" rx="5" ry="3" fill="@l"/><circle cx="20" cy="30" r="2.4" fill="@P" stroke="none"/><circle cx="40" cy="27" r="2.4" fill="@P" stroke="none"/><circle cx="50" cy="38" r="2.4" fill="@P" stroke="none"/>';},
+ cilantro:function(){return '<path d="M32 62V45" fill="none" stroke-width="3"/><path d="M32 46C18 46 8 36 13 26C15 20 24 20 26 25C24 17 30 8 37 12C43 8 51 16 47 25C54 25 56 33 51 39C46 44 39 46 32 46Z" fill="@l"/><path d="M32 46V22M32 38L20 30M32 38L44 30" fill="none"/>';},
+ borage:function(){return '<path d="M32 50V63" fill="none" stroke-width="3"/><path d="M32 60C20 58 16 50 18 46C26 48 30 54 32 60Z" fill="@g"/><polygon points="'+starPts(32,30,25,10)+'" fill="@u"/><circle cx="32" cy="30" r="4.5" fill="@k"/><path d="M32 30V20" fill="none" stroke-width="2"/>';},
+ /* generic set for custom plants */
+ sprout:function(){return '<path d="M32 60V30" fill="none" stroke-width="3.5"/><path d="M32 40C20 40 12 32 12 20C24 20 32 28 32 40Z" fill="@g"/><path d="M32 34C42 34 50 26 50 14C38 14 32 22 32 34Z" fill="@l"/><path d="M18 60H46" fill="none" stroke="@b" stroke-width="4"/>';},
+ flower:function(){return '<path d="M32 38V62" fill="none" stroke-width="3"/>'+petals(32,26,5,11,8,0,"P",true)+'<circle cx="32" cy="26" r="6" fill="@y"/>'+lf(32,56,-35,18,5,"g");},
+ apple:function(){return '<path d="M32 22C20 12 8 24 12 40C15 52 25 60 32 56C39 60 49 52 52 40C56 24 44 12 32 22Z" fill="@r"/><path d="M32 22V10" fill="none" stroke="@b" stroke-width="3.5"/>'+lf(33,16,-20,16,5,"g");},
+ turnip:function(){return '<path d="M12 28C12 22 22 20 32 20C42 20 52 22 52 28C52 42 42 54 32 56C22 54 12 42 12 28Z" fill="@w"/><path d="M13 30C16 24 48 24 51 30C48 42 42 52 32 56C22 52 16 42 13 30Z" fill="@P"/><path d="M32 56V63" fill="none" stroke-width="2.5"/><path d="M32 20C28 14 24 10 22 4M32 20V4M32 20C36 14 40 10 42 4" fill="none" stroke="@G" stroke-width="3.5"/>';},
+ bush:function(){return '<path d="M6 54C4 38 14 24 24 26C26 16 40 14 44 24C54 24 60 40 56 54Z" fill="@G"/><circle cx="22" cy="40" r="3.4" fill="@r"/><circle cx="36" cy="34" r="3.4" fill="@r"/><circle cx="46" cy="46" r="3.4" fill="@r"/><circle cx="28" cy="49" r="3.4" fill="@r"/><path d="M32 54V62" fill="none" stroke-width="3"/>';},
+ tree:function(){return '<path d="M28 62L29 38H35L36 62Z" fill="@b"/><circle cx="20" cy="30" r="13" fill="@g"/><circle cx="44" cy="30" r="13" fill="@g"/><circle cx="32" cy="18" r="14" fill="@G"/><circle cx="32" cy="34" r="12" fill="@g"/>';},
+ mushroom:function(){return '<path d="M25 62L27 40H37L39 62Z" fill="@w"/><path d="M8 40C8 24 20 12 32 12C44 12 56 24 56 40Z" fill="@r"/><circle cx="22" cy="28" r="4" fill="@w" stroke="none"/><circle cx="36" cy="22" r="4.5" fill="@w" stroke="none"/><circle cx="46" cy="33" r="3.5" fill="@w" stroke="none"/>';},
+ clover:function(){return '<path d="M32 36V62" fill="none" stroke-width="3"/><circle cx="23" cy="24" r="10" fill="@g"/><circle cx="41" cy="24" r="10" fill="@g"/><circle cx="23" cy="40" r="10" fill="@l"/><circle cx="41" cy="40" r="10" fill="@l"/><path d="M32 32L23 24M32 32L41 24M32 32L23 40M32 32L41 40" fill="none" stroke-width="1.6"/>';}
+};
+var TOK_COLOR={r:"#d9482f",g:"#5f9a4a",G:"#3d7a3b",l:"#a9cf7a",o:"#ee8a2b",y:"#f2c230",p:"#8a58a8",P:"#a8326a",b:"#8a5a34",w:"#f6efd9",k:"#3a2d22",u:"#5b86c8",s:"#9db39a",t:"#c9a06b",a:"#e0a030"};
+var TOK_BW={r:"#bdbdbd",g:"#d6d6d6",G:"#9a9a9a",l:"#f0f0f0",o:"#c4c4c4",y:"#f4f4f4",p:"#a8a8a8",P:"#8c8c8c",b:"#8c8c8c",w:"#ffffff",k:"#4a4a4a",u:"#cccccc",s:"#cfcfcf",t:"#dedede",a:"#d0d0d0"};
+/* returns an svg <g> centered at (x,y) with the given pixel size */
+function plantIcon(key,C,x,y,size){
+  var f=ICON_SRC[key]||ICON_SRC.sprout,s=f(),bw=C.bw,tab=bw?TOK_BW:TOK_COLOR,stroke=bw?"#000000":mix(C.ink,"#ffffff",0.25);
+  s=s.replace(/@([a-zA-Z])/g,function(m,t){return tab[t]||"#888888";});
+  return '<g transform="translate('+(x-size/2).toFixed(1)+' '+(y-size/2).toFixed(1)+') scale('+(size/64).toFixed(4)+')" stroke="'+stroke+'" stroke-width="'+(bw?2.2:1.8)+'" stroke-linejoin="round" stroke-linecap="round" data-icon="'+key+'">'+s+'</g>';
+}
+function iconSVG(key,C,size){
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" class="ico">'+plantIcon(key,C,size/2,size/2,size-2)+'</svg>';
+}
+
+/* ================= 60 original seasonal tips (15 per season) ================= */
+var SEASONS=["spring","summer","autumn","winter"];
+var SEASON_NAME={spring:"Spring",summer:"Summer",autumn:"Autumn",winter:"Winter"};
+var TIPS={
+ spring:[
+  "Wait until the soil crumbles in your hand before digging. Wet soil packs down hard.",
+  "Harden off seedlings by giving them a little more outdoor time each day for a week.",
+  "Sow peas and spinach as soon as the ground can be worked.",
+  "Spread an inch of compost on every bed before planting.",
+  "Label every row. Seedlings all look alike for the first two weeks.",
+  "Thin crowded seedlings so the strong ones have room to grow.",
+  "Plant carrots after a rain so the thin seeds stay moist.",
+  "Keep a bucket of water by the beds to settle in new transplants.",
+  "Cover tender seedlings with a sheet when a late frost is forecast.",
+  "Sketch your bed plan on paper before you plant anything.",
+  "Plant herbs near the kitchen door so you actually use them.",
+  "Slugs hide under boards. Check at dawn and move them away.",
+  "Plant a few extra seeds. Not every one will sprout.",
+  "Rotate crops. Never put the same family in the same bed two years running.",
+  "Bees love early blossoms. Let a few herbs flower for them."
+ ],
+ summer:[
+  "Water deeply in the morning rather than lightly every evening.",
+  "A layer of mulch keeps roots cool and cuts down on weeding.",
+  "Pick beans and zucchini often. Picking tells the plant to make more.",
+  "Pinch off tomato side shoots to send energy to the fruit.",
+  "Shade lettuce with a cloth in the hottest afternoons.",
+  "Check the undersides of leaves for tiny pests once a week.",
+  "Tie climbing plants gently with soft strips of cloth.",
+  "Harvest herbs before they flower for the best flavor.",
+  "Let the soil dry slightly between waterings to build strong roots.",
+  "Plant a second round of quick crops like radishes where early ones were pulled.",
+  "Collect rainwater in a barrel for a free, gentle supply.",
+  "Cut flowers for a vase. It encourages more blooms.",
+  "Walk your garden every day. Small problems are easy to fix early.",
+  "Leave a shallow dish of water out for bees and butterflies.",
+  "Record what grew well so next year's plan is even better."
+ ],
+ autumn:[
+  "Plant garlic cloves pointy side up about two inches deep.",
+  "Rake fallen leaves into a pile to make rich leaf mold.",
+  "Sow spinach and kale now for a cool-weather harvest.",
+  "Pull spent plants and add them to the compost pile.",
+  "Save seeds from your best plants and store them dry in paper envelopes.",
+  "Plant spring bulbs before the ground freezes.",
+  "Cover bare beds with a layer of leaves or straw to protect the soil.",
+  "Pick green tomatoes before frost and ripen them indoors.",
+  "Dig up and divide crowded perennials such as chives and mint.",
+  "Clean and oil your tools before putting them away.",
+  "Plant a cover crop such as clover to feed the soil over winter.",
+  "Harvest root crops on a dry day and leave them to air for an hour.",
+  "Bring tender herbs in pots indoors before the first hard frost.",
+  "Take photos of your beds now to help you plan next season.",
+  "Leave a few seed heads standing as winter food for birds."
+ ],
+ winter:[
+  "Plan next year's beds on graph paper while the garden sleeps.",
+  "Order seeds early for the best choice of varieties.",
+  "Start onions and peppers indoors on a bright windowsill.",
+  "Check stored bulbs and tubers for soft spots and remove any.",
+  "Sprinkle wood ash lightly on beds only if your soil is acidic.",
+  "Sharpen pruners and clean pots so you are ready for spring.",
+  "Grow cress or microgreens on a kitchen shelf for fresh green snacks.",
+  "Keep birdbaths free of ice so wildlife can drink.",
+  "Test your old seeds on a damp paper towel before you plant them.",
+  "Add kitchen scraps to the compost, but skip meat and dairy.",
+  "Avoid walking on frozen beds. It damages the soil underneath.",
+  "Read about companion planting and try one new pairing this year.",
+  "Wrap pots in burlap so roots stay protected from hard freezes.",
+  "Mark your calendar with the last frost date for your area.",
+  "Dream big. Every garden starts as an idea in winter."
+ ]
+};
+var DISCLAIMER="Traditional gardening guidance, not scientific guarantees.";
+
+/* ================= plant table (base + custom plants + overrides) ================= */
+function normName(s){return String(s||"").toLowerCase().replace(/^\s+|\s+$/g,"").replace(/\s+/g," ");}
+function buildTable(customText,ruleText){
+  var T={list:[],byKey:{},fr:{},fo:{},err:[],customKeys:[],nameKey:{}},i,k,a;
+  for(i=0;i<PLANT_KEYS.length;i++){k=PLANT_KEYS[i];T.list.push({k:k,n:PLANT_NAME[k],ic:k,custom:false});T.byKey[k]=T.list[i];T.nameKey[normName(PLANT_NAME[k])]=k;T.fr[k]={};T.fo[k]={};}
+  for(k in BASE_FRIEND){for(a in BASE_FRIEND[k]){T.fr[k][a]=1;}}
+  for(k in BASE_FOE){for(a in BASE_FOE[k]){T.fo[k][a]=1;}}
+  var lines=String(customText||"").split(/\r?\n/),ln,m,nm,ic,cnt=0;
+  for(i=0;i<lines.length;i++){
+    ln=lines[i].replace(/^\s+|\s+$/g,"");if(!ln){continue;}
+    m=/^(.+?)\s*=\s*([a-z]+)$/i.exec(ln);
+    if(!m){T.err.push({n:i+1,line:ln,why:"write it as: name = icon (for example dahlia = flower)"});continue;}
+    nm=m[1].replace(/^\s+|\s+$/g,"").replace(/\s+/g," ");ic=m[2].toLowerCase();
+    if(!/^[A-Za-z][A-Za-z '\-]{0,19}$/.test(nm)){T.err.push({n:i+1,line:ln,why:"plant name must be 1-20 letters"});continue;}
+    if(GENERIC_ICONS.indexOf(ic)<0){T.err.push({n:i+1,line:ln,why:"icon must be one of: "+GENERIC_ICONS.join(", ")});continue;}
+    if(T.nameKey[normName(nm)]){T.err.push({n:i+1,line:ln,why:"that plant name already exists"});continue;}
+    if(cnt>=CUSTOM_MAX){T.err.push({n:i+1,line:ln,why:"over the "+CUSTOM_MAX+"-plant limit"});continue;}
+    k="x"+(cnt+1);cnt++;
+    T.list.push({k:k,n:nm,ic:ic,custom:true});T.byKey[k]=T.list[T.list.length-1];T.nameKey[normName(nm)]=k;T.fr[k]={};T.fo[k]={};T.customKeys.push(k);
+  }
+  lines=String(ruleText||"").split(/\r?\n/);
+  for(i=0;i<lines.length;i++){
+    ln=lines[i].replace(/^\s+|\s+$/g,"");if(!ln){continue;}
+    m=/^(.+?)\s*\+\s*(.+?)\s*=\s*(friend|foe|none)$/i.exec(ln);
+    if(!m){T.err.push({n:i+1,line:ln,why:"write it as: tomato + basil = friend (or foe, or none)"});continue;}
+    var ka=T.nameKey[normName(m[1])],kb=T.nameKey[normName(m[2])],rel=m[3].toLowerCase();
+    if(!ka||!kb){T.err.push({n:i+1,line:ln,why:"unknown plant: "+(!ka?m[1]:m[2])});continue;}
+    if(ka===kb){T.err.push({n:i+1,line:ln,why:"a rule needs two different plants"});continue;}
+    delete T.fr[ka][kb];delete T.fr[kb][ka];delete T.fo[ka][kb];delete T.fo[kb][ka];
+    if(rel==="friend"){T.fr[ka][kb]=1;T.fr[kb][ka]=1;}
+    else if(rel==="foe"){T.fo[ka][kb]=1;T.fo[kb][ka]=1;}
+  }
+  return T;
+}
+function isFriend(T,a,b){return !!(T.fr[a]&&T.fr[a][b]);}
+function isFoe(T,a,b){return !!(T.fo[a]&&T.fo[a][b]);}
+
+/* ================= puzzle model, solver, generator ================= */
+var DIFFS=["easy","medium","hard","expert"];
+var DIFF_NAME={easy:"Easy",medium:"Medium",hard:"Hard",expert:"Expert"};
+var DIFF_FRAC={easy:0.5,medium:0.35,hard:0.25,expert:0.15};
+var DIFF_INFO={easy:"about half the beds pre-filled",medium:"about 35% pre-filled",hard:"about 25% pre-filled",expert:"about 15% pre-filled (fewer when the logic needs them)"};
+var SIZES=[4,5,6,7,8];
+var BLOCK_NAMES=["","Path","Pond","Shed"];
+var TYPES=["classic","raised","match"];
+var TYPE_NAME={classic:"Garden Grid",raised:"Plan the Raised Bed",match:"Companion Match"};
+var MATCH_N={easy:4,medium:5,hard:6,expert:7};
+
+function popc(m){var c=0;while(m){m&=m-1;c++;}return c;}
+
+/* spec from a puzzle: precomputed neighbors, foe masks */
+function specOf(pz){
+  var R=pz.R,C=pz.C,tot=R*C,nb=[],free=[],row=[],col=[],i,r,c,fm=[],fr=pz.friends||[];
+  for(i=0;i<pz.n;i++){fm.push(0);}
+  for(i=0;i<pz.foes.length;i++){fm[pz.foes[i][0]]|=(1<<pz.foes[i][1]);fm[pz.foes[i][1]]|=(1<<pz.foes[i][0]);}
+  for(r=0;r<R;r++){for(c=0;c<C;c++){
+    i=r*C+c;row.push(r);col.push(c);nb.push([]);
+    if(pz.blocked[i]){continue;}
+    free.push(i);
+  }}
+  for(i=0;i<tot;i++){
+    if(pz.blocked[i]){continue;}
+    r=row[i];c=col[i];
+    if(r>0&&!pz.blocked[i-C]){nb[i].push(i-C);}
+    if(r<R-1&&!pz.blocked[i+C]){nb[i].push(i+C);}
+    if(c>0&&!pz.blocked[i-1]){nb[i].push(i-1);}
+    if(c<C-1&&!pz.blocked[i+1]){nb[i].push(i+1);}
+  }
+  return {R:R,C:C,n:pz.n,rule:pz.rule,k:pz.k,blocked:pz.blocked,foeMask:fm,friends:fr,nb:nb,free:free,row:row,col:col};
+}
+
+/* backtracking solver: counts solutions up to o.max (default 2), MRV with forward checking */
+function solveGarden(sp,giv,o){
+  o=o||{};
+  var R=sp.R,C=sp.C,n=sp.n,full=(1<<n)-1,tot=R*C,latin=sp.rule==="latin",fm=sp.foeMask,nb=sp.nb,free=sp.free,row=sp.row,col=sp.col,
+      val=[],rowU=[],colU=[],rem=[],i,r,c,p,max=o.max||2,limit=o.limit||1000000000,rng=o.rng||null,
+      res={count:0,first:null,nodes:0,limited:false},fr=sp.friends,cands=[];
+  for(i=0;i<tot;i++){val.push(sp.blocked[i]?-2:-1);}
+  for(r=0;r<R;r++){rowU.push(0);}
+  for(c=0;c<C;c++){colU.push(0);}
+  for(p=0;p<n;p++){rem.push(latin?0:sp.k);}
+  var left0=free.length;
+  function legal(cell,p2){
+    var j,v;
+    if(latin){if((rowU[row[cell]]>>p2)&1||(colU[col[cell]]>>p2)&1){return false;}}
+    else if(rem[p2]<=0){return false;}
+    for(j=0;j<nb[cell].length;j++){v=val[nb[cell][j]];if(v>=0&&((fm[p2]>>v)&1)){return false;}}
+    return true;
+  }
+  function put(cell,p2){val[cell]=p2;if(latin){rowU[row[cell]]|=(1<<p2);colU[col[cell]]|=(1<<p2);}else{rem[p2]--;}}
+  function unput(cell,p2){val[cell]=-1;if(latin){rowU[row[cell]]&=~(1<<p2);colU[col[cell]]&=~(1<<p2);}else{rem[p2]++;}}
+  function adj(a,b){
+    var j,cell,k2;
+    for(j=0;j<free.length;j++){cell=free[j];if(val[cell]===a){for(k2=0;k2<nb[cell].length;k2++){if(val[nb[cell][k2]]===b){return true;}}}}
+    return false;
+  }
+  function possible(a,b,cand){
+    var j,cell,k2,w;
+    for(j=0;j<free.length;j++){
+      cell=free[j];
+      if(val[cell]===a||(val[cell]<0&&((cand[cell]>>a)&1))){
+        for(k2=0;k2<nb[cell].length;k2++){w=nb[cell][k2];if(val[w]===b||(val[w]<0&&((cand[w]>>b)&1))){return true;}}
+      }
+    }
+    return false;
+  }
+  var left=left0;
+  if(giv){
+    for(i=0;i<tot;i++){
+      if(giv[i]>=0&&!sp.blocked[i]){
+        if(!legal(i,giv[i])){return res;}
+        put(i,giv[i]);left--;
+      }
+    }
+  }
+  function rec(lf,depth){
+    if(res.count>=max||res.limited){return;}
+    res.nodes++;if(res.nodes>limit){res.limited=true;return;}
+    var f,j,w,cell,m,pc,best=-1,bc=99,bm=0,cmask=full,avail=null,cand,v,pp,order,t,tmp;
+    if(lf===0){
+      for(f=0;f<fr.length;f++){if(!adj(fr[f][0],fr[f][1])){return;}}
+      res.count++;if(!res.first){res.first=val.slice();}
+      return;
+    }
+    cand=cands[depth];if(!cand){cand=new Array(tot);cands[depth]=cand;}
+    if(!latin){cmask=0;avail=[];for(pp=0;pp<n;pp++){avail.push(0);if(rem[pp]>0){cmask|=(1<<pp);}}}
+    for(j=0;j<free.length;j++){
+      cell=free[j];if(val[cell]>=0){continue;}
+      m=cmask;
+      if(latin){m&=~(rowU[row[cell]]|colU[col[cell]]);}
+      for(w=0;w<nb[cell].length;w++){v=val[nb[cell][w]];if(v>=0){m&=~fm[v];}}
+      if(!m){return;}
+      cand[cell]=m;
+      pc=popc(m);if(pc<bc){bc=pc;best=cell;bm=m;}
+      if(!latin){for(pp=0;pp<n;pp++){if((m>>pp)&1){avail[pp]++;}}}
+    }
+    if(!latin){for(pp=0;pp<n;pp++){if(rem[pp]>avail[pp]){return;}}}
+    for(f=0;f<fr.length;f++){if(!possible(fr[f][0],fr[f][1],cand)){return;}}
+    order=[];for(pp=0;pp<n;pp++){if((bm>>pp)&1){order.push(pp);}}
+    if(rng){for(t=order.length-1;t>0;t--){j=Math.floor(rng()*(t+1));tmp=order[t];order[t]=order[j];order[j]=tmp;}}
+    for(t=0;t<order.length;t++){
+      put(best,order[t]);rec(lf-1,depth+1);unput(best,order[t]);
+      if(res.count>=max||res.limited){return;}
+    }
+  }
+  rec(left,0);
+  return res;
+}
+
+/* ---------- plant set + generation ---------- */
+function chooseSet(rng,T,n,P){
+  var set=[],pool=[],i,k,tries,a,cands,fr;
+  for(i=0;i<T.list.length;i++){pool.push(T.list[i].k);}
+  if(P.useCustom!==false&&T.customKeys.length){
+    var cs=shuffleWith(rng,T.customKeys),cmax=Math.min(cs.length,Math.floor(n/2));
+    for(i=0;i<cmax;i++){set.push(cs[i]);}
+  }
+  for(tries=0;tries<40&&set.length+2<=n&&tries<3+Math.floor(n/3);tries++){
+    a=pick(rng,pool);
+    if(set.indexOf(a)>=0){continue;}
+    cands=[];for(k in T.fr[a]){if(set.indexOf(k)<0&&k!==a){cands.push(k);}}
+    if(!cands.length){continue;}
+    cands.sort();
+    set.push(a);set.push(pick(rng,cands));
+  }
+  var rest=shuffleWith(rng,pool);
+  for(i=0;i<rest.length&&set.length<n;i++){if(set.indexOf(rest[i])<0){set.push(rest[i]);}}
+  return shuffleWith(rng,set);
+}
+function pairsOf(T,set,rel){
+  var out=[],i,j;
+  for(i=0;i<set.length;i++){for(j=i+1;j<set.length;j++){if(rel==="foe"?isFoe(T,set[i],set[j]):isFriend(T,set[i],set[j])){out.push([i,j]);}}}
+  return out;
+}
+function pickBlocked(rng,R,C,count){
+  var b=[],i,cells=[];
+  for(i=0;i<R*C;i++){b.push(0);cells.push(i);}
+  cells=shuffleWith(rng,cells);
+  for(i=0;i<count;i++){b[cells[i]]=1+Math.floor(rng()*3);}
+  return b;
+}
+function ruleFor(rng,F,R,C,style,poolSize){
+  var cands=[],kk,nn;
+  if(style!=="latin"){
+    for(kk=2;kk<=8;kk++){if(F%kk===0){nn=F/kk;if(nn>=4&&nn<=9&&nn<=poolSize){cands.push([kk,nn]);}}}
+  }
+  if(style==="count"&&cands.length){return {rule:"count",k:cands[Math.floor(rng()*cands.length)][0],n:0,cands:cands};}
+  if(style==="mixed"&&cands.length&&rng()<0.5){return {rule:"count",k:cands[Math.floor(rng()*cands.length)][0],n:0,cands:cands};}
+  return {rule:"latin",k:0,n:Math.max(R,C)};
+}
+function genGarden(rng,o,T){
+  var R=o.R,C=o.C,diff=o.diff,frac=o.raised?(diff==="expert"?0.4:0.55):DIFF_FRAC[diff],attempt,i,j;
+  for(attempt=0;attempt<60;attempt++){
+    var bcount=0;
+    if(o.blocked&&!o.raised&&R>=5){bcount=ri(rng,1,Math.min(4,Math.floor(R*C/9)));}
+    var blocked=pickBlocked(rng,R,C,bcount),F=0;
+    for(i=0;i<R*C;i++){if(!blocked[i]){F++;}}
+    var rl=ruleFor(rng,F,R,C,o.rule,T.list.length),n,k;
+    if(rl.rule==="count"){k=rl.k;n=F/k;}else{k=0;n=rl.n;}
+    var set=chooseSet(rng,T,n,o);
+    var pz={R:R,C:C,blocked:blocked,rule:rl.rule,k:k,n:n,plants:set,foes:pairsOf(T,set,"foe"),friends:[],diff:diff,raised:!!o.raised,F:F};
+    var sp=specOf(pz),sol=solveGarden(sp,null,{max:1,rng:rng,limit:60000});
+    if(!sol.first){continue;}
+    var solv=sol.first,cand=pairsOf(T,set,"friend"),adjP=[];
+    for(i=0;i<cand.length;i++){
+      var ia=cand[i][0],ib=cand[i][1],ok=false,cell,w;
+      for(j=0;j<sp.free.length&&!ok;j++){cell=sp.free[j];if(solv[cell]===ia){for(w=0;w<sp.nb[cell].length;w++){if(solv[sp.nb[cell][w]]===ib){ok=true;break;}}}}
+      if(ok){adjP.push(cand[i]);}
+    }
+    if(!adjP.length&&attempt<40){continue;}
+    adjP=shuffleWith(rng,adjP);
+    pz.friends=adjP.slice(0,Math.min(adjP.length,ri(rng,3,6)));
+    sp=specOf(pz);
+    var bestG=null,bestC=999,target=Math.round(F*frac),pass,passes=(F<=40?3:1),v,r2;
+    for(pass=0;pass<passes&&bestC>target;pass++){
+      var givens=solv.slice(),order=shuffleWith(rng,sp.free),clues=F;
+      for(i=0;i<order.length&&clues>target;i++){
+        v=givens[order[i]];givens[order[i]]=-1;
+        r2=solveGarden(sp,givens,{max:2,limit:o.limit||40000});
+        if(r2.count===1&&!r2.limited){clues--;}else{givens[order[i]]=v;}
+      }
+      if(clues<bestC){bestC=clues;bestG=givens;}
+    }
+    givens=bestG;clues=bestC;
+    var sol2=[],cl=[];
+    for(i=0;i<R*C;i++){sol2.push(blocked[i]?-1:solv[i]);cl.push(!blocked[i]&&givens[i]>=0);}
+    pz.solution=sol2;pz.clue=cl;pz.nClues=clues;pz.target=target;
+    return pz;
+  }
+  throw new Error("could not build a "+R+"x"+C+" garden. Try another seed or fewer custom foe rules.");
+}
+
+/* ---------- Companion Match quiz ---------- */
+function countMatchings(L,Rr,T){
+  var cnt=0,used=[],i;
+  for(i=0;i<Rr.length;i++){used.push(false);}
+  function go(li){
+    if(cnt>1){return;}
+    if(li===L.length){cnt++;return;}
+    var j;
+    for(j=0;j<Rr.length;j++){if(!used[j]&&isFriend(T,L[li],Rr[j])){used[j]=true;go(li+1);used[j]=false;}}
+  }
+  go(0);
+  return cnt;
+}
+function genMatch(rng,T,diff){
+  var N=MATCH_N[diff],pool=[],i,k,tries,out=null,part=null;
+  for(i=0;i<T.list.length;i++){if(Object.keys(T.fr[T.list[i].k]).length>0){pool.push(T.list[i].k);}}
+  for(tries=0;tries<2500&&!out;tries++){
+    var Lk=shuffleWith(rng,pool).slice(0,N),Rk=[],ok=true,key;
+    for(i=0;i<N&&ok;i++){
+      var fl=[];for(key in T.fr[Lk[i]]){if(Lk.indexOf(key)<0&&Rk.indexOf(key)<0){fl.push(key);}}
+      if(!fl.length){ok=false;break;}
+      fl.sort();Rk.push(pick(rng,fl));
+    }
+    if(!ok){continue;}
+    if(countMatchings(Lk,Rk,T)===1){out={L:Lk,R:Rk};}
+  }
+  if(!out){throw new Error("could not build a matching puzzle. Try another seed.");}
+  var perm=shuffleWith(rng,out.R.map(function(x,ix){return ix;})),Rs=[],ans=[];
+  for(i=0;i<N;i++){Rs.push(out.R[perm[i]]);}
+  for(i=0;i<N;i++){ans.push(Rs.indexOf(out.R[i]));}
+  /* part B: friend / foe / no rule */
+  var rels=[],nF=Math.ceil(N/3),nO=Math.ceil(N/3),nN=N-nF-nO,keys=[],a,b,pairs=[],seen={};
+  for(i=0;i<T.list.length;i++){keys.push(T.list[i].k);}
+  for(i=0;i<nF;i++){rels.push("friend");}for(i=0;i<nO;i++){rels.push("foe");}for(i=0;i<nN;i++){rels.push("none");}
+  rels=shuffleWith(rng,rels);
+  for(i=0;i<N;i++){
+    var want=rels[i],g=0,found=false;
+    while(g<400&&!found){
+      g++;a=pick(rng,keys);b=pick(rng,keys);
+      if(a===b||seen[a+"|"+b]||seen[b+"|"+a]){continue;}
+      var rel=isFriend(T,a,b)?"friend":(isFoe(T,a,b)?"foe":"none");
+      if(rel===want){found=true;seen[a+"|"+b]=1;pairs.push({a:a,b:b,rel:rel});}
+    }
+    if(!found){a=keys[(i*3)%keys.length];b=keys[(i*3+7)%keys.length];if(a===b){b=keys[(i*3+8)%keys.length];}pairs.push({a:a,b:b,rel:isFriend(T,a,b)?"friend":(isFoe(T,a,b)?"foe":"none")});}
+  }
+  return {N:N,left:out.L,right:Rs,ans:ans,pairs:pairs};
+}
+
+/* ================= deck planning ================= */
+function planDeck(P){
+  var T=buildTable(P.customText,P.ruleText),tasks=[],si,di,pg,idx=0,sizes=SIZES.filter(function(s){return P.sizes.indexOf(s)>=0;}),diffs=DIFFS.filter(function(d){return P.diffs.indexOf(d)>=0;}),i;
+  if(P.types.classic){for(si=0;si<sizes.length;si++){for(di=0;di<diffs.length;di++){for(pg=0;pg<P.pagesPer;pg++){tasks.push({t:"classic",size:sizes[si],diff:diffs[di]});}}}}
+  if(P.types.raised){for(di=0;di<diffs.length;di++){for(pg=0;pg<P.pagesPer;pg++){tasks.push({t:"raised",size:3,diff:diffs[di]});}}}
+  if(P.types.match){for(pg=0;pg<P.pagesPer*2;pg++){tasks.push({t:"match",size:0,diff:diffs[pg%diffs.length]});}}
+  var seasons=SEASONS.filter(function(s){return P.seasons.indexOf(s)>=0;});if(!seasons.length){seasons=["spring"];}
+  var N=tasks.length;
+  /* group by season in contiguous blocks so the book reads spring...winter */
+  for(i=0;i<N;i++){tasks[i].season=seasons[Math.min(seasons.length-1,Math.floor(i*seasons.length/N))];tasks[i].idx=i;}
+  return {tasks:tasks,table:T,seasons:seasons,tableErrors:T.err};
+}
+function runTask(P,plan,ti){
+  var tk=plan.tasks[ti],rng=mulberry32(mixSeed(P.seed,ti+31)),T=plan.table,pg={t:tk.t,season:tk.season,diff:tk.diff,idx:ti,seed:mixSeed(P.seed,ti+31)};
+  pg.tip=pick(rng,TIPS[tk.season]);
+  if(tk.t==="match"){pg.match=genMatch(rng,T,tk.diff);return pg;}
+  var o={R:tk.size,C:tk.t==="raised"?4:tk.size,diff:tk.diff,rule:tk.t==="raised"?"latin":P.rule,blocked:!!P.blocked,raised:tk.t==="raised",useCustom:P.useCustom};
+  pg.pz=genGarden(rng,o,T);
+  /* resolve names and icons so pages stay valid even if the table is edited later */
+  pg.names=[];pg.icons=[];
+  var i;
+  for(i=0;i<pg.pz.plants.length;i++){pg.names.push(T.byKey[pg.pz.plants[i]].n);pg.icons.push(T.byKey[pg.pz.plants[i]].ic);}
+  return pg;
+}
+function makeDeckSync(P){
+  var plan=planDeck(P),pages=[],i;
+  for(i=0;i<plan.tasks.length;i++){pages.push(runTask(P,plan,i));}
+  return {params:P,plan:plan,pages:pages};
+}
+
+/* ================= state ================= */
+var PRESETS={
+  meadow:{name:"Watercolor Meadow",ink:"#2d4a1c",paper:"#fffdf6",a:"#5f8a5c",line:"#d6dcc0",red:"#c1503a",sw:["#5f8a5c","#c17767"]},
+  clay:{name:"Terracotta Clay",ink:"#4a2a1c",paper:"#fff9f3",a:"#c17767",line:"#ead6c8",red:"#2f7a4a",sw:["#c17767","#e4b59a"]},
+  lavender:{name:"Lavender Field",ink:"#2f2a4a",paper:"#fcfaff",a:"#8a6fb0",line:"#ddd5ec",red:"#c0396b",sw:["#8a6fb0","#c9b8e6"]},
+  sunny:{name:"Sunflower Patch",ink:"#4a3300",paper:"#fffdf0",a:"#c98f12",line:"#eadfb5",red:"#b5432e",sw:["#e0a81c","#7b9e87"]},
+  bw:{name:"Print-safe B/W",ink:"#000000",paper:"#ffffff",a:"#000000",line:"#bdbdbd",red:"#000000",sw:["#000000","#ffffff"]}
+};
+var PRESET_KEYS=["meadow","clay","lavender","sunny","bw"];
+var TRIMS={"6x9":[6,9],"8x10":[8,10],"8.5x11":[8.5,11],"a4":[8.27,11.69]};
+var TRIM_KEYS=["6x9","8x10","8.5x11","a4"];
+var BLEED_PX=12;
+function defaultState(){
+  return {
+    sizes:[4,5,6],diffs:["easy","medium","hard"],types:{classic:true,raised:true,match:true},rule:"latin",pagesPer:1,blocked:true,
+    seasons:["spring","summer","autumn","winter"],customText:"",ruleText:"",useCustom:true,
+    title:"Garden Companion Logic",sub:"Plant smart. Keep foes apart. Seat friends together.",seedInput:"",
+    preset:"meadow",header:"block",border:"rounded",pattern:"none",wm:"footer",nums:true,
+    trim:"8.5x11",bleed:false,mIn:0.5,mOut:0.5,mTb:0.5,mirror:true,guides:true,
+    book:true,seasonPages:true,guide:true,ans:true,seller:"",
+    view:"puzzle",layout2:"single",zoom:100
+  };
+}
+var S=defaultState();
+var deck=null, curPage=0, genRunning=false;
+function gameTitle(){return S.title||"Garden Companion Logic";}
+function pal(){
+  var p=PRESETS[S.preset]||PRESETS.meadow,bw=S.preset==="bw";
+  var C={bw:bw,ink:p.ink,paper:p.paper,a:p.a,line:p.line,red:p.red};
+  C.soft=mix(C.paper,C.ink,0.07);C.mid=mix(C.paper,C.ink,0.55);C.tint=bw?"#eeeeee":mix(C.paper,C.a,0.12);
+  return C;
+}
+
+/* ================= garden board ================= */
+function blockedArt(kind,x,y,s,C){
+  var bw=C.bw,ink=C.ink,o="",cx=x+s/2,cy=y+s/2;
+  if(kind===1){
+    o+='<rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="'+(bw?"#e4e4e4":"#e6d8b8")+'"/>';
+    o+='<ellipse cx="'+(x+18)+'" cy="'+(y+20)+'" rx="10" ry="7" fill="'+(bw?"#ffffff":"#bfb79f")+'" stroke="'+ink+'" stroke-width="1.6"/><ellipse cx="'+(x+42)+'" cy="'+(y+32)+'" rx="10" ry="7" fill="'+(bw?"#ffffff":"#bfb79f")+'" stroke="'+ink+'" stroke-width="1.6"/><ellipse cx="'+(x+22)+'" cy="'+(y+48)+'" rx="10" ry="7" fill="'+(bw?"#ffffff":"#bfb79f")+'" stroke="'+ink+'" stroke-width="1.6"/>';
+  }else if(kind===2){
+    o+='<rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="'+(bw?"#d9d9d9":"#9cc7e0")+'"/>';
+    o+='<path d="M'+(x+8)+' '+(y+20)+'q6 -6 12 0t12 0t12 0" fill="none" stroke="'+(bw?"#000000":"#ffffff")+'" stroke-width="2.4" stroke-linecap="round"/><path d="M'+(x+14)+' '+(y+44)+'q6 -6 12 0t12 0t12 0" fill="none" stroke="'+(bw?"#000000":"#ffffff")+'" stroke-width="2.4" stroke-linecap="round"/>';
+    o+='<circle cx="'+(x+44)+'" cy="'+(y+30)+'" r="7" fill="'+(bw?"#ffffff":"#5f9a4a")+'" stroke="'+ink+'" stroke-width="1.6"/>';
+  }else{
+    o+='<rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="'+(bw?"#efefef":"#d9c3a0")+'"/>';
+    o+='<rect x="'+(x+12)+'" y="'+(y+28)+'" width="40" height="26" fill="'+(bw?"#ffffff":"#c9a27a")+'" stroke="'+ink+'" stroke-width="2"/><path d="M'+(x+8)+' '+(y+30)+'L'+cx+' '+(y+10)+'L'+(x+56)+' '+(y+30)+'Z" fill="'+(bw?"#9a9a9a":"#a2543c")+'" stroke="'+ink+'" stroke-width="2" stroke-linejoin="round"/><rect x="'+(cx-5)+'" y="'+(y+38)+'" width="10" height="16" fill="'+(bw?"#4a4a4a":"#6b4a30")+'" stroke="'+ink+'" stroke-width="1.6"/>';
+  }
+  return o;
+}
+function boardSVG(pz,icons,C,ans,cellPx){
+  var s=64,pad=6,W=pz.C*s+pad*2,H=pz.R*s+pad*2,i,r,c,x,y,o,soil=C.bw?"#ffffff":mix(C.paper,"#c9a27a",0.18),fillBg=C.bw?"#e8e8e8":mix(C.paper,C.red,0.1);
+  o='<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" data-w="'+W+'" data-h="'+H+'" data-rows="'+pz.R+'" data-cols="'+pz.C+'" preserveAspectRatio="xMidYMid meet">';
+  for(r=0;r<pz.R;r++){for(c=0;c<pz.C;c++){
+    i=r*pz.C+c;x=pad+c*s;y=pad+r*s;
+    if(pz.blocked[i]){
+      o+='<g data-cell="'+i+'" data-kind="blocked" data-block="'+pz.blocked[i]+'">'+blockedArt(pz.blocked[i],x,y,s,C)+'<rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="none" stroke="'+C.ink+'" stroke-width="2"/></g>';
+    }else{
+      var pi=pz.solution[i],isClue=pz.clue[i],show=isClue||ans;
+      o+='<g data-cell="'+i+'" data-kind="'+(isClue?"clue":(ans?"fill":"empty"))+'"'+(show?' data-plant="'+pz.plants[pi]+'"':'')+'><rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="'+((ans&&!isClue)?fillBg:soil)+'" stroke="'+C.ink+'" stroke-width="2"/>';
+      if(show){o+=plantIcon(icons[pi],C,x+s/2,y+s/2,50);}
+      o+='</g>';
+    }
+  }}
+  o+='<rect x="'+pad+'" y="'+pad+'" width="'+(pz.C*s)+'" height="'+(pz.R*s)+'" fill="none" stroke="'+C.ink+'" stroke-width="4" rx="3"/>';
+  return o+'</svg>';
+}
+function iconTag(key,C,px){return iconSVG(key,C,px);}
+function ruleText1(pz){
+  if(pz.rule==="count"){return 'Plant each of the '+pz.n+' plants exactly '+pz.k+' times in the garden.';}
+  var hasBlock=false,i;for(i=0;i<pz.blocked.length;i++){if(pz.blocked[i]){hasBlock=true;}}
+  if(!hasBlock&&pz.R===pz.C){return 'Every plant appears exactly once in each row and once in each column.';}
+  return 'No plant may repeat in any row or in any column. Not every plant has to appear in every row.';
+}
+function pairChips(pairs,icons,C,cls,sym){
+  var o="",i;
+  for(i=0;i<pairs.length;i++){o+='<span class="ch '+cls+'">'+iconTag(icons[pairs[i][0]],C,22)+'<i>'+sym+'</i>'+iconTag(icons[pairs[i][1]],C,22)+'</span>';}
+  return o;
+}
+function rulesHTML(pg,C){
+  var pz=pg.pz,o='<div class="rules fit2"><div class="rt">Garden rules</div><ol>';
+  o+='<li>'+esc(ruleText1(pz))+'</li>';
+  o+='<li>Foes may never touch side by side (up, down, left or right).'+(pz.foes.length?' <span class="chs">'+pairChips(pz.foes,pg.icons,C,"foe","x")+'</span>':' No foes in this garden.')+'</li>';
+  o+='<li>These friends must touch side by side at least once.'+(pz.friends.length?' <span class="chs">'+pairChips(pz.friends,pg.icons,C,"fr","+")+'</span>':' (none in this garden)')+'</li>';
+  o+='<li>'+pz.nClues+' beds are already planted. Path, pond and shed squares stay empty.</li></ol>';
+  o+='<div class="disc">'+esc(DISCLAIMER)+'</div></div>';
+  return o;
+}
+function legendHTML(pg,C){
+  var o='<div class="leg">',i;
+  for(i=0;i<pg.pz.plants.length;i++){o+='<span class="lg">'+iconTag(pg.icons[i],C,26)+'<b>'+esc(pg.names[i])+'</b></span>';}
+  return o+'</div>';
+}
+function tipHTML(pg){
+  return '<div class="tip fit2"><b>'+SEASON_NAME[pg.season]+' tip:</b> '+esc(pg.tip)+'</div><div class="notes"><b>Gardener\'s notes</b><span class="nl"></span><span class="nl"></span></div>';
+}
+
+/* ================= page chrome ================= */
+function patternSVG(d,C){
+  if(S.pattern==="none"){return "";}
+  var o='<svg class="bgpat" xmlns="http://www.w3.org/2000/svg" width="'+d.W+'" height="'+d.H+'" viewBox="0 0 '+d.W+' '+d.H+'"><defs>';
+  var col=mix(C.paper,C.ink,C.bw?0.08:0.06);
+  if(S.pattern==="dots"){o+='<pattern id="ptn" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="14" cy="14" r="2" fill="'+col+'"/></pattern>';}
+  else if(S.pattern==="leaves"){o+='<pattern id="ptn" width="70" height="70" patternUnits="userSpaceOnUse"><path d="M12 24C12 14 22 10 30 12C30 22 22 28 12 24Z" fill="'+col+'"/><path d="M44 62C44 52 54 48 62 50C62 60 54 66 44 62Z" fill="'+col+'"/></pattern>';}
+  else{o+='<pattern id="ptn" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" fill="none" stroke="'+col+'" stroke-width="1"/></pattern>';}
+  return o+'</defs><rect width="'+d.W+'" height="'+d.H+'" fill="url(#ptn)"/></svg>';
+}
+function frameHTML(d,C){
+  if(S.border==="none"){return "";}
+  var st=(S.border==="solid")?"3px solid":(S.border==="double")?"6px double":"4px solid",rad=(S.border==="rounded")?"22px":"0";
+  return '<div class="frame" style="left:'+(d.ml-10)+'px;top:'+(d.mt-10)+'px;right:'+(d.mr-10)+'px;bottom:'+(d.mb-10)+'px;border:'+st+' '+(S.border==="rounded"?C.a:C.ink)+';border-radius:'+rad+';"></div>';
+}
+function headHTML(kick,title,chip){
+  var h='<div class="hd hd-'+S.header+'"><div class="htxt"><div class="kick fit1">'+esc(kick)+'</div><h2 class="ttl fit1">'+esc(title)+'</h2></div>';
+  if(chip){h+='<div class="lvlchip">'+esc(chip)+'</div>';}
+  return h+'</div>';
+}
+
+/* ================= page list ================= */
+function buildPages(dk){
+  var L=[],i,s,wi,seasons=dk.plan.seasons,table=dk.plan.table;
+  if(S.book){L.push({k:"title"},{k:"copy"},{k:"howto"});}
+  for(s=0;s<seasons.length;s++){
+    var first=true;
+    for(wi=0;wi<dk.pages.length;wi++){
+      if(dk.pages[wi].season!==seasons[s]){continue;}
+      if(first&&S.book&&S.seasonPages){L.push({k:"season",season:seasons[s]});}
+      first=false;
+      L.push({k:"pz",wi:wi});
+    }
+  }
+  if(S.book&&S.guide){var gp=Math.ceil(table.list.length/9);for(i=0;i<gp;i++){L.push({k:"guide",gi:i});}}
+  var puzzleCount=L.length,pzs=[];
+  if(S.ans){
+    for(i=0;i<dk.pages.length;i++){pzs.push(i);}
+    for(i=0;i<pzs.length;i+=2){L.push({k:"ans",wis:pzs.slice(i,i+2)});}
+  }
+  return {list:L,puzzleCount:puzzleCount};
+}
+function viewList(dk){
+  var b=buildPages(dk),idx=[],i;
+  for(i=0;i<b.list.length;i++){if((S.view==="answer")===(b.list[i].k==="ans")){idx.push(i);}}
+  if(!idx.length){for(i=0;i<b.puzzleCount;i++){idx.push(i);}}
+  return {all:b.list,idx:idx};
+}
+
+/* ================= match quiz ================= */
+function matchBody(pg,dk,ans,C){
+  var m=pg.match,T=dk.plan.table,i,L="",Rr="",Q="",letters="ABCDEFGHIJ";
+  for(i=0;i<m.N;i++){
+    var lk=T.byKey[m.left[i]],rk=T.byKey[m.right[i]];
+    L+='<div class="mrow"><span class="n">'+(i+1)+'</span>'+iconTag(lk.ic,C,34)+'<b class="mn">'+esc(lk.n)+'</b><span class="bl'+(ans?' ans':'')+'" style="min-width:34px">'+(ans?letters.charAt(m.ans[i]):'&nbsp;')+'</span></div>';
+    Rr+='<div class="mrow"><span class="n">'+letters.charAt(i)+'</span>'+iconTag(rk.ic,C,34)+'<b class="mn">'+esc(rk.n)+'</b></div>';
+  }
+  for(i=0;i<m.pairs.length;i++){
+    var pa=T.byKey[m.pairs[i].a],pb=T.byKey[m.pairs[i].b],opts="",rels=[["friend","Friends"],["foe","Foes"],["none","No rule"]],j;
+    for(j=0;j<3;j++){opts+='<span class="opt"><i class="cbx2'+(ans&&m.pairs[i].rel===rels[j][0]?' on':'')+'"></i>'+rels[j][1]+'</span>';}
+    Q+='<div class="qrow"><span class="n">'+(i+1)+'</span>'+iconTag(pa.ic,C,30)+'<b class="mn">'+esc(pa.n)+'</b><i class="amp">&amp;</i>'+iconTag(pb.ic,C,30)+'<b class="mn">'+esc(pb.n)+'</b><span class="opts">'+opts+'</span></div>';
+  }
+  return '<div class="mwrap fit2"><div class="mh">Part A. Match each plant with one good friend. Write the letter.</div><div class="mcols"><div class="mcol">'+L+'</div><div class="mcol">'+Rr+'</div></div><div class="mh">Part B. Are these two plants friends, foes, or is there no common rule?</div><div class="qcol">'+Q+'</div><div class="disc">'+esc(DISCLAIMER)+'</div></div>';
+}
+function matchKeyText(pg,dk){
+  var m=pg.match,T=dk.plan.table,letters="ABCDEFGHIJ",i,a=[],b=[];
+  for(i=0;i<m.N;i++){a.push((i+1)+" "+T.byKey[m.left[i]].n+" = "+letters.charAt(m.ans[i])+" ("+T.byKey[m.right[m.ans[i]]].n+")");}
+  var rn={friend:"Friends",foe:"Foes",none:"No rule"};
+  for(i=0;i<m.pairs.length;i++){b.push((i+1)+" "+T.byKey[m.pairs[i].a].n+" and "+T.byKey[m.pairs[i].b].n+": "+rn[m.pairs[i].rel]);}
+  return {a:a,b:b};
+}
+
+/* ================= plant guide cards ================= */
+function namesOf(T,map,max){
+  var ks=[],k,out=[],i;
+  for(k in map){ks.push(k);}
+  ks.sort(function(x,y){return T.byKey[x].n<T.byKey[y].n?-1:1;});
+  for(i=0;i<ks.length&&i<max;i++){out.push(T.byKey[ks[i]].n);}
+  var s=out.join(", ");
+  if(ks.length>max){s+=" +"+(ks.length-max)+" more";}
+  return s||"none listed";
+}
+function guideCards(T,gi,C){
+  var o='<div class="gcards fit2">',i,st=gi*9,en=Math.min(T.list.length,st+9);
+  for(i=st;i<en;i++){
+    var p=T.list[i],note=p.custom?"Your own plant.":PLANT_NOTE[p.k],sea=p.custom?"any season":PLANT_SEASON[p.k];
+    o+='<div class="gc"><div class="gct">'+iconTag(p.ic,C,46)+'<div><b class="gn">'+esc(p.n)+'</b><div class="gs">Best in '+esc(sea)+'</div></div></div>'+
+       '<div class="gl2"><b>Friends:</b> '+esc(namesOf(T,T.fr[p.k],5))+'</div><div class="gl2"><b>Foes:</b> '+esc(namesOf(T,T.fo[p.k],4))+'</div><div class="gnote">'+esc(note)+'</div></div>';
+  }
+  return o+'</div>';
+}
+
+/* ================= pages ================= */
+function pageInner(dk,desc,pi){
+  var C=pal(),P=dk.params,h='',noNum=S.book&&(desc.k==="title"||desc.k==="copy"),T=dk.plan.table,i;
+  if(desc.k==="title"){
+    h+='<div class="cover">'+logoSVG(170,C.a,C.paper,C.ink).replace('width="170" height="170"','class="big" width="170" height="170"')+'<div class="kick fit1">Companion planting logic puzzles - '+dk.pages.length+' puzzles</div><h2 class="ttl fit1" style="font-size:calc(40px*var(--ts));">'+esc(gameTitle())+'</h2><div class="sub fit2">'+esc(S.sub)+'</div><div class="covicons">'+iconTag("tomato",C,60)+iconTag("basil",C,60)+iconTag("marigold",C,60)+iconTag("carrot",C,60)+'</div></div>'+footHTML(pi,"",false);
+  }else if(desc.k==="copy"){
+    var yr=new Date().getFullYear(),who=S.seller||"the publisher";
+    h+=headHTML("Copyright","Legal notes","")+'<div class="txt-page fit2"><p><b>'+esc(gameTitle())+'</b></p><p>Copyright &copy; '+yr+' '+esc(who)+'. All rights reserved.</p><p>No part of this book may be reproduced or transmitted without written permission, except that the purchaser may copy the puzzles for personal use.</p><p>'+esc(DISCLAIMER)+' Companion planting lists in this book come from widely repeated gardening tradition. Results vary with climate, soil and variety, so treat them as friendly suggestions.</p><p>All plant drawings are original. Every puzzle has exactly one solution, proven by a solver. Puzzle set seed: '+P.seed+'.</p><p>First edition.</p></div>'+footHTML(pi,"",false);
+  }else if(desc.k==="howto"){
+    var ex=["tomato","basil","fennel"],exI=[iconTag("tomato",C,26),iconTag("basil",C,26),iconTag("fennel",C,26)];
+    h+=headHTML("Before you start","How to solve a garden","")+'<div class="txt-page fit2" style="justify-content:flex-start;"><p>Fill every empty bed with a plant. Each puzzle shows its own rules box. Use the plant key to find the pictures.</p><h3>Reading the rules box</h3><ul><li>Row and column rule: a plant cannot repeat in a row or column, or the box tells you how many times each plant is used.</li><li>Foes (marked with an x) may never touch side by side. <span class="chs"><span class="ch foe">'+exI[0]+'<i>x</i>'+exI[2]+'</span></span> Tomato and fennel are foes.</li><li>Friends (marked with a plus) must touch side by side at least once. <span class="chs"><span class="ch fr">'+exI[0]+'<i>+</i>'+exI[1]+'</span></span> Tomato and basil are friends.</li><li>Path, pond and shed squares stay empty.</li></ul><h3>Solving tips</h3><ul><li>Start with the beds that have the fewest choices.</li><li>Cross out plants a neighbor foe rules out.</li><li>Every puzzle has exactly one solution, so you never need to guess.</li></ul><p class="disc">'+esc(DISCLAIMER)+'</p></div>'+footHTML(pi,"",true);
+  }else if(desc.k==="season"){
+    var ic="",ks=[],k;
+    for(k=0;k<PLANT_KEYS.length;k++){if(PLANT_SEASON[PLANT_KEYS[k]]===desc.season){ks.push(PLANT_KEYS[k]);}}
+    ks=ks.slice(0,6);
+    for(k=0;k<ks.length;k++){ic+=iconTag(ks[k],C,54);}
+    var cnt=0,w;for(w=0;w<dk.pages.length;w++){if(dk.pages[w].season===desc.season){cnt++;}}
+    var tp=TIPS[desc.season],tl="";for(k=0;k<3;k++){tl+='<li>'+esc(tp[(k*5+dk.params.seed)%tp.length])+'</li>';}
+    h+='<div class="cover"><div class="kick fit1">Season section</div><h2 class="ttl fit1" style="font-size:calc(44px*var(--ts));">'+SEASON_NAME[desc.season]+' Beds</h2><div class="sub fit2">'+cnt+' puzzle'+(cnt===1?'':'s')+' in this section</div><div class="covicons">'+ic+'</div><div class="seasontips fit2"><h3>Three '+SEASON_NAME[desc.season].toLowerCase()+' tips</h3><ul>'+tl+'</ul></div></div>'+footHTML(pi,"",true);
+  }else if(desc.k==="guide"){
+    var gp=Math.ceil(T.list.length/9);
+    h+=headHTML("Plant guide","Companion cheat sheet"+(gp>1?" "+(desc.gi+1)+" of "+gp:""),"")+'<p class="instr">Traditional friends and foes for every plant in this book. '+esc(DISCLAIMER)+'</p>'+guideCards(T,desc.gi,C)+footHTML(pi,"",true);
+  }else if(desc.k==="pz"){
+    var pg=dk.pages[desc.wi];
+    if(pg.t==="match"){
+      h+=headHTML(SEASON_NAME[pg.season]+" - quiz",TYPE_NAME.match+" "+(desc.wi+1),DIFF_NAME[pg.diff])+'<div class="namerow"><span>Name</span><span>Date</span></div>'+matchBody(pg,dk,false,C)+'<div class="tip fit2"><b>'+SEASON_NAME[pg.season]+' tip:</b> '+esc(pg.tip)+'</div>'+footHTML(pi,"G"+(desc.wi+1),true);
+    }else{
+      var pz=pg.pz,sz=pg.t==="raised"?"Raised bed 3 x 4":(pz.R+" x "+pz.C+" garden");
+      h+=headHTML(SEASON_NAME[pg.season]+" - "+sz,(pg.t==="raised"?TYPE_NAME.raised:TYPE_NAME.classic)+" "+(desc.wi+1),DIFF_NAME[pg.diff])+rulesHTML(pg,C)+'<div class="board-wrap">'+boardSVG(pz,pg.icons,C,false)+'</div>'+legendHTML(pg,C)+tipHTML(pg)+footHTML(pi,"G"+(desc.wi+1),true);
+    }
+  }else if(desc.k==="ans"){
+    var tiles="",q;
+    for(q=0;q<desc.wis.length;q++){
+      var pgA=dk.pages[desc.wis[q]],nn=desc.wis[q]+1;
+      if(pgA.t==="match"){
+        var kt=matchKeyText(pgA,dk),ll="";
+        for(i=0;i<kt.a.length;i++){ll+='<div>'+esc(kt.a[i])+'</div>';}
+        ll+='<div class="kgap"></div>';
+        for(i=0;i<kt.b.length;i++){ll+='<div>'+esc(kt.b[i])+'</div>';}
+        tiles+='<div class="tile keytile fit2"><div class="tt">'+TYPE_NAME.match+' '+nn+' - '+DIFF_NAME[pgA.diff]+'</div>'+ll+'</div>';
+      }else{
+        tiles+='<div class="tile"><div class="tt">'+(pgA.t==="raised"?TYPE_NAME.raised:TYPE_NAME.classic)+' '+nn+' - '+DIFF_NAME[pgA.diff]+' (shaded beds are the answers)</div><div class="board-wrap">'+boardSVG(pgA.pz,pgA.icons,C,true)+'</div>'+legendHTML(pgA,C)+'</div>';
+      }
+    }
+    h+=headHTML("Answer key","Solutions","")+'<div class="ans-grid2">'+tiles+'</div>'+footHTML(pi,"Key",true);
+  }
+  return {html:h,noNum:noNum};
+}
+function pageSheet(dk,list,pi,forExport){
+  var desc=list[pi],inner=pageInner(dk,desc,pi);
+  return sheetHTML(pi,inner.html,desc.k,forExport);
+}
+function dimsFor(pi){
+  var t=TRIMS[S.trim],tw=Math.round(t[0]*96),th=Math.round(t[1]*96),b=S.bleed?BLEED_PX:0,recto=(pi%2===0);
+  var inn=S.mIn*96,out=S.mOut*96,ml,mr;
+  if(S.mirror){ml=recto?inn:out;mr=recto?out:inn;}else{ml=mr=(inn+out)/2;}
+  return {W:tw+b,H:th+2*b,tx:(S.bleed&&!recto)?b:0,ty:b,tw:tw,th:th,ml:Math.round(ml),mr:Math.round(mr),mt:Math.round(S.mTb*96),mb:Math.round(S.mTb*96),recto:recto,bleed:S.bleed};
+}
+function guidesHTML(d){
+  var h='<div class="guide-safe" style="left:'+d.ml+'px;top:'+d.mt+'px;right:'+d.mr+'px;bottom:'+d.mb+'px;"></div>';
+  var gx=d.recto?d.ml:(d.tw-d.mr);
+  h+='<div class="guide-gutter" style="left:'+gx+'px;"></div>';
+  if(d.bleed){h+='<div class="guide-trim"></div><div class="guide-tag" style="left:2px;top:2px;">trim</div>';}
+  return h;
+}
+function sheetHTML(pi,inner,kind,forExport){
+  var d=dimsFor(pi),C=pal(),ts=(0.82+0.18*Math.min(1,Math.min(d.tw,d.th)/720)).toFixed(3);
+  var vars='--paper:'+C.paper+';--ink:'+C.ink+';--p1:'+C.a+';--p2:'+C.line+';--red:'+C.red+';--soft:'+C.soft+';--paper-scale:1;';
+  var h='<div class="sheet-slot"><div class="sheet" data-kind="'+kind+'" data-pi="'+pi+'" style="width:'+d.W+'px;height:'+d.H+'px;'+vars+'">';
+  h+=patternSVG(d,C);
+  h+='<div class="trim" style="left:'+d.tx+'px;top:'+d.ty+'px;width:'+d.tw+'px;height:'+d.th+'px;">';
+  if(S.wm==="faint"){h+='<div class="wm">'+logoSVG(Math.round(Math.min(d.tw,d.th)*0.6),mix(C.paper,C.ink,0.05),mix(C.paper,C.ink,0.1),mix(C.paper,C.ink,0.16))+'</div>';}
+  h+=frameHTML(d,C);
+  h+='<div class="pg" data-ts="'+ts+'" data-mb="'+d.mb+'" data-mr="'+d.mr+'" style="--ts:'+ts+';padding:'+d.mt+'px '+d.mr+'px '+d.mb+'px '+d.ml+'px;">'+inner+'</div>';
+  if(!forExport&&S.guides){h+=guidesHTML(d);}
+  h+='</div></div></div>';
+  return h;
+}
+function footHTML(pi,label,showNum){
+  var C=pal(),sd=deck?deck.params.seed:0;
+  var left='Seed '+sd+(label?' '+label:'');
+  var mid=S.seller?('Created by '+esc(S.seller)):'';
+  var right=(showNum&&S.nums)?('<span class="pno">'+(pi+1)+'</span>'):'';
+  if(S.wm==="footer"){right+=logoSVG(18,C.a,C.paper,C.ink);}
+  return '<div class="pf"><span class="pl">'+esc(left)+'</span><span class="pm">'+mid+'</span><span class="pr">'+right+'</span></div>';
+}
+function fitSheet(sheet){
+  var pgs=sheet.querySelectorAll(".pg"),a;
+  for(a=0;a<pgs.length;a++){
+    var pg=pgs[a],ts0=parseFloat(pg.getAttribute("data-ts"))||1,mb=parseFloat(pg.getAttribute("data-mb"))||0,mr=parseFloat(pg.getAttribute("data-mr"))||0;
+    var s=ts0,guard=0;
+    var over=function(){
+      var last=pg.lastElementChild;if(!last){return false;}
+      if(last.offsetTop+last.offsetHeight>pg.clientHeight-mb+1){return true;}
+      var kids=pg.children,k;
+      for(k=0;k<kids.length;k++){if(kids[k].offsetLeft+kids[k].offsetWidth>pg.clientWidth-mr+2){return true;}}
+      var f2=pg.querySelectorAll(".fit2");
+      for(k=0;k<f2.length;k++){if(f2[k].scrollHeight>f2[k].clientHeight+1||f2[k].scrollWidth>f2[k].clientWidth+1){return true;}}
+      var bwp=pg.querySelector(".board-wrap");
+      if(bwp&&bwp.clientHeight<pg.clientHeight*0.3){return true;}
+      return false;
+    };
+    while(over()&&s>0.3&&guard<70){s-=0.025;pg.style.setProperty("--ts",s.toFixed(3));guard++;}
+    var f1=pg.querySelectorAll(".fit1"),i;
+    for(i=0;i<f1.length;i++){
+      var fs=parseFloat(window.getComputedStyle(f1[i]).fontSize),g2=0;
+      while(f1[i].scrollWidth>f1[i].clientWidth+1&&fs>6&&g2<60){fs-=0.5;f1[i].style.fontSize=fs+"px";g2++;}
+    }
+    var bws=pg.querySelectorAll(".board-wrap");
+    for(i=0;i<bws.length;i++){
+      var sv=bws[i].querySelector("svg");if(!sv){continue;}
+      var vw=parseFloat(sv.getAttribute("data-w")),vh=parseFloat(sv.getAttribute("data-h")),aw=bws[i].clientWidth,ah=bws[i].clientHeight;
+      var sc=Math.max(0,Math.min(aw/vw,ah/vh));
+      sv.style.width=Math.floor(vw*sc)+"px";sv.style.height=Math.floor(vh*sc)+"px";
+      sv.setAttribute("width",Math.floor(vw*sc));sv.setAttribute("height",Math.floor(vh*sc));
+    }
+  }
+}
+function fitAll(root){var sh=root.querySelectorAll(".sheet"),i;for(i=0;i<sh.length;i++){fitSheet(sh[i]);}}
+function parseSeed(v){
+  v=String(v||"").replace(/^\s+|\s+$/g,"");
+  if(v===""){return null;}
+  if(/^[0-9]+$/.test(v)){return (parseInt(v,10)>>>0);}
+  var h=2166136261,i;for(i=0;i<v.length;i++){h=Math.imul(h^v.charCodeAt(i),16777619);}
+  return h>>>0;
+}
+function randomSeed(){return (Math.floor(Math.random()*900000000)+100000);}
+function pad(s,n){s=String(s);while(s.length<n){s="0"+s;}return s;}
+function segSet(id,val){var b=$(id).querySelectorAll("button"),i;for(i=0;i<b.length;i++){b[i].setAttribute("aria-pressed",b[i].getAttribute("data-val")===String(val)?"true":"false");}}
+function extend(a,b){var k;for(k in b){if(Object.prototype.hasOwnProperty.call(b,k)){a[k]=b[k];}}return a;}
+function snapshot(){return {s:JSON.stringify(S),deck:deck};}
+function updateUndoBtns(){$("btnUndo").disabled=hidx<=0;$("btnRedo").disabled=hidx>=hist.length-1;}
+function commit(){
+  readControls();
+  var sn=snapshot();
+  if(hidx>=0&&hist[hidx].s===sn.s&&hist[hidx].deck===sn.deck){return;}
+  hist=hist.slice(0,hidx+1);hist.push(sn);
+  if(hist.length>31){hist.shift();}
+  hidx=hist.length-1;updateUndoBtns();autosave();
+}
+function restore(i){
+  var sn=hist[i],keep={view:S.view,layout2:S.layout2,zoom:S.zoom};
+  S=extend(defaultState(),JSON.parse(sn.s));S.view=keep.view;S.layout2=keep.layout2;S.zoom=keep.zoom;
+  deck=sn.deck;curPage=0;writeControls();updateUndoBtns();renderSim();renderPreview();autosave();
+  setProgress("History step "+(i+1)+" / "+hist.length+" restored.",1);
+}
+function undo(){if(hidx>0){hidx--;restore(hidx);}}
+function redo(){if(hidx<hist.length-1){hidx++;restore(hidx);}}
+function setProgress(t,f){$("progressText").innerText=t;$("progressFill").style.width=(f*100).toFixed(0)+"%";}
+function showError(msg){var e=$("progressError");if(!msg){e.style.display="none";e.innerText="";return;}e.style.display="block";e.innerText=msg;}
+function layoutDims(){var L=S.layout2;if(L==="spread"){return {c:2,r:1};}if(L==="strip"){return {c:3,r:1};}if(L==="grid"){return {c:2,r:2};}return {c:1,r:1};}
+function previewScale(){
+  var sc=$("previewScroll"),ld=layoutDims(),d=dimsFor(0),aw=sc.clientWidth-44,ah=sc.clientHeight-44,gap=24;
+  var s=Math.min((aw-(ld.c-1)*gap)/(ld.c*d.W),(ah-(ld.r-1)*gap)/(ld.r*d.H));
+  return clamp(s,0.08,2)*S.zoom/100;
+}
+function inlineExportColors(root){
+  var els=root.querySelectorAll("*"),i,el,cs;
+  for(i=0;i<els.length;i++){
+    el=els[i];
+    if(el.namespaceURI==="http://www.w3.org/2000/svg"){continue;}
+    try{
+      cs=window.getComputedStyle(el);
+      var bg=cs.backgroundColor;
+      if(bg&&bg!=="rgba(0, 0, 0, 0)"&&bg!=="transparent"){el.style.backgroundColor=bg;}
+      el.style.backgroundImage="none";
+      el.style.color=cs.color;
+      if(cs.borderTopStyle!=="none"&&parseFloat(cs.borderTopWidth)>0){el.style.borderColor=cs.borderTopColor;}
+      el.style.boxShadow="none";el.style.textShadow="none";el.style.webkitBackdropFilter="none";el.style.backdropFilter="none";
+    }catch(e){}
+  }
+}
+function exportFail(msg){showError(msg+" Falling back to Exact Print.");setProgress(msg,1);setTimeout(function(){exactPrint();},600);}
+function libsOK(){return typeof window.html2canvas!=="undefined"&&window.jspdf&&window.jspdf.jsPDF;}
+function waitFonts(cb){try{if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){cb();},function(){cb();});return;}}catch(e){}cb();}
+function download(blob,name){
+  var a=document.createElement("a"),url=URL.createObjectURL(blob);
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1500);
+}
+function capturePages(onPage,onDone,onFail){
+  waitFonts(function(){
+    var sheets;
+    try{sheets=buildExportDeck();}catch(e){onFail("Could not build pages: "+(e&&e.message?e.message:e));return;}
+    var i=0,n=sheets.length;
+    function next(){
+      if(i>=n){onDone(n);return;}
+      window.html2canvas(sheets[i],{scale:EXPORT_SCALE,backgroundColor:pal().paper,useCORS:true,logging:false,ignoreElements:keepFor(sheets[i])}).then(function(canvas){
+        if(!canvas||!canvas.width||!canvas.height){throw new Error("capture "+(i+1)+" came back blank.");}
+        onPage(canvas,i,n,sheets[i]);
+        i++;setProgress("Rendering page "+i+" / "+n+" ...",i/n);
+        setTimeout(next,0);
+      }).then(null,function(e){onFail("Export failed on page "+(i+1)+": "+(e&&e.message?e.message:String(e)));});
+    }
+    setProgress("Rendering page 1 / "+n+" ...",0);next();
+  });
+}
+function exportPDF(){
+  showError("");
+  if(!deck){exportFail("Nothing to export: generate a kit first.");return;}
+  if(!libsOK()){exportFail("PDF libraries did not load (offline? html2canvas/jsPDF missing).");return;}
+  readControls();
+  var pdf=null;
+  capturePages(function(canvas,i,n,sheet){
+    var wpt=sheet.offsetWidth*0.75,hpt=sheet.offsetHeight*0.75,orient=wpt>hpt?"landscape":"portrait";
+    var img=canvas.toDataURL("image/jpeg",0.92);
+    if(!img||img.length<4000){throw new Error("capture "+(i+1)+" looks empty.");}
+    if(!pdf){pdf=new window.jspdf.jsPDF({unit:"pt",format:[wpt,hpt],orientation:orient});}else{pdf.addPage([wpt,hpt],orient);}
+    pdf.addImage(img,"JPEG",0,0,wpt,hpt);
+  },function(n){
+    try{
+      var blob=pdf.output("blob");download(blob,slug(gameTitle())+".pdf");
+      window.__lastPDF={pages:n,bytes:blob.size};
+      setProgress("Done. PDF downloaded ("+n+" pages).",1);
+    }catch(e){exportFail("PDF save failed: "+(e&&e.message?e.message:e));}
+  },exportFail);
+}
+function exportZip(){
+  showError("");
+  if(!deck){exportFail("Nothing to export: generate a kit first.");return;}
+  if(typeof window.html2canvas==="undefined"||typeof window.JSZip==="undefined"){exportFail("ZIP libraries did not load (offline? html2canvas/JSZip missing).");return;}
+  readControls();
+  var zip=new window.JSZip(),pending=0,finished=false,total=0,doneCb=null;
+  capturePages(function(canvas,i){
+    pending++;
+    canvas.toBlob(function(b){zip.file("page-"+pad(i+1,3)+".png",b);pending--;if(finished&&!pending&&doneCb){doneCb();}},"image/png");
+  },function(n){
+    total=n;finished=true;
+    doneCb=function(){
+      zip.generateAsync({type:"blob"}).then(function(blob){
+        download(blob,slug(gameTitle())+"-png.zip");window.__lastZip={pages:total,bytes:blob.size};
+        setProgress("Done. ZIP downloaded ("+total+" PNG pages).",1);
+      }).then(null,function(e){exportFail("ZIP failed: "+(e&&e.message?e.message:e));});
+    };
+    if(!pending){doneCb();}
+  },exportFail);
+}
+function exactPrint(){
+  if(!deck){showError("Nothing to print: generate a kit first.");return;}
+  readControls();
+  var d=dimsFor(0),sheets;
+  try{sheets=buildExportDeck();}catch(e){showError("Print build failed: "+e.message);window.print();return;}
+  var css=document.querySelector("style").innerHTML,body=$("exportDeck").innerHTML;
+  var html="<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>"+esc(gameTitle())+"</title><link href=\"https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Josefin+Sans:wght@500;600;700&display=swap\" rel=\"stylesheet\"><style>"+css+
+    "@page{size:"+d.W+"px "+d.H+"px;margin:0;}html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important;}.sheet-slot{width:"+d.W+"px;height:"+d.H+"px;overflow:hidden;page-break-after:always;break-after:page;}.sheet{transform:none!important;box-shadow:none!important;}</style></head><body>"+body+"</body></html>";
+  var w=null;try{w=window.open("","_blank");}catch(e2){w=null;}
+  if(!w){showError(($("progressError").innerText?$("progressError").innerText+" ":"")+"Popup blocked: printing the current view instead. Allow popups for the full-kit print.");window.print();return;}
+  w.document.open();w.document.write(html);w.document.close();w.focus();
+  setTimeout(function(){w.print();},500);
+}
+function afterChange(commitNow){readControls();renderPreview();if(commitNow){commit();}else{autosave();}}
+function wireSeg(id,key,numeric){
+  var b=$(id).querySelectorAll("button"),i;
+  for(i=0;i<b.length;i++){(function(btn){btn.addEventListener("click",function(){
+    var v=btn.getAttribute("data-val");S[key]=numeric?parseInt(v,10):v;segSet(id,S[key]);
+    readControls();renderPreview();commit();
+  });})(b[i]);}
+}
+function setView(v){S.view=v;curPage=0;$("viewPuzzle").setAttribute("aria-pressed",v==="puzzle"?"true":"false");$("viewAnswer").setAttribute("aria-pressed",v==="answer"?"true":"false");renderPreview();}
+function openHelp(){$("helpOverlay").classList.add("show");$("btnHelpClose").focus();}
+function closeHelp(){$("helpOverlay").classList.remove("show");$("btnHelp").focus();}
+function movePage(dlt){
+  if(!deck){return;}
+  var vl=viewList(deck),np=clamp(curPage+dlt,0,Math.max(0,vl.idx.length-1));
+  if(np!==curPage){curPage=np;renderPreview();}
+}
+
+function keepFor(sheet){
+  return function(el){
+    var t=el.tagName;
+    if(t==="HTML"||t==="BODY"||t==="HEAD"||t==="STYLE"||t==="LINK"||t==="META"||t==="TITLE"||t==="SCRIPT"){return false;}
+    return !(el===sheet||el.contains(sheet)||sheet.contains(el));
+  };
+}
+
+/* ================= seed code ================= */
+var hist=[],hidx=-1,STORE_KEY="gc-project-v1";
+function renderSim(){}
+var RULE_KEYS=["latin","count","mixed"];
+function encodeCode(s,seed){
+  var a=0,i,sz=0,df=0,ty=0,se=0;
+  for(i=0;i<5;i++){if(s.sizes.indexOf(i+4)>=0){sz|=(1<<i);}}
+  for(i=0;i<4;i++){if(s.diffs.indexOf(DIFFS[i])>=0){df|=(1<<i);if(0){}}if(s.seasons.indexOf(SEASONS[i])>=0){se|=(1<<i);}}
+  for(i=0;i<3;i++){if(s.types[TYPES[i]]){ty|=(1<<i);}}
+  a=sz+df*32+ty*512+Math.max(0,RULE_KEYS.indexOf(s.rule))*4096+(s.pagesPer-1)*16384+se*65536+(s.blocked?1:0)*1048576+Math.max(0,PRESET_KEYS.indexOf(s.preset))*2097152+Math.max(0,TRIM_KEYS.indexOf(s.trim))*16777216+(s.bleed?1:0)*67108864;
+  return "GC-"+pad(a.toString(36).toUpperCase(),6)+"-"+(seed>>>0).toString(36).toUpperCase();
+}
+function decodeCode(code){
+  var m=/^GC-([0-9A-Z]{5,6})-([0-9A-Z]{1,8})$/i.exec(String(code||"").replace(/\s+/g,""));
+  if(!m){return null;}
+  var a=parseInt(m[1],36),seed=parseInt(m[2],36)>>>0,i;
+  var sz=a%32,df=Math.floor(a/32)%16,ty=Math.floor(a/512)%8,ru=Math.floor(a/4096)%4,pg=Math.floor(a/16384)%4+1,se=Math.floor(a/65536)%16,bl=Math.floor(a/1048576)%2,pr=Math.floor(a/2097152)%8,tr=Math.floor(a/16777216)%4,bd=Math.floor(a/67108864)%2;
+  if(ru>2||pg>3||pr>4){return null;}
+  var sizes=[],diffs=[],seasons=[],types={};
+  for(i=0;i<5;i++){if(sz&(1<<i)){sizes.push(i+4);}}
+  for(i=0;i<4;i++){if(df&(1<<i)){diffs.push(DIFFS[i]);}if(se&(1<<i)){seasons.push(SEASONS[i]);}}
+  for(i=0;i<3;i++){types[TYPES[i]]=!!(ty&(1<<i));}
+  return {sizes:sizes,diffs:diffs,types:types,rule:RULE_KEYS[ru],pagesPer:pg,seasons:seasons,blocked:!!bl,preset:PRESET_KEYS[pr],trim:TRIM_KEYS[tr],bleed:!!bd,seed:seed};
+}
+
+/* ================= controls <-> state ================= */
+var TYPE_IDS={classic:"tyClassic",raised:"tyRaised",match:"tyMatch"};
+function reportBox(id,okText,count,errs){
+  var h="",i;
+  if(count){h+='<span style="color:#2d5016;font-weight:700;">'+count+' '+okText+'</span>';}
+  if(errs.length){
+    h+=' <span style="color:#8a2c1c;font-weight:700;">'+errs.length+' need fixing:</span><ul class="bad">';
+    for(i=0;i<errs.length;i++){h+='<li>Line '+errs[i].n+': '+esc(errs[i].why)+' ('+esc(errs[i].line.length>34?errs[i].line.slice(0,34)+"...":errs[i].line)+')</li>';}
+    h+='</ul>';
+  }
+  $(id).innerHTML=h;
+}
+function renderReports(){
+  var cT=$("inCustom").value,rT=$("inRules").value,t1=buildTable(cT,""),t2=buildTable(cT,rT),rn=0,i,ls=String(rT).split(/\r?\n/);
+  for(i=0;i<ls.length;i++){if(ls[i].replace(/\s+/g,"")){rn++;}}
+  var rErr=t2.err.slice(t1.err.length);
+  reportBox("customReport","custom plant"+(t1.customKeys.length===1?"":"s")+" ready",t1.customKeys.length,t1.err);
+  reportBox("ruleReport","rule"+(rn-rErr.length===1?"":"s")+" applied",rn-rErr.length,rErr);
+  return t2;
+}
+function readControls(){
+  var i;
+  S.sizes=[];for(i=4;i<=8;i++){if($("sz"+i).checked){S.sizes.push(i);}}
+  S.diffs=[];for(i=0;i<DIFFS.length;i++){if($("df_"+DIFFS[i]).checked){S.diffs.push(DIFFS[i]);}}
+  S.seasons=[];for(i=0;i<SEASONS.length;i++){if($("se_"+SEASONS[i]).checked){S.seasons.push(SEASONS[i]);}}
+  S.types={};for(i=0;i<TYPES.length;i++){S.types[TYPES[i]]=$(TYPE_IDS[TYPES[i]]).checked;}
+  S.rule=$("selRule").value;S.pagesPer=clamp(parseInt($("selPages").value,10)||1,1,3);S.blocked=$("inBlocked").checked;
+  S.title=$("inTitle").value;S.customText=$("inCustom").value;S.ruleText=$("inRules").value;S.useCustom=$("inUseCustom").checked;
+  S.sub=$("inSub").value;S.seedInput=$("inSeed").value;
+  S.preset=$("inPreset").value;S.header=$("inHeader").value;S.border=$("inBorder").value;S.pattern=$("inPattern").value;S.wm=$("inWm").value;S.nums=$("inNums").checked;
+  S.trim=$("inTrim").value;S.bleed=$("inBleed").checked;
+  S.mIn=clamp(parseFloat($("inMIn").value)||0.5,0.25,1.25);S.mOut=clamp(parseFloat($("inMOut").value)||0.5,0.25,1.25);S.mTb=clamp(parseFloat($("inMTb").value)||0.5,0.25,1.25);
+  S.mirror=$("inMirror").checked;S.guides=$("inGuides").checked;
+  S.book=$("inBook").checked;S.seasonPages=$("inSeasonPages").checked;S.guide=$("inGuide").checked;S.ans=$("inAns").checked;S.seller=$("inSeller").value;
+  S.layout2=$("selLayout").value;S.zoom=parseInt($("selZoom").value,10)||100;
+  var d=[];for(i=0;i<S.diffs.length;i++){d.push(DIFF_NAME[S.diffs[i]]+": "+DIFF_INFO[S.diffs[i]]);}
+  $("dfNote").innerText=d.join(". ");
+}
+function writeControls(){
+  var i;
+  for(i=4;i<=8;i++){$("sz"+i).checked=S.sizes.indexOf(i)>=0;}
+  for(i=0;i<DIFFS.length;i++){$("df_"+DIFFS[i]).checked=S.diffs.indexOf(DIFFS[i])>=0;}
+  for(i=0;i<SEASONS.length;i++){$("se_"+SEASONS[i]).checked=S.seasons.indexOf(SEASONS[i])>=0;}
+  for(i=0;i<TYPES.length;i++){$(TYPE_IDS[TYPES[i]]).checked=!!S.types[TYPES[i]];}
+  $("selRule").value=S.rule;$("selPages").value=String(S.pagesPer);$("inBlocked").checked=!!S.blocked;
+  $("inTitle").value=S.title;$("inCustom").value=S.customText;$("inRules").value=S.ruleText;$("inUseCustom").checked=!!S.useCustom;
+  $("inSub").value=S.sub;$("inSeed").value=S.seedInput;
+  $("inPreset").value=S.preset;$("inHeader").value=S.header;$("inBorder").value=S.border;$("inPattern").value=S.pattern;$("inWm").value=S.wm;$("inNums").checked=S.nums;
+  $("inTrim").value=S.trim;$("inBleed").checked=S.bleed;$("inMIn").value=S.mIn;$("inMOut").value=S.mOut;$("inMTb").value=S.mTb;
+  $("inMirror").checked=S.mirror;$("inGuides").checked=S.guides;
+  $("inBook").checked=S.book;$("inSeasonPages").checked=S.seasonPages;$("inGuide").checked=S.guide;$("inAns").checked=S.ans;$("inSeller").value=S.seller;
+  $("selLayout").value=S.layout2;$("selZoom").value=String(S.zoom);
+  $("viewPuzzle").setAttribute("aria-pressed",S.view==="puzzle"?"true":"false");$("viewAnswer").setAttribute("aria-pressed",S.view==="answer"?"true":"false");
+  var sw=document.querySelectorAll(".swatch");for(i=0;i<sw.length;i++){sw[i].setAttribute("aria-pressed",sw[i].getAttribute("data-preset")===S.preset?"true":"false");}
+  renderReports();readControls();
+}
+
+/* ================= project ================= */
+function projectJSON(){return JSON.stringify({v:1,app:"garden-companion-logic",state:S,params:deck?deck.params:null});}
+function autosave(){
+  try{window.localStorage.setItem(STORE_KEY,projectJSON());$("autoNote").innerText="Autosaved "+new Date().toLocaleTimeString()+".";}
+  catch(e){$("autoNote").innerText="Autosave unavailable in this browser. Use Save .json.";}
+}
+function applyProject(obj){
+  if(!obj||obj.app!=="garden-companion-logic"||!obj.state){throw new Error("Not a Garden Companion Logic project file.");}
+  S=extend(defaultState(),obj.state);
+  writeControls();
+  if(obj.params){generateFromParams(obj.params,function(){commit();});}
+  else{deck=null;curPage=0;renderPreview();commit();}
+}
+
+/* ================= preview ================= */
+function emptyHTML(){return '<div class="empty-card">'+logoSVG(96,"#ffffff","#7B9E87","#2D5016")+'<h2 class="gl">Garden Companion Logic</h2><p>Pick garden sizes, difficulty and puzzle types, then press <b>Generate Garden Book</b>. Every puzzle is proven to have exactly one solution.</p></div>';}
+function renderPreview(){
+  var host=$("previewHost");
+  updateNotes();
+  if(!deck){host.innerHTML=emptyHTML();$("sheetPos").innerText="Page - / -";$("kpiDeck").innerText="No book yet";$("kpiPreset").innerText=PRESETS[S.preset].name;$("btnPrev").disabled=true;$("btnNext").disabled=true;return;}
+  var vl=viewList(deck),ld=layoutDims(),per=ld.c*ld.r,scale=previewScale(),html="",v;
+  if(curPage>=vl.idx.length){curPage=Math.max(0,vl.idx.length-1);}
+  var d0=dimsFor(0);
+  for(v=curPage;v<Math.min(vl.idx.length,curPage+per);v++){
+    var pi=vl.idx[v],h=pageSheet(deck,vl.all,pi,false);
+    h=h.replace('<div class="sheet-slot">','<div class="sheet-slot" style="width:'+Math.round(d0.W*scale)+'px;height:'+Math.round(d0.H*scale)+'px;overflow:hidden;">');
+    h=h.replace("--paper-scale:1;","--paper-scale:"+scale.toFixed(4)+";");
+    html+=h;
+  }
+  host.innerHTML=html;
+  fitAll(host);
+  $("sheetPos").innerText="Page "+(curPage+1)+" / "+vl.idx.length+(S.view==="answer"?" (answers)":"");
+  $("btnPrev").disabled=curPage<=0;$("btnNext").disabled=curPage>=vl.idx.length-1;
+  $("kpiDeck").innerText=deck.pages.length+" puzzles";
+  $("kpiPreset").innerText=PRESETS[S.preset].name;
+  $("metaLine").innerText="Seed "+deck.params.seed+" • "+vl.all.length+" pages in book • trim "+S.trim+(S.bleed?" + bleed":"");
+}
+function insideNeed(pages){return pages<=150?0.375:(pages<=300?0.5:(pages<=500?0.625:0.75));}
+function updateNotes(){
+  var d=dimsFor(0),txt="Sheet: "+(d.W/96).toFixed(3)+" x "+(d.H/96).toFixed(3)+" in"+(S.bleed?" (trim + 0.125 in bleed; width +0.125, height +0.25 per KDP)":"")+". Dashed blue = safe area, pink = gutter. Guides never print.";
+  if(deck){
+    var b=buildPages(deck),need=insideNeed(b.list.length);
+    $("bookNote").innerText="Book: "+b.list.length+" pages ("+b.puzzleCount+" front/puzzle pages + "+(b.list.length-b.puzzleCount)+" answer pages).";
+    txt+=" KDP inside margin for "+b.list.length+" pages: at least "+need+" in."+(S.mIn+1e-9<need?" Your inside margin is smaller: raise it before uploading.":" Your inside margin is OK.");
+  }else{$("bookNote").innerText="Generate a book to see the page count.";}
+  $("trimNote").innerText=txt;
+}
+
+/* ================= generation (one puzzle per tick) ================= */
+function paramsFromState(seed){
+  var t={},i;for(i=0;i<TYPES.length;i++){t[TYPES[i]]=!!S.types[TYPES[i]];}
+  return {sizes:S.sizes.slice(),diffs:S.diffs.slice(),types:t,rule:S.rule,pagesPer:S.pagesPer,blocked:!!S.blocked,seasons:S.seasons.slice(),customText:S.customText,ruleText:S.ruleText,useCustom:!!S.useCustom,seed:seed>>>0};
+}
+function generateFromParams(P,done){
+  if(genRunning){return;}
+  var plan=planDeck(P),N=plan.tasks.length;
+  if(!N){showError("Nothing to generate. Pick at least one puzzle type, one difficulty and (for Garden Grid) one size.");setProgress("Nothing to generate.",0);return;}
+  showError("");genRunning=true;$("btnGenerate").disabled=true;
+  var pages=[],k=0,t0=Date.now();
+  setProgress("Building puzzle 1 / "+N+" ...",0);
+  function tick(){
+    if(k>=N){
+      deck={params:P,plan:plan,pages:pages};curPage=0;genRunning=false;$("btnGenerate").disabled=false;
+      $("inSeed").value=String(P.seed);S.seedInput=String(P.seed);
+      $("inCode").value=encodeCode(S,P.seed);
+      var msg="Done. "+N+" puzzles in "+((Date.now()-t0)/1000).toFixed(1)+"s, each with exactly one solution.";
+      if(plan.tableErrors.length){msg+=" "+plan.tableErrors.length+" table line(s) skipped.";}
+      setProgress(msg,1);renderPreview();
+      if(done){done();}
+      return;
+    }
+    try{pages.push(runTask(P,plan,k));}
+    catch(e){genRunning=false;$("btnGenerate").disabled=false;showError("Generation failed on puzzle "+(k+1)+": "+(e&&e.message?e.message:e));setProgress("Stopped.",0);return;}
+    k++;
+    setProgress("Building puzzle "+Math.min(k+1,N)+" / "+N+" ...",k/N);
+    setTimeout(tick,0);
+  }
+  setTimeout(tick,0);
+}
+function startGeneration(){
+  if(genRunning){return;}
+  readControls();
+  var v=String($("inSeed").value||"").replace(/\s+/g,""),seed=null;
+  if(/^GC-/i.test(v)){var dc=decodeCode(v);if(!dc){showError("That seed code is not valid.");return;}applyCode(dc);seed=dc.seed;}
+  else{seed=parseSeed(v);}
+  if(seed===null){seed=randomSeed();}
+  generateFromParams(paramsFromState(seed),function(){commit();});
+}
+function applyCode(dc){
+  S.sizes=dc.sizes;S.diffs=dc.diffs;S.types=dc.types;S.rule=dc.rule;S.pagesPer=dc.pagesPer;S.seasons=dc.seasons;S.blocked=dc.blocked;S.preset=dc.preset;S.trim=dc.trim;S.bleed=dc.bleed;
+  S.seedInput=String(dc.seed);writeControls();
+}
+
+/* ================= export ================= */
+function buildExportDeck(){
+  var host=$("exportDeck"),i,html="",list=buildPages(deck).list;
+  host.innerHTML="";
+  for(i=0;i<list.length;i++){html+=pageSheet(deck,list,i,true);}
+  host.innerHTML=html;
+  var sh=host.querySelectorAll(".sheet");
+  for(i=0;i<sh.length;i++){sh[i].style.transform="none";sh[i].style.setProperty("--paper-scale","1");sh[i].style.boxShadow="none";}
+  fitAll(host);
+  inlineExportColors(host);
+  return sh;
+}
+function iconSheetSVG(C,T){
+  var n=T.list.length,cols=6,rows=Math.ceil(n/cols),W=cols*150+20,H=rows*118+70,o='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" font-family="Arial, Helvetica, sans-serif"><rect width="'+W+'" height="'+H+'" fill="'+C.paper+'"/>',i;
+  o+='<text x="'+W/2+'" y="36" text-anchor="middle" font-size="24" font-weight="700" fill="'+C.ink+'">Plant icon chart</text>';
+  for(i=0;i<n;i++){
+    var cx=10+(i%cols)*150+75,cy=60+Math.floor(i/cols)*118+44;
+    o+=plantIcon(T.list[i].ic,C,cx,cy,74)+'<text x="'+cx+'" y="'+(cy+58)+'" text-anchor="middle" font-size="13" fill="'+C.ink+'">'+esc(T.list[i].n)+'</text>';
+  }
+  return o+'</svg>';
+}
+function exportSVG(){
+  showError("");
+  var C=pal(),svg,name="plant-icon-chart.svg";
+  if(deck){
+    var vl=viewList(deck),pi=vl.idx[curPage],desc=vl.all[pi];
+    if(desc&&desc.k==="pz"&&deck.pages[desc.wi].pz){
+      var pg=deck.pages[desc.wi];svg=boardSVG(pg.pz,pg.icons,C,S.view==="answer");
+      svg=svg.replace('<svg class="board" ','<svg ').replace('preserveAspectRatio','width="'+(pg.pz.C*64+12)*2+'" height="'+(pg.pz.R*64+12)*2+'" preserveAspectRatio');
+      svg=svg.replace('<svg ','<svg font-family="Arial, Helvetica, sans-serif" ');
+      name="garden-"+(desc.wi+1)+(S.view==="answer"?"-answer":"")+".svg";
+    }
+  }
+  if(!svg){svg=iconSheetSVG(C,deck?deck.plan.table:buildTable(S.customText,S.ruleText));}
+  download(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+svg],{type:"image/svg+xml"}),name);
+  setProgress("SVG downloaded ("+name+").",1);
+}
+
+/* ================= wiring ================= */
+function buildSelects(){
+  var i,g=$("szGrid"),dg=$("dfGrid"),sg=$("seGrid");g.innerHTML="";dg.innerHTML="";sg.innerHTML="";
+  for(i=4;i<=8;i++){var l=document.createElement("label");l.className="tgl";l.innerHTML='<span>'+i+' x '+i+'</span><input type="checkbox" id="sz'+i+'">';g.appendChild(l);}
+  for(i=0;i<DIFFS.length;i++){var l2=document.createElement("label");l2.className="tgl";l2.innerHTML='<span>'+DIFF_NAME[DIFFS[i]]+'</span><input type="checkbox" id="df_'+DIFFS[i]+'">';dg.appendChild(l2);}
+  for(i=0;i<SEASONS.length;i++){var l3=document.createElement("label");l3.className="tgl";l3.innerHTML='<span>'+SEASON_NAME[SEASONS[i]]+'</span><input type="checkbox" id="se_'+SEASONS[i]+'">';sg.appendChild(l3);}
+  var host=$("swatches"),sel=$("inPreset");host.innerHTML="";sel.innerHTML="";
+  for(i=0;i<PRESET_KEYS.length;i++){
+    (function(k){
+      var pr=PRESETS[k],b=document.createElement("button"),op=document.createElement("option");
+      b.className="swatch";b.setAttribute("data-preset",k);b.setAttribute("aria-label",pr.name);b.title=pr.name;b.setAttribute("aria-pressed",S.preset===k?"true":"false");
+      b.style.background="linear-gradient(135deg,"+pr.sw[0]+" 50%,"+pr.sw[1]+" 50%)";
+      host.appendChild(b);b.addEventListener("click",function(){S.preset=k;writeControls();renderPreview();commit();});
+      op.value=k;op.textContent=pr.name;sel.appendChild(op);
+    })(PRESET_KEYS[i]);
+  }
+  var z=$("selZoom"),vals=[50,75,100,125,150,200];
+  for(i=0;i<vals.length;i++){var oz=document.createElement("option");oz.value=vals[i];oz.textContent=vals[i]===100?"Fit (100%)":vals[i]+"%";z.appendChild(oz);}
+  z.value="100";
+}
+function wire(){
+  var i,live=["selRule","selPages","tyClassic","tyRaised","tyMatch","inBlocked","inTitle","inCustom","inRules","inUseCustom","inSub","inPreset","inHeader","inBorder","inPattern","inWm","inNums","inTrim","inBleed","inMIn","inMOut","inMTb","inMirror","inGuides","inBook","inSeasonPages","inGuide","inAns","inSeller","selLayout","selZoom"];
+  for(i=4;i<=8;i++){live.push("sz"+i);}
+  for(i=0;i<DIFFS.length;i++){live.push("df_"+DIFFS[i]);}
+  for(i=0;i<SEASONS.length;i++){live.push("se_"+SEASONS[i]);}
+  for(i=0;i<live.length;i++){(function(id){
+    var el=$(id);
+    el.addEventListener("input",function(){if(id==="inCustom"||id==="inRules"){renderReports();}afterChange(false);});
+    el.addEventListener("change",function(){afterChange(true);});
+  })(live[i]);}
+  $("inSeed").addEventListener("change",function(){readControls();autosave();});
+  $("btnDice").addEventListener("click",function(){$("inSeed").value=String(randomSeed());readControls();autosave();});
+  $("btnCode").addEventListener("click",function(){
+    var dc=decodeCode($("inCode").value);
+    if(!dc){showError("That seed code is not valid. It looks like GC-XXXXXX-XXXXXX.");return;}
+    showError("");applyCode(dc);generateFromParams(paramsFromState(dc.seed),function(){commit();});
+  });
+  $("btnGenerate").addEventListener("click",startGeneration);
+  $("viewPuzzle").addEventListener("click",function(){setView("puzzle");});
+  $("viewAnswer").addEventListener("click",function(){setView("answer");});
+  $("btnPDF").addEventListener("click",exportPDF);$("btnPDF2").addEventListener("click",exportPDF);
+  $("btnZip").addEventListener("click",exportZip);$("btnSVG").addEventListener("click",exportSVG);
+  $("btnPrint").addEventListener("click",exactPrint);
+  $("btnUndo").addEventListener("click",undo);$("btnRedo").addEventListener("click",redo);
+  $("btnSave").addEventListener("click",function(){readControls();download(new Blob([projectJSON()],{type:"application/json"}),slug(gameTitle())+"-project.json");setProgress("Project saved as .json.",1);});
+  $("btnLoad").addEventListener("click",function(){$("fileLoad").click();});
+  $("fileLoad").addEventListener("change",function(){
+    var f=$("fileLoad").files[0];if(!f){return;}
+    var rd=new FileReader();
+    rd.onload=function(){try{applyProject(JSON.parse(String(rd.result)));setProgress("Project loaded.",1);}catch(e){showError("Could not load project: "+(e&&e.message?e.message:e));}};
+    rd.onerror=function(){showError("Could not read that file.");};
+    rd.readAsText(f);$("fileLoad").value="";
+  });
+  $("btnPrev").addEventListener("click",function(){movePage(-1);});
+  $("btnNext").addEventListener("click",function(){movePage(1);});
+  $("btnHelp").addEventListener("click",openHelp);$("btnHelpClose").addEventListener("click",closeHelp);
+  $("helpOverlay").addEventListener("click",function(e){if(e.target===$("helpOverlay")){closeHelp();}});
+  document.addEventListener("keydown",function(e){
+    var a=document.activeElement,typing=a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT");
+    if(e.key==="Escape"&&$("helpOverlay").classList.contains("show")){closeHelp();return;}
+    if(typing){return;}
+    var k=e.key;
+    if((e.ctrlKey||e.metaKey)&&(k==="z"||k==="Z")){e.preventDefault();if(e.shiftKey){redo();}else{undo();}return;}
+    if((e.ctrlKey||e.metaKey)&&(k==="y"||k==="Y")){e.preventDefault();redo();return;}
+    if(e.ctrlKey||e.metaKey||e.altKey){return;}
+    if(k==="g"||k==="G"){startGeneration();}
+    else if(k==="a"||k==="A"){setView(S.view==="puzzle"?"answer":"puzzle");}
+    else if(k==="ArrowLeft"){movePage(-1);}
+    else if(k==="ArrowRight"){movePage(1);}
+    else if(k==="h"||k==="H"||k==="?"){if($("helpOverlay").classList.contains("show")){closeHelp();}else{openHelp();}}
+  });
+  var rt=null;
+  window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(renderPreview,120);});
+}
+
+/* ================= init ================= */
+function initFavicon(){
+  var l=document.createElement("link");l.rel="icon";l.type="image/svg+xml";
+  l.href="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(logoSVG(64,"#ffffff","#7B9E87","#2D5016"));
+  document.head.appendChild(l);
+}
+function init(){
+  initFavicon();
+  $("brandLogo").innerHTML=logoSVG(58,"#ffffff","#7B9E87","#2D5016");
+  buildSelects();wire();
+  var restored=false;
+  try{
+    var raw=window.localStorage.getItem(STORE_KEY);
+    if(raw){var obj=JSON.parse(raw);S=extend(defaultState(),obj.state);S.view="puzzle";writeControls();restored=true;
+      if(obj.params){generateFromParams(obj.params,function(){commit();});}}
+  }catch(e){restored=false;}
+  if(!restored){writeControls();}
+  readControls();renderPreview();commit();
+  waitFonts(function(){if(deck){renderPreview();}});
+}
+
+window.GC={
+  get S(){return S;},setS:function(o){S=extend(defaultState(),o);writeControls();},
+  getDeck:function(){return deck;},setDeck:function(d){deck=d;curPage=0;renderPreview();},
+  defaultState:defaultState,makeDeckSync:makeDeckSync,planDeck:planDeck,runTask:runTask,genGarden:genGarden,genMatch:genMatch,solveGarden:solveGarden,specOf:specOf,
+  buildTable:buildTable,isFriend:isFriend,isFoe:isFoe,PLANT_KEYS:PLANT_KEYS,PLANT_NAME:PLANT_NAME,ICON_SRC:ICON_SRC,GENERIC_ICONS:GENERIC_ICONS,TIPS:TIPS,SEASONS:SEASONS,DIFFS:DIFFS,DIFF_FRAC:DIFF_FRAC,
+  FRIEND_SRC:FRIEND_SRC,FOE_SRC:FOE_SRC,BASE_FRIEND:BASE_FRIEND,BASE_FOE:BASE_FOE,
+  plantIcon:plantIcon,iconSVG:iconSVG,boardSVG:boardSVG,pal:pal,iconSheetSVG:iconSheetSVG,
+  buildPages:buildPages,buildExportDeck:buildExportDeck,encodeCode:encodeCode,decodeCode:decodeCode,dimsFor:dimsFor,
+  undo:undo,redo:redo,commit:commit,histLen:function(){return hist.length;},histIdx:function(){return hidx;},
+  startGeneration:startGeneration,isRunning:function(){return genRunning;},applyProject:applyProject,projectJSON:projectJSON,
+  readControls:readControls,renderPreview:renderPreview,exportPDF:exportPDF,exportZip:exportZip,exportSVG:exportSVG,setCur:function(n){curPage=n;renderPreview();},
+  viewList:function(){return viewList(deck);},mulberry32:mulberry32,mixSeed:mixSeed,PRESET_KEYS:PRESET_KEYS
+};
+init();
+</script>
+</body>
+</html>
