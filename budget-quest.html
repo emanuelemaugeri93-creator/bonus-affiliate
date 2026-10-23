@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Quest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0620;--pk:#ff2d78;--cy:#00ffcc;--yl:#ffd60a;--tx:#f1e9ff;--tx2:#a99bd0;--bd:rgba(0,255,204,.35);--card:rgba(255,45,120,.06);--field:rgba(0,0,0,.45);}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{font-family:'Share Tech Mono',Consolas,'Courier New',monospace;color:var(--tx);background:var(--bg);overflow:hidden;font-size:14px;}
+body::before{content:"";position:fixed;left:-50%;right:-50%;bottom:0;height:46%;pointer-events:none;background:linear-gradient(rgba(255,45,120,.55) 1px,transparent 1px) 0 0/100% 38px,linear-gradient(90deg,rgba(255,45,120,.55) 1px,transparent 1px) 0 0/60px 100%;transform:perspective(380px) rotateX(62deg);transform-origin:50% 100%;opacity:.35;-webkit-mask-image:linear-gradient(transparent,#000 70%);mask-image:linear-gradient(transparent,#000 70%);}
+body::after{content:"";position:fixed;left:50%;top:6%;width:340px;height:340px;margin-left:-170px;border-radius:50%;pointer-events:none;background:linear-gradient(#ffd60a,#ff2d78);opacity:.16;filter:blur(2px);}
+h1,h2,h3,h4{font-family:'Orbitron',Arial,sans-serif;margin:0;letter-spacing:.04em;}
+.gl{color:var(--cy);text-shadow:0 0 8px rgba(0,255,204,.7),0 0 22px rgba(0,255,204,.35);}
+.gp{color:var(--pk);text-shadow:0 0 8px rgba(255,45,120,.75),0 0 22px rgba(255,45,120,.35);}
+button{font-family:inherit;cursor:pointer;color:inherit;transition:transform .08s,box-shadow .15s;}
+button:active{transform:scale(.97);}
+:focus-visible{outline:3px solid var(--yl);outline-offset:2px;}
+.app-shell{position:fixed;left:0;right:0;top:0;bottom:0;display:grid;grid-template-columns:360px 1fr;z-index:1;}
+.sidebar{overflow-y:auto;padding:16px 14px 30px;border-right:1px solid var(--bd);background:rgba(11,6,32,.82);}
+.sidebar::-webkit-scrollbar{width:9px;}.sidebar::-webkit-scrollbar-thumb{background:var(--pk);border-radius:6px;}
+.brand{display:flex;gap:12px;align-items:center;margin-bottom:16px;padding:14px;border:1px solid var(--pk);box-shadow:0 0 18px rgba(255,45,120,.35),inset 0 0 14px rgba(255,45,120,.12);background:var(--card);}
+.brand svg{width:58px;height:58px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(255,214,10,.6));}
+.brand .kicker{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--cy);}
+.brand h1{margin:2px 0;font-size:22px;line-height:1.05;}
+.brand .tag{font-size:12px;color:var(--tx2);line-height:1.4;}
+.panel{border:1px solid var(--bd);margin-bottom:16px;overflow:hidden;background:var(--card);box-shadow:0 0 14px rgba(0,255,204,.12);}
+.panel-head{padding:11px 14px;border-bottom:1px solid var(--bd);font-size:15px;}
+.panel-body{padding:14px;}
+.sub-head{font-family:'Orbitron',sans-serif;font-size:12px;margin:18px 0 8px;padding-top:12px;border-top:1px dashed var(--pk);color:var(--yl);letter-spacing:.1em;text-transform:uppercase;}
+.panel-body>.sub-head:first-child{margin-top:0;border-top:none;padding-top:0;}
+.fl{display:block;font-size:11px;color:var(--tx2);margin:11px 0 5px;text-transform:uppercase;letter-spacing:.08em;}
+.ipt,.sel,textarea.ipt{width:100%;padding:9px 11px;border:1px solid var(--bd);background:var(--field);color:var(--cy);font-size:13px;font-family:inherit;border-radius:0;}
+textarea.ipt{resize:vertical;min-height:90px;}
+.sel option{color:#111;}
+.ipt:focus,.sel:focus{border-color:var(--pk);box-shadow:0 0 10px rgba(255,45,120,.5);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.seg{display:grid;gap:6px;grid-auto-flow:column;grid-auto-columns:1fr;}
+.tgl{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:13px;gap:8px;}
+.tgl input{width:18px;height:18px;accent-color:#ff2d78;flex-shrink:0;}
+.mixgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:12px;}
+.swatches{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.swatch{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0;}
+.swatch[aria-pressed=true]{outline:3px solid var(--cy);outline-offset:2px;box-shadow:0 0 12px rgba(0,255,204,.6);}
+.btn{width:100%;padding:10px;border:1px solid var(--cy);background:rgba(0,255,204,.06);color:var(--cy);font-size:12.5px;margin-top:8px;letter-spacing:.04em;}
+.btn:hover{background:rgba(0,255,204,.16);box-shadow:0 0 14px rgba(0,255,204,.45);}
+.btn:disabled{opacity:.4;pointer-events:none;}
+.btn.gen{padding:14px;font-size:15px;font-family:'Orbitron',sans-serif;font-weight:700;background:var(--pk);color:#fff;border-color:var(--pk);box-shadow:0 0 20px rgba(255,45,120,.6);margin-top:4px;}
+.btn.half{width:auto;}
+.note{font-size:11px;color:var(--tx2);line-height:1.55;margin-top:8px;}
+.report{font-size:11.5px;margin-top:8px;line-height:1.5;}
+.report ul.bad{margin:6px 0 0;padding:8px 10px 8px 26px;border:1px solid #ff4d4d;background:rgba(255,40,40,.14);color:#ff9a9a;}
+.prog-text{font-size:12px;margin-top:10px;min-height:18px;}
+.prog-bar{height:10px;border:1px solid var(--bd);background:var(--field);margin-top:6px;overflow:hidden;}
+.prog-fill{height:100%;width:0;background:linear-gradient(90deg,var(--pk),var(--yl),var(--cy));box-shadow:0 0 12px rgba(255,45,120,.7);}
+.prog-err{display:none;margin-top:8px;font-size:12px;font-weight:700;color:#fff;background:#b42318;border:1px solid #ef4444;padding:9px 10px;line-height:1.5;}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;}
+.topbar{display:flex;align-items:center;gap:8px;padding:10px 14px;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--bd);background:rgba(11,6,32,.85);}
+.chip{font-size:11px;padding:6px 12px;border:1px solid var(--bd);white-space:nowrap;}
+.chip.preset{background:var(--pk);color:#fff;border-color:var(--pk);box-shadow:0 0 10px rgba(255,45,120,.5);}
+.vt{display:flex;border:1px solid var(--bd);}
+.vt button{border:none;background:transparent;padding:7px 13px;font-size:12px;color:var(--tx2);}
+.vt button[aria-pressed=true]{background:var(--cy);color:#0b0620;}
+.topbar select{background:var(--field);color:var(--cy);border:1px solid var(--bd);padding:7px 9px;font-size:12px;font-family:inherit;border-radius:0;}
+.topbar select option{color:#111;}
+.tb-btn{border:1px solid var(--cy);background:rgba(0,255,204,.06);color:var(--cy);padding:8px 12px;font-size:12px;}
+.tb-btn.primary{background:var(--pk);color:#fff;border-color:var(--pk);box-shadow:0 0 14px rgba(255,45,120,.55);}
+.preview-scroll{flex:1;min-height:0;overflow:auto;padding:22px;display:flex;flex-direction:column;align-items:center;}
+.preview-host{display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap;}
+.empty-card{max-width:520px;text-align:center;border:1px solid var(--pk);padding:44px 34px;background:rgba(11,6,32,.8);box-shadow:0 0 24px rgba(255,45,120,.35);}
+.empty-card svg{width:96px;height:96px;filter:drop-shadow(0 0 10px rgba(255,214,10,.6));}
+.empty-card h2{margin:12px 0;font-size:26px;}
+.empty-card p{color:var(--tx2);font-size:13px;line-height:1.7;}
+.bottomnav{display:flex;align-items:center;gap:14px;justify-content:center;padding:10px;flex-shrink:0;flex-wrap:wrap;border-top:1px solid var(--bd);background:rgba(11,6,32,.85);}
+.nav-btn{width:38px;height:38px;border:1px solid var(--cy);background:rgba(0,255,204,.06);color:var(--cy);font-size:16px;}
+.nav-btn:disabled{opacity:.3;}
+.sheet-pos{font-size:12px;}
+.meta-line{font-size:11px;color:var(--tx2);width:100%;text-align:center;}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.help-overlay.show{display:flex;}
+.help-modal{background:#150a33;border:1px solid var(--pk);box-shadow:0 0 30px rgba(255,45,120,.5);width:640px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+.help-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bd);}
+.help-head h3{font-size:17px;}
+.help-close{border:1px solid var(--cy);background:transparent;color:var(--cy);width:32px;height:32px;}
+.help-body{padding:16px 18px;overflow-y:auto;}
+.help-step{display:flex;gap:12px;margin-bottom:14px;}
+.help-num{width:28px;height:28px;background:var(--pk);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 10px rgba(255,45,120,.6);}
+.help-step h4{font-size:13px;margin:0 0 3px;color:var(--cy);}
+.help-step p{margin:0;font-size:12.5px;line-height:1.65;color:var(--tx2);}
+kbd{border:1px solid var(--bd);padding:1px 6px;font-size:11px;background:var(--field);}
+#exportDeck{position:fixed;left:-99999px;top:0;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:290px 1fr;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:1px solid var(--bd);}}
+/* ===== PAPER (printables: solid colors only) ===== */
+.sheet-slot{flex-shrink:0;position:relative;}
+.sheet{position:relative;overflow:hidden;background:var(--paper,#fff);color:var(--ink,#000);transform-origin:top left;transform:scale(var(--paper-scale,1));box-shadow:0 18px 60px rgba(0,0,0,.5);flex-shrink:0;}
+.sheet .bgpat{position:absolute;left:0;top:0;}
+.sheet .trim{position:absolute;overflow:hidden;}
+.sheet .wm{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;z-index:1;}
+.sheet .frame{position:absolute;z-index:1;}
+.sheet .guide-safe{position:absolute;border:1px dashed #1e90ff;z-index:5;pointer-events:none;}
+.sheet .guide-gutter{position:absolute;top:0;bottom:0;width:0;border-left:1px dashed #e0306a;z-index:5;pointer-events:none;}
+.sheet .guide-trim{position:absolute;left:0;top:0;right:0;bottom:0;border:1px dashed #e0306a;z-index:5;pointer-events:none;}
+.sheet .guide-tag{position:absolute;z-index:6;font:10px Arial,sans-serif;color:#e0306a;background:#ffffff;padding:1px 4px;}
+.pg{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;overflow:hidden;z-index:2;font-family:'Share Tech Mono',Consolas,'Courier New',monospace;color:var(--ink);--ts:1;}
+.pg *{box-sizing:border-box;}
+.hd{display:flex;align-items:center;gap:12px;flex-shrink:0;margin-bottom:calc(8px*var(--ts));}
+.hd .dbadge{flex-shrink:0;width:calc(62px*var(--ts));height:calc(72px*var(--ts));}
+.hd .dbadge svg{width:100%;height:100%;display:block;}
+.hd .htxt{flex:1;min-width:0;}
+.hd .lvl{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;font-size:calc(10px*var(--ts));font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.hd .lvl svg{display:block;margin-top:3px;}
+.hd-ribbon{background:var(--p1);color:#ffffff;padding:calc(8px*var(--ts)) calc(12px*var(--ts));border-radius:6px;}
+.hd-ribbon .kick,.hd-ribbon .ttl,.hd-ribbon .lvl{color:#ffffff;}
+.hd-plain{border-bottom:2px solid var(--p1);padding-bottom:calc(6px*var(--ts));}
+.kick{font-size:calc(11px*var(--ts));letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--p1);white-space:nowrap;overflow:hidden;}
+.ttl{font-family:'Orbitron','Arial Black',Arial,sans-serif;font-weight:800;font-size:calc(24px*var(--ts));line-height:1.12;margin:2px 0 0;white-space:nowrap;overflow:hidden;color:var(--ink);}
+.instr{font-size:calc(12.5px*var(--ts));line-height:1.45;margin:0 0 calc(6px*var(--ts));flex-shrink:0;}
+.board-wrap{position:relative;flex:1;min-height:0;}
+.board-wrap svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}
+.wordlist{display:flex;flex-wrap:wrap;justify-content:center;gap:calc(3px*var(--ts)) calc(14px*var(--ts));font-size:calc(12px*var(--ts));font-weight:700;letter-spacing:.07em;margin-top:calc(6px*var(--ts));flex-shrink:0;}
+.digit-row{display:flex;align-items:center;justify-content:center;gap:12px;font-family:'Orbitron',Arial,sans-serif;font-weight:700;font-size:calc(16px*var(--ts));margin-top:calc(8px*var(--ts));flex-shrink:0;}
+.dbox{width:calc(46px*var(--ts));height:calc(46px*var(--ts));border:3px solid var(--ink);border-radius:10px;background:var(--paper);text-align:center;line-height:calc(40px*var(--ts));font-size:calc(26px*var(--ts));}
+.pf{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;margin-top:calc(8px*var(--ts));padding-top:calc(5px*var(--ts));border-top:1px solid var(--p2);font-size:calc(10px*var(--ts));}
+.pf .pl{flex-shrink:0;white-space:nowrap;}
+.pf .pm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+.pf .pr{flex-shrink:0;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.pf .pr svg{width:calc(16px*var(--ts));height:calc(16px*var(--ts));}
+.txt-page{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;}
+.txt-page h3{font-family:'Orbitron',Arial,sans-serif;font-size:calc(18px*var(--ts));margin:calc(10px*var(--ts)) 0 calc(4px*var(--ts));color:var(--p1);}
+.txt-page p,.txt-page li{font-size:calc(12.5px*var(--ts));line-height:1.5;margin:0 0 calc(4px*var(--ts));}
+.txt-page ul{margin:0;padding-left:calc(18px*var(--ts));}
+.cover{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:calc(10px*var(--ts));}
+.cover .big{width:calc(190px*var(--ts));height:calc(190px*var(--ts));}
+.cover .ttl{font-size:calc(40px*var(--ts));white-space:normal;text-align:center;}
+.cover .sub{font-size:calc(16px*var(--ts));max-width:90%;}
+.ans-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:calc(8px*var(--ts));}
+.tile{border:2px solid var(--ink);border-radius:8px;padding:calc(5px*var(--ts));display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--paper);}
+.tile .tt{font-size:calc(10.5px*var(--ts));font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tile .board-wrap{flex:1;}
+.keytile{font-size:calc(11px*var(--ts));line-height:1.5;overflow:hidden;}
+.keytile b{color:var(--p1);}
+@media (max-width:1180px){.app-shell{grid-template-columns:320px 1fr;}}
+@media (max-width:980px){.app-shell{grid-template-columns:280px 1fr;}}
+@media (max-width:760px){.app-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr;}.sidebar{max-height:44vh;border-right:none;border-bottom:1px solid var(--glb);}}
+@media print{
+  body{background:#fff;overflow:visible;}
+  .orbs,.top-app-bar,.sidebar,.topbar,.bottomnav,.help-overlay,.guide-safe,.guide-gutter,.guide-trim,.guide-tag{display:none !important;}
+  .app-shell{display:block;position:static;}
+  .main{display:block;}
+  .preview-scroll{overflow:visible;display:block;padding:0;}
+  .preview-host{display:block;}
+  .sheet-slot{width:auto !important;height:auto !important;margin:0;page-break-after:always;}
+  .sheet{transform:none;box-shadow:none;}
+}
+
+.sheet-slot{color:#000;}
+.hd-block{background:var(--p1);color:var(--paper);padding:calc(8px*var(--ts)) calc(14px*var(--ts));border-radius:calc(12px*var(--ts));}
+.hd-block .kick,.hd-block .ttl{color:var(--paper);}
+.hd-underline{border-bottom:calc(4px*var(--ts)) solid var(--p1);padding-bottom:calc(6px*var(--ts));}
+.lvlchip{flex-shrink:0;font-size:calc(11px*var(--ts));font-weight:700;border:2px solid var(--p1);color:var(--p1);border-radius:calc(12px*var(--ts));padding:calc(3px*var(--ts)) calc(9px*var(--ts));white-space:nowrap;font-family:'Orbitron',Arial,sans-serif;}
+.hd-block .lvlchip{border-color:var(--paper);color:var(--paper);}
+.hd .htxt .ttl{font-size:calc(21px*var(--ts));}
+.kick{letter-spacing:.06em;}
+.namerow{display:flex;gap:calc(24px*var(--ts));font-size:calc(11px*var(--ts));margin-bottom:calc(5px*var(--ts));flex-shrink:0;}
+.namerow span{flex:1;border-bottom:1px solid var(--ink);padding-bottom:2px;}
+.rows{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly;overflow:hidden;}
+.rw{display:flex;gap:calc(8px*var(--ts));align-items:flex-start;padding:calc(3px*var(--ts)) 0;border-bottom:1px dashed var(--p2);}
+.rw .n{flex:0 0 auto;font-family:'Orbitron',Arial,sans-serif;font-weight:700;font-size:calc(14px*var(--ts));color:var(--p1);min-width:calc(20px*var(--ts));}
+.rw .rb{flex:1;min-width:0;}
+.st{font-size:calc(11.5px*var(--ts));line-height:1.4;margin-bottom:calc(3px*var(--ts));}
+.sv{width:100%;}.sv svg{width:100%;height:auto;max-height:calc(120px*var(--ts));display:block;}
+.ln2{font-size:calc(13px*var(--ts));margin-top:calc(4px*var(--ts));line-height:1.9;}
+.bl{display:inline-block;border-bottom:2px solid var(--ink);text-align:center;font-weight:700;vertical-align:baseline;}
+.bl.ans{color:var(--red,#d6155b);border-bottom-color:var(--red,#d6155b);}
+.why{display:block;font-size:calc(10.5px*var(--ts));color:var(--red,#d6155b);line-height:1.35;}
+.mk{font-size:calc(13px*var(--ts));margin-bottom:calc(2px*var(--ts));}
+.cnts{display:flex;flex-wrap:wrap;gap:calc(4px*var(--ts)) calc(12px*var(--ts));margin-top:calc(3px*var(--ts));}
+.cnt{display:inline-flex;align-items:center;gap:calc(4px*var(--ts));font-size:calc(12px*var(--ts));}
+.cbx2{display:inline-block;width:calc(26px*var(--ts));height:calc(18px*var(--ts));border:2px solid var(--ink);background:var(--paper);vertical-align:middle;}
+.cnt em{font-style:normal;font-weight:700;color:var(--red,#d6155b);min-width:calc(26px*var(--ts));text-align:center;border-bottom:2px solid var(--red,#d6155b);}
+.pts{display:flex;flex-wrap:wrap;gap:calc(4px*var(--ts)) calc(8px*var(--ts));}
+.pt{display:inline-flex;gap:calc(8px*var(--ts));align-items:center;border:2px solid var(--ink);border-radius:calc(8px*var(--ts));padding:calc(1px*var(--ts)) calc(8px*var(--ts));font-size:calc(11.5px*var(--ts));background:var(--paper);}
+.pt b{color:var(--p1);}
+.nw{display:grid;grid-template-columns:1fr;gap:calc(2px*var(--ts));}
+.nr{display:flex;align-items:center;gap:calc(10px*var(--ts));border-bottom:1px dotted var(--p2);padding:calc(2px*var(--ts)) 0;font-size:calc(12px*var(--ts));}
+.nr .nt{flex:1;}.nr .opt{display:inline-flex;align-items:center;gap:calc(4px*var(--ts));font-size:calc(11px*var(--ts));}
+.cbx2.on{background:var(--ink);box-shadow:inset 0 0 0 calc(2px*var(--ts)) var(--paper);}
+.nr .cbx2{width:calc(16px*var(--ts));height:calc(16px*var(--ts));}
+.bt{margin-top:calc(8px*var(--ts));border:2px solid var(--ink);border-radius:calc(10px*var(--ts));padding:calc(5px*var(--ts)) calc(10px*var(--ts));}
+.bt .bh{font-family:'Orbitron',Arial,sans-serif;font-weight:700;font-size:calc(12px*var(--ts));color:var(--p1);margin-bottom:calc(3px*var(--ts));}
+.bt .br{display:flex;justify-content:space-between;align-items:center;font-size:calc(11.5px*var(--ts));padding:calc(1px*var(--ts)) 0;}
+.bt .br.t{font-weight:700;border-top:1px solid var(--p2);}
+.mchart{display:grid;grid-template-columns:repeat(5,1fr);gap:calc(6px*var(--ts));margin:calc(4px*var(--ts)) 0;}
+.mc{display:flex;flex-direction:column;align-items:center;text-align:center;font-size:calc(9.5px*var(--ts));border:1px solid var(--p2);border-radius:calc(8px*var(--ts));padding:calc(3px*var(--ts));}
+.mc svg{width:100%;height:calc(44px*var(--ts));}
+.mc b{color:var(--p1);}
+.covcoins{width:80%;}.covcoins svg{width:100%;height:auto;}
+.cert{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:calc(8px*var(--ts));border:calc(5px*var(--ts)) double var(--p1);border-radius:calc(16px*var(--ts));padding:calc(14px*var(--ts));}
+.cert .sub{font-size:calc(13px*var(--ts));}
+.cert .nmline{min-width:60%;border-bottom:2px solid var(--ink);font-family:'Orbitron',Arial,sans-serif;font-weight:700;font-size:calc(22px*var(--ts));padding:0 calc(10px*var(--ts));}
+.cert .xph{font-size:calc(11px*var(--ts));font-weight:700;}
+.cert .board-wrap{width:100%;flex:1;min-height:0;}
+.cert .xpl{font-family:'Orbitron',Arial,sans-serif;font-weight:700;font-size:calc(15px*var(--ts));}
+.cert .sig{display:flex;gap:calc(30px*var(--ts));width:100%;font-size:calc(10.5px*var(--ts));}
+.cert .sig span{flex:1;border-top:1px solid var(--ink);padding-top:2px;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Controls">
+    <div class="brand">
+      <span id="brandLogo" aria-hidden="true"></span>
+      <div><div class="kicker">Printable Money Studio</div><h1 class="gl">Budget Quest</h1><div class="tag">Story-based money math with generic coins and bills. Every total is computed in whole cents.</div></div>
+    </div>
+
+    <section class="panel" aria-labelledby="hGen">
+      <h2 class="panel-head gp" id="hGen">Generator</h2>
+      <div class="panel-body">
+        <div class="fl" id="lblLv">Levels</div>
+        <div class="mixgrid" id="lvGrid" role="group" aria-labelledby="lblLv"></div>
+        <div class="note" id="lvNote"></div>
+        <div class="fl" id="lblMd">Worksheet types</div>
+        <div class="mixgrid" style="grid-template-columns:1fr;" role="group" aria-labelledby="lblMd">
+          <label class="tgl"><span>1. Count the coins</span><input type="checkbox" id="mdCount" checked></label>
+          <label class="tgl"><span>2. Make the amount</span><input type="checkbox" id="mdMake" checked></label>
+          <label class="tgl"><span>3. Shopping math</span><input type="checkbox" id="mdShop" checked></label>
+          <label class="tgl"><span>4. Savings goals</span><input type="checkbox" id="mdSave" checked></label>
+          <label class="tgl"><span>5. Needs vs wants</span><input type="checkbox" id="mdNeeds" checked></label>
+          <label class="tgl"><span>6. Price tag detective</span><input type="checkbox" id="mdDetect" checked></label>
+        </div>
+        <div class="row2">
+          <div><label class="fl" for="selPages">Pages per type</label><select class="sel" id="selPages"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+          <div><label class="fl" for="selPer">Problems per page</label><select class="sel" id="selPer"></select></div>
+        </div>
+        <div class="sub-head">Content Lock</div>
+        <label class="fl" for="inTitle">Workbook title</label>
+        <input class="ipt" id="inTitle" value="Budget Quest" maxlength="60">
+        <label class="fl" for="inShop">My shop name</label>
+        <input class="ipt" id="inShop" value="My Shop" maxlength="30">
+        <label class="fl" for="inItems">My items: "name = price", one per line (up to 60)</label>
+        <textarea class="ipt" id="inItems" placeholder="sticker sheet = 1.25&#10;lemonade = $0.75" aria-describedby="itemReport"></textarea>
+        <div class="report" id="itemReport" aria-live="polite"></div>
+        <label class="tgl"><span>Use only my items</span><input type="checkbox" id="inCustomOnly"></label>
+        <label class="fl" for="inNames">Student names for the stories (comma separated)</label>
+        <input class="ipt" id="inNames" placeholder="Maya, Leo, Zoe" maxlength="160">
+        <label class="fl" for="inStudent">Certificate name</label>
+        <input class="ipt" id="inStudent" placeholder="blank = write-in line" maxlength="40">
+        <div class="sub-head">Seed</div>
+        <label class="fl" for="inSeed">Seed (blank = random)</label>
+        <div style="display:flex;gap:6px;"><input class="ipt" id="inSeed" inputmode="numeric" placeholder="random"><button class="btn half" id="btnDice" style="margin-top:0;" aria-label="Random seed">Dice</button></div>
+        <label class="fl" for="inCode">Seed code (share to rebuild this deck)</label>
+        <div style="display:flex;gap:6px;"><input class="ipt" id="inCode" placeholder="BQ-..."><button class="btn half" id="btnCode" style="margin-top:0;">Use</button></div>
+        <div class="note">The code holds levels, types, counts, look, trim and seed. Your items, names and certificate name are not inside it; use Save .json.</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="hSty">
+      <h2 class="panel-head gp" id="hSty">Style</h2>
+      <div class="panel-body">
+        <label class="fl" for="inPreset">Page style</label>
+        <select class="sel" id="inPreset"></select>
+        <div class="swatches" id="swatches" role="group" aria-label="Style swatches"></div>
+        <label class="fl" for="inSub">Subtitle</label>
+        <input class="ipt" id="inSub" value="Count it. Spend it. Save it." maxlength="70">
+        <div class="row2">
+          <div><label class="fl" for="inHeader">Header</label><select class="sel" id="inHeader"><option value="block">Color block</option><option value="underline">Underline</option><option value="plain">Plain</option></select></div>
+          <div><label class="fl" for="inBorder">Border</label><select class="sel" id="inBorder"><option value="rounded">Rounded</option><option value="solid">Solid</option><option value="double">Double</option><option value="none">None</option></select></div>
+        </div>
+        <label class="fl" for="inPattern">Background pattern</label>
+        <select class="sel" id="inPattern"><option value="none">None</option><option value="coins">Coins</option><option value="dots">Dots</option><option value="grid">Faint grid</option></select>
+        <label class="fl" for="inWm">Logo mark</label>
+        <select class="sel" id="inWm"><option value="none">None</option><option value="footer">Footer mark</option><option value="faint">Faint watermark</option></select>
+        <label class="tgl"><span>Show page numbers</span><input type="checkbox" id="inNums" checked></label>
+
+        <div class="sub-head">KDP Trim Studio</div>
+        <label class="fl" for="inTrim">Trim size</label>
+        <select class="sel" id="inTrim"><option value="6x9">6 x 9 in</option><option value="8x10">8 x 10 in</option><option value="8.5x11" selected>8.5 x 11 in</option><option value="a4">A4 (8.27 x 11.69 in)</option></select>
+        <label class="tgl"><span>Add bleed (0.125 in)</span><input type="checkbox" id="inBleed"></label>
+        <div class="row3">
+          <div><label class="fl" for="inMIn">Inside</label><input class="ipt" type="number" id="inMIn" min="0.25" max="1.25" step="0.125" value="0.625"></div>
+          <div><label class="fl" for="inMOut">Outside</label><input class="ipt" type="number" id="inMOut" min="0.25" max="1.25" step="0.125" value="0.5"></div>
+          <div><label class="fl" for="inMTb">Top/btm</label><input class="ipt" type="number" id="inMTb" min="0.25" max="1.25" step="0.125" value="0.5"></div>
+        </div>
+        <label class="tgl"><span>Mirror margins (facing pages)</span><input type="checkbox" id="inMirror" checked></label>
+        <label class="tgl"><span>Show safe-area and gutter guides</span><input type="checkbox" id="inGuides" checked></label>
+        <div class="note" id="trimNote"></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="hExp">
+      <h2 class="panel-head gp" id="hExp">Export Deck</h2>
+      <div class="panel-body">
+        <button class="btn gen" id="btnGenerate">Generate Workbook</button>
+        <div class="prog-text" id="progressText" role="status" aria-live="polite">Idle. Pick levels and worksheet types, then generate.</div>
+        <div class="prog-bar"><div class="prog-fill" id="progressFill"></div></div>
+        <div class="prog-err" id="progressError" role="alert"></div>
+        <div class="sub-head">Book Builder</div>
+        <label class="tgl"><span>Front matter (title, copyright, how-to)</span><input type="checkbox" id="inBook" checked></label>
+        <label class="tgl"><span>Money Master Certificate + XP tracker</span><input type="checkbox" id="inCert" checked></label>
+        <label class="tgl"><span>Append answer pages</span><input type="checkbox" id="inAns" checked></label>
+        <div class="note" id="bookNote"></div>
+        <label class="fl" for="inSeller">Seller branding: "Created by"</label>
+        <input class="ipt" id="inSeller" maxlength="50" placeholder="optional, e.g. Penny Press">
+        <div class="sub-head">Export</div>
+        <button class="btn" id="btnPDF2">Download Exact PDF (whole book)</button>
+        <button class="btn" id="btnZip">Download PNG ZIP (one per page)</button>
+        <button class="btn" id="btnSVG">Download coin and bill chart as SVG</button>
+        <div class="sub-head">Project</div>
+        <div class="row2"><button class="btn" id="btnUndo" style="margin-top:0">Undo</button><button class="btn" id="btnRedo" style="margin-top:0">Redo</button></div>
+        <div class="row2"><button class="btn" id="btnSave">Save .json</button><button class="btn" id="btnLoad">Load .json</button></div>
+        <input type="file" id="fileLoad" accept=".json,application/json" class="sr" aria-label="Load project file">
+        <div class="note" id="autoNote">Autosave on.</div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="chip" id="kpiDeck">No workbook yet</span>
+      <span class="chip preset" id="kpiPreset">Arcade Bright</span>
+      <div class="vt" role="group" aria-label="View"><button id="viewPuzzle" aria-pressed="true">Puzzle</button><button id="viewAnswer" aria-pressed="false">Answer</button></div>
+      <select id="selLayout" aria-label="Page layout"><option value="single">Single</option><option value="spread">2-page spread</option><option value="strip">3-up strip</option><option value="grid">2x2 grid</option></select>
+      <select id="selZoom" aria-label="Zoom"></select>
+      <button class="tb-btn" id="btnHelp">? How to use</button>
+      <button class="tb-btn primary" id="btnPDF">Download Exact PDF</button>
+      <button class="tb-btn" id="btnPrint">Exact Print</button>
+    </div>
+    <div class="preview-scroll" id="previewScroll"><div class="preview-host" id="previewHost"></div></div>
+    <div class="bottomnav">
+      <button class="nav-btn" id="btnPrev" aria-label="Previous page">&lt;</button>
+      <span class="sheet-pos" id="sheetPos">Page - / -</span>
+      <button class="nav-btn" id="btnNext" aria-label="Next page">&gt;</button>
+      <div class="meta-line" id="metaLine">Generate a workbook to see your pages.</div>
+    </div>
+  </main>
+</div>
+<div id="exportDeck"></div>
+<div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-modal">
+    <div class="help-head"><h3 class="gl" id="helpTitle">How to use Budget Quest</h3><button class="help-close" id="btnHelpClose" aria-label="Close help">X</button></div>
+    <div class="help-body">
+      <div class="help-step"><div class="help-num">1</div><div><h4>Pick levels and types</h4><p>Level 1 is pennies, nickels and dimes up to $1.00. Level 5 reaches $100 with change and long shopping lists. Choose which of the six worksheet types to include, then press <b>Generate Workbook</b>.</p></div></div>
+      <div class="help-step"><div class="help-num">2</div><div><h4>Exact answers</h4><p>All money is stored in whole cents, so there are no rounding errors. The fewest-coins answers are found by dynamic programming and every change and savings answer is recomputed.</p></div></div>
+      <div class="help-step"><div class="help-num">3</div><div><h4>Your own shop</h4><p>Paste items as "name = price" and name your shop. Add student names for the stories. Lines that cannot be read are listed in red.</p></div></div>
+      <div class="help-step"><div class="help-num">4</div><div><h4>Make a book</h4><p>Choose a KDP trim and bleed. Book Builder adds the title, copyright and money chart pages, a Money Master Certificate with an XP tracker, and an answer key. Export one PDF or a PNG ZIP; the seed in every footer rebuilds the same workbook.</p></div></div>
+      <div class="help-step"><div class="help-num">5</div><div><h4>Shortcuts</h4><p><kbd>G</kbd> generate, <kbd>A</kbd> puzzle/answer view, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> pages, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>Ctrl</kbd>+<kbd>Y</kbd> redo, <kbd>H</kbd> help.</p></div></div>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+
+/* ================= utils ================= */
+var EXPORT_SCALE = 3;
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function mixSeed(a,b){var h=(a>>>0)^Math.imul((b|0)+0x7f4a7c15,0x9e3779b1);h=Math.imul(h^(h>>>15),0x85ebca6b);h^=h>>>13;h=Math.imul(h,0xc2b2ae35);return(h^(h>>>16))>>>0;}
+function shuffleWith(rng,arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(rng()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function ri(rng,a,b){return a+Math.floor(rng()*(b-a+1));}
+function pick(rng,arr){return arr[Math.floor(rng()*arr.length)];}
+function slug(s){return String(s||"budget-quest").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"budget-quest";}
+function hex2rgb(h){h=String(h).replace("#","");if(h.length===3){h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];}return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function rgb2hex(r,g,b){var o="#",a=[r,g,b],i,s;for(i=0;i<3;i++){s=Math.max(0,Math.min(255,Math.round(a[i]))).toString(16);if(s.length<2){s="0"+s;}o+=s;}return o;}
+function mix(a,b,t){var x=hex2rgb(a),y=hex2rgb(b);return rgb2hex(x[0]+(y[0]-x[0])*t,x[1]+(y[1]-x[1])*t,x[2]+(y[2]-x[2])*t);}
+function gray(c){var x=hex2rgb(c),g=Math.round(0.3*x[0]+0.59*x[1]+0.11*x[2]);return rgb2hex(g,g,g);}
+function starPts(cx,cy,R,r){var p=[],i,a,rr;for(i=0;i<10;i++){a=-Math.PI/2+i*Math.PI/5;rr=(i%2===0)?R:r;p.push((cx+Math.cos(a)*rr).toFixed(1)+","+(cy+Math.sin(a)*rr).toFixed(1));}return p.join(" ");}
+
+/* ================= money formatting: integer cents only ================= */
+function pad2(n){return n<10?"0"+n:String(n);}
+function money(c){
+  if(c<0){return "-"+money(-c);}
+  c=Math.round(c);
+  var d=Math.floor(c/100),cents=c-d*100,s=String(d),out="",i;
+  for(i=0;i<s.length;i++){out+=s.charAt(i);var left=s.length-1-i;if(left>0&&left%3===0){out+=",";}}
+  return "$"+out+"."+pad2(cents);
+}
+/* parse "$1.25", "1.25", "3", "0.5" -> integer cents using string math (no floats) */
+function parseCents(str){
+  var m=/^\$?\s*(\d{1,4})(?:\.(\d{1,2}))?$/.exec(String(str).replace(/^\s+|\s+$/g,""));
+  if(!m){return null;}
+  var d=parseInt(m[1],10),c=0;
+  if(m[2]!==undefined){c=parseInt(m[2].length===1?m[2]+"0":m[2],10);}
+  var v=d*100+c;
+  return v>0&&v<=99999?v:null;
+}
+
+/* ================= logo: glowing coin with a pixel star and a small basket ================= */
+function logoSVG(size,c1,c2,c3){
+  var px="",i,star=[[4,0],[3,1],[4,1],[5,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[2,3],[3,3],[4,3],[5,3],[6,3],[3,4],[4,4],[5,4],[2,5],[3,5],[5,5],[6,5]];
+  for(i=0;i<star.length;i++){px+='<rect x="'+(18+star[i][0]*3.4).toFixed(1)+'" y="'+(10+star[i][1]*3.4).toFixed(1)+'" width="3.5" height="3.5" fill="'+c1+'"/>';}
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 64 64">'+
+    '<rect width="64" height="64" rx="14" fill="'+c3+'"/>'+
+    '<circle cx="32" cy="29" r="22" fill="'+c2+'" stroke="'+c1+'" stroke-width="3"/>'+
+    '<circle cx="32" cy="29" r="17" fill="none" stroke="'+c1+'" stroke-width="1.4" stroke-dasharray="2 3"/>'+px+
+    '<path d="M16 46 H48 L44 58 H20 Z" fill="'+c1+'"/><path d="M22 46 L26 38 M42 46 L38 38" stroke="'+c1+'" stroke-width="2.4" stroke-linecap="round"/>'+
+    '<path d="M24 50 V55 M32 50 V55 M40 50 V55" stroke="'+c3+'" stroke-width="1.6"/>'+
+    '</svg>';
+}
+
+/* ================= denominations ================= */
+var DEN={
+  penny:{c:1,label:"1¢",name:"penny",r:19.05,coin:true,col:"#b87333",ring:"#8a531f",em:"leaf"},
+  nickel:{c:5,label:"5¢",name:"nickel",r:21.21,coin:true,col:"#c9ccd4",ring:"#8e919b",em:"ring"},
+  dime:{c:10,label:"10¢",name:"dime",r:17.91,coin:true,col:"#d6d9e0",ring:"#9a9da8",em:"wave"},
+  quarter:{c:25,label:"25¢",name:"quarter",r:24.26,coin:true,col:"#c3c7cf",ring:"#868a94",em:"star"},
+  half:{c:50,label:"50¢",name:"half dollar",r:30.61,coin:true,col:"#d0d3da",ring:"#8d909a",em:"sun"},
+  dollarcoin:{c:100,label:"$1",name:"dollar coin",r:26.5,coin:true,col:"#d9b13b",ring:"#9c7a14",em:"star"},
+  bill1:{c:100,label:"$1",name:"one-dollar bill",coin:false,col:"#cfe8c8",ring:"#4d7c4a",em:"circle"},
+  bill5:{c:500,label:"$5",name:"five-dollar bill",coin:false,col:"#d8e4f2",ring:"#4a6f9c",em:"diamond"},
+  bill10:{c:1000,label:"$10",name:"ten-dollar bill",coin:false,col:"#f3e4c8",ring:"#9c7a3c",em:"star"},
+  bill20:{c:2000,label:"$20",name:"twenty-dollar bill",coin:false,col:"#cdeadf",ring:"#3f8a6a",em:"hex"}
+};
+var DEN_KEYS=["penny","nickel","dime","quarter","half","dollarcoin","bill1","bill5","bill10","bill20"];
+var DEN_BY_CENTS={1:"penny",5:"nickel",10:"dime",25:"quarter",50:"half",500:"bill5",1000:"bill10",2000:"bill20"};
+function denKey(c,preferBill){if(c===100){return preferBill?"bill1":"dollarcoin";}return DEN_BY_CENTS[c];}
+
+/* ================= minimum coin DP (unbounded, integer cents) ================= */
+function minCoins(set,target){
+  var INF=1e9,best=[0],from=[0],i,j;
+  for(i=1;i<=target;i++){best.push(INF);from.push(0);for(j=0;j<set.length;j++){if(set[j]<=i&&best[i-set[j]]+1<best[i]){best[i]=best[i-set[j]]+1;from[i]=set[j];}}}
+  if(best[target]>=INF){return null;}
+  var counts={},t=target;
+  while(t>0){counts[from[t]]=(counts[from[t]]||0)+1;t-=from[t];}
+  return {n:best[target],counts:counts};
+}
+function sumCounts(counts){var s=0,k;for(k in counts){if(Object.prototype.hasOwnProperty.call(counts,k)){s+=parseInt(k,10)*counts[k];}}return s;}
+function countPieces(counts){var s=0,k;for(k in counts){if(Object.prototype.hasOwnProperty.call(counts,k)){s+=counts[k];}}return s;}
+
+/* ================= banks: 150 shop items ================= */
+var SHOPS=["Toy Shop","Bakery","Pet Store","Book Nook"];
+var ITEM_RAW={
+"Toy Shop":"wooden train|899;toy robot|1299;puzzle box|749;jump rope|349;yo-yo|299;bouncy ball|149;building blocks|1599;teddy bear|1199;toy truck|999;kite|1099;marbles bag|399;sticker pack|199;water squirter|599;paper airplane kit|449;toy drum|1349;board game|1999;doll house|2499;race car|699;hero figure|1049;plush bunny|899;magic wand|549;toy piano|2299;bubble kit|279;chalk set|399;pogo stick|2999;frisbee|549;coloring set|849;toy dinosaur|1249;spinning top|229;slide whistle|179;toy castle|2799;rubber duck|249;hand puppet|1149;tool play set|1699;bike bell|449;toy boat|749;toy drone|3499;magnet set|899",
+"Bakery":"blueberry muffin|275;chocolate chip cookie|125;cinnamon roll|325;sourdough loaf|599;bagel|165;cupcake|295;apple pie slice|399;croissant|285;donut|135;birthday cake|2499;brownie|225;lemon tart|349;fruit scone|255;wheat bread|449;pretzel|199;cheese danish|325;oatmeal cookie|115;baguette|379;carrot cake slice|425;cream puff|245;banana bread slice|275;pumpkin muffin|265;gingerbread cookie|150;macaron|195;pizza roll|215;garlic knot|99;raisin bun|185;strawberry shortcake|475;cookie box|1299;dinner rolls|549;fudge square|175;peanut butter cookie|130;cheesecake slice|450;angel cake slice|375;hot cocoa|299;orange juice|249;milk carton|199",
+"Pet Store":"dog bone|299;cat toy mouse|199;fish tank plant|449;bird seed bag|799;dog leash|1299;cat collar|599;hamster wheel|1499;goldfish|249;dog ball|349;scratching post|2499;pet brush|899;dog bowl|799;fish food|349;rabbit treats|499;turtle rock|1099;bird cage toy|649;cat bed|2199;dog sweater|1799;aquarium net|299;hamster bedding|899;cat litter bag|1599;dog shampoo|999;parrot swing|749;pet water bottle|599;chew toy|549;cat treats|449;fish tank light|1999;hamster ball|1199;pet carrier|3999;dog treats|699;rabbit hay toy|899;gerbil tunnel|799;collar tag|399;catnip toy|299;dog flyer disc|499;bird bath|1499;aquarium pebbles|699;pet blanket|1299",
+"Book Nook":"adventure novel|899;picture book|599;dictionary|1499;bookmark|149;reading light|1299;notebook|349;comic book|499;atlas|1999;joke book|699;science book|1599;poetry book|799;sticker book|449;coloring book|399;pencil set|299;gel pens|549;journal|899;story collection|1099;map poster|799;book bag|1899;puzzle book|549;kids cookbook|1499;fairy tale book|749;encyclopedia|2999;bookends|1299;eraser pack|199;pencil sharpener|129;highlighters|449;sketchbook|999;wall calendar|1199;audio story card|1099;mystery novel|999;animal fact book|849;space book|1199;history book|1399;drawing guide|749;reading log|649;paper clips|179"
+};
+var ITEMS=[];
+(function(){var s,k,parts,i,f;for(s=0;s<SHOPS.length;s++){parts=ITEM_RAW[SHOPS[s]].split(";");for(i=0;i<parts.length;i++){f=parts[i].split("|");ITEMS.push({n:f[0],c:parseInt(f[1],10),shop:SHOPS[s]});}}})();
+
+/* ================= 50 story templates (original) ================= */
+var STORIES={
+count:["{N} opened a piggy bank and found these coins and bills. How much money is inside?","{N} emptied a jar of change after a lemonade stand. Count the money.","{N} found some money under the couch cushions. How much did {N} find?","After a yard sale, {N} counted the cash box. What is the total?","{N} saved these coins and bills for a trip to the {S}. How much is saved?","A wishing fountain gave {N} a surprise: money to count. How much is there?","{N}'s grandma left a pile of change on the table. How much is there?","At the end of the bake sale, {N} counted the money box. What is the total?","{N} sorted birthday money into a pile. Add it all up.","The class treasure chest holds this money. What is the total?"],
+make:["{N} wants to pay exactly {M} using only these coins and bills. Show how.","The vending machine at the {S} takes exact change. {N} needs {M}. Which pieces can {N} use?","{N} is building a stack worth {M}. Choose pieces from the set below.","To buy a surprise at the {S}, {N} needs exactly {M}. Make that amount.","The cashier asks {N} to pay {M} with the money in this set. How can {N} do it?","{N} has only these kinds of money. Make {M}.","A game at the arcade needs exactly {M}. Help {N} count it out.","{N} is playing store and needs to hand over {M}. Pick the pieces.","The tip jar needs {M}. Which pieces could {N} put in?","{N}'s piggy bank bet is {M}. Show a way to make it."],
+shop:["{N} is shopping at the {S}. Add the prices to find the total, then work out the change.","{N} visits the {S} with a short list. How much will it cost, and how much change comes back?","At the {S}, {N} picks out some treats. Find the total and the change.","{N} is helping at home and shops at the {S}. Total the list and find the change.","The {S} has a sale day. {N} buys the things below. What is the total and the change?","{N} took money to the {S}. Add up the items and find what is left.","{N} is spending allowance at the {S}. Find the total cost and the change.","A busy day at the {S}: {N} is next in line. Total the items and find the change.","{N} counts the prices at the {S} before paying. What is the total, and what is the change?","{N} is buying gifts at the {S}. Find the total and the change.","{N} has a coupon-free day at the {S}. Add the prices and find the change.","{N} hands the cashier money at the {S}. Find the total and the change."],
+save:["{N} wants to buy {I} for {G}. {N} saves {A} every week{ST}. How many weeks until {N} can buy it?","The {I} costs {G}. {N} puts away {A} each week{ST}. How many weeks will it take?","{N} is saving for {I}, which costs {G}. Each week {N} saves {A}{ST}. How many weeks?","A new {I} costs {G}. {N} earns {A} a week and saves it all{ST}. How many weeks are needed?","{N} has a goal: {I} for {G}. Saving {A} per week{ST}, how many weeks will it take?","To afford {I} at {G}, {N} saves {A} a week{ST}. How long will it take, in weeks?","{N} checks the price tag: {G} for {I}. With {A} saved each week{ST}, how many weeks?","{N} is on a savings quest for {I} at {G}. {N} adds {A} weekly{ST}. How many weeks?","{N} wants {I} that costs {G}. Saving {A} every week{ST} means how many weeks?","The goal is {I} for {G}. {N} saves {A} each week{ST}. Find the number of weeks."],
+detect:["{N} spent exactly {M} at the {S} on two different items. Which two items did {N} buy?","At the {S}, {N} paid {M} for two things. Which two items were they?","{N}'s receipt from the {S} says {M}, but the item names are smudged. Find the two items.","Two items from the {S} cost {M} together. Which two are they?","{N} bought a pair of items at the {S} for {M} in total. Find the pair.","Price tag detective: which two items add up to {M}?","{N} remembers paying exactly {M} for two things at the {S}. Which two?","Solve the case: two items at the {S} make {M}. Which ones?"]
+};
+var NAMES_DEFAULT=["Maya","Leo","Zoe","Sam","Ava","Noah","Ivy","Eli","Mia","Omar","Lily","Ben","Nora","Kai","Ruby","Theo","Luna","Jude","Ella","Finn"];
+
+/* ================= 30 needs vs wants scenarios ================= */
+var NEEDWANT_RAW="Buying groceries so the family can eat dinner|need;A warm coat when it is snowing|need;A visit to the doctor when you are sick|need;School shoes that fit|need;The water bill for the house|need;A bus pass to get to school|need;Soap and toothpaste|need;Rent for the family home|need;Glasses so you can see the board|need;Medicine when you have a fever|need;Winter boots when it snows|need;Notebooks for class|need;Electricity to keep the lights on|need;A smoke alarm for the house|need;A helmet for riding a bike|need;A new video game|want;A fancy toy robot|want;Candy at the checkout|want;A third pair of sneakers when yours still fit|want;Movie tickets|want;A cupcake for dessert|want;A sparkly charm for a backpack|want;A glittery phone case|want;A poster for your bedroom wall|want;A second scoop of ice cream|want;Extra stickers|want;A trip to the arcade|want;A pizza party with friends|want;Fashion sunglasses|want;A bigger TV for the playroom|want";
+var NEEDWANT=[];
+(function(){var p=NEEDWANT_RAW.split(";"),i,f;for(i=0;i<p.length;i++){f=p[i].split("|");NEEDWANT.push({t:f[0],tag:f[1]});}})();
+var BUDGET_NEEDS=[["Lunch money for the week",450],["A bus pass",600],["School supplies",350],["Soap and shampoo",400],["A water bottle",250],["Notebook paper",200],["Snack for school",300],["A pair of socks",500]];
+var BUDGET_WANTS=[["A comic book",450],["Arcade tokens",500],["Stickers",250],["A milkshake",400],["A toy car",350],["A bracelet",300],["Movie snack",450],["A poster",500]];
+
+/* ================= levels, modes ================= */
+var LEVELS=[1,2,3,4,5];
+var MODES=["count","make","shop","save","needs","detect"];
+var MODE_NAMES={count:"Count the coins",make:"Make the amount",shop:"Shopping math",save:"Savings goals",needs:"Needs vs wants",detect:"Price tag detective"};
+var MODE_INSTR={
+  count:"Look at the money in each picture. Add it up and write the total.",
+  make:"Use only the money shown to make the exact amount. Write how many of each piece you use.",
+  shop:"Add the prices to find the total. Then subtract the total from the money paid to find the change.",
+  save:"Work out how many whole weeks it takes to reach the goal. Show your thinking.",
+  needs:"Tick Need or Want for each choice. Then finish the mini budget table.",
+  detect:"Find the two items whose prices add up to the total. Write their names."
+};
+var LEVEL_INFO={
+  1:{name:"Level 1",desc:"Pennies, nickels and dimes up to $1.00",countSet:[1,5,10],countMax:100,pieces:[3,6],makeSet:[1,5,10],makeMax:95,itemMax:300,shopMax:500,shopItems:2,saveMaxGoal:500,saveAllow:[25,50,100],saveWeeks:[2,5],detMax:400,detN:5,income:[500,1000]},
+  2:{name:"Level 2",desc:"Add quarters, totals up to $2.00",countSet:[1,5,10,25],countMax:200,pieces:[4,8],makeSet:[1,5,10,25],makeMax:199,itemMax:800,shopMax:1000,shopItems:2,saveMaxGoal:1000,saveAllow:[50,100,150,200],saveWeeks:[3,8],detMax:800,detN:5,income:[1000,1500]},
+  3:{name:"Level 3",desc:"Half dollars, dollar coins and $1 and $5 bills",countSet:[1,5,10,25,50,100,500],countMax:1000,pieces:[5,9],makeSet:[1,10,25,50,100],makeMax:299,itemMax:1500,shopMax:2000,shopItems:3,saveMaxGoal:2500,saveAllow:[100,150,250,500],saveWeeks:[4,10],detMax:1500,detN:6,income:[1500,2500]},
+  4:{name:"Level 4",desc:"Bills up to $20, totals up to $50",countSet:[1,5,10,25,100,500,1000,2000],countMax:5000,pieces:[6,10],makeSet:[1,5,25,100,500,1000],makeMax:1500,itemMax:3000,shopMax:5000,shopItems:4,saveMaxGoal:6000,saveAllow:[250,500,750,1000],saveWeeks:[5,12],detMax:3000,detN:6,income:[2500,4000]},
+  5:{name:"Level 5",desc:"Totals up to $100 with change, long shopping lists",countSet:[1,5,10,25,100,500,1000,2000],countMax:10000,pieces:[6,12],makeSet:[1,5,25,100,500,1000,2000],makeMax:10000,itemMax:5000,shopMax:10000,shopItems:5,saveMaxGoal:10000,saveAllow:[300,450,700,1200],saveWeeks:[4,20],detMax:5000,detN:7,income:[4000,8000]}
+};
+
+/* ================= custom content ================= */
+function parseCustomItems(raw,shopName){
+  var lines=String(raw||"").split(/\r?\n/),items=[],bad=[],i,ln,parts,seen={};
+  for(i=0;i<lines.length;i++){
+    ln=lines[i].replace(/^\s+|\s+$/g,"");
+    if(ln===""||ln.charAt(0)==="#"){continue;}
+    parts=ln.split("=");
+    if(parts.length!==2){bad.push({n:i+1,line:ln,why:parts.length<2?"no '=' found (write: item = price)":"more than one '='"});continue;}
+    var nm=parts[0].replace(/^\s+|\s+$/g,""),pr=parts[1];
+    if(!nm){bad.push({n:i+1,line:ln,why:"item name is empty"});continue;}
+    if(nm.length>34){bad.push({n:i+1,line:ln,why:"item name longer than 34 characters"});continue;}
+    if(!/^[A-Za-z0-9 '&\-\.]+$/.test(nm)){bad.push({n:i+1,line:ln,why:"item name has invalid characters"});continue;}
+    var c=parseCents(pr);
+    if(c===null){bad.push({n:i+1,line:ln,why:"price must look like 1.25 or $3 (max 999.99)"});continue;}
+    if(seen[nm.toLowerCase()]){bad.push({n:i+1,line:ln,why:"duplicate of line "+seen[nm.toLowerCase()]});continue;}
+    if(items.length>=60){bad.push({n:i+1,line:ln,why:"over the 60-item limit"});continue;}
+    seen[nm.toLowerCase()]=i+1;items.push({n:nm,c:c,shop:shopName||"My Shop",custom:true});
+  }
+  return {items:items,bad:bad};
+}
+function parseNames(raw){
+  var parts=String(raw||"").split(/[,\n;]+/),out=[],i,n;
+  for(i=0;i<parts.length;i++){n=parts[i].replace(/^\s+|\s+$/g,"");if(n&&n.length<=16&&/^[A-Za-z][A-Za-z '\-]*$/.test(n)&&out.indexOf(n)<0){out.push(n);}if(out.length>=20){break;}}
+  return out;
+}
+function fillTpl(t,m){return t.replace(/\{([A-Z])\}/g,function(a,k){return m[k]!==undefined?m[k]:a;});}
+
+/* ================= problem generators (all integer cents) ================= */
+function randomPieces(rng,set,count,maxTotal){
+  var out=[],total=0,tries=0,c;
+  while(out.length<count&&tries<200){
+    tries++;c=pick(rng,set);
+    if(total+c>maxTotal){continue;}
+    out.push(c);total+=c;
+  }
+  if(!out.length){out.push(set[0]);}
+  return out;
+}
+function genCount(rng,level,ctx){
+  var L=LEVEL_INFO[level],n=ri(rng,L.pieces[0],L.pieces[1]),pieces=randomPieces(rng,L.countSet,n,L.countMax),t=0,i;
+  pieces.sort(function(a,b){return a-b;});
+  for(i=0;i<pieces.length;i++){t+=pieces[i];}
+  var m={N:ctx.name(),S:ctx.shop()};
+  return {mode:"count",level:level,story:fillTpl(pick(rng,STORIES.count),m),pieces:pieces,billsAsBills:true,total:t};
+}
+function genMake(rng,level,ctx){
+  var L=LEVEL_INFO[level],set=L.makeSet.slice(),target,tries=0,mc;
+  if(level===5){var sh=shuffleWith(rng,[5,25,100,500,1000,2000]).slice(0,ri(rng,3,5));set=[1].concat(sh).sort(function(a,b){return a-b;});}
+  if(level===3&&rng()<0.5){set=[1,10,25,50,100];}
+  if(level===2&&rng()<0.5){set=[1,10,25];}
+  do{
+    target=ri(rng,Math.max(6,Math.floor(L.makeMax/6)),L.makeMax);tries++;
+    mc=minCoins(set,target);
+  }while((!mc||mc.n<2)&&tries<50);
+  /* one valid (not necessarily minimal) representation */
+  var rem=target,valid={},order=shuffleWith(rng,set.filter(function(c){return c>1;})),k;
+  for(k=0;k<order.length;k++){var maxn=Math.floor(rem/order[k]);if(maxn>0&&rng()<0.7){var take=ri(rng,0,Math.min(maxn,3));if(take>0){valid[order[k]]=take;rem-=take*order[k];}}}
+  if(rem>0){valid[1]=(valid[1]||0)+rem;}
+  var m={N:ctx.name(),S:ctx.shop(),M:money(target)};
+  return {mode:"make",level:level,story:fillTpl(pick(rng,STORIES.make),m),target:target,set:set,valid:valid,min:mc.counts,minN:mc.n};
+}
+function niceAbove(total,maxPay){
+  var opts=[500,1000,2000,5000,10000],i;
+  for(i=0;i<opts.length;i++){if(opts[i]>=total&&opts[i]<=maxPay){return opts[i];}}
+  return opts[opts.length-1]>=total?opts[opts.length-1]:total;
+}
+function payPieces(pay){
+  var out=[],r=pay,den=[2000,1000,500,100,25,10,5,1],i;
+  for(i=0;i<den.length;i++){while(r>=den[i]){out.push(den[i]);r-=den[i];}}
+  return out;
+}
+function genShop(rng,level,ctx){
+  var L=LEVEL_INFO[level],shop=ctx.shopFor(),pool=ctx.itemsFor(shop,L.itemMax),n=L.shopItems,items=[],total=0,tries=0,i;
+  if(pool.length<n){n=Math.max(1,pool.length);}
+  do{
+    items=shuffleWith(rng,pool).slice(0,n);total=0;for(i=0;i<items.length;i++){total+=items[i].c;}tries++;
+  }while(total>L.shopMax&&tries<80);
+  if(total>L.shopMax){items=items.slice(0,1);total=items[0].c;}
+  var pay=niceAbove(total,Math.max(L.shopMax,total));
+  if(pay<total){pay=total;}
+  var m={N:ctx.name(),S:shop};
+  return {mode:"shop",level:level,story:fillTpl(pick(rng,STORIES.shop),m),shop:shop,items:items.map(function(x){return {n:x.n,c:x.c};}),total:total,pay:pay,change:pay-total,payPieces:payPieces(pay)};
+}
+function genSave(rng,level,ctx){
+  var L=LEVEL_INFO[level],allow=pick(rng,L.saveAllow),weeks=ri(rng,L.saveWeeks[0],L.saveWeeks[1]),start=0,goal,round=false,left=0,tries=0,items=ctx.allItems();
+  if(level>=3){start=allow*ri(rng,0,2);}
+  if(level===5){
+    round=true;
+    do{goal=ri(rng,Math.max(allow*2,500),L.saveMaxGoal);if(goal%5!==0){goal-=goal%5;}tries++;}while((goal<=start||Math.floor((goal-start+allow-1)/allow)>L.saveWeeks[1])&&tries<100);
+    weeks=Math.floor((goal-start+allow-1)/allow);left=weeks*allow+start-goal;
+  }else{
+    goal=start+allow*weeks;
+    while(goal>L.saveMaxGoal&&weeks>1){weeks--;goal=start+allow*weeks;}
+  }
+  var cand=items.filter(function(x){return x.c<=goal+300&&x.c>=Math.max(50,goal-300);});
+  var it=cand.length?pick(rng,cand):pick(rng,items);
+  var m={N:ctx.name(),I:"a "+it.n,G:money(goal),A:money(allow),ST:start>0?(", and already has "+money(start)):""};
+  return {mode:"save",level:level,story:fillTpl(pick(rng,STORIES.save),m)+(round?" Round up to the next whole week.":""),item:it.n,goal:goal,allow:allow,start:start,weeks:weeks,round:round,left:left,need:goal-start};
+}
+function genNeeds(rng,level,ctx,count){
+  var L=LEVEL_INFO[level],needs=shuffleWith(rng,NEEDWANT.filter(function(x){return x.tag==="need";})),wants=shuffleWith(rng,NEEDWANT.filter(function(x){return x.tag==="want";}));
+  var nN=Math.ceil(count/2),sc=needs.slice(0,nN).concat(wants.slice(0,count-nN));
+  sc=shuffleWith(rng,sc);
+  var income=ri(rng,L.income[0]/50,L.income[1]/50)*50,bn=shuffleWith(rng,BUDGET_NEEDS).slice(0,3),bw=shuffleWith(rng,BUDGET_WANTS).slice(0,2),tn=0,tw=0,i;
+  for(i=0;i<bn.length;i++){tn+=bn[i][1];}for(i=0;i<bw.length;i++){tw+=bw[i][1];}
+  var guard=0;while(tn+tw>income&&guard<20){income+=250;guard++;}
+  return {mode:"needs",level:level,scenarios:sc.map(function(x){return {t:x.t,tag:x.tag};}),income:income,needs:bn.map(function(x){return {n:x[0],c:x[1]};}),wants:bw.map(function(x){return {n:x[0],c:x[1]};}),needsTotal:tn,wantsTotal:tw,savings:income-tn-tw,story:"You earned "+money(income)+" this week. Use the table to see how much is left to save."};
+}
+function genDetect(rng,level,ctx){
+  var L=LEVEL_INFO[level],shop=ctx.shopFor(),pool=ctx.itemsFor(shop,L.detMax),n=L.detN,tries=0,items,pair,total,ok,i,j;
+  if(pool.length<n){n=Math.max(3,pool.length);}
+  do{
+    items=shuffleWith(rng,pool).slice(0,n);
+    var a=ri(rng,0,n-1),b=ri(rng,0,n-1);if(a===b){b=(a+1)%n;}
+    pair=[Math.min(a,b),Math.max(a,b)];total=items[pair[0]].c+items[pair[1]].c;
+    ok=true;
+    for(i=0;i<n&&ok;i++){for(j=i+1;j<n;j++){if((i!==pair[0]||j!==pair[1])&&items[i].c+items[j].c===total){ok=false;break;}}}
+    tries++;
+  }while(!ok&&tries<200);
+  var m={N:ctx.name(),S:shop,M:money(total)};
+  return {mode:"detect",level:level,story:fillTpl(pick(rng,STORIES.detect),m),shop:shop,items:items.map(function(x){return {n:x.n,c:x.c};}),pair:pair,total:total,unique:ok};
+}
+function makeCtx(rng,P,customItems,names){
+  var all=ITEMS.concat(customItems);
+  var shopsAvail=P.customOnly&&customItems.length?[customItems[0].shop]:SHOPS.concat(customItems.length?[customItems[0].shop]:[]);
+  return {
+    name:function(){return pick(rng,names);},
+    shop:function(){return pick(rng,shopsAvail);},
+    shopFor:function(){return pick(rng,shopsAvail);},
+    itemsFor:function(shop,max){var r=all.filter(function(x){return x.shop===shop&&x.c<=max;});if(r.length<3){r=all.filter(function(x){return x.c<=max&&(!P.customOnly||x.custom);});}return r;},
+    allItems:function(){return P.customOnly&&customItems.length?customItems:all;}
+  };
+}
+function genProblem(mode,rng,level,ctx,count){
+  if(mode==="count"){return genCount(rng,level,ctx);}
+  if(mode==="make"){return genMake(rng,level,ctx);}
+  if(mode==="shop"){return genShop(rng,level,ctx);}
+  if(mode==="save"){return genSave(rng,level,ctx);}
+  if(mode==="needs"){return genNeeds(rng,level,ctx,count);}
+  return genDetect(rng,level,ctx);
+}
+
+/* ================= planning and deck generation ================= */
+function planDeck(P){
+  var tasks=[],li,mi,pg,ci=parseCustomItems(P.customItems,P.shopName),names=parseNames(P.names);
+  if(!names.length){names=NAMES_DEFAULT.slice();}
+  var levels=LEVELS.filter(function(l){return P.levels.indexOf(l)>=0;}),idx=0;
+  for(li=0;li<levels.length;li++){for(mi=0;mi<MODES.length;mi++){if(P.modes[MODES[mi]]){for(pg=0;pg<P.pagesPer;pg++){tasks.push({level:levels[li],mode:MODES[mi],pi:pg,idx:idx++});}}}}
+  return {tasks:tasks,customItems:ci,names:names,xpTotal:tasks.reduce(function(a,t){return a+t.level*10;},0)};
+}
+function runTask(P,plan,ti){
+  var tk=plan.tasks[ti],rng=mulberry32(mixSeed(P.seed,ti+17)),ctx=makeCtx(rng,P,plan.customItems.items,plan.names),items=[],i,n=P.perPage;
+  if(tk.mode==="needs"){items.push(genNeeds(rng,tk.level,ctx,Math.min(10,n+2)));}
+  else{for(i=0;i<n;i++){items.push(genProblem(tk.mode,rng,tk.level,ctx,n));}}
+  return {mode:tk.mode,level:tk.level,pi:tk.pi,items:items,xp:tk.level*10,seed:mixSeed(P.seed,ti+17)};
+}
+function makeDeckSync(P){
+  var plan=planDeck(P),pages=[],i;
+  for(i=0;i<plan.tasks.length;i++){pages.push(runTask(P,plan,i));}
+  return {params:P,plan:plan,pages:pages};
+}
+
+/* ================= state ================= */
+var PRESETS={
+  arcade:{name:"Arcade Bright",ink:"#1b1038",paper:"#fffdf8",a:"#ff2d78",line:"#e4d9f0",red:"#d6155b",sw:["#ff2d78","#00c2a0"]},
+  candy:{name:"Candy Shop",ink:"#3a0f2e",paper:"#fff9fc",a:"#d6336c",line:"#f0cfdd",red:"#8338ec",sw:["#d6336c","#74c69d"]},
+  ocean:{name:"Ocean",ink:"#06283d",paper:"#fbfeff",a:"#0077b6",line:"#c5dfea",red:"#e63946",sw:["#0077b6","#48cae4"]},
+  sunny:{name:"Sunny Day",ink:"#3b2300",paper:"#fffdf5",a:"#f77f00",line:"#e8dcc0",red:"#d62828",sw:["#f77f00","#ffd60a"]},
+  bw:{name:"Print-safe B/W",ink:"#000000",paper:"#ffffff",a:"#000000",line:"#bdbdbd",red:"#000000",sw:["#000000","#ffffff"]}
+};
+var PRESET_KEYS=["arcade","candy","ocean","sunny","bw"];
+var TRIMS={"6x9":[6,9],"8x10":[8,10],"8.5x11":[8.5,11],"a4":[8.27,11.69]};
+var TRIM_KEYS=["6x9","8x10","8.5x11","a4"];
+var BLEED_PX=12;
+function defaultState(){
+  return {
+    levels:[1,2,3,4,5],modes:{count:true,make:true,shop:true,save:true,needs:true,detect:true},pagesPer:1,perPage:6,
+    customItems:"",shopName:"My Shop",customOnly:false,names:"",studentName:"",
+    title:"Budget Quest",sub:"Count it. Spend it. Save it.",seedInput:"",
+    preset:"arcade",header:"block",border:"rounded",pattern:"none",wm:"footer",nums:true,
+    trim:"8.5x11",bleed:false,mIn:0.625,mOut:0.5,mTb:0.5,mirror:true,guides:true,
+    book:true,cert:true,ans:true,seller:"",
+    view:"puzzle",layout2:"single",zoom:100
+  };
+}
+var S=defaultState();
+var deck=null, curPage=0, genRunning=false;
+function gameTitle(){return S.title||"Budget Quest";}
+function pal(){
+  var p=PRESETS[S.preset]||PRESETS.arcade,bw=S.preset==="bw";
+  var C={bw:bw,ink:p.ink,paper:p.paper,a:p.a,line:p.line,red:p.red};
+  C.soft=mix(C.paper,C.ink,0.07);C.mid=mix(C.paper,C.ink,0.55);C.tint=bw?"#eeeeee":mix(C.paper,C.a,0.12);
+  return C;
+}
+function denColors(key,C){var d=DEN[key];return C.bw?{col:gray(d.col),ring:gray(d.ring)}:{col:d.col,ring:d.ring};}
+
+/* ================= coin and bill artwork (generic; value text + neutral emblem) ================= */
+function emblem(kind,cx,cy,s,ink){
+  if(kind==="star"){return '<polygon points="'+starPts(cx,cy,s,s*0.42)+'" fill="'+ink+'"/>';}
+  if(kind==="leaf"){return '<path d="M'+(cx-s)+' '+(cy+s*0.6)+' C'+(cx-s*0.8)+' '+(cy-s)+' '+(cx+s*0.6)+' '+(cy-s)+' '+(cx+s)+' '+(cy-s*0.8)+' C'+(cx+s*0.8)+' '+(cy+s*0.6)+' '+(cx-s*0.2)+' '+(cy+s*0.9)+' '+(cx-s)+' '+(cy+s*0.6)+'Z" fill="'+ink+'"/>';}
+  if(kind==="ring"){return '<circle cx="'+cx+'" cy="'+cy+'" r="'+s+'" fill="none" stroke="'+ink+'" stroke-width="'+(s*0.3).toFixed(1)+'"/>';}
+  if(kind==="wave"){return '<path d="M'+(cx-s)+' '+cy+' q'+(s*0.5)+' '+(-s*0.8)+' '+s+' 0 t'+s+' 0" fill="none" stroke="'+ink+'" stroke-width="'+(s*0.28).toFixed(1)+'" stroke-linecap="round"/>';}
+  if(kind==="sun"){var o="",i;for(i=0;i<8;i++){var a=i*Math.PI/4;o+='<line x1="'+(cx+Math.cos(a)*s*0.7).toFixed(1)+'" y1="'+(cy+Math.sin(a)*s*0.7).toFixed(1)+'" x2="'+(cx+Math.cos(a)*s*1.1).toFixed(1)+'" y2="'+(cy+Math.sin(a)*s*1.1).toFixed(1)+'" stroke="'+ink+'" stroke-width="'+(s*0.2).toFixed(1)+'"/>';}return o+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(s*0.5)+'" fill="'+ink+'"/>';}
+  if(kind==="diamond"){return '<polygon points="'+cx+','+(cy-s)+' '+(cx+s)+','+cy+' '+cx+','+(cy+s)+' '+(cx-s)+','+cy+'" fill="'+ink+'"/>';}
+  if(kind==="hex"){var p=[],j;for(j=0;j<6;j++){var b=Math.PI/3*j;p.push((cx+Math.cos(b)*s).toFixed(1)+","+(cy+Math.sin(b)*s).toFixed(1));}return '<polygon points="'+p.join(" ")+'" fill="'+ink+'"/>';}
+  return '<circle cx="'+cx+'" cy="'+cy+'" r="'+s*0.8+'" fill="'+ink+'"/>';
+}
+/* returns {g,w,h}: drawing centered at (0,0) */
+function denArt(key,C,sc){
+  var d=DEN[key],col=denColors(key,C),ink=C.bw?"#000000":mix(col.ring,"#000000",0.35),s=sc||1,o;
+  if(d.coin){
+    var r=d.r*1.55*s;
+    o='<g data-den="'+key+'" data-value="'+d.c+'"><circle r="'+r.toFixed(1)+'" fill="'+col.col+'" stroke="'+col.ring+'" stroke-width="'+(3*s).toFixed(1)+'"/><circle r="'+(r*0.84).toFixed(1)+'" fill="none" stroke="'+col.ring+'" stroke-width="'+(1.4*s).toFixed(1)+'" stroke-dasharray="'+(3*s).toFixed(1)+' '+(3*s).toFixed(1)+'"/>';
+    o+=emblem(d.em,0,-r*0.42,r*0.2,ink);
+    o+='<text x="0" y="'+(r*0.3).toFixed(1)+'" text-anchor="middle" dy=".35em" font-size="'+(r*(d.label.length>2?0.62:0.78)).toFixed(1)+'" font-weight="700" fill="'+ink+'" font-family="Arial, Helvetica, sans-serif">'+d.label+'</text>';
+    o+='<text x="0" y="'+(r*0.74).toFixed(1)+'" text-anchor="middle" font-size="'+(r*0.2).toFixed(1)+'" font-weight="700" fill="'+ink+'" font-family="Arial, Helvetica, sans-serif">'+d.name.toUpperCase()+'</text></g>';
+    return {g:o,w:r*2,h:r*2};
+  }
+  var w=150*s,h=64*s;
+  o='<g data-den="'+key+'" data-value="'+d.c+'"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" rx="'+(5*s)+'" fill="'+col.col+'" stroke="'+col.ring+'" stroke-width="'+(3*s)+'"/><rect x="'+(-w/2+6*s)+'" y="'+(-h/2+6*s)+'" width="'+(w-12*s)+'" height="'+(h-12*s)+'" rx="'+(3*s)+'" fill="none" stroke="'+col.ring+'" stroke-width="'+(1.2*s)+'"/>';
+  o+='<ellipse cx="0" cy="0" rx="'+(30*s)+'" ry="'+(22*s)+'" fill="'+C.paper+'" stroke="'+col.ring+'" stroke-width="'+(1.6*s)+'"/>';
+  o+=emblem(d.em,0,-6*s,7*s,ink);
+  o+='<text x="0" y="'+(12*s)+'" text-anchor="middle" font-size="'+(9*s)+'" font-weight="700" fill="'+ink+'" font-family="Arial, Helvetica, sans-serif">'+d.label+'</text>';
+  o+='<text x="'+(-w/2+13*s)+'" y="'+(-h/2+17*s)+'" text-anchor="middle" font-size="'+(13*s)+'" font-weight="700" fill="'+ink+'" font-family="Arial, Helvetica, sans-serif">'+d.label+'</text>';
+  o+='<text x="'+(w/2-13*s)+'" y="'+(h/2-7*s)+'" text-anchor="middle" font-size="'+(13*s)+'" font-weight="700" fill="'+ink+'" font-family="Arial, Helvetica, sans-serif">'+d.label+'</text></g>';
+  return {g:o,w:w,h:h};
+}
+function pieceKey(c,level){if(c===100){return level>=4?"bill1":"dollarcoin";}return DEN_BY_CENTS[c];}
+/* flow pieces into rows inside a width; returns svg markup with data-total */
+function coinsSVG(pieces,level,C,W,sc){
+  var items=[],i,total=0;
+  var sorted=pieces.slice().sort(function(a,b){return b-a;});
+  for(i=0;i<sorted.length;i++){items.push(denArt(pieceKey(sorted[i],level),C,sc||1));total+=sorted[i];}
+  var gap=10,x=0,y=0,rowH=0,rows=[[]],rw=0,rh=0;
+  var placed=[];
+  for(i=0;i<items.length;i++){
+    var it=items[i];
+    if(x>0&&x+it.w>W){y+=rowH+gap;x=0;rowH=0;}
+    placed.push({it:it,x:x+it.w/2,y:y,h:it.h});
+    x+=it.w+gap;rowH=Math.max(rowH,it.h);
+  }
+  var H=y+rowH,o='';
+  /* second pass: center each piece vertically inside its row */
+  var rowTop=0,cur=0,k,rowItems=[];
+  var byRow={};
+  for(i=0;i<placed.length;i++){var key=placed[i].y;(byRow[key]=byRow[key]||[]).push(placed[i]);}
+  var keys=Object.keys(byRow).map(Number).sort(function(a,b){return a-b;});
+  for(k=0;k<keys.length;k++){
+    var row=byRow[keys[k]],mh=0,j,rowW=0;
+    for(j=0;j<row.length;j++){mh=Math.max(mh,row[j].h);rowW+=row[j].it.w+gap;}
+    var off=0;
+    for(j=0;j<row.length;j++){o+='<g transform="translate('+(row[j].x).toFixed(1)+' '+(keys[k]+mh/2).toFixed(1)+')">'+row[j].it.g+'</g>';}
+  }
+  return '<svg class="coins" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+Math.max(H,10).toFixed(0)+'" data-total="'+total+'" data-w="'+W+'" data-h="'+Math.max(H,10).toFixed(0)+'" preserveAspectRatio="xMinYMid meet" font-family="Arial, Helvetica, sans-serif">'+o+'</svg>';
+}
+function denRowSVG(cents,C,sc){
+  var n=cents.length,W=n*92+8,o='<svg class="coins" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' 80" data-w="'+W+'" data-h="80" preserveAspectRatio="xMinYMid meet" font-family="Arial, Helvetica, sans-serif">',i;
+  for(i=0;i<n;i++){var art=denArt(pieceKey(cents[i],3),C,sc||0.8);o+='<g transform="translate('+(4+i*92+46)+' 40)">'+art.g+'</g>';}
+  return o+'</svg>';
+}
+
+/* ================= page chrome ================= */
+function patternSVG(d,C){
+  if(S.pattern==="none"){return "";}
+  var o='<svg class="bgpat" xmlns="http://www.w3.org/2000/svg" width="'+d.W+'" height="'+d.H+'" viewBox="0 0 '+d.W+' '+d.H+'"><defs>';
+  var col=mix(C.paper,C.ink,C.bw?0.08:0.06);
+  if(S.pattern==="dots"){o+='<pattern id="ptn" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="14" cy="14" r="2" fill="'+col+'"/></pattern>';}
+  else if(S.pattern==="coins"){o+='<pattern id="ptn" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="15" cy="15" r="8" fill="none" stroke="'+col+'" stroke-width="2"/><circle cx="45" cy="45" r="8" fill="none" stroke="'+col+'" stroke-width="2"/></pattern>';}
+  else{o+='<pattern id="ptn" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" fill="none" stroke="'+col+'" stroke-width="1"/></pattern>';}
+  return o+'</defs><rect width="'+d.W+'" height="'+d.H+'" fill="url(#ptn)"/></svg>';
+}
+function frameHTML(d,C){
+  if(S.border==="none"){return "";}
+  var st=(S.border==="solid")?"3px solid":(S.border==="double")?"6px double":"4px solid",rad=(S.border==="rounded")?"22px":"0";
+  return '<div class="frame" style="left:'+(d.ml-10)+'px;top:'+(d.mt-10)+'px;right:'+(d.mr-10)+'px;bottom:'+(d.mb-10)+'px;border:'+st+' '+(S.border==="rounded"?C.a:C.ink)+';border-radius:'+rad+';"></div>';
+}
+function headHTML(kick,title,chip){
+  var h='<div class="hd hd-'+S.header+'"><div class="htxt"><div class="kick fit1">'+esc(kick)+'</div><h2 class="ttl fit1">'+esc(title)+'</h2></div>';
+  if(chip){h+='<div class="lvlchip">'+esc(chip)+'</div>';}
+  return h+'</div>';
+}
+
+/* ================= page list ================= */
+function buildPages(dk){
+  var L=[],i;
+  if(S.book){L.push({k:"title"},{k:"copy"},{k:"howto"});}
+  for(i=0;i<dk.pages.length;i++){L.push({k:"ws",wi:i});}
+  if(S.cert){L.push({k:"cert"});}
+  var puzzleCount=L.length;
+  if(S.ans){for(i=0;i<dk.pages.length;i++){L.push({k:"ans",wi:i});}}
+  return {list:L,puzzleCount:puzzleCount};
+}
+function viewList(dk){
+  var b=buildPages(dk),idx=[],i;
+  for(i=0;i<b.list.length;i++){if((S.view==="answer")===(b.list[i].k==="ans")){idx.push(i);}}
+  if(!idx.length){for(i=0;i<b.puzzleCount;i++){idx.push(i);}}
+  return {all:b.list,idx:idx};
+}
+
+/* ================= rows ================= */
+function countsText(counts,sorted){
+  var keys=Object.keys(counts).map(Number).sort(function(a,b){return b-a;}),out=[],i;
+  for(i=0;i<keys.length;i++){var d=DEN[pieceKey(keys[i],3)];out.push(counts[keys[i]]+" x "+d.label);}
+  return out.join(", ");
+}
+function breakdownText(pieces){
+  var counts={},i;for(i=0;i<pieces.length;i++){counts[pieces[i]]=(counts[pieces[i]]||0)+1;}
+  var keys=Object.keys(counts).map(Number).sort(function(a,b){return b-a;}),out=[];
+  for(i=0;i<keys.length;i++){out.push(counts[keys[i]]+" x "+money(keys[i])+" = "+money(counts[keys[i]]*keys[i]));}
+  return out.join(" + ");
+}
+function boxes(n,cls){var o="",i;for(i=0;i<n;i++){o+='<i class="'+(cls||"cbx2")+'"></i>';}return o;}
+function blank(txt,ans,w){return '<span class="bl'+(ans?' ans':'')+'" style="min-width:'+(w||70)+'px">'+(ans?esc(txt):'&nbsp;')+'</span>';}
+function rowHTML(mode,it,idx,ans,C){
+  var h='<div class="rw"><span class="n">'+(idx+1)+'</span><div class="rb">';
+  if(mode==="count"){
+    h+='<div class="st">'+esc(it.story)+'</div><div class="sv">'+coinsSVG(it.pieces,it.level,C,520,0.9)+'</div>';
+    h+='<div class="ln2">Total: '+blank(money(it.total),ans,90)+(ans?'<span class="why">'+esc(breakdownText(it.pieces))+'</span>':'')+'</div>';
+  }else if(mode==="make"){
+    var ds=it.set.slice().sort(function(a,b){return a-b;}),i,cnt="";
+    h+='<div class="st">'+esc(it.story)+'</div><div class="mk"><b>Make '+blank(money(it.target),true,60)+'</b></div><div class="sv">'+denRowSVG(ds,C,0.62)+'</div>';
+    for(i=0;i<ds.length;i++){
+      var d=DEN[pieceKey(ds[i],3)],v=ans?(it.valid[ds[i]]||0):"";
+      cnt+='<span class="cnt"><b>'+d.label+'</b> x '+(ans?'<em class="ans">'+v+'</em>':'<i class="cbx2"></i>')+'</span>';
+    }
+    h+='<div class="cnts">'+cnt+'</div>';
+    if(ans){h+='<div class="why">Fewest pieces ('+it.minN+'): '+esc(countsText(it.min))+'. Total check: '+money(it.target)+'.</div>';}
+  }else if(mode==="shop"){
+    var r="",j;
+    for(j=0;j<it.items.length;j++){r+='<span class="pt"><span>'+esc(it.items[j].n)+'</span><b>'+money(it.items[j].c)+'</b></span>';}
+    h+='<div class="st">'+esc(it.story)+'</div><div class="pts">'+r+'</div>';
+    h+='<div class="ln2">Total: '+blank(money(it.total),ans,80)+' &nbsp; You pay: <b>'+money(it.pay)+'</b> &nbsp; Change: '+blank(money(it.change),ans,80)+'</div>';
+    if(ans){h+='<div class="why">'+money(it.pay)+' - '+money(it.total)+' = '+money(it.change)+'</div>';}
+  }else if(mode==="save"){
+    h+='<div class="st">'+esc(it.story)+'</div>';
+    h+='<div class="ln2">Goal <b>'+money(it.goal)+'</b>'+(it.start?' &nbsp; Already saved <b>'+money(it.start)+'</b>':'')+' &nbsp; Each week <b>'+money(it.allow)+'</b></div>';
+    h+='<div class="ln2">Still needed: '+blank(money(it.need),ans,80)+' &nbsp; Weeks: '+blank(String(it.weeks),ans,50)+(ans?'<span class="why">'+(it.round?(it.weeks+' weeks x '+money(it.allow)+' = '+money(it.weeks*it.allow)+', which covers '+money(it.need)+' with '+money(it.left)+' extra'):(it.weeks+' x '+money(it.allow)+' = '+money(it.need)))+'</span>':'')+'</div>';
+  }else if(mode==="detect"){
+    var g="",q;
+    for(q=0;q<it.items.length;q++){g+='<span class="pt"><span>'+esc(it.items[q].n)+'</span><b>'+money(it.items[q].c)+'</b></span>';}
+    h+='<div class="st">'+esc(it.story)+'</div><div class="pts">'+g+'</div>';
+    h+='<div class="ln2">The two items are '+blank(ans?it.items[it.pair[0]].n:"",ans,130)+' and '+blank(ans?it.items[it.pair[1]].n:"",ans,130)+(ans?'<span class="why">'+money(it.items[it.pair[0]].c)+' + '+money(it.items[it.pair[1]].c)+' = '+money(it.total)+'</span>':'')+'</div>';
+  }
+  return h+'</div></div>';
+}
+function needsHTML(it,ans,C){
+  var h='<div class="nw">',i;
+  for(i=0;i<it.scenarios.length;i++){
+    var s=it.scenarios[i];
+    h+='<div class="nr"><span class="nt">'+esc(s.t)+'</span><span class="opt"><i class="cbx2'+(ans&&s.tag==="need"?" on":"")+'"></i>Need</span><span class="opt"><i class="cbx2'+(ans&&s.tag==="want"?" on":"")+'"></i>Want</span></div>';
+  }
+  h+='</div><div class="bt"><div class="bh">Mini budget: income '+money(it.income)+'</div>';
+  for(i=0;i<it.needs.length;i++){h+='<div class="br"><span>Need: '+esc(it.needs[i].n)+'</span><b>'+money(it.needs[i].c)+'</b></div>';}
+  h+='<div class="br t"><span>Total needs</span>'+blank(money(it.needsTotal),ans,80)+'</div>';
+  for(i=0;i<it.wants.length;i++){h+='<div class="br"><span>Want: '+esc(it.wants[i].n)+'</span><b>'+money(it.wants[i].c)+'</b></div>';}
+  h+='<div class="br t"><span>Total wants</span>'+blank(money(it.wantsTotal),ans,80)+'</div>';
+  h+='<div class="br t"><span>Left to save</span>'+blank(money(it.savings),ans,80)+'</div></div>';
+  return h;
+}
+function worksheetBody(pg,ans,C){
+  var rows="",i;
+  if(pg.mode==="needs"){return '<div class="rows fit2" style="justify-content:flex-start;">'+needsHTML(pg.items[0],ans,C)+'</div>';}
+  for(i=0;i<pg.items.length;i++){rows+=rowHTML(pg.mode,pg.items[i],i,ans,C);}
+  return '<div class="rows fit2">'+rows+'</div>';
+}
+
+/* ================= pages ================= */
+function certHTML(dk,C){
+  var n=dk.pages.length,xp=0,i,stars="";
+  for(i=0;i<n;i++){xp+=dk.pages[i].xp;}
+  var cols=Math.min(n,10),rowsN=Math.ceil(n/cols),sw=34,W=cols*sw+8,H=rowsN*sw+8,o='<svg class="board" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" data-w="'+W+'" data-h="'+H+'" preserveAspectRatio="xMidYMid meet" font-family="Arial, Helvetica, sans-serif">';
+  for(i=0;i<n;i++){var x=4+(i%cols)*sw+sw/2,y=4+Math.floor(i/cols)*sw+sw/2;o+='<polygon points="'+starPts(x,y,14,6)+'" fill="none" stroke="'+C.ink+'" stroke-width="2"/>';}
+  o+='</svg>';
+  var name=(S.studentName||"").replace(/^\s+|\s+$/g,"");
+  return '<div class="cert"><div class="kick fit1">Congratulations</div><h2 class="ttl fit1" style="font-size:calc(34px*var(--ts));text-align:center;">Money Master Certificate</h2><div class="sub">This certificate is proudly awarded to</div><div class="nmline">'+(name?esc(name):'&nbsp;')+'</div><div class="sub">for finishing every page of '+esc(gameTitle())+'</div><div class="xph">XP tracker: color one star for each page you finish</div><div class="board-wrap">'+o+'</div><div class="xpl">XP earned ______ of '+xp+'</div><div class="sig"><span>Teacher or parent</span><span>Date</span></div></div>';
+}
+function pageInner(dk,desc,pi){
+  var C=pal(),P=dk.params,h='',noNum=S.book&&(desc.k==="title"||desc.k==="copy"),i;
+  if(desc.k==="title"){
+    var ds=[1,5,10,25,100,500];
+    h+='<div class="cover">'+logoSVG(170,C.a,C.paper,C.ink).replace('width="170" height="170"','class="big" width="170" height="170"')+'<div class="kick fit1">Money math workbook - '+dk.pages.length+' worksheets</div><h2 class="ttl fit1" style="font-size:calc(40px*var(--ts));">'+esc(gameTitle())+'</h2><div class="sub fit2">'+esc(S.sub)+'</div><div class="covcoins">'+denRowSVG(ds,C,0.9)+'</div></div>'+footHTML(pi,"",false);
+  }else if(desc.k==="copy"){
+    var yr=new Date().getFullYear(),who=S.seller||"the publisher";
+    h+=headHTML("Copyright","Legal notes","")+'<div class="txt-page fit2"><p><b>'+esc(gameTitle())+'</b></p><p>Copyright &copy; '+yr+' '+esc(who)+'. All rights reserved.</p><p>No part of this book may be reproduced or transmitted without written permission, except that the purchaser may copy the worksheets for personal or classroom use.</p><p>All coins and bills in this book are generic drawings made for teaching and do not copy real currency. Every total, change and savings answer is computed in whole cents and checked by code. Puzzle set seed: '+P.seed+'.</p><p>First edition.</p></div>'+footHTML(pi,"",false);
+  }else if(desc.k==="howto"){
+    var all=[1,5,10,25,50,100,100,500,1000,2000],cells="",keys=["penny","nickel","dime","quarter","half","dollarcoin","bill1","bill5","bill10","bill20"],k;
+    for(k=0;k<keys.length;k++){var art=denArt(keys[k],C,0.8);cells+='<div class="mc"><svg xmlns="http://www.w3.org/2000/svg" viewBox="'+(-art.w/2-4)+' '+(-art.h/2-4)+' '+(art.w+8)+' '+(art.h+8)+'" preserveAspectRatio="xMidYMid meet">'+art.g+'</svg><span>'+DEN[keys[k]].name+'</span><b>'+money(DEN[keys[k]].c)+'</b></div>';}
+    h+=headHTML("Before you start","How Budget Quest works","")+'<div class="txt-page fit2" style="justify-content:flex-start;"><p>Every page is a money challenge. Work with whole cents, line up the dollars and cents, and write the answers on the lines. Check your work with the answer pages at the back.</p><h3>Money chart</h3><div class="mchart">'+cells+'</div><h3>Handy tips</h3><ul><li>100 cents make one dollar.</li><li>Change = money paid minus the total.</li><li>To find weeks: divide what you still need by what you save each week.</li></ul></div>'+footHTML(pi,"",true);
+  }else if(desc.k==="cert"){
+    h+=headHTML("Level up","Your reward","")+certHTML(dk,C)+footHTML(pi,"",true);
+  }else{
+    var pg=dk.pages[desc.wi],ans=desc.k==="ans",XP='+'+pg.xp+' XP';
+    h+=headHTML((ans?"Answer key - ":"")+LEVEL_INFO[pg.level].name+" - "+LEVEL_INFO[pg.level].desc,MODE_NAMES[pg.mode],XP);
+    if(!ans){
+      h+='<div class="namerow"><span>Name</span><span>Date</span></div><p class="instr">'+esc(MODE_INSTR[pg.mode])+'</p>';
+    }else{h+='<p class="instr">All money amounts are shown in dollars and cents.</p>';}
+    h+=worksheetBody(pg,ans,C)+footHTML(pi,(ans?"A":"W")+(desc.wi+1),true);
+  }
+  return {html:h,noNum:noNum};
+}
+function pageSheet(dk,list,pi,forExport){
+  var desc=list[pi],inner=pageInner(dk,desc,pi);
+  return sheetHTML(pi,inner.html,desc.k,forExport);
+}
+function dimsFor(pi){
+  var t=TRIMS[S.trim],tw=Math.round(t[0]*96),th=Math.round(t[1]*96),b=S.bleed?BLEED_PX:0,recto=(pi%2===0);
+  var inn=S.mIn*96,out=S.mOut*96,ml,mr;
+  if(S.mirror){ml=recto?inn:out;mr=recto?out:inn;}else{ml=mr=(inn+out)/2;}
+  return {W:tw+b,H:th+2*b,tx:(S.bleed&&!recto)?b:0,ty:b,tw:tw,th:th,ml:Math.round(ml),mr:Math.round(mr),mt:Math.round(S.mTb*96),mb:Math.round(S.mTb*96),recto:recto,bleed:S.bleed};
+}
+function guidesHTML(d){
+  var h='<div class="guide-safe" style="left:'+d.ml+'px;top:'+d.mt+'px;right:'+d.mr+'px;bottom:'+d.mb+'px;"></div>';
+  var gx=d.recto?d.ml:(d.tw-d.mr);
+  h+='<div class="guide-gutter" style="left:'+gx+'px;"></div>';
+  if(d.bleed){h+='<div class="guide-trim"></div><div class="guide-tag" style="left:2px;top:2px;">trim</div>';}
+  return h;
+}
+function sheetHTML(pi,inner,kind,forExport){
+  var d=dimsFor(pi),C=pal(),ts=(0.82+0.18*Math.min(1,Math.min(d.tw,d.th)/720)).toFixed(3);
+  var vars='--paper:'+C.paper+';--ink:'+C.ink+';--p1:'+C.a+';--p2:'+C.line+';--red:'+C.red+';--soft:'+C.soft+';--paper-scale:1;';
+  var h='<div class="sheet-slot"><div class="sheet" data-kind="'+kind+'" data-pi="'+pi+'" style="width:'+d.W+'px;height:'+d.H+'px;'+vars+'">';
+  h+=patternSVG(d,C);
+  h+='<div class="trim" style="left:'+d.tx+'px;top:'+d.ty+'px;width:'+d.tw+'px;height:'+d.th+'px;">';
+  if(S.wm==="faint"){h+='<div class="wm">'+logoSVG(Math.round(Math.min(d.tw,d.th)*0.6),mix(C.paper,C.ink,0.05),mix(C.paper,C.ink,0.1),mix(C.paper,C.ink,0.16))+'</div>';}
+  h+=frameHTML(d,C);
+  h+='<div class="pg" data-ts="'+ts+'" data-mb="'+d.mb+'" data-mr="'+d.mr+'" style="--ts:'+ts+';padding:'+d.mt+'px '+d.mr+'px '+d.mb+'px '+d.ml+'px;">'+inner+'</div>';
+  if(!forExport&&S.guides){h+=guidesHTML(d);}
+  h+='</div></div></div>';
+  return h;
+}
+function footHTML(pi,label,showNum){
+  var C=pal(),sd=deck?deck.params.seed:0;
+  var left='Seed '+sd+(label?' '+label:'');
+  var mid=S.seller?('Created by '+esc(S.seller)):'';
+  var right=(showNum&&S.nums)?('<span class="pno">'+(pi+1)+'</span>'):'';
+  if(S.wm==="footer"){right+=logoSVG(18,C.a,C.paper,C.ink);}
+  return '<div class="pf"><span class="pl">'+esc(left)+'</span><span class="pm">'+mid+'</span><span class="pr">'+right+'</span></div>';
+}
+function fitSheet(sheet){
+  var pgs=sheet.querySelectorAll(".pg"),a;
+  for(a=0;a<pgs.length;a++){
+    var pg=pgs[a],ts0=parseFloat(pg.getAttribute("data-ts"))||1,mb=parseFloat(pg.getAttribute("data-mb"))||0,mr=parseFloat(pg.getAttribute("data-mr"))||0;
+    var s=ts0,guard=0;
+    var over=function(){
+      var last=pg.lastElementChild;if(!last){return false;}
+      if(last.offsetTop+last.offsetHeight>pg.clientHeight-mb+1){return true;}
+      var kids=pg.children,k;
+      for(k=0;k<kids.length;k++){if(kids[k].offsetLeft+kids[k].offsetWidth>pg.clientWidth-mr+2){return true;}}
+      var f2=pg.querySelectorAll(".fit2");
+      for(k=0;k<f2.length;k++){if(f2[k].scrollHeight>f2[k].clientHeight+1||f2[k].scrollWidth>f2[k].clientWidth+1){return true;}}
+      var bwp=pg.querySelector(".board-wrap");
+      if(bwp&&bwp.clientHeight<pg.clientHeight*0.3){return true;}
+      return false;
+    };
+    while(over()&&s>0.3&&guard<70){s-=0.025;pg.style.setProperty("--ts",s.toFixed(3));guard++;}
+    var f1=pg.querySelectorAll(".fit1"),i;
+    for(i=0;i<f1.length;i++){
+      var fs=parseFloat(window.getComputedStyle(f1[i]).fontSize),g2=0;
+      while(f1[i].scrollWidth>f1[i].clientWidth+1&&fs>6&&g2<60){fs-=0.5;f1[i].style.fontSize=fs+"px";g2++;}
+    }
+    var bws=pg.querySelectorAll(".board-wrap");
+    for(i=0;i<bws.length;i++){
+      var sv=bws[i].querySelector("svg");if(!sv){continue;}
+      var vw=parseFloat(sv.getAttribute("data-w")),vh=parseFloat(sv.getAttribute("data-h")),aw=bws[i].clientWidth,ah=bws[i].clientHeight;
+      var sc=Math.max(0,Math.min(aw/vw,ah/vh));
+      sv.style.width=Math.floor(vw*sc)+"px";sv.style.height=Math.floor(vh*sc)+"px";
+      sv.setAttribute("width",Math.floor(vw*sc));sv.setAttribute("height",Math.floor(vh*sc));
+    }
+  }
+}
+function fitAll(root){var sh=root.querySelectorAll(".sheet"),i;for(i=0;i<sh.length;i++){fitSheet(sh[i]);}}
+function parseSeed(v){
+  v=String(v||"").replace(/^\s+|\s+$/g,"");
+  if(v===""){return null;}
+  if(/^[0-9]+$/.test(v)){return (parseInt(v,10)>>>0);}
+  var h=2166136261,i;for(i=0;i<v.length;i++){h=Math.imul(h^v.charCodeAt(i),16777619);}
+  return h>>>0;
+}
+function randomSeed(){return (Math.floor(Math.random()*900000000)+100000);}
+function pad(s,n){s=String(s);while(s.length<n){s="0"+s;}return s;}
+function segSet(id,val){var b=$(id).querySelectorAll("button"),i;for(i=0;i<b.length;i++){b[i].setAttribute("aria-pressed",b[i].getAttribute("data-val")===String(val)?"true":"false");}}
+function extend(a,b){var k;for(k in b){if(Object.prototype.hasOwnProperty.call(b,k)){a[k]=b[k];}}return a;}
+function snapshot(){return {s:JSON.stringify(S),deck:deck};}
+function updateUndoBtns(){$("btnUndo").disabled=hidx<=0;$("btnRedo").disabled=hidx>=hist.length-1;}
+function commit(){
+  readControls();
+  var sn=snapshot();
+  if(hidx>=0&&hist[hidx].s===sn.s&&hist[hidx].deck===sn.deck){return;}
+  hist=hist.slice(0,hidx+1);hist.push(sn);
+  if(hist.length>31){hist.shift();}
+  hidx=hist.length-1;updateUndoBtns();autosave();
+}
+function restore(i){
+  var sn=hist[i],keep={view:S.view,layout2:S.layout2,zoom:S.zoom};
+  S=extend(defaultState(),JSON.parse(sn.s));S.view=keep.view;S.layout2=keep.layout2;S.zoom=keep.zoom;
+  deck=sn.deck;curPage=0;writeControls();updateUndoBtns();renderSim();renderPreview();autosave();
+  setProgress("History step "+(i+1)+" / "+hist.length+" restored.",1);
+}
+function undo(){if(hidx>0){hidx--;restore(hidx);}}
+function redo(){if(hidx<hist.length-1){hidx++;restore(hidx);}}
+function setProgress(t,f){$("progressText").innerText=t;$("progressFill").style.width=(f*100).toFixed(0)+"%";}
+function showError(msg){var e=$("progressError");if(!msg){e.style.display="none";e.innerText="";return;}e.style.display="block";e.innerText=msg;}
+function layoutDims(){var L=S.layout2;if(L==="spread"){return {c:2,r:1};}if(L==="strip"){return {c:3,r:1};}if(L==="grid"){return {c:2,r:2};}return {c:1,r:1};}
+function previewScale(){
+  var sc=$("previewScroll"),ld=layoutDims(),d=dimsFor(0),aw=sc.clientWidth-44,ah=sc.clientHeight-44,gap=24;
+  var s=Math.min((aw-(ld.c-1)*gap)/(ld.c*d.W),(ah-(ld.r-1)*gap)/(ld.r*d.H));
+  return clamp(s,0.08,2)*S.zoom/100;
+}
+function inlineExportColors(root){
+  var els=root.querySelectorAll("*"),i,el,cs;
+  for(i=0;i<els.length;i++){
+    el=els[i];
+    if(el.namespaceURI==="http://www.w3.org/2000/svg"){continue;}
+    try{
+      cs=window.getComputedStyle(el);
+      var bg=cs.backgroundColor;
+      if(bg&&bg!=="rgba(0, 0, 0, 0)"&&bg!=="transparent"){el.style.backgroundColor=bg;}
+      el.style.backgroundImage="none";
+      el.style.color=cs.color;
+      if(cs.borderTopStyle!=="none"&&parseFloat(cs.borderTopWidth)>0){el.style.borderColor=cs.borderTopColor;}
+      el.style.boxShadow="none";el.style.textShadow="none";el.style.webkitBackdropFilter="none";el.style.backdropFilter="none";
+    }catch(e){}
+  }
+}
+function exportFail(msg){showError(msg+" Falling back to Exact Print.");setProgress(msg,1);setTimeout(function(){exactPrint();},600);}
+function libsOK(){return typeof window.html2canvas!=="undefined"&&window.jspdf&&window.jspdf.jsPDF;}
+function waitFonts(cb){try{if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){cb();},function(){cb();});return;}}catch(e){}cb();}
+function download(blob,name){
+  var a=document.createElement("a"),url=URL.createObjectURL(blob);
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1500);
+}
+function capturePages(onPage,onDone,onFail){
+  waitFonts(function(){
+    var sheets;
+    try{sheets=buildExportDeck();}catch(e){onFail("Could not build pages: "+(e&&e.message?e.message:e));return;}
+    var i=0,n=sheets.length;
+    function next(){
+      if(i>=n){onDone(n);return;}
+      window.html2canvas(sheets[i],{scale:EXPORT_SCALE,backgroundColor:pal().paper,useCORS:true,logging:false,ignoreElements:keepFor(sheets[i])}).then(function(canvas){
+        if(!canvas||!canvas.width||!canvas.height){throw new Error("capture "+(i+1)+" came back blank.");}
+        onPage(canvas,i,n,sheets[i]);
+        i++;setProgress("Rendering page "+i+" / "+n+" ...",i/n);
+        setTimeout(next,0);
+      }).then(null,function(e){onFail("Export failed on page "+(i+1)+": "+(e&&e.message?e.message:String(e)));});
+    }
+    setProgress("Rendering page 1 / "+n+" ...",0);next();
+  });
+}
+function exportPDF(){
+  showError("");
+  if(!deck){exportFail("Nothing to export: generate a kit first.");return;}
+  if(!libsOK()){exportFail("PDF libraries did not load (offline? html2canvas/jsPDF missing).");return;}
+  readControls();
+  var pdf=null;
+  capturePages(function(canvas,i,n,sheet){
+    var wpt=sheet.offsetWidth*0.75,hpt=sheet.offsetHeight*0.75,orient=wpt>hpt?"landscape":"portrait";
+    var img=canvas.toDataURL("image/jpeg",0.92);
+    if(!img||img.length<4000){throw new Error("capture "+(i+1)+" looks empty.");}
+    if(!pdf){pdf=new window.jspdf.jsPDF({unit:"pt",format:[wpt,hpt],orientation:orient});}else{pdf.addPage([wpt,hpt],orient);}
+    pdf.addImage(img,"JPEG",0,0,wpt,hpt);
+  },function(n){
+    try{
+      var blob=pdf.output("blob");download(blob,slug(gameTitle())+".pdf");
+      window.__lastPDF={pages:n,bytes:blob.size};
+      setProgress("Done. PDF downloaded ("+n+" pages).",1);
+    }catch(e){exportFail("PDF save failed: "+(e&&e.message?e.message:e));}
+  },exportFail);
+}
+function exportZip(){
+  showError("");
+  if(!deck){exportFail("Nothing to export: generate a kit first.");return;}
+  if(typeof window.html2canvas==="undefined"||typeof window.JSZip==="undefined"){exportFail("ZIP libraries did not load (offline? html2canvas/JSZip missing).");return;}
+  readControls();
+  var zip=new window.JSZip(),pending=0,finished=false,total=0,doneCb=null;
+  capturePages(function(canvas,i){
+    pending++;
+    canvas.toBlob(function(b){zip.file("page-"+pad(i+1,3)+".png",b);pending--;if(finished&&!pending&&doneCb){doneCb();}},"image/png");
+  },function(n){
+    total=n;finished=true;
+    doneCb=function(){
+      zip.generateAsync({type:"blob"}).then(function(blob){
+        download(blob,slug(gameTitle())+"-png.zip");window.__lastZip={pages:total,bytes:blob.size};
+        setProgress("Done. ZIP downloaded ("+total+" PNG pages).",1);
+      }).then(null,function(e){exportFail("ZIP failed: "+(e&&e.message?e.message:e));});
+    };
+    if(!pending){doneCb();}
+  },exportFail);
+}
+function exactPrint(){
+  if(!deck){showError("Nothing to print: generate a kit first.");return;}
+  readControls();
+  var d=dimsFor(0),sheets;
+  try{sheets=buildExportDeck();}catch(e){showError("Print build failed: "+e.message);window.print();return;}
+  var css=document.querySelector("style").innerHTML,body=$("exportDeck").innerHTML;
+  var html="<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>"+esc(gameTitle())+"</title><link href=\"https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap\" rel=\"stylesheet\"><style>"+css+
+    "@page{size:"+d.W+"px "+d.H+"px;margin:0;}html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important;}.sheet-slot{width:"+d.W+"px;height:"+d.H+"px;overflow:hidden;page-break-after:always;break-after:page;}.sheet{transform:none!important;box-shadow:none!important;}</style></head><body>"+body+"</body></html>";
+  var w=null;try{w=window.open("","_blank");}catch(e2){w=null;}
+  if(!w){showError(($("progressError").innerText?$("progressError").innerText+" ":"")+"Popup blocked: printing the current view instead. Allow popups for the full-kit print.");window.print();return;}
+  w.document.open();w.document.write(html);w.document.close();w.focus();
+  setTimeout(function(){w.print();},500);
+}
+function afterChange(commitNow){readControls();renderPreview();if(commitNow){commit();}else{autosave();}}
+function wireSeg(id,key,numeric){
+  var b=$(id).querySelectorAll("button"),i;
+  for(i=0;i<b.length;i++){(function(btn){btn.addEventListener("click",function(){
+    var v=btn.getAttribute("data-val");S[key]=numeric?parseInt(v,10):v;segSet(id,S[key]);
+    readControls();renderPreview();commit();
+  });})(b[i]);}
+}
+function setView(v){S.view=v;curPage=0;$("viewPuzzle").setAttribute("aria-pressed",v==="puzzle"?"true":"false");$("viewAnswer").setAttribute("aria-pressed",v==="answer"?"true":"false");renderPreview();}
+function openHelp(){$("helpOverlay").classList.add("show");$("btnHelpClose").focus();}
+function closeHelp(){$("helpOverlay").classList.remove("show");$("btnHelp").focus();}
+function movePage(dlt){
+  if(!deck){return;}
+  var vl=viewList(deck),np=clamp(curPage+dlt,0,Math.max(0,vl.idx.length-1));
+  if(np!==curPage){curPage=np;renderPreview();}
+}
+
+function keepFor(sheet){
+  return function(el){
+    var t=el.tagName;
+    if(t==="HTML"||t==="BODY"||t==="HEAD"||t==="STYLE"||t==="LINK"||t==="META"||t==="TITLE"||t==="SCRIPT"){return false;}
+    return !(el===sheet||el.contains(sheet)||sheet.contains(el));
+  };
+}
+
+/* ================= seed code ================= */
+var hist=[],hidx=-1,STORE_KEY="bq-project-v1";
+function renderSim(){}
+function encodeCode(s,seed){
+  var lm=0,mm=0,i;
+  for(i=0;i<5;i++){if(s.levels.indexOf(i+1)>=0){lm|=(1<<i);}}
+  for(i=0;i<6;i++){if(s.modes[MODES[i]]){mm|=(1<<i);}}
+  var a=lm|(mm<<5)|((s.pagesPer-1)<<11)|((s.perPage-4)<<13)|(Math.max(0,PRESET_KEYS.indexOf(s.preset))<<16)|(Math.max(0,TRIM_KEYS.indexOf(s.trim))<<19)|((s.bleed?1:0)<<21)|((s.customOnly?1:0)<<22);
+  return "BQ-"+pad(a.toString(36).toUpperCase(),5)+"-"+(seed>>>0).toString(36).toUpperCase();
+}
+function decodeCode(code){
+  var m=/^BQ-([0-9A-Z]{5})-([0-9A-Z]{1,8})$/i.exec(String(code||"").replace(/\s+/g,""));
+  if(!m){return null;}
+  var a=parseInt(m[1],36),seed=parseInt(m[2],36)>>>0,lm=a&31,mm=(a>>5)&63,levels=[],modes={},i;
+  for(i=0;i<5;i++){if(lm&(1<<i)){levels.push(i+1);}}
+  for(i=0;i<6;i++){modes[MODES[i]]=!!(mm&(1<<i));}
+  var pg=((a>>11)&3)+1,pp=((a>>13)&7)+4,pr=(a>>16)&7,tr=(a>>19)&3;
+  if(pg>3||pp>8||pr>4){return null;}
+  return {levels:levels,modes:modes,pagesPer:pg,perPage:pp,preset:PRESET_KEYS[pr],trim:TRIM_KEYS[tr],bleed:!!((a>>21)&1),customOnly:!!((a>>22)&1),seed:seed};
+}
+
+/* ================= controls <-> state ================= */
+var MODE_IDS={count:"mdCount",make:"mdMake",shop:"mdShop",save:"mdSave",needs:"mdNeeds",detect:"mdDetect"};
+function renderReports(){
+  var cv=parseCustomItems($("inItems").value,$("inShop").value||"My Shop"),h="";
+  if(!String($("inItems").value||"").replace(/\s+/g,"")){$("itemReport").innerHTML="";return cv;}
+  h+='<span style="color:#00ffcc;">'+cv.items.length+' item'+(cv.items.length===1?"":"s")+' ready</span>';
+  if(cv.bad.length){
+    h+=' <span style="color:#ff9a9a;">'+cv.bad.length+' need fixing:</span><ul class="bad">';
+    var i;for(i=0;i<cv.bad.length;i++){h+='<li>Line '+cv.bad[i].n+': '+esc(cv.bad[i].why)+' ('+esc(cv.bad[i].line.length>30?cv.bad[i].line.slice(0,30)+"...":cv.bad[i].line)+')</li>';}
+    h+='</ul>';
+  }
+  $("itemReport").innerHTML=h;
+  return cv;
+}
+function readControls(){
+  var i;
+  S.levels=[];for(i=1;i<=5;i++){if($("lv"+i).checked){S.levels.push(i);}}
+  S.modes={};for(i=0;i<MODES.length;i++){S.modes[MODES[i]]=$(MODE_IDS[MODES[i]]).checked;}
+  S.pagesPer=clamp(parseInt($("selPages").value,10)||1,1,3);S.perPage=clamp(parseInt($("selPer").value,10)||6,4,8);
+  S.title=$("inTitle").value;S.shopName=$("inShop").value;S.customItems=$("inItems").value;S.customOnly=$("inCustomOnly").checked;S.names=$("inNames").value;S.studentName=$("inStudent").value;
+  S.sub=$("inSub").value;S.seedInput=$("inSeed").value;
+  S.preset=$("inPreset").value;S.header=$("inHeader").value;S.border=$("inBorder").value;S.pattern=$("inPattern").value;S.wm=$("inWm").value;S.nums=$("inNums").checked;
+  S.trim=$("inTrim").value;S.bleed=$("inBleed").checked;
+  S.mIn=clamp(parseFloat($("inMIn").value)||0.625,0.25,1.25);S.mOut=clamp(parseFloat($("inMOut").value)||0.5,0.25,1.25);S.mTb=clamp(parseFloat($("inMTb").value)||0.5,0.25,1.25);
+  S.mirror=$("inMirror").checked;S.guides=$("inGuides").checked;
+  S.book=$("inBook").checked;S.cert=$("inCert").checked;S.ans=$("inAns").checked;S.seller=$("inSeller").value;
+  S.layout2=$("selLayout").value;S.zoom=parseInt($("selZoom").value,10)||100;
+  var d=[],j;for(j=0;j<S.levels.length;j++){d.push(LEVEL_INFO[S.levels[j]].name+": "+LEVEL_INFO[S.levels[j]].desc);}
+  $("lvNote").innerText=d.join(". ");
+}
+function writeControls(){
+  var i;
+  for(i=1;i<=5;i++){$("lv"+i).checked=S.levels.indexOf(i)>=0;}
+  for(i=0;i<MODES.length;i++){$(MODE_IDS[MODES[i]]).checked=!!S.modes[MODES[i]];}
+  $("selPages").value=String(S.pagesPer);$("selPer").value=String(S.perPage);
+  $("inTitle").value=S.title;$("inShop").value=S.shopName;$("inItems").value=S.customItems;$("inCustomOnly").checked=!!S.customOnly;$("inNames").value=S.names;$("inStudent").value=S.studentName;
+  $("inSub").value=S.sub;$("inSeed").value=S.seedInput;
+  $("inPreset").value=S.preset;$("inHeader").value=S.header;$("inBorder").value=S.border;$("inPattern").value=S.pattern;$("inWm").value=S.wm;$("inNums").checked=S.nums;
+  $("inTrim").value=S.trim;$("inBleed").checked=S.bleed;$("inMIn").value=S.mIn;$("inMOut").value=S.mOut;$("inMTb").value=S.mTb;
+  $("inMirror").checked=S.mirror;$("inGuides").checked=S.guides;
+  $("inBook").checked=S.book;$("inCert").checked=S.cert;$("inAns").checked=S.ans;$("inSeller").value=S.seller;
+  $("selLayout").value=S.layout2;$("selZoom").value=String(S.zoom);
+  $("viewPuzzle").setAttribute("aria-pressed",S.view==="puzzle"?"true":"false");$("viewAnswer").setAttribute("aria-pressed",S.view==="answer"?"true":"false");
+  var sw=document.querySelectorAll(".swatch");for(i=0;i<sw.length;i++){sw[i].setAttribute("aria-pressed",sw[i].getAttribute("data-preset")===S.preset?"true":"false");}
+  renderReports();readControls();
+}
+
+/* ================= project ================= */
+function projectJSON(){return JSON.stringify({v:1,app:"budget-quest",state:S,params:deck?deck.params:null});}
+function autosave(){
+  try{window.localStorage.setItem(STORE_KEY,projectJSON());$("autoNote").innerText="Autosaved "+new Date().toLocaleTimeString()+".";}
+  catch(e){$("autoNote").innerText="Autosave unavailable in this browser. Use Save .json.";}
+}
+function applyProject(obj){
+  if(!obj||obj.app!=="budget-quest"||!obj.state){throw new Error("Not a Budget Quest project file.");}
+  S=extend(defaultState(),obj.state);
+  writeControls();
+  if(obj.params){generateFromParams(obj.params,function(){commit();});}
+  else{deck=null;curPage=0;renderPreview();commit();}
+}
+
+/* ================= preview ================= */
+function emptyHTML(){return '<div class="empty-card">'+logoSVG(96,"#ffd60a","#ff2d78","#0b0620")+'<h2 class="gl">Budget Quest</h2><p>Pick your levels and worksheet types, then press <b>Generate Workbook</b>. Coins, bills, shops and savings goals are drawn and added up in whole cents.</p></div>';}
+function renderPreview(){
+  var host=$("previewHost");
+  updateNotes();
+  if(!deck){host.innerHTML=emptyHTML();$("sheetPos").innerText="Page - / -";$("kpiDeck").innerText="No workbook yet";$("kpiPreset").innerText=PRESETS[S.preset].name;$("btnPrev").disabled=true;$("btnNext").disabled=true;return;}
+  var vl=viewList(deck),ld=layoutDims(),per=ld.c*ld.r,scale=previewScale(),html="",v;
+  if(curPage>=vl.idx.length){curPage=Math.max(0,vl.idx.length-1);}
+  var d0=dimsFor(0);
+  for(v=curPage;v<Math.min(vl.idx.length,curPage+per);v++){
+    var pi=vl.idx[v],h=pageSheet(deck,vl.all,pi,false);
+    h=h.replace('<div class="sheet-slot">','<div class="sheet-slot" style="width:'+Math.round(d0.W*scale)+'px;height:'+Math.round(d0.H*scale)+'px;overflow:hidden;">');
+    h=h.replace("--paper-scale:1;","--paper-scale:"+scale.toFixed(4)+";");
+    html+=h;
+  }
+  host.innerHTML=html;
+  fitAll(host);
+  $("sheetPos").innerText="Page "+(curPage+1)+" / "+vl.idx.length+(S.view==="answer"?" (answers)":"");
+  $("btnPrev").disabled=curPage<=0;$("btnNext").disabled=curPage>=vl.idx.length-1;
+  $("kpiDeck").innerText=deck.pages.length+" worksheets • "+deck.plan.xpTotal+" XP";
+  $("kpiPreset").innerText=PRESETS[S.preset].name;
+  $("metaLine").innerText="Seed "+deck.params.seed+" • "+vl.all.length+" pages in book • trim "+S.trim+(S.bleed?" + bleed":"");
+}
+function updateNotes(){
+  var d=dimsFor(0);
+  $("trimNote").innerText="Sheet: "+(d.W/96).toFixed(3)+" x "+(d.H/96).toFixed(3)+" in"+(S.bleed?" (trim + 0.125 in bleed; width +0.125, height +0.25 per KDP)":"")+". Dashed blue = safe area, pink = gutter. Guides never print.";
+  if(deck){var b=buildPages(deck);$("bookNote").innerText="Book: "+b.list.length+" pages ("+b.puzzleCount+" front/worksheet pages + "+(b.list.length-b.puzzleCount)+" answer pages).";}
+  else{$("bookNote").innerText="Generate a workbook to see the page count.";}
+}
+
+/* ================= generation (one page per tick) ================= */
+function paramsFromState(seed){
+  var m={},i;for(i=0;i<MODES.length;i++){m[MODES[i]]=!!S.modes[MODES[i]];}
+  return {levels:S.levels.slice(),modes:m,pagesPer:S.pagesPer,perPage:S.perPage,customItems:S.customItems,shopName:S.shopName||"My Shop",customOnly:!!S.customOnly,names:S.names,seed:seed>>>0};
+}
+function generateFromParams(P,done){
+  if(genRunning){return;}
+  var anyMode=false,i;for(i=0;i<MODES.length;i++){if(P.modes[MODES[i]]){anyMode=true;}}
+  if(!anyMode||!P.levels.length){showError("Pick at least one level and one worksheet type.");setProgress("Nothing to generate.",0);return;}
+  if(P.customOnly&&!parseCustomItems(P.customItems,P.shopName).items.length){showError("'Use only my items' is on but there are no valid items. Fix the red lines or turn it off.");setProgress("Nothing to generate.",0);return;}
+  showError("");genRunning=true;$("btnGenerate").disabled=true;
+  var plan=planDeck(P),pages=[],k=0,t0=Date.now(),N=plan.tasks.length;
+  setProgress("Building page 1 / "+N+" ...",0);
+  function tick(){
+    if(k>=N){
+      deck={params:P,plan:plan,pages:pages};curPage=0;genRunning=false;$("btnGenerate").disabled=false;
+      $("inSeed").value=String(P.seed);S.seedInput=String(P.seed);
+      $("inCode").value=encodeCode(S,P.seed);
+      var msg="Done. "+N+" worksheets in "+((Date.now()-t0)/1000).toFixed(1)+"s.";
+      if(plan.customItems.bad.length){msg+=" "+plan.customItems.bad.length+" item line(s) skipped.";}
+      setProgress(msg,1);renderPreview();
+      if(done){done();}
+      return;
+    }
+    try{pages.push(runTask(P,plan,k));}
+    catch(e){genRunning=false;$("btnGenerate").disabled=false;showError("Generation failed on page "+(k+1)+": "+(e&&e.message?e.message:e));setProgress("Stopped.",0);return;}
+    k++;
+    setProgress("Building page "+Math.min(k+1,N)+" / "+N+" ...",k/N);
+    setTimeout(tick,0);
+  }
+  setTimeout(tick,0);
+}
+function startGeneration(){
+  if(genRunning){return;}
+  readControls();
+  var v=String($("inSeed").value||"").replace(/\s+/g,""),seed=null;
+  if(/^BQ-/i.test(v)){var dc=decodeCode(v);if(!dc){showError("That seed code is not valid.");return;}applyCode(dc);seed=dc.seed;}
+  else{seed=parseSeed(v);}
+  if(seed===null){seed=randomSeed();}
+  generateFromParams(paramsFromState(seed),function(){commit();});
+}
+function applyCode(dc){
+  S.levels=dc.levels;S.modes=dc.modes;S.pagesPer=dc.pagesPer;S.perPage=dc.perPage;S.preset=dc.preset;S.trim=dc.trim;S.bleed=dc.bleed;S.customOnly=dc.customOnly;
+  S.seedInput=String(dc.seed);writeControls();
+}
+
+/* ================= export ================= */
+function buildExportDeck(){
+  var host=$("exportDeck"),i,html="",list=buildPages(deck).list;
+  host.innerHTML="";
+  for(i=0;i<list.length;i++){html+=pageSheet(deck,list,i,true);}
+  host.innerHTML=html;
+  var sh=host.querySelectorAll(".sheet");
+  for(i=0;i<sh.length;i++){sh[i].style.transform="none";sh[i].style.setProperty("--paper-scale","1");sh[i].style.boxShadow="none";}
+  fitAll(host);
+  inlineExportColors(host);
+  return sh;
+}
+function moneyChartSVG(C){
+  var keys=["penny","nickel","dime","quarter","half","dollarcoin","bill1","bill5","bill10","bill20"],W=980,H=330,o='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" font-family="Arial, Helvetica, sans-serif"><rect width="'+W+'" height="'+H+'" fill="'+C.paper+'"/>',i;
+  o+='<text x="'+W/2+'" y="34" text-anchor="middle" font-size="26" font-weight="700" fill="'+C.ink+'">Money chart</text>';
+  for(i=0;i<keys.length;i++){
+    var col=i%5,row=Math.floor(i/5),cx=100+col*195,cy=110+row*140,art=denArt(keys[i],C,0.8);
+    o+='<g transform="translate('+cx+' '+cy+')">'+art.g+'</g><text x="'+cx+'" y="'+(cy+art.h/2+18)+'" text-anchor="middle" font-size="13" fill="'+C.ink+'">'+esc(DEN[keys[i]].name)+'</text><text x="'+cx+'" y="'+(cy+art.h/2+36)+'" text-anchor="middle" font-size="15" font-weight="700" fill="'+C.a+'">'+money(DEN[keys[i]].c)+'</text>';
+  }
+  return o+'</svg>';
+}
+function exportSVG(){
+  showError("");
+  var C=pal();
+  download(new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+moneyChartSVG(C)],{type:"image/svg+xml"}),"money-chart.svg");
+  setProgress("SVG downloaded (coin and bill chart).",1);
+}
+
+/* ================= wiring ================= */
+function buildSelects(){
+  var i,o,s=$("selPer"),g=$("lvGrid");s.innerHTML="";g.innerHTML="";
+  for(i=4;i<=8;i++){o=document.createElement("option");o.value=String(i);o.textContent=String(i);s.appendChild(o);}
+  for(i=1;i<=5;i++){var l=document.createElement("label");l.className="tgl";l.innerHTML='<span>Level '+i+'</span><input type="checkbox" id="lv'+i+'">';g.appendChild(l);}
+  var host=$("swatches"),sel=$("inPreset");host.innerHTML="";sel.innerHTML="";
+  for(i=0;i<PRESET_KEYS.length;i++){
+    (function(k){
+      var pr=PRESETS[k],b=document.createElement("button"),op=document.createElement("option");
+      b.className="swatch";b.setAttribute("data-preset",k);b.setAttribute("aria-label",pr.name);b.title=pr.name;b.setAttribute("aria-pressed",S.preset===k?"true":"false");
+      b.style.background="linear-gradient(135deg,"+pr.sw[0]+" 50%,"+pr.sw[1]+" 50%)";
+      host.appendChild(b);b.addEventListener("click",function(){S.preset=k;writeControls();renderPreview();commit();});
+      op.value=k;op.textContent=pr.name;sel.appendChild(op);
+    })(PRESET_KEYS[i]);
+  }
+  var z=$("selZoom"),vals=[50,75,100,125,150,200];
+  for(i=0;i<vals.length;i++){var oz=document.createElement("option");oz.value=vals[i];oz.textContent=vals[i]===100?"Fit (100%)":vals[i]+"%";z.appendChild(oz);}
+  z.value="100";
+}
+function wire(){
+  var i,live=["selPages","selPer","mdCount","mdMake","mdShop","mdSave","mdNeeds","mdDetect","inTitle","inShop","inItems","inCustomOnly","inNames","inStudent","inSub","inPreset","inHeader","inBorder","inPattern","inWm","inNums","inTrim","inBleed","inMIn","inMOut","inMTb","inMirror","inGuides","inBook","inCert","inAns","inSeller","selLayout","selZoom"];
+  for(i=1;i<=5;i++){live.push("lv"+i);}
+  for(i=0;i<live.length;i++){(function(id){
+    var el=$(id);
+    el.addEventListener("input",function(){if(id==="inItems"||id==="inShop"){renderReports();}afterChange(false);});
+    el.addEventListener("change",function(){afterChange(true);});
+  })(live[i]);}
+  $("inSeed").addEventListener("change",function(){readControls();autosave();});
+  $("btnDice").addEventListener("click",function(){$("inSeed").value=String(randomSeed());readControls();autosave();});
+  $("btnCode").addEventListener("click",function(){
+    var dc=decodeCode($("inCode").value);
+    if(!dc){showError("That seed code is not valid. It looks like BQ-XXXXX-XXXXXX.");return;}
+    showError("");applyCode(dc);generateFromParams(paramsFromState(dc.seed),function(){commit();});
+  });
+  $("btnGenerate").addEventListener("click",startGeneration);
+  $("viewPuzzle").addEventListener("click",function(){setView("puzzle");});
+  $("viewAnswer").addEventListener("click",function(){setView("answer");});
+  $("btnPDF").addEventListener("click",exportPDF);$("btnPDF2").addEventListener("click",exportPDF);
+  $("btnZip").addEventListener("click",exportZip);$("btnSVG").addEventListener("click",exportSVG);
+  $("btnPrint").addEventListener("click",exactPrint);
+  $("btnUndo").addEventListener("click",undo);$("btnRedo").addEventListener("click",redo);
+  $("btnSave").addEventListener("click",function(){readControls();download(new Blob([projectJSON()],{type:"application/json"}),slug(gameTitle())+"-project.json");setProgress("Project saved as .json.",1);});
+  $("btnLoad").addEventListener("click",function(){$("fileLoad").click();});
+  $("fileLoad").addEventListener("change",function(){
+    var f=$("fileLoad").files[0];if(!f){return;}
+    var rd=new FileReader();
+    rd.onload=function(){try{applyProject(JSON.parse(String(rd.result)));setProgress("Project loaded.",1);}catch(e){showError("Could not load project: "+(e&&e.message?e.message:e));}};
+    rd.onerror=function(){showError("Could not read that file.");};
+    rd.readAsText(f);$("fileLoad").value="";
+  });
+  $("btnPrev").addEventListener("click",function(){movePage(-1);});
+  $("btnNext").addEventListener("click",function(){movePage(1);});
+  $("btnHelp").addEventListener("click",openHelp);$("btnHelpClose").addEventListener("click",closeHelp);
+  $("helpOverlay").addEventListener("click",function(e){if(e.target===$("helpOverlay")){closeHelp();}});
+  document.addEventListener("keydown",function(e){
+    var a=document.activeElement,typing=a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT");
+    if(e.key==="Escape"&&$("helpOverlay").classList.contains("show")){closeHelp();return;}
+    if(typing){return;}
+    var k=e.key;
+    if((e.ctrlKey||e.metaKey)&&(k==="z"||k==="Z")){e.preventDefault();if(e.shiftKey){redo();}else{undo();}return;}
+    if((e.ctrlKey||e.metaKey)&&(k==="y"||k==="Y")){e.preventDefault();redo();return;}
+    if(e.ctrlKey||e.metaKey||e.altKey){return;}
+    if(k==="g"||k==="G"){startGeneration();}
+    else if(k==="a"||k==="A"){setView(S.view==="puzzle"?"answer":"puzzle");}
+    else if(k==="ArrowLeft"){movePage(-1);}
+    else if(k==="ArrowRight"){movePage(1);}
+    else if(k==="h"||k==="H"||k==="?"){if($("helpOverlay").classList.contains("show")){closeHelp();}else{openHelp();}}
+  });
+  var rt=null;
+  window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(renderPreview,120);});
+}
+
+/* ================= init ================= */
+function initFavicon(){
+  var l=document.createElement("link");l.rel="icon";l.type="image/svg+xml";
+  l.href="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(logoSVG(64,"#ffd60a","#ff2d78","#0b0620"));
+  document.head.appendChild(l);
+}
+function init(){
+  initFavicon();
+  $("brandLogo").innerHTML=logoSVG(58,"#ffd60a","#ff2d78","#0b0620");
+  buildSelects();wire();
+  var restored=false;
+  try{
+    var raw=window.localStorage.getItem(STORE_KEY);
+    if(raw){var obj=JSON.parse(raw);S=extend(defaultState(),obj.state);S.view="puzzle";writeControls();restored=true;
+      if(obj.params){generateFromParams(obj.params,function(){commit();});}}
+  }catch(e){restored=false;}
+  if(!restored){writeControls();}
+  readControls();renderPreview();commit();
+  waitFonts(function(){if(deck){renderPreview();}});
+}
+
+window.BQ={
+  get S(){return S;},setS:function(o){S=extend(defaultState(),o);writeControls();},
+  getDeck:function(){return deck;},setDeck:function(d){deck=d;curPage=0;renderPreview();},
+  defaultState:defaultState,makeDeckSync:makeDeckSync,planDeck:planDeck,runTask:runTask,genProblem:genProblem,makeCtx:makeCtx,
+  money:money,parseCents:parseCents,minCoins:minCoins,sumCounts:sumCounts,parseCustomItems:parseCustomItems,parseNames:parseNames,
+  ITEMS:ITEMS,SHOPS:SHOPS,STORIES:STORIES,NEEDWANT:NEEDWANT,DEN:DEN,DEN_KEYS:DEN_KEYS,LEVEL_INFO:LEVEL_INFO,MODES:MODES,NAMES_DEFAULT:NAMES_DEFAULT,
+  denArt:denArt,coinsSVG:coinsSVG,pal:pal,pieceKey:pieceKey,rowHTML:rowHTML,needsHTML:needsHTML,moneyChartSVG:moneyChartSVG,
+  buildPages:buildPages,buildExportDeck:buildExportDeck,encodeCode:encodeCode,decodeCode:decodeCode,dimsFor:dimsFor,
+  undo:undo,redo:redo,commit:commit,histLen:function(){return hist.length;},histIdx:function(){return hidx;},
+  startGeneration:startGeneration,isRunning:function(){return genRunning;},applyProject:applyProject,projectJSON:projectJSON,
+  readControls:readControls,renderPreview:renderPreview,exportPDF:exportPDF,exportZip:exportZip,exportSVG:exportSVG,setCur:function(n){curPage=n;renderPreview();},
+  viewList:function(){return viewList(deck);},mulberry32:mulberry32,mixSeed:mixSeed
+};
+init();
+</script>
+</body>
+</html>
