@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planting and Season Calendar Studio</title>
+<link id="favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23FAF3E8' stroke='%232D5016' stroke-width='2'/%3E%3Cpath d='M16 25V15' stroke='%232D5016' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M16 15c-5 0-7-3-7-6 5 0 7 2 7 6z' fill='%237B9E87'/%3E%3Cpath d='M16 17c4 0 6-2 6-5-4 0-6 2-6 5z' fill='%23C17767'/%3E%3Cpath d='M20 24l2.5 2.5L28 20' fill='none' stroke='%232D5016' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--sage:#7B9E87;--terra:#C17767;--cream:#FAF3E8;--forest:#2D5016;--line:#E4D8C2}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--cream);color:var(--forest);font-family:Nunito,"Trebuchet MS",Arial,sans-serif;font-size:14px;line-height:1.45}
+.top{position:fixed;top:0;left:0;right:0;height:50px;z-index:50;background:var(--forest);color:var(--cream);display:flex;align-items:center;gap:14px;padding:0 16px}
+.brand{display:flex;align-items:center;gap:10px;font-family:"Josefin Sans",Nunito,sans-serif;font-weight:700;font-size:17px;white-space:nowrap}
+.brand svg{width:30px;height:30px;flex:none}
+.top .howto{font:700 12.5px Nunito,sans-serif;background:var(--cream);color:var(--forest);border:0;border-radius:14px;padding:6px 14px;cursor:pointer}
+.apps{display:flex;gap:6px;margin-left:auto}
+.apps a,.apps .cur{font-weight:700;font-size:12.5px;padding:5px 12px;border:2px solid var(--sage);border-radius:14px;color:var(--cream);text-decoration:none;white-space:nowrap}
+.apps .cur{background:var(--terra);border-color:var(--terra)}
+.app{position:fixed;top:50px;left:0;right:0;bottom:0;display:flex}
+.side{width:360px;flex:none;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.tabs{display:flex;background:var(--cream);border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:transparent;padding:10px 2px;font:700 11px "Josefin Sans",sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#6b7a5f;cursor:pointer;border-bottom:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--forest);border-bottom-color:var(--terra)}
+.panels{flex:1;overflow:auto;padding:14px 16px 28px}
+.panel[hidden]{display:none}
+.panel h2{font:700 18px "Josefin Sans",sans-serif;margin:0 0 10px}
+.panel h3{font:700 11.5px "Josefin Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6b7a5f;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:12px}
+label{display:block;font-weight:700;font-size:12.5px;margin:9px 0 3px}
+.hint{font-size:12px;color:#5b6b50;margin:4px 0}
+input[type=text],input[type=number],input[type=date],input[type=search],select{width:100%;font:inherit;color:var(--forest);background:#fff;border:2px solid var(--line);border-radius:12px;padding:7px 10px}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid rgba(193,119,103,.6);outline-offset:1px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1 1 auto}.row .fixed{flex:none}
+.chk{display:flex;align-items:center;gap:8px;font-weight:600;margin:6px 0}.chk input{width:17px;height:17px;accent-color:var(--forest)}
+.btn{font:700 13px Nunito,sans-serif;border:2px solid var(--forest);background:#fff;color:var(--forest);padding:7px 14px;border-radius:16px;cursor:pointer}
+.btn:hover{background:var(--cream)}.btn.pri{background:var(--forest);color:var(--cream)}.btn.pri:hover{background:#3d6a1e}.btn.sm{padding:3px 10px;font-size:12px}.btn[disabled]{opacity:.45;cursor:not-allowed}
+.card{background:var(--cream);border:2px solid var(--line);border-radius:20px;padding:10px 14px;margin:10px 0}
+.note{font-size:12.5px;background:#fff7ec;border:2px solid var(--terra);border-radius:16px;padding:8px 12px;margin:10px 0}
+.errbox{background:#fdecea;border:2px solid #b3261e;color:#7d1710;border-radius:16px;padding:10px 12px;font-weight:700;margin:10px 0}
+.okbox{background:#eef6ea;border:2px solid var(--sage);border-radius:16px;padding:8px 12px;margin:10px 0}
+.warnli{font-size:12.5px;margin:3px 0;color:#8a3b1e}
+.group{margin:10px 0 2px;font:700 12px "Josefin Sans",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--terra)}
+.crop{border:2px solid var(--line);border-radius:14px;margin:5px 0;background:#fff}
+.crop .hd{display:flex;align-items:center;gap:8px;padding:5px 10px}.crop .hd label{margin:0;flex:1;font-weight:700}
+.crop .ed{padding:6px 10px 10px;border-top:1px dashed var(--line);display:grid;grid-template-columns:1fr 1fr;gap:4px 8px}.crop .ed label{margin:2px 0;font-size:11px}.crop .ed input,.crop .ed select{padding:3px 6px;border-radius:8px;font-size:12px}
+.sw{display:flex;gap:4px;margin:6px 0}.sw i{width:26px;height:20px;border-radius:6px;border:1px solid #0003;display:block}
+.sty{width:100%;text-align:left;border:2px solid var(--line);background:#fff;border-radius:14px;padding:7px 12px;margin:5px 0;font:700 13px Nunito,sans-serif;color:var(--forest);cursor:pointer;display:flex;gap:10px;align-items:center}
+.sty[aria-pressed="true"]{border-color:var(--forest);box-shadow:0 0 0 2px var(--forest)}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:#fff;border-bottom:1px solid var(--line)}
+.bar button{font:700 12.5px Nunito,sans-serif;border:2px solid var(--line);background:#fff;color:var(--forest);border-radius:14px;padding:4px 12px;cursor:pointer}
+.bar button.pri{background:var(--forest);color:var(--cream);border-color:var(--forest)}
+.bar input[type=number]{width:60px;padding:3px 6px;text-align:center}
+.bar .sp{flex:1}.bar .st{font-size:12.5px}
+#wrap{flex:1;overflow:auto;padding:22px;background:#E9E0CE}
+#pages{margin:0 auto;display:flex;flex-wrap:wrap;gap:18px;justify-content:center;align-items:flex-start}
+.seg{display:inline-flex}.seg button{border-radius:0!important;margin-left:-2px}.seg button:first-child{border-radius:14px 0 0 14px!important;margin-left:0}.seg button:last-child{border-radius:0 14px 14px 0!important}.seg button[aria-pressed="true"]{background:var(--forest)!important;color:var(--cream)!important;border-color:var(--forest)!important}
+#pages.all .page{cursor:pointer}#pages.spread{flex-wrap:nowrap;width:max-content}.ord{display:flex;align-items:center;gap:6px;border:2px solid var(--line);border-radius:12px;padding:3px 8px;margin:4px 0;background:#fff}.ord label{margin:0;flex:1}
+.page{position:relative;box-shadow:0 2px 14px rgba(0,0,0,.25);margin:0 auto;overflow:hidden}
+.page.hide{display:none}
+#pages.editing [data-ek]{outline:1px dashed rgba(120,120,120,.7);cursor:text}#pages.editing [data-ek]:hover{background:rgba(255,230,0,.35)}#pages.editing [data-ek]:focus{outline:2px solid #3F51B5;background:rgba(255,230,0,.45)}
+#off{position:fixed;left:-20000px;top:0}
+.modal-bg{position:fixed;inset:0;background:rgba(45,80,22,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}.modal-bg[hidden]{display:none}
+.modal{background:var(--cream);border-radius:24px;max-width:760px;width:100%;max-height:88vh;overflow:auto;padding:22px 28px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.modal h2{font-family:"Josefin Sans",sans-serif;margin:0 0 8px}.modal h3{margin:16px 0 4px;font:700 15px "Josefin Sans",sans-serif;color:var(--terra)}
+.modal li,.modal p{font-size:14px}.modal .big{background:#fff;border:2px solid var(--terra);border-radius:16px;padding:8px 14px;font-weight:700}
+.modal .toc{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.modal .toc a{font-weight:700;font-size:12px;color:var(--forest);border:2px solid var(--sage);border-radius:12px;padding:2px 10px;text-decoration:none;background:#fff}
+.modal kbd{font:700 12px monospace;background:#fff;border:1px solid var(--line);border-radius:6px;padding:0 5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:900px){.app{position:static;margin-top:50px;flex-direction:column}.side{width:auto;border-right:0;border-bottom:1px solid var(--line)}.panels{max-height:55vh}.brand span{display:none}#wrap{padding:10px;min-height:70vh}}
+@media print{
+ .top,.side,.bar,#off{display:none!important}
+ html,body{background:#fff!important}
+ .app{position:static!important;display:block!important}
+ #wrap{overflow:visible!important;padding:0!important;background:#fff!important}
+ #pages{zoom:1!important;width:auto!important}
+ .page,.page.hide{display:block!important;box-shadow:none!important;margin:0!important;page-break-after:always;break-after:page}
+}
+</style>
+</head>
+<body>
+<a class="sr" href="#panels">Skip to controls</a>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#FAF3E8" stroke="#FAF3E8" stroke-width="1"/><circle cx="16" cy="16" r="13.5" fill="#2D5016"/><path d="M16 25V15" stroke="#FAF3E8" stroke-width="2" stroke-linecap="round"/><path d="M16 15c-5 0-7-3-7-6 5 0 7 2 7 6z" fill="#7B9E87"/><path d="M16 17c4 0 6-2 6-5-4 0-6 2-6 5z" fill="#C17767"/><path d="M20 24l2.5 2.5L28 20" fill="none" stroke="#FAF3E8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Planting and Season Calendar Studio</span>
+  </div>
+  <button type="button" class="howto" id="btnHowTop">How to use</button>
+  <nav class="apps" id="appLinks" aria-label="Other web apps"></nav>
+</header>
+
+<div class="app">
+ <aside class="side" aria-label="Controls">
+  <div class="tabs" role="tablist" aria-label="Panels">
+   <button role="tab" id="tab-fr" aria-selected="true" aria-controls="p-fr" data-p="fr">Frost Dates</button>
+   <button role="tab" id="tab-cr" aria-selected="false" aria-controls="p-cr" data-p="cr">Crops</button>
+   <button role="tab" id="tab-st" aria-selected="false" aria-controls="p-st" data-p="st">Style</button>
+   <button role="tab" id="tab-bk" aria-selected="false" aria-controls="p-bk" data-p="bk">Book Pages</button>
+   <button role="tab" id="tab-ex" aria-selected="false" aria-controls="p-ex" data-p="ex">Export</button>
+  </div>
+  <div class="panels" id="panels">
+   <section class="panel" id="p-fr" role="tabpanel" aria-labelledby="tab-fr">
+    <h2>Frost dates</h2>
+    <div class="note">Dates and crop data are TYPICAL estimates. Check your local extension service advice and your seed packets.</div>
+    <label for="preset">Example presets</label>
+    <select id="preset"><option value="">Choose an example...</option><option value="cool">Cool: last frost May 10, first frost Sep 25 (Example only, not your location)</option><option value="mod">Moderate: Apr 20, Oct 20 (Example only, not your location)</option><option value="warm">Warm: Mar 10, Nov 25 (Example only, not your location)</option><option value="south">Southern style: Sep 20, May 10 next year (Example only)</option></select>
+    <label for="lf">Last spring frost date</label><input type="date" id="lf">
+    <label for="ff">First fall frost date</label><input type="date" id="ff">
+    <label for="hemi">Hemisphere note</label>
+    <select id="hemi"><option value="N">Northern hemisphere</option><option value="S">Southern hemisphere</option></select>
+    <p class="hint">The dates drive everything, so both hemispheres work. This note is only printed on the title page.</p>
+    <div class="card" id="seasonInfo" aria-live="polite"></div>
+    <label for="buffer">Frost buffer for tender crops (days later)</label><input type="number" id="buffer" min="0" max="28" step="1">
+    <label for="markDate">Mark a date on the charts (optional, for example today)</label>
+    <div class="row"><input type="date" id="markDate"><button class="btn sm fixed" id="btnToday" type="button">Today</button><button class="btn sm fixed" id="btnMarkClear" type="button">Clear</button></div>
+    <label for="startMonth">Calendar year starts in</label>
+    <select id="startMonth"></select>
+    <h3>Warnings</h3>
+    <div id="warnList" aria-live="polite"></div>
+   </section>
+   <section class="panel" id="p-cr" role="tabpanel" aria-labelledby="tab-cr" hidden>
+    <h2>Crops</h2>
+    <div class="row" id="starters" role="group" aria-label="Starter sets"><button class="btn sm" type="button" data-set="salad">Salad garden</button><button class="btn sm" type="button" data-set="family">Family vegetables</button><button class="btn sm" type="button" data-set="hardy">Cool season only</button><button class="btn sm" type="button" data-set="none">Clear all</button></div>
+    <label for="cropSearch">Search crops</label><input type="search" id="cropSearch" maxlength="40" placeholder="Search">
+    <div id="cropList"></div>
+    <h3>Add a custom crop</h3>
+    <div class="row"><input type="text" id="newCrop" maxlength="40" placeholder="Crop name" aria-label="Custom crop name"><button class="btn sm fixed" id="btnAddCrop" type="button">Add</button></div>
+    <p class="hint">Every number is editable. Weeks are counted from the last spring frost (negative = before it).</p>
+   </section>
+   <section class="panel" id="p-st" role="tabpanel" aria-labelledby="tab-st" hidden>
+    <h2>Calendar style</h2>
+    <div id="styles"></div>
+    <label for="coverFile">Match my cover (upload an image)</label><input type="file" id="coverFile" accept="image/png,image/jpeg,image/webp">
+    <div class="sw" id="coverSw" aria-label="Palette from your cover"></div>
+    <h3>Page size</h3>
+    <label for="trim">Trim size</label>
+    <select id="trim"><option value="6x9">6 x 9 in</option><option value="8x10">8 x 10 in</option><option value="8.5x11">8.5 x 11 in</option><option value="8.27x11.69">A4</option></select>
+    <label for="margin">Margins (in)</label><input type="number" id="margin" min="0.3" max="1.2" step="0.05">
+    <h3>Title and footer</h3>
+    <label for="title">Book title</label><input type="text" id="title" maxlength="70">
+    <label for="subtitle">Subtitle</label><input type="text" id="subtitle" maxlength="90">
+    <label for="author">Author or garden name</label><input type="text" id="author" maxlength="60">
+    <label for="createdBy">"Created by" footer (empty = no footer)</label><input type="text" id="createdBy" maxlength="60">
+   </section>
+   <section class="panel" id="p-bk" role="tabpanel" aria-labelledby="tab-bk" hidden>
+    <h2>Book pages</h2>
+    <p class="hint">Tick the pages in your book and use Up / Down to change their order.</p>
+    <div id="pageChecks"></div>
+    <div class="card" id="pageCount" aria-live="polite"></div>
+   </section>
+   <section class="panel" id="p-ex" role="tabpanel" aria-labelledby="tab-ex" hidden>
+    <h2>Export</h2>
+    <div id="exMsg" role="alert" aria-live="assertive"></div>
+    <div class="row"><button class="btn pri" id="btnPdf" type="button">Exact PDF</button><button class="btn pri" id="btnZip" type="button">PNG ZIP</button><button class="btn pri" id="btnPrint" type="button">Exact Print</button></div>
+    <h3>Calendar and data files</h3>
+    <div class="row"><button class="btn" id="btnIcs" type="button">Calendar file (.ics)</button><button class="btn" id="btnCsv" type="button">Schedule (CSV)</button></div>
+    <p class="hint">The .ics file adds every date as an all-day event in Google Calendar, Apple Calendar, Outlook and others.</p>
+    <p class="hint">Exact PDF is one PDF with every selected page at your trim size. PNG ZIP has one image per page. Exact Print opens the print dialog with the page size set.</p>
+    <h3>Project</h3>
+    <div class="row"><button class="btn" id="btnSave" type="button">Save project</button><button class="btn" id="btnLoad" type="button">Load project</button><input id="fileProj" type="file" accept=".json,application/json" class="sr" aria-label="Load project file"></div>
+    <p class="hint" id="savedMsg" aria-live="polite"></p>
+   </section>
+  </div>
+ </aside>
+ <main class="main" aria-label="Pages">
+  <div class="bar" role="toolbar" aria-label="Page controls">
+   <button type="button" id="pvPrev" aria-label="Previous page">Prev</button>
+   <input type="number" id="pvNum" min="1" value="1" aria-label="Page number"><span id="pvTot">/ 1</span>
+   <button type="button" id="pvNext" aria-label="Next page">Next</button>
+   <span class="seg" role="group" aria-label="View layout"><button type="button" id="vwPage" aria-pressed="true">Page</button><button type="button" id="vwSpread" aria-pressed="false">Spread</button><button type="button" id="vwAll" aria-pressed="false">All pages</button></span>
+   <button type="button" id="zOut" aria-label="Zoom out">-</button><span id="zVal">100%</span><button type="button" id="zIn" aria-label="Zoom in">+</button><button type="button" id="zFit">Fit</button>
+   <button type="button" id="btnUndo">Undo</button><button type="button" id="btnRedo">Redo</button><button type="button" id="btnEdit" aria-pressed="false">Edit text</button><button type="button" id="btnEditReset">Reset text edits</button>
+   <span class="sp"></span><span class="st" id="status" role="status" aria-live="polite">Ready</span>
+   <button type="button" class="pri" id="btnPdf2">Exact PDF</button><button type="button" class="pri" id="btnPrint2">Exact Print</button>
+  </div>
+  <div id="wrap"><div id="pages"></div></div>
+ </main>
+</div>
+<div id="off" aria-hidden="true"></div>
+
+<div class="modal-bg" id="modalBg" hidden>
+ <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle" tabindex="-1" id="modal">
+  <h2 id="mdTitle">How to use Planting and Season Calendar Studio</h2>
+  <p class="big">All dates and crop data here are TYPICAL estimates. Your local conditions differ. Check your local extension service advice and the seed packet for every crop before you plant.</p>
+  <nav class="toc" aria-label="Guide sections"><a href="#hg-quick">Quick start</a><a href="#hg-frost">Frost dates</a><a href="#hg-crops">Crops</a><a href="#hg-calc">How dates are worked out</a><a href="#hg-pages">The pages</a><a href="#hg-style">Style and trim</a><a href="#hg-export">Export</a><a href="#hg-fix">Troubleshooting</a><a href="#hg-keys">Shortcuts</a></nav>
+  <h3 id="hg-quick">1. Quick start</h3>
+  <ol>
+   <li><b>Frost Dates:</b> enter your last spring frost and first fall frost, or pick an example preset (examples only, not your location).</li>
+   <li><b>Crops:</b> tick the crops you grow. Click a crop to edit any number.</li>
+   <li><b>Style:</b> choose a look and a trim size. You can match your book cover colors by uploading the cover.</li>
+   <li><b>Book Pages:</b> choose which pages to include: title, how-to, year wheel, Gantt chart, month grid, week-by-week list, seed-starting table and a blank planner.</li>
+   <li><b>Export:</b> Exact PDF, PNG ZIP or Exact Print.</li>
+  </ol>
+  <h3 id="hg-frost">2. Frost dates</h3>
+  <p>Use full dates. The growing season length is shown automatically. For the southern hemisphere enter the dates as they fall in your year (for example last frost 20 Sep and first frost 10 May of the next year) and set "Calendar year starts in" to July. The frost buffer moves tender crops later by the number of days you choose.</p>
+  <h3 id="hg-crops">3. Crops</h3>
+  <p>Built-in crops are grouped and searchable. For each crop you can change the indoor start week, the sowing or transplant week (weeks from last spring frost, negative = before), days to maturity, harvest window length in weeks, frost hardiness and succession planting (interval and number of plantings). Add your own crops at the bottom.</p>
+  <h3 id="hg-calc">4. How dates are worked out</h3>
+  <ul>
+   <li>Planting date = last spring frost + weeks x 7 days. Harvest begins = planting (or transplant) date + days to maturity. Harvest window = the weeks you set (default 3).</li>
+   <li>Garlic is planted 4 weeks before the first fall frost and harvested the next summer.</li>
+   <li><b>Warnings:</b> "May not mature before first fall frost" appears for frost-tender crops whose harvest would begin after the first fall frost. "No valid window" appears when the planting date falls on or after the first fall frost. Dates before the calendar year start are marked "previous year".</li>
+   <li><b>Succession planting</b> repeats every N weeks only while the whole harvest window still ends before the first fall frost.</li>
+  </ul>
+  <h3 id="hg-pages">5. The pages</h3>
+  <p>Year wheel (circular), Gantt chart (bars for indoors, growing and harvest), month grid, week-by-week to-do list, seed-starting schedule and a blank fill-in planner with your frost dates. Long lists continue on extra pages automatically.</p>
+  <h3>Page layouts and extras</h3>
+  <ul>
+   <li><b>View layouts:</b> <b>Page</b> shows one page, <b>Spread</b> shows two facing pages like an open book, <b>All pages</b> shows the whole book as a grid (click a page to open it).</li>
+   <li><b>Starter sets</b> in Crops pick a group of crops in one click. Each group has Select all / none.</li>
+   <li><b>Mark a date</b> draws a line on the wheel and Gantt chart (for example today).</li>
+   <li><b>Book Pages</b> lets you reorder pages with Up / Down. Each crop also has a notes field that appears in the seed table and CSV.</li>
+   <li><b>Calendar file (.ics)</b> and <b>Schedule (CSV)</b> are in Export.</li>
+  </ul>
+  <h3 id="hg-style">6. Style and trim</h3>
+  <p>Cozy Garden, Kraft, Clean White, Print-safe B/W (no color needed) and Match My Cover. Trim sizes: 6x9, 8x10, 8.5x11 and A4, with adjustable margins. Text is always dark or light enough to read (contrast of at least 4.5:1).</p>
+  <h3>Edit the text on the pages</h3>
+  <p>Editing is on by default (the button under the pages says "Editing: on"; click it to lock the pages). Click any text on a page (titles, labels, table cells, notes) and type. Press Enter when done. Your edits are saved with the project, appear in the PDF, PNG ZIP and print, and are kept when you change other settings. Text inside charts and drawings cannot be edited this way. <b>Reset text edits</b> brings the original text back. If you change the data behind a text, that one edit is dropped because the original text changed.</p>
+  <h3 id="hg-export">7. Export</h3>
+  <ul>
+   <li><b>Exact PDF</b> and <b>PNG ZIP</b> capture each page exactly as shown. <b>Exact Print</b> sets the paper size and opens the print dialog (choose Save as PDF, margins None).</li>
+   <li>If an export fails you get a red message and a "Print instead" button.</li>
+   <li><b>Save project</b> keeps everything in one .json file; the browser also autosaves.</li>
+  </ul>
+  <h3 id="hg-fix">8. Troubleshooting</h3>
+  <ul>
+   <li><b>"May not mature":</b> choose a faster variety, start indoors earlier, or reduce the frost buffer.</li>
+   <li><b>No window:</b> the first fall frost is too early for that crop, or the season is too short.</li>
+   <li><b>PDF fails:</b> libraries load from the internet. Reload and try again, or use Exact Print.</li>
+  </ul>
+  <h3 id="hg-keys">9. Shortcuts</h3>
+  <p><kbd>Alt+Left/Right</kbd> pages, <kbd>Alt+1</kbd> to <kbd>Alt+5</kbd> panels, <kbd>Ctrl/Cmd+Z</kbd> undo, <kbd>Ctrl/Cmd+Y</kbd> redo, <kbd>Ctrl/Cmd+S</kbd> save project, <kbd>Alt+E</kbd> Exact PDF, <kbd>Alt+P</kbd> Exact Print, <kbd>F1</kbd> this guide, <kbd>Esc</kbd> close.</p>
+  <p><button class="btn pri" id="modalClose" type="button">Close guide</button></p>
+ </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+var APP_LINKS=[
+  {label:'Web-App #4 (current app)',url:'',current:true}
+];
+var STORE_KEY='psc.project.v1';
+var SVGNS='http://www.w3.org/2000/svg';
+var DAY=86400000;
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var MONL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id);}
+function own(o,k){return Object.prototype.hasOwnProperty.call(o,k);}
+function clamp(v,a,b){v=parseFloat(v);if(isNaN(v))v=a;return Math.min(b,Math.max(a,v));}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;}
+function NS(tag,attrs,parent){var e=document.createElementNS(SVGNS,tag),k;if(attrs){for(k in attrs){if(own(attrs,k))e.setAttribute(k,String(attrs[k]));}}if(parent)parent.appendChild(e);return e;}
+function p2(n){return (n<10?'0':'')+n;}
+function downloadBlob(name,blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);document.body.removeChild(a);},1500);}
+
+/* ---------- UTC date math ---------- */
+function utc(y,m,d){return Date.UTC(y,m-1,d);}
+function addDays(ms,n){return ms+n*DAY;}
+function iso(ms){var d=new Date(ms);return d.getUTCFullYear()+'-'+p2(d.getUTCMonth()+1)+'-'+p2(d.getUTCDate());}
+function parseIso(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||''));if(!m)return NaN;var ms=utc(+m[1],+m[2],+m[3]);return iso(ms)===s?ms:NaN;}
+function fmt(ms){var d=new Date(ms);return MON[d.getUTCMonth()]+' '+d.getUTCDate();}
+function fmtY(ms){var d=new Date(ms);return MON[d.getUTCMonth()]+' '+d.getUTCDate()+', '+d.getUTCFullYear();}
+
+/* ---------- crop data (typical, editable) ---------- */
+function C(id,name,group,kind,indoors,sow,dtm,hardy,verb,si,sc){return {id:id,name:name,group:group,kind:kind,indoors:indoors,sow:sow,dtm:dtm,hardy:hardy,hl:3,verb:verb,si:si||0,sc:sc||1,on:false,custom:false,note:''};}
+function defaultCrops(){
+ return [
+  C('lettuce','Lettuce','Leafy greens','direct',null,-4,45,'hardy','Direct sow',2,4),
+  C('spinach','Spinach','Leafy greens','direct',null,-6,45,'hardy','Direct sow',3,3),
+  C('kale','Kale','Leafy greens','transplant',-10,-4,55,'hardy','Transplant'),
+  C('radish','Radish','Root crops','direct',null,-4,28,'hardy','Direct sow',2,4),
+  C('carrots','Carrots','Root crops','direct',null,-3,70,'semi','Direct sow',3,3),
+  C('beets','Beets','Root crops','direct',null,-4,55,'semi','Direct sow',3,3),
+  C('potatoes','Potatoes','Root crops','direct',null,-3,100,'semi','Plant'),
+  C('broccoli','Broccoli','Brassicas','transplant',-10,-2,70,'semi','Transplant'),
+  C('cabbage','Cabbage','Brassicas','transplant',-9,-3,75,'hardy','Transplant'),
+  C('onions','Onions (sets)','Alliums','direct',null,-4,90,'hardy','Plant sets'),
+  C('garlic','Garlic','Alliums','fall',null,4,240,'hardy','Plant cloves'),
+  C('peas','Peas','Legumes','direct',null,-6,60,'hardy','Direct sow'),
+  C('bushbeans','Bush beans','Legumes','direct',null,2,55,'tender','Direct sow',3,3),
+  C('polebeans','Pole beans','Legumes','direct',null,2,65,'tender','Direct sow'),
+  C('tomatoes','Tomatoes','Fruiting crops','transplant',-6,2,75,'tender','Transplant'),
+  C('peppers','Peppers','Fruiting crops','transplant',-8,2,75,'tender','Transplant'),
+  C('eggplant','Eggplant','Fruiting crops','transplant',-8,2,80,'tender','Transplant'),
+  C('cucumbers','Cucumbers','Fruiting crops','direct',null,2,55,'tender','Direct sow'),
+  C('summersquash','Summer squash','Fruiting crops','direct',null,2,50,'tender','Direct sow'),
+  C('wintersquash','Winter squash','Fruiting crops','direct',null,2,95,'tender','Direct sow'),
+  C('sweetcorn','Sweet corn','Fruiting crops','direct',null,2,80,'tender','Direct sow'),
+  C('pumpkin','Pumpkin','Fruiting crops','direct',null,2,100,'tender','Direct sow'),
+  C('basil','Basil','Herbs','transplant',-6,2,60,'tender','Transplant')
+ ];
+}
+var STARTER=['lettuce','peas','carrots','tomatoes','peppers','cucumbers','bushbeans','garlic'];
+var GROUPS=['Leafy greens','Root crops','Brassicas','Alliums','Legumes','Fruiting crops','Herbs','Custom'];
+
+/* ---------- calculation ---------- */
+function computeCrop(c,cfg){
+  var out={crop:c,plantings:[],warnings:[],invalid:false,late:false};
+  var tender=c.hardy==='tender',shift=(tender?cfg.buffer:0)*DAY,plant,start=null;
+  if(c.kind==='fall'){plant=cfg.ff-c.sow*7*DAY;}
+  else{plant=cfg.lf+c.sow*7*DAY+shift;if(c.kind==='transplant'&&c.indoors!==null&&c.indoors!==undefined)start=cfg.lf+c.indoors*7*DAY+shift;}
+  var hs=plant+c.dtm*DAY,he=hs+c.hl*7*DAY,ok=!isNaN(plant)&&!isNaN(hs);
+  out.invalid=!ok||!(cfg.ff>cfg.lf)||(c.kind!=='fall'&&plant>=cfg.ff);
+  out.late=tender&&ok&&hs>cfg.ff;
+  out.plantings.push({k:0,start:start,plant:plant,hs:hs,he:he});
+  if(out.invalid)out.warnings.push(c.name+': No valid growing window with these dates.');
+  else if(out.late)out.warnings.push(c.name+': May not mature before first fall frost.');
+  if(c.kind!=='fall'&&c.si>0&&c.sc>1&&ok){
+    var k;
+    for(k=1;k<c.sc;k++){
+      var p=plant+k*c.si*7*DAY,s2=start===null?null:start+k*c.si*7*DAY,h2=p+c.dtm*DAY,e2=h2+c.hl*7*DAY;
+      if(e2>cfg.ff)break;
+      out.plantings.push({k:k,start:s2,plant:p,hs:h2,he:e2});
+    }
+  }
+  return out;
+}
+function cfgOf(st){return {lf:parseIso(st.lf),ff:parseIso(st.ff),buffer:st.buffer};}
+function computeAll(st){var cfg=cfgOf(st);return st.crops.filter(function(c){return c.on;}).map(function(c){return computeCrop(c,cfg);});}
+function axisOf(st){
+  var lf=parseIso(st.lf),d=new Date(lf),y=d.getUTCFullYear(),m=d.getUTCMonth()+1,ay=(m>=st.startMonth)?y:y-1;
+  return {start:utc(ay,st.startMonth,1),end:utc(ay+1,st.startMonth,1)};
+}
+
+/* ---------- colors ---------- */
+function hex2rgb(h){h=h.replace('#','');if(h.length===3)h=h.replace(/(.)/g,'$1$1');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function rgb2hex(r){return '#'+r.map(function(v){v=Math.max(0,Math.min(255,Math.round(v)));return (v<16?'0':'')+v.toString(16);}).join('');}
+function mix(a,b,t){var x=hex2rgb(a),y=hex2rgb(b);return rgb2hex([x[0]+(y[0]-x[0])*t,x[1]+(y[1]-x[1])*t,x[2]+(y[2]-x[2])*t]);}
+function lum(h){var c=hex2rgb(h).map(function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];}
+function contrast(a,b){var l1=lum(a),l2=lum(b),hi=Math.max(l1,l2),lo=Math.min(l1,l2);return (hi+0.05)/(lo+0.05);}
+function textOn(bg){return contrast(bg,'#000000')>=contrast(bg,'#ffffff')?'#000000':'#ffffff';}
+function ensureInk(ink,bg){var t=0,c=ink;while(contrast(c,bg)<4.5&&t<=1){t+=0.1;c=mix(ink,lum(bg)>0.4?'#000000':'#ffffff',t);}return contrast(c,bg)>=4.5?c:(lum(bg)>0.4?'#000000':'#ffffff');}
+var PALS={
+ cozy:{name:'Cozy Garden',bg:'#FAF3E8',ink:'#2D5016',accent:'#C17767',soft:'#EFE3CE',grid:'#D9C9AA',crops:['#7B9E87','#C17767','#D9A441','#5B8C5A','#B5651D','#8E6C8A','#4F7CAC','#A3B18A']},
+ kraft:{name:'Kraft',bg:'#D9BE98',ink:'#3B2A1A',accent:'#7A4B2A',soft:'#CBAE86',grid:'#A98B62',crops:['#7A4B2A','#556B2F','#8C5A2B','#3F5B3A','#9C6B3A','#6B4E31','#4B6A4A','#A0522D']},
+ clean:{name:'Clean White',bg:'#FFFFFF',ink:'#1F2A1F',accent:'#2D5016',soft:'#F2F5F0',grid:'#D5DCD0',crops:['#2D5016','#C17767','#7B9E87','#D9A441','#4F7CAC','#8E6C8A','#5B8C5A','#B5651D']},
+ bw:{name:'Print-safe B/W',bg:'#FFFFFF',ink:'#000000',accent:'#000000',soft:'#F0F0F0',grid:'#999999',crops:['#000000','#555555','#888888','#BBBBBB','#333333','#777777','#AAAAAA','#DDDDDD']},
+ cover:{name:'Match My Cover',bg:'#FAF3E8',ink:'#2D5016',accent:'#C17767',soft:'#EFE3CE',grid:'#D9C9AA',crops:['#7B9E87','#C17767','#D9A441','#5B8C5A','#B5651D','#8E6C8A','#4F7CAC','#A3B18A']}
+};
+function palFromPixels(px){
+  /* px: array of [r,g,b]. median cut to 8 colors */
+  var boxes=[px.slice()],i;
+  while(boxes.length<8){
+    var bi=0,bn=0;for(i=0;i<boxes.length;i++){if(boxes[i].length>bn){bn=boxes[i].length;bi=i;}}
+    var b=boxes[bi];if(b.length<2)break;
+    var mn=[255,255,255],mx=[0,0,0];b.forEach(function(p){for(var c=0;c<3;c++){if(p[c]<mn[c])mn[c]=p[c];if(p[c]>mx[c])mx[c]=p[c];}});
+    var ch=0,rg=-1;for(i=0;i<3;i++){if(mx[i]-mn[i]>rg){rg=mx[i]-mn[i];ch=i;}}
+    b.sort(function(p,q){return p[ch]-q[ch];});var mid=Math.floor(b.length/2);
+    boxes.splice(bi,1,b.slice(0,mid),b.slice(mid));
+  }
+  var cols=boxes.filter(function(b){return b.length;}).map(function(b){var s=[0,0,0];b.forEach(function(p){s[0]+=p[0];s[1]+=p[1];s[2]+=p[2];});return rgb2hex([s[0]/b.length,s[1]/b.length,s[2]/b.length]);});
+  while(cols.length<8)cols.push(cols[cols.length%Math.max(1,cols.length)]||'#7B9E87');
+  cols.sort(function(a,b){return lum(a)-lum(b);});
+  var bg=mix(cols[cols.length-1],'#ffffff',0.65),dark=cols[0];
+  var ink=ensureInk(dark,bg);
+  function sat(h){var r=hex2rgb(h),mx2=Math.max.apply(null,r),mn2=Math.min.apply(null,r);return mx2?(mx2-mn2)/mx2:0;}
+  var accent=cols.slice().sort(function(a,b){return sat(b)-sat(a);})[0];
+  return {name:'Match My Cover',bg:bg,ink:ink,accent:accent,soft:mix(bg,accent,0.12),grid:mix(bg,ink,0.25),crops:cols.slice(0,8)};
+}
+
+/* ---------- state ---------- */
+var S={edits:{},editMode:true,lf:'',ff:'',hemi:'N',buffer:0,startMonth:1,crops:defaultCrops(),style:'cozy',coverPal:null,trim:'6x9',margin:0.5,title:'My Planting and Season Calendar',subtitle:'Sowing, transplanting and harvest windows',author:'',createdBy:'',pages:{title:true,howto:true,wheel:true,gantt:true,grid:true,weeks:true,seeds:true,blank:true},order:['title','howto','wheel','gantt','grid','weeks','seeds','blank'],mark:'',view:'page',cur:0,zoom:1};
+var PRESETS={cool:['05-10','09-25',0],mod:['04-20','10-20',0],warm:['03-10','11-25',0],south:['09-20','05-10',1]};
+function presetDates(key,year){var p=PRESETS[key];return [year+'-'+p[0],(year+p[2])+'-'+p[1]];}
+function initState(){
+  var y=new Date().getUTCFullYear(),d=presetDates('mod',y);S.lf=d[0];S.ff=d[1];
+  S.crops.forEach(function(c){c.on=STARTER.indexOf(c.id)>=0;});
+}
+function pal(){var p=(S.style==='cover'&&S.coverPal)?S.coverPal:PALS[S.style]||PALS.cozy;return p;}
+function snapshot(){return JSON.stringify({lf:S.lf,ff:S.ff,hemi:S.hemi,buffer:S.buffer,startMonth:S.startMonth,crops:S.crops,style:S.style,coverPal:S.coverPal,trim:S.trim,margin:S.margin,title:S.title,subtitle:S.subtitle,author:S.author,createdBy:S.createdBy,pages:S.pages,order:S.order,mark:S.mark,edits:S.edits});}
+function applySnapshot(str){
+  var o;try{o=JSON.parse(str);}catch(e){return false;}
+  if(!o||typeof o!=='object')return false;
+S.edits=cleanEdits(o.edits);  if(!isNaN(parseIso(o.lf)))S.lf=o.lf;if(!isNaN(parseIso(o.ff)))S.ff=o.ff;
+  S.hemi=o.hemi==='S'?'S':'N';S.buffer=Math.round(clamp(o.buffer,0,28));S.startMonth=Math.round(clamp(o.startMonth,1,12));
+  if(o.crops&&o.crops.length){var base=defaultCrops(),list=[];o.crops.slice(0,80).forEach(function(c){if(!c||typeof c.name!=='string')return;var kind=(c.kind==='transplant'||c.kind==='fall')?c.kind:'direct',hardy=(c.hardy==='hardy'||c.hardy==='semi')?c.hardy:'tender';list.push({id:String(c.id||('c'+list.length)).slice(0,30),name:c.name.slice(0,40),group:GROUPS.indexOf(c.group)>=0?c.group:'Custom',kind:kind,indoors:(c.indoors===null||c.indoors===undefined||kind!=='transplant')?null:clamp(c.indoors,-30,30),sow:clamp(c.sow,-30,30),dtm:Math.round(clamp(c.dtm,1,400)),hardy:hardy,hl:Math.round(clamp(c.hl,1,26)),verb:String(c.verb||'Direct sow').slice(0,20),note:String(c.note||'').slice(0,120),si:Math.round(clamp(c.si,0,12)),sc:Math.round(clamp(c.sc,1,12)),on:!!c.on,custom:!!c.custom});});if(list.length)S.crops=list;}
+  S.style=PALS[o.style]?o.style:'cozy';
+  if(o.coverPal&&typeof o.coverPal==='object'&&/^#[0-9a-f]{6}$/i.test(o.coverPal.bg)&&/^#[0-9a-f]{6}$/i.test(o.coverPal.ink)&&o.coverPal.crops&&o.coverPal.crops.length===8){S.coverPal=o.coverPal;}else S.coverPal=null;
+  if(S.style==='cover'&&!S.coverPal)S.style='cozy';
+  S.trim=TRIMS[o.trim]?o.trim:'6x9';S.margin=clamp(o.margin,0.3,1.2);
+  ['title','subtitle','author','createdBy'].forEach(function(k){if(typeof o[k]==='string')S[k]=o[k].slice(0,90);});
+  if(o.order&&o.order.length){var base=['title','howto','wheel','gantt','grid','weeks','seeds','blank'],ord=[];o.order.forEach(function(k){if(base.indexOf(k)>=0&&ord.indexOf(k)<0)ord.push(k);});base.forEach(function(k){if(ord.indexOf(k)<0)ord.push(k);});S.order=ord;}
+  S.mark=(typeof o.mark==='string'&&!isNaN(parseIso(o.mark)))?o.mark:'';
+  if(o.pages&&typeof o.pages==='object'){Object.keys(S.pages).forEach(function(k){if(typeof o.pages[k]==='boolean')S.pages[k]=o.pages[k];});}
+  return true;
+}
+var TRIMS={'6x9':[6,9],'8x10':[8,10],'8.5x11':[8.5,11],'8.27x11.69':[8.27,11.69]};
+
+/* ---------- page building ---------- */
+var STATEMENT='Dates are typical estimates. Check local extension service advice and seed packets.';
+function events(res,st){
+  var ev=[];
+  res.forEach(function(r,ri){r.plantings.forEach(function(p){
+    var sfx=r.plantings.length>1?' #'+(p.k+1):'';
+    if(p.start!==null)ev.push({t:p.start,type:'indoors',text:'Start indoors: '+r.crop.name+sfx,ci:ri});
+    ev.push({t:p.plant,type:'plant',text:r.crop.verb+': '+r.crop.name+sfx,ci:ri});
+    ev.push({t:p.hs,type:'harvest',text:'Harvest begins: '+r.crop.name+sfx,ci:ri});
+    ev.push({t:p.he,type:'harvestEnd',text:'Harvest window ends: '+r.crop.name+sfx,ci:ri});
+  });});
+  ev.sort(function(a,b){return a.t-b.t;});return ev;
+}
+function mkPage(kind,title,p,pageNo,total,W,H){
+  var pg=el('div','page hide');pg.setAttribute('data-type',kind);
+  pg.style.width=(W*96)+'px';pg.style.height=(H*96)+'px';pg.style.background=p.bg;pg.style.color=p.ink;pg.style.fontFamily="Nunito,'Trebuchet MS',Arial,sans-serif";pg.style.fontSize=(4.8+W*0.55)+'pt';
+  var m=S.margin*96;pg.style.padding=m+'px';
+  var inner=el('div');inner.style.cssText='position:relative;width:100%;height:100%;display:flex;flex-direction:column';
+  if(title){var h=el('h2',null,title);h.style.cssText='margin:0 0 '+(0.12*96)+'px;font-family:"Josefin Sans",Nunito,sans-serif;font-weight:700;font-size:1.7em;letter-spacing:.02em;color:'+p.ink+';border-bottom:3px solid '+p.accent+';padding-bottom:4px';inner.appendChild(h);}
+  var body=el('div');body.style.cssText='flex:1;min-height:0;position:relative;overflow:hidden';inner.appendChild(body);
+  var ft=el('div');ft.style.cssText='display:flex;justify-content:space-between;gap:12px;font-size:0.72em;border-top:1px solid '+p.grid+';padding-top:4px;margin-top:6px;color:'+p.ink;
+  ft.appendChild(el('span',null,kind==='title'?'':STATEMENT));
+  var right=el('span',null,(S.createdBy?'Created by '+S.createdBy+'   ':'')+(kind==='title'?'':'Page '+pageNo));ft.appendChild(right);
+  inner.appendChild(ft);pg.appendChild(inner);pg._body=body;return pg;
+}
+function contentSize(){var t=TRIMS[S.trim],m=S.margin;return [t[0]-2*m,t[1]-2*m];}
+function rowsPerPage(rowIn,reserveIn){var cs=contentSize();return Math.max(4,Math.floor((cs[1]-reserveIn)/rowIn));}
+function tableEl(p,cols,rows,rowH){
+  var t=el('table');t.style.cssText='width:100%;border-collapse:collapse;table-layout:fixed;font-size:0.9em';
+  var th=el('thead'),tr=el('tr');cols.forEach(function(c){var h=el('th',null,c.h);h.style.cssText='background:'+p.ink+';color:'+textOn(p.ink)+';text-align:left;padding:3px 6px;width:'+c.w+';font-family:"Josefin Sans",sans-serif;font-size:0.9em';tr.appendChild(h);});th.appendChild(tr);t.appendChild(th);
+  var tb=el('tbody');rows.forEach(function(r,i){var rr=el('tr');r.forEach(function(v){var td=el('td',null,v);td.style.cssText='border-bottom:1px solid '+p.grid+';padding:3px 6px;vertical-align:top;height:'+rowH+'in;background:'+(i%2?p.soft:p.bg)+';color:'+p.ink+';overflow:hidden';rr.appendChild(td);});tb.appendChild(rr);});t.appendChild(tb);return t;
+}
+function warnLines(res){var w=[];res.forEach(function(r){r.warnings.forEach(function(x){w.push(x);});});return w;}
+function posNote(t,ax){return t<ax.start?' (previous year)':(t>=ax.end?' (next year)':'');}
+
+function buildWheel(p,res,ax,W,H,pg){
+  var cs=contentSize(),svgH=Math.min(cs[1]*0.7,cs[0]),svg=NS('svg',{viewBox:'0 0 1000 1000',role:'img','aria-label':'Year wheel'});svg.style.cssText='display:block;margin:0 auto;height:'+svgH+'in;width:'+svgH+'in';
+  var cx=500,cy=500,R=400,len=(ax.end-ax.start)/DAY,i;
+  function ang(ms){var d=(ms-ax.start)/DAY;d=Math.max(0,Math.min(len,d));return d/len*2*Math.PI-Math.PI/2;}
+  function pt(r,a){return [cx+r*Math.cos(a),cy+r*Math.sin(a)];}
+  function arc(r1,r2,a1,a2,fill,stroke){if(a2<=a1)return;var big=(a2-a1)>Math.PI?1:0,A=pt(r2,a1),B=pt(r2,a2),Cc=pt(r1,a2),D=pt(r1,a1);var d='M'+A[0]+' '+A[1]+'A'+r2+' '+r2+' 0 '+big+' 1 '+B[0]+' '+B[1]+'L'+Cc[0]+' '+Cc[1]+'A'+r1+' '+r1+' 0 '+big+' 0 '+D[0]+' '+D[1]+'Z';NS('path',{d:d,fill:fill,stroke:stroke||p.ink,'stroke-width':1.2},svg);}
+  NS('circle',{cx:cx,cy:cy,r:R+10,fill:p.soft,stroke:p.ink,'stroke-width':2},svg);
+  var n=res.length,r0=150,r1=R-40,rw=Math.min(22,(r1-r0)/Math.max(1,n));
+  for(i=0;i<12;i++){var m0=utc(new Date(ax.start).getUTCFullYear(),new Date(ax.start).getUTCMonth()+1+i,1),a=ang(m0>=ax.end?ax.end:m0);var P1=pt(r0-6,a),P2=pt(R+10,a);NS('line',{x1:P1[0],y1:P1[1],x2:P2[0],y2:P2[1],stroke:p.grid,'stroke-width':1.5},svg);
+    var mid=m0+15*DAY,am=ang(Math.min(mid,ax.end)),T=pt(R-18,am),mm=NS('text',{x:T[0],y:T[1],'text-anchor':'middle','dominant-baseline':'central','font-size':26,'font-weight':700,'font-family':'Josefin Sans,sans-serif',fill:p.ink},svg);mm.textContent=MON[new Date(m0).getUTCMonth()];}
+  var clipped=[];
+  res.forEach(function(r,ri){
+    var ra=r0+ri*rw,rb=ra+rw-3,col=p.crops[ri%8];
+    NS('circle',{cx:cx,cy:cy,r:(ra+rb)/2,fill:'none',stroke:p.grid,'stroke-width':rb-ra,opacity:0.35},svg);
+    r.plantings.forEach(function(pl){
+      if(pl.start!==null)arc(ra,rb,ang(pl.start),ang(pl.plant),mix(col,p.bg,0.7),p.ink);
+      arc(ra,rb,ang(pl.plant),ang(pl.hs),mix(col,p.bg,0.35),p.ink);
+      arc(ra,rb,ang(pl.hs),ang(pl.he),col,p.ink);
+      if(pl.start!==null&&pl.start<ax.start||pl.he>=ax.end)if(clipped.indexOf(r.crop.name)<0)clipped.push(r.crop.name);
+    });
+    var tn=pt((ra+rb)/2,-Math.PI/2-0.03),tx=NS('text',{x:tn[0],y:tn[1],'text-anchor':'end','dominant-baseline':'central','font-size':Math.max(9,Math.min(16,rw*0.7)),'font-family':'Nunito,sans-serif',fill:p.ink,'font-weight':700},svg);tx.textContent=String(ri+1);
+  });
+  var cfg=cfgOf(S),fm=[[cfg.lf,'LF'],[cfg.ff,'FF']];
+  fm.forEach(function(f){var a=ang(f[0]),A=pt(r0-14,a),B=pt(R+30,a);NS('line',{x1:A[0],y1:A[1],x2:B[0],y2:B[1],stroke:p.accent,'stroke-width':5,'stroke-dasharray':'12 6'},svg);var T=pt(R+62,a),tt=NS('text',{x:T[0],y:T[1],'text-anchor':'middle','dominant-baseline':'central','font-size':34,'font-weight':700,fill:p.ink,'font-family':'Josefin Sans,sans-serif'},svg);tt.textContent=f[1];});
+  if(S.mark){var mk=parseIso(S.mark);if(mk>=ax.start&&mk<ax.end){var am=ang(mk),M1=pt(r0-14,am),M2=pt(R+30,am);NS('line',{x1:M1[0],y1:M1[1],x2:M2[0],y2:M2[1],stroke:p.ink,'stroke-width':6},svg);var MT=pt(R+62,am),mt=NS('text',{x:MT[0],y:MT[1],'text-anchor':'middle','dominant-baseline':'central','font-size':26,'font-weight':700,fill:p.ink,'font-family':'Nunito,sans-serif'},svg);mt.textContent='Mark '+fmt(mk);}}
+  var ct=NS('text',{x:cx,y:cy-14,'text-anchor':'middle','font-size':38,'font-weight':700,'font-family':'Josefin Sans,sans-serif',fill:p.ink},svg);ct.textContent='Season';
+  var ct2=NS('text',{x:cx,y:cy+26,'text-anchor':'middle','font-size':30,'font-family':'Nunito,sans-serif',fill:p.ink},svg);ct2.textContent=Math.round((cfg.ff-cfg.lf)/DAY)+' days';
+  pg._body.appendChild(svg);
+  var lg=el('div');lg.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:1px 10px;font-size:0.78em;margin-top:4px';
+  res.forEach(function(r,ri){var it=el('div');it.style.cssText='display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden';var sw=el('i');sw.style.cssText='display:inline-block;width:12px;height:12px;flex:none;border:1px solid '+p.ink+';background:'+p.crops[ri%8];it.appendChild(sw);it.appendChild(document.createTextNode((ri+1)+' '+r.crop.name+' ('+fmt(r.plantings[0].plant)+')'));lg.appendChild(it);});
+  pg._body.appendChild(lg);
+  var nt=el('div',null,'LF = last spring frost '+fmtY(cfg.lf)+'. FF = first fall frost '+fmtY(cfg.ff)+'. Rings from the center out follow the legend numbers. Light = indoors, medium = growing, solid = harvest.'+(clipped.length?' Continues into another calendar year: '+clipped.join(', ')+'.':''));nt.style.cssText='font-size:0.72em;margin-top:3px';pg._body.appendChild(nt);
+}
+function buildGantt(p,rows,ax,pg,rowIn){
+  var cs=contentSize(),W=1000,avail=cs[1]*0.72*1000/cs[0],rh=Math.max(24,Math.min(80,(avail-110)/Math.max(1,rows.length))),top=70,h=top+rows.length*rh+40;
+  var svg=NS('svg',{viewBox:'0 0 '+W+' '+h,role:'img','aria-label':'Gantt chart'});svg.style.cssText='display:block;width:100%;height:auto';
+  var lx=210,px=lx+8,pw=W-px-10,len=(ax.end-ax.start)/DAY;
+  function X(ms){var d=(ms-ax.start)/DAY;return px+Math.max(0,Math.min(len,d))/len*pw;}
+  var i,y0;
+  for(i=0;i<12;i++){var m0=utc(new Date(ax.start).getUTCFullYear(),new Date(ax.start).getUTCMonth()+1+i,1),x=X(m0);NS('line',{x1:x,y1:top-10,x2:x,y2:h-30,stroke:p.grid,'stroke-width':1.2},svg);var t=NS('text',{x:x+(X(m0+30*DAY)-x)/2,y:top-24,'text-anchor':'middle','font-size':18,'font-weight':700,fill:p.ink,'font-family':'Josefin Sans,sans-serif'},svg);t.textContent=MON[new Date(m0).getUTCMonth()];}
+  rows.forEach(function(r,ri){
+    y0=top+ri*rh;if(ri%2)NS('rect',{x:0,y:y0,width:W,height:rh,fill:p.soft},svg);
+    var tl=NS('text',{x:6,y:y0+rh/2,'dominant-baseline':'central','font-size':Math.min(22,rh*0.6),'font-weight':700,fill:p.ink,'font-family':'Nunito,sans-serif'},svg);tl.textContent=r.crop.name+(r.late?' *':'');
+    var col=p.crops[r.idx%8];
+    r.plantings.forEach(function(pl,k){
+      var off=(k%3)*rh*0.2,bh=rh*0.36;
+      if(pl.start!==null)NS('rect',{x:X(pl.start),y:y0+rh*0.12+off,width:Math.max(2,X(pl.plant)-X(pl.start)),height:bh,fill:mix(col,p.bg,0.75),stroke:p.ink,'stroke-width':1.2,'stroke-dasharray':'5 3'},svg);
+      NS('rect',{x:X(pl.plant),y:y0+rh*0.12+off,width:Math.max(2,X(pl.hs)-X(pl.plant)),height:bh,fill:mix(col,p.bg,0.4),stroke:p.ink,'stroke-width':1.2},svg);
+      NS('rect',{x:X(pl.hs),y:y0+rh*0.12+off,width:Math.max(2,X(pl.he)-X(pl.hs)),height:bh,fill:col,stroke:p.ink,'stroke-width':1.4},svg);
+    });
+  });
+  var cfg=cfgOf(S);[[cfg.lf,'Last frost '+fmt(cfg.lf)],[cfg.ff,'First frost '+fmt(cfg.ff)]].forEach(function(f,k){var x=X(f[0]);NS('line',{x1:x,y1:top-8,x2:x,y2:h-30,stroke:p.accent,'stroke-width':3,'stroke-dasharray':'10 5'},svg);var t=NS('text',{x:Math.min(W-6,Math.max(6,x)),y:h-12,'text-anchor':k?'end':'start','font-size':18,'font-weight':700,fill:p.ink,'font-family':'Nunito,sans-serif'},svg);t.textContent=f[1];});
+  if(S.mark){var mk2=parseIso(S.mark);if(mk2>=ax.start&&mk2<ax.end){var mx=X(mk2);NS('line',{x1:mx,y1:top-8,x2:mx,y2:h-30,stroke:p.ink,'stroke-width':4},svg);var mtt=NS('text',{x:Math.min(W-6,Math.max(6,mx)),y:top-44,'text-anchor':'middle','font-size':18,'font-weight':700,fill:p.ink,'font-family':'Nunito,sans-serif'},svg);mtt.textContent='Mark '+fmt(mk2);}}
+  pg._body.appendChild(svg);
+  var lg=el('div',null,'Dashed light = start indoors. Medium = growing. Solid = harvest window. * = may not mature before first fall frost.');lg.style.cssText='font-size:0.75em;margin-top:4px';pg._body.appendChild(lg);
+}
+function monthIndex(ms,ax){var d=new Date(ms),a=new Date(ax.start);return (d.getUTCFullYear()-a.getUTCFullYear())*12+d.getUTCMonth()-a.getUTCMonth();}
+function buildPages(){
+  var p=pal(),res=computeAll(S),ax,cfg=cfgOf(S),pages=[],t=TRIMS[S.trim],W=t[0],H=t[1];
+  var valid=!isNaN(cfg.lf)&&!isNaN(cfg.ff)&&cfg.ff>cfg.lf;
+  res.forEach(function(r,i){r.idx=i;});
+  var pageNo=0,groups={},cur=null;
+  function add(kind,title){pageNo++;var pg=mkPage(kind,title,p,pageNo,0,W,H);(cur||pages).push(pg);return pg;}
+  function finalize(){var out=[];S.order.forEach(function(k){if(groups[k])out=out.concat(groups[k]);});return out.concat(pages);}
+  if(S.pages.title){
+    cur=groups.title=[];var pg=add('title','');var b=pg._body;b.style.display='flex';b.style.flexDirection='column';b.style.alignItems='center';b.style.justifyContent='center';b.style.textAlign='center';
+    var svg=NS('svg',{viewBox:'0 0 100 100',width:'1.6in',height:'1.6in',role:'img','aria-label':'Seedling in a circle'});NS('circle',{cx:50,cy:50,r:44,fill:p.soft,stroke:p.ink,'stroke-width':3},svg);NS('path',{d:'M50 78V48',stroke:p.ink,'stroke-width':4,'stroke-linecap':'round'},svg);NS('path',{d:'M50 48c-16 0-22-9-22-18 16 0 22 6 22 18z',fill:p.crops[0],stroke:p.ink,'stroke-width':2},svg);NS('path',{d:'M50 54c12 0 18-6 18-15-12 0-18 6-18 15z',fill:p.crops[1],stroke:p.ink,'stroke-width':2},svg);b.appendChild(svg);
+    var h1=el('div',null,S.title||'Planting Calendar');h1.style.cssText='font-family:"Josefin Sans",sans-serif;font-weight:700;font-size:2.4em;line-height:1.1;margin:14px 6% 6px;color:'+p.ink;b.appendChild(h1);
+    if(S.subtitle){var s1=el('div',null,S.subtitle);s1.style.cssText='font-size:1.2em;margin:0 8% 14px;color:'+p.ink;b.appendChild(s1);}
+    if(S.author){var a1=el('div',null,S.author);a1.style.cssText='font-family:"Josefin Sans",sans-serif;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:'+p.ink;b.appendChild(a1);}
+    var fi=el('div',null,valid?'Last spring frost '+fmtY(cfg.lf)+'   |   First fall frost '+fmtY(cfg.ff)+'   |   '+(S.hemi==='S'?'Southern':'Northern')+' hemisphere note':'');fi.style.cssText='margin-top:22px;font-size:0.85em;border:2px solid '+p.accent+';border-radius:14px;padding:6px 14px;color:'+p.ink;b.appendChild(fi);
+  }
+  if(S.pages.howto){
+    cur=groups.howto=[];var pg2=add('howto','How to use this planner');var b2=pg2._body;
+    var items=['Find your own last spring frost and first fall frost dates (ask your local extension service) and write them on the planner page.','Every date in this book is counted from those two dates. Weeks before the last frost are negative.','The Year Wheel and Gantt chart show when to start seeds indoors, plant, and harvest. Solid bars are harvest windows.','The Month Grid lists tasks by month. The week-by-week list is your to-do list for the season.','The Seed-Starting table lists the exact start and planting dates for each crop.','Move dates earlier or later to match your own garden notes. These are typical values, not rules.'];
+    var ol=el('ol');ol.style.cssText='margin:0 0 12px 1.2em;padding:0;line-height:1.55';items.forEach(function(x){ol.appendChild(el('li',null,x));});b2.appendChild(ol);
+    var nb=el('div',null,STATEMENT+' Check your local extension service advice and the seed packet for every crop.');nb.style.cssText='border:2px solid '+p.accent+';border-radius:14px;padding:8px 14px;font-weight:700;background:'+p.soft;b2.appendChild(nb);
+    var cv=el('div',null,'Legend: light dashed = start indoors, medium = growing, solid = harvest, dashed line = frost date.');cv.style.cssText='margin-top:10px;font-size:0.9em';b2.appendChild(cv);
+  }
+  if(!valid||!res.length){
+    cur=null;var pge=add('note','Calendar');pge._body.appendChild(el('p',null,!valid?'Enter a last spring frost date and a first fall frost date that is later than the last frost.':'Pick at least one crop in the Crops panel.'));
+    return finalize();
+  }
+  ax=axisOf(S);
+  if(S.pages.wheel){cur=groups.wheel=[];var pw=add('wheel','Year wheel');buildWheel(p,res,ax,W,H,pw);}
+  if(S.pages.gantt){
+    cur=groups.gantt=[];var perG=Math.max(5,Math.floor(contentSize()[1]*0.74/0.34)),chunks=Math.ceil(res.length/perG),ci;
+    for(ci=0;ci<chunks;ci++){var pgG=add('gantt','Gantt chart'+(chunks>1?' ('+(ci+1)+' of '+chunks+')':''));buildGantt(p,res.slice(ci*perG,(ci+1)*perG),ax,pgG);}
+  }
+  if(S.pages.grid){
+    cur=groups.grid=[];var pgm=add('grid','Month grid'+(ax?'':''));var b3=pgm._body;var g=el('div');g.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:6px;height:100%';
+    var ev=events(res,S),cap=Math.max(5,Math.floor(contentSize()[1]/4/0.2));var other=[],mi;
+    var bym=[];for(mi=0;mi<12;mi++)bym.push([]);
+    ev.forEach(function(e){if(e.type==='harvestEnd')return;var k=monthIndex(e.t,ax);if(k<0||k>11)other.push(e);else bym[k].push(e);});
+    for(mi=0;mi<12;mi++){
+      var d0=new Date(utc(new Date(ax.start).getUTCFullYear(),new Date(ax.start).getUTCMonth()+1+mi,1)),cell=el('div');cell.style.cssText='border:2px solid '+p.grid+';border-radius:14px;padding:5px 8px;overflow:hidden;background:'+(mi%2?p.soft:p.bg);
+      var mh=el('div',null,MONL[d0.getUTCMonth()]+' '+d0.getUTCFullYear());mh.style.cssText='font-family:"Josefin Sans",sans-serif;font-weight:700;color:'+p.accent+';margin-bottom:2px;font-size:1.02em';cell.appendChild(mh);
+      bym[mi].slice(0,cap).forEach(function(e){var li=el('div',null,new Date(e.t).getUTCDate()+'  '+e.text);li.style.cssText='font-size:0.78em;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';cell.appendChild(li);});
+      if(bym[mi].length>cap){var mo=el('div',null,'+'+(bym[mi].length-cap)+' more (see week list)');mo.style.cssText='font-size:0.72em;font-style:italic';cell.appendChild(mo);}
+      g.appendChild(cell);
+    }
+    b3.appendChild(g);
+  }
+  if(S.pages.weeks){
+    cur=groups.weeks=[];var wk={},wkeys=[];function addW(ms,text){var w=Math.floor((ms-cfg.lf)/(7*DAY));if(!own(wk,w)){wk[w]=[];wkeys.push(w);}wk[w].push(text);}
+    events(res,S).forEach(function(e){addW(e.t,e.text);});addW(cfg.lf,'LAST SPRING FROST');addW(cfg.ff,'FIRST FALL FROST');
+    wkeys.sort(function(a,b){return a-b;});
+    var rowsW=wkeys.map(function(w){var s=cfg.lf+w*7*DAY;return [(w>0?'+':(w<0?'-':''))+Math.abs(w),fmt(s)+' - '+fmt(s+6*DAY),wk[w].join('; ')];});
+    var per=rowsPerPage(0.46,0.95),n2=Math.max(1,Math.ceil(rowsW.length/per)),k2;
+    for(k2=0;k2<n2;k2++){var pgw=add('weeks','Week by week'+(n2>1?' ('+(k2+1)+' of '+n2+')':''));pgw._body.appendChild(tableEl(p,[{h:'Wk',w:'8%'},{h:'Dates',w:'24%'},{h:'To do',w:'68%'}],rowsW.slice(k2*per,(k2+1)*per),0.34));}
+  }
+  if(S.pages.seeds){
+    cur=groups.seeds=[];var rowsS=[];res.forEach(function(r){r.plantings.forEach(function(pl){var notes=[];if(r.plantings.length>1)notes.push('Succession '+(pl.k+1)+' of '+r.plantings.length);if(r.late&&pl.k===0)notes.push('May not mature before first fall frost');if(r.invalid&&pl.k===0)notes.push('No valid window');if(pl.start!==null&&pl.start<ax.start)notes.push('Start is in the previous year');if(r.crop.kind==='fall')notes.push('Harvest is next summer');if(r.crop.note&&pl.k===0)notes.push(r.crop.note);rowsS.push([r.crop.name,pl.start!==null?fmt(pl.start):'-',r.crop.verb+' '+fmt(pl.plant),fmt(pl.hs)+(pl.hs>=ax.end?' (next year)':''),notes.join('. ')]);});});
+    var perS=rowsPerPage(0.52,0.95),nS=Math.max(1,Math.ceil(rowsS.length/perS)),kS;
+    for(kS=0;kS<nS;kS++){var pgs=add('seeds','Seed-starting schedule'+(nS>1?' ('+(kS+1)+' of '+nS+')':''));pgs._body.appendChild(tableEl(p,[{h:'Crop',w:'18%'},{h:'Start indoors',w:'15%'},{h:'Plant out / sow',w:'22%'},{h:'Harvest begins',w:'17%'},{h:'Notes',w:'28%'}],rowsS.slice(kS*perS,(kS+1)*perS),0.4));}
+  }
+  if(S.pages.blank){
+    cur=groups.blank=[];var pgb=add('blank','My planting planner');var bb=pgb._body;
+    var info=el('div',null,'Last spring frost: '+fmtY(cfg.lf)+'     First fall frost: '+fmtY(cfg.ff)+'     Season: '+Math.round((cfg.ff-cfg.lf)/DAY)+' days ('+Math.round((cfg.ff-cfg.lf)/DAY/7*10)/10+' weeks)');info.style.cssText='border:2px solid '+p.accent+';border-radius:14px;padding:6px 12px;margin-bottom:8px;font-weight:700;background:'+p.soft;bb.appendChild(info);
+    var nrows=Math.max(6,Math.floor((contentSize()[1]-1.5)/0.42)),blank=[],q;for(q=0;q<nrows;q++)blank.push(['','','','','']);
+    bb.appendChild(tableEl(p,[{h:'Crop',w:'22%'},{h:'Start indoors',w:'16%'},{h:'Plant out / sow',w:'18%'},{h:'Harvest',w:'16%'},{h:'Notes',w:'28%'}],blank,0.3));
+  }
+  var all=finalize();
+  all.forEach(function(pg,i){var f=pg.querySelector('div > div:last-child span:last-child');if(f&&pg.getAttribute('data-type')!=='title'){f.textContent=(S.createdBy?'Created by '+S.createdBy+'   ':'')+'Page '+(i+1)+' of '+all.length;}});
+  return all;
+}
+
+/* ---------- UI ---------- */
+var pagesCache=[],renderTimer=null,hist=[],hidx=-1,histTimer=null,saveTimer=null;
+function setStatus(m,err){var e=$('status');e.textContent=m;e.style.color=err?'#b3261e':'';}
+function render(){
+  var host=$('pages');host.innerHTML='';
+  try{pagesCache=buildPages();}catch(e){setStatus('Drawing failed: '+e.message,true);console.error(e);pagesCache=[];}
+  tagText();pagesCache.forEach(function(pg){host.appendChild(pg);});applyEditMode();
+  $('pvTot').textContent='/ '+pagesCache.length;$('pvNum').max=pagesCache.length;
+  showPage(S.cur);
+  updateInfo();
+  setStatus(pagesCache.length+' page'+(pagesCache.length===1?'':'s'));
+}
+function showPage(n){
+  var tot=pagesCache.length;if(!tot)return;
+  n=Math.max(0,Math.min(tot-1,n));S.cur=n;$('pvNum').value=n+1;
+  var shown=[n];
+  if(S.view==='spread'){shown=n===0?[0]:(n%2===1?[n,n+1]:[n-1,n]);}
+  if(S.view==='all'){shown=pagesCache.map(function(x,i){return i;});}
+  pagesCache.forEach(function(pg,i){pg.className='page'+(shown.indexOf(i)>=0?'':' hide');pg.onclick=null;});
+  if(S.view==='all')pagesCache.forEach(function(pg,i){pg.onclick=function(){setView('page');showPage(i);};});
+  $('pages').className=(S.view==='all'?'all':(S.view==='spread'?'spread':''))+(S.editMode?' editing':'');
+  applyZoom();
+}
+function setView(v){S.view=v;$('vwPage').setAttribute('aria-pressed',v==='page');$('vwSpread').setAttribute('aria-pressed',v==='spread');$('vwAll').setAttribute('aria-pressed',v==='all');showPage(S.cur);fitZoom();}
+function applyZoom(){$('pages').style.zoom=S.zoom;$('zVal').textContent=Math.round(S.zoom*100)+'%';}
+function fitZoom(){var t=TRIMS[S.trim],w=$('wrap'),cols=S.view==='spread'?2:1;if(S.view==='all'){S.zoom=0.4;applyZoom();return;}var zw=(w.clientWidth-44-(cols-1)*18)/(t[0]*96*cols),zh=(w.clientHeight-44)/(t[1]*96);S.zoom=Math.round(Math.max(0.3,Math.min(2,Math.min(zw,zh)))*100)/100;applyZoom();}
+function updateInfo(){
+  var cfg=cfgOf(S),box=$('seasonInfo');box.innerHTML='';
+  if(isNaN(cfg.lf)||isNaN(cfg.ff)){box.appendChild(el('div',null,'Enter both dates.'));}
+  else if(cfg.ff<=cfg.lf){var e=el('div','errbox','The first fall frost must be later than the last spring frost.');box.appendChild(e);}
+  else{var d=Math.round((cfg.ff-cfg.lf)/DAY);box.appendChild(el('div',null,'Growing season: '+d+' days ('+(Math.round(d/7*10)/10)+' weeks)'));box.appendChild(el('div','hint',fmtY(cfg.lf)+' to '+fmtY(cfg.ff)));}
+  var wl=$('warnList');wl.innerHTML='';var res=computeAll(S),w=warnLines(res);
+  if(!w.length)wl.appendChild(el('div','hint','No warnings for the selected crops.'));
+  w.forEach(function(x){wl.appendChild(el('div','warnli',x));});
+  $('pageCount').textContent=pagesCache.length+' page'+(pagesCache.length===1?'':'s')+' in the book.';
+}
+function selectTab(p){['fr','cr','st','bk','ex'].forEach(function(id){var on=id===p;$('tab-'+id).setAttribute('aria-selected',on?'true':'false');$('p-'+id).hidden=!on;});}
+function changed(){clearTimeout(renderTimer);renderTimer=setTimeout(render,120);clearTimeout(histTimer);histTimer=setTimeout(pushHist,500);clearTimeout(saveTimer);saveTimer=setTimeout(autosave,900);}
+function pushHist(){var s=snapshot();if(hist[hidx]===s)return;hist=hist.slice(0,hidx+1);hist.push(s);if(hist.length>100)hist.shift();hidx=hist.length-1;updUndo();}
+function updUndo(){$('btnUndo').disabled=hidx<=0;$('btnRedo').disabled=hidx>=hist.length-1;}
+function undo(){if(hidx>0){hidx--;applySnapshot(hist[hidx]);syncUI();render();updUndo();}}
+function redo(){if(hidx<hist.length-1){hidx++;applySnapshot(hist[hidx]);syncUI();render();updUndo();}}
+function autosave(){try{localStorage.setItem(STORE_KEY,snapshot());$('savedMsg').textContent='Autosaved '+new Date().toLocaleTimeString();}catch(e){$('savedMsg').textContent='Autosave unavailable (storage blocked or full). Use Save project.';}}
+
+function buildCropList(){
+  var box=$('cropList');box.innerHTML='';var q=$('cropSearch').value.toLowerCase().replace(/^\s+|\s+$/g,'');
+  GROUPS.forEach(function(g){
+    var list=S.crops.filter(function(c){return c.group===g&&(!q||c.name.toLowerCase().indexOf(q)>=0||g.toLowerCase().indexOf(q)>=0);});if(!list.length)return;
+    var gh=el('div','group',g+'  ');var ga=el('button','btn sm','All');ga.type='button';ga.setAttribute('aria-label','Select all '+g);ga.addEventListener('click',function(){list.forEach(function(c){c.on=true;});buildCropList();changed();});var gn=el('button','btn sm','None');gn.type='button';gn.setAttribute('aria-label','Select none in '+g);gn.addEventListener('click',function(){list.forEach(function(c){c.on=false;});buildCropList();changed();});gh.appendChild(ga);gh.appendChild(document.createTextNode(' '));gh.appendChild(gn);box.appendChild(gh);
+    list.forEach(function(c){
+      var wrap=el('div','crop'),hd=el('div','hd'),cb=el('input');cb.type='checkbox';cb.id='cb_'+c.id;cb.checked=c.on;cb.addEventListener('change',function(){c.on=cb.checked;changed();});
+      var lb=el('label',null,c.name);lb.setAttribute('for',cb.id);var ed=el('button','btn sm','Edit');ed.type='button';ed.setAttribute('aria-expanded','false');
+      var form=el('div','ed');form.hidden=true;
+      function num(label,key,min,max,nullable){var l=el('label',null,label),i=el('input');i.type='number';i.step='any';i.min=min;i.max=max;i.value=(c[key]===null||c[key]===undefined)?'':c[key];i.setAttribute('aria-label',c.name+' '+label);i.addEventListener('change',function(){if(i.value===''&&nullable){c[key]=null;}else{c[key]=clamp(i.value,min,max);if(key==='dtm'||key==='hl'||key==='si'||key==='sc')c[key]=Math.round(c[key]);i.value=c[key];}changed();});var d=el('div');d.appendChild(l);d.appendChild(i);form.appendChild(d);}
+      if(c.kind==='transplant')num('Start indoors (wk from LF)','indoors',-30,30,true);
+      num(c.kind==='fall'?'Weeks before first fall frost':'Sow / plant out (wk from LF)','sow',-30,30,false);
+      num('Days to maturity','dtm',1,400,false);num('Harvest window (weeks)','hl',1,26,false);num('Succession every (weeks, 0=off)','si',0,12,false);num('Number of plantings','sc',1,12,false);
+      var hl=el('label',null,'Frost hardiness'),hs=el('select');[['hardy','Hardy'],['semi','Semi-hardy'],['tender','Tender']].forEach(function(o){var op=el('option',null,o[1]);op.value=o[0];hs.appendChild(op);});hs.value=c.hardy;hs.setAttribute('aria-label',c.name+' frost hardiness');hs.addEventListener('change',function(){c.hardy=hs.value;changed();});var hd2=el('div');hd2.appendChild(hl);hd2.appendChild(hs);form.appendChild(hd2);
+      var nl=el('label',null,'Notes (printed in the seed table)'),ni=el('input');ni.type='text';ni.maxLength=120;ni.value=c.note||'';ni.setAttribute('aria-label',c.name+' notes');ni.addEventListener('input',function(){c.note=ni.value;changed();});var nd=el('div');nd.style.gridColumn='1 / -1';nd.appendChild(nl);nd.appendChild(ni);form.appendChild(nd);
+      if(c.custom){var rm=el('button','btn sm','Delete crop');rm.type='button';rm.addEventListener('click',function(){S.crops=S.crops.filter(function(x){return x!==c;});buildCropList();changed();});form.appendChild(rm);}
+      ed.addEventListener('click',function(){form.hidden=!form.hidden;ed.setAttribute('aria-expanded',form.hidden?'false':'true');});
+      hd.appendChild(cb);hd.appendChild(lb);hd.appendChild(ed);wrap.appendChild(hd);wrap.appendChild(form);box.appendChild(wrap);
+    });
+  });
+}
+function buildStyles(){
+  var box=$('styles');box.innerHTML='';
+  ['cozy','kraft','clean','bw'].forEach(function(k){var b=el('button','sty');b.type='button';b.setAttribute('data-s',k);var sw=el('span');sw.style.cssText='display:flex;gap:3px';PALS[k].crops.slice(0,4).forEach(function(c){var i=el('i');i.style.cssText='width:16px;height:16px;border-radius:5px;display:block;border:1px solid #0003;background:'+c;sw.appendChild(i);});b.appendChild(sw);b.appendChild(document.createTextNode(PALS[k].name));b.addEventListener('click',function(){S.style=k;syncUI();changed();});box.appendChild(b);});
+  var b2=el('button','sty');b2.type='button';b2.setAttribute('data-s','cover');b2.appendChild(document.createTextNode('Match My Cover'));b2.addEventListener('click',function(){if(!S.coverPal){selectTab('st');$('coverFile').click();return;}S.style='cover';syncUI();changed();});box.appendChild(b2);
+}
+function syncUI(){
+  $('lf').value=S.lf;$('ff').value=S.ff;$('hemi').value=S.hemi;$('buffer').value=S.buffer;$('startMonth').value=String(S.startMonth);
+  $('trim').value=S.trim;$('margin').value=S.margin;$('title').value=S.title;$('subtitle').value=S.subtitle;$('author').value=S.author;$('createdBy').value=S.createdBy;
+  document.querySelectorAll('.sty').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-s')===S.style?'true':'false');});
+  var sw=$('coverSw');sw.innerHTML='';if(S.coverPal)S.coverPal.crops.forEach(function(c){var i=el('i');i.style.background=c;sw.appendChild(i);});
+  buildPageChecks();$('markDate').value=S.mark;
+  buildCropList();
+}
+function buildPageChecks(){
+  var pc=$('pageChecks');pc.innerHTML='';
+  S.order.forEach(function(k,i){
+    var lab='';PAGE_LABELS.forEach(function(x){if(x[0]===k)lab=x[1];});
+    var row=el('div','ord'),cb=el('input');cb.type='checkbox';cb.id='pg_'+k;cb.setAttribute('data-k',k);cb.checked=!!S.pages[k];cb.addEventListener('change',function(){S.pages[k]=cb.checked;changed();});
+    var l=el('label',null,lab);l.setAttribute('for','pg_'+k);
+    var up=el('button','btn sm','Up');up.type='button';up.setAttribute('aria-label','Move '+lab+' up');up.disabled=i===0;up.addEventListener('click',function(){var t=S.order[i-1];S.order[i-1]=S.order[i];S.order[i]=t;buildPageChecks();changed();});
+    var dn=el('button','btn sm','Down');dn.type='button';dn.setAttribute('aria-label','Move '+lab+' down');dn.disabled=i===S.order.length-1;dn.addEventListener('click',function(){var t=S.order[i+1];S.order[i+1]=S.order[i];S.order[i]=t;buildPageChecks();changed();});
+    row.appendChild(cb);row.appendChild(l);row.appendChild(up);row.appendChild(dn);pc.appendChild(row);
+  });
+}
+var PAGE_LABELS=[['title','Title page'],['howto','How-to page'],['wheel','Year wheel'],['gantt','Gantt chart'],['grid','Month grid'],['weeks','Week-by-week list'],['seeds','Seed-starting schedule'],['blank','Blank fill-in planner']];
+
+/* ---------- exports ---------- */
+/* ---------- export (robust): SVGs are rasterized first, libraries checked separately ---------- */
+var CAPSCALE=3;
+function rasterizeSvgs(root,sc){
+  var svgs=Array.prototype.slice.call(root.querySelectorAll('svg')),jobs=[];
+  svgs.forEach(function(sv){
+    jobs.push(new Promise(function(resolve){
+      try{
+        var r=sv.getBoundingClientRect(),w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height)),cs=getComputedStyle(sv);
+        var c=sv.cloneNode(true);c.setAttribute('xmlns','http://www.w3.org/2000/svg');c.setAttribute('width',w*sc);c.setAttribute('height',h*sc);c.removeAttribute('style');
+        var str=new XMLSerializer().serializeToString(c),img=new Image();
+        img.onload=function(){
+          try{
+            var cv=document.createElement('canvas');cv.width=w*sc;cv.height=h*sc;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+            var out=new Image();out.onload=function(){sv.parentNode.replaceChild(out,sv);resolve();};out.onerror=function(){resolve();};
+            out.style.cssText='display:'+(cs.display==='inline'?'block':cs.display)+';width:'+w+'px;height:'+h+'px;margin:'+cs.margin;out.width=w;out.height=h;out.src=cv.toDataURL('image/png');
+          }catch(e){resolve();}
+        };
+        img.onerror=function(){resolve();};
+        img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(str);
+      }catch(e){resolve();}
+    }));
+  });
+  return Promise.all(jobs);
+}
+function pageLabel(pg){return pg.getAttribute('data-key')||pg.getAttribute('data-type')||'page';}
+function offCapture(pg,scale){
+  var host=$('off');host.innerHTML='';var c=pg.cloneNode(true);c.className='page';c.style.margin='0';c.style.boxShadow='none';
+  Array.prototype.forEach.call(c.querySelectorAll('[contenteditable]'),function(e){e.removeAttribute('contenteditable');});
+  host.appendChild(c);
+  return rasterizeSvgs(c,scale).then(function(){
+    var w=c.offsetWidth,h=c.offsetHeight;
+    return html2canvas(c,{scale:scale,backgroundColor:pal().bg,logging:false,useCORS:true,width:w,height:h,windowWidth:w+40});
+  }).then(function(cv){host.innerHTML='';return cv;},function(e){host.innerHTML='';throw e;});
+}
+function libsPdf(){return typeof html2canvas!=='undefined'&&window.jspdf&&window.jspdf.jsPDF;}
+function libsZip(){return typeof html2canvas!=='undefined'&&typeof JSZip!=='undefined';}
+function captureAll(scale,onProg){
+  var i=0,out=[];
+  return (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){
+    function next(){
+      if(i>=pagesCache.length)return Promise.resolve(out);
+      var idx=i;
+      return offCapture(pagesCache[idx],scale).then(function(cv){out.push(cv);i++;if(onProg)onProg(i,pagesCache.length);return next();},function(e){throw new Error('Page '+(idx+1)+' ('+pageLabel(pagesCache[idx])+') could not be captured: '+(e&&e.message?e.message:e));});
+    }
+    return next();
+  });
+}
+function pdfBytes(){
+  return new Promise(function(resolve,reject){
+    if(!libsPdf()){reject(new Error('The PDF libraries (html2canvas and jsPDF) did not load. Check your internet connection and reload'));return;}
+    if(!pagesCache.length){reject(new Error('There are no pages to export'));return;}
+    var t=TRIMS[S.trim];
+    captureAll(CAPSCALE,function(i,n){setStatus('Capturing page '+i+' of '+n+'...');}).then(function(cvs){
+      var doc=new window.jspdf.jsPDF({unit:'in',format:[t[0],t[1]],orientation:t[0]>t[1]?'l':'p',compress:true});
+      cvs.forEach(function(cv,i){if(i>0)doc.addPage([t[0],t[1]],t[0]>t[1]?'l':'p');doc.addImage(cv.toDataURL('image/jpeg',0.95),'JPEG',0,0,t[0],t[1],undefined,'FAST');});
+      resolve(new Uint8Array(doc.output('arraybuffer')));
+    }).catch(reject);
+  });
+}
+function zipBytes(){
+  return new Promise(function(resolve,reject){
+    if(!libsZip()){reject(new Error('The ZIP libraries (html2canvas and JSZip) did not load. Check your internet connection and reload'));return;}
+    if(!pagesCache.length){reject(new Error('There are no pages to export'));return;}
+    var zip=new JSZip();
+    captureAll(2,function(i,n){setStatus('Capturing page '+i+' of '+n+'...');}).then(function(cvs){
+      return Promise.all(cvs.map(function(cv,i){return new Promise(function(res,rej){cv.toBlob(function(b){if(!b){rej(new Error('The browser could not create a PNG'));return;}var fr=new FileReader();fr.onload=function(){zip.file('page-'+p2(i+1)+'-'+pageLabel(pagesCache[i]).replace(/[^a-z0-9-]/gi,'')+'.png',new Uint8Array(fr.result));res();};fr.onerror=function(){rej(new Error('Could not read PNG data'));};fr.readAsArrayBuffer(b);},'image/png');});}));
+    }).then(function(){return zip.generateAsync({type:'uint8array'});}).then(resolve,reject);
+  });
+}
+
+/* ---------- edit text directly on the pages ---------- */
+function hashStr(s){var h=5381,i;for(i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))|0;}return (h>>>0).toString(36);}
+function tagText(){
+  var counts={};
+  pagesCache.forEach(function(pg){
+    var type=pg.getAttribute('data-key')||pg.getAttribute('data-type'),sub=pg.getAttribute('data-sub')||'';
+    var base=type+'@'+(counts[type+sub]=(counts[type+sub]||0)+1)+sub,n=0;
+    Array.prototype.forEach.call(pg.querySelectorAll('*'),function(e){
+      if(e.children.length>0||e.closest('svg')||e.tagName==='STYLE')return;
+      var orig=e.textContent;if(orig.replace(/\s/g,'')==='')return;
+      n++;var key=base+'|t'+n+'|'+hashStr(orig);
+      e.setAttribute('data-ek',key);e.setAttribute('data-eo',orig);
+      if(own(S.edits,key))e.textContent=S.edits[key];
+    });
+  });
+}
+function applyEditMode(){
+  $('pages').classList[S.editMode?'add':'remove']('editing');
+  pagesCache.forEach(function(pg){Array.prototype.forEach.call(pg.querySelectorAll('[data-ek]'),function(e){if(S.editMode){e.setAttribute('contenteditable','true');e.setAttribute('spellcheck','false');}else e.removeAttribute('contenteditable');});});
+  var b=$('btnEdit');if(b){b.setAttribute('aria-pressed',S.editMode?'true':'false');b.textContent=S.editMode?'Editing: on':'Editing: off';}
+  var n=Object.keys(S.edits).length,r=$('btnEditReset');if(r){r.disabled=!n;r.textContent='Reset text edits'+(n?' ('+n+')':'');}
+}
+function bindEditing(){
+  var host=$('pages'),timer=null;
+  host.addEventListener('input',function(e){
+    var t=e.target.closest&&e.target.closest('[data-ek]');if(!t||!S.editMode)return;
+    var key=t.getAttribute('data-ek'),txt=t.textContent.replace(/\s+/g,' ').slice(0,300);
+    if(txt===t.getAttribute('data-eo'))delete S.edits[key];else S.edits[key]=txt;
+    var r=$('btnEditReset');if(r){var n=Object.keys(S.edits).length;r.disabled=!n;r.textContent='Reset text edits'+(n?' ('+n+')':'');}
+    clearTimeout(timer);timer=setTimeout(function(){pushHist();autosave();},500);
+  });
+  host.addEventListener('keydown',function(e){if(S.editMode&&e.key==='Enter'&&e.target.closest&&e.target.closest('[data-ek]')){e.preventDefault();e.target.blur();}});
+  host.addEventListener('paste',function(e){if(!S.editMode||!(e.target.closest&&e.target.closest('[data-ek]')))return;e.preventDefault();var tx=(e.clipboardData||window.clipboardData).getData('text').replace(/\s+/g,' ');document.execCommand('insertText',false,tx);});
+  $('btnEdit').addEventListener('click',function(){S.editMode=!S.editMode;applyEditMode();setStatus(S.editMode?'Editing on: click any text on a page and type. Press Enter when done.':'Editing off');});
+  $('btnEditReset').addEventListener('click',function(){S.edits={};pushHist();autosave();render();});
+}
+function cleanEdits(o){var r={},n=0;if(o&&typeof o==='object'){Object.keys(o).forEach(function(k){if(n<3000&&typeof o[k]==='string'&&k.length<200){r[k]=o[k].slice(0,300);n++;}});}return r;}
+function fail(msg){
+  var box=$('exMsg');box.innerHTML='';var d=el('div','errbox',msg+' ');var b=el('button','btn sm','Print instead (window.print)');b.type='button';b.addEventListener('click',exactPrint);d.appendChild(b);box.appendChild(d);selectTab('ex');setStatus('Export failed',true);
+}
+function ok(msg){var box=$('exMsg');box.innerHTML='';box.appendChild(el('div','okbox',msg));}
+function exportPdf(){setStatus('Exporting PDF...');pdfBytes().then(function(b){downloadBlob('planting-calendar.pdf',new Blob([b],{type:'application/pdf'}));ok('PDF saved: '+pagesCache.length+' page(s), '+Math.round(b.length/1024)+' KB.');setStatus('PDF saved');}).catch(function(e){fail('PDF export failed: '+(e&&e.message?e.message:e)+'.');});}
+function exportZip(){setStatus('Exporting PNGs...');zipBytes().then(function(b){downloadBlob('planting-calendar-pages.zip',new Blob([b],{type:'application/zip'}));ok('PNG ZIP saved: '+pagesCache.length+' image(s).');setStatus('ZIP saved');}).catch(function(e){fail('PNG ZIP export failed: '+(e&&e.message?e.message:e)+'.');});}
+function exactPrint(){
+  try{
+    var t=TRIMS[S.trim],st=$('printStyle');if(!st){st=document.createElement('style');st.id='printStyle';document.head.appendChild(st);}
+    st.textContent='@page{size:'+t[0]+'in '+t[1]+'in;margin:0}';
+    window.print();
+  }catch(e){fail('Print failed: '+e.message+'.');}
+}
+function icsEsc(s){return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');}
+function icsFold(line){var out=[],first=true;while(line.length>(first?75:74)){var n=first?75:74;out.push((first?'':' ')+line.slice(0,n));line=line.slice(n);first=false;}out.push((first?'':' ')+line);return out.join('\r\n');}
+function ymd(ms){return iso(ms).replace(/-/g,'');}
+function allEvents(){
+  var res=computeAll(S),cfg=cfgOf(S),ev=[];
+  if(!isNaN(cfg.lf))ev.push({t:cfg.lf,text:'Last spring frost (typical date)'});
+  if(!isNaN(cfg.ff))ev.push({t:cfg.ff,text:'First fall frost (typical date)'});
+  res.forEach(function(r){r.plantings.forEach(function(p){
+    var sfx=r.plantings.length>1?' #'+(p.k+1):'';
+    if(p.start!==null)ev.push({t:p.start,text:'Start indoors: '+r.crop.name+sfx});
+    ev.push({t:p.plant,text:r.crop.verb+': '+r.crop.name+sfx});
+    ev.push({t:p.hs,text:'Harvest begins: '+r.crop.name+sfx});
+    ev.push({t:p.he,text:'Harvest window ends: '+r.crop.name+sfx});
+  });});
+  ev.sort(function(a,b){return a.t-b.t;});return ev;
+}
+function icsText(){
+  var ev=allEvents(),stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z');
+  var out=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Planting and Season Calendar Studio//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:'+icsEsc(S.title||'Planting calendar')];
+  ev.forEach(function(e,i){
+    out.push('BEGIN:VEVENT','UID:psc-'+i+'-'+ymd(e.t)+'@planting-calendar.local','DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+ymd(e.t),'DTEND;VALUE=DATE:'+ymd(e.t+DAY),'SUMMARY:'+icsEsc(e.text),'DESCRIPTION:'+icsEsc('Typical estimate. Check local extension service advice and seed packets.'),'TRANSP:TRANSPARENT','END:VEVENT');
+  });
+  out.push('END:VCALENDAR');
+  return out.map(icsFold).join('\r\n')+'\r\n';
+}
+function csvq(s){s=String(s==null?'':s);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
+function scheduleCsv(){
+  var res=computeAll(S),rows=['crop,planting,start indoors,plant or sow,harvest begins,harvest ends,notes'];
+  res.forEach(function(r){r.plantings.forEach(function(p){
+    var n=[];if(r.late&&p.k===0)n.push('May not mature before first fall frost');if(r.invalid&&p.k===0)n.push('No valid growing window');if(r.crop.note)n.push(r.crop.note);
+    rows.push([csvq(r.crop.name),p.k+1,p.start!==null?iso(p.start):'',iso(p.plant),iso(p.hs),iso(p.he),csvq(n.join('. '))].join(','));
+  });});
+  return rows.join('\n')+'\n';
+}
+function exportIcs(){try{if(!allEvents().length)throw new Error('No dates to export. Enter frost dates and pick crops');downloadBlob('planting-calendar.ics',new Blob([icsText()],{type:'text/calendar'}));ok('Calendar file saved: '+allEvents().length+' all-day events. Import it into your calendar app.');}catch(e){fail('Calendar export failed: '+e.message+'.');}}
+function exportCsv(){try{if(!computeAll(S).length)throw new Error('Pick at least one crop');downloadBlob('planting-schedule.csv',new Blob([scheduleCsv()],{type:'text/csv'}));ok('Schedule CSV saved.');}catch(e){fail('CSV export failed: '+e.message+'.');}}
+function saveProject(){try{downloadBlob('planting-calendar-project.psc.json',new Blob([JSON.stringify({app:'planting-season-calendar-studio',v:1,state:JSON.parse(snapshot())})],{type:'application/json'}));ok('Project saved.');}catch(e){fail('Could not save the project: '+e.message+'.');}}
+function loadProjectFile(f){var r=new FileReader();r.onload=function(){try{var o=JSON.parse(String(r.result));if(!o||o.app!=='planting-season-calendar-studio'||!o.state)throw new Error('This file is not a Planting and Season Calendar Studio project');if(!applySnapshot(JSON.stringify(o.state)))throw new Error('The project data is damaged');syncUI();render();pushHist();ok('Project loaded.');}catch(e){fail('Could not load the project: '+e.message+'.');}};r.onerror=function(){fail('Could not read the file.');};r.readAsText(f);}
+function readCover(f){
+  if(!/^image\//.test(f.type)){fail('The cover must be an image (PNG, JPEG or WebP).');return;}
+  var fr=new FileReader();fr.onload=function(){var img=new Image();img.onload=function(){try{var cv=document.createElement('canvas');cv.width=cv.height=64;var g=cv.getContext('2d');g.drawImage(img,0,0,64,64);var d=g.getImageData(0,0,64,64).data,px=[],i;for(i=0;i<d.length;i+=4){if(d[i+3]>128)px.push([d[i],d[i+1],d[i+2]]);}if(!px.length)throw new Error('The image has no visible pixels');S.coverPal=palFromPixels(px);S.style='cover';syncUI();changed();}catch(e){fail('Could not read colors from the cover: '+e.message+'.');}};img.onerror=function(){fail('Could not open that image.');};img.src=String(fr.result);};fr.onerror=function(){fail('Could not read the image file.');};fr.readAsDataURL(f);
+}
+
+var lastFocus=null;
+function openModal(){lastFocus=document.activeElement;$('modalBg').hidden=false;$('modal').focus();}
+function closeModal(){$('modalBg').hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+
+function init(){
+  initState();
+  var links=$('appLinks');APP_LINKS.forEach(function(l){var a=document.createElement(l.current?'span':'a');a.textContent=l.label;if(l.current){a.className='cur';a.setAttribute('aria-current','page');}else{a.href=l.url;a.target='_blank';a.rel='noopener';}links.appendChild(a);});
+  MONL.forEach(function(m,i){var o=el('option',null,m);o.value=String(i+1);$('startMonth').appendChild(o);});
+  buildPageChecks();
+  try{var raw=localStorage.getItem(STORE_KEY);if(raw)applySnapshot(raw);}catch(e){}
+  buildStyles();syncUI();render();pushHist();fitZoom();
+  document.querySelectorAll('.tabs button').forEach(function(b){b.addEventListener('click',function(){selectTab(b.getAttribute('data-p'));});});
+  $('preset').addEventListener('change',function(){var k=this.value;if(!k)return;var y=new Date(parseIso(S.lf)||Date.now()).getUTCFullYear(),d=presetDates(k,y);S.lf=d[0];S.ff=d[1];if(k==='south')S.startMonth=7;else if(S.startMonth===7)S.startMonth=1;syncUI();changed();});
+  $('lf').addEventListener('change',function(){if(!isNaN(parseIso(this.value))){S.lf=this.value;changed();}});
+  $('ff').addEventListener('change',function(){if(!isNaN(parseIso(this.value))){S.ff=this.value;changed();}});
+  $('hemi').addEventListener('change',function(){S.hemi=this.value;changed();});
+  $('buffer').addEventListener('change',function(){S.buffer=Math.round(clamp(this.value,0,28));this.value=S.buffer;changed();});
+  $('startMonth').addEventListener('change',function(){S.startMonth=parseInt(this.value,10);changed();});
+  $('cropSearch').addEventListener('input',buildCropList);
+  $('btnAddCrop').addEventListener('click',function(){var n=$('newCrop').value.replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'');if(!n){return;}S.crops.push({id:'custom'+Date.now(),name:n.slice(0,40),group:'Custom',kind:'direct',indoors:null,sow:0,dtm:60,hardy:'semi',hl:3,verb:'Direct sow',note:'',si:0,sc:1,on:true,custom:true});$('newCrop').value='';buildCropList();changed();});
+  $('trim').addEventListener('change',function(){S.trim=this.value;S.margin=this.value==='6x9'?0.5:(this.value==='8x10'?0.6:0.7);$('margin').value=S.margin;changed();setTimeout(fitZoom,150);});
+  $('margin').addEventListener('change',function(){S.margin=clamp(this.value,0.3,1.2);this.value=S.margin;changed();});
+  [['title','title'],['subtitle','subtitle'],['author','author'],['createdBy','createdBy']].forEach(function(x){$(x[0]).addEventListener('input',function(){S[x[1]]=this.value;changed();});});
+  $('coverFile').addEventListener('change',function(){if(this.files[0])readCover(this.files[0]);this.value='';});
+  $('btnPdf').addEventListener('click',exportPdf);$('btnPdf2').addEventListener('click',exportPdf);$('btnZip').addEventListener('click',exportZip);$('btnPrint').addEventListener('click',exactPrint);$('btnPrint2').addEventListener('click',exactPrint);
+  $('btnIcs').addEventListener('click',exportIcs);$('btnCsv').addEventListener('click',exportCsv);
+  $('vwPage').addEventListener('click',function(){setView('page');});$('vwSpread').addEventListener('click',function(){setView('spread');});$('vwAll').addEventListener('click',function(){setView('all');});
+  $('markDate').addEventListener('change',function(){S.mark=isNaN(parseIso(this.value))?'':this.value;changed();});
+  $('btnToday').addEventListener('click',function(){S.mark=iso(Date.now());$('markDate').value=S.mark;changed();});
+  $('btnMarkClear').addEventListener('click',function(){S.mark='';$('markDate').value='';changed();});
+  var SETS={salad:['lettuce','spinach','radish','beets','carrots'],family:['tomatoes','peppers','cucumbers','bushbeans','carrots','lettuce','onions','garlic'],hardy:['lettuce','spinach','peas','radish','kale','cabbage','onions','garlic'],none:[]};
+  document.querySelectorAll('#starters button').forEach(function(b){b.addEventListener('click',function(){var set=SETS[b.getAttribute('data-set')];S.crops.forEach(function(c){c.on=set.indexOf(c.id)>=0;});buildCropList();changed();});});
+  $('btnSave').addEventListener('click',saveProject);$('btnLoad').addEventListener('click',function(){$('fileProj').click();});$('fileProj').addEventListener('change',function(){if(this.files[0])loadProjectFile(this.files[0]);this.value='';});
+  $('pvPrev').addEventListener('click',function(){showPage(S.cur-1);});$('pvNext').addEventListener('click',function(){showPage(S.cur+1);});$('pvNum').addEventListener('change',function(){showPage((parseInt(this.value,10)||1)-1);});
+  $('zIn').addEventListener('click',function(){S.zoom=Math.min(3,Math.round(S.zoom*115)/100);applyZoom();});$('zOut').addEventListener('click',function(){S.zoom=Math.max(0.25,Math.round(S.zoom*100/1.15)/100);applyZoom();});$('zFit').addEventListener('click',fitZoom);
+  $('btnUndo').addEventListener('click',undo);$('btnRedo').addEventListener('click',redo);
+  $('btnHowTop').addEventListener('click',openModal);$('modalClose').addEventListener('click',closeModal);$('modalBg').addEventListener('click',function(e){if(e.target===this)closeModal();});
+  $('modal').addEventListener('click',function(e){var t=e.target;if(t.tagName==='A'&&/^#hg-/.test(t.getAttribute('href')||'')){e.preventDefault();var x=document.getElementById(t.getAttribute('href').slice(1));if(x)x.scrollIntoView({behavior:'smooth',block:'start'});}});
+  bindEditing();
+  setTimeout(function(){setStatus('Editing is on: click any text on a page to change it.');},300);
+  window.addEventListener('resize',function(){fitZoom();});
+  document.addEventListener('keydown',function(e){
+    var mod=e.ctrlKey||e.metaKey,tag=(e.target&&e.target.tagName)||'';
+    if(e.key==='Escape'&&!$('modalBg').hidden){closeModal();return;}
+    if(mod&&(e.key==='s'||e.key==='S')){e.preventDefault();saveProject();return;}
+    if(mod&&tag!=='INPUT'&&tag!=='TEXTAREA'){if((e.key==='z'||e.key==='Z')&&!e.shiftKey){e.preventDefault();undo();return;}if(e.key==='y'||e.key==='Y'||((e.key==='z'||e.key==='Z')&&e.shiftKey)){e.preventDefault();redo();return;}}
+    if(e.altKey&&!mod){
+      if(e.key==='ArrowLeft'){e.preventDefault();showPage(S.cur-1);return;}if(e.key==='ArrowRight'){e.preventDefault();showPage(S.cur+1);return;}
+      var map={Digit1:'fr',Digit2:'cr',Digit3:'st',Digit4:'bk',Digit5:'ex'};if(map[e.code]){e.preventDefault();selectTab(map[e.code]);return;}
+      if(e.code==='KeyE'){e.preventDefault();exportPdf();return;}if(e.code==='KeyP'){e.preventDefault();exactPrint();return;}
+    }
+    if(e.key==='F1'){e.preventDefault();openModal();}
+  });
+  try{if(!localStorage.getItem('psc.guideSeen')){localStorage.setItem('psc.guideSeen','1');setTimeout(openModal,700);}}catch(e){}
+}
+
+/* ---------- test hooks ---------- */
+window.PSC={captureCanvas:function(i){return offCapture(pagesCache[i],2);},icsText:icsText,scheduleCsv:scheduleCsv,allEvents:allEvents,setView:setView,showPage:showPage,S:S,DAY:DAY,utc:utc,addDays:addDays,iso:iso,parseIso:parseIso,computeCrop:computeCrop,computeAll:computeAll,defaultCrops:defaultCrops,presetDates:presetDates,PRESETS:PRESETS,axisOf:axisOf,
+ contrast:contrast,textOn:textOn,palFromPixels:palFromPixels,pdfBytes:pdfBytes,zipBytes:zipBytes,buildPages:buildPages,render:render,pages:function(){return pagesCache;},cfgOf:cfgOf,
+ set:function(o){var k;for(k in o){if(own(o,k))S[k]=o[k];}syncUI();render();}};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</body>
+</html>
