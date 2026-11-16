@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claim Review Scanner</title>
+<link id="favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23FFE600'/%3E%3Crect x='1' y='1' width='30' height='30' fill='none' stroke='%23000' stroke-width='2'/%3E%3Cpath d='M10 8v13' stroke='%23000' stroke-width='2.4'/%3E%3Cpath d='M10 8h9l-2 3.2 2 3.2h-9z' fill='%23000'/%3E%3Ccircle cx='17' cy='18' r='5.5' fill='%23FFE600' stroke='%23000' stroke-width='2.4'/%3E%3Cpath d='M21 22l6 6' stroke='%23000' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--y:#FFE600;--k:#000;--w:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--y);color:var(--k);font-family:"Space Grotesk",Arial,sans-serif;font-size:15px;line-height:1.4}
+.mono{font-family:"Space Mono",Menlo,Consolas,monospace}
+.top{position:sticky;top:0;z-index:50;background:var(--k);color:var(--y);display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:4px solid var(--k)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.brand svg{width:32px;height:32px;flex:none}
+.apps{display:flex;gap:8px;margin-left:auto}
+.apps a,.apps .cur{font-weight:700;text-transform:uppercase;font-size:12px;border:3px solid var(--y);color:var(--y);padding:5px 10px;text-decoration:none;white-space:nowrap}
+.apps .cur{background:var(--y);color:var(--k)}
+.stmt{background:var(--w);border-bottom:4px solid var(--k);padding:8px 16px;font-weight:700;text-transform:uppercase;font-size:13px;letter-spacing:.02em}
+.wrap{padding:16px;max-width:1700px;margin:0 auto}
+button,input,select,textarea{font:inherit;color:var(--k)}
+.btn{font-weight:700;text-transform:uppercase;font-size:13px;letter-spacing:.04em;background:var(--w);border:4px solid var(--k);border-radius:0;padding:8px 14px;cursor:pointer;box-shadow:4px 4px 0 var(--k);transition:transform .05s,box-shadow .05s}
+.btn:hover{background:var(--y)}
+.btn:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--k)}
+.btn.blk{background:var(--k);color:var(--y)}.btn.blk:hover{background:#222}
+.btn.sm{padding:4px 8px;font-size:11px;border-width:3px;box-shadow:3px 3px 0 var(--k)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}.btn[aria-pressed="true"]{background:var(--k);color:var(--y)}
+:focus-visible{outline:4px solid #0057ff;outline-offset:2px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.tools .sp{flex:1}
+.status{font-weight:700;font-size:13px;text-transform:uppercase}
+.card{background:var(--w);border:4px solid var(--k);box-shadow:8px 8px 0 var(--k);padding:14px;margin-bottom:22px}
+.card h2{margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;background:var(--k);color:var(--y);display:inline-block;padding:3px 10px}
+.drawer[hidden]{display:none}
+label{display:block;font-weight:700;text-transform:uppercase;font-size:12px;letter-spacing:.04em;margin:8px 0 3px}
+textarea,input[type=text],input[type=url],input[type=search],select{width:100%;border:4px solid var(--k);border-radius:0;background:var(--w);padding:7px 9px;font-size:14px}
+textarea{font-family:"Space Mono",Menlo,monospace;font-size:13px;min-height:200px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:0 0 auto}.row .grow{flex:1 1 160px}
+.chk{display:flex;align-items:center;gap:8px;font-weight:700;text-transform:uppercase;font-size:12px;margin:6px 0}.chk input{width:20px;height:20px;accent-color:#000}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:22px}
+.kpi{background:var(--w);border:4px solid var(--k);box-shadow:8px 8px 0 var(--k);padding:12px 14px}
+.kpi b{display:block;font-size:38px;line-height:1.05;font-family:"Space Mono",monospace}
+.kpi span{text-transform:uppercase;font-weight:700;font-size:12px;letter-spacing:.06em}
+.prog{height:22px;border:4px solid var(--k);background:var(--w);margin-top:6px}.prog i{display:block;height:100%;background:var(--k);width:0}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start}
+#mm{width:24px;border:4px solid var(--k);background:var(--w);display:flex;flex-direction:column;cursor:pointer;flex:none}#mm .mb{flex:1;min-height:2px}#mm .mb.H{background:var(--k)}#mm .mb.M{background:repeating-linear-gradient(45deg,#000 0 3px,#fff 3px 6px)}#mm .mb.L{background:radial-gradient(#000 35%,#fff 36%) 0 0/6px 6px}.vwrap{display:flex;gap:8px}.vwrap #viewer{flex:1;min-width:0}.risk{font-weight:700;text-transform:uppercase;font-size:11px;border:3px solid #000;padding:0 5px}.risk.HIGH{background:#000;color:#FFE600}.hint-box{background:#fff7a8;border:3px solid #000;padding:6px 8px;margin:4px 0}#viewer{height:620px;overflow:auto;border:4px solid var(--k);padding:10px 12px;background:var(--w);font-family:"Space Mono",monospace;font-size:13.5px;line-height:1.65}
+.blk{white-space:pre-wrap;word-wrap:break-word;margin:0 0 12px}.blk.hd{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:17px;text-transform:uppercase;border-bottom:4px solid var(--k);padding-bottom:3px;margin-top:14px}
+mark{background:var(--y);color:var(--k);padding:0 2px;cursor:pointer}
+mark::before{content:"[" attr(data-sev) "] ";font-weight:700;font-family:"Space Grotesk",sans-serif;font-size:11px}
+mark[data-sev="H"]{border-bottom:4px solid var(--k)}mark[data-sev="M"]{border-bottom:3px dashed var(--k)}mark[data-sev="L"]{border-bottom:2px dotted var(--k)}
+mark[data-done="1"]{opacity:.55}mark[data-done="1"]::after{content:" (done)";font-size:11px;font-family:"Space Grotesk",sans-serif}
+mark.act{background:var(--k);color:var(--y);outline:3px solid var(--k)}
+.fl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.fl select,.fl input{width:auto;flex:1 1 110px;padding:4px 6px;font-size:12px;border-width:3px}
+#flist{height:300px;overflow:auto;border:4px solid var(--k);background:var(--w);position:relative}
+.frow{display:block;width:100%;height:78px;text-align:left;border:0;border-bottom:3px solid var(--k);background:var(--w);padding:6px 9px;cursor:pointer;overflow:hidden}
+.frow:hover{background:#fff7a8}.frow.act{background:var(--k);color:var(--y)}
+.frow .m{display:flex;gap:6px;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase}
+.frow .s{font-family:"Space Mono",monospace;font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:3px}
+.sev{display:inline-block;border:3px solid currentColor;padding:0 5px;font-weight:700;font-size:11px}
+.sev.H{background:var(--k);color:var(--y);border-color:var(--y)}.frow:not(.act) .sev.H{border-color:var(--k);color:var(--w)}
+.frow:not(.act) .sev.H{background:var(--k);color:var(--y)}
+.detail{border:4px solid var(--k);background:var(--w);padding:10px;margin-top:12px;font-size:13.5px}
+.detail .q{font-family:"Space Mono",monospace;background:var(--y);border:3px solid var(--k);padding:6px 8px;margin:6px 0}
+.detail h3{margin:8px 0 2px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.detail p{margin:0 0 4px}
+.stbtn{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.stbtn button{padding:3px 8px;font-size:11px;border-width:3px;box-shadow:3px 3px 0 var(--k)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border:3px solid var(--k);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--k);color:var(--y);text-transform:uppercase;font-size:11px;letter-spacing:.05em}
+.bar{display:inline-block;width:100px;height:14px;border:3px solid var(--k);vertical-align:middle;background:var(--w)}.bar i{display:block;height:100%;background:var(--k)}
+.rules{max-height:420px;overflow:auto;border:4px solid var(--k)}
+.rule td{font-size:12.5px}.rule input[type=text],.rule select{border-width:2px;padding:2px 4px;font-size:12px}
+.rulebox{background:#fff7a8;border:3px solid var(--k);padding:8px;margin:6px 0}
+.err{background:var(--k);color:#ff6b6b;font-weight:700;padding:6px 10px;margin:8px 0;border:4px solid #ff6b6b}
+.errbox{background:#fff;border:4px solid var(--k);box-shadow:6px 6px 0 #ff0033;padding:10px 12px;font-weight:700;margin:10px 0;color:#b00020}
+.okbox{background:var(--w);border:4px solid var(--k);padding:8px 12px;font-weight:700;margin:10px 0}
+.hint{font-size:12px;font-weight:500;margin:4px 0}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}.modal-bg[hidden]{display:none}
+.modal{background:var(--y);border:4px solid var(--k);box-shadow:10px 10px 0 var(--k);max-width:780px;width:100%;max-height:88vh;overflow:auto;padding:20px 26px}
+.modal h2{margin:0 0 8px;text-transform:uppercase}.modal h3{text-transform:uppercase;font-size:14px;margin:16px 0 4px;background:var(--k);color:var(--y);display:inline-block;padding:2px 8px}
+.modal li,.modal p{font-size:14px}.modal .big{background:var(--w);border:4px solid var(--k);padding:8px 12px;font-weight:700}
+.modal pre{background:var(--w);border:3px solid var(--k);padding:6px 8px;font:12px/1.5 "Space Mono",monospace;white-space:pre-wrap}
+.modal kbd{font:700 12px "Space Mono",monospace;background:var(--w);border:2px solid var(--k);padding:0 4px}
+.modal .toc{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.modal .toc a{font-weight:700;font-size:12px;text-transform:uppercase;color:var(--k);border:3px solid var(--k);background:var(--w);padding:2px 8px;text-decoration:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:1000px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.brand span{display:none}#viewer{height:420px}}
+</style>
+</head>
+<body>
+<a class="sr" href="#viewer">Skip to manuscript</a>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" fill="#FFE600"/><rect x="1" y="1" width="30" height="30" fill="none" stroke="#000" stroke-width="2"/><path d="M10 8v13" stroke="#000" stroke-width="2.4"/><path d="M10 8h9l-2 3.2 2 3.2h-9z" fill="#000"/><circle cx="17" cy="18" r="5.5" fill="#FFE600" stroke="#000" stroke-width="2.4"/><path d="M21 22l6 6" stroke="#000" stroke-width="3"/></svg>
+    <span>Claim Review Scanner</span>
+  </div>
+  <button type="button" class="btn sm" id="btnHowTop">How to use</button>
+  <nav class="apps" id="appLinks" aria-label="Other web apps"></nav>
+</header>
+<div class="stmt" role="note">This tool only FLAGS sentences for a human check. It never says a statement is true or false. Automated flags are prompts for human review, not verification.</div>
+
+<div class="wrap">
+ <div class="tools" role="toolbar" aria-label="Tools">
+  <button class="btn" id="tbMs" type="button" aria-pressed="true">Manuscript</button>
+  <button class="btn" id="tbRules" type="button" aria-pressed="false">Rules</button>
+  <button class="btn" id="tbSrc" type="button" aria-pressed="false">Sources</button>
+  <button class="btn" id="tbNum" type="button" aria-pressed="false">Numbers</button>
+  <button class="btn" id="tbEx" type="button" aria-pressed="false">Export</button>
+  <button class="btn sm" id="btnUndo" type="button">Undo</button><button class="btn sm" id="btnRedo" type="button">Redo</button>
+  <button class="btn sm" id="btnSave" type="button">Save project</button><button class="btn sm" id="btnLoad" type="button">Load project</button>
+  <input id="fileProj" type="file" accept=".json,application/json" class="sr" aria-label="Load project file">
+  <span class="sp"></span><span class="status" id="status" role="status" aria-live="polite">Ready</span>
+ </div>
+
+ <section class="card drawer" id="dr-ms" aria-label="Manuscript input">
+  <h2>Manuscript</h2>
+  <label for="msText">Paste a chapter or the whole manuscript (text or Markdown). Headings (#, ##, "Chapter N") split chapters.</label>
+  <textarea id="msText" spellcheck="false"></textarea>
+  <div class="row" style="margin-top:10px">
+   <button class="btn blk" id="btnAnalyze" type="button">Analyze</button>
+   <button class="btn" id="btnUpload" type="button">Upload .txt / .md</button>
+   <button class="btn" id="btnSample" type="button">Load sample chapter</button>
+   <input id="fileMs" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown,.docx" class="sr" aria-label="Upload manuscript file">
+   <label class="chk" style="margin:0"><input type="checkbox" id="remember"> Remember manuscript in this browser</label>
+  </div>
+  <div class="prog" aria-hidden="true" style="margin-top:10px"><i id="aprog"></i></div>
+  <p class="hint">.docx files are not read by this tool. Copy the text from your document and paste it above. Everything stays in your browser.</p>
+ </section>
+
+ <section class="card drawer" id="dr-rules" aria-label="Rules" hidden>
+  <h2>Rules</h2>
+  <div class="row"><label for="ruleCat" class="sr">Category</label><select id="ruleCat" class="grow"></select><button class="btn sm" id="btnRuleAdd" type="button">Add rule</button><button class="btn sm" id="btnRuleReset" type="button">Reset rules</button><span id="ruleCount" class="status"></span></div>
+  <div id="ruleErr"></div>
+  <div class="rules"><table class="rule"><thead><tr><th>On</th><th>Rule</th><th>Severity</th><th>Hits</th><th>Edit</th></tr></thead><tbody id="ruleBody"></tbody></table></div>
+  <div class="row" style="margin:6px 0"><span id="ignCount" class="status"></span><button class="btn sm" id="btnIgnClear" type="button">Clear ignored sentences</button></div>
+  <p class="hint">Each rule has a pattern (regular expression), a severity, a reason and a "what to verify" text. Changes re-run the scan.</p>
+ </section>
+
+ <section class="card drawer" id="dr-src" aria-label="Source ledger" hidden>
+  <h2>Source ledger</h2>
+  <div id="srcList"></div>
+  <h3 style="font-size:13px;text-transform:uppercase">Add a source</h3>
+  <div class="row">
+   <div class="grow"><label for="sTitle">Title</label><input type="text" id="sTitle" maxlength="160"></div>
+   <div class="grow"><label for="sUrl">URL</label><input type="text" id="sUrl" maxlength="300"></div>
+  </div>
+  <div class="row">
+   <div><label for="sDate">Date accessed</label><input type="text" id="sDate" maxlength="20" placeholder="YYYY-MM-DD"></div>
+   <div class="grow"><label for="sType">Reliability type</label><select id="sType"><option>Official agency</option><option>University extension</option><option>Manufacturer</option><option>Book</option><option>Other</option></select></div>
+   <button class="btn blk" id="btnSrcAdd" type="button" style="align-self:flex-end">Add source</button>
+  </div>
+ </section>
+
+ <section class="card drawer" id="dr-num" aria-label="Numbers by topic" hidden>
+  <h2>Numbers by topic</h2>
+  <p class="hint">Every number with a unit that sits next to a topic word (store, boil, per person, bleach...). Conflicts mean the same topic has different values. Click a value to jump to it.</p>
+  <div style="overflow:auto;max-height:420px"><table><thead><tr><th>Topic</th><th>Unit type</th><th>Values (chapter)</th><th>Conflict</th></tr></thead><tbody id="numBody"></tbody></table></div>
+ </section>
+
+ <section class="card drawer" id="dr-ex" aria-label="Export" hidden>
+  <h2>Export</h2>
+  <div id="exMsg" role="alert" aria-live="assertive"></div>
+  <div class="row">
+   <button class="btn blk" id="btnPdf" type="button">Review report (PDF)</button>
+   <button class="btn" id="btnCsv" type="button">Findings (CSV)</button>
+   <button class="btn" id="btnMd" type="button">Source ledger (Markdown)</button>
+   <button class="btn" id="btnCheck" type="button">Clean checklist (TXT)</button>
+  </div>
+  <h3 style="font-size:13px;text-transform:uppercase;margin:14px 0 4px">Report text (edit it, it is printed on the PDF cover)</h3>
+  <div class="row"><div class="grow"><label for="repTitle">Report title</label><input type="text" id="repTitle" maxlength="80"></div><div class="grow"><label for="repBy">Prepared by</label><input type="text" id="repBy" maxlength="80"></div></div>
+  <label for="repNote">Cover note</label><textarea id="repNote" style="min-height:70px" maxlength="600" aria-label="Cover note"></textarea>
+  <div class="row" style="margin-top:10px"><button class="btn" id="btnNumCsv" type="button">Numbers table (CSV)</button><button class="btn" id="btnDisc" type="button">Suggest disclaimer starter</button></div>
+  <label for="discText">Disclaimer starter (edit it, then have it reviewed by a qualified professional)</label>
+  <textarea id="discText" style="min-height:120px" aria-label="Disclaimer starter text"></textarea>
+  <div class="row" style="margin-top:6px"><button class="btn sm" id="btnDiscCopy" type="button">Copy text</button></div>
+  <p class="hint">Reports state: "Automated flags are prompts for human review, not verification."</p>
+ </section>
+
+ <div class="kpis" aria-label="Key numbers">
+  <div class="kpi"><span>Total flags</span><b id="kTotal">0</b></div>
+  <div class="kpi"><span>High severity</span><b id="kHigh">0</b></div>
+  <div class="kpi"><span>Unresolved</span><b id="kUnres">0</b></div>
+  <div class="kpi"><span>Verified</span><b id="kVer">0</b></div>
+  <div class="kpi"><span>Progress</span><b id="kProg">0%</b><div class="prog"><i id="kBar"></i></div></div>
+ </div>
+
+ <div class="grid">
+  <section class="card" aria-label="Manuscript viewer"><h2>Manuscript with flags</h2><div class="vwrap"><div id="viewer" tabindex="0" aria-label="Manuscript text with highlighted flags"></div><div id="mm" aria-hidden="true" title="Flag map. Click to jump."></div></div><p class="hint">Highlights show severity as text: [H] high, [M] medium, [L] low. Click a highlight to review it.</p></section>
+  <section class="card" aria-label="Findings"><h2>Findings</h2>
+   <div class="fl">
+    <label class="sr" for="fSev">Severity</label><select id="fSev"><option value="">All severities</option><option value="H">High</option><option value="M">Medium</option><option value="L">Low</option></select>
+    <label class="sr" for="fCat">Category</label><select id="fCat"></select>
+    <label class="sr" for="fSt">Status</label><select id="fSt"></select>
+    <label class="sr" for="fCh">Chapter</label><select id="fCh"></select>
+    <label class="sr" for="fSort">Sort</label><select id="fSort"><option value="pos">Order in text</option><option value="sev">Severity first</option></select>
+    <label class="sr" for="fQ">Search</label><input type="search" id="fQ" placeholder="Search" maxlength="60">
+   </div>
+   <div class="row" style="margin-bottom:8px"><span class="status" id="fCount"></span><span class="sp" style="flex:1"></span><label for="bulkCat" class="sr">Bulk category</label><select id="bulkCat" style="width:auto;border-width:3px;padding:3px"></select><label for="bulkSt" class="sr">Bulk status</label><select id="bulkSt" style="width:auto;border-width:3px;padding:3px"></select><button class="btn sm" id="btnBulk" type="button">Apply to category</button></div>
+   <div id="flist" role="listbox" aria-label="Findings list" tabindex="0"></div>
+   <div class="detail" id="detail" aria-live="polite"></div>
+   <p class="hint">Keys: J next, K previous, V verified, R rewritten, A accepted as is, X removed.</p>
+  </section>
+ </div>
+
+ <section class="card" aria-label="Summary by chapter"><h2>Summary by chapter</h2><div style="overflow:auto"><table><thead><tr><th>Chapter</th><th>Words</th><th>Flags</th><th>High</th><th>Unresolved</th><th>Risk</th><th>Progress</th></tr></thead><tbody id="chapBody"></tbody></table></div></section>
+</div>
+
+<div class="modal-bg" id="modalBg" hidden>
+ <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle" tabindex="-1" id="modal">
+  <h2 id="mdTitle">How to use Claim Review Scanner</h2>
+  <p class="big">This tool FLAGS sentences that deserve a human check. It never says a statement is true or false, and it does not verify anything. You, the author, remain responsible for the accuracy and safety of your book.</p>
+  <nav class="toc" aria-label="Guide sections"><a href="#hg-quick">Quick start</a><a href="#hg-what">What gets flagged</a><a href="#hg-review">Reviewing</a><a href="#hg-rules">Rules</a><a href="#hg-src">Source ledger</a><a href="#hg-export">Export</a><a href="#hg-fix">Troubleshooting</a><a href="#hg-keys">Shortcuts</a></nav>
+  <h3 id="hg-quick">1. Quick start</h3>
+  <ol>
+   <li>Click <b>Manuscript</b>. A sample chapter with deliberate flags is already loaded so you can try the tool. Click <b>Load sample chapter</b> to bring it back.</li>
+   <li>Replace it with your text: paste a chapter or the whole book, or upload a .txt or .md file. Word (.docx) files are not read: copy the text out of Word and paste it.</li>
+   <li>Click <b>Analyze</b>. Large books (100,000 words) take a few seconds and show a progress bar.</li>
+   <li>Work through the <b>Findings</b> list. Click a finding to jump to it in the text, check it against a reliable source, then set its status.</li>
+   <li>When you are done, open <b>Export</b> for the PDF report, CSV, source ledger and checklist.</li>
+  </ol>
+  <h3 id="hg-what">2. What gets flagged</h3>
+  <ul>
+   <li><b>Numbers with units:</b> temperatures, times and durations in food, water or storage contexts, pressures, electrical values (volts, amps, watts, wire gauge, breakers, grounding), water-treatment amounts (bleach, drops per gallon, ppm, micron ratings), quantities and conversions.</li>
+   <li><b>Risky words:</b> food preservation (canning, botulism, curing), absolute promises (always, never, guaranteed, 100%), medical and legal language.</li>
+   <li><b>Off-niche topics:</b> weapons, tactical, wilderness survival and medical treatment are flagged as "Off-niche: consider removing".</li>
+   <li><b>Consistency:</b> when the same topic has different values in different places (for example "1 gallon per person" and "2 gallons per person"), both sentences are flagged.</li>
+   <li>Severity is High, Medium or Low and is always written as a label ([H], [M], [L]), never by color alone. A highlight does not mean the text is wrong. It means a person should check it.</li>
+  </ul>
+  <h3 id="hg-review">3. Reviewing a finding</h3>
+  <p>Select a finding to see why it was flagged and what to verify. Set a status: <b>To verify</b>, <b>Verified</b>, <b>Rewritten</b>, <b>Accepted as is</b> or <b>Removed</b>. Add a note, and attach a source from your ledger or add a new one. Use the filters (severity, category, status, chapter, search) and <b>Apply to category</b> to change many findings at once. The tiles and the chapter summary show your progress.</p>
+  <h3>Extra tools</h3>
+  <ul>
+   <li><b>Flag map:</b> the narrow strip beside the text shows where flags are (black = high, striped = medium, dotted = low). Click it to jump.</li>
+   <li><b>Risk by chapter:</b> unresolved flags weighted by severity per 1,000 words, written as Low, Medium or High. It is a guide for where to look first, not a quality score.</li>
+   <li><b>Possible rewrite approach:</b> for absolute promises, medical wording and off-niche passages the detail box suggests how to rewrite. These are prompts, not facts.</li>
+   <li><b>Ignore this sentence:</b> hides a false alarm in all future scans (Rules shows the count and can clear it).</li>
+   <li><b>Numbers:</b> a table of every number next to a topic word, with conflicts marked. Export it as CSV.</li>
+   <li><b>Disclaimer starter:</b> Export builds a draft disclaimer from the risk areas found in your text. It is a starting point only and should be reviewed by a qualified professional.</li>
+  </ul>
+  <h3>Editing text</h3>
+  <ul><li><b>Edit this sentence</b> (in the detail box, or double-click a highlighted sentence) rewrites that sentence in your manuscript, marks it Rewritten and scans again.</li><li><b>Report text</b> in Export lets you change the report title, add "Prepared by" and a cover note that are printed on the PDF cover.</li></ul>
+  <h3 id="hg-rules">4. Rules</h3>
+  <p>Open <b>Rules</b> to switch rules on or off, change severity, edit a pattern, or add your own. Patterns are regular expressions. If a pattern is invalid it is shown in red and skipped. <b>Reset rules</b> restores the built-in list.</p>
+  <h3 id="hg-src">5. Source ledger</h3>
+  <p>Record where you checked each fact: title, link, date accessed and type (official agency, university extension, manufacturer, book, other). One source can support many findings.</p>
+  <h3 id="hg-export">6. Export</h3>
+  <ul>
+   <li><b>Review report (PDF):</b> cover summary, key numbers, findings table with status and source, ledger.</li>
+   <li><b>Findings (CSV)</b> for spreadsheets. <b>Source ledger (Markdown)</b>. <b>Clean checklist (TXT)</b> of what is still unresolved.</li>
+   <li>Save project stores rules, statuses, notes, ledger and the manuscript text in one .json file. Your browser also autosaves rules, statuses, notes and sources. The manuscript text is kept only if you tick "Remember manuscript".</li>
+  </ul>
+  <h3 id="hg-fix">7. Troubleshooting</h3>
+  <ul>
+   <li><b>Nothing is flagged:</b> check that the text was analyzed and that rules are switched on.</li>
+   <li><b>Too many flags:</b> switch off low-value rules or filter by severity.</li>
+   <li><b>A rule is red:</b> its pattern is not a valid regular expression. Fix or switch it off.</li>
+   <li><b>PDF fails:</b> the PDF library needs an internet connection the first time the page loads.</li>
+  </ul>
+  <h3 id="hg-keys">8. Shortcuts</h3>
+  <p><kbd>J</kbd>/<kbd>K</kbd> next/previous finding, <kbd>V</kbd> verified, <kbd>R</kbd> rewritten, <kbd>A</kbd> accepted as is, <kbd>X</kbd> removed, <kbd>Ctrl/Cmd+Z</kbd> undo, <kbd>Ctrl/Cmd+Y</kbd> redo, <kbd>F1</kbd> this guide, <kbd>Esc</kbd> close.</p>
+  <p><button class="btn blk" id="modalClose" type="button">Close guide</button></p>
+ </div>
+</div>
+
+<script type="text/plain" id="sampleText"># Chapter 1: Water Basics
+
+Plan on 1 gallon of water per person per day for drinking and cooking. Store the water in food-grade containers and rotate it every 6 months. Many readers keep a 14 day supply, and you should never skip rotation.
+
+If the water looks cloudy, filter it first and then add 8 drops of bleach per gallon. Let it stand for 30 minutes before drinking. A filter rated at 0.2 micron removes bacteria, but a boil of 1 minute is the usual fallback. This method is completely safe and guaranteed to work.
+
+# Chapter 2: The Solar Corner
+
+A 400 watt panel feeding a 12 volt battery bank can run small loads. Use 10 gauge wire for the run and fit a 30 amp breaker near the battery. Grounding the frame matters, and wiring in series raises the voltage.
+
+For storage, the guide says to plan 2 gallons per person per day, which is more than the first chapter suggested. Inverter size depends on the surge load of your fridge.
+
+# Chapter 3: Preserving the Harvest
+
+Water bath canning suits high acid foods, while a pressure canner at 10 psi is needed for low acid vegetables. Process jars for 25 minutes and cool them overnight. Botulism is rare but serious, so follow tested recipes. Jerky can be dried at 160 degrees until firm.
+
+Some books add chapters about hunting rifles and tactical gear, but that is outside this guide. A cure for every illness is not something a garden can promise.
+
+The raised bed is 4 feet wide and 8 feet long, and the class meets for 2 hours on Saturday.
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+var APP_LINKS=[
+  {label:'Web-App #3 (current app)',url:'',current:true}
+];
+var STORE_KEY='crs.v1';
+var STATUSES=['To verify','Verified','Rewritten','Accepted as is','Removed'];
+var SRC_TYPES=['Official agency','University extension','Manufacturer','Book','Other'];
+var SEVN={H:'High',M:'Medium',L:'Low'};
+var SEVO={H:0,M:1,L:2};
+var CATS=['Temperature','Time and duration','Pressure','Electrical','Water treatment','Food preservation','Absolute promises','Medical and legal','Off-niche','Quantities','Consistency'];
+var CATINFO={
+ 'Temperature':['Temperatures decide food safety and results, and units are easy to mix up.','Check the number and unit against an official source or the manufacturer manual.'],
+ 'Time and duration':['Times and storage periods change safety and quality.','Confirm the duration for this exact food, method and container with a reliable source.'],
+ 'Pressure':['Pressure values depend on equipment and altitude.','Check the figure against the equipment manual and an official guideline.'],
+ 'Electrical':['Electrical values affect fire and shock risk.','Confirm values, units and wording with a qualified electrician or the manufacturer, and local code.'],
+ 'Water treatment':['Water-treatment amounts and times affect whether water is safe to drink.','Check amounts, contact time and product type against an official health agency or the product label.'],
+ 'Food preservation':['Preservation methods carry food-safety risks.','Check the method and wording against a tested source such as a national food-safety agency or university extension.'],
+ 'Absolute promises':['Absolute wording promises more than most advice can support.','Rewrite with accurate limits or remove the promise.'],
+ 'Medical and legal':['Medical or legal wording can create liability and harm.','Remove it, or have it checked by a qualified professional.'],
+ 'Off-niche':['Off-niche: consider removing. This topic is outside the product line.','Decide whether it belongs in this book at all.'],
+ 'Quantities':['A quantity or conversion may be wrong or unclear.','Re-check the arithmetic, the unit and the source.'],
+ 'Consistency':['The same topic has different values in different places.','Decide which value is right and make every mention agree.']
+};
+/* [id, category, severity, regex, why (optional), verify (optional)] */
+var D=[
+ ['temp-deg','Temperature','M',/\b\d{1,3}(?:\.\d+)?\s*(?:°|degrees?\b)/i],
+ ['temp-letter','Temperature','M',/\b\d{1,3}\s?(?:°\s?)?(?:F|C)\b(?![a-z])/],
+ ['temp-fridge','Temperature','L',/\b(?:refrigerat\w*|fridge|freezer)\b/i],
+ ['temp-danger','Temperature','H',/\b(?:danger zone|internal temperature|safe temperature|core temperature)\b/i],
+ ['temp-boil','Temperature','M',/\b(?:rolling boil|boiling point|boiling water)\b/i],
+ ['temp-ambient','Temperature','L',/\b(?:room temperature|cool, dry place|below freezing|above freezing)\b/i],
+ ['time-store','Time and duration','M',/\b(?:store[sd]?|storing|keeps?|kept|shelf life|lasts?)\b[^.!?\n]{0,40}\b\d+\s*(?:minutes?|hours?|days?|weeks?|months?|years?)\b/i],
+ ['time-boil','Time and duration','H',/\b(?:boil\w*|simmer\w*)\b[^.!?\n]{0,40}\b\d+\s*(?:minutes?|mins?|hours?|seconds?)\b|\b\d+\s*(?:minutes?|mins?|seconds?)\b[^.!?\n]{0,30}\b(?:boil\w*|simmer\w*)\b/i],
+ ['time-process','Time and duration','H',/\b(?:process(?:ed|ing)?|canned?|canning)\b[^.!?\n]{0,40}\b\d+\s*(?:minutes?|hours?)\b/i],
+ ['time-rest','Time and duration','L',/\b(?:rest|soak|cure|ferment|steep|dry)\w*\b[^.!?\n]{0,40}\b\d+\s*(?:hours?|days?|weeks?)\b/i],
+ ['time-contact','Time and duration','H',/\b(?:contact time|let (?:it )?stand|wait)\b[^.!?\n]{0,30}\b\d+\s*(?:minutes?|hours?)\b/i],
+ ['time-expiry','Time and duration','M',/\b(?:expir\w+|best[- ]by|use[- ]by)\b/i],
+ ['time-rotation','Time and duration','L',/\b(?:rotate|rotation)\b[^.!?\n]{0,30}\b\d+\s*(?:months?|weeks?|years?)\b/i],
+ ['time-growth','Time and duration','L',/\b(?:germinat\w+|days to maturity|harvest(?:ed)?)\b[^.!?\n]{0,40}\b\d+\s*(?:days?|weeks?|months?)\b/i],
+ ['pres-psi','Pressure','H',/\b\d+(?:\.\d+)?\s*(?:psi|psig)\b/i],
+ ['pres-kpa','Pressure','H',/\b\d+(?:\.\d+)?\s*(?:kpa|bar|pascals?|mmhg|atm)\b/i],
+ ['pres-gauge','Pressure','H',/\b(?:pressure gauge|dial gauge|weighted gauge|altitude adjust\w*)\b/i],
+ ['pres-words','Pressure','M',/\b(?:pressurized|relief valve|vent pipe)\b/i],
+ ['elec-volt','Electrical','H',/\b\d+(?:\.\d+)?\s*(?:[Vv]olts?|VAC|VDC|kV|V)\b/],
+ ['elec-amp','Electrical','H',/\b\d+(?:\.\d+)?\s*(?:[Aa]mps?|[Aa]mperes?|mA|A)\b/],
+ ['elec-watt','Electrical','M',/\b\d+(?:[.,]\d+)?\s*(?:[Ww]atts?|kW|W)\b/],
+ ['elec-kwh','Electrical','M',/\b\d+(?:\.\d+)?\s*(?:kWh|Wh|amp[- ]hours?|Ah)\b/i],
+ ['elec-gauge','Electrical','H',/\b\d{1,2}\s*(?:AWG|gauge)\b|\bAWG\s*\d+\b|\bwire gauge\b/i],
+ ['elec-breaker','Electrical','H',/\b(?:circuit breaker|breaker|fuse|fused|overcurrent)\b/i],
+ ['elec-ground','Electrical','H',/\b(?:grounding|grounded|ground fault|GFCI|earthing)\b/i],
+ ['elec-inverter','Electrical','M',/\b(?:inverter|charge controller|MPPT|PWM controller)\b/i],
+ ['elec-battery','Electrical','M',/\b(?:lithium|LiFePO4|lead[- ]acid|AGM|battery bank|depth of discharge)\b/i],
+ ['elec-wiring','Electrical','H',/\b(?:wiring diagram|wired in (?:series|parallel)|wiring in (?:series|parallel)|short circuit|reverse polarity|connect(?:ed)? the (?:positive|negative))\b/i],
+ ['elec-load','Electrical','L',/\b(?:surge load|continuous load|peak load|load calculation)\b/i],
+ ['elec-solar','Electrical','L',/\b(?:peak sun hours|panel rating|open[- ]circuit voltage|Voc|Isc)\b/i],
+ ['water-bleach','Water treatment','H',/\b(?:bleach|sodium hypochlorite|hypochlorite)\b/i],
+ ['water-drops','Water treatment','H',/\b\d+\s*drops?\b[^.!?\n]{0,30}\b(?:gallon|liter|litre|quart)s?\b|\bdrops? (?:per|of)\b[^.!?\n]{0,20}\b(?:gallon|liter|quart)s?\b/i],
+ ['water-ppm','Water treatment','H',/\b\d+(?:\.\d+)?\s*(?:ppm|mg\/L|parts per million)\b/i],
+ ['water-chlorine','Water treatment','H',/\b(?:chlorine|chlorinat\w+|chloramine)\b/i],
+ ['water-iodine','Water treatment','H',/\b(?:iodine|chlorine dioxide|purification tablets?)\b/i],
+ ['water-micron','Water treatment','H',/\b\d+(?:\.\d+)?\s*(?:micron|µm)s?\b|\b(?:absolute|nominal) (?:micron )?rating\b/i],
+ ['water-safe','Water treatment','H',/\b(?:potable|drinkable|safe to drink|safe drinking|purif(?:y|ied|ication)|disinfect\w*)\b/i],
+ ['water-pathogen','Water treatment','H',/\b(?:giardia|cryptosporidium|e\.? ?coli|bacteria|viruses|pathogens?|parasites?)\b/i],
+ ['water-storage','Water treatment','M',/\b(?:water storage|stored water|rotate (?:your )?water|food[- ]grade (?:barrel|container|bucket)s?)\b/i],
+ ['food-canning','Food preservation','H',/\b(?:canning|canned|canner|mason jars?)\b/i],
+ ['food-pressure','Food preservation','H',/\bpressure (?:canner|canning|cooker)\b/i],
+ ['food-waterbath','Food preservation','H',/\bwater[- ]bath\b/i],
+ ['food-botulism','Food preservation','H',/\b(?:botulism|botulinum|clostridium)\b/i],
+ ['food-ferment','Food preservation','M',/\b(?:ferment\w*|brine|brining|sauerkraut|kimchi)\b/i],
+ ['food-cure','Food preservation','H',/\b(?:curing salt|nitrites?|nitrates?|cured meat|jerky|smoked (?:meat|fish))\b/i],
+ ['food-dehydrate','Food preservation','M',/\b(?:dehydrat\w+|dried meat|freeze[- ]dr\w+)\b/i],
+ ['food-safe','Food preservation','H',/\b(?:safe to eat|safe to consume|food[- ]safe|spoil\w*)\b/i],
+ ['food-acid','Food preservation','H',/\b(?:pH|acidity|low[- ]acid|high[- ]acid|acidified)\b/],
+ ['food-oil','Food preservation','H',/\b(?:garlic in oil|infused oils?)\b/i],
+ ['abs-always','Absolute promises','M',/\b(?:always|never|every time|without exception|in all cases)\b/i],
+ ['abs-guarantee','Absolute promises','H',/\b(?:guarantee[sd]?|guaranteed|risk[- ]free|foolproof)\b/i],
+ ['abs-safe','Absolute promises','H',/\b(?:completely safe|totally safe|100% safe|absolutely safe|perfectly safe|no risk)\b/i],
+ ['abs-percent','Absolute promises','M',/\b100\s?%|\b(?:completely|totally|entirely) (?:effective|reliable|sterile)\b/i],
+ ['abs-proven','Absolute promises','M',/\b(?:proven|scientifically proven|studies show|experts agree|doctors recommend)\b/i],
+ ['abs-prevents','Absolute promises','H',/\b(?:prevents?|eliminates?|kills (?:all|every)|removes (?:all|every)|stops)\b[^.!?\n]{0,30}\b(?:disease|illness|bacteria|germs|infection|mold|pests?)\b/i],
+ ['abs-works','Absolute promises','L',/\b(?:works every time|can't fail|cannot fail|impossible to)\b/i],
+ ['med-cure','Medical and legal','H',/\b(?:cures? (?:cancer|diabetes|disease|illness|every)|heals?|miracle|cure[- ]all|cure for)\b/i],
+ ['med-treat','Medical and legal','H',/\b(?:treat(?:s|ed|ing|ment)?|diagnos\w+|therapy|prescri\w+|dosage|dose|symptoms?)\b/i],
+ ['med-legal','Medical and legal','H',/\b(?:lawsuit|sue|liable|liability|legally|illegal|permit required|code compliant|up to code)\b/i],
+ ['med-promise','Medical and legal','M',/\b(?:no side effects|doctor approved|FDA approved|USDA approved|certified)\b/i],
+ ['med-allergy','Medical and legal','M',/\b(?:allergic|allergy|anaphyla\w+|poison\w*|toxic)\b/i],
+ ['off-weapon','Off-niche','H',/\b(?:rifles?|firearms?|ammo|ammunition|handgun|pistol|shotgun|weapons?)\b/i],
+ ['off-tactical','Off-niche','M',/\b(?:tactical|combat|self[- ]defense|ambush|militia|bug[- ]out|SHTF|doomsday)\b/i],
+ ['off-wilderness','Off-niche','M',/\b(?:wilderness|foraging wild|wild edibles|tracking game|trapping|snares?|survival shelter|fire starting)\b/i],
+ ['off-medical','Off-niche','H',/\b(?:first aid|tourniquet|wound|suture|antibiotics?|surgery|CPR)\b/i],
+ ['off-hunt','Off-niche','L',/\b(?:hunting|hunters?|field dress\w*)\b/i],
+ ['qty-volume','Quantities','L',/\b\d+(?:[.,]\d+)?\s*(?:gallons?|gal|liters?|litres?|quarts?|pints?|cups?|ml|ounces?|oz|tablespoons?|teaspoons?|tbsp|tsp)\b/i],
+ ['qty-weight','Quantities','L',/\b\d+(?:[.,]\d+)?\s*(?:pounds?|lbs?|kilograms?|kg|grams?|tons?)\b/i],
+ ['qty-ratio','Quantities','M',/\b\d+\s*(?:parts?|:)\s*\d+\b|\b\d+\s*to\s*1\b|\bratio of\b/i],
+ ['qty-percent','Quantities','L',/\b\d+(?:\.\d+)?\s?%/]
+];
+function defaultRules(){
+  return D.map(function(r){return {id:r[0],cat:r[1],sev:r[2],src:r[3].source,ci:r[3].ignoreCase,w:r[4]||'',v:r[5]||'',on:true,builtin:true};});
+}
+
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id);}
+function own(o,k){return Object.prototype.hasOwnProperty.call(o,k);}
+function clamp(v,a,b){v=parseFloat(v);if(isNaN(v))v=a;return Math.min(b,Math.max(a,v));}
+function norm(s){return String(s).toLowerCase().replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'');}
+function hash(s){var h=5381,i;for(i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))|0;}return (h>>>0).toString(36);}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;}
+function downloadBlob(name,blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);document.body.removeChild(a);},1500);}
+function today(){return new Date().toISOString().slice(0,10);}
+
+/* ---------- state ---------- */
+var S={text:'',rules:defaultRules(),reviews:{},ledger:[],ignored:{},groups:[],report:{title:'Claim Review Report',by:'',note:''},remember:false,
+ chapters:[],blocks:[],sents:[],F:[],byId:{},view:[],sel:null,f:{sev:'',cat:'',st:'',ch:'',q:'',sort:'pos'},analyzing:false,ver:0,ruleHits:{},lastMs:0,words:0};
+var nextSrc=1;
+
+/* ---------- sentence + structure ---------- */
+var ABBR={dr:1,mr:1,mrs:1,ms:1,vs:1,etc:1,approx:1,no:1,fig:1,'e.g':1,'i.e':1,st:1,inc:1,ft:1,sq:1};
+function splitSent(text,start,end){
+  var out=[],i=start,s=start;
+  function push(a,b){while(a<b&&/\s/.test(text.charAt(a)))a++;while(b>a&&/\s/.test(text.charAt(b-1)))b--;if(b>a)out.push([a,b]);}
+  while(i<end){
+    var ch=text.charAt(i);
+    if(ch==='.'||ch==='!'||ch==='?'){
+      var j=i+1;while(j<end&&/["')\]*_]/.test(text.charAt(j)))j++;
+      var nx=j>=end?' ':text.charAt(j),ok=/\s/.test(nx);
+      if(ok&&ch==='.'){var k=i-1;while(k>=start&&/[A-Za-z.]/.test(text.charAt(k)))k--;var w=text.slice(k+1,i).toLowerCase();if(ABBR[w]||w.length===1)ok=false;}
+      if(ok){push(s,j);s=j;}
+      i=j;continue;
+    }
+    i++;
+  }
+  push(s,end);
+  return out;
+}
+var HEAD=/^(#{1,2})\s+(.+)$|^(chapter\s+\d+\b.*)$/i;
+function structure(text){
+  var lines=text.split('\n'),off=0,i,chapters=[],blocks=[],cur=null,chap=null,words=0;
+  function newChap(title,s){chap={title:title,s:s,e:s,words:0,idx:chapters.length};chapters.push(chap);}
+  function closeBlock(){if(cur){cur.e=cur.lastEnd;var w=text.slice(cur.s,cur.e).match(/\S+/g);cur.words=w?w.length:0;chap.words+=cur.words;words+=cur.words;chap.e=cur.e;blocks.push(cur);cur=null;}}
+  for(i=0;i<lines.length;i++){
+    var ln=lines[i],le=off+ln.length,t=ln.replace(/\r$/,''),m=HEAD.exec(t.replace(/^\s+/,''));
+    if(m&&t.length<160){
+      closeBlock();
+      newChap((m[2]||m[3]).replace(/\s+#*$/,''),off);
+      blocks.push({s:off,e:le,ch:chap.idx,head:true,marks:[],words:0,lastEnd:le});chap.e=le;
+    }else if(/^\s*$/.test(ln)){closeBlock();}
+    else{
+      if(!chap)newChap('Manuscript',off);
+      if(!cur)cur={s:off,e:le,ch:chap.idx,head:false,marks:[],words:0,lastEnd:le};
+      cur.lastEnd=le;
+    }
+    off=le+1;
+  }
+  closeBlock();
+  return {chapters:chapters,blocks:blocks,words:words};
+}
+
+/* ---------- rules compile + quantities ---------- */
+function compile(){
+  var out=[],i;
+  S.rules.forEach(function(r){r.err='';if(!r.on)return;try{out.push({r:r,re:new RegExp(r.src,r.ci?'i':'')});}catch(e){r.err=String(e.message||e).slice(0,120);}});
+  return out;
+}
+var TOPICS=['per person','per day','per gallon','bleach','drops','boil','boiling','simmer','store','storage','shelf life','process','canning','pressure','filter','micron','solar panel','panel','battery','inverter','compost','chickens','coop','germination','harvest','temperature','cook','rest','soak','stand'];
+var TOPICRE=TOPICS.map(function(t){return {t:t,re:new RegExp('\\b'+t.replace(/ /g,'\\s+')+'\\b','gi')};});
+var QRE=/(\d+(?:[.,]\d+)?)\s*(°\s?[FC](?![a-z])|gallons?|gal\b|liters?|litres?|quarts?|cups?|pounds?|lbs?|kg\b|kilograms?|grams?|minutes?|mins?|hours?|days?|weeks?|months?|years?|psi\b|kpa\b|bar\b|watts?\b|volts?\b|amps?\b|drops?\b|ppm\b)/gi;
+function qnorm(v,u){
+  u=u.toLowerCase().replace(/\s+/g,'');
+  if(/^°f/.test(u))return {c:'temp',b:(v-32)*5/9,u:'F'};if(/^°c/.test(u))return {c:'temp',b:v,u:'C'};
+  if(/^gal/.test(u))return {c:'vol',b:v*3.785411784};if(/^(liter|litre)/.test(u))return {c:'vol',b:v};if(/^quart/.test(u))return {c:'vol',b:v*0.946353};if(/^cup/.test(u))return {c:'vol',b:v*0.236588};
+  if(/^(pound|lb)/.test(u))return {c:'wt',b:v*0.45359237};if(/^kilogram|^kg/.test(u))return {c:'wt',b:v};if(/^gram/.test(u))return {c:'wt',b:v/1000};
+  if(/^min/.test(u))return {c:'time',b:v};if(/^hour/.test(u))return {c:'time',b:v*60};if(/^day/.test(u))return {c:'time',b:v*1440};if(/^week/.test(u))return {c:'time',b:v*10080};if(/^month/.test(u))return {c:'time',b:v*43200};if(/^year/.test(u))return {c:'time',b:v*525600};
+  if(/^psi/.test(u))return {c:'pres',b:v*6.894757};if(/^kpa/.test(u))return {c:'pres',b:v};if(/^bar/.test(u))return {c:'pres',b:v*100};
+  if(/^watt/.test(u))return {c:'W',b:v};if(/^volt/.test(u))return {c:'V',b:v};if(/^amp/.test(u))return {c:'A',b:v};if(/^drop/.test(u))return {c:'drops',b:v};if(/^ppm/.test(u))return {c:'ppm',b:v};
+  return null;
+}
+function quantities(sent){
+  var out=[],m;
+  QRE.lastIndex=0;
+  while((m=QRE.exec(sent))){
+    var v=parseFloat(m[1].replace(',','.')),q=qnorm(v,m[2]);if(!q)continue;
+    var qs=m.index,qe=m.index+m[0].length,best=null,bd=99;
+    TOPICRE.forEach(function(tp){tp.re.lastIndex=0;var tm;while((tm=tp.re.exec(sent))){var ts=tm.index,te=ts+tm[0].length,lo=Math.min(te,qs),hi=Math.max(ts,qe);var gapTxt=te<=qs?sent.slice(te,qs):(ts>=qe?sent.slice(qe,ts):'');var d=gapTxt.trim()===''?0:gapTxt.trim().split(/\s+/).length;if(d<=6&&d<bd){bd=d;best=tp.t;}}});
+    if(best)out.push({topic:best,cls:q.c,b:q.b,text:m[0],v:v});
+  }
+  return out;
+}
+
+/* ---------- analysis (chunked) ---------- */
+function analyze(text){
+  var ver=++S.ver;
+  return new Promise(function(resolve){
+    var t0=performance.now();
+    S.analyzing=true;setStatus('Analyzing...');setProg(2);
+    S.text=String(text).replace(/\r\n?/g,'\n').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'');
+    var st=structure(S.text);S.chapters=st.chapters;S.blocks=st.blocks;S.words=st.words;
+    var sents=[],bi,k;
+    for(bi=0;bi<S.blocks.length;bi++){var b=S.blocks[bi];b.marks=[];if(b.head)continue;var ss=splitSent(S.text,b.s,b.e);for(k=0;k<ss.length;k++)sents.push({s:ss[k][0],e:ss[k][1],b:bi,ch:b.ch});}
+    S.sents=sents;
+    var rules=compile(),F=[],hits={},i=0,CH=260;
+    rules.forEach(function(x){hits[x.r.id]=0;});
+    function step(){
+      if(ver!==S.ver){resolve(null);return;}
+      var end=Math.min(sents.length,i+CH),n,r;
+      for(;i<end;i++){
+        var se=sents[i],sent=S.text.slice(se.s,se.e);
+        for(r=0;r<rules.length;r++){
+          var m=rules[r].re.exec(sent);
+          if(m){F.push({rule:rules[r].r.id,cat:rules[r].r.cat,sev:rules[r].r.sev,ch:se.ch,b:se.b,s:se.s,e:se.e,text:sent,match:m[0],ri:r,w:rules[r].r.w,v:rules[r].r.v});hits[rules[r].r.id]++;}
+        }
+      }
+      setProg(5+90*i/Math.max(1,sents.length));
+      if(i<sents.length){setTimeout(step,0);return;}
+      finish();
+    }
+    function finish(){
+      /* consistency */
+      var groups={},g;
+      sents.forEach(function(se,idx){
+        var sent=S.text.slice(se.s,se.e);if(!/\d/.test(sent))return;
+        quantities(sent).forEach(function(q){var key=q.topic+'|'+q.cls;(groups[key]=groups[key]||[]).push({se:se,q:q});});
+      });
+      var consHits=0,seen={};
+      for(g in groups){if(!own(groups,g))continue;var arr=groups[g],mn=1e18,mx=-1e18;
+        arr.forEach(function(x){if(x.q.b<mn)mn=x.q.b;if(x.q.b>mx)mx=x.q.b;});
+        var diff=g.split('|')[1]==='temp'?(mx-mn)>1:(mx>0?(mx-mn)/mx>0.02:false);
+        if(!diff)continue;
+        var vals=[];arr.forEach(function(x){if(vals.indexOf(x.q.text)<0)vals.push(x.q.text);});
+        arr.forEach(function(x){
+          var sk=x.se.s+':'+x.se.e;if(seen[sk])return;seen[sk]=1;
+          F.push({rule:'cons-values',cat:'Consistency',sev:'H',ch:x.se.ch,b:x.se.b,s:x.se.s,e:x.se.e,text:S.text.slice(x.se.s,x.se.e),match:x.q.text,ri:999,w:'The topic "'+g.split('|')[0]+'" appears with different values: '+vals.join(' / ')+'.',v:CATINFO.Consistency[1]});consHits++;
+        });
+      }
+      hits['cons-values']=consHits;
+      S.groups=[];
+      for(g in groups){if(!own(groups,g))continue;var ga=groups[g],gmn=1e18,gmx=-1e18;ga.forEach(function(x){if(x.q.b<gmn)gmn=x.q.b;if(x.q.b>gmx)gmx=x.q.b;});
+        var gdiff=g.split('|')[1]==='temp'?(gmx-gmn)>1:(gmx>0?(gmx-gmn)/gmx>0.02:false);
+        if(ga.length<2&&!gdiff)continue;
+        S.groups.push({topic:g.split('|')[0],cls:g.split('|')[1],conflict:gdiff,items:ga.map(function(x){return {ch:x.se.ch,b:x.se.b,text:x.q.text};})});}
+      S.groups.sort(function(a,b){return (b.conflict?1:0)-(a.conflict?1:0)||a.topic.localeCompare(b.topic);});
+      var ign=0;F=F.filter(function(f){if(S.ignored[hash(norm(f.text))]){ign++;return false;}return true;});S.ignoredHits=ign;
+      F.sort(function(a,b){return a.s-b.s||a.ri-b.ri;});
+      var occ={};
+      F.forEach(function(f,n){f.id=n+1;var base=f.rule+'|'+hash(norm(f.text));occ[base]=(occ[base]||0)+1;f.key=base+'#'+occ[base];var rv=S.reviews[f.key]||null;f.st=rv?rv.st:'To verify';f.note=rv?rv.note:'';f.src=rv?rv.src.slice():[];});
+      S.F=F;S.byId={};F.forEach(function(f){S.byId[f.id]=f;});S.ruleHits=hits;
+      buildMarks();
+      S.analyzing=false;S.lastMs=performance.now()-t0;
+      setProg(100);setTimeout(function(){setProg(0);},400);
+      setStatus('Analyzed '+S.words.toLocaleString()+' words in '+(S.lastMs/1000).toFixed(2)+' s: '+F.length+' flags');
+      fillFilters();applyFilters();renderAll();
+      resolve({findings:F,ms:S.lastMs,words:S.words});
+    }
+    step();
+  });
+}
+function buildMarks(){
+  var map={};
+  S.blocks.forEach(function(b){b.marks=[];});
+  S.F.forEach(function(f){var k=f.s+':'+f.e,m=map[k];if(!m){m={s:f.s,e:f.e,ids:[],sev:f.sev};map[k]=m;S.blocks[f.b].marks.push(m);}m.ids.push(f.id);if(SEVO[f.sev]<SEVO[m.sev])m.sev=f.sev;});
+}
+
+/* ---------- status / progress ---------- */
+function setStatus(m){$('status').textContent=m;}
+function setProg(p){$('aprog').style.width=p+'%';}
+
+/* ---------- filters ---------- */
+function fillSel(id,opts,cur){var s=$(id);s.innerHTML='';opts.forEach(function(o){var op=el('option',null,o[1]);op.value=o[0];s.appendChild(op);});s.value=cur;}
+function fillFilters(){
+  fillSel('fCat',[['','All categories']].concat(CATS.map(function(c){return [c,c];})),S.f.cat);
+  fillSel('fSt',[['','All statuses']].concat(STATUSES.map(function(c){return [c,c];})),S.f.st);
+  fillSel('fCh',[['','All chapters']].concat(S.chapters.map(function(c,i){return [String(i),(i+1)+'. '+c.title.slice(0,40)];})),S.f.ch);
+  fillSel('bulkCat',CATS.map(function(c){return [c,c];}),$('bulkCat').value||CATS[0]);
+  fillSel('bulkSt',STATUSES.map(function(c){return [c,c];}),$('bulkSt').value||'Verified');
+  $('fSev').value=S.f.sev;$('fSort').value=S.f.sort;$('fQ').value=S.f.q;
+}
+function applyFilters(){
+  var f=S.f,q=norm(f.q);
+  S.view=S.F.filter(function(x){return (!f.sev||x.sev===f.sev)&&(!f.cat||x.cat===f.cat)&&(!f.st||x.st===f.st)&&(f.ch===''||String(x.ch)===f.ch)&&(!q||norm(x.text+' '+x.rule+' '+x.note).indexOf(q)>=0);});
+  if(f.sort==='sev')S.view=S.view.slice().sort(function(a,b){return SEVO[a.sev]-SEVO[b.sev]||a.s-b.s;});
+  $('fCount').textContent=S.view.length+' of '+S.F.length+' shown';
+}
+
+/* ---------- rendering ---------- */
+function renderAll(){renderKpis();renderChapters();renderViewer();renderList();renderDetail();renderRules();renderLedger();renderNumbers();renderMinimap();}
+function counts(list){var c={total:list.length,high:0,unres:0,ver:0,done:0};list.forEach(function(f){if(f.sev==='H')c.high++;if(f.st==='To verify')c.unres++;else c.done++;if(f.st==='Verified')c.ver++;});c.prog=c.total?Math.round(c.done/c.total*100):0;return c;}
+function renderKpis(){var c=counts(S.F);$('kTotal').textContent=c.total;$('kHigh').textContent=c.high;$('kUnres').textContent=c.unres;$('kVer').textContent=c.ver;$('kProg').textContent=c.prog+'%';$('kBar').style.width=c.prog+'%';}
+function renderChapters(){
+  var tb=$('chapBody');tb.innerHTML='';
+  S.chapters.forEach(function(ch,i){
+    var list=S.F.filter(function(f){return f.ch===i;}),c=counts(list),tr=el('tr');
+    var td=el('td',null,(i+1)+'. '+ch.title.slice(0,70));tr.appendChild(td);
+    [ch.words.toLocaleString(),String(c.total),String(c.high),String(c.unres)].forEach(function(v){tr.appendChild(el('td',null,v));});
+    var rk=riskOf(list,ch.words),rt=el('td');rt.appendChild(el('span','risk '+rk.label.toUpperCase(),rk.label+' ('+rk.score+')'));tr.appendChild(rt);
+    var p=el('td');var b=el('span','bar');var ii=el('i');ii.style.width=c.prog+'%';b.appendChild(ii);p.appendChild(b);p.appendChild(document.createTextNode(' '+c.prog+'%'));tr.appendChild(p);
+    tb.appendChild(tr);
+  });
+}
+function riskOf(list,words){var sc=0;list.forEach(function(f){if(f.st==='To verify')sc+=f.sev==='H'?5:(f.sev==='M'?2:1);});var per=words>0?sc*1000/words:0;per=Math.round(per*10)/10;return {score:per,label:per<5?'Low':(per<15?'Medium':'High')};}
+function renderMinimap(){
+  var mm=$('mm');mm.innerHTML='';var nb=S.blocks.length;if(!nb)return;
+  var n=Math.min(120,nb),best=[],i;for(i=0;i<n;i++)best.push('');
+  S.F.forEach(function(f){var k=Math.min(n-1,Math.floor(f.b*n/nb));if(!best[k]||SEVO[f.sev]<SEVO[best[k]])best[k]=f.sev;});
+  for(i=0;i<n;i++){var d=el('div','mb'+(best[i]?' '+best[i]:''));d.setAttribute('data-i',i);mm.appendChild(d);}
+  mm.setAttribute('data-n',n);
+}
+function jumpBlock(bi){
+  var v=$('viewer');
+  if(S.blocks.length>200){v.scrollTop=Math.max(0,bi*vAvg-40);renderViewer();}
+  else{renderViewer();var b=v.querySelector('.blk[data-b="'+bi+'"]');if(b){v.scrollTop=b.offsetTop-v.offsetTop-20;}}
+}
+function renderNumbers(){
+  var tb=$('numBody');tb.innerHTML='';
+  if(!S.groups.length){var tr0=el('tr'),td0=el('td',null,'No repeated topic numbers found.');td0.colSpan=4;tr0.appendChild(td0);tb.appendChild(tr0);return;}
+  S.groups.forEach(function(g){
+    var tr=el('tr'),vt=el('td');
+    tr.appendChild(el('td',null,g.topic));tr.appendChild(el('td',null,g.cls));
+    g.items.forEach(function(it){var b=el('button','btn sm',it.text+' (ch '+(it.ch+1)+')');b.type='button';b.style.margin='2px';b.addEventListener('click',function(){jumpBlock(it.b);});vt.appendChild(b);});
+    tr.appendChild(vt);tr.appendChild(el('td',null,g.conflict?'YES - values differ':'no'));if(g.conflict)tr.style.background='#fff7a8';tb.appendChild(tr);
+  });
+}
+function numbersCsv(){var rows=['topic,unit type,conflict,values'];S.groups.forEach(function(g){rows.push([csvq(g.topic),csvq(g.cls),csvq(g.conflict?'yes':'no'),csvq(g.items.map(function(i){return i.text+' (ch '+(i.ch+1)+')';}).join('; '))].join(','));});return rows.join('\n')+'\n';}
+var HINTS={'abs-always':'If it is true in most cases, say "usually" or "in most cases". If it is a safety rule, say who it applies to.','abs-guarantee':'Remove the guarantee, or say what you can honestly stand behind (for example "designed to").','abs-safe':'Say what risk remains and what the reader should do about it.','abs-percent':'Replace 100% with an honest range, or cite the source for the figure.','abs-proven':'Name the study or source, or soften to "many people find".','abs-prevents':'Use "may help reduce" only if a reliable source supports it; otherwise remove.','abs-works':'Describe typical results and the limits instead.','med-cure':'Remove health claims. A garden or pantry book should not promise cures.','med-treat':'Remove medical advice, or add a clear statement that this is not medical advice and name a professional to consult.','med-legal':'Remove legal promises, or have the wording checked for your country.','med-promise':'Remove the approval claim unless you can show it from the official body.','med-allergy':'Keep a short warning and point to a doctor or the label for details.'};
+var HINTCAT={'Absolute promises':'Soften the wording and state the limits.','Medical and legal':'Remove, or have a qualified professional review it.','Off-niche':'Consider removing this passage or moving it to a different book.'};
+function hintFor(f){return HINTS[f.rule]||HINTCAT[f.cat]||'';}
+var DISC={'Electrical':'Electrical work can cause shock, fire and death. The diagrams and values in this book are examples only. Always follow local electrical codes and the manufacturer\'s instructions, and consult a licensed electrician before installing or changing any system.','Water treatment':'Water-treatment amounts and times in this book are general information. Untreated or poorly treated water can cause serious illness. Check the guidance of your local health authority and the instructions on every product you use.','Food preservation':'Home food preservation carries real risks, including foodborne illness. Use tested recipes and methods from a national food-safety agency or a university extension service, and follow them exactly.','Medical and legal':'This book is not medical or legal advice. See a qualified professional for health or legal questions.','Pressure':'Pressure equipment can be dangerous if used wrongly. Follow the manufacturer\'s manual for your equipment.','Time and duration':'Times and storage periods are examples. Check them against current guidance for your food, method and equipment.'};
+function disclaimerText(){
+  var seen={};S.F.forEach(function(f){seen[f.cat]=1;});
+  var out=['General: This book is provided for general information and education. It is not professional advice. The author and publisher are not liable for loss or harm from using it. You are responsible for checking facts, following local laws, and using caution.'];
+  Object.keys(DISC).forEach(function(k){if(seen[k])out.push(k+': '+DISC[k]);});
+  out.push('Note: this text is a starting point generated from the topics found in the manuscript. Have it reviewed by a qualified professional before publishing.');
+  return out.join('\n\n');
+}
+/* virtual viewer */
+var vAvg=90,vStart=0,vEnd=0;
+function blockEl(b,bi){
+  var d=el('div','blk'+(b.head?' hd':''));d.setAttribute('data-b',bi);
+  var cur=b.s;
+  b.marks.forEach(function(m){
+    if(m.s>cur)d.appendChild(document.createTextNode(S.text.slice(cur,m.s)));
+    var mk=el('mark',null,S.text.slice(m.s,m.e));mk.setAttribute('data-sev',m.sev);mk.setAttribute('data-ids',m.ids.join(' '));mk.setAttribute('tabindex','0');mk.setAttribute('role','button');
+    var done=m.ids.every(function(id){return S.byId[id].st!=='To verify';});if(done)mk.setAttribute('data-done','1');
+    if(S.sel!==null&&m.ids.indexOf(S.sel)>=0)mk.className='act';
+    mk.setAttribute('aria-label',SEVN[m.sev]+' severity flag');
+    d.appendChild(mk);cur=m.e;
+  });
+  if(cur<b.e)d.appendChild(document.createTextNode(S.text.slice(cur,b.e)));
+  return d;
+}
+function renderViewer(){
+  var v=$('viewer'),n=S.blocks.length;
+  if(!v.firstChild){v.appendChild(el('div'));v.appendChild(el('div'));v.appendChild(el('div'));v.children[0].id='vTop';v.children[1].id='vBody';v.children[2].id='vBot';}
+  var top=$('vTop'),body=$('vBody'),bot=$('vBot');
+  if(!n){top.style.height='0px';bot.style.height='0px';body.innerHTML='';body.appendChild(el('p','hint','No text yet. Open Manuscript and click Analyze.'));return;}
+  var first=Math.max(0,Math.floor(v.scrollTop/vAvg)-6),cnt=Math.ceil(v.clientHeight/vAvg)+18;
+  if(n<=200){first=0;cnt=n;}
+  var last=Math.min(n,first+cnt);
+  body.innerHTML='';
+  for(var i=first;i<last;i++)body.appendChild(blockEl(S.blocks[i],i));
+  vStart=first;vEnd=last;
+  var rendered=last-first;
+  if(rendered>0&&body.offsetHeight>0){vAvg=Math.max(30,body.offsetHeight/rendered*0.5+vAvg*0.5);}
+  top.style.height=(first*vAvg)+'px';bot.style.height=(Math.max(0,n-last)*vAvg)+'px';
+}
+var vTick=false;
+function onViewerScroll(){if(vTick)return;vTick=true;requestAnimationFrame(function(){vTick=false;var v=$('viewer');if(S.blocks.length>200){var first=Math.max(0,Math.floor(v.scrollTop/vAvg)-6);if(first<vStart||first>vStart+8)renderViewerKeep();}});}
+function renderViewerKeep(){var v=$('viewer'),st=v.scrollTop;renderViewer();v.scrollTop=st;}
+function scrollToFinding(f){
+  var v=$('viewer');
+  if(S.blocks.length>200){v.scrollTop=Math.max(0,f.b*vAvg-60);renderViewer();}else renderViewer();
+  var m=v.querySelector('mark.act');
+  if(m){var vr=v.getBoundingClientRect(),mr=m.getBoundingClientRect();v.scrollTop+=mr.top-vr.top-v.clientHeight/3;}
+}
+/* virtual list */
+var ROWH=78;
+function renderList(){
+  var box=$('flist'),n=S.view.length;
+  if(!box.firstChild){box.appendChild(el('div'));box.appendChild(el('div'));box.children[0].id='lBody';box.children[1].id='lSp';}
+  var body=$('lBody'),sp=$('lSp');
+  body.innerHTML='';
+  if(!n){body.appendChild(el('p','hint','No findings to show.'));sp.style.height='0px';body.style.transform='none';return;}
+  var first=Math.max(0,Math.floor(box.scrollTop/ROWH)-3),cnt=Math.ceil(box.clientHeight/ROWH)+8,last=Math.min(n,first+cnt);
+  for(var i=first;i<last;i++){
+    var f=S.view[i],b=el('button','frow'+(f.id===S.sel?' act':''));b.type='button';b.setAttribute('data-id',f.id);b.setAttribute('role','option');b.setAttribute('aria-selected',f.id===S.sel?'true':'false');
+    var m=el('div','m');m.appendChild(el('span','sev '+f.sev,f.sev+' '+SEVN[f.sev]));m.appendChild(el('span',null,f.cat));m.appendChild(el('span',null,'| '+f.st));m.appendChild(el('span',null,'| #'+f.id));
+    b.appendChild(m);b.appendChild(el('div','s',f.text));
+    body.appendChild(b);
+  }
+  body.style.transform='translateY('+(first*ROWH)+'px)';
+  sp.style.height=Math.max(0,(n-(last-first))*ROWH+ (first*ROWH>0?first*ROWH:0))+'px';
+  sp.style.height=(n*ROWH-(last-first)*ROWH)+'px';
+}
+function ensureListVisible(){
+  var idx=-1,i;for(i=0;i<S.view.length;i++){if(S.view[i].id===S.sel){idx=i;break;}}
+  if(idx<0)return;var box=$('flist'),top=idx*ROWH;
+  if(top<box.scrollTop||top+ROWH>box.scrollTop+box.clientHeight)box.scrollTop=Math.max(0,top-ROWH);
+  renderList();
+}
+function renderDetail(){
+  var d=$('detail');d.innerHTML='';
+  var f=S.sel!==null?S.byId[S.sel]:null;
+  if(!f){d.appendChild(el('p',null,S.F.length?'Select a finding to review it.':'No flags yet.'));return;}
+  var h=el('div','m');h.appendChild(el('span','sev '+f.sev,f.sev+' '+SEVN[f.sev]));h.appendChild(el('b',null,'  '+f.cat+' | rule '+f.rule+' | #'+f.id));d.appendChild(h);
+  d.appendChild(el('div','q',f.text));
+  var info=CATINFO[f.cat]||['',''];
+  d.appendChild(el('h3',null,'Why it was flagged'));d.appendChild(el('p',null,f.w||info[0]));
+  d.appendChild(el('h3',null,'What to verify'));d.appendChild(el('p',null,f.v||info[1]));
+  var hint=hintFor(f);if(hint){d.appendChild(el('h3',null,'Possible rewrite approach'));d.appendChild(el('div','hint-box',hint));}
+  d.appendChild(el('h3',null,'Edit this sentence'));
+  var es=el('textarea');es.id='editSent';es.style.minHeight='64px';es.value=f.text;es.setAttribute('aria-label','Edit this sentence');es.maxLength=1200;d.appendChild(es);
+  var ab=el('button','btn sm','Apply edit to the manuscript');ab.type='button';ab.style.marginTop='6px';ab.addEventListener('click',function(){applySentenceEdit(f,es.value);});d.appendChild(ab);
+  d.appendChild(el('h3',null,'Status'));
+  var sb=el('div','stbtn');
+  STATUSES.forEach(function(s){var b=el('button','btn',s);b.type='button';b.setAttribute('aria-pressed',f.st===s?'true':'false');b.addEventListener('click',function(){setStatusOf(f,s);});sb.appendChild(b);});
+  d.appendChild(sb);
+  d.appendChild(el('h3',null,'Note'));
+  var ta=el('textarea');ta.style.minHeight='56px';ta.value=f.note;ta.setAttribute('aria-label','Note');ta.maxLength=600;
+  ta.addEventListener('input',function(){f.note=ta.value;saveReview(f);scheduleSave();});ta.addEventListener('change',function(){pushHist();});
+  d.appendChild(ta);
+  d.appendChild(el('h3',null,'Sources'));
+  var sl=el('div');
+  f.src.forEach(function(id){var s=srcById(id);if(!s)return;var r=el('div');r.appendChild(document.createTextNode(s.title+' ('+s.type+', '+s.date+') '));var x=el('button','btn sm','Remove');x.type='button';x.addEventListener('click',function(){f.src.splice(f.src.indexOf(id),1);saveReview(f);pushHist();scheduleSave();renderDetail();});r.appendChild(x);sl.appendChild(r);});
+  d.appendChild(sl);
+  var row=el('div','row');
+  var sel=el('select');sel.setAttribute('aria-label','Attach a source');var o0=el('option',null,'Attach a source...');o0.value='';sel.appendChild(o0);
+  S.ledger.forEach(function(s){var o=el('option',null,s.title.slice(0,60));o.value=String(s.id);sel.appendChild(o);});
+  sel.style.width='auto';sel.style.flex='1 1 160px';
+  sel.addEventListener('change',function(){var id=parseInt(sel.value,10);if(id&&f.src.indexOf(id)<0){f.src.push(id);saveReview(f);pushHist();scheduleSave();renderDetail();}});
+  row.appendChild(sel);
+  var nb=el('button','btn sm','New source');nb.type='button';nb.addEventListener('click',function(){showDrawer('src');$('sTitle').focus();});row.appendChild(nb);
+  d.appendChild(row);
+  var ib=el('button','btn sm','Ignore this sentence in future scans');ib.type='button';ib.style.marginTop='8px';ib.addEventListener('click',function(){ignoreFinding(f);});d.appendChild(ib);
+}
+function applySentenceEdit(f,val){
+  var nv=String(val).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'');
+  if(!nv){fail('The sentence cannot be empty. Use Removed status or delete the text in the manuscript instead.');return;}
+  if(nv===f.text){setStatus('No change to apply.');return;}
+  var s0=f.s,len=nv.length;
+  S.text=S.text.slice(0,f.s)+nv+S.text.slice(f.e);$('msText').value=S.text;S.sel=null;
+  analyze(S.text).then(function(){
+    var n=0;S.F.forEach(function(x){if(x.s>=s0&&x.e<=s0+len+1){x.st='Rewritten';x.note=x.note||'Edited in the scanner';saveReview(x);n++;}});
+    pushHist();scheduleSave();afterChange();setStatus('Sentence updated in the manuscript'+(n?' and marked Rewritten ('+n+' flag(s) remain on the new wording)':'. The new wording has no flags')+'.');
+  });
+}
+function ignoreFinding(f){S.ignored[hash(norm(f.text))]=true;S.sel=null;pushHist();scheduleSave();rescan();}
+function srcById(id){for(var i=0;i<S.ledger.length;i++){if(S.ledger[i].id===id)return S.ledger[i];}return null;}
+
+/* ---------- review actions ---------- */
+function saveReview(f){S.reviews[f.key]={st:f.st,note:f.note,src:f.src.slice()};}
+function setStatusOf(f,s){f.st=s;saveReview(f);pushHist();scheduleSave();afterChange();}
+function afterChange(){applyFilters();renderKpis();renderChapters();renderViewerKeep();renderList();renderDetail();}
+function select(id,jump){
+  S.sel=id;var f=S.byId[id];
+  if(jump&&f)scrollToFinding(f);else renderViewerKeep();
+  renderList();renderDetail();if(jump)ensureListVisible();
+}
+function move(d){
+  if(!S.view.length)return;var i=-1,k;for(k=0;k<S.view.length;k++){if(S.view[k].id===S.sel){i=k;break;}}
+  i=i<0?(d>0?0:S.view.length-1):Math.min(S.view.length-1,Math.max(0,i+d));select(S.view[i].id,true);
+}
+function bulk(){
+  var cat=$('bulkCat').value,st=$('bulkSt').value,n=0;
+  S.F.forEach(function(f){if(f.cat===cat&&f.st!==st){f.st=st;saveReview(f);n++;}});
+  pushHist();scheduleSave();afterChange();setStatus(n+' findings in '+cat+' set to '+st);
+}
+
+/* ---------- rules panel ---------- */
+var openRule=null,reTimer=null;
+function renderRules(){
+  var cat=$('ruleCat').value;if(!$('ruleCat').options.length){fillSel('ruleCat',[['','All categories']].concat(CATS.slice(0,10).map(function(c){return [c,c];})),'');}
+  var tb=$('ruleBody');tb.innerHTML='';var shown=0,errs=[];
+  S.rules.forEach(function(r){
+    if(r.err)errs.push(r.id+': '+r.err);
+    if(cat&&r.cat!==cat)return;shown++;
+    var tr=el('tr');
+    var c1=el('td');var cb=el('input');cb.type='checkbox';cb.checked=r.on;cb.setAttribute('aria-label','Enable rule '+r.id);cb.addEventListener('change',function(){r.on=cb.checked;pushHist();scheduleSave();rescan();});c1.appendChild(cb);tr.appendChild(c1);
+    var c2=el('td');c2.appendChild(el('b',null,r.id));c2.appendChild(el('div','hint',r.cat+(r.err?' | INVALID PATTERN':'')));if(r.err)c2.style.color='#b00020';tr.appendChild(c2);
+    var c3=el('td');var se=el('select');se.setAttribute('aria-label','Severity of '+r.id);['H','M','L'].forEach(function(s){var o=el('option',null,SEVN[s]);o.value=s;se.appendChild(o);});se.value=r.sev;se.addEventListener('change',function(){r.sev=se.value;pushHist();scheduleSave();rescan();});c3.appendChild(se);tr.appendChild(c3);
+    tr.appendChild(el('td',null,String(S.ruleHits[r.id]||0)));
+    var c5=el('td');var eb=el('button','btn sm',openRule===r.id?'Close':'Edit');eb.type='button';eb.addEventListener('click',function(){openRule=(openRule===r.id)?null:r.id;renderRules();});c5.appendChild(eb);tr.appendChild(c5);
+    tb.appendChild(tr);
+    if(openRule===r.id){var er=el('tr'),ec=el('td');ec.colSpan=5;ec.appendChild(ruleEditor(r));er.appendChild(ec);tb.appendChild(er);}
+  });
+  $('ruleCount').textContent=shown+' of '+S.rules.length+' rules';$('ignCount').textContent=Object.keys(S.ignored).length+' ignored sentence(s)';
+  $('ruleErr').innerHTML='';if(errs.length){var e=el('div','err','Invalid patterns (skipped): '+errs.join(' | '));$('ruleErr').appendChild(e);}
+}
+function ruleEditor(r){
+  var box=el('div','rulebox');
+  function field(lbl,val,cb){var l=el('label',null,lbl);var i=el('input');i.type='text';i.value=val;i.addEventListener('input',function(){cb(i.value);});box.appendChild(l);box.appendChild(i);return i;}
+  field('Pattern (regular expression)',r.src,function(v){r.src=v;scheduleRescan();});
+  var l=el('label','chk');var ci=el('input');ci.type='checkbox';ci.checked=r.ci;ci.addEventListener('change',function(){r.ci=ci.checked;scheduleRescan();});l.appendChild(ci);l.appendChild(document.createTextNode(' Ignore upper/lower case'));box.appendChild(l);
+  field('Why it is flagged',r.w,function(v){r.w=v;scheduleSave();});
+  field('What to verify',r.v,function(v){r.v=v;scheduleSave();});
+  var del=el('button','btn sm','Delete rule');del.type='button';del.style.marginTop='8px';del.addEventListener('click',function(){S.rules=S.rules.filter(function(x){return x!==r;});openRule=null;pushHist();scheduleSave();rescan();});box.appendChild(del);
+  return box;
+}
+function scheduleRescan(){clearTimeout(reTimer);reTimer=setTimeout(function(){pushHist();scheduleSave();rescan();},700);}
+function rescan(){if(S.text){analyze(S.text);}else renderRules();}
+function addRule(){
+  var id='custom-'+(S.rules.length+1);S.rules.push({id:id,cat:$('ruleCat').value||'Quantities',sev:'M',src:'\\bexample\\b',ci:true,w:'',v:'',on:true,builtin:false});
+  openRule=id;pushHist();scheduleSave();renderRules();
+}
+
+/* ---------- ledger ---------- */
+function renderLedger(){
+  var box=$('srcList');box.innerHTML='';
+  if(!S.ledger.length){box.appendChild(el('p','hint','No sources yet.'));return;}
+  var tb=el('table');var hd=el('tr');['Title','URL','Accessed','Type','Used',''].forEach(function(h){hd.appendChild(el('th',null,h));});tb.appendChild(hd);
+  S.ledger.forEach(function(s){
+    var used=S.F.filter(function(f){return f.src.indexOf(s.id)>=0;}).length,tr=el('tr');
+    [s.title,s.url,s.date,s.type,String(used)].forEach(function(v){tr.appendChild(el('td',null,v));});
+    var c=el('td');var b=el('button','btn sm','Delete');b.type='button';b.addEventListener('click',function(){S.ledger=S.ledger.filter(function(x){return x.id!==s.id;});S.F.forEach(function(f){var k=f.src.indexOf(s.id);if(k>=0){f.src.splice(k,1);saveReview(f);}});pushHist();scheduleSave();renderLedger();renderDetail();});c.appendChild(b);tr.appendChild(c);tb.appendChild(tr);
+  });
+  box.appendChild(tb);
+}
+function addSource(){
+  var t=$('sTitle').value.replace(/\s+/g,' ').trim();
+  if(!t){fail('A source needs a title.');return;}
+  var u=$('sUrl').value.trim();if(u&&!/^https?:\/\//i.test(u)){fail('The URL must start with http:// or https://');return;}
+  S.ledger.push({id:nextSrc++,title:t.slice(0,160),url:u.slice(0,300),date:($('sDate').value.trim()||today()).slice(0,20),type:$('sType').value});
+  $('sTitle').value='';$('sUrl').value='';$('sDate').value='';
+  pushHist();scheduleSave();renderLedger();renderDetail();ok('Source added.');
+}
+
+/* ---------- persistence ---------- */
+function stateObj(withText){return {report:S.report,ignored:S.ignored,rules:S.rules.map(function(r){return {id:r.id,cat:r.cat,sev:r.sev,src:r.src,ci:r.ci,w:r.w,v:r.v,on:r.on,builtin:r.builtin};}),reviews:S.reviews,ledger:S.ledger,nextSrc:nextSrc,remember:S.remember,text:withText?S.text:undefined};}
+function applyState(o,withText){
+  if(!o||typeof o!=='object')return;
+  if(o.rules&&o.rules.length){S.rules=[];o.rules.slice(0,400).forEach(function(r){if(r&&typeof r.id==='string'&&CATS.indexOf(r.cat)>=0&&SEVN[r.sev]&&typeof r.src==='string')S.rules.push({id:r.id.slice(0,40),cat:r.cat,sev:r.sev,src:r.src.slice(0,500),ci:!!r.ci,w:String(r.w||'').slice(0,300),v:String(r.v||'').slice(0,300),on:r.on!==false,builtin:!!r.builtin});});if(!S.rules.length)S.rules=defaultRules();}
+  S.reviews={};if(o.reviews&&typeof o.reviews==='object'){Object.keys(o.reviews).slice(0,50000).forEach(function(k){var v=o.reviews[k];if(v&&STATUSES.indexOf(v.st)>=0)S.reviews[k]={st:v.st,note:String(v.note||'').slice(0,600),src:(v.src||[]).filter(function(x){return typeof x==='number';})};});}
+  S.ledger=[];if(o.ledger&&o.ledger.length){o.ledger.slice(0,500).forEach(function(s){if(s&&typeof s.title==='string'&&typeof s.id==='number')S.ledger.push({id:s.id,title:s.title.slice(0,160),url:String(s.url||'').slice(0,300),date:String(s.date||'').slice(0,20),type:SRC_TYPES.indexOf(s.type)>=0?s.type:'Other'});});}
+  nextSrc=Math.max(parseInt(o.nextSrc,10)||1,1);S.ledger.forEach(function(s){if(s.id>=nextSrc)nextSrc=s.id+1;});
+  S.ignored={};if(o.ignored&&typeof o.ignored==='object'){Object.keys(o.ignored).slice(0,5000).forEach(function(k){if(/^[a-z0-9]{1,12}$/.test(k))S.ignored[k]=true;});}
+  if(o.report&&typeof o.report==='object'){S.report={title:String(o.report.title||'Claim Review Report').slice(0,80),by:String(o.report.by||'').slice(0,80),note:String(o.report.note||'').slice(0,600)};}
+  S.remember=!!o.remember;
+  if(withText&&typeof o.text==='string'){S.text=o.text;}
+}
+var saveTimer=null;
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(autosave,700);}
+function autosave(){try{localStorage.setItem(STORE_KEY,JSON.stringify(stateObj(S.remember)));}catch(e){setStatus('Autosave unavailable (storage blocked or full). Use Save project.');}}
+var hist=[],hidx=-1;
+function histSnap(){return JSON.stringify({rules:stateObj(false).rules,reviews:S.reviews,ledger:S.ledger,nextSrc:nextSrc,ignored:S.ignored});}
+function pushHist(){var s=histSnap();if(hist[hidx]===s)return;hist=hist.slice(0,hidx+1);hist.push(s);if(hist.length>100)hist.shift();hidx=hist.length-1;updUndo();}
+function updUndo(){$('btnUndo').disabled=hidx<=0;$('btnRedo').disabled=hidx>=hist.length-1;}
+function restore(i){var o=JSON.parse(hist[i]);var rem=S.remember;applyState(o,false);S.remember=rem;if(S.text)analyze(S.text);else renderAll();scheduleSave();updUndo();}
+function undo(){if(hidx>0){hidx--;restore(hidx);}}
+function redo(){if(hidx<hist.length-1){hidx++;restore(hidx);}}
+
+/* ---------- exports ---------- */
+function fail(msg){$('exMsg').innerHTML='';var b=el('div','errbox',msg);$('exMsg').appendChild(b);showDrawer('ex');}
+function ok(msg){$('exMsg').innerHTML='';$('exMsg').appendChild(el('div','okbox',msg));}
+var STATEMENT='Automated flags are prompts for human review, not verification.';
+function csvq(s){s=String(s==null?'':s);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
+function srcText(f){return f.src.map(function(id){var s=srcById(id);return s?s.title+' ('+s.type+', '+s.date+(s.url?', '+s.url:'')+')':'';}).filter(Boolean).join('; ');}
+function csv(){
+  var rows=['id,chapter,category,severity,rule,status,sentence,matched text,note,sources'];
+  S.F.forEach(function(f){rows.push([f.id,csvq((f.ch+1)+'. '+S.chapters[f.ch].title),csvq(f.cat),csvq(SEVN[f.sev]),csvq(f.rule),csvq(f.st),csvq(f.text),csvq(f.match),csvq(f.note),csvq(srcText(f))].join(','));});
+  return rows.join('\n')+'\n';
+}
+function ledgerMd(){
+  var o=['# Source ledger','','_'+STATEMENT+'_','','Generated '+today(),''];
+  if(!S.ledger.length)o.push('No sources recorded.');
+  S.ledger.forEach(function(s,i){var used=S.F.filter(function(f){return f.src.indexOf(s.id)>=0;});o.push('## '+(i+1)+'. '+s.title,'','- Type: '+s.type,'- Date accessed: '+s.date,'- URL: '+(s.url||'none'),'- Supports '+used.length+' finding(s)'+(used.length?': #'+used.map(function(f){return f.id;}).join(', #'):''),'');});
+  return o.join('\n')+'\n';
+}
+function checklist(){
+  var o=['CLEAN CHECKLIST','',STATEMENT,''],any=false;
+  S.chapters.forEach(function(ch,i){
+    var list=S.F.filter(function(f){return f.ch===i&&f.st==='To verify';});if(!list.length)return;any=true;
+    o.push((i+1)+'. '+ch.title);list.forEach(function(f){o.push('  [ ] ['+f.sev+'] #'+f.id+' '+f.cat+': '+f.text.replace(/\s+/g,' ').slice(0,200));});o.push('');
+  });
+  if(!any)o.push('Nothing is left to verify.');
+  return o.join('\n')+'\n';
+}
+function pdfT(s){return String(s==null?'':s).replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,'-').replace(/\u2026/g,'...').replace(/[^\x20-\x7E\u00A0-\u00FF]/g,'?');}
+function pdfBytes(){
+  return new Promise(function(resolve,reject){
+    try{
+      if(!(window.jspdf&&window.jspdf.jsPDF))throw new Error('The PDF library (jsPDF) did not load. Check your internet connection and reload the page.');
+      if(!S.F.length&&!S.text)throw new Error('Nothing to report yet. Analyze a manuscript first.');
+      var doc=new window.jspdf.jsPDF({unit:'pt',format:'letter'}),W=612,H=792,M=40,y=M,c=counts(S.F);
+      doc.setFont('helvetica','bold');doc.setFontSize(24);var rt=doc.splitTextToSize(pdfT((S.report.title||'Claim Review Report').toUpperCase()),W-2*M);doc.text(rt,M,y+16);y+=16+rt.length*26;
+      doc.setFontSize(11);doc.setFont('helvetica','normal');doc.text('Generated '+today()+'  |  '+S.words.toLocaleString()+' words  |  '+S.chapters.length+' chapters'+(S.report.by?'  |  Prepared by '+pdfT(S.report.by):''),M,y);y+=24;
+      doc.setFont('helvetica','bold');doc.setFontSize(12);
+      var box=doc.splitTextToSize(STATEMENT+' This report lists sentences that need a human check. It does not say whether any statement is true or false.',W-2*M-16);
+      doc.rect(M,y-12,W-2*M,box.length*14+14);doc.text(box,M+8,y+2);y+=box.length*14+24;
+      if(S.report.note){doc.setFont('helvetica','normal');doc.setFontSize(11);var nl=doc.splitTextToSize(pdfT(S.report.note),W-2*M);doc.text(nl,M,y);y+=nl.length*14+14;}
+      y+=10;
+      doc.setFontSize(13);doc.text('Key numbers',M,y);y+=18;doc.setFont('helvetica','normal');doc.setFontSize(11);
+      [['Total flags',c.total],['High severity',c.high],['Unresolved (To verify)',c.unres],['Verified',c.ver],['Progress (resolved)',c.prog+'%']].forEach(function(k){doc.text(k[0]+': '+k[1],M+8,y);y+=16;});
+      y+=10;doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('By status',M,y);y+=18;doc.setFont('helvetica','normal');doc.setFontSize(11);
+      STATUSES.forEach(function(s){doc.text(s+': '+S.F.filter(function(f){return f.st===s;}).length,M+8,y);y+=16;});
+      y+=10;doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('By chapter',M,y);y+=18;doc.setFont('helvetica','normal');doc.setFontSize(10);
+      S.chapters.slice(0,30).forEach(function(ch,i){var cc=counts(S.F.filter(function(f){return f.ch===i;}));if(y>H-M){doc.addPage();y=M;}doc.text(pdfT((i+1)+'. '+ch.title.slice(0,60)+'  -  flags '+cc.total+', high '+cc.high+', unresolved '+cc.unres+', risk '+riskOf(S.F.filter(function(f){return f.ch===i;}),ch.words).label),M+8,y);y+=14;});
+      doc.addPage();y=M;
+      var cols=[M,M+30,M+62,M+104,M+200,M+266],widths=[W-2*M-266];
+      function head(){doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setFillColor(0,0,0);doc.rect(M,y-10,W-2*M,14,'F');doc.setTextColor(255,230,0);['#','Ch','Sev','Category','Status','Sentence / note / source'].forEach(function(h,i){doc.text(h,cols[i]+2,y);});doc.setTextColor(0,0,0);y+=14;doc.setFont('helvetica','normal');}
+      doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('Findings',M,y);y+=18;head();
+      doc.setFontSize(8.5);
+      S.F.forEach(function(f){
+        var body=pdfT(f.text.replace(/\s+/g,' ').slice(0,300)),lines=doc.splitTextToSize(body,widths[0]);if(lines.length>5)lines=lines.slice(0,5);
+        var extra=[];if(f.note)extra=extra.concat(doc.splitTextToSize('Note: '+pdfT(f.note.slice(0,200)),widths[0]).slice(0,2));var st=srcText(f);if(st)extra=extra.concat(doc.splitTextToSize('Source: '+pdfT(st.slice(0,200)),widths[0]).slice(0,2));
+        var all=lines.concat(extra),h=all.length*10+6;
+        if(y+h>H-M){doc.addPage();y=M;head();doc.setFontSize(8.5);}
+        doc.text(String(f.id),cols[0]+2,y);doc.text(String(f.ch+1),cols[1]+2,y);doc.text(SEVN[f.sev],cols[2]+2,y);doc.text(pdfT(f.cat).slice(0,18),cols[3]+2,y);doc.text(pdfT(f.st).slice(0,16),cols[4]+2,y);
+        doc.text(all,cols[5]+2,y);doc.setDrawColor(0);doc.line(M,y+h-8,W-M,y+h-8);y+=h;
+      });
+      if(S.ledger.length){doc.addPage();y=M;doc.setFont('helvetica','bold');doc.setFontSize(13);doc.text('Source ledger',M,y);y+=20;doc.setFont('helvetica','normal');doc.setFontSize(10);
+        S.ledger.forEach(function(s,i){var ls=doc.splitTextToSize(pdfT((i+1)+'. '+s.title+' | '+s.type+' | accessed '+s.date+' | '+(s.url||'no URL')),W-2*M);if(y+ls.length*12>H-M){doc.addPage();y=M;}doc.text(ls,M,y);y+=ls.length*12+6;});}
+      var n=doc.getNumberOfPages(),p;for(p=1;p<=n;p++){doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80);doc.text(pdfT(STATEMENT)+'   Page '+p+' of '+n,M,H-18);doc.setTextColor(0);}
+      resolve(new Uint8Array(doc.output('arraybuffer')));
+    }catch(e){reject(e);}
+  });
+}
+function exportAs(kind){
+  try{
+    if(!S.text){throw new Error('Nothing to export yet. Analyze a manuscript first.');}
+    if(kind==='csv'){downloadBlob('claim-findings.csv',new Blob([csv()],{type:'text/csv'}));ok('CSV saved: '+S.F.length+' findings.');}
+    else if(kind==='md'){downloadBlob('source-ledger.md',new Blob([ledgerMd()],{type:'text/markdown'}));ok('Source ledger saved: '+S.ledger.length+' source(s).');}
+    else if(kind==='txt'){downloadBlob('clean-checklist.txt',new Blob([checklist()],{type:'text/plain'}));ok('Checklist saved.');}
+    else{pdfBytes().then(function(b){downloadBlob('claim-review-report.pdf',new Blob([b],{type:'application/pdf'}));ok('PDF report saved ('+Math.round(b.length/1024)+' KB).');}).catch(function(e){fail('PDF export failed: '+e.message);});}
+  }catch(e){fail('Export failed: '+e.message);}
+}
+function saveProject(){try{var o=stateObj(true);o.app='claim-review-scanner';o.v=1;downloadBlob('claim-review-project.json',new Blob([JSON.stringify(o)],{type:'application/json'}));ok('Project saved (includes the manuscript text).');}catch(e){fail('Could not save the project: '+e.message);}}
+function loadProjectFile(f){var r=new FileReader();r.onload=function(){try{var o=JSON.parse(String(r.result));if(!o||o.app!=='claim-review-scanner')throw new Error('This file is not a Claim Review Scanner project.');applyState(o,true);$('msText').value=S.text;$('remember').checked=S.remember;pushHist();scheduleSave();if(S.text)analyze(S.text);else renderAll();ok('Project loaded.');}catch(e){fail('Could not load the project: '+e.message);}};r.onerror=function(){fail('Could not read the file.');};r.readAsText(f);}
+
+/* ---------- UI plumbing ---------- */
+function showDrawer(name){['ms','rules','src','num','ex'].forEach(function(n){$('dr-'+n).hidden=(n!==name);});syncTools();}
+function toggleDrawer(name){var d=$('dr-'+name),was=!d.hidden;['ms','rules','src','num','ex'].forEach(function(n){$('dr-'+n).hidden=true;});d.hidden=was;syncTools();}
+function syncTools(){var m={ms:'tbMs',rules:'tbRules',src:'tbSrc',num:'tbNum',ex:'tbEx'};Object.keys(m).forEach(function(k){$(m[k]).setAttribute('aria-pressed',$('dr-'+k).hidden?'false':'true');});}
+var lastFocus=null;
+function openModal(){lastFocus=document.activeElement;$('modalBg').hidden=false;$('modal').focus();}
+function closeModal(){$('modalBg').hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+function loadSample(){var t=$('sampleText').textContent.replace(/^\n/,'');$('msText').value=t;return analyze(t);}
+function readMsFile(f){
+  if(/\.docx$/i.test(f.name)){fail('Word (.docx) files are not read by this tool. Copy the text from your document and paste it into the box.');showDrawer('ms');return;}
+  if(!/\.(txt|md|markdown)$/i.test(f.name)&&!/^text\//.test(f.type)){fail('"'+f.name+'" is not a .txt or .md file.');return;}
+  if(f.size>20*1024*1024){fail('That file is larger than 20 MB.');return;}
+  var r=new FileReader();r.onload=function(){$('msText').value=String(r.result);analyze(String(r.result));};r.onerror=function(){fail('Could not read the file.');};r.readAsText(f);
+}
+
+function init(){
+  var links=$('appLinks');APP_LINKS.forEach(function(l){var a=document.createElement(l.current?'span':'a');a.textContent=l.label;if(l.current){a.className='cur';a.setAttribute('aria-current','page');}else{a.href=l.url;a.target='_blank';a.rel='noopener';}links.appendChild(a);});
+  var restored=null;try{var raw=localStorage.getItem(STORE_KEY);if(raw)restored=JSON.parse(raw);}catch(e){}
+  if(restored)applyState(restored,true);
+  $('remember').checked=S.remember;
+  pushHist();
+  fillSel('ruleCat',[['','All categories']].concat(CATS.slice(0,10).map(function(c){return [c,c];})),'');
+  fillFilters();
+  if(S.text){$('msText').value=S.text;analyze(S.text);}else{loadSample();}
+  $('tbMs').addEventListener('click',function(){toggleDrawer('ms');});$('tbRules').addEventListener('click',function(){toggleDrawer('rules');renderRules();});$('tbSrc').addEventListener('click',function(){toggleDrawer('src');renderLedger();});$('tbEx').addEventListener('click',function(){toggleDrawer('ex');});
+  $('btnAnalyze').addEventListener('click',function(){analyze($('msText').value);});
+  $('btnSample').addEventListener('click',loadSample);
+  $('btnUpload').addEventListener('click',function(){$('fileMs').click();});
+  $('fileMs').addEventListener('change',function(){if(this.files[0])readMsFile(this.files[0]);this.value='';});
+  $('remember').addEventListener('change',function(){S.remember=this.checked;scheduleSave();});
+  var dz=$('dr-ms');dz.addEventListener('dragover',function(e){e.preventDefault();});dz.addEventListener('drop',function(e){e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)readMsFile(f);});
+  $('viewer').addEventListener('scroll',onViewerScroll);
+  $('viewer').addEventListener('click',function(e){var m=e.target.closest&&e.target.closest('mark');if(m){var ids=m.getAttribute('data-ids').split(' ');select(parseInt(ids[0],10),false);}});
+  $('viewer').addEventListener('dblclick',function(e){var m=e.target.closest&&e.target.closest('mark');if(m){var ids=m.getAttribute('data-ids').split(' ');select(parseInt(ids[0],10),false);var ed=$('editSent');if(ed)ed.focus();}});
+  $('repTitle').value=S.report.title;$('repBy').value=S.report.by;$('repNote').value=S.report.note;
+  $('repTitle').addEventListener('input',function(){S.report.title=this.value;scheduleSave();});$('repBy').addEventListener('input',function(){S.report.by=this.value;scheduleSave();});$('repNote').addEventListener('input',function(){S.report.note=this.value;scheduleSave();});
+  $('viewer').addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.tagName==='MARK'){e.preventDefault();e.target.click();}});
+  $('flist').addEventListener('scroll',function(){renderList();});
+  $('flist').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.frow');if(b)select(parseInt(b.getAttribute('data-id'),10),true);});
+  [['fSev','sev'],['fCat','cat'],['fSt','st'],['fCh','ch'],['fSort','sort']].forEach(function(x){$(x[0]).addEventListener('change',function(){S.f[x[1]]=this.value;applyFilters();$('flist').scrollTop=0;renderList();});});
+  $('fQ').addEventListener('input',function(){S.f.q=this.value;applyFilters();$('flist').scrollTop=0;renderList();});
+  $('btnBulk').addEventListener('click',bulk);
+  $('btnRuleAdd').addEventListener('click',addRule);$('btnRuleReset').addEventListener('click',function(){S.rules=defaultRules();openRule=null;pushHist();scheduleSave();rescan();});
+  $('ruleCat').addEventListener('change',renderRules);
+  $('btnSrcAdd').addEventListener('click',addSource);
+  $('tbNum').addEventListener('click',function(){toggleDrawer('num');renderNumbers();});
+  $('btnIgnClear').addEventListener('click',function(){S.ignored={};pushHist();scheduleSave();rescan();});
+  $('mm').addEventListener('click',function(e){var d=e.target;if(!d.getAttribute||d.getAttribute('data-i')===null)return;var n=parseInt($('mm').getAttribute('data-n'),10)||1;jumpBlock(Math.floor(parseInt(d.getAttribute('data-i'),10)*S.blocks.length/n));});
+  $('btnNumCsv').addEventListener('click',function(){try{if(!S.text)throw new Error('Nothing to export yet. Analyze a manuscript first.');downloadBlob('numbers-by-topic.csv',new Blob([numbersCsv()],{type:'text/csv'}));ok('Numbers table saved: '+S.groups.length+' topic group(s).');}catch(e){fail('Export failed: '+e.message);}});
+  $('btnDisc').addEventListener('click',function(){$('discText').value=disclaimerText();ok('Disclaimer starter written below. Edit it and have it reviewed.');});
+  $('btnDiscCopy').addEventListener('click',function(){var t=$('discText');if(!t.value){fail('Click "Suggest disclaimer starter" first.');return;}t.select();var done=false;try{done=document.execCommand('copy');}catch(e){}if(done)ok('Copied.');else fail('Copy was blocked by the browser. Select the text and copy it yourself.');});
+  $('btnPdf').addEventListener('click',function(){exportAs('pdf');});$('btnCsv').addEventListener('click',function(){exportAs('csv');});$('btnMd').addEventListener('click',function(){exportAs('md');});$('btnCheck').addEventListener('click',function(){exportAs('txt');});
+  $('btnSave').addEventListener('click',saveProject);$('btnLoad').addEventListener('click',function(){$('fileProj').click();});$('fileProj').addEventListener('change',function(){if(this.files[0])loadProjectFile(this.files[0]);this.value='';});
+  $('btnUndo').addEventListener('click',undo);$('btnRedo').addEventListener('click',redo);
+  $('btnHowTop').addEventListener('click',openModal);$('modalClose').addEventListener('click',closeModal);
+  $('modalBg').addEventListener('click',function(e){if(e.target===this)closeModal();});
+  $('modal').addEventListener('click',function(e){var t=e.target;if(t.tagName==='A'&&/^#hg-/.test(t.getAttribute('href')||'')){e.preventDefault();var x=document.getElementById(t.getAttribute('href').slice(1));if(x)x.scrollIntoView({behavior:'smooth',block:'start'});}});
+  document.addEventListener('keydown',function(e){
+    var tag=(e.target&&e.target.tagName)||'',typing=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT',mod=e.ctrlKey||e.metaKey;
+    if(e.key==='Escape'&&!$('modalBg').hidden){closeModal();return;}
+    if(e.key==='F1'){e.preventDefault();openModal();return;}
+    if(mod&&!typing){if((e.key==='z'||e.key==='Z')&&!e.shiftKey){e.preventDefault();undo();return;}if(e.key==='y'||e.key==='Y'||((e.key==='z'||e.key==='Z')&&e.shiftKey)){e.preventDefault();redo();return;}}
+    if(typing||mod||e.altKey||!$('modalBg').hidden)return;
+    var k=e.key.toLowerCase(),f=S.sel!==null?S.byId[S.sel]:null;
+    if(k==='j'){e.preventDefault();move(1);}else if(k==='k'){e.preventDefault();move(-1);}
+    else if(f&&k==='v'){e.preventDefault();setStatusOf(f,'Verified');}else if(f&&k==='r'){e.preventDefault();setStatusOf(f,'Rewritten');}else if(f&&k==='a'){e.preventDefault();setStatusOf(f,'Accepted as is');}else if(f&&k==='x'){e.preventDefault();setStatusOf(f,'Removed');}
+  });
+  try{if(!localStorage.getItem('crs.guideSeen')){localStorage.setItem('crs.guideSeen','1');setTimeout(openModal,700);}}catch(e){}
+}
+
+/* ---------- test hooks ---------- */
+window.CRS={numbersCsv:numbersCsv,disclaimerText:disclaimerText,riskOf:riskOf,ignoreFinding:ignoreFinding,hintFor:hintFor,jumpBlock:jumpBlock,S:S,analyze:analyze,csv:csv,ledgerMd:ledgerMd,checklist:checklist,pdfBytes:pdfBytes,setStatusOf:setStatusOf,select:select,defaultRules:defaultRules,splitSent:splitSent,apply:applyFilters,
+  addSource:function(t){S.ledger.push({id:nextSrc++,title:t,url:'https://example.org',date:today(),type:'Official agency'});return nextSrc-1;},
+  isReady:function(){return !S.analyzing;}};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</body>
+</html>
