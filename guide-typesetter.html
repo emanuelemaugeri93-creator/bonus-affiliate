@@ -1,0 +1,2224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guide Typesetter Studio</title>
+<link id="favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23161513'/%3E%3Cpath d='M16 9c-2.6-1.6-6-2-9-1.4v15c3-.6 6.4-.2 9 1.4 2.6-1.6 6-2 9-1.4v-15c-3-.6-6.4-.2-9 1.4z' fill='%23faf8f3'/%3E%3Cpath d='M16 9v15' stroke='%23161513' stroke-width='1.2'/%3E%3Cpath d='M9 26.5h14' stroke='%23D62828' stroke-width='1.6'/%3E%3Cpath d='M11 28.2v-2.4M14 28.2v-1.4M17 28.2v-2.4M20 28.2v-1.4M23 28.2v-2.4' stroke='%23D62828' stroke-width='.9'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Playfair+Display:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* App shell. Selectors are scoped to the app chrome so nothing leaks into the typeset pages. */
+:root{--paper:#faf8f3;--ink:#161513;--muted:#6b675e;--line:#dcd7cb;--acc:#D62828;--acc-d:#a81d1d;--panel:#fffdf8;--stage:#e6e2d6;color-scheme:light}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:Inter,"Helvetica Neue",Arial,system-ui,sans-serif;font-size:14px;line-height:1.45}
+.topbar{position:fixed;top:0;left:0;right:0;height:46px;z-index:50;background:var(--ink);color:#fff;display:flex;align-items:center;gap:16px;padding:0 14px;box-sizing:border-box}
+.topbar .brand{display:flex;align-items:center;gap:10px;font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:17px;white-space:nowrap}
+.topbar .brand svg{width:26px;height:26px;flex:none}
+.topbar .howto{font:600 12.5px Inter,sans-serif;color:var(--ink);background:#fff;border:1px solid #fff;border-radius:3px;padding:6px 12px;cursor:pointer;white-space:nowrap}.topbar .howto:hover{background:#f0ece1}.topbar .howto:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.topbar .apps{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.topbar .apps a{color:#fff;text-decoration:none;font-size:12.5px;font-weight:600;padding:6px 11px;border:1px solid #4a4741;border-radius:3px;white-space:nowrap}
+.topbar .apps .cur{background:var(--acc);border:1px solid var(--acc);color:#fff;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:3px;white-space:nowrap}
+.topbar .apps a:hover{background:var(--acc);border-color:var(--acc)}
+.topbar .apps a:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.gts-main{position:fixed;top:46px;left:0;right:0;bottom:0;display:flex}
+.gts-left{width:min(470px,44%);min-width:330px;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel)}
+.gts-right{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--stage)}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--paper)}
+.tabs button{flex:1;border:0;background:transparent;padding:11px 2px;font:600 11.5px Inter,sans-serif;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--acc)}
+.panels{flex:1;overflow:auto;padding:14px 16px 28px}
+.panel[hidden]{display:none}
+.panel h2{font-family:"Playfair Display",Georgia,serif;font-size:20px;margin:2px 0 10px}
+.panel h3{font:700 11.5px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;border-top:1px solid var(--line);padding-top:12px}
+.panel label{display:block;font-size:12.5px;font-weight:600;margin:10px 0 3px}
+.panel .hint{font-size:12px;color:var(--muted);margin:4px 0}
+.panel input[type=text],.panel input[type=number],.panel select,.panel textarea{width:100%;box-sizing:border-box;font:14px Inter,sans-serif;color:var(--ink);background:#fff;border:1px solid #c9c3b4;border-radius:3px;padding:7px 8px}
+.panel textarea{resize:vertical;line-height:1.4}
+.panel textarea.ms{font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;min-height:48vh;tab-size:2;white-space:pre-wrap}
+.panel input:focus-visible,.panel select:focus-visible,.panel textarea:focus-visible,.panel button:focus-visible,.pvbar button:focus-visible,.pvbar input:focus-visible,.modal button:focus-visible,.tabs button:focus-visible,#pvStage:focus-visible{outline:3px solid rgba(214,40,40,.55);outline-offset:1px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>*{flex:1 1 auto}
+.row .fixed{flex:none}
+.panel label.chk,.pvbar label.chk{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:8px 0;font-weight:500}
+.chk input{width:16px;height:16px;accent-color:var(--acc)}
+.btn{font:600 13px Inter,sans-serif;border:1px solid var(--ink);background:#fff;color:var(--ink);padding:8px 12px;border-radius:3px;cursor:pointer}
+.btn:hover{background:#f0ece1}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.pri:hover{background:var(--acc-d)}
+.btn.sm{padding:5px 9px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.stats{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:8px 0}
+.stats b{color:var(--ink)}
+.warns{font-size:12.5px;background:#fff4f0;border:1px solid #efc6bd;border-radius:3px;padding:8px 10px;margin:8px 0}
+.warns ul{margin:4px 0 0;padding-left:18px}
+.imgs{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.imgs .im{width:84px;font-size:11px;border:1px solid var(--line);border-radius:3px;background:#fff;padding:4px;text-align:center}
+.imgs .im img{width:100%;height:56px;object-fit:contain;display:block}
+.imgs .im button{border:0;background:none;color:var(--acc-d);cursor:pointer;font-size:11px;text-decoration:underline}
+.errbox{background:#fdecec;border:2px solid var(--acc);color:#7d1010;border-radius:3px;padding:10px 12px;font-size:13px;font-weight:600;margin:10px 0}
+.okbox{background:#eaf5ee;border:1px solid #9bc9ab;color:#1d4d2e;border-radius:3px;padding:8px 12px;font-size:13px;margin:10px 0}
+.steps{font-size:13px;background:#fff;border:1px solid var(--line);border-radius:3px;padding:8px 12px 8px 28px;margin:8px 0}
+.steps li{margin:3px 0}
+.note{font-size:12px;color:var(--muted);border-left:3px solid var(--acc);padding-left:9px;margin:12px 0}
+.mgrid{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:3px;padding:8px 10px;margin:0}
+.mgrid dt{color:var(--muted)}.mgrid dd{margin:0;font-weight:600}
+.pvbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--line)}
+.pvbar button,.pvbar input[type=number]{font:600 13px Inter,sans-serif;border:1px solid #c9c3b4;background:#fff;border-radius:3px;padding:5px 9px;cursor:pointer;color:var(--ink)}
+.pvbar input[type=number]{width:58px;cursor:text;text-align:center}
+.pvbar .btn.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+.pvbar .sp{flex:1}
+.pvbar .seg{display:flex}
+.pvbar .seg button{border-radius:0;margin-left:-1px}
+.pvbar .seg button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pvbar .st{font-size:12.5px;color:var(--muted);min-width:120px}
+.pvbar .st.err{color:var(--acc-d);font-weight:700}
+.prog{height:3px;background:var(--line);position:relative}
+.prog i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--acc);transition:width .15s}
+#pvStage{flex:1;overflow:auto;padding:22px;box-sizing:border-box}
+#pvMsg{max-width:420px;margin:12vh auto;text-align:center;color:var(--muted);font-size:14px}
+#pvWork{position:absolute;left:-40000px;top:0;visibility:hidden}
+#pvOut .pagedjs_pages{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;align-items:flex-start}
+#pvOut .pagedjs_page{background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.25);flex:none}
+#pvOut .pagedjs_page:not(.bk-show){display:none}
+#pvOut.spread .pagedjs_pages{gap:0;flex-wrap:nowrap}
+#pvOut .bk p,#pvOut .bk li,#pvOut .bk td,#pvOut .bk th,#pvOut .bk h2,#pvOut .bk h3,#pvOut .bk h1,#pvOut .bk figcaption,#pvOut .bk .tp-title,#pvOut .bk .tp-sub,#pvOut .bk .dd,#pvOut .bk .cp{cursor:pointer}
+#pvOut .bk p:hover,#pvOut .bk li:hover,#pvOut .bk td:hover,#pvOut .bk h2:hover,#pvOut .bk h3:hover,#pvOut .bk h1:hover,#pvOut .bk .tp-title:hover,#pvOut .bk .cp:hover,#pvOut .bk .dd:hover{background:rgba(255,230,0,.35)}
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(22,21,19,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-bg[hidden]{display:none}
+.modal{background:var(--paper);max-width:760px;width:100%;max-height:86vh;overflow:auto;border-radius:4px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.modal h2{font-family:"Playfair Display",Georgia,serif;margin:0 0 8px}
+.modal h3{margin:16px 0 4px;font-size:14px}
+.modal li,.modal p{font-size:13.5px}
+.modal .lead{font-size:14.5px;margin:0 0 10px}.modal .toc{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.modal .toc a{font-size:12px;font-weight:600;color:var(--ink);border:1px solid #c9c3b4;border-radius:3px;padding:3px 9px;text-decoration:none;background:#fff}.modal .toc a:hover{background:var(--acc);color:#fff;border-color:var(--acc)}.modal pre{background:#fff;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:3px;padding:8px 10px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;margin:6px 0 10px}.modal ul{padding-left:20px}.modal code{font:12px ui-monospace,Menlo,monospace;background:#fff;border:1px solid var(--line);border-radius:2px;padding:0 3px}.modal pre code{border:0;padding:0}.modal kbd{font:600 11.5px ui-monospace,Menlo,monospace;background:#fff;border:1px solid #c9c3b4;border-radius:3px;padding:1px 5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.saved{font-size:12px;color:var(--muted)}
+@media (max-width:900px){
+ .topbar .brand span{display:none}
+ .gts-main{position:static;margin-top:46px;flex-direction:column}
+ .gts-left{width:auto;min-width:0;border-right:0;border-bottom:1px solid var(--line)}
+ .panels{max-height:70vh}
+ .gts-right{min-height:80vh}
+ .panel textarea.ms{min-height:36vh}
+}
+/* ---- upgrade: gallery, navigator, insights, palette, toolbar ---- */
+.topbar .howto kbd{font:600 10.5px ui-monospace,Menlo,monospace;background:#ece7da;border:1px solid #c9c3b4;border-radius:3px;padding:0 4px;margin-left:5px}
+.panel details{border:1px solid var(--line);border-radius:4px;background:#fff;margin:10px 0}
+.panel details>summary{cursor:pointer;font:700 12px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);padding:9px 12px;list-style:none;display:flex;align-items:center;justify-content:space-between}
+.panel details>summary::-webkit-details-marker{display:none}
+.panel details>summary::after{content:"+";font-size:16px;color:var(--acc)}
+.panel details[open]>summary::after{content:"\2212"}
+.panel details .grp{padding:0 12px 10px;border-top:1px solid var(--line)}
+.panel h3.first{border-top:0;padding-top:0;margin-top:6px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin:8px 0 6px}
+.gallery .card{border:2px solid transparent;background:#f3efe4;border-radius:6px;padding:6px 6px 7px;cursor:pointer;text-align:center;font:600 11px Inter,sans-serif;color:var(--ink);transition:transform .12s,box-shadow .12s}
+.gallery .card:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.16)}
+.gallery .card[aria-pressed="true"]{border-color:var(--acc);background:#fff;box-shadow:0 0 0 3px rgba(214,40,40,.15)}
+.gallery .card svg{width:100%;height:auto;display:block;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.accpick{width:60px;height:30px;padding:0;border:1px solid #c9c3b4;border-radius:3px;margin-top:6px;background:#fff}
+.mys{display:flex;gap:6px;align-items:center;margin:5px 0;padding:5px 8px;border:1px solid var(--line);border-radius:3px;background:#fff}
+.mys span{flex:1;font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbar{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px}
+.tbar button{min-width:34px;font:600 12.5px Inter,sans-serif;border:1px solid #c9c3b4;background:#fff;border-radius:3px;padding:5px 8px;cursor:pointer;color:var(--ink)}
+.tbar button:hover{background:#f0ece1}
+.fr{margin:6px 0}
+.pvwrap{flex:1;display:flex;min-height:0}
+#nav{width:164px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--paper)}
+#nav[hidden]{display:none}
+.navtabs{display:flex;border-bottom:1px solid var(--line)}
+.navtabs button{flex:1;border:0;background:transparent;padding:9px 4px;font:700 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent}
+.navtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--acc)}
+.navbody{flex:1;overflow:auto;padding:10px 8px;box-sizing:border-box}
+.navbody[hidden]{display:none}
+#navPages{display:flex;flex-direction:column;align-items:center;gap:12px}
+.th{position:relative;flex:none;padding:0;border:2px solid transparent;background:#fff;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.25);overflow:hidden;box-sizing:content-box}
+.th.cur{border-color:var(--acc)}
+.th .thin{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none}
+.th .thin .pagedjs_page{box-shadow:none!important;display:block!important}
+.th .n{position:absolute;right:3px;bottom:2px;z-index:2;font:700 10px Inter,sans-serif;background:rgba(22,21,19,.78);color:#fff;border-radius:2px;padding:0 4px}
+.ol{display:flex;width:100%;gap:6px;text-align:left;border:0;background:transparent;font:500 12px Inter,sans-serif;color:var(--ink);padding:5px 4px;border-radius:3px;cursor:pointer}
+.ol:hover{background:#ece7da}
+.ol .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ol .p{color:var(--muted);font-variant-numeric:tabular-nums}
+.ol-part{font-weight:800;text-transform:uppercase;font-size:11px;letter-spacing:.06em;margin-top:8px}.ol-ch{font-weight:700}.ol-sec{padding-left:14px;color:#4b473f;font-size:11.5px}
+#pvStage.stg-warm{background:#e6e2d6}#pvStage.stg-slate{background:#3b4452}#pvStage.stg-night{background:#14161a}#pvStage.stg-light{background:#f4f4f2}
+#pvStage.stg-night #pvMsg,#pvStage.stg-slate #pvMsg{color:#c9cdd4}
+.pvbar select{font:600 12.5px Inter,sans-serif;border:1px solid #c9c3b4;background:#fff;border-radius:3px;padding:5px 6px;color:var(--ink)}
+#pvOut .pagedjs_page{position:relative}
+#pvOut .pagedjs_page.bk-L::after,#pvOut .pagedjs_page.bk-R::after{content:"";position:absolute;top:0;bottom:0;width:7%;pointer-events:none;z-index:5}
+#pvOut .pagedjs_page.bk-L::after{right:0;background:linear-gradient(to right,rgba(0,0,0,0),rgba(0,0,0,.16))}
+#pvOut .pagedjs_page.bk-R::after{left:0;background:linear-gradient(to left,rgba(0,0,0,0),rgba(0,0,0,.16))}
+@keyframes flipN{0%{transform:perspective(2400px) rotateY(-96deg);filter:brightness(.6)}60%{filter:brightness(.9)}100%{transform:none;filter:none}}
+@keyframes flipP{0%{transform:perspective(2400px) rotateY(96deg);filter:brightness(.6)}60%{filter:brightness(.9)}100%{transform:none;filter:none}}
+@keyframes fadeIn{from{opacity:.15;transform:translateY(8px)}to{opacity:1;transform:none}}
+#pvOut.flip-n .bk-R{transform-origin:left center;animation:flipN .6s cubic-bezier(.3,.7,.3,1)}
+#pvOut.flip-p .bk-L{transform-origin:right center;animation:flipP .6s cubic-bezier(.3,.7,.3,1)}
+#pvOut.flip-n:not(.spread) .bk-show,#pvOut.flip-p:not(.spread) .bk-show{animation:fadeIn .3s ease}
+@media (prefers-reduced-motion:reduce){#pvOut .bk-show{animation:none!important}}
+.icards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0}
+.icard{background:#fff;border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+.icard b{display:block;font:700 17px "Playfair Display",Georgia,serif}.icard span{font-size:11.5px;color:var(--muted)}
+.brow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr) auto;gap:8px;align-items:center;margin:5px 0;font-size:12px}
+.brow .bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow .bt{background:#ece7da;border-radius:2px;height:10px}.brow .bt i{display:block;height:100%;background:var(--acc);border-radius:2px}
+.brow .bv{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}.brow .bv small{font-weight:400;color:var(--muted)}
+.pfl{list-style:none;margin:6px 0;padding:0}
+.pf{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:3px;padding:7px 10px;margin:5px 0}
+.pf i{flex:none;width:10px;height:10px;border-radius:50%;margin-top:4px;background:#999}
+.pf-ok i{background:#2f9e5a}.pf-warn i{background:#e08a00}.pf-err i{background:var(--acc)}.pf-info i{background:#4a78c2}
+.pf-err{border-color:#efb3b3;background:#fff4f2}
+.cmdk{background:var(--paper);width:min(620px,100%);border-radius:8px;box-shadow:0 16px 50px rgba(0,0,0,.45);overflow:hidden;align-self:flex-start;margin-top:12vh}
+.cmdk input{width:100%;box-sizing:border-box;border:0;border-bottom:1px solid var(--line);padding:15px 18px;font:500 16px Inter,sans-serif;background:#fff;color:var(--ink);outline:0}
+.cmdk ul{list-style:none;margin:0;padding:6px;max-height:50vh;overflow:auto}
+.cmdk li{padding:8px 12px;border-radius:4px;font-size:14px;cursor:pointer}
+.cmdk li[aria-selected="true"]{background:var(--ink);color:#fff}
+.cmdk li.none{color:var(--muted);cursor:default}
+.cmdh{font-size:11.5px;color:var(--muted);padding:7px 14px;border-top:1px solid var(--line)}
+@media (max-width:900px){#nav{width:120px}}
+</style>
+</head>
+<body>
+<a class="sr" href="#ms">Skip to manuscript</a>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="6" fill="#faf8f3"/><path d="M16 9c-2.6-1.6-6-2-9-1.4v15c3-.6 6.4-.2 9 1.4 2.6-1.6 6-2 9-1.4v-15c-3-.6-6.4-.2-9 1.4z" fill="#161513"/><path d="M16 9v15" stroke="#faf8f3" stroke-width="1.2"/><path d="M9 26.5h14" stroke="#D62828" stroke-width="1.6"/><path d="M11 28.2v-2.4M14 28.2v-1.4M17 28.2v-2.4M20 28.2v-1.4M23 28.2v-2.4" stroke="#D62828" stroke-width=".9"/></svg>
+    <span>Guide Typesetter Studio</span>
+  </div>
+  <button type="button" class="howto" id="btnHowTop">How to use</button>
+  <button type="button" class="howto" id="btnCmd" title="Command palette (Ctrl/Cmd+K)">Commands <kbd>Ctrl K</kbd></button>
+  <nav class="apps" id="appLinks" aria-label="Other web apps"></nav>
+</header>
+
+<div class="gts-main">
+ <aside class="gts-left" aria-label="Controls">
+  <div class="tabs" role="tablist" aria-label="Panels">
+    <button role="tab" id="tab-ms" aria-selected="true" aria-controls="p-ms" data-p="ms">Manuscript</button>
+    <button role="tab" id="tab-bk" aria-selected="false" aria-controls="p-bk" data-p="bk">Book</button>
+    <button role="tab" id="tab-st" aria-selected="false" aria-controls="p-st" data-p="st">Style</button>
+    <button role="tab" id="tab-in" aria-selected="false" aria-controls="p-in" data-p="in">Insights</button>
+    <button role="tab" id="tab-ex" aria-selected="false" aria-controls="p-ex" data-p="ex">Export</button>
+  </div>
+  <div class="panels">
+
+   <section class="panel" id="p-ms" role="tabpanel" aria-labelledby="tab-ms">
+     <div class="row">
+       <button class="btn sm fixed" id="btnUndo" type="button" title="Undo (Ctrl+Z)">Undo</button>
+       <button class="btn sm fixed" id="btnRedo" type="button" title="Redo (Ctrl+Shift+Z)">Redo</button>
+       <button class="btn sm fixed" id="btnSample" type="button">Load sample</button>
+       <button class="btn sm fixed" id="btnUploadMd" type="button">Upload .md / .txt</button>
+       <button class="btn sm fixed" id="btnHelp" type="button">How to</button>
+       <input id="fileMd" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" class="sr" aria-label="Upload manuscript file">
+     </div>
+     <label for="ms">Manuscript (Markdown). # part, ## chapter, ### section</label>
+     <div class="tbar" id="mdBar" role="toolbar" aria-label="Formatting">
+       <button type="button" data-fmt="b" title="Bold (wraps the selection in **)"><b>B</b></button>
+       <button type="button" data-fmt="i" title="Italic"><i>I</i></button>
+       <button type="button" data-fmt="h2" title="Chapter heading (##)">H2</button>
+       <button type="button" data-fmt="h3" title="Section heading (###)">H3</button>
+       <button type="button" data-fmt="ul" title="Bullet list">&bull; List</button>
+       <button type="button" data-fmt="ol" title="Numbered list">1. List</button>
+       <button type="button" data-fmt="task" title="Checklist">[ ] Check</button>
+       <button type="button" data-fmt="q" title="Quote">&ldquo; Quote</button>
+       <button type="button" data-fmt="link" title="Link">Link</button>
+       <button type="button" data-fmt="hr" title="Ornament break (---)">---</button>
+     </div>
+     <details class="fr" id="frBox"><summary>Find and replace</summary>
+       <div class="grp"><div class="row"><input type="text" id="frFind" placeholder="Find" aria-label="Find"><input type="text" id="frRepl" placeholder="Replace with" aria-label="Replace with"></div>
+       <div class="row"><button class="btn sm fixed" id="frPrev" type="button">Previous</button><button class="btn sm fixed" id="frNext" type="button">Next</button><button class="btn sm fixed" id="frOne" type="button">Replace</button><button class="btn sm fixed" id="frAll" type="button">Replace all</button><label class="chk" style="margin:0"><input type="checkbox" id="frCase"> Match case</label><span class="hint" id="frInfo" aria-live="polite"></span></div></div>
+     </details>
+     <textarea id="ms" class="ms" spellcheck="false" aria-describedby="msHint"></textarea>
+     <p class="hint" id="msHint">Click any text in the preview to jump to it here. Drop a .md or .txt file anywhere on this panel. Callouts: <code>:::tip Title</code> ... <code>:::</code> (checklist, example, mistake, tip, note, worksheet). Table caption: a line <code>Table: caption</code> right above the table.</p>
+     <div class="stats" id="stats" aria-live="polite"></div>
+     <div id="warns"></div>
+     <h3>Insert</h3>
+     <div class="row">
+       <select id="selCallout" aria-label="Insert callout"><option value="">Callout...</option>
+         <option value="checklist">Checklist</option><option value="example">Example</option><option value="mistake">Mistake</option><option value="tip">Tip</option><option value="note">Note</option><option value="worksheet">Worksheet</option></select>
+       <button class="btn sm fixed" id="btnTable" type="button">Table</button>
+       <button class="btn sm fixed" id="btnImg" type="button">Add image</button>
+       <input id="fileImg" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" class="sr" aria-label="Upload image" multiple>
+     </div>
+     <div class="imgs" id="imgList" aria-label="Uploaded images"></div>
+     <p class="hint">Images are stored inside the project as data URIs and referenced as <code>![Caption](img:img1)</code>. Figures and tables are numbered per chapter (Figure 3.2).</p>
+   </section>
+
+   <section class="panel" id="p-bk" role="tabpanel" aria-labelledby="tab-bk" hidden>
+     <h2>Book details</h2>
+     <label for="m_title">Title</label><input type="text" id="m_title">
+     <label for="m_subtitle">Subtitle</label><input type="text" id="m_subtitle">
+     <label for="m_author">Author</label><input type="text" id="m_author">
+     <label for="m_publisher">Publisher line</label><input type="text" id="m_publisher">
+     <div class="row">
+       <div><label for="m_year">Year</label><input type="text" id="m_year"></div>
+       <div><label for="m_edition">Edition</label><input type="text" id="m_edition"></div>
+     </div>
+     <label for="m_copy">Copyright text ({year} {author} {publisher} {edition} {title} are filled in)</label>
+     <textarea id="m_copy" rows="6"></textarea>
+     <label for="m_disc">Disclaimer page text (leave empty to skip the page)</label>
+     <textarea id="m_disc" rows="5"></textarea>
+     <label for="m_ded">Dedication (optional)</label>
+     <textarea id="m_ded" rows="2"></textarea>
+     <label for="m_about">About the author (optional)</label>
+     <textarea id="m_about" rows="4"></textarea>
+     <label for="m_also">Also by (optional, one title per line)</label>
+     <textarea id="m_also" rows="3"></textarea>
+     <label for="m_review">"Thank you / please review" page text (switch the page on in Style)</label>
+     <textarea id="m_review" rows="4"></textarea>
+     <div class="note">You are responsible for the factual accuracy and the safety review of everything in your book. Check every number, instruction and warning against authoritative sources before you publish.</div>
+   </section>
+
+   <section class="panel" id="p-st" role="tabpanel" aria-labelledby="tab-st" hidden>
+     <h2>Style</h2>
+     <h3 class="first">Style gallery</h3>
+     <div id="gallery" class="gallery" role="group" aria-label="Style presets"></div>
+     <p class="hint">Pick a look, then fine-tune anything below. Each preset sets fonts, openers, callouts, tables, running heads and more.</p>
+     <div id="stForm"></div>
+     <h3>My styles</h3>
+     <div class="row"><input type="text" id="styleName" maxlength="40" placeholder="Name your style" aria-label="Style name"><button class="btn sm fixed" id="btnSaveStyle" type="button">Save current style</button></div>
+     <div id="myStyles"></div>
+     <h3>Margins (computed)</h3>
+     <dl class="mgrid" id="mgrid"></dl>
+     <p class="hint">Inside gutter follows the page count (24-150: 0.375 in, 151-300: 0.5, 301-500: 0.625, 501-700: 0.75, 701-828: 0.875). Verify against current KDP guidelines before uploading.</p>
+   </section>
+
+   <section class="panel" id="p-in" role="tabpanel" aria-labelledby="tab-in" hidden>
+     <h2>Insights</h2>
+     <p class="hint">Numbers from your manuscript, and checks run on the paginated book.</p>
+     <div id="inCards" class="icards"></div>
+     <h3>Chapter lengths</h3>
+     <div id="inBars"></div>
+     <h3>Print checks</h3>
+     <div id="pfList" aria-live="polite"></div>
+   </section>
+
+   <section class="panel" id="p-ex" role="tabpanel" aria-labelledby="tab-ex" hidden>
+     <h2>Export</h2>
+     <div id="exMsg" role="alert" aria-live="assertive"></div>
+     <h3>Print PDF</h3>
+     <button class="btn pri" id="btnPrint" type="button">Exact Print (open paged output)</button>
+     <p class="hint">Opens the paged book in a new tab with the page size set to the trim size.</p>
+     <ol class="steps" id="printSteps"></ol>
+     <h3>EPUB 3</h3>
+     <button class="btn pri" id="btnEpub" type="button">Download EPUB</button>
+     <p class="hint">Reflowable, built in your browser. No Paged.js layout is used.</p>
+     <h3>Other files</h3>
+     <div class="row">
+       <button class="btn" id="btnMd" type="button">Cleaned markdown</button>
+       <button class="btn" id="btnPack" type="button">Front matter pack (.txt)</button>
+     </div>
+     <h3>Project</h3>
+     <div class="row">
+       <button class="btn" id="btnSave" type="button">Save project (.json)</button>
+       <button class="btn" id="btnLoad" type="button">Load project</button>
+       <input id="fileProj" type="file" accept=".json,application/json" class="sr" aria-label="Load project file">
+     </div>
+     <p class="saved" id="savedMsg" aria-live="polite"></p>
+     <div class="note">Nothing is uploaded. Everything runs in this browser tab. You remain responsible for the factual accuracy and safety review of the book.</div>
+   </section>
+  </div>
+ </aside>
+
+ <main class="gts-right" aria-label="Preview">
+  <div class="pvbar" role="toolbar" aria-label="Preview controls">
+    <button type="button" id="btnNav" aria-pressed="false" title="Page thumbnails and outline">Navigator</button>
+    <button type="button" id="pvFirst" aria-label="First page">|&lt;</button>
+    <button type="button" id="pvPrev" aria-label="Previous page">&lt;</button>
+    <input type="number" id="pvNum" min="1" value="1" aria-label="Page number">
+    <span id="pvTot" aria-live="polite">/ 0</span>
+    <button type="button" id="pvNext" aria-label="Next page">&gt;</button>
+    <button type="button" id="pvLast" aria-label="Last page">&gt;|</button>
+    <span class="seg" role="group" aria-label="View mode">
+      <button type="button" id="vwPage" aria-pressed="true">Page</button>
+      <button type="button" id="vwSpread" aria-pressed="false">Spread</button>
+      <button type="button" id="vwAll" aria-pressed="false">All</button>
+    </span>
+    <button type="button" id="zOut" aria-label="Zoom out">-</button>
+    <span id="zVal" aria-live="polite">100%</span>
+    <button type="button" id="zIn" aria-label="Zoom in">+</button>
+    <button type="button" id="zFit">Fit</button>
+    <select id="stageBg" aria-label="Stage background"><option value="warm">Warm</option><option value="slate">Slate</option><option value="night">Night</option><option value="light">Light</option></select>
+    <span class="sp"></span>
+    <label class="chk" style="margin:0"><input type="checkbox" id="autoRender" checked> Live</label>
+    <button type="button" id="btnRender" class="btn sm pri">Typeset now</button>
+    <span class="st" id="pvStatus" role="status" aria-live="polite">Ready</span>
+  </div>
+  <div class="prog" aria-hidden="true"><i id="pvProg"></i></div>
+  <div class="pvwrap">
+   <aside id="nav" hidden aria-label="Navigator">
+    <div class="navtabs" role="tablist"><button type="button" role="tab" id="navTabPages" aria-selected="true">Pages</button><button type="button" role="tab" id="navTabOutline" aria-selected="false">Outline</button></div>
+    <div id="navPages" class="navbody"></div>
+    <div id="navOutline" class="navbody" hidden></div>
+   </aside>
+   <div id="pvStage" tabindex="0" aria-label="Paginated preview">
+    <div id="pvMsg">Typesetting preview...</div>
+    <div id="pvOut"></div>
+   </div>
+  </div>
+ </main>
+</div>
+<div id="pvWork" aria-hidden="true"></div>
+<div class="modal-bg" id="cmdBg" hidden>
+ <div class="cmdk" role="dialog" aria-modal="true" aria-label="Command palette">
+  <input id="cmdIn" type="text" placeholder="Type a command: preset, font, callout, chapter, export..." aria-label="Command" autocomplete="off" spellcheck="false">
+  <ul id="cmdList" role="listbox" aria-label="Commands"></ul>
+  <div class="cmdh">Up and Down to move, Enter to run, Esc to close</div>
+ </div>
+</div>
+
+<div class="modal-bg" id="modalBg" hidden>
+ <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mdTitle" tabindex="-1" id="modal">
+  <h2 id="mdTitle">How to use Guide Typesetter Studio</h2>
+  <p class="lead">Paste the Markdown of a practical guide (written by an AI or by you) and get a print-ready interior for KDP plus an EPUB. Everything runs in your browser. Nothing is uploaded.</p>
+  <nav class="toc" aria-label="Guide sections">
+    <a href="#hg-quick">Quick start</a><a href="#hg-write">Writing syntax</a><a href="#hg-book">Book details</a><a href="#hg-style">Style and margins</a><a href="#hg-prev">Preview</a><a href="#hg-new">Style studio and tools</a><a href="#hg-export">Export</a><a href="#hg-ai">Using an AI writer</a><a href="#hg-fix">Troubleshooting</a><a href="#hg-keys">Shortcuts</a>
+  </nav>
+
+  <h3 id="hg-quick">1. Quick start (5 minutes)</h3>
+  <ol>
+    <li>Open the <b>Manuscript</b> tab. A sample guide is already loaded so you can see the result. Click <b>Load sample</b> any time to bring it back.</li>
+    <li>Replace it with your text: paste into the box, click <b>Upload .md / .txt</b>, or drag a file onto the left panel.</li>
+    <li>Open <b>Book</b> and fill in title, subtitle, author, publisher line, year and the copyright, disclaimer and dedication texts.</li>
+    <li>Open <b>Style</b>, choose a preset and your trim size (the page size you chose on KDP).</li>
+    <li>Check the live preview on the right, then go to <b>Export</b>: Exact Print for the PDF, or Download EPUB.</li>
+  </ol>
+
+  <h3>Edit text from the preview</h3>
+  <p>Click any text on a preview page. For body text the studio jumps to that exact text in the Manuscript box and selects it, so you can type the new wording and watch the page update. For the title page, copyright, disclaimer, dedication and About the author, it opens the matching field in the Book tab.</p>
+  <h3 id="hg-write">2. Writing syntax</h3>
+  <p>Use plain Markdown. The headings decide the structure of the book:</p>
+  <pre># Part One: Foundations      (optional part page)
+## Chapter title              (every ## starts a new chapter)
+### Section title             (a heading inside a chapter)</pre>
+  <p>Chapters get numbers automatically ("Chapter 1"). Titles that start with Introduction, Preface, Conclusion, Appendix, Glossary, Resources and similar words are not numbered. Text written before the first heading becomes an "Introduction" chapter.</p>
+  <p><b>Callout boxes</b> open with a colon fence and a type, and close with a line containing only three colons. Types: <code>checklist</code>, <code>example</code>, <code>mistake</code>, <code>tip</code>, <code>note</code>, <code>worksheet</code>. The title after the type is optional. Callouts cannot be nested.</p>
+  <pre>:::tip Label with the words you would say
+Write the label you would use when asking someone to find the item.
+:::
+
+:::checklist Room diagnosis
+- [ ] First item (prints as an empty checkbox)
+- [ ] Second item
+:::</pre>
+  <p>A <b>worksheet</b> callout adds blank ruled lines for the reader to write on.</p>
+  <p><b>Tables</b> use standard Markdown. For a caption, put a line starting with <code>Table:</code> directly above the table, with one blank line between them. Tables and figures are numbered per chapter (Table 2.1, Figure 3.2) and the header row repeats if a table runs over a page.</p>
+  <pre>Table: Weekly schedule
+
+| Day | Focus | Time |
+|---|---|---|
+| Sunday | Entry | 10 minutes |</pre>
+  <p><b>Images:</b> click <b>Add image</b> (PNG, JPEG, GIF, WebP or SVG, max 5 MB each). A line like <code>![Caption](img:img1)</code> is inserted at the cursor. Replace the caption text. The image is stored inside your project, so it is also included in the EPUB.</p>
+  <p>A line with only <code>---</code> becomes a decorative ornament divider. Bold, italic, lists and numbered lists work as usual. Raw HTML is shown as text, not run.</p>
+  <p>Under the text box you see word count, estimated page count, reading time, and warnings: paragraphs longer than 180 words (hard to read in print) and callouts you forgot to close.</p>
+
+  <h3 id="hg-book">3. Book details</h3>
+  <p>The <b>Book</b> tab builds the front matter: title page, copyright page, disclaimer page, dedication and contents, then the back matter: index of figures and tables (switch it on in Style), About the author and Also by. Leave a field empty and that page is skipped. In the copyright text, <code>{year}</code>, <code>{author}</code>, <code>{publisher}</code>, <code>{edition}</code> and <code>{title}</code> are replaced automatically. Edit the default copyright and disclaimer so they fit your book and country.</p>
+
+  <h3 id="hg-style">4. Style, trim size and margins</h3>
+  <ul>
+    <li><b>Style gallery:</b> 13 complete looks (Classic Serif, Clean Modern, Farmhouse, Compact Reference, Large Print, Heritage Almanac, Bold Editorial, Field Manual, Swiss Minimal, Vintage Journal, Workbook, Literary, Coastal Calm). Each card is a live mini page. Click one, then fine-tune any setting underneath. Your trim size and front/back matter choices stay when you switch.</li>
+    <li><b>Trim size:</b> choose the exact size you will pick in KDP (ten standard sizes from 5 x 8 to 8.5 x 11 in).</li>
+    <li><b>Chapter opener:</b> eight layouts. <b>Drop caps</b>, <b>justified text</b> and <b>chapters start on a right page</b> are toggles. Starting on a right page adds blank pages, which is the traditional book layout. Turn it off to save pages.</li>
+    <li><b>Accent color:</b> ten colors or any custom color. Black prints cheapest. If a color is too light for text, headings use a darker shade of it automatically.</li>
+    <li><b>Margins are automatic.</b> The inside (gutter) margin follows your page count: 24-150 pages 0.375 in, 151-300 0.5 in, 301-500 0.625 in, 501-700 0.75 in, 701-828 0.875 in. Outside, top and bottom are at least 0.5 in. Pages are mirrored for left and right. The studio re-checks the page count after typesetting and adjusts if you cross a limit. Always verify against current KDP guidelines.</li>
+  </ul>
+
+  <h3 id="hg-prev">5. Using the preview</h3>
+  <p>The preview is the real paginated book, not an approximation. <b>Page</b> shows one page, <b>Spread</b> shows facing pages like an open book, <b>All</b> shows every page small. Use the arrows or type a page number, and the zoom buttons or <b>Fit</b>. <b>Live</b> re-typesets a moment after you stop typing. For very long books switch Live off and press <b>Typeset now</b> when you want an update.</p>
+
+  <h3 id="hg-new">Style studio and tools</h3>
+  <ul>
+    <li><b>13 font pairings</b> (Garamond, Baskerville, Merriweather, Source, Crimson, Bitter with Oswald, DM Serif, Spectral, Atkinson Hyperlegible, Courier Prime and more). Fonts download only when you pick them.</li>
+    <li><b>Components:</b> choose how section headings, callout boxes (boxed, soft tint, label tab, header band, minimal), quotes and tables look. Number your sections (3.2), add an &ldquo;In this chapter&rdquo; box under each chapter opener, use a small-caps lead-in, and pick a raised or boxed drop cap.</li>
+    <li><b>Page:</b> custom outside, top and bottom margins, four running-head styles, four page-number styles and four title-page designs (classic, left with bar, framed, color band).</li>
+    <li><b>Front and back matter:</b> half-title page, contents with sections, a &ldquo;thank you, please review&rdquo; page, up to 10 blank notes pages (ruled, dotted or grid) and an option to end on an even page count.</li>
+    <li><b>My styles:</b> save your whole look under a name and apply it to any book later (kept in this browser).</li>
+    <li><b>Navigator:</b> the button above the preview opens page thumbnails and a clickable outline of parts, chapters and sections with their page numbers.</li>
+    <li><b>Spread view</b> shows facing pages with a gutter shadow and a page-turn animation. The <b>stage</b> menu changes the backdrop (warm, slate, night, light).</li>
+    <li><b>Insights tab:</b> word counts, reading time, reading ease and grade level, a chapter-length chart, and <b>print checks</b> on the real pages: page count range, contents numbers, pictures under 150 DPI, half-empty pages, stranded headings, blank pages and font loading.</li>
+    <li><b>Editor tools:</b> a formatting bar (bold, italic, headings, lists, checklist, quote, link) and Find and replace above the manuscript. <b>Smart quotes and dashes</b> are applied to the book without changing your text.</li>
+    <li><b>Command palette:</b> press <kbd>Ctrl/Cmd+K</kbd>, type a few letters and press Enter to change a preset, a font, an option, jump to a chapter, switch view or export.</li>
+  </ul>
+
+  <h3 id="hg-export">6. Exporting</h3>
+  <p><b>Print PDF (Exact Print).</b> Click it and a new tab opens with the paginated book. Wait for "pages ready", then press <b>Print / Save as PDF</b> and set:</p>
+  <ul><li>Destination: <b>Save as PDF</b></li><li>Margins: <b>None</b> (the margins are already inside the pages)</li><li>Background graphics: <b>On</b></li><li>Headers and footers: off, Scale: 100</li></ul>
+  <p>Use Chrome or Edge for the exact trim size. Allow pop-ups if the tab does not open. Upload the saved PDF to KDP as your manuscript.</p>
+  <p><b>EPUB 3.</b> A reflowable ebook for Kindle and other readers. It has no fixed page numbers or running headers, which is normal for ebooks. Run the free EPUBCheck tool before submitting to a store.</p>
+  <p><b>Cleaned markdown</b> tidies spacing and closes open callouts. <b>Front matter pack</b> is a text file with all your front and back matter plus print specs, handy for your KDP listing. <b>Save project</b> keeps everything (text, settings, images) in one .json file. <b>Load project</b> restores it. The browser also autosaves in the background.</p>
+
+  <h3 id="hg-ai">7. Getting the AI to write in this format</h3>
+  <p>Paste this at the start of your AI chat, then ask it to write your guide:</p>
+  <pre>Write the book in Markdown. Use "## " for each chapter and "### " for sections.
+Use these boxes where useful, each closed with a line of three colons:
+:::checklist Title, :::example Title, :::mistake Title, :::tip Title, :::note Title, :::worksheet Title
+Write checklist items as "- [ ] item". Put "Table: caption" above every table.
+Do not use HTML.</pre>
+
+  <h3 id="hg-fix">8. Troubleshooting</h3>
+  <ul>
+    <li><b>Preview says libraries did not load:</b> you are offline or a script is blocked. Reconnect and reload.</li>
+    <li><b>A callout shows as plain text:</b> the type is misspelled or the closing <code>:::</code> line is missing.</li>
+    <li><b>Table caption missing:</b> leave a blank line between the <code>Table:</code> line and the table.</li>
+    <li><b>Image shows [missing image]:</b> the id in <code>img:...</code> does not match an uploaded image. Check the list under the text box.</li>
+    <li><b>Too many blank pages:</b> turn off "Chapters start on a right page".</li>
+    <li><b>Print tab does not open:</b> allow pop-ups for this page.</li>
+    <li><b>PDF page size is wrong:</b> use Chrome or Edge and set Margins to None.</li>
+    <li><b>Autosave unavailable:</b> your browser blocks storage. Use <b>Save project</b> regularly.</li>
+  </ul>
+
+  <h3 id="hg-keys">9. Keyboard shortcuts</h3>
+  <p><kbd>Ctrl/Cmd+Z</kbd> undo, <kbd>Ctrl/Cmd+Shift+Z</kbd> redo, <kbd>Ctrl/Cmd+S</kbd> save project, <kbd>Alt+Left/Right</kbd> previous/next page, <kbd>Alt+1</kbd> to <kbd>Alt+5</kbd> switch panels, <kbd>Ctrl/Cmd+K</kbd> command palette, <kbd>Alt+P</kbd> Exact Print, <kbd>Alt+E</kbd> EPUB, <kbd>Alt+R</kbd> typeset now, <kbd>F1</kbd> this guide, <kbd>Esc</kbd> close.</p>
+
+  <h3>Your responsibility</h3>
+  <p>You are responsible for the factual accuracy and the safety review of your book. This tool typesets text; it does not check it. Verify every number, instruction and warning against authoritative sources before you publish.</p>
+  <p><button class="btn pri" id="modalClose" type="button">Close guide</button></p>
+ </div>
+</div>
+
+<script type="text/plain" id="sampleMd">
+# Part One: The Basics
+
+## Why Homes Drift Into Clutter
+
+Most homes do not become cluttered because the people in them are careless. They become cluttered because the home has no system for the things that keep arriving: mail, groceries, school papers, gifts, packaging, and the small purchases that seemed sensible at the time. Every object that comes through the door needs a destination. When it does not have one, it lands on the nearest flat surface and waits for a decision that never gets made.
+
+This chapter explains the three forces behind that drift and shows you how to spot them in your own rooms. Once you can name the forces, you can design around them instead of fighting them with willpower.
+
+### Force one: arrival without a destination
+
+Think about the last time you carried a bag of shopping or a stack of mail into the house. Where did it go first? For most people the answer is the counter, the table, or the chair by the door. These are landing spots, and every home has them whether or not anyone planned them.
+
+A landing spot is not a problem by itself. The problem starts when it is also the only place something can go. If the counter is the only home for the mail, the counter will always be covered in mail.
+
+:::note Why surfaces matter
+A flat surface at hip height is the most convenient place in a room to put something down, so it becomes the default. Design the default on purpose and you remove most of the daily decisions.
+:::
+
+### Force two: decisions that are too big
+
+"Where should this go?" sounds like one question, but it is really four: Do I need it? Do I use it often? Where would I look for it? Is there room? When all four need answering at once, the item waits. Breaking the decision into smaller steps is the first real skill of staying organized, and it is the reason the method in this book asks you to sort before you store.
+
+### Force three: no limit
+
+A shelf with no edge fills until it overflows. A drawer without a boundary becomes a pile. Containers are not decoration; they are the edge that tells you when a category is full and something has to leave before something new can enter.
+
+:::mistake Buying storage before sorting
+Bins bought first and sorted later simply give clutter a tidier outfit. Sort what you own into categories, measure the space, and only then choose containers that fit the categories you actually have.
+:::
+
+Here is a short checklist you can run in any room to see which of the three forces is at work.
+
+:::checklist Room diagnosis
+- [ ] Is there a flat surface that holds more than five unrelated items?
+- [ ] Can you name a home for the three things you set down most often?
+- [ ] Does every shelf and drawer have a visible limit?
+- [ ] Could a guest put away a clean dish without asking you?
+:::
+
+If you ticked two or more boxes, the next chapter is for you. It gives every object in the house one of four possible homes, and it keeps the number of decisions you make each day close to zero.
+
+## The Four-Zone Setup
+
+The idea behind the four-zone setup is simple. Instead of asking where each individual object belongs, you ask which zone it belongs to. There are only four zones, so there are only four answers, and the answers are the same in every house.
+
+The figure below shows how the zones relate to each other. The closer a zone is to your daily path, the smaller it should be and the more often it gets reset.
+
+![The four zones, ordered from closest to your daily path to furthest away.](img:zones)
+
+### The four zones
+
+The **landing zone** is where things arrive: keys, bags, post, shoes, and anything you are carrying when you walk in. The **daily zone** holds what you use every day, from dishes to the remote control. The **backup zone** holds what you use monthly or occasionally, such as spare linens and the second set of tools. The **seasonal zone** holds what you need only at certain times of year, along with the things you keep for sentimental reasons.
+
+Table: The four zones at a glance
+
+| Zone | What lives there | Reset rhythm | Size rule |
+|---|---|---|---|
+| Landing | Keys, bags, post, shoes | Every evening | One basket or tray per person |
+| Daily | Dishes, clothes in rotation, tools used weekly | Every week | Fits on shelves at arm height |
+| Backup | Spare linens, occasional tools, guest items | Every quarter | One shelf or bin per category |
+| Seasonal | Holiday items, off-season clothes, keepsakes | Twice a year | Labeled boxes, one per season |
+
+---
+
+### How the sizes work
+
+Each zone has a size rule, and the rule is the limit that Force three says you need. When the landing basket is full, you do not buy a bigger basket. You empty the basket. When the backup shelf is full, something leaves the house before something new arrives.
+
+:::example A family of four at the front door
+The Rivera family had a bench at the front door that held, on a typical day, eleven coats, six bags, and a stack of unopened letters. They gave each person one basket for the landing zone and moved the coats to hooks one step further in. The bench is now empty by eight each evening because the baskets are emptied before dinner.
+:::
+
+:::tip Label with the words you would say
+Write the label you would use if you were asking someone else to find the item. "Batteries and chargers" works better than "Electronics" because it matches how you will actually look for the thing.
+:::
+
+Before you move on, run through this setup list once, with a pen in your hand.
+
+:::checklist Zone setup list
+- [ ] Choose the spot for each person's landing basket
+- [ ] Clear one daily-zone shelf and test how it feels for a week
+- [ ] Measure the backup shelves and write the sizes on a sticky note
+- [ ] Pick one wall or closet as the seasonal zone and label the boxes
+:::
+
+## The Weekly Reset
+
+A system that works only when you feel motivated will fail within a month. The weekly reset is the part of the method that keeps working when you do not. It takes about twenty minutes, it happens at the same time every week, and it follows the same steps in the same order.
+
+The routine has one rule: you are not allowed to start anything new. A reset puts things back where they belong. It is not the time to reorganize the garage or decide what to do about the boxes in the loft.
+
+1. Empty the landing baskets and sort the contents into the correct zones.
+2. Clear the flat surfaces in the main rooms, one room at a time.
+3. Return anything from the daily zone that has wandered into another room.
+4. Check the backup shelf you are due to review this quarter.
+5. Put one item in the donation bag, even if the bag is almost empty.
+6. Write down the one thing that kept getting in the way this week.
+
+Table: A sample weekly schedule
+
+| Day | Focus | Time |
+|---|---|---|
+| Sunday | Landing baskets and entry | 10 minutes |
+| Sunday | Kitchen and living room surfaces | 10 minutes |
+| Quarterly | One backup shelf | 30 minutes |
+
+:::worksheet Your first reset plan
+Pick a day and a start time that you can protect.
+Which room will you start with?
+What is the one item you will put in the donation bag?
+:::
+
+:::mistake Letting the reset grow
+When a twenty-minute reset turns into a two-hour project, it stops happening. If you find yourself starting a bigger job, write it on a list and finish the reset first. The bigger job gets its own slot on another day.
+:::
+
+By now you have the whole method: three forces to watch for, four zones to sort into, and one short routine to keep it all in place. Start with the landing zone this week. It is the smallest change, and it is the one you will notice every single day.
+</script>
+<script type="text/plain" id="sampleAbout">Alex Morgan writes practical guides about home routines. This sample text is original filler written for the typesetting studio and can be replaced with your own.</script>
+
+<script>window.PagedConfig={auto:false};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+<script src="https://unpkg.com/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ================= CONFIG ================= */
+/* Add the other bonuses here later as {label:'Access Web-App #2',url:'https://...'}. current:true marks this app. */
+var APP_LINKS=[
+  {label:'Web-App #1 (current app)',url:'',current:true},
+  {label:'Web-App #2',url:'https://emanuelemaugeri93-creator.github.io/bonus-affiliate/practical-diagram-studio.html'},
+  {label:'Web-App #3',url:'https://emanuelemaugeri93-creator.github.io/bonus-affiliate/claim-review.html'}
+];
+var STORE_KEY='gts.project.v1';
+var CALLOUTS={checklist:'Checklist',example:'Example',mistake:'Mistake',tip:'Tip',note:'Note',worksheet:'Worksheet'};
+var UNNUM=/^(introduction|preface|foreword|prologue|conclusion|afterword|epilogue|appendix|glossary|resources|acknowledg|about the|index|further reading)/i;
+var LIBS_OK=(typeof marked!=='undefined')&&(typeof DOMPurify!=='undefined')&&(typeof Paged!=='undefined');
+var ZIP_OK=(typeof JSZip!=='undefined');
+
+/* ---- colour helpers ---- */
+function hexOk(c){return /^#[0-9A-Fa-f]{6}$/.test(String(c||''));}
+function hexRgb(c){c=c.replace('#','');return [parseInt(c.substr(0,2),16),parseInt(c.substr(2,2),16),parseInt(c.substr(4,2),16)];}
+function rgbHex(r,g,b){function t(n){n=Math.max(0,Math.min(255,Math.round(n)));return (n<16?'0':'')+n.toString(16);}return '#'+t(r)+t(g)+t(b);}
+function lumOf(c){var a=hexRgb(c).map(function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];}
+function contrastOf(a,b){var la=lumOf(a),lb=lumOf(b),hi=Math.max(la,lb),lo=Math.min(la,lb);return (hi+0.05)/(lo+0.05);}
+function mixHex(a,b,t){var x=hexRgb(a),y=hexRgb(b);return rgbHex(x[0]+(y[0]-x[0])*t,x[1]+(y[1]-x[1])*t,x[2]+(y[2]-x[2])*t);}
+function inkOn(c,bg,min){var i=0;while(contrastOf(c,bg)<min&&i<60){c=mixHex(c,'#000000',0.07);i++;}return c;}
+function textOn(bg){return contrastOf(bg,'#ffffff')>=contrastOf(bg,'#111111')?'#ffffff':'#111111';}
+
+/* ---- font pairings (Google Fonts, loaded only when chosen) ---- */
+var FONTS={
+ lora:{name:'Lora + Playfair Display',body:"'Lora',Georgia,'Times New Roman',serif",head:"'Playfair Display',Georgia,serif",fam:['Lora','Playfair Display'],gf:['Lora:ital,wght@0,400;0,600;0,700;1,400;1,600','Playfair+Display:wght@400;600;700;900']},
+ inter:{name:'Inter (clean sans)',body:"'Inter','Helvetica Neue',Arial,sans-serif",head:"'Inter','Helvetica Neue',Arial,sans-serif",fam:['Inter'],gf:['Inter:wght@400;500;600;700']},
+ garamond:{name:'EB Garamond + Cormorant',body:"'EB Garamond',Garamond,Georgia,serif",head:"'Cormorant Garamond','EB Garamond',Georgia,serif",fam:['EB Garamond','Cormorant Garamond'],gf:['EB+Garamond:ital,wght@0,400;0,500;0,700;1,400','Cormorant+Garamond:wght@500;600;700']},
+ baskerville:{name:'Libre Baskerville + Raleway',body:"'Libre Baskerville',Georgia,serif",head:"'Raleway','Helvetica Neue',Arial,sans-serif",fam:['Libre Baskerville','Raleway'],gf:['Libre+Baskerville:ital,wght@0,400;0,700;1,400','Raleway:wght@500;600;700;800']},
+ merri:{name:'Merriweather + Montserrat',body:"'Merriweather',Georgia,serif",head:"'Montserrat','Helvetica Neue',Arial,sans-serif",fam:['Merriweather','Montserrat'],gf:['Merriweather:ital,wght@0,400;0,700;1,400','Montserrat:wght@500;600;700;800']},
+ source:{name:'Source Serif + Source Sans',body:"'Source Serif 4',Georgia,serif",head:"'Source Sans 3','Helvetica Neue',Arial,sans-serif",fam:['Source Serif 4','Source Sans 3'],gf:['Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400','Source+Sans+3:wght@500;600;700']},
+ crimson:{name:'Crimson Pro + Work Sans',body:"'Crimson Pro',Georgia,serif",head:"'Work Sans','Helvetica Neue',Arial,sans-serif",fam:['Crimson Pro','Work Sans'],gf:['Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400','Work+Sans:wght@500;600;700']},
+ slab:{name:'Bitter + Oswald (handbook)',body:"'Bitter',Georgia,serif",head:"'Oswald','Arial Narrow',Arial,sans-serif",fam:['Bitter','Oswald'],gf:['Bitter:ital,wght@0,400;0,600;0,700;1,400','Oswald:wght@500;600;700']},
+ dmserif:{name:'DM Sans + DM Serif Display',body:"'DM Sans','Helvetica Neue',Arial,sans-serif",head:"'DM Serif Display',Georgia,serif",fam:['DM Sans','DM Serif Display'],gf:['DM+Sans:ital,wght@0,400;0,500;0,700;1,400','DM+Serif+Display']},
+ spectral:{name:'Spectral + Fira Sans',body:"'Spectral',Georgia,serif",head:"'Fira Sans','Helvetica Neue',Arial,sans-serif",fam:['Spectral','Fira Sans'],gf:['Spectral:ital,wght@0,400;0,600;0,700;1,400','Fira+Sans:wght@500;600;700']},
+ atkinson:{name:'Atkinson Hyperlegible (easy reading)',body:"'Atkinson Hyperlegible','Helvetica Neue',Arial,sans-serif",head:"'Atkinson Hyperlegible','Helvetica Neue',Arial,sans-serif",fam:['Atkinson Hyperlegible'],gf:['Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400']},
+ typewriter:{name:'Courier Prime + Special Elite (vintage)',body:"'Courier Prime','Courier New',monospace",head:"'Special Elite','Courier New',monospace",fam:['Courier Prime','Special Elite'],gf:['Courier+Prime:ital,wght@0,400;0,700;1,400','Special+Elite']},
+ georgia:{name:'Georgia + Helvetica (no download)',body:"Georgia,'Times New Roman',serif",head:"'Helvetica Neue',Helvetica,Arial,sans-serif",fam:[],gf:[]}
+};
+var fontLinked={};
+function fontHref(key){var f=FONTS[key];return f&&f.gf.length?'https://fonts.googleapis.com/css2?family='+f.gf.join('&family=')+'&display=swap':'';}
+function ensureFonts(key){
+  var h=fontHref(key);if(!h||fontLinked[key])return;fontLinked[key]=1;
+  if(document.querySelector('link[href="'+h+'"]'))return;
+  var l=document.createElement('link');l.rel='stylesheet';l.href=h;document.head.appendChild(l);
+}
+
+/* ---- presets: each one is a complete look ---- */
+var PRESETS={
+ classic:{name:'Classic Serif',font:'lora',fs:11.5,lh:1.5,opener:'classic',orn:'diamond',drop:'classic',just:true,para:'indent',accent:'#111111',outside:0.6,top:0.75,bottom:0.8,h3:'plain',callout:'boxed',head:'caps',folio:'center',title:'classic',quote:'rule',table:'lined',secNum:false,leadin:false,minitoc:false},
+ modern:{name:'Clean Modern',font:'inter',fs:10.5,lh:1.55,opener:'block',orn:'rule',drop:'none',just:false,para:'space',accent:'#1F3A5F',outside:0.6,top:0.75,bottom:0.8,h3:'bar',callout:'soft',head:'caps',folio:'center',title:'left',quote:'mark',table:'striped',secNum:false,leadin:false,minitoc:false},
+ farmhouse:{name:'Farmhouse',font:'lora',fs:12,lh:1.6,opener:'band',orn:'wheat',drop:'classic',just:false,para:'indent',accent:'#6B4A2B',outside:0.65,top:0.8,bottom:0.85,h3:'rule',callout:'boxed',head:'italic',folio:'flank',title:'framed',quote:'rule',table:'lined',secNum:false,leadin:false,minitoc:false},
+ compact:{name:'Compact Reference',font:'inter',fs:10,lh:1.4,opener:'minimal',orn:'rule',drop:'none',just:false,para:'space',accent:'#111111',outside:0.5,top:0.6,bottom:0.65,h3:'plain',callout:'minimal',head:'rule',folio:'outside',title:'left',quote:'rule',table:'boxed',secNum:true,leadin:false,minitoc:false},
+ large:{name:'Large Print',font:'lora',fs:14,lh:1.6,opener:'classic',orn:'diamond',drop:'none',just:false,para:'space',accent:'#111111',outside:0.75,top:0.85,bottom:0.9,h3:'plain',callout:'boxed',head:'caps',folio:'center',title:'classic',quote:'rule',table:'lined',secNum:false,leadin:false,minitoc:false},
+ almanac:{name:'Heritage Almanac',font:'garamond',fs:12,lh:1.5,opener:'rule2',orn:'flourish',drop:'raised',just:true,para:'indent',accent:'#7A1F2B',outside:0.65,top:0.8,bottom:0.85,h3:'caps',callout:'tab',head:'italic',folio:'flank',title:'framed',quote:'center',table:'minimal',secNum:false,leadin:true,minitoc:false},
+ editorial:{name:'Bold Editorial',font:'dmserif',fs:10.5,lh:1.55,opener:'inverse',orn:'dots',drop:'box',just:false,para:'space',accent:'#B45309',outside:0.6,top:0.75,bottom:0.8,h3:'bar',callout:'ink',head:'rule',folio:'outside',title:'band',quote:'box',table:'striped',secNum:false,leadin:false,minitoc:false},
+ field:{name:'Field Manual',font:'slab',fs:10.5,lh:1.5,opener:'side',orn:'rule',drop:'none',just:false,para:'space',accent:'#2D5A3D',outside:0.55,top:0.7,bottom:0.75,h3:'rule',callout:'ink',head:'caps',folio:'outside',title:'left',quote:'rule',table:'boxed',secNum:true,leadin:false,minitoc:true},
+ swiss:{name:'Swiss Minimal',font:'inter',fs:10.5,lh:1.6,opener:'minimal',orn:'none',drop:'none',just:false,para:'space',accent:'#111111',outside:0.65,top:0.8,bottom:0.85,h3:'plain',callout:'minimal',head:'rule',folio:'outside',title:'left',quote:'center',table:'minimal',secNum:false,leadin:false,minitoc:false},
+ journal:{name:'Vintage Journal',font:'typewriter',fs:11,lh:1.55,opener:'circle',orn:'dots',drop:'none',just:false,para:'space',accent:'#7A4B22',outside:0.65,top:0.8,bottom:0.85,h3:'rule',callout:'soft',head:'italic',folio:'flank',title:'classic',quote:'mark',table:'lined',secNum:false,leadin:false,minitoc:false},
+ workbook:{name:'Workbook',font:'source',fs:11,lh:1.55,opener:'block',orn:'rule',drop:'none',just:false,para:'space',accent:'#1F3A5F',outside:0.6,top:0.75,bottom:0.8,h3:'bar',callout:'tab',head:'caps',folio:'center',title:'band',quote:'box',table:'striped',secNum:true,leadin:false,minitoc:true},
+ literary:{name:'Literary',font:'crimson',fs:12,lh:1.5,opener:'classic',orn:'star',drop:'raised',just:true,para:'indent',accent:'#111111',outside:0.65,top:0.8,bottom:0.85,h3:'caps',callout:'minimal',head:'italic',folio:'center',title:'classic',quote:'center',table:'minimal',secNum:false,leadin:true,minitoc:false},
+ coastal:{name:'Coastal Calm',font:'spectral',fs:11.5,lh:1.55,opener:'circle',orn:'leaf',drop:'classic',just:false,para:'indent',accent:'#0F5F73',outside:0.6,top:0.75,bottom:0.8,h3:'rule',callout:'soft',head:'caps',folio:'center',title:'framed',quote:'mark',table:'striped',secNum:false,leadin:false,minitoc:false}
+};
+var TRIMS={'5x8':{w:5,h:8},'5.25x8':{w:5.25,h:8},'5.5x8.5':{w:5.5,h:8.5},'6x9':{w:6,h:9},'6.14x9.21':{w:6.14,h:9.21},'7x10':{w:7,h:10},'7.5x9.25':{w:7.5,h:9.25},'8x10':{w:8,h:10},'8.5x8.5':{w:8.5,h:8.5},'8.5x11':{w:8.5,h:11}};
+var ACCENTS=[['#111111','Black (cheapest print)'],['#D62828','Red'],['#1F3A5F','Navy'],['#2D5A3D','Forest'],['#6B4A2B','Brown'],['#7A1F2B','Burgundy'],['#0F5F73','Teal'],['#6B3FA0','Plum'],['#B45309','Amber'],['#334155','Slate']];
+var OPENERS=[['classic','Centered classic'],['block','Big numeral'],['band','Ruled band'],['minimal','Minimal'],['inverse','Solid band (reversed)'],['circle','Numeral in a ring'],['rule2','Double rule, small caps'],['side','Numeral beside title']];
+var ORNS=[['diamond','Diamonds'],['rule','Rule and dot'],['wheat','Wheat sprig'],['flourish','Flourish'],['star','Star'],['leaf','Leaves'],['dots','Three dots'],['compass','Compass'],['none','None']];
+function selOpts(o){return o;}
+var FONT_OPTS=Object.keys(FONTS).map(function(k){return [k,FONTS[k].name];});
+var TRIM_OPTS=Object.keys(TRIMS).map(function(k){return [k,TRIMS[k].w+' x '+TRIMS[k].h+' in'];});
+var PRESET_OPTS=Object.keys(PRESETS).map(function(k){return [k,PRESETS[k].name];});
+
+/* every Style control is described once here; the form, the sanitizer and the project file all use it */
+var SCHEMA=[
+ {g:'Typography',open:true},
+ {id:'s_preset',key:'preset',label:'Style preset',type:'sel',opts:PRESET_OPTS,special:'preset'},
+ {id:'s_font',key:'font',label:'Font pairing',type:'sel',opts:FONT_OPTS},
+ {id:'s_fs',key:'fontSize',label:'Font size (pt)',type:'num',min:9,max:16,step:0.5,half:1},
+ {id:'s_lh',key:'lineHeight',label:'Line height',type:'num',min:1.2,max:2,step:0.05,half:1},
+ {id:'s_para',key:'para',label:'Paragraphs',type:'sel',opts:[['indent','Indented first line'],['space','Space between paragraphs']]},
+ {id:'s_just',key:'just',label:'Justified text',type:'chk'},
+ {id:'s_hyph',key:'hyph',label:'Hyphenate words',type:'chk'},
+ {id:'s_drop',key:'drop',label:'Drop caps',type:'chk'},
+ {id:'s_dropst',key:'dropStyle',label:'Drop cap style',type:'sel',opts:[['classic','Dropped three lines'],['raised','Raised initial'],['box','Boxed initial']]},
+ {id:'s_lead',key:'leadin',label:'Small-caps lead-in at chapter start',type:'chk'},
+ {id:'s_smart',key:'smart',label:'Smart quotes and dashes',type:'chk'},
+ {g:'Chapters',open:true},
+ {id:'s_opener',key:'opener',label:'Chapter opener',type:'sel',opts:OPENERS},
+ {id:'s_orn',key:'ornament',label:'Ornament',type:'sel',opts:ORNS},
+ {id:'s_acc',key:'accent',label:'Accent color',type:'acc'},
+ {id:'s_secnum',key:'secNum',label:'Number the sections (3.2)',type:'chk'},
+ {id:'s_mini',key:'minitoc',label:'"In this chapter" box under the opener',type:'chk'},
+ {id:'s_right',key:'right',label:'Chapters start on a right page',type:'chk'},
+ {g:'Components',open:false},
+ {id:'s_h3',key:'h3',label:'Section headings',type:'sel',opts:[['plain','Plain, accent color'],['rule','Underline rule'],['bar','Side bar'],['caps','Small caps']]},
+ {id:'s_callout',key:'callout',label:'Callout boxes',type:'sel',opts:[['boxed','Boxed (one look per type)'],['soft','Soft tint'],['tab','Label tab'],['ink','Header band'],['minimal','Minimal rules']]},
+ {id:'s_quote',key:'quote',label:'Quotes',type:'sel',opts:[['rule','Side rule'],['mark','Large quote mark'],['center','Centered'],['box','Tinted box']]},
+ {id:'s_table',key:'table',label:'Tables',type:'sel',opts:[['lined','Lined'],['striped','Striped with colored header'],['boxed','Boxed grid'],['minimal','Minimal rules']]},
+ {g:'Page',open:false},
+ {id:'s_trim',key:'trim',label:'Trim size',type:'sel',opts:TRIM_OPTS},
+ {id:'s_mout',key:'mOut',label:'Outside margin (in, 0 = preset)',type:'num',min:0,max:1.5,step:0.05,half:1},
+ {id:'s_mtop',key:'mTop',label:'Top margin (in, 0 = preset)',type:'num',min:0,max:1.5,step:0.05,half:1},
+ {id:'s_mbot',key:'mBot',label:'Bottom margin (in, 0 = preset)',type:'num',min:0,max:1.5,step:0.05,half:1},
+ {id:'s_head',key:'head',label:'Running head',type:'sel',opts:[['caps','Small caps, spaced'],['italic','Italic'],['rule','Small caps with rule'],['none','None']]},
+ {id:'s_folio',key:'folio',label:'Page numbers',type:'sel',opts:[['center','Bottom center'],['flank','Centered with dashes'],['outside','Bottom outside corner'],['none','None']]},
+ {id:'s_title',key:'title',label:'Title page',type:'sel',opts:[['classic','Centered classic'],['left','Left aligned with bar'],['framed','Framed'],['band','Color band']]},
+ {g:'Front and back matter',open:false},
+ {id:'s_half',key:'halfTitle',label:'Half-title page before the title page',type:'chk'},
+ {id:'s_tocd',key:'tocDepth',label:'Contents depth',type:'sel',opts:[['1','Chapters'],['2','Chapters and sections']]},
+ {id:'s_fig',key:'figIndex',label:'Index of figures and tables',type:'chk'},
+ {id:'s_review',key:'review',label:'"Thank you / please review" page',type:'chk'},
+ {id:'s_notes',key:'notes',label:'Blank notes pages at the end (0 to 10)',type:'num',min:0,max:10,step:1,half:1,int:1},
+ {id:'s_notest',key:'noteStyle',label:'Notes paper',type:'sel',opts:[['ruled','Ruled'],['dotted','Dotted'],['grid','Grid']]},
+ {id:'s_pad',key:'padEven',label:'End on an even page count',type:'chk'}
+];
+function presetSt(key){
+  var P=PRESETS[key]||PRESETS.classic;
+  return {preset:PRESETS[key]?key:'classic',trim:'6x9',font:P.font,fontSize:P.fs,lineHeight:P.lh,para:P.para,just:P.just,hyph:true,drop:P.drop!=='none',dropStyle:P.drop==='none'?'classic':P.drop,leadin:!!P.leadin,smart:true,
+    opener:P.opener,ornament:P.orn,accent:P.accent,secNum:!!P.secNum,minitoc:!!P.minitoc,right:true,h3:P.h3,callout:P.callout,quote:P.quote,table:P.table,
+    mOut:0,mTop:0,mBot:0,head:P.head,folio:P.folio,title:P.title,halfTitle:false,tocDepth:'1',figIndex:true,review:false,notes:0,noteStyle:'ruled',padEven:false};
+}
+
+var DEFAULT_COPY='Copyright © {year} {author}. All rights reserved.\n\nNo part of this book may be reproduced, stored in a retrieval system, or transmitted in any form or by any means, electronic, mechanical, photocopying, recording, or otherwise, without the prior written permission of the publisher, except for brief quotations used in reviews.\n\n{edition}\n\nPublished by {publisher}.';
+var DEFAULT_DISC='This book is provided for general information and educational purposes only and is not a substitute for professional advice. The author and publisher make no warranties about the completeness or accuracy of the contents and accept no liability for any loss or damage arising from the use of the information in this book. Readers are responsible for verifying facts and for following local laws, safety rules, and the guidance of qualified professionals before acting.';
+
+/* ================= HELPERS ================= */
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function rep(t,key,val){return String(t).split('{'+key+'}').join(val);}
+function clamp(v,a,b){v=parseFloat(v);if(isNaN(v))v=a;return Math.min(b,Math.max(a,v));}
+function num(n){return +(+n).toFixed(4);}
+var imul=Math.imul||function(a,b){var ah=(a>>>16)&0xffff,al=a&0xffff,bh=(b>>>16)&0xffff,bl=b&0xffff;return((al*bl)+(((ah*bl+al*bh)<<16)>>>0)|0);};
+function mulberry32(a){return function(){a|=0;a=(a+0x6D2B79F5)|0;var t=imul(a^(a>>>15),1|a);t=(t+imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function hashStr(s){var h=5381,i;for(i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))|0;}return h>>>0;}
+function slug(s){return String(s||'book').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'book';}
+function downloadBlob(name,blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);document.body.removeChild(a);},1500);}
+function validImg(u){return /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,[A-Za-z0-9+\/=]+$/.test(String(u));}
+function textToParas(t){var parts=String(t||'').replace(/\r\n?/g,'\n').split(/\n\s*\n/),o=[],i;for(i=0;i<parts.length;i++){if(parts[i].replace(/\s/g,'')==='')continue;o.push('<p>'+esc(parts[i].replace(/^\s+|\s+$/g,'')).split('\n').join('<br>')+'</p>');}return o.join('');}
+function extOf(u){var m=/^data:image\/([a-z+]+);/.exec(u)||[];var t=m[1]||'png';return t==='jpeg'?'jpg':(t==='svg+xml'?'svg':t);}
+function mimeOf(u){var m=/^data:(image\/[a-z+]+);/.exec(u);return m?m[1]:'image/png';}
+
+/* ================= STATE ================= */
+var S={md:'',images:{},meta:{},st:{}};
+var DEFAULT_REVIEW='If this book helped you, please consider leaving a short, honest review where you bought it. Reviews help other readers decide, and they help small publishers like us more than you might think.\n\nThank you for reading.';
+function defaultState(){
+  var smp=$('sampleMd').textContent.replace(/^\n/,'');
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" font-family="Georgia,serif"><rect width="600" height="300" fill="#ffffff"/><g fill="none" stroke="#111" stroke-width="2"><rect x="20" y="40" width="130" height="220" rx="8"/><rect x="170" y="70" width="130" height="160" rx="8"/><rect x="320" y="100" width="130" height="100" rx="8"/><rect x="470" y="125" width="110" height="50" rx="8"/></g><g fill="#111" font-size="17" text-anchor="middle"><text x="85" y="75" font-weight="bold">Landing</text><text x="235" y="105" font-weight="bold">Daily</text><text x="385" y="132" font-weight="bold">Backup</text><text x="525" y="155" font-weight="bold">Seasonal</text></g><g fill="#555" font-size="13" text-anchor="middle"><text x="85" y="150">Every evening</text><text x="235" y="150">Every week</text><text x="385" y="165">Every quarter</text><text x="525" y="172">Twice a year</text></g><path d="M150 150h20M300 150h20M450 150h20" stroke="#D62828" stroke-width="3"/></svg>';
+  return {
+    md:smp,
+    images:{zones:'data:image/svg+xml;base64,'+btoa(svg)},
+    meta:{title:'The Calm Home Method',subtitle:'A practical guide to organizing a home that stays organized',author:'Alex Morgan',publisher:'Maple Street Press',year:String(new Date().getFullYear()),edition:'First edition',copy:DEFAULT_COPY,disc:DEFAULT_DISC,ded:'For everyone who has ever cleared a table and watched it fill up again.',about:$('sampleAbout').textContent,also:'The Calm Kitchen Method\nThe Calm Paperwork Method',review:DEFAULT_REVIEW},
+    st:presetSt('classic')
+  };
+}
+var KEEP_ON_PRESET=['trim','right','figIndex','halfTitle','tocDepth','review','notes','noteStyle','padEven','smart','hyph'];
+function applyPreset(key){
+  var n=presetSt(key),st=S.st,i;
+  for(i=0;i<KEEP_ON_PRESET.length;i++)n[KEEP_ON_PRESET[i]]=st[KEEP_ON_PRESET[i]];
+  S.st=n;
+}
+function schemaField(key){var i;for(i=0;i<SCHEMA.length;i++){if(SCHEMA[i].key===key)return SCHEMA[i];}return null;}
+function sanitizeSt(o,base){
+  var r=base,i,f,v,j,ok;
+  if(!o||typeof o!=='object')return r;
+  if(PRESETS[o.preset])r.preset=o.preset;
+  for(i=0;i<SCHEMA.length;i++){
+    f=SCHEMA[i];if(!f.key||f.key==='preset')continue;
+    v=o[f.key];if(v===undefined||v===null)continue;
+    if(f.type==='chk')r[f.key]=!!v;
+    else if(f.type==='num'){var n=parseFloat(v);if(isFinite(n)){n=Math.max(f.min,Math.min(f.max,n));r[f.key]=f.int?Math.round(n):n;}}
+    else if(f.type==='acc'){if(hexOk(v))r[f.key]=String(v);}
+    else if(f.type==='sel'){ok=false;for(j=0;j<f.opts.length;j++){if(f.opts[j][0]===String(v)){ok=true;break;}}if(ok)r[f.key]=String(v);}
+  }
+  return r;
+}
+function sanitizeState(o){
+  var d=defaultState(),r={md:d.md,images:{},meta:d.meta,st:d.st},k;
+  if(!o||typeof o!=='object')return d;
+  if(typeof o.md==='string')r.md=o.md;
+  if(o.images&&typeof o.images==='object'){for(k in o.images){if(Object.prototype.hasOwnProperty.call(o.images,k)&&/^[A-Za-z0-9_-]+$/.test(k)&&validImg(o.images[k]))r.images[k]=o.images[k];}}
+  if(o.meta&&typeof o.meta==='object'){for(k in d.meta){if(typeof o.meta[k]==='string')r.meta[k]=o.meta[k];}}
+  if(o.st&&typeof o.st==='object'){
+    var base=PRESETS[o.st.preset]?presetSt(o.st.preset):d.st;
+    r.st=sanitizeSt(o.st,base);
+  }
+  return r;
+}
+
+/* ================= MARGINS ================= */
+function gutterFor(n){
+  if(n<=150)return 0.375;if(n<=300)return 0.5;if(n<=500)return 0.625;if(n<=700)return 0.75;return 0.875;
+}
+function trimOf(k){return TRIMS[k]||TRIMS['6x9'];}
+function margins(pages){
+  var st=S.st,P=PRESETS[st.preset]||PRESETS.classic;
+  return {inside:gutterFor(pages),outside:Math.max(0.5,st.mOut>0?st.mOut:P.outside),top:Math.max(0.5,st.mTop>0?st.mTop:P.top),bottom:Math.max(0.5,st.mBot>0?st.mBot:P.bottom),pages:pages};
+}
+
+var lastPad=false;
+/* ================= ORNAMENTS (inline SVG) ================= */
+function ornamentSvg(kind,color,h){
+  h=h||12;var c=color||'#111';
+  var a='<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ornament" ';
+  if(kind==='none')return '';
+  if(kind==='star')return a+'viewBox="0 0 120 14" width="'+(h*10)+'" height="'+h+'"><path d="M4 7h42M74 7h42" stroke="'+c+'" stroke-width="1" fill="none"/><path d="M60 1l1.9 4 4.4.6-3.2 3.1.8 4.4L60 11l-3.9 2.1.8-4.4-3.2-3.1 4.4-.6z" fill="'+c+'"/></svg>';
+  if(kind==='leaf')return a+'viewBox="0 0 120 16" width="'+(h*8)+'" height="'+h+'"><path d="M6 8h38M76 8h38" stroke="'+c+'" stroke-width="1" fill="none"/><path d="M60 8c-5-7-13-7-17-3 4 4 12 4 17 3zM60 8c5-7 13-7 17-3-4 4-12 4-17 3z" fill="'+c+'"/></svg>';
+  if(kind==='dots')return a+'viewBox="0 0 60 10" width="'+(h*5)+'" height="'+h+'"><g fill="'+c+'"><circle cx="18" cy="5" r="2.2"/><circle cx="30" cy="5" r="2.2"/><circle cx="42" cy="5" r="2.2"/></g></svg>';
+  if(kind==='compass')return a+'viewBox="0 0 120 16" width="'+(h*8)+'" height="'+h+'"><path d="M4 8h44M72 8h44" stroke="'+c+'" stroke-width="1" fill="none"/><circle cx="60" cy="8" r="5" fill="none" stroke="'+c+'" stroke-width="1.1"/><path d="M60 1v14M53 8h14" stroke="'+c+'" stroke-width="1" fill="none"/><path d="M60 3.5l1.6 4.5-1.6 4.5-1.6-4.5z" fill="'+c+'"/></svg>';
+  if(kind==='rule')return a+'viewBox="0 0 120 12" width="'+(h*10)+'" height="'+h+'"><path d="M4 6h46M70 6h46" stroke="'+c+'" stroke-width="1" fill="none"/><circle cx="60" cy="6" r="3" fill="'+c+'"/></svg>';
+  if(kind==='wheat')return a+'viewBox="0 0 120 20" width="'+(h*6)+'" height="'+h+'"><path d="M4 10h40M76 10h40" stroke="'+c+'" stroke-width="1" fill="none"/><path d="M60 18V4" stroke="'+c+'" stroke-width="1.2"/><g fill="'+c+'"><ellipse cx="56" cy="14" rx="2" ry="4" transform="rotate(-35 56 14)"/><ellipse cx="64" cy="14" rx="2" ry="4" transform="rotate(35 64 14)"/><ellipse cx="56" cy="9" rx="2" ry="4" transform="rotate(-35 56 9)"/><ellipse cx="64" cy="9" rx="2" ry="4" transform="rotate(35 64 9)"/><ellipse cx="60" cy="3" rx="1.8" ry="3.4"/></g></svg>';
+  if(kind==='flourish')return a+'viewBox="0 0 160 20" width="'+(h*8)+'" height="'+h+'"><path d="M80 10c-10-8-18 6-30 0s-20-6-40 0M80 10c10-8 18 6 30 0s20-6 40 0" stroke="'+c+'" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M80 5l4 5-4 5-4-5z" fill="'+c+'"/></svg>';
+  return a+'viewBox="0 0 120 12" width="'+(h*10)+'" height="'+h+'"><path d="M4 6h30M86 6h30" stroke="'+c+'" stroke-width="1" fill="none"/><g fill="'+c+'"><path d="M60 0l6 6-6 6-6-6z"/><path d="M42 3l3 3-3 3-3-3z"/><path d="M78 3l3 3-3 3-3-3z"/></g></svg>';
+}
+
+/* ================= MARKDOWN ================= */
+var RMODE='paged',USED_IMG={},CO_MODE=false;
+var R=null;
+function buildRenderer(){
+  if(!LIBS_OK)return;
+  R=new marked.Renderer();
+  R.html=function(h){return esc(h);};
+  R.link=function(href,title,text){
+    if(href&&/^(https?:|mailto:|#)/i.test(href))return '<a href="'+esc(href)+'">'+text+'</a>';
+    return text;
+  };
+  R.image=function(href,title,text){
+    var m=/^img:([A-Za-z0-9_-]+)$/.exec(href||''),id,src,u;
+    if(!m)return esc(text||'');
+    id=m[1];u=S.images[id];
+    if(!u||!validImg(u))return '<span class="bk-missing">[missing image: '+esc(id)+']</span>';
+    if(RMODE==='epub'){USED_IMG[id]=u;src='images/'+id+'.'+extOf(u);}else{src=u;}
+    return '<figure class="fig"><img src="'+src+'" alt="'+esc(text||'')+'"><figcaption>'+esc(text||'')+'</figcaption></figure>';
+  };
+  R.checkbox=function(c){return '<span class="cbx'+(c?' on':'')+'"></span> ';};
+  R.listitem=function(text,task){return '<li'+(task?' class="task"':'')+'>'+text+'</li>\n';};
+  R.heading=function(text,level){
+    if(CO_MODE)return '<p class="co-sub">'+text+'</p>';
+    var l=Math.min(4,Math.max(3,level));
+    return '<h'+l+' class="bk-h'+l+'">'+text+'</h'+l+'>\n';
+  };
+  R.table=function(header,body){return '<div class="tblw"><table><thead>'+header+'</thead><tbody>'+body+'</tbody></table></div>\n';};
+  R.hr=function(){return '<hr>\n';};
+}
+function mdToHtml(text){
+  var t=String(text).replace(/^(Table:[^\n]*)\n(?=\|)/gm,function(m0,g1){return g1+'\n\n';});
+  return marked.parse(t,{renderer:R,gfm:true,breaks:false,mangle:false,headerIds:false,smartypants:!!S.st.smart});
+}
+var CO_RE=/^:::\s*(checklist|example|mistake|tip|note|worksheet)\b[ \t]*(.*)$/i;
+function renderBlocks(lines,warn){
+  var out=[],buf=[],i=0,m,inner,type,title,j,inF=false;
+  function flush(){if(buf.length){var t=buf.join('\n');if(t.replace(/\s/g,'')!=='')out.push(mdToHtml(t));buf=[];}}
+  while(i<lines.length){
+    var ln=lines[i];
+    if(/^\s*(```|~~~)/.test(ln))inF=!inF;
+    m=!inF?CO_RE.exec(ln):null;
+    if(m){
+      flush();type=m[1].toLowerCase();title=m[2].replace(/\s+$/,'');inner=[];j=i+1;
+      while(j<lines.length&&!/^:::\s*$/.test(lines[j])){inner.push(lines[j]);j++;}
+      if(j>=lines.length&&warn)warn.push('Callout ":::'+type+'" was not closed with ":::" (closed automatically).');
+      CO_MODE=true;
+      var body=mdToHtml(inner.join('\n'));
+      CO_MODE=false;
+      out.push('<aside class="co co-'+type+'"><div class="co-h"><span class="co-lab">'+CALLOUTS[type]+'</span>'+(title?'<span class="co-t">'+esc(title)+'</span>':'')+'</div><div class="co-b">'+body+(type==='worksheet'?'<div class="ws-line"></div><div class="ws-line"></div><div class="ws-line"></div><div class="ws-line"></div>':'')+'</div></aside>');
+      i=j+1;continue;
+    }
+    buf.push(ln);i++;
+  }
+  flush();
+  return out.join('\n');
+}
+var PURIFY_CFG={FORBID_TAGS:['style','script','iframe','object','embed','form','input','textarea','button','link','meta','base'],FORBID_ATTR:['style','srcset','formaction']};
+function sanitize(html){return DOMPurify.sanitize(html,PURIFY_CFG);}
+
+function postDom(box,ch,mode){
+  var i,el,figs,tabs,p=ch.numbered?(ch.num+'.'):'',n=0;
+  ch.secs=[];
+  figs=box.querySelectorAll('figure.fig');
+  for(i=0;i<figs.length;i++){
+    el=figs[i];n++;
+    var cap=el.querySelector('figcaption'),txt=cap?cap.textContent:'';
+    var label='Figure '+p+n;
+    el.id='fig-'+ch.id+'-'+n;
+    if(cap)cap.innerHTML='<span class="lab">'+esc(label)+(txt?'.':'')+'</span>'+(txt?' '+esc(txt):'');
+    ch.figs.push({id:el.id,label:label,text:txt});
+  }
+  tabs=box.querySelectorAll('.tblw');n=0;
+  for(i=0;i<tabs.length;i++){
+    el=tabs[i];n++;
+    var prev=el.previousElementSibling,ct='';
+    if(prev&&prev.tagName==='P'&&/^Table:\s*/.test(prev.textContent)){ct=prev.textContent.replace(/^Table:\s*/,'');prev.parentNode.removeChild(prev);}
+    var lab='Table '+p+n;
+    el.id='tab-'+ch.id+'-'+n;
+    var capd=document.createElement('div');capd.className='tcap';
+    capd.innerHTML='<span class="lab">'+esc(lab)+(ct?'.':'')+'</span>'+(ct?' '+esc(ct):'');
+    el.insertBefore(capd,el.firstChild);
+    ch.tabs.push({id:el.id,label:lab,text:ct});
+  }
+  var h3s=box.querySelectorAll('h3.bk-h3');
+  for(i=0;i<h3s.length;i++){
+    var hh=h3s[i],nm=ch.numbered?(ch.num+'.'+(i+1)):'';
+    hh.id='sec-'+ch.id+'-'+(i+1);
+    ch.secs.push({id:hh.id,title:hh.textContent,num:S.st.secNum?nm:''});
+    if(S.st.secNum&&nm)hh.innerHTML='<span class="sn">'+nm+'</span>'+hh.innerHTML;
+  }
+  var hrs=box.querySelectorAll('hr');
+  for(i=hrs.length-1;i>=0;i--){
+    if(mode==='epub'){hrs[i].className='orn';}
+    else{var d=document.createElement('div');d.className='orn';d.innerHTML=ornamentSvg(S.st.ornament,S.st.accent,10)||'&nbsp;';hrs[i].parentNode.replaceChild(d,hrs[i]);}
+  }
+  var lis=box.querySelectorAll('li.task');
+  for(i=0;i<lis.length;i++){var par=lis[i].parentNode;if(par&&par.className.indexOf('chk')<0)par.className=(par.className?par.className+' ':'')+'chk';}
+  var ps=box.querySelectorAll('p');
+  for(i=0;i<ps.length;i++){
+    var pv=ps[i].previousElementSibling;
+    if(!pv||pv.tagName!=='P')ps[i].className=(ps[i].className?ps[i].className+' ':'')+'ni';
+  }
+  if(mode==='paged'){
+    var f=box.firstElementChild;
+    if(f&&f.tagName==='P'&&/^[A-Za-z]/.test(f.textContent)){
+      if(S.st.drop)f.className=(f.className?f.className+' ':'')+'dc dc-'+S.st.dropStyle;
+      if(S.st.leadin&&f.firstChild&&f.firstChild.nodeType===3){
+        var tx=f.firstChild.nodeValue,mm=/^(\S+(?:\s+\S+){2,3})(\s[\s\S]*)$/.exec(tx);
+        if(mm&&tx.split(/\s+/).length>8){var sp=document.createElement('span');sp.className='lead';sp.textContent=mm[1];f.firstChild.nodeValue=mm[2];f.insertBefore(sp,f.firstChild);}
+      }
+    }
+  }
+}
+
+var INERT=null;
+function inertDoc(){if(!INERT)INERT=document.implementation.createHTMLDocument('');return INERT;}
+function parseDoc(md,mode){
+  RMODE=mode||'paged';USED_IMG={};
+  var src=String(md||'').replace(/\r\n?/g,'\n').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'');
+  var lines=src.split('\n'),items=[],prelude=[],cur=null,inFence=false,inCo=false,warn=[],partN=0,chapI=0,chapN=0,i,t,h;
+  for(i=0;i<lines.length;i++){
+    t=lines[i];
+    if(!inCo&&/^\s*(```|~~~)/.test(t))inFence=!inFence;
+    if(!inFence){
+      if(!inCo&&CO_RE.test(t))inCo=true;
+      else if(inCo&&/^:::\s*$/.test(t))inCo=false;
+      else if(!inCo){
+        h=/^(#{1,2})\s+(.+?)\s*#*\s*$/.exec(t);
+        if(h){
+          if(h[1]==='#'){cur=null;items.push({kind:'part',title:h[2],id:'pt-'+(++partN)});}
+          else{cur={kind:'chapter',title:h[2],lines:[],figs:[],tabs:[]};items.push(cur);}
+          continue;
+        }
+      }
+    }
+    if(cur)cur.lines.push(t);else if(items.length===0)prelude.push(t);
+  }
+  if(inCo)warn.push('A callout is still open at the end of the manuscript.');
+  var hasPre=false;for(i=0;i<prelude.length;i++){if(prelude[i].replace(/\s/g,'')!==''){hasPre=true;break;}}
+  if(hasPre)items.unshift({kind:'chapter',title:'Introduction',lines:prelude,figs:[],tabs:[]});
+  var words=0,chapters=0;
+  for(i=0;i<items.length;i++){
+    var it=items[i];
+    if(it.kind!=='chapter')continue;
+    chapI++;it.id='ch-'+chapI;
+    it.numbered=!UNNUM.test(it.title);
+    if(it.numbered){chapN++;it.num=chapN;}
+    var raw=renderBlocks(it.lines,warn);
+    var clean=sanitize(raw);
+    var box=inertDoc().createElement('div');box.innerHTML=clean;
+    postDom(box,it,RMODE);
+    it.dom=box;
+    var w=(box.textContent||'').match(/\S+/g);it.words=w?w.length:0;words+=it.words;chapters++;
+    it.lines=null;
+  }
+  return {items:items,warn:warn,words:words,chapters:chapters,parts:partN};
+}
+
+/* ================= STATS / PAGES ================= */
+function estimatePages(doc){
+  var st=S.st,t=trimOf(st.trim),m=margins(200);
+  var cw=t.w-m.inside-m.outside,chh=t.h-m.top-m.bottom;
+  var lines=chh*72/(st.fontSize*st.lineHeight),cpl=cw*72/(st.fontSize*0.47);
+  var wpp=Math.max(60,lines*cpl/5.9*0.88);
+  var pages=6+doc.words/wpp+doc.chapters*(0.75+(st.right?0.5:0.1))+doc.parts*1.5;
+  return Math.max(24,Math.round(pages));
+}
+function findLongParas(md){
+  var lines=String(md).replace(/\r\n?/g,'\n').split('\n'),res=[],start=-1,words=0,txt='',i,inF=false;
+  function end(){if(start>=0&&words>180)res.push({line:start+1,words:words,txt:txt.slice(0,48)});start=-1;words=0;txt='';}
+  for(i=0;i<lines.length;i++){
+    var l=lines[i];
+    if(/^\s*(```|~~~)/.test(l)){inF=!inF;end();continue;}
+    if(inF)continue;
+    if(l.replace(/\s/g,'')===''||/^(#|\||:::|>|\s*[-*+]\s|\s*\d+[.)]\s|!\[|Table:|---)/.test(l)){end();continue;}
+    if(start<0){start=i;txt=l;}
+    words+=(l.match(/\S+/g)||[]).length;
+  }
+  end();
+  return res.sort(function(a,b){return b.words-a.words;}).slice(0,6);
+}
+
+/* ================= BOOK HTML ================= */
+function fillTpl(t){var M=S.meta;return rep(rep(rep(rep(rep(t,'year',M.year),'author',M.author),'publisher',M.publisher),'edition',M.edition),'title',M.title);}
+/* ================= TOC + BOOK HTML ================= */
+function buildToc(doc){
+  var h=['<ul class="toc">'],i,it,k,deep=S.st.tocDepth==='2';
+  for(i=0;i<doc.items.length;i++){
+    it=doc.items[i];
+    if(it.kind==='part'){h.push('<li class="tpart"><a class="t" href="#'+it.id+'">'+esc(it.title)+'</a><span class="dots"></span><a class="pn" href="#'+it.id+'" aria-hidden="true"></a></li>');}
+    else{
+      h.push('<li class="tchap"><a class="t" href="#'+it.id+'">'+(it.numbered?'<span class="tn">'+it.num+'</span>':'')+esc(it.title)+'</a><span class="dots"></span><a class="pn" href="#'+it.id+'" aria-hidden="true"></a></li>');
+      if(deep&&it.secs){for(k=0;k<it.secs.length;k++)h.push('<li class="tsec"><a class="t" href="#'+it.secs[k].id+'">'+(it.secs[k].num?'<span class="tn">'+esc(it.secs[k].num)+'</span>':'')+esc(it.secs[k].title)+'</a><span class="dots"></span><a class="pn" href="#'+it.secs[k].id+'" aria-hidden="true"></a></li>');}
+    }
+  }
+  h.push('</ul>');return h.join('');
+}
+function listIndex(entries){
+  var h=['<ul class="toc idx">'],i;
+  for(i=0;i<entries.length;i++){h.push('<li><a class="t" href="#'+entries[i].id+'"><b>'+esc(entries[i].label)+'</b>'+(entries[i].text?'  '+esc(entries[i].text):'')+'</a><span class="dots"></span><a class="pn" href="#'+entries[i].id+'" aria-hidden="true"></a></li>');}
+  h.push('</ul>');return h.join('');
+}
+function buildBookHtml(doc,opts){
+  opts=opts||{};
+  var M=S.meta,st=S.st,h=[],i,it,first=true,rt=st.right?'bk-rt':'bk-pg';
+  var acc=st.accent;
+  h.push('<div class="bk" lang="en">');
+  if(st.halfTitle)h.push('<section class="bk-sec bk-half" data-kind="half"><div class="hf-t">'+esc(M.title)+'</div></section>');
+  var tcol=st.title==='band'?textOn(acc):acc,torn=st.title==='left'?'':ornamentSvg(st.ornament,tcol,12);
+  h.push('<section class="bk-sec bk-title t-'+st.title+(st.halfTitle?' bk-pg':'')+'" data-kind="title"><div class="tp">'+torn+'<h1 class="tp-title">'+esc(M.title)+'</h1>'+(M.subtitle?'<p class="tp-sub">'+esc(M.subtitle)+'</p>':'')+(M.author?'<p class="tp-author">'+esc(M.author)+'</p>':'')+'</div><p class="tp-pub">'+esc(M.publisher)+'</p></section>');
+  h.push('<section class="bk-sec bk-copy bk-pg" data-kind="copy"><div class="cp">'+textToParas(fillTpl(M.copy))+'</div></section>');
+  if(M.disc&&M.disc.replace(/\s/g,'')!=='')h.push('<section class="bk-sec bk-disc bk-pg" data-kind="disc"><div class="dc-t">Disclaimer</div>'+textToParas(fillTpl(M.disc))+'</section>');
+  if(M.ded&&M.ded.replace(/\s/g,'')!=='')h.push('<section class="bk-sec bk-ded bk-pg" data-kind="ded"><div class="dd">'+textToParas(M.ded)+'</div></section>');
+  h.push('<section class="bk-sec bk-toc bk-pg" data-kind="toc"><h2 class="bk-toch">Contents</h2>'+buildToc(doc)+'</section>');
+  var figs=[],tabs=[];
+  for(i=0;i<doc.items.length;i++){
+    it=doc.items[i];
+    var fa=first?' data-first="1"':'';first=false;
+    if(it.kind==='part'){
+      var pm=/^(part\s+[\w]+)\s*[:.\-–—]\s*(.+)$/i.exec(it.title);
+      h.push('<section class="bk-sec bk-part '+rt+'" data-kind="part"'+fa+'><div class="pt-in">'+(pm?'<div class="pt-lab">'+esc(pm[1])+'</div><h1 class="pt-t" id="'+it.id+'">'+esc(pm[2])+'</h1>':'<h1 class="pt-t" id="'+it.id+'">'+esc(it.title)+'</h1>')+ornamentSvg(st.ornament,acc,12)+'</div></section>');
+    }else{
+      var oc=st.opener==='inverse'?textOn(acc):acc;
+      var o='<header class="bk-opener bk-op-'+st.opener+'">'+(it.numbered?'<div class="op-lab">Chapter '+it.num+'</div><div class="op-num">'+it.num+'</div>':'')+'<h2 class="bk-ct" id="'+it.id+'">'+esc(it.title)+'</h2><div class="op-orn">'+ornamentSvg(st.ornament,oc,12)+'</div></header>';
+      var mt='';
+      if(st.minitoc&&it.secs&&it.secs.length>=2){
+        var ml=[],q;for(q=0;q<it.secs.length;q++)ml.push('<li>'+(it.secs[q].num?'<span class="sn">'+esc(it.secs[q].num)+'</span> ':'')+esc(it.secs[q].title)+'</li>');
+        mt='<div class="minitoc"><div class="mt-h">In this chapter</div><ul>'+ml.join('')+'</ul></div>';
+      }
+      h.push('<section class="bk-sec bk-chapter '+rt+'" data-kind="chapter"'+fa+'>'+o+mt+'<div class="bk-body">'+it.dom.innerHTML+'</div></section>');
+      figs=figs.concat(it.figs);tabs=tabs.concat(it.tabs);
+    }
+  }
+  if(st.figIndex&&(figs.length||tabs.length)){
+    h.push('<section class="bk-sec bk-back bk-pg" data-kind="back"><h2 class="bk-bh">Figures and Tables</h2>'+(figs.length?'<h3 class="bk-bh3">Figures</h3>'+listIndex(figs):'')+(tabs.length?'<h3 class="bk-bh3">Tables</h3>'+listIndex(tabs):'')+'</section>');
+  }
+  if(M.about&&M.about.replace(/\s/g,'')!=='')h.push('<section class="bk-sec bk-back bk-pg" data-kind="back"><h2 class="bk-bh">About the Author</h2>'+textToParas(M.about)+'</section>');
+  if(M.also&&M.also.replace(/\s/g,'')!==''){
+    var al=M.also.split('\n'),li=[],k;for(k=0;k<al.length;k++){if(al[k].replace(/\s/g,'')!=='')li.push('<li>'+esc(al[k])+'</li>');}
+    h.push('<section class="bk-sec bk-back bk-pg" data-kind="back"><h2 class="bk-bh">Also by '+esc(M.author)+'</h2><ul class="also">'+li.join('')+'</ul></section>');
+  }
+  if(st.review&&M.review&&M.review.replace(/\s/g,'')!=='')h.push('<section class="bk-sec bk-back bk-review bk-pg" data-kind="back"><h2 class="bk-bh">Thank you for reading</h2>'+textToParas(M.review)+'</section>');
+  for(i=0;i<st.notes;i++)h.push('<section class="bk-sec bk-notes nt-'+st.noteStyle+(i===0?' nt-first':'')+' bk-pg" data-kind="notes">'+(i===0?'<h2 class="bk-bh">Notes</h2>':'')+'<div class="nt-box"></div></section>');
+  if(opts.pad)h.push('<section class="bk-sec bk-pad bk-pg" data-kind="blank">&nbsp;</section>');
+  h.push('</div>');
+  return h.join('');
+}
+
+/* ================= BOOK CSS ================= */
+function buildCss(m){
+  var st=S.st,F=FONTS[st.font]||FONTS.lora,t=trimOf(st.trim),a=st.accent,aT=inkOn(a,'#ffffff',4.5),aOn=textOn(a),tint=mixHex(a,'#ffffff',0.9),tint2=mixHex(a,'#ffffff',0.95),fs=st.fontSize,lh=st.lineHeight;
+  var ch=num(t.h-m.top-m.bottom-0.1),B=F.body,H=F.head,c=[],indent=st.para==='indent';
+  function q(s){return '"'+String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\s+/g,' ')+'"';}
+  /* page boxes: running head and folio */
+  var hd='font-size:8pt;color:#444;vertical-align:bottom;padding-bottom:0.2in;',hdFont='font-family:'+H+';',lt='',rt='';
+  if(st.head==='caps'){hd=hdFont+hd+'letter-spacing:0.14em;text-transform:uppercase;';}
+  else if(st.head==='italic'){hd='font-family:'+B+';font-style:italic;font-size:9pt;color:#444;vertical-align:bottom;padding-bottom:0.2in;';}
+  else if(st.head==='rule'){hd=hdFont+hd.replace('padding-bottom:0.2in;','padding-bottom:0.09in;')+'letter-spacing:0.14em;text-transform:uppercase;border-bottom:0.5pt solid #888;';}
+  if(st.head!=='none'){lt='@top-center{content:'+q(S.meta.title)+';'+hd+'}';rt='@top-center{content:string(chap);'+hd+'}';}
+  var fo='font-family:'+B+';font-size:9.5pt;color:#222;vertical-align:top;padding-top:0.2in;',fcL='',fcR='',fcC='';
+  if(st.folio==='center')fcC='@bottom-center{content:var(--folio);'+fo+'}';
+  else if(st.folio==='flank')fcC='@bottom-center{content:"\\2013\\00a0" var(--folio) "\\00a0\\2013";'+fo+'}';
+  else if(st.folio==='outside'){fcL='@bottom-left{content:var(--folio);'+fo+'text-align:left;}';fcR='@bottom-right{content:var(--folio);'+fo+'text-align:right;}';}
+  c.push('@page{size:'+t.w+'in '+t.h+'in;margin:'+m.top+'in '+m.outside+'in '+m.bottom+'in '+m.outside+'in;'+fcC+'}');
+  c.push('@page :left{margin-left:'+m.outside+'in;margin-right:'+m.inside+'in;'+lt+fcL+'}');
+  c.push('@page :right{margin-left:'+m.inside+'in;margin-right:'+m.outside+'in;'+rt+fcR+'}');
+  c.push('.pagedjs_page.bk-nohead .pagedjs_margin-top-center,.pagedjs_page.bk-nofolio .pagedjs_margin-bottom-center,.pagedjs_page.bk-nofolio .pagedjs_margin-bottom-left,.pagedjs_page.bk-nofolio .pagedjs_margin-bottom-right{visibility:hidden;}');
+  /* body text */
+  c.push('.bk{font-family:'+B+';font-size:'+fs+'pt;line-height:'+lh+';color:#111;text-align:'+(st.just?'justify':'left')+';hyphens:'+(st.hyph?'auto':'manual')+';-webkit-hyphens:'+(st.hyph?'auto':'manual')+';-webkit-print-color-adjust:exact;print-color-adjust:exact;}');
+  c.push('.bk *{box-sizing:border-box;}');
+  c.push('.bk[data-align-last-split-element],.bk [data-align-last-split-element]{text-align-last:auto;}');
+  if(st.just)c.push('.bk p[data-align-last-split-element]{text-align-last:justify;}');
+  c.push('.bk p{margin:0 0 '+(indent?'0':'0.7em')+';'+(indent?'text-indent:1.3em;':'')+'orphans:3;widows:3;}');
+  c.push('.bk p.ni,.bk .co p,.bk li p,.bk td p{text-indent:0;}');
+  c.push('.bk p.dc-classic::first-letter{float:left;font-family:'+H+';font-size:3.3em;line-height:0.82;padding:0.04em 0.09em 0 0;color:'+aT+';font-weight:700;}');
+  c.push('.bk p.dc-raised::first-letter{font-family:'+H+';font-size:2.3em;line-height:1;color:'+aT+';font-weight:700;padding-right:0.03em;}');
+  c.push('.bk p.dc-box::first-letter{float:left;font-family:'+H+';font-size:2.7em;line-height:1;background:'+a+';color:'+aOn+';padding:0.06em 0.16em 0.02em;margin:0.06em 0.12em 0 0;font-weight:700;}');
+  c.push('.bk .lead{font-variant:small-caps;letter-spacing:0.05em;font-weight:600;}');
+  c.push('.bk strong{font-weight:700;}.bk em{font-style:italic;}');
+  c.push('.bk a{color:inherit;text-decoration:underline;}');
+  /* section headings */
+  var h3='font-family:'+H+';font-size:1.28em;line-height:1.2;font-weight:700;margin:1.5em 0 0.55em;break-after:avoid;page-break-after:avoid;text-align:left;text-indent:0;';
+  if(st.h3==='plain')h3+='color:'+aT+';';
+  else if(st.h3==='rule')h3+='color:#111;border-bottom:1pt solid '+a+';padding-bottom:0.2em;';
+  else if(st.h3==='bar')h3+='color:#111;border-left:4pt solid '+a+';padding-left:0.55em;';
+  else h3+='color:'+aT+';font-variant:small-caps;letter-spacing:0.08em;font-size:1.22em;';
+  c.push('.bk h3.bk-h3{'+h3+'}');
+  c.push('.bk .sn{color:'+aT+';font-weight:700;margin-right:0.45em;font-variant:normal;}');
+  c.push('.bk h4.bk-h4{font-family:'+H+';font-size:1.05em;font-style:italic;font-weight:600;margin:1.2em 0 0.4em;break-after:avoid;page-break-after:avoid;text-align:left;}');
+  c.push('.bk ul,.bk ol{margin:0.6em 0 0.9em;padding-left:1.5em;}.bk li{margin:0 0 0.28em;break-inside:avoid;page-break-inside:avoid;orphans:2;widows:2;}');
+  c.push('.bk ul.chk{list-style:none;padding-left:0;}.bk li.task{padding-left:1.7em;text-indent:-1.7em;}');
+  c.push('.bk .cbx{display:inline-block;width:0.82em;height:0.82em;border:1.3pt solid #111;border-radius:1.5pt;margin-right:0.6em;vertical-align:-0.1em;}');
+  /* quotes */
+  var bq='margin:1em 0;padding:0 0 0 1em;border-left:2.2pt solid '+a+';font-style:italic;';
+  if(st.quote==='mark')bq='margin:1.2em 0.4em;padding:0.1em 0 0 1.7em;border:0;font-style:italic;position:relative;';
+  else if(st.quote==='center')bq='margin:1.3em 8%;padding:0.6em 0;border:0;border-top:0.8pt solid '+a+';border-bottom:0.8pt solid '+a+';text-align:center;font-style:italic;';
+  else if(st.quote==='box')bq='margin:1em 0;padding:0.7em 1em;border:0;border-left:3pt solid '+a+';background:'+tint2+';font-style:italic;';
+  c.push('.bk blockquote{'+bq+'}');
+  if(st.quote==='mark')c.push('.bk blockquote::before{content:"\\201C";position:absolute;left:0;top:-0.12em;font-family:'+H+';font-size:2.8em;line-height:1;color:'+aT+';font-style:normal;}');
+  c.push('.bk blockquote p{text-indent:0;margin:0 0 0.4em;}');
+  c.push('.bk pre,.bk code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:0.86em;}.bk pre{white-space:pre-wrap;background:#f1f1ee;padding:0.6em 0.8em;break-inside:avoid;}');
+  c.push('.bk .orn{text-align:center;margin:1.3em 0;text-indent:0;break-inside:avoid;line-height:1;}.bk .orn svg{max-width:60%;}');
+  /* callouts */
+  var co=st.callout,lab='font-family:Inter,Arial,sans-serif;font-size:0.62em;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;flex:none;';
+  c.push('.bk .co{break-inside:avoid;page-break-inside:avoid;margin:1.15em 0;padding:0.75em 1em 0.8em;font-size:0.95em;line-height:'+(lh>1.5?1.45:lh)+';text-align:left;text-indent:0;}');
+  c.push('.bk .co-h{font-family:'+H+';font-weight:700;margin-bottom:0.5em;display:flex;align-items:baseline;gap:0.6em;break-after:avoid;page-break-after:avoid;}');
+  c.push('.bk .co-t{font-size:1.02em;}');
+  c.push('.bk .co p{margin:0 0 0.5em;}.bk .co p:last-child{margin-bottom:0;}.bk .co ul,.bk .co ol{margin:0.3em 0;}.bk .co-sub{font-weight:700;}');
+  if(co==='boxed'){
+    c.push('.bk .co{border:1pt solid #333;border-radius:3pt;}.bk .co-lab{'+lab+'background:'+a+';color:'+aOn+';padding:0.2em 0.6em;border-radius:2pt;}');
+    c.push('.bk .co-checklist{border:1.5pt solid '+a+';}');
+    c.push('.bk .co-example{border:0;border-left:4pt solid '+a+';background:#f1f1ee;border-radius:0 3pt 3pt 0;}');
+    c.push('.bk .co-mistake{border:1.3pt dashed #333;}.bk .co-mistake .co-lab{background:#fff;color:#111;border:1pt solid #111;}');
+    c.push('.bk .co-tip{border:0;border-top:1.5pt solid '+a+';border-bottom:1.5pt solid '+a+';border-radius:0;padding-left:0.2em;padding-right:0.2em;}');
+    c.push('.bk .co-note{border:0;border-left:1pt solid #888;background:#f4f3ef;border-radius:0;}.bk .co-note .co-lab{background:#555;color:#fff;}');
+    c.push('.bk .co-worksheet{border:3.5pt double '+a+';}');
+  }else if(co==='soft'){
+    c.push('.bk .co{border:0;border-radius:5pt;background:'+tint+';}.bk .co-lab{'+lab+'color:'+aT+';}');
+    c.push('.bk .co-mistake{background:#f1f1ee;border:1pt dashed #777;}.bk .co-mistake .co-lab{color:#111;}.bk .co-worksheet{border:1.2pt solid '+a+';background:#fff;}.bk .co-checklist{border-left:4pt solid '+a+';border-radius:0 5pt 5pt 0;}');
+  }else if(co==='tab'){
+    c.push('.bk .co{border:1.2pt solid '+a+';border-radius:3pt;margin-top:1.7em;padding-top:1em;position:relative;}.bk .co-h{position:absolute;top:-0.8em;left:0.8em;margin:0;background:#fff;padding:0 0.5em;}');
+    c.push('.bk .co-lab{'+lab+'color:'+aT+';font-size:0.7em;}.bk .co-mistake{border-style:dashed;}.bk .co-worksheet{border-style:double;border-width:3.5pt;}.bk .co-note,.bk .co-example{background:'+tint2+';}');
+  }else if(co==='ink'){
+    c.push('.bk .co{border:1.2pt solid '+a+';border-radius:3pt;padding-top:0;overflow:hidden;}.bk .co-h{background:'+a+';color:'+aOn+';margin:0 -1em 0.7em;padding:0.45em 1em;}');
+    c.push('.bk .co-lab{'+lab+'color:'+aOn+';}.bk .co-mistake{border-style:dashed;}.bk .co-worksheet{border-style:double;border-width:3.5pt;}');
+  }else{
+    c.push('.bk .co{border:0;border-top:1.5pt solid '+a+';border-radius:0;padding-left:0;padding-right:0;}.bk .co-lab{'+lab+'color:'+aT+';}.bk .co-mistake{border-top-style:dashed;}.bk .co-worksheet{border-bottom:1.5pt solid '+a+';}');
+  }
+  c.push('.bk .ws-line{height:1.9em;border-bottom:0.6pt solid #888;}');
+  /* figures + tables */
+  c.push('.bk .tblw{margin:1.15em 0;text-indent:0;}');
+  c.push('.bk .tcap,.bk figcaption{font-family:'+H+';font-size:0.84em;line-height:1.3;margin:0 0 0.45em;text-align:left;text-indent:0;break-after:avoid;page-break-after:avoid;}');
+  c.push('.bk figcaption{margin:0.5em 0 0;text-align:center;break-after:auto;}');
+  c.push('.bk .lab{font-weight:700;}');
+  c.push('.bk table{width:100%;border-collapse:collapse;font-size:0.88em;line-height:1.35;text-align:left;}');
+  c.push('.bk thead{display:table-header-group;}.bk tr{break-inside:avoid;page-break-inside:avoid;}');
+  var tb=st.table;
+  if(tb==='striped'){
+    c.push('.bk th{font-family:'+H+';background:'+a+';color:'+aOn+';padding:0.4em 0.55em;text-align:left;border:0;}.bk td{border-bottom:0.4pt solid #ccc;padding:0.38em 0.55em;vertical-align:top;}.bk tbody tr:nth-child(even) td{background:'+tint2+';}');
+  }else if(tb==='boxed'){
+    c.push('.bk table{border:1pt solid #333;}.bk th{font-family:'+H+';background:#f0f0ee;border:0.6pt solid #888;padding:0.38em 0.55em;text-align:left;}.bk td{border:0.6pt solid #999;padding:0.38em 0.55em;vertical-align:top;}');
+  }else if(tb==='minimal'){
+    c.push('.bk th{font-family:'+H+';border-top:1.3pt solid #111;border-bottom:0.8pt solid #111;padding:0.4em 0.55em;text-align:left;}.bk td{padding:0.36em 0.55em;vertical-align:top;}.bk tbody tr:last-child td{border-bottom:1.3pt solid #111;}');
+  }else{
+    c.push('.bk th{font-family:'+H+';background:#ececea;border-bottom:1.3pt solid #111;padding:0.38em 0.55em;text-align:left;}.bk td{border-bottom:0.5pt solid #b5b5b0;padding:0.38em 0.55em;vertical-align:top;}');
+  }
+  c.push('.bk figure.fig{margin:1.2em 0;text-align:center;break-inside:avoid;page-break-inside:avoid;text-indent:0;}');
+  c.push('.bk figure.fig img{max-width:100%;max-height:'+num(Math.max(2,(t.h-m.top-m.bottom)*0.55))+'in;height:auto;}');
+  c.push('.bk .bk-missing{color:#a00;font-style:italic;}');
+  c.push('.bk .bk-rt{break-before:right;}.bk .bk-pg{break-before:page;}');
+  c.push('.bk .bk-sec{margin:0;padding:0;}');
+  /* title page */
+  var tt=st.title,ttl=num(Math.min(38,t.w*6.2));
+  c.push('.bk .bk-title{height:'+ch+'in;display:flex;flex-direction:column;justify-content:space-between;}');
+  c.push('.bk .bk-half,.bk .bk-half *{text-align:center;text-indent:0;}.bk .bk-half{height:'+ch+'in;display:flex;align-items:center;justify-content:center;}.bk .hf-t{font-family:'+H+';font-size:1.7em;font-weight:700;margin-top:-0.6in;}');
+  c.push('.bk .bk-ded,.bk .bk-ded *,.bk .bk-part,.bk .bk-part *{text-align:center;text-align-last:center;text-indent:0;hyphens:manual;}');
+  c.push('.bk .tp{padding-top:1.6in;text-indent:0;}.bk .tp p{text-indent:0;}');
+  c.push('.bk .tp-title{font-family:'+H+';font-size:'+ttl+'pt;line-height:1.08;font-weight:800;margin:0.35em 0 0.3em;hyphens:manual;}');
+  c.push('.bk .tp-sub{font-size:1.25em;font-style:italic;line-height:1.3;margin:0 8% 0.9in;}');
+  c.push('.bk .tp-author{font-family:'+H+';font-size:1.3em;letter-spacing:0.16em;text-transform:uppercase;}');
+  c.push('.bk .tp-pub{font-size:0.95em;letter-spacing:0.1em;text-indent:0;margin:0;}');
+  if(tt==='left'){
+    c.push('.bk .t-left,.bk .t-left *{text-align:left;text-align-last:left;text-indent:0;hyphens:manual;}.bk .t-left .tp{padding-top:1.1in;border-top:9pt solid '+a+';}.bk .t-left .tp-title{font-size:'+num(ttl*1.12)+'pt;margin-top:0.5em;}.bk .t-left .tp-sub{margin:0 0 0.7in;}.bk .t-left .tp-author{color:'+aT+';}');
+  }else if(tt==='framed'){
+    c.push('.bk .t-framed,.bk .t-framed *{text-align:center;text-align-last:center;text-indent:0;hyphens:manual;}.bk .t-framed{border:2.4pt double '+a+';padding:0.3in 0.25in;}.bk .t-framed .tp{padding-top:1.1in;}');
+  }else if(tt==='band'){
+    c.push('.bk .t-band,.bk .t-band *{text-align:center;text-align-last:center;text-indent:0;hyphens:manual;}.bk .t-band .tp{background:'+a+';color:'+aOn+';padding:1.1in 0.35in 0.7in;margin-top:0.3in;}.bk .t-band .tp-title,.bk .t-band .tp-sub,.bk .t-band .tp-author{color:'+aOn+';}.bk .t-band .tp-sub{margin-bottom:0.5in;}');
+  }else{
+    c.push('.bk .t-classic,.bk .t-classic *{text-align:center;text-align-last:center;text-indent:0;hyphens:manual;}');
+  }
+  c.push('.bk .bk-copy{height:'+ch+'in;display:flex;flex-direction:column;justify-content:flex-end;}');
+  c.push('.bk .cp{font-size:8.6pt;line-height:1.5;text-align:left;}.bk .cp p{text-indent:0;margin:0 0 0.8em;}');
+  c.push('.bk .bk-disc .dc-t{font-family:'+H+';font-weight:700;font-size:1.3em;margin:0 0 0.8em;text-align:center;}.bk .bk-disc p{text-indent:0;margin:0 0 0.8em;font-size:0.92em;}');
+  c.push('.bk .bk-ded{height:'+ch+'in;display:flex;align-items:center;justify-content:center;text-align:center;}');
+  c.push('.bk .dd{font-style:italic;font-size:1.2em;line-height:1.5;margin-top:-0.8in;}.bk .dd p{text-indent:0;text-align:center;}');
+  c.push('.bk .bk-part{height:'+ch+'in;display:flex;align-items:center;justify-content:center;text-align:center;}');
+  c.push('.bk .pt-in{margin-top:-0.4in;}.bk .pt-lab{font-family:'+H+';font-size:0.95em;letter-spacing:0.22em;text-transform:uppercase;color:'+aT+';margin-bottom:0.6em;}');
+  c.push('.bk .pt-t{font-family:'+H+';font-size:'+num(Math.min(32,t.w*5.2))+'pt;line-height:1.12;font-weight:700;margin:0 0 0.7em;text-align:center;}');
+  c.push('.bk .bk-toch,.bk .bk-bh{font-family:'+H+';font-size:1.7em;font-weight:700;margin:0.5in 0 0.7em;text-align:center;text-indent:0;break-after:avoid;}');
+  c.push('.bk .bk-bh3{font-family:'+H+';font-size:1.05em;margin:1.2em 0 0.4em;break-after:avoid;}');
+  c.push('.bk ul.toc{list-style:none;padding:0;margin:0;text-align:left;}');
+  c.push('.bk .toc li{display:flex;align-items:baseline;margin:0 0 0.5em;text-indent:0;line-height:1.3;}');
+  c.push('.bk .toc li.tpart{margin-top:1.1em;font-weight:700;font-family:'+H+';}');
+  c.push('.bk .toc li.tsec{margin-left:2em;font-size:0.9em;margin-bottom:0.28em;}.bk .toc li.tsec .tn{width:2.4em;}');
+  c.push('.bk .toc a{color:inherit;text-decoration:none;}');
+  c.push('.bk .toc .tn{display:inline-block;width:2em;font-weight:600;}');
+  c.push('.bk .toc .dots{flex:1 1 auto;min-width:1.2em;border-bottom:1.3pt dotted #555;margin:0 0.45em;position:relative;top:-0.28em;}');
+  c.push('.bk .toc .pn{flex:none;}.bk .toc .pn::after{content:var(--pn);}');
+  c.push('.bk ul.also{list-style:none;padding:0;text-align:center;}.bk ul.also li{margin:0 0 0.5em;font-style:italic;}');
+  c.push('.bk .bk-review p{text-indent:0;text-align:center;}');
+  c.push('.bk .nt-box{height:'+num(ch-0.3)+'in;}.bk .nt-first .nt-box{height:'+num(ch-1.7)+'in;}');
+  c.push('.bk .nt-ruled .nt-box{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(0.3in - 0.7pt),#9a9a9a calc(0.3in - 0.7pt),#9a9a9a 0.3in);}');
+  c.push('.bk .nt-dotted .nt-box{background-image:radial-gradient(circle,#777 0.6pt,transparent 0.8pt);background-size:0.25in 0.25in;}');
+  c.push('.bk .nt-grid .nt-box{background-image:linear-gradient(to right,#c4c4c4 0.5pt,transparent 0.5pt),linear-gradient(to bottom,#c4c4c4 0.5pt,transparent 0.5pt);background-size:0.25in 0.25in;}');
+  /* chapter mini contents */
+  c.push('.bk .minitoc{margin:0 0 1.5em;padding:0.6em 0.9em;border-left:2.5pt solid '+a+';background:'+tint2+';text-indent:0;break-inside:avoid;font-size:0.9em;text-align:left;}');
+  c.push('.bk .mt-h{font-family:'+H+';font-weight:700;font-size:0.78em;letter-spacing:0.14em;text-transform:uppercase;color:'+aT+';margin-bottom:0.3em;}.bk .minitoc ul{list-style:none;margin:0;padding:0;}.bk .minitoc li{margin:0.15em 0;text-indent:0;}');
+  /* chapter openers */
+  c.push('.bk .bk-opener{margin:'+num(Math.max(0.6,ch*0.1))+'in 0 1.4em;break-after:avoid;page-break-after:avoid;text-indent:0;}');
+  c.push('.bk .bk-ct{font-family:'+H+';font-weight:700;margin:0;string-set:chap content(text);break-after:avoid;hyphens:manual;}');
+  c.push('.bk .op-lab{font-family:'+H+';font-size:0.85em;letter-spacing:0.22em;text-transform:uppercase;color:'+aT+';}');
+  c.push('.bk .op-num{display:none;}.bk .op-orn{margin-top:1em;}');
+  c.push('.bk .bk-op-classic{text-align:center;}.bk .bk-op-classic .bk-ct{font-size:2.1em;line-height:1.15;margin-top:0.35em;}.bk .bk-op-classic .op-orn{text-align:center;}');
+  c.push('.bk .bk-op-block{text-align:left;}.bk .bk-op-block .op-lab{display:none;}.bk .bk-op-block .op-num{display:block;font-family:'+H+';font-weight:800;font-size:5.4em;line-height:0.9;color:'+a+';}.bk .bk-op-block .bk-ct{font-size:1.9em;line-height:1.15;margin-top:0.2em;padding-top:0.3em;border-top:3pt solid '+a+';}.bk .bk-op-block .op-orn{display:none;}');
+  c.push('.bk .bk-op-band{text-align:left;border-top:3.5pt solid '+a+';border-bottom:1pt solid '+a+';padding:0.9em 0 0.8em;}.bk .bk-op-band .bk-ct{font-size:1.85em;line-height:1.15;margin-top:0.25em;}.bk .bk-op-band .op-orn{display:none;}');
+  c.push('.bk .bk-op-minimal{text-align:left;margin-top:0.2in;}.bk .bk-op-minimal .op-lab{display:none;}.bk .bk-op-minimal .bk-ct{font-size:1.6em;line-height:1.15;padding-bottom:0.35em;border-bottom:1pt solid '+a+';}.bk .bk-op-minimal .op-orn{display:none;}');
+  c.push('.bk .bk-op-inverse{background:'+a+';color:'+aOn+';padding:1.1em 1.2em 1em;text-align:left;}.bk .bk-op-inverse .op-lab{color:'+aOn+';opacity:0.9;}.bk .bk-op-inverse .bk-ct{font-size:1.9em;line-height:1.15;margin-top:0.3em;color:'+aOn+';}.bk .bk-op-inverse .op-orn{display:none;}');
+  c.push('.bk .bk-op-circle{text-align:center;}.bk .bk-op-circle .op-lab{display:none;}.bk .bk-op-circle .op-num{display:flex;align-items:center;justify-content:center;width:1.95em;height:1.95em;border:2pt solid '+a+';border-radius:50%;margin:0 auto 0.45em;font-family:'+H+';font-size:2.6em;font-weight:700;color:'+aT+';line-height:1;}.bk .bk-op-circle .bk-ct{font-size:1.9em;line-height:1.15;}.bk .bk-op-circle .op-orn{text-align:center;}');
+  c.push('.bk .bk-op-rule2{text-align:center;border-top:4pt double '+a+';border-bottom:4pt double '+a+';padding:1em 0 0.9em;}.bk .bk-op-rule2 .bk-ct{font-size:1.55em;line-height:1.2;margin-top:0.4em;text-transform:uppercase;letter-spacing:0.08em;}.bk .bk-op-rule2 .op-orn{display:none;}');
+  c.push('.bk .bk-op-side{display:flex;align-items:flex-end;gap:0.7em;text-align:left;border-bottom:1.2pt solid '+a+';padding-bottom:0.5em;}.bk .bk-op-side .op-lab,.bk .bk-op-side .op-orn{display:none;}.bk .bk-op-side .op-num{display:block;font-family:'+H+';font-weight:800;font-size:4.6em;line-height:0.85;color:'+a+';flex:none;}.bk .bk-op-side .bk-ct{font-size:1.75em;line-height:1.15;flex:1;padding-bottom:0.05em;}');
+  return c.join('\n');
+}
+
+/* ================= POST PROCESS (also stringified into the print window) ================= */
+function gtsPostProcess(root){
+  var pages=root.querySelectorAll('.pagedjs_page'),i,j,mainStart=-1,ids={},folios=[];
+  function rom(n){var m=[[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],[50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']],s='',k;for(k=0;k<m.length;k++){while(n>=m[k][0]){s+=m[k][1];n-=m[k][0];}}return s;}
+  for(i=0;i<pages.length;i++){if(pages[i].querySelector('[data-first="1"]')){mainStart=i;break;}}
+  if(mainStart<0)mainStart=0;
+  for(i=0;i<pages.length;i++){
+    var pg=pages[i],content=pg.querySelector('.pagedjs_page_content'),kindEl=content?content.querySelector('[data-kind]'):null,kind=kindEl?kindEl.getAttribute('data-kind'):'blank';
+    var has=content&&((content.textContent||'').replace(/\s+/g,'')!==''||content.querySelector('img,svg,figure,.nt-box'));
+    if(!has)kind='blank';
+    var f=i<mainStart?rom(i+1):String(i-mainStart+1);
+    folios.push(f);
+    pg.style.setProperty('--folio','"'+f+'"');
+    pg.className=pg.className.replace(/\s*bk-(nohead|nofolio)/g,'');
+    if(kind==='title'||kind==='copy'||kind==='disc'||kind==='ded'||kind==='part'||kind==='blank'||kind==='half')pg.className+=' bk-nofolio';
+    if(kind!=='chapter'||(content&&content.querySelector('.bk-opener')))pg.className+=' bk-nohead';
+    pg.setAttribute('data-bk-kind',kind);pg.setAttribute('data-bk-folio',f);
+    if(content){var els=content.querySelectorAll('[id]');for(j=0;j<els.length;j++){if(!Object.prototype.hasOwnProperty.call(ids,els[j].id))ids[els[j].id]=f;}}
+  }
+  var pn=root.querySelectorAll('a.pn');
+  for(i=0;i<pn.length;i++){var h=(pn[i].getAttribute('href')||'').slice(1);var v=Object.prototype.hasOwnProperty.call(ids,h)?ids[h]:'?';pn[i].style.setProperty('--pn','"'+v+'"');pn[i].setAttribute('data-pn',v);}
+  return {total:pages.length,mainStart:mainStart,folios:folios,ids:ids};
+}
+
+/* ================= FONTS + PAGINATION ================= */
+function loadFonts(){
+  var F=FONTS[S.st.font]||FONTS.lora,fams=F.fam.concat(['Inter']),jobs=[],i;
+  ensureFonts(S.st.font);
+  if(!document.fonts||!document.fonts.load)return Promise.resolve();
+  for(i=0;i<fams.length;i++){jobs.push(document.fonts.load("400 16px '"+fams[i]+"'"));jobs.push(document.fonts.load("700 16px '"+fams[i]+"'"));jobs.push(document.fonts.load("italic 400 16px '"+fams[i]+"'"));}
+  return Promise.race([Promise.all(jobs).catch(function(){}),new Promise(function(r){setTimeout(r,5000);})]);
+}
+var previewer=null;
+function paginate(html,css,onPage){
+  var work=$('pvWork');
+  try{if(previewer&&previewer.polisher&&previewer.polisher.destroy)previewer.polisher.destroy();}catch(e){}
+  work.innerHTML='';
+  previewer=new Paged.Previewer();
+  try{previewer.on('page',function(pg){if(onPage)onPage(pg&&pg.position!=null?pg.position+1:0);});}catch(e){}
+  return loadFonts().then(function(){return previewer.preview(html,[{'book.css':css}],work);}).then(function(){
+    return gtsPostProcess(work);
+  });
+}
+
+/* ================= RENDER ORCHESTRATOR ================= */
+var rendering=false,pending=false,waiters=[],timer=null,lastDoc=null,lastPages=0,lastMargins=null,renderCount=0,estForProg=0;
+function setStatus(msg,isErr){var e=$('pvStatus');e.textContent=msg;e.className='st'+(isErr?' err':'');}
+function setProg(p){$('pvProg').style.width=Math.max(0,Math.min(100,p))+'%';}
+function scheduleRender(delay){
+  if(!$('autoRender').checked)return;
+  clearTimeout(timer);
+  var big=lastDoc&&lastDoc.words>20000;
+  timer=setTimeout(startRender,delay||(big?1600:750));
+}
+function renderNow(){return new Promise(function(res){waiters.push(res);clearTimeout(timer);startRender();});}
+function startRender(){
+  if(rendering){pending=true;return;}
+  rendering=true;pending=false;
+  typeset(function(){
+    rendering=false;
+    if(pending){startRender();return;}
+    var w=waiters;waiters=[];for(var i=0;i<w.length;i++)w[i](lastPages);
+  });
+}
+function typeset(done){
+  if(!LIBS_OK){setStatus('A library failed to load. Check your internet connection and reload.',true);$('pvMsg').textContent='Libraries (marked, DOMPurify, Paged.js) did not load. Reload with an internet connection.';done();return;}
+  var doc;
+  try{doc=parseDoc(S.md,'paged');}catch(e){setStatus('Parse error: '+e.message,true);done();return;}
+  lastDoc=doc;updateStats(doc);
+  var guess=lastPages||estimatePages(doc),pass=0,padFlag=!!(S.st.padEven&&lastPad);
+  estForProg=guess;
+  $('pvMsg').style.display=lastPages?'none':'block';
+  setStatus('Typesetting...');setProg(2);
+  function attempt(g){
+    pass++;
+    var m=margins(g),css=buildCss(m),html=buildBookHtml(doc,{pad:padFlag});
+    paginate(html,css,function(n){setStatus('Typesetting page '+n+'...');setProg(Math.min(95,n/Math.max(1,estForProg)*100));}).then(function(info){
+      var n=info.total;
+      if(gutterFor(n)!==gutterFor(g)&&pass<4){estForProg=n;attempt(n);return;}
+      if(S.st.padEven&&n%2===1&&pass<5){padFlag=!padFlag;attempt(n);return;}
+      if(!S.st.padEven)padFlag=false;
+      var work=$('pvWork'),pagesEl=work.querySelector('.pagedjs_pages'),out=$('pvOut');
+      try{lastPf=runPreflight(work,doc,n);}catch(pe){lastPf=[{l:'info',m:'Print checks could not run: '+pe.message}];}
+      out.innerHTML='';if(pagesEl)out.appendChild(pagesEl);
+      work.innerHTML='';
+      lastPages=n;lastMargins=m;lastInfo=info;lastPad=padFlag;renderCount++;
+      $('pvMsg').style.display='none';
+      setProg(100);setTimeout(function(){setProg(0);},500);
+      setStatus('Typeset: '+n+' pages');
+      $('pvTot').textContent='/ '+n;$('pvNum').max=n;
+      showPage(clamp($('pvNum').value,1,n),true);
+      if(!zoomSet)fitZoom();else applyZoom();
+      updateStats(doc);updateMargins();
+      try{renderPreflight();renderInsights(doc);if(!$('nav').hidden){buildOutline();buildThumbs();}}catch(ie){console.error(ie);}
+      done();
+    }).catch(function(err){
+      setStatus('Typesetting failed: '+(err&&err.message?err.message:err),true);
+      setProg(0);console.error(err);done();
+    });
+  }
+  attempt(guess);
+}
+
+/* ================= PREVIEW VIEW ================= */
+var view='page',zoom=1,zoomSet=false,curPage=1;
+function pageEls(){return $('pvOut').querySelectorAll('.pagedjs_page');}
+var lastSpread=-1,flipT=null;
+function showPage(n,keep,anim){
+  var ps=pageEls(),tot=ps.length,i,out=$('pvOut'),prev=curPage,key;
+  if(!tot)return;
+  n=Math.max(1,Math.min(tot,n));curPage=n;key=n;
+  $('pvNum').value=n;
+  for(i=0;i<tot;i++)ps[i].className=ps[i].className.replace(/\s*bk-(show|L|R)\b/g,'');
+  if(view==='all'){
+    for(i=0;i<tot;i++)ps[i].className+=' bk-show';
+    if(!keep)ps[n-1].scrollIntoView({block:'start'});
+  }else if(view==='spread'){
+    var l=(n%2===1)?n-1:n,r=l+1;
+    if(l>=1)ps[l-1].className+=' bk-show bk-L';
+    if(r<=tot)ps[r-1].className+=' bk-show bk-R';
+    key=l;
+  }else{ps[n-1].className+=' bk-show';}
+  out.className=(view==='spread'?'spread':'');
+  var calm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(anim&&!calm&&view!=='all'&&lastSpread!==-1&&key!==lastSpread){
+    out.className+=(n>=prev?' flip-n':' flip-p');clearTimeout(flipT);
+    flipT=setTimeout(function(){out.className=out.className.replace(/\s*flip-[np]/g,'');},750);
+  }
+  lastSpread=key;
+  markThumb(n);
+}
+function setView(v){
+  view=v;
+  $('vwPage').setAttribute('aria-pressed',v==='page');$('vwSpread').setAttribute('aria-pressed',v==='spread');$('vwAll').setAttribute('aria-pressed',v==='all');
+  showPage(curPage,false);
+  fitZoom();
+}
+function applyZoom(){$('pvOut').style.zoom=zoom;$('zVal').textContent=Math.round(zoom*100)+'%';}
+function fitZoom(){
+  var t=trimOf(S.st.trim),st=$('pvStage'),cols=view==='spread'?2:1;
+  if(view==='all'){zoom=0.5;}
+  else{
+    var w=(st.clientWidth-60)/(t.w*96*cols),h=(st.clientHeight-44)/(t.h*96);
+    zoom=Math.max(0.3,Math.min(2,Math.min(w,h)));
+  }
+  zoom=Math.round(zoom*100)/100;zoomSet=false;applyZoom();
+}
+function setZoom(z){zoom=Math.max(0.25,Math.min(3,z));zoomSet=true;applyZoom();}
+
+/* ================= UI: STATS, MARGINS ================= */
+function updateStats(doc){
+  var words=doc?doc.words:0,pages=lastPages||(doc?estimatePages(doc):0),mins=Math.max(1,Math.round(words/230));
+  $('stats').innerHTML='<span><b>'+words.toLocaleString()+'</b> words</span><span><b>'+(lastPages?'':'~')+pages+'</b> pages'+(lastPages?'':' (est.)')+'</span><span><b>'+mins+'</b> min read</span>'+(doc?'<span><b>'+doc.chapters+'</b> chapters</span>':'');
+  var lp=findLongParas(S.md),w=[],i,html='';
+  if(doc&&doc.warn)for(i=0;i<doc.warn.length;i++)w.push('<li>'+esc(doc.warn[i])+'</li>');
+  for(i=0;i<lp.length;i++)w.push('<li>Line '+lp[i].line+': paragraph of '+lp[i].words+' words ("'+esc(lp[i].txt)+'...")</li>');
+  if(w.length)html='<div class="warns"><b>Warnings</b><ul>'+w.join('')+'</ul></div>';
+  $('warns').innerHTML=html;
+}
+function updateMargins(){
+  var m=lastMargins||margins(lastPages||estimatePages(lastDoc||{words:0,chapters:0,parts:0}));
+  $('mgrid').innerHTML='<dt>Pages</dt><dd>'+(lastPages||'estimate')+'</dd><dt>Inside gutter</dt><dd>'+m.inside+' in</dd><dt>Outside</dt><dd>'+m.outside+' in</dd><dt>Top</dt><dd>'+m.top+' in</dd><dt>Bottom</dt><dd>'+m.bottom+' in</dd>';
+}
+
+/* ================= FORM BINDING ================= */
+var META_KEYS=['title','subtitle','author','publisher','year','edition','copy','disc','ded','about','also','review'];
+function syncUI(){
+  var k;
+  $('ms').value=S.md;
+  for(k=0;k<META_KEYS.length;k++)$('m_'+META_KEYS[k]).value=S.meta[META_KEYS[k]];
+  syncStyleForm();
+  renderImgList();updateMargins();
+}
+function onMeta(){
+  var k;for(k=0;k<META_KEYS.length;k++)S.meta[META_KEYS[k]]=$('m_'+META_KEYS[k]).value;
+  changed();
+}
+function changed(){scheduleRender();scheduleSave();}
+var saveTimer=null;
+function projectObj(){return {app:'guide-typesetter-studio',v:1,md:S.md,meta:S.meta,st:S.st,images:S.images};}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(autosave,900);}
+function autosave(){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(projectObj()));$('savedMsg').textContent='Autosaved '+new Date().toLocaleTimeString();}
+  catch(e){$('savedMsg').textContent='Autosave unavailable (storage blocked or full). Use Save project (.json).';}
+}
+
+/* ================= UNDO / REDO ================= */
+var hist=[],hidx=-1,histTimer=null;
+function pushHist(v){
+  if(hist[hidx]===v)return;
+  hist=hist.slice(0,hidx+1);hist.push(v);if(hist.length>250)hist.shift();hidx=hist.length-1;updUndo();
+}
+function updUndo(){$('btnUndo').disabled=hidx<=0;$('btnRedo').disabled=hidx>=hist.length-1;}
+function undo(){if(hidx>0){hidx--;S.md=hist[hidx];$('ms').value=S.md;updUndo();changed();}}
+function redo(){if(hidx<hist.length-1){hidx++;S.md=hist[hidx];$('ms').value=S.md;updUndo();changed();}}
+function setMd(v){
+  S.md=v;$('ms').value=v;
+  clearTimeout(histTimer);pushHist(v);changed();
+}
+
+/* ================= FILE INPUT ================= */
+function readTextFile(f){
+  if(!/\.(md|markdown|txt)$/i.test(f.name)&&!/^text\//.test(f.type)){showErr('"'+f.name+'" is not a .md or .txt file.');return;}
+  if(f.size>8*1024*1024){showErr('That file is larger than 8 MB.');return;}
+  var r=new FileReader();r.onload=function(){lastPages=0;setMd(String(r.result));setStatus('Loaded '+f.name);};r.onerror=function(){showErr('Could not read the file.');};r.readAsText(f);
+}
+function addImageFile(f,insert){
+  if(!/^image\/(png|jpeg|gif|webp|svg\+xml)$/.test(f.type)){showErr('Image "'+f.name+'" must be PNG, JPEG, GIF, WebP or SVG.');return;}
+  if(f.size>5*1024*1024){showErr('Image "'+f.name+'" is larger than 5 MB.');return;}
+  var r=new FileReader();
+  r.onload=function(){
+    var u=String(r.result),n=1;
+    if(!validImg(u)){showErr('Could not read image "'+f.name+'".');return;}
+    while(S.images['img'+n])n++;
+    var id='img'+n;S.images[id]=u;renderImgList();
+    if(insert){insertAtCursor('\n\n![Caption for '+f.name.replace(/[\[\]()]/g,'')+'](img:'+id+')\n\n');}
+    scheduleSave();
+  };
+  r.readAsDataURL(f);
+}
+function renderImgList(){
+  var h=[],k;
+  for(k in S.images){if(Object.prototype.hasOwnProperty.call(S.images,k))h.push('<div class="im"><img src="'+S.images[k]+'" alt=""><div>'+esc(k)+'</div><button type="button" data-rm="'+esc(k)+'">remove</button></div>');}
+  $('imgList').innerHTML=h.join('');
+}
+function insertAtCursor(txt){
+  var ta=$('ms'),s=ta.selectionStart,e=ta.selectionEnd,v=ta.value;
+  ta.value=v.slice(0,s)+txt+v.slice(e);
+  ta.selectionStart=ta.selectionEnd=s+txt.length;ta.focus();
+  S.md=ta.value;pushHist(S.md);lastPages=0;changed();
+}
+
+/* ================= EXPORTS ================= */
+function showErr(msg){var b=$('exMsg');b.innerHTML='<div class="errbox">'+esc(msg)+'</div>';selectTab('ex');console.error(msg);}
+function showOk(msg){$('exMsg').innerHTML='<div class="okbox">'+esc(msg)+'</div>';}
+function detectBrowser(){
+  var ua=navigator.userAgent||'';
+  if(/Edg\//.test(ua)||(/Chrome\//.test(ua)&&!/OPR\//.test(ua)))return 'chrome';
+  if(/Firefox\//.test(ua))return 'firefox';
+  if(/Safari\//.test(ua))return 'safari';
+  return 'other';
+}
+function printSteps(){
+  var t=trimOf(S.st.trim),b=detectBrowser(),s=[];
+  if(b==='chrome'){
+    s=['Click Exact Print. The book opens in a new tab and is paginated.','In the print dialog set <b>Destination: Save as PDF</b>.','Set <b>Margins: None</b>. The book already contains its own margins.','Turn <b>Background graphics: On</b>. Turn headers and footers off. Scale: 100.','The page size ('+t.w+' x '+t.h+' in) comes from the book. Save the PDF.'];
+  }else if(b==='firefox'){
+    s=['Firefox ignores parts of the @page rules. For an exact trim size use Chrome or Edge.','If you must use Firefox: Print, Save to PDF, Margins None, tick Print backgrounds, Scale 100.'];
+  }else if(b==='safari'){
+    s=['Safari does not reliably honor custom page sizes. For an exact trim size use Chrome or Edge.','In Safari: File, Print, PDF menu, Save as PDF. Check the page size in the PDF afterwards.'];
+  }else{
+    s=['Use a Chromium browser (Chrome or Edge) for exact results.','Print dialog: Destination Save as PDF, Margins None, Background graphics On, Scale 100.'];
+  }
+  $('printSteps').innerHTML='<li>'+s.join('</li><li>')+'</li>';
+}
+function buildStandalone(html,css){
+  var t=trimOf(S.st.trim),b=detectBrowser(),SC='script';
+  var steps=b==='chrome'?'Destination <b>Save as PDF</b> &middot; Margins <b>None</b> &middot; Background graphics <b>On</b> &middot; Headers and footers off &middot; Scale 100':'Use Chrome or Edge for exact trim size. Print dialog: Save as PDF, Margins None, Background graphics On.';
+  var js='window.PagedConfig={auto:false};';
+  var run='var CSS='+JSON.stringify(css).replace(/<\//g,'<\\/')+';var HTML='+JSON.stringify(html).replace(/<\//g,'<\\/')+';'+gtsPostProcess.toString()+';'+
+   'function go(){var st=document.getElementById("st");st.textContent="Paginating...";var p=new Paged.Previewer();p.preview(HTML,[{"book.css":CSS}],document.getElementById("out")).then(function(){var info=gtsPostProcess(document.getElementById("out"));st.textContent=info.total+" pages ready. Press Print.";document.getElementById("pb").disabled=false;window.__gtsPages=info.total;}).catch(function(e){st.textContent="Pagination failed: "+e.message;st.style.color="#ff9c9c";});}'+
+   'if(document.fonts&&document.fonts.ready){Promise.race([document.fonts.ready,new Promise(function(r){setTimeout(r,4000)})]).then(function(){go();});}else{go();}';
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>'+esc(S.meta.title)+' - print</title>'+
+   (fontHref(S.st.font)?'<link href="'+fontHref(S.st.font)+'" rel="stylesheet">':'')+'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">'+
+   '<style>@page{size:'+t.w+'in '+t.h+'in;margin:0}body{margin:0;background:#d8d4c9;font-family:Inter,system-ui,sans-serif}.guide{position:sticky;top:0;z-index:20;background:#161513;color:#fff;padding:10px 16px;font-size:13px;line-height:1.5}.guide button{font:600 13px Inter,sans-serif;background:#D62828;color:#fff;border:0;border-radius:3px;padding:7px 14px;cursor:pointer;margin-right:12px}.guide button[disabled]{opacity:.5}#out .pagedjs_pages{display:flex;flex-direction:column;align-items:center;gap:18px;padding:18px 0}#out .pagedjs_page{background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.3)}@media print{.guide{display:none}body{background:#fff}#out .pagedjs_pages{display:block;padding:0}#out .pagedjs_page{box-shadow:none;margin:0}}</style>'+
+   '<'+SC+'>'+js+'<'+'/'+SC+'><'+SC+' src="https://unpkg.com/pagedjs@0.4.3/dist/paged.polyfill.js"><'+'/'+SC+'></head><body>'+
+   '<div class="guide"><button id="pb" type="button" disabled onclick="window.print()">Print / Save as PDF</button><span id="st">Loading...</span><div style="margin-top:6px;color:#ddd">'+steps+'</div></div><div id="out"></div><'+SC+'>'+run+'<'+'/'+SC+'></body></html>';
+}
+function exactPrint(){
+  try{
+    if(!LIBS_OK)throw new Error('Libraries did not load. Reload this page with an internet connection.');
+    var doc=lastDoc||parseDoc(S.md,'paged');
+    if(!doc.items.length)throw new Error('The manuscript has no chapters. Add at least one "## Chapter title" heading.');
+    var m=lastMargins||margins(lastPages||estimatePages(doc));
+    var page=buildStandalone(buildBookHtml(doc,{pad:lastPad&&S.st.padEven}),buildCss(m));
+    var blob=new Blob([page],{type:'text/html'}),url=URL.createObjectURL(blob),w=window.open(url,'_blank');
+    if(!w)throw new Error('The browser blocked the new tab. Allow pop-ups for this page and click Exact Print again.');
+    printSteps();showOk('Print tab opened. Wait for "pages ready", then press Print and follow the steps below.');
+  }catch(e){showErr('Print export failed: '+e.message);}
+}
+
+function validXml(name,txt){
+  var d=new DOMParser().parseFromString(txt,'application/xml');
+  if(d.getElementsByTagName('parsererror').length)throw new Error('Generated file '+name+' is not well-formed XML: '+d.getElementsByTagName('parsererror')[0].textContent.slice(0,200));
+}
+function serializeBody(box){
+  var s=new XMLSerializer().serializeToString(box);
+  return s.replace(/^<div xmlns="[^"]*">/,'<div>');
+}
+var EPUB_CSS='html{font-size:100%}body{font-family:Georgia,"Times New Roman",serif;line-height:1.5;margin:0 4%;color:#111}h1,h2,h3,h4{font-family:Helvetica,Arial,sans-serif;line-height:1.2;page-break-after:avoid;break-after:avoid}h1{font-size:1.7em;margin:1.6em 0 .6em}h2{font-size:1.4em}h3{font-size:1.2em;margin:1.4em 0 .4em}p{margin:0 0 .8em;text-align:left;orphans:2;widows:2}.ep-open{margin:2em 0 1.4em;text-align:center}.ep-lab{text-transform:uppercase;letter-spacing:.15em;font-size:.8em;margin:0}.ep-open h1{margin:.2em 0 0}.tp{text-align:center;margin-top:20%}.tp-title{font-size:2.2em;margin-bottom:.2em}.tp-sub{font-style:italic}.tp-author{text-transform:uppercase;letter-spacing:.14em;margin-top:2em}.cp{font-size:.8em}.dd{text-align:center;font-style:italic;margin-top:25%}.pt{text-align:center;margin-top:25%}.co{border:1px solid #444;padding:.6em .9em;margin:1.1em 0;break-inside:avoid;page-break-inside:avoid}.co-h{font-family:Helvetica,Arial,sans-serif;font-weight:bold;margin-bottom:.4em}.co-lab{text-transform:uppercase;letter-spacing:.12em;font-size:.72em;margin-right:.6em;border:1px solid #444;padding:0 .4em}.co-example{border-width:0 0 0 4px;background:#f1f1ee}.co-mistake{border-style:dashed}.co-tip{border-width:2px 0}.co-note{background:#f4f3ef;border-width:0 0 0 1px}.co-worksheet{border-style:double;border-width:4px}.ws-line{height:1.8em;border-bottom:1px solid #888}.cbx{display:inline-block;width:.8em;height:.8em;border:1.3px solid #111;margin-right:.5em}ul.chk{list-style:none;padding-left:0}table{border-collapse:collapse;width:100%;font-size:.9em;margin:.4em 0 1em}th,td{border-bottom:1px solid #aaa;padding:.3em .5em;text-align:left;vertical-align:top}th{background:#ececea}.tcap,figcaption{font-family:Helvetica,Arial,sans-serif;font-size:.85em;margin:.8em 0 .3em}figure{margin:1.2em 0;text-align:center}img{max-width:100%;height:auto}.lab{font-weight:bold}hr.orn{border:0;text-align:center;margin:1.4em 0}hr.orn:after{content:"* * *";letter-spacing:.4em}.toc{list-style:none;padding:0}.also{list-style:none;padding:0;text-align:center;font-style:italic}';
+function epubExtra(){
+  var a=inkOn(S.st.accent,'#ffffff',4.5);
+  return 'h1,h2,h3{color:'+a+'}.ep-lab{color:'+a+'}.co{border-color:'+a+'}.co-lab{border-color:'+a+';color:'+a+'}.sn{font-weight:bold;margin-right:.4em}';
+}
+function buildEpub(){
+  return new Promise(function(resolve,reject){
+    try{
+      if(!ZIP_OK)throw new Error('The JSZip library did not load. Reload the page with an internet connection and try again.');
+      if(!LIBS_OK)throw new Error('The markdown libraries did not load. Reload the page with an internet connection.');
+      var M=S.meta,doc=parseDoc(S.md,'epub');
+      if(!doc.items.length)throw new Error('The manuscript has no chapters. Add at least one "## Chapter title" heading.');
+      var manifest=[],spine=[],navItems=[],i,it,xml={};
+      var seed=mulberry32(hashStr(M.title+'|'+M.author+'|'+M.year)),hex='',bv;
+      for(i=0;i<16;i++){bv=Math.floor(seed()*256);if(i===6)bv=(bv&15)|64;if(i===8)bv=(bv&63)|128;hex+=(bv<16?'0':'')+bv.toString(16);}
+      var uuid='urn:uuid:'+hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);
+      var xhtml=function(title,body){
+        return '<?xml version="1.0" encoding="UTF-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.w3.org/2007/ops" lang="en" xml:lang="en"><head><meta charset="utf-8"/><title>'+esc(title)+'</title><link rel="stylesheet" type="text/css" href="style.css"/></head><body>'+body+'</body></html>';
+      };
+      var addPage=function(id,fname,title,body,nav){
+        xml['OEBPS/'+fname]=xhtml(title,body);
+        manifest.push('<item id="'+id+'" href="'+fname+'" media-type="application/xhtml+xml"/>');
+        spine.push('<itemref idref="'+id+'"/>');
+        if(nav)navItems.push({href:fname,title:title,kind:nav});
+      };
+      var paras=textToParas;
+      addPage('title','title.xhtml',M.title,'<section epub:type="titlepage" class="tp"><h1 class="tp-title">'+esc(M.title)+'</h1>'+(M.subtitle?'<p class="tp-sub">'+esc(M.subtitle)+'</p>':'')+(M.author?'<p class="tp-author">'+esc(M.author)+'</p>':'')+'<p>'+esc(M.publisher)+'</p></section>',false);
+      addPage('copyright','copyright.xhtml','Copyright','<section class="cp">'+paras(fillTpl(M.copy))+'</section>',false);
+      if(M.disc&&M.disc.replace(/\s/g,'')!=='')addPage('disclaimer','disclaimer.xhtml','Disclaimer','<section><h2>Disclaimer</h2>'+paras(fillTpl(M.disc))+'</section>',false);
+      if(M.ded&&M.ded.replace(/\s/g,'')!=='')addPage('dedication','dedication.xhtml','Dedication','<section class="dd">'+paras(M.ded)+'</section>',false);
+      var figs=[],tabs=[],ci=0,pi=0,tocPos=spine.length;
+      for(i=0;i<doc.items.length;i++){
+        it=doc.items[i];
+        if(it.kind==='part'){
+          pi++;var pn=('0'+pi).slice(-2);
+          addPage('part'+pi,'part'+pn+'.xhtml',it.title,'<section epub:type="part" class="pt"><h1 id="'+it.id+'">'+esc(it.title)+'</h1></section>','part');
+        }else{
+          ci++;var cn=('0'+ci).slice(-2);
+          var body='<section epub:type="chapter"><header class="ep-open">'+(it.numbered?'<p class="ep-lab">Chapter '+it.num+'</p>':'')+'<h1 id="'+it.id+'">'+esc(it.title)+'</h1></header>'+serializeBody(it.dom)+'</section>';
+          addPage('ch'+ci,'ch'+cn+'.xhtml',it.title,body,'chapter');
+          figs=figs.concat(it.figs);tabs=tabs.concat(it.tabs);
+        }
+      }
+      var lst=function(a,hd){var o='<h2>'+hd+'</h2><ul class="toc">',j;for(j=0;j<a.length;j++)o+='<li>'+esc(a[j].label)+(a[j].text?' '+esc(a[j].text):'')+'</li>';return o+'</ul>';};
+      if(S.st.figIndex&&(figs.length||tabs.length)){
+        var ix='<section><h1>Figures and Tables</h1>';
+        if(figs.length)ix+=lst(figs,'Figures');
+        if(tabs.length)ix+=lst(tabs,'Tables');
+        addPage('figindex','figures.xhtml','Figures and Tables',ix+'</section>','back');
+      }
+      if(M.about&&M.about.replace(/\s/g,'')!=='')addPage('about','about.xhtml','About the Author','<section><h1>About the Author</h1>'+paras(M.about)+'</section>','back');
+      if(M.also&&M.also.replace(/\s/g,'')!==''){
+        var al=M.also.split('\n'),li=[],j2;for(j2=0;j2<al.length;j2++){if(al[j2].replace(/\s/g,'')!=='')li.push('<li>'+esc(al[j2])+'</li>');}
+        addPage('also','also.xhtml','Also by '+M.author,'<section><h1>Also by '+esc(M.author)+'</h1><ul class="also">'+li.join('')+'</ul></section>','back');
+      }
+      if(S.st.review&&M.review&&M.review.replace(/\s/g,'')!=='')addPage('review','review.xhtml','Thank you for reading','<section><h1>Thank you for reading</h1>'+paras(M.review)+'</section>','back');
+      var nav='<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>',open=false;
+      for(i=0;i<navItems.length;i++){
+        var n=navItems[i];
+        if(n.kind==='part'){if(open)nav+='</ol></li>';nav+='<li><a href="'+n.href+'">'+esc(n.title)+'</a><ol>';open=true;}
+        else nav+='<li><a href="'+n.href+'">'+esc(n.title)+'</a></li>';
+      }
+      if(open)nav+='</ol></li>';
+      nav+='</ol></nav>';
+      nav+='<nav epub:type="landmarks" hidden="hidden"><ol><li><a epub:type="toc" href="nav.xhtml">Contents</a></li><li><a epub:type="bodymatter" href="'+(navItems.length?navItems[0].href:'nav.xhtml')+'">Start of book</a></li></ol></nav>';
+      xml['OEBPS/nav.xhtml']=xhtml('Contents',nav);
+      manifest.push('<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>');
+      spine.splice(tocPos,0,'<itemref idref="nav"/>');
+      var id,imgItems=[],imgFiles={};
+      for(id in USED_IMG){if(Object.prototype.hasOwnProperty.call(USED_IMG,id)){imgFiles[id]=USED_IMG[id];imgItems.push('<item id="img-'+id+'" href="images/'+id+'.'+extOf(USED_IMG[id])+'" media-type="'+mimeOf(USED_IMG[id])+'"/>');}}
+      manifest.push('<item id="css" href="style.css" media-type="text/css"/>');
+      var stamp=new Date().toISOString().replace(/\.\d+Z$/,'Z');
+      var opf='<?xml version="1.0" encoding="UTF-8"?>\n<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="bookid" xml:lang="en"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="bookid">'+uuid+'</dc:identifier><dc:title>'+esc(M.title+(M.subtitle?': '+M.subtitle:''))+'</dc:title>'+(M.author?'<dc:creator>'+esc(M.author)+'</dc:creator>':'')+'<dc:language>en</dc:language>'+(M.publisher?'<dc:publisher>'+esc(M.publisher)+'</dc:publisher>':'')+'<meta property="dcterms:modified">'+stamp+'</meta></metadata><manifest>'+manifest.join('')+imgItems.join('')+'</manifest><spine>'+spine.join('')+'</spine></package>';
+      var container='<?xml version="1.0" encoding="UTF-8"?>\n<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
+      xml['META-INF/container.xml']=container;xml['OEBPS/content.opf']=opf;
+      var nm;
+      for(nm in xml){if(Object.prototype.hasOwnProperty.call(xml,nm))validXml(nm,xml[nm]);}
+      var z2=new JSZip();
+      z2.file('mimetype','application/epub+zip',{compression:'STORE'});
+      z2.file('META-INF/container.xml',container);
+      z2.file('OEBPS/content.opf',opf);
+      z2.file('OEBPS/style.css',EPUB_CSS+epubExtra());
+      for(nm in xml){if(Object.prototype.hasOwnProperty.call(xml,nm)&&nm!=='META-INF/container.xml'&&nm!=='OEBPS/content.opf')z2.file(nm,xml[nm]);}
+      for(id in imgFiles){z2.file('OEBPS/images/'+id+'.'+extOf(imgFiles[id]),imgFiles[id].split(',')[1],{base64:true});}
+      z2.generateAsync({type:'uint8array',compression:'DEFLATE'}).then(resolve,reject);
+    }catch(e){reject(e);}
+  });
+}
+function exportEpub(){
+  buildEpub().then(function(bytes){
+    downloadBlob(slug(S.meta.title)+'.epub',new Blob([bytes],{type:'application/epub+zip'}));
+    showOk('EPUB created ('+Math.round(bytes.length/1024)+' KB). All XML files passed a well-formedness check. For store submission also run the free EPUBCheck tool.');
+  }).catch(function(e){showErr('EPUB export failed: '+(e&&e.message?e.message:e));});
+}
+function cleanMarkdown(md){
+  var s=String(md).replace(/\r\n?/g,'\n').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').split('\n'),out=[],i,inF=false,inCo=false,l;
+  for(i=0;i<s.length;i++){
+    l=s[i].replace(/[ \t]+$/,'');
+    if(/^\s*(```|~~~)/.test(l))inF=!inF;
+    if(!inF){
+      if(!inCo&&CO_RE.test(l)){inCo=true;if(out.length&&out[out.length-1]!=='')out.push('');}
+      else if(inCo&&/^:::\s*$/.test(l)){inCo=false;out.push(':::');if(s[i+1]!==undefined&&s[i+1].replace(/\s/g,'')!=='')out.push('');continue;}
+      else if(!inCo&&/^#{1,3}\s/.test(l)){if(out.length&&out[out.length-1]!=='')out.push('');out.push(l);if(s[i+1]!==undefined&&s[i+1].replace(/\s/g,'')!=='')out.push('');continue;}
+    }
+    out.push(l);
+  }
+  if(inCo)out.push(':::');
+  var r=out.join('\n').replace(/\n{3,}/g,'\n\n').replace(/^\n+/,'').replace(/\n+$/,'');
+  return r+'\n';
+}
+function exportMd(){
+  try{downloadBlob(slug(S.meta.title)+'.md',new Blob([cleanMarkdown(S.md)],{type:'text/markdown'}));showOk('Cleaned markdown downloaded.');}
+  catch(e){showErr('Markdown export failed: '+e.message);}
+}
+function exportPack(){
+  try{
+    var M=S.meta,doc=lastDoc||parseDoc(S.md,'paged'),m=lastMargins||margins(lastPages||estimatePages(doc)),t=trimOf(S.st.trim),i,it,o=[];
+    o.push('FRONT MATTER PACK','=================','');
+    o.push('TITLE: '+M.title,'SUBTITLE: '+M.subtitle,'AUTHOR: '+M.author,'PUBLISHER LINE: '+M.publisher,'YEAR: '+M.year,'EDITION: '+M.edition,'');
+    o.push('--- COPYRIGHT PAGE ---',fillTpl(M.copy),'');
+    o.push('--- DISCLAIMER PAGE ---',fillTpl(M.disc),'');
+    o.push('--- DEDICATION ---',M.ded,'');
+    o.push('--- ABOUT THE AUTHOR ---',M.about,'');
+    o.push('--- ALSO BY ---',M.also,'');
+    o.push('--- CONTENTS ---');
+    for(i=0;i<doc.items.length;i++){it=doc.items[i];o.push((it.kind==='part'?'':'  ')+(it.numbered?it.num+'. ':'')+it.title);}
+    o.push('','--- PRINT SPECS ---','Trim size: '+t.w+' x '+t.h+' in','Pages: '+(lastPages||'about '+estimatePages(doc)),'Inside gutter: '+m.inside+' in','Outside margin: '+m.outside+' in','Top: '+m.top+' in','Bottom: '+m.bottom+' in','Verify margins against current KDP guidelines before uploading.','','The author is responsible for the factual accuracy and safety review of the book.');
+    downloadBlob(slug(M.title)+'-front-matter.txt',new Blob([o.join('\n')+'\n'],{type:'text/plain'}));showOk('Front matter pack downloaded.');
+  }catch(e){showErr('Front matter export failed: '+e.message);}
+}
+function saveProject(){
+  try{downloadBlob(slug(S.meta.title)+'.gts.json',new Blob([JSON.stringify(projectObj())],{type:'application/json'}));showOk('Project saved.');}
+  catch(e){showErr('Could not save the project: '+e.message);}
+}
+function loadProjectFile(f){
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var o=JSON.parse(String(r.result));
+      if(!o||o.app!=='guide-typesetter-studio')throw new Error('This file is not a Guide Typesetter Studio project.');
+      var n=sanitizeState(o);S.md=n.md;S.images=n.images;S.meta=n.meta;S.st=n.st;lastPages=0;
+      syncUI();hist=[];hidx=-1;pushHist(S.md);changed();showOk('Project loaded.');
+    }catch(e){showErr('Could not load the project: '+e.message);}
+  };
+  r.onerror=function(){showErr('Could not read the project file.');};
+  r.readAsText(f);
+}
+
+/* ================= TABS / MODAL ================= */
+function selectTab(p){
+  var ids=['ms','bk','st','in','ex'],i;
+  for(i=0;i<ids.length;i++){
+    var on=ids[i]===p;
+    $('tab-'+ids[i]).setAttribute('aria-selected',on?'true':'false');
+    $('p-'+ids[i]).hidden=!on;
+  }
+  if(p==='ex')printSteps();
+  if(p==='st'){updateMargins();loadGalleryFonts();}
+}
+var lastFocus=null;
+function openModal(){lastFocus=document.activeElement;$('modalBg').hidden=false;$('modal').focus();}
+function closeModal(){$('modalBg').hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+
+/* ================= CLICK TEXT IN THE PREVIEW TO EDIT IT ================= */
+var FRONT_MAP=[['.tp-title','m_title'],['.tp-sub','m_subtitle'],['.tp-author','m_author'],['.tp-pub','m_publisher'],['.cp','m_copy'],['.bk-disc','m_disc'],['.dd','m_ded'],['ul.also','m_also'],['.bk-back','m_about']];
+function reEsc(w){return w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function locateInMd(text,tag){
+  text=String(text).replace(/[\u2018\u2019]/g,"'").replace(/[\u201c\u201d]/g,'"').replace(/\u2026/g,'...');
+  var words=String(text).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'').split(' ').filter(function(w){return w.replace(/[^A-Za-z0-9\u00C0-\u024F]/g,'').length>0;});
+  var n,md=S.md;
+  for(n=Math.min(6,words.length);n>=1;n--){
+    var body=words.slice(0,n).map(reEsc).join('[\\s*_`>#|\\-]*'),re,m;
+    if(tag==='TD'||tag==='TH'){try{re=new RegExp('\\|\\s*('+body+')','i');m=re.exec(md);if(m)return m.index+m[0].length-m[1].length;}catch(e){}}
+    try{re=new RegExp(body,'i');}catch(e){continue;}
+    m=re.exec(md);if(m)return m.index;
+  }
+  return -1;
+}
+function editFromPreview(target){
+  var i;
+  for(i=0;i<FRONT_MAP.length;i++){
+    if(target.closest(FRONT_MAP[i][0])){
+      if(FRONT_MAP[i][0]==='.bk-back'&&!/about the author/i.test(target.closest('.bk-back').textContent))continue;
+      selectTab('bk');var f=$(FRONT_MAP[i][1]);f.focus();try{f.select();}catch(e){}
+      setStatusMsg('Edit this text in the Book tab. The preview updates as you type.');return true;
+    }
+  }
+  var el0=target.closest('p,li,td,th,h1,h2,h3,h4,figcaption,.co-t,.tcap,.lab');if(!el0||!el0.closest('.bk'))return false;
+  var idx=locateInMd(el0.textContent,el0.tagName);
+  if(idx<0){setStatusMsg('Could not find that text in the manuscript. It may come from a template.');return true;}
+  var md=S.md,end;
+  if(el0.tagName==='P'&&!el0.closest('.co')){end=md.indexOf('\n\n',idx);}else{end=md.indexOf('\n',idx);}
+  if(end<0)end=md.length;
+  selectTab('ms');var ta=$('ms');ta.focus();ta.setSelectionRange(idx,end);
+  var before=md.slice(0,idx).split('\n').length-1;ta.scrollTop=Math.max(0,before*19-ta.clientHeight/3);
+  setStatusMsg('Selected in the manuscript. Type to replace or edit it; the preview updates.');
+  return true;
+}
+function setStatusMsg(m){var e=$('stats');if(!e)return;var d=$('editMsg');if(!d){d=document.createElement('div');d.id='editMsg';d.className='hint';d.setAttribute('aria-live','polite');e.parentNode.insertBefore(d,e);}d.textContent=m;}
+
+/* ================= STYLE FORM (built from SCHEMA) ================= */
+function buildStyleForm(){
+  var host=$('stForm'),i,f,cur=null,det,sm;
+  host.innerHTML='';
+  for(i=0;i<SCHEMA.length;i++){
+    f=SCHEMA[i];
+    if(f.g){det=document.createElement('details');if(f.open)det.open=true;sm=document.createElement('summary');sm.textContent=f.g;det.appendChild(sm);cur=document.createElement('div');cur.className='grp';det.appendChild(cur);host.appendChild(det);continue;}
+    cur.appendChild(fieldEl(f));
+  }
+}
+function fieldEl(f){
+  var w=document.createElement('div'),l,e,j,o;
+  if(f.type==='chk'){
+    l=document.createElement('label');l.className='chk';e=document.createElement('input');e.type='checkbox';e.id=f.id;l.appendChild(e);l.appendChild(document.createTextNode(' '+f.label));w.appendChild(l);return w;
+  }
+  l=document.createElement('label');l.setAttribute('for',f.id);l.textContent=f.label;w.appendChild(l);
+  if(f.type==='num'){e=document.createElement('input');e.type='number';e.id=f.id;e.min=f.min;e.max=f.max;e.step=f.step;w.appendChild(e);return w;}
+  e=document.createElement('select');e.id=f.id;
+  if(f.type==='acc'){
+    for(j=0;j<ACCENTS.length;j++){o=document.createElement('option');o.value=ACCENTS[j][0];o.textContent=ACCENTS[j][1];e.appendChild(o);}
+    o=document.createElement('option');o.value='custom';o.textContent='Custom color...';e.appendChild(o);
+    w.appendChild(e);
+    var c=document.createElement('input');c.type='color';c.id='s_acc_c';c.setAttribute('aria-label','Custom accent color');c.className='accpick';c.hidden=true;w.appendChild(c);
+    var n=document.createElement('p');n.className='hint';n.id='accHint';w.appendChild(n);
+    return w;
+  }
+  for(j=0;j<f.opts.length;j++){o=document.createElement('option');o.value=f.opts[j][0];o.textContent=f.opts[j][1];e.appendChild(o);}
+  w.appendChild(e);return w;
+}
+function syncStyleForm(){
+  var i,f,e,st=S.st,j,known;
+  for(i=0;i<SCHEMA.length;i++){
+    f=SCHEMA[i];if(!f.key)continue;e=$(f.id);if(!e)continue;
+    if(f.type==='chk')e.checked=!!st[f.key];
+    else if(f.type==='acc'){
+      known=false;for(j=0;j<ACCENTS.length;j++){if(ACCENTS[j][0].toLowerCase()===String(st.accent).toLowerCase()){known=true;break;}}
+      e.value=known?ACCENTS[j][0]:'custom';$('s_acc_c').hidden=known;$('s_acc_c').value=st.accent;
+      var ct=contrastOf(st.accent,'#ffffff');$('accHint').textContent='Contrast with white paper: '+ct.toFixed(1)+':1'+(ct<4.5?' (light for text; headings use a darker shade automatically)':'');
+    }else e.value=String(st[f.key]);
+  }
+  refreshGallerySel();
+}
+function onField(f,e){
+  var st=S.st,v;
+  if(f.key==='preset'){applyPreset(e.value);lastPages=0;ensureFonts(S.st.font);syncUI();changed();return;}
+  if(f.type==='chk')v=e.checked;
+  else if(f.type==='num'){v=parseFloat(e.value);if(!isFinite(v))return;v=Math.max(f.min,Math.min(f.max,v));if(f.int)v=Math.round(v);}
+  else if(f.type==='acc'){if(e.value==='custom'){v=$('s_acc_c').value;$('s_acc_c').hidden=false;}else{v=e.value;$('s_acc_c').hidden=true;$('s_acc_c').value=v;}}
+  else v=e.value;
+  st[f.key]=v;
+  if(f.key==='font')ensureFonts(v);
+  if(f.type==='acc'){var ct=contrastOf(v,'#ffffff');$('accHint').textContent='Contrast with white paper: '+ct.toFixed(1)+':1'+(ct<4.5?' (light for text; headings use a darker shade automatically)':'');}
+  lastPages=0;changed();
+}
+function bindStyleForm(){
+  SCHEMA.forEach(function(f){
+    if(!f.key)return;var e=$(f.id);if(!e)return;
+    e.addEventListener('change',function(){onField(f,e);});
+    if(f.type==='num')e.addEventListener('input',function(){onField(f,e);});
+  });
+  $('s_acc_c').addEventListener('input',function(){S.st.accent=this.value;lastPages=0;syncStyleForm();changed();});
+}
+
+/* ---- preset gallery: every card is a live mini page in that preset's fonts ---- */
+function miniPage(key){
+  var P=PRESETS[key],F=FONTS[P.font]||FONTS.lora,a=P.accent,on=textOn(a),H=F.head,B=F.body,tint=mixHex(a,'#ffffff',0.9),i,y,s;
+  s='<svg viewBox="0 0 96 132" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+esc(P.name)+' preview"><rect x="1" y="1" width="94" height="130" rx="2" fill="#fff" stroke="#cfc8b8"/>';
+  var T='font-family="'+H+'"';
+  if(P.opener==='classic')s+='<text x="48" y="19" font-size="3.6" text-anchor="middle" fill="'+a+'" letter-spacing="0.7" '+T+'>CHAPTER 3</text><text x="48" y="33" font-size="10" text-anchor="middle" font-weight="700" fill="#111" '+T+'>Title</text><path d="M36 40h24" stroke="'+a+'" stroke-width="0.8"/>';
+  else if(P.opener==='block')s+='<text x="9" y="34" font-size="23" font-weight="800" fill="'+a+'" '+T+'>3</text><path d="M9 38h78" stroke="'+a+'" stroke-width="1.6"/><text x="9" y="47" font-size="8.5" font-weight="700" fill="#111" '+T+'>Title</text>';
+  else if(P.opener==='band')s+='<path d="M9 13h78" stroke="'+a+'" stroke-width="2.6"/><text x="9" y="22" font-size="3.6" fill="'+a+'" letter-spacing="0.7" '+T+'>CHAPTER 3</text><text x="9" y="34" font-size="9.5" font-weight="700" fill="#111" '+T+'>Title</text><path d="M9 41h78" stroke="'+a+'" stroke-width="0.8"/>';
+  else if(P.opener==='minimal')s+='<text x="9" y="28" font-size="9" font-weight="700" fill="#111" '+T+'>Title</text><path d="M9 33h78" stroke="'+a+'" stroke-width="0.9"/>';
+  else if(P.opener==='inverse')s+='<rect x="9" y="12" width="78" height="31" fill="'+a+'"/><text x="14" y="21" font-size="3.4" fill="'+on+'" letter-spacing="0.7" '+T+'>CHAPTER 3</text><text x="14" y="35" font-size="9.5" font-weight="700" fill="'+on+'" '+T+'>Title</text>';
+  else if(P.opener==='circle')s+='<circle cx="48" cy="23" r="9.5" fill="none" stroke="'+a+'" stroke-width="1.4"/><text x="48" y="27" font-size="11" text-anchor="middle" font-weight="700" fill="'+a+'" '+T+'>3</text><text x="48" y="43" font-size="8.5" text-anchor="middle" font-weight="700" fill="#111" '+T+'>Title</text>';
+  else if(P.opener==='rule2')s+='<path d="M9 13h78M9 15.2h78M9 43h78M9 45.2h78" stroke="'+a+'" stroke-width="0.8"/><text x="48" y="21" font-size="3.4" text-anchor="middle" fill="'+a+'" letter-spacing="0.7" '+T+'>CHAPTER 3</text><text x="48" y="35" font-size="7.2" text-anchor="middle" font-weight="700" letter-spacing="0.8" fill="#111" '+T+'>TITLE</text>';
+  else s+='<text x="9" y="36" font-size="21" font-weight="800" fill="'+a+'" '+T+'>3</text><text x="30" y="33" font-size="8" font-weight="700" fill="#111" '+T+'>Title</text><path d="M9 41h78" stroke="'+a+'" stroke-width="1.1"/>';
+  for(i=0;i<7;i++){y=56+i*5.1;var x0=(P.para==='indent'&&i===0)?13:9,x1=(i===6)?56:87;s+='<rect x="'+x0+'" y="'+y+'" width="'+(x1-x0)+'" height="1.7" rx="0.8" fill="#b9b4a8"/>';}
+  if(P.drop!=='none')s+='<rect x="9" y="56" width="5" height="5" fill="'+(P.drop==='box'?a:'none')+'"/><text x="9.6" y="61.2" font-size="6.5" font-weight="700" fill="'+(P.drop==='box'?on:a)+'" '+T+'>A</text>';
+  if(P.callout==='boxed')s+='<rect x="9" y="96" width="78" height="19" rx="1.5" fill="none" stroke="#333" stroke-width="0.8"/><rect x="12" y="99" width="12" height="3.6" rx="0.8" fill="'+a+'"/>';
+  else if(P.callout==='soft')s+='<rect x="9" y="96" width="78" height="19" rx="2.5" fill="'+tint+'"/><rect x="12" y="99" width="12" height="2.4" rx="0.8" fill="'+a+'"/>';
+  else if(P.callout==='tab')s+='<rect x="9" y="97" width="78" height="18" rx="1.5" fill="none" stroke="'+a+'" stroke-width="0.9"/><rect x="13" y="94.6" width="14" height="4.6" fill="#fff"/><rect x="14" y="95.8" width="12" height="2.2" rx="0.8" fill="'+a+'"/>';
+  else if(P.callout==='ink')s+='<rect x="9" y="96" width="78" height="19" rx="1.5" fill="none" stroke="'+a+'" stroke-width="0.9"/><rect x="9" y="96" width="78" height="6" fill="'+a+'"/>';
+  else s+='<path d="M9 97h78" stroke="'+a+'" stroke-width="1.3"/><rect x="9" y="99.6" width="12" height="2.4" rx="0.8" fill="'+a+'"/>';
+  for(i=0;i<2;i++)s+='<rect x="'+(P.callout==='boxed'||P.callout==='soft'?12:12)+'" y="'+(105+i*4)+'" width="'+(i?44:66)+'" height="1.5" rx="0.7" fill="#b9b4a8"/>';
+  var fx=P.folio==='outside'?86:48,fa=P.folio==='outside'?'end':'middle';
+  if(P.folio!=='none')s+='<text x="'+fx+'" y="126" font-size="3.4" text-anchor="'+fa+'" fill="#555" font-family="'+B+'">'+(P.folio==='flank'?'- 12 -':'12')+'</text>';
+  return s+'</svg>';
+}
+function buildGallery(){
+  var host=$('gallery'),k;host.innerHTML='';
+  for(k in PRESETS){
+    if(!Object.prototype.hasOwnProperty.call(PRESETS,k))continue;
+    var b=document.createElement('button');b.type='button';b.className='card';b.setAttribute('data-k',k);b.setAttribute('aria-pressed','false');
+    b.innerHTML=miniPage(k)+'<span>'+esc(PRESETS[k].name)+'</span>';
+    host.appendChild(b);
+  }
+  host.addEventListener('click',function(e){
+    var b=e.target.closest?e.target.closest('button.card'):null;if(!b)return;
+    applyPreset(b.getAttribute('data-k'));lastPages=0;ensureFonts(S.st.font);syncUI();changed();
+  });
+}
+var galleryFontsLoaded=false;
+function loadGalleryFonts(){if(galleryFontsLoaded)return;galleryFontsLoaded=true;var k;for(k in PRESETS){if(Object.prototype.hasOwnProperty.call(PRESETS,k))ensureFonts(PRESETS[k].font);}}
+function refreshGallerySel(){
+  var cs=document.querySelectorAll('#gallery .card'),i;
+  for(i=0;i<cs.length;i++)cs[i].setAttribute('aria-pressed',cs[i].getAttribute('data-k')===S.st.preset?'true':'false');
+}
+
+/* ---- my saved styles ---- */
+var MYSTYLES_KEY='gts.mystyles.v1';
+function loadMyStyles(){try{var a=JSON.parse(localStorage.getItem(MYSTYLES_KEY)||'[]');return Array.isArray(a)?a.slice(0,30):[];}catch(e){return [];}}
+function saveMyStyles(a){try{localStorage.setItem(MYSTYLES_KEY,JSON.stringify(a));}catch(e){showErr('Could not save your style (browser storage is blocked).');}}
+function renderMyStyles(){
+  var a=loadMyStyles(),h=[],i;
+  for(i=0;i<a.length;i++)h.push('<div class="mys"><span>'+esc(String(a[i].name).slice(0,40))+'</span><button type="button" class="btn sm" data-ap="'+i+'">Apply</button><button type="button" class="btn sm" data-rm="'+i+'">Delete</button></div>');
+  $('myStyles').innerHTML=h.join('')||'<p class="hint">No saved styles yet. Set up your look, type a name and press Save.</p>';
+}
+function bindMyStyles(){
+  $('btnSaveStyle').addEventListener('click',function(){
+    var nm=$('styleName').value.replace(/^\s+|\s+$/g,'').slice(0,40);
+    if(!nm){showErr('Type a name for the style first.');return;}
+    var a=loadMyStyles();a.push({name:nm,st:JSON.parse(JSON.stringify(S.st))});saveMyStyles(a);$('styleName').value='';renderMyStyles();
+  });
+  $('myStyles').addEventListener('click',function(e){
+    var b=e.target.closest?e.target.closest('button'):null;if(!b)return;
+    var a=loadMyStyles(),i;
+    if(b.getAttribute('data-rm')!==null){i=+b.getAttribute('data-rm');a.splice(i,1);saveMyStyles(a);renderMyStyles();return;}
+    if(b.getAttribute('data-ap')!==null){i=+b.getAttribute('data-ap');if(!a[i])return;var keepTrim=S.st.trim;S.st=sanitizeSt(a[i].st,presetSt(a[i].st&&PRESETS[a[i].st.preset]?a[i].st.preset:'classic'));S.st.trim=keepTrim;ensureFonts(S.st.font);lastPages=0;syncUI();changed();}
+  });
+}
+
+/* ================= NAVIGATOR: OUTLINE + THUMBNAILS ================= */
+var lastInfo=null,thumbObs=null,TH=0.14;
+function jumpToId(id){
+  var ps=pageEls(),i;
+  for(i=0;i<ps.length;i++){if(ps[i].querySelector('[id="'+id+'"]')){showPage(i+1,false,true);return true;}}
+  return false;
+}
+function buildOutline(){
+  var box=$('navOutline'),h=[],doc=lastDoc,i,k,it,ids=lastInfo&&lastInfo.ids?lastInfo.ids:{};
+  if(!doc){box.innerHTML='';return;}
+  function row(cls,id,txt){h.push('<button type="button" class="ol '+cls+'" data-id="'+esc(id)+'"><span class="t">'+esc(txt)+'</span><span class="p">'+esc(Object.prototype.hasOwnProperty.call(ids,id)?ids[id]:'')+'</span></button>');}
+  for(i=0;i<doc.items.length;i++){
+    it=doc.items[i];
+    if(it.kind==='part'){row('ol-part',it.id,it.title);continue;}
+    row('ol-ch',it.id,(it.numbered?it.num+'. ':'')+it.title);
+    if(it.secs)for(k=0;k<it.secs.length;k++)row('ol-sec',it.secs[k].id,(it.secs[k].num?it.secs[k].num+' ':'')+it.secs[k].title);
+  }
+  box.innerHTML=h.join('');
+}
+function buildThumbs(){
+  var box=$('navPages'),ps=pageEls(),t=trimOf(S.st.trim),tw=Math.round(t.w*96*TH),th=Math.round(t.h*96*TH),i;
+  box.innerHTML='';
+  if(thumbObs){try{thumbObs.disconnect();}catch(e){}}
+  if(!ps.length||$('nav').hidden)return;
+  var frag=document.createDocumentFragment();
+  for(i=0;i<ps.length;i++){
+    var d=document.createElement('button');d.type='button';d.className='th';d.setAttribute('data-n',i+1);d.setAttribute('aria-label','Go to page '+(i+1));
+    d.style.width=tw+'px';d.style.height=th+'px';
+    var lab=document.createElement('span');lab.className='n';lab.textContent=ps[i].getAttribute('data-bk-folio')||String(i+1);d.appendChild(lab);
+    frag.appendChild(d);
+  }
+  box.appendChild(frag);
+  if(typeof IntersectionObserver==='undefined')return;
+  thumbObs=new IntersectionObserver(function(es){
+    es.forEach(function(en){
+      if(!en.isIntersecting)return;var d=en.target;if(d.getAttribute('data-f'))return;d.setAttribute('data-f','1');
+      var n=+d.getAttribute('data-n'),src=pageEls()[n-1];if(!src)return;
+      var cl=src.cloneNode(true),ids=cl.querySelectorAll('[id]'),j;for(j=0;j<ids.length;j++)ids[j].removeAttribute('id');
+      cl.className=cl.className.replace(/\s*bk-(show|L|R)\b/g,'')+' bk-show';
+      var wrap=document.createElement('div');wrap.className='thin';wrap.style.width=Math.round(t.w*96)+'px';wrap.style.height=Math.round(t.h*96)+'px';wrap.style.transform='scale('+TH+')';wrap.setAttribute('aria-hidden','true');
+      wrap.appendChild(cl);d.insertBefore(wrap,d.firstChild);
+    });
+  },{root:$('navPages'),rootMargin:'300px'});
+  var ds=box.querySelectorAll('.th');for(i=0;i<ds.length;i++)thumbObs.observe(ds[i]);
+  markThumb(curPage);
+}
+function markThumb(n){
+  var box=$('navPages');if(!box||$('nav').hidden)return;
+  var cs=box.querySelectorAll('.th.cur'),i;for(i=0;i<cs.length;i++)cs[i].className=cs[i].className.replace(/\s*cur/g,'');
+  var d=box.querySelector('.th[data-n="'+n+'"]');
+  if(d){d.className+=' cur';var r=d.offsetTop,bx=box;if(r<bx.scrollTop+10||r>bx.scrollTop+bx.clientHeight-d.offsetHeight-10)bx.scrollTop=Math.max(0,r-bx.clientHeight/3);}
+}
+function toggleNav(on){
+  var nv=$('nav');if(typeof on!=='boolean')on=nv.hidden;
+  nv.hidden=!on;$('btnNav').setAttribute('aria-pressed',on?'true':'false');
+  if(on){buildOutline();buildThumbs();}
+  if(!zoomSet&&view!=='all')fitZoom();
+}
+function navTab(which){
+  var ps=which==='pages';
+  $('navTabPages').setAttribute('aria-selected',ps?'true':'false');$('navTabOutline').setAttribute('aria-selected',ps?'false':'true');
+  $('navPages').hidden=!ps;$('navOutline').hidden=ps;
+}
+function bindNav(){
+  $('btnNav').addEventListener('click',function(){toggleNav();});
+  $('navTabPages').addEventListener('click',function(){navTab('pages');});
+  $('navTabOutline').addEventListener('click',function(){navTab('outline');});
+  $('navPages').addEventListener('click',function(e){var b=e.target.closest?e.target.closest('.th'):null;if(b)showPage(+b.getAttribute('data-n'),false,true);});
+  $('navOutline').addEventListener('click',function(e){var b=e.target.closest?e.target.closest('.ol'):null;if(b)jumpToId(b.getAttribute('data-id'));});
+  var sel=$('stageBg');
+  function applyStage(v){var st=$('pvStage');st.className=st.className.replace(/\s*stg-\w+/g,'')+' stg-'+v;try{localStorage.setItem('gts.stage',v);}catch(e){}}
+  var sv='warm';try{sv=localStorage.getItem('gts.stage')||'warm';}catch(e){}
+  if(!/^(warm|slate|night|light)$/.test(sv))sv='warm';
+  sel.value=sv;applyStage(sv);
+  sel.addEventListener('change',function(){applyStage(sel.value);});
+}
+
+/* ================= INSIGHTS ================= */
+function syllables(w){
+  w=w.toLowerCase().replace(/[^a-z]/g,'');if(!w)return 0;if(w.length<=3)return 1;
+  w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'').replace(/^y/,'');
+  var m=w.match(/[aeiouy]{1,2}/g);return m?m.length:1;
+}
+function textStats(txt){
+  var sents=txt.split(/[.!?]+(?:\s|$)/).filter(function(s){return /\w/.test(s);}),words=txt.match(/[A-Za-zÀ-ɏ']+/g)||[],syl=0,i,long=0;
+  for(i=0;i<words.length;i++)syl+=syllables(words[i]);
+  for(i=0;i<sents.length;i++){var c=(sents[i].match(/\S+/g)||[]).length;if(c>30)long++;}
+  var W=words.length,N=Math.max(1,sents.length),asl=W/N,asw=syl/Math.max(1,W);
+  return {words:W,sents:N,asl:asl,fre:W?206.835-1.015*asl-84.6*asw:0,fk:W?0.39*asl+11.8*asw-15.59:0,long:long};
+}
+function easeLabel(f){return f>=90?'very easy':(f>=80?'easy':(f>=70?'fairly easy':(f>=60?'plain English':(f>=50?'fairly difficult':(f>=30?'difficult':'very difficult')))));}
+function renderInsights(doc){
+  if(!doc){return;}
+  var chs=[],i,it,all='',mx=1,tot=0;
+  for(i=0;i<doc.items.length;i++){it=doc.items[i];if(it.kind!=='chapter')continue;var tx=it.dom?it.dom.textContent:'';all+=' '+tx;chs.push({t:it.title,n:it.numbered?it.num:0,w:it.words,s:textStats(tx)});if(it.words>mx)mx=it.words;tot+=it.words;}
+  var st=textStats(all),avg=chs.length?Math.round(tot/chs.length):0;
+  var cards=[['Words',tot.toLocaleString()],['Chapters',String(chs.length)],['Average chapter',avg.toLocaleString()+' words'],['Reading time',Math.max(1,Math.round(tot/230))+' min'],['Reading ease',tot?Math.round(st.fre)+' ('+easeLabel(st.fre)+')':'n/a'],['Grade level',tot?st.fk.toFixed(1):'n/a'],['Words per sentence',tot?st.asl.toFixed(1):'n/a'],['Long sentences (30+ words)',String(st.long)]];
+  $('inCards').innerHTML=cards.map(function(c){return '<div class="icard"><b>'+esc(c[1])+'</b><span>'+esc(c[0])+'</span></div>';}).join('');
+  var h=[];
+  for(i=0;i<chs.length;i++){
+    var c=chs[i],pct=Math.max(2,Math.round(c.w/mx*100));
+    h.push('<div class="brow"><div class="bl" title="'+esc(c.t)+'">'+(c.n?c.n+'. ':'')+esc(c.t.length>34?c.t.slice(0,33)+'...':c.t)+'</div><div class="bt"><i style="width:'+pct+'%"></i></div><div class="bv">'+c.w.toLocaleString()+'<small> w &middot; ease '+Math.round(c.s.fre)+'</small></div></div>');
+  }
+  $('inBars').innerHTML=h.join('')||'<p class="hint">Add chapters to see their lengths.</p>';
+}
+
+/* ================= PRINT CHECKS (run on the paginated book) ================= */
+var lastPf=[];
+function runPreflight(work,doc,n){
+  var res=[],ps=work.querySelectorAll('.pagedjs_page'),i,j;
+  function add(l,m){res.push({l:l,m:m});}
+  if(!doc.items.length)add('err','The manuscript has no chapters. Start each chapter with "## Title".');
+  if(n<24)add('err','The book has '+n+' pages. A KDP paperback needs at least 24 pages.');
+  else if(n>828)add('err','The book has '+n+' pages. KDP paperbacks stop at 828 pages.');
+  else add('ok',n+' pages: inside the KDP paperback range (24 to 828).');
+  if(n%2===1)add('info','Odd page count ('+n+'). The printer will add a blank page. Switch on "End on an even page count" to place it yourself.');
+  var bad=work.querySelectorAll('a.pn[data-pn="?"]').length;
+  if(bad)add('err',bad+' contents entries have no page number (heading text missing from the book).');else add('ok','Every contents entry has a page number.');
+  var mi=work.querySelectorAll('.bk-missing').length;
+  if(mi)add('err',mi+' image reference(s) point to an image that is not uploaded.');
+  var imgs=work.querySelectorAll('figure.fig img'),low=0,minDpi=1e9,raster=0;
+  for(i=0;i<imgs.length;i++){
+    var im=imgs[i];if(/^data:image\/svg/.test(im.getAttribute('src')||''))continue;
+    var wIn=im.offsetWidth/96;if(wIn>0&&im.naturalWidth){raster++;var dpi=im.naturalWidth/wIn;if(dpi<minDpi)minDpi=dpi;if(dpi<150)low++;}
+  }
+  if(low)add('warn',low+' picture(s) print below 150 DPI (lowest about '+Math.round(minDpi)+'). They may look soft on paper. Use larger images.');
+  else if(raster)add('ok','All pictures print at 150 DPI or better (lowest about '+Math.round(minDpi)+').');
+  var thin=[],strand=[],blanks=0,lhpx=S.st.fontSize*96/72*S.st.lineHeight;
+  for(i=0;i<ps.length;i++){
+    var pg=ps[i],content=pg.querySelector('.pagedjs_page_content'),kind=pg.getAttribute('data-bk-kind');
+    if(kind==='blank'){blanks++;continue;}
+    if(!content)continue;
+    var r0=content.getBoundingClientRect(),els=content.querySelectorAll('*'),mx=r0.top;
+    for(j=0;j<els.length;j++){var b=els[j].getBoundingClientRect().bottom;if(b>mx&&b<=r0.bottom+2)mx=b;}
+    var fill=(mx-r0.top)/Math.max(1,r0.height);
+    if(kind==='chapter'){
+      var nx=ps[i+1],cont=false;
+      if(nx){var nc=nx.querySelector('.pagedjs_page_content'),fe=nc&&nc.querySelector('[data-kind]');cont=!fe||fe.hasAttribute('data-split-from');}
+      if(cont&&fill<0.55)thin.push(pg.getAttribute('data-bk-folio')+' ('+Math.round(fill*100)+'%)');
+    }
+    var hs=content.querySelectorAll('h3.bk-h3,h4.bk-h4,.bk-ct');
+    for(j=0;j<hs.length;j++){if(hs[j].getBoundingClientRect().bottom>r0.bottom-lhpx*1.4){strand.push(pg.getAttribute('data-bk-folio'));break;}}
+  }
+  if(thin.length)add('warn',thin.length+' page(s) are less than 55% full because a figure, table or box could not split: page '+thin.slice(0,6).join(', ')+(thin.length>6?'...':'')+'. Add text before it or move it.');
+  else add('ok','No half-empty pages in the middle of chapters.');
+  if(strand.length)add('warn','A heading sits at the very bottom of page '+strand.slice(0,6).join(', ')+'. Add a line of text before the next section.');
+  else add('ok','No heading is stranded at the bottom of a page.');
+  if(blanks)add('info',blanks+' blank page(s) (from "Chapters start on a right page"). Turn that off to save pages.');
+  var ct=contrastOf(S.st.accent,'#ffffff');
+  if(ct<3)add('warn','The accent color is very light on white paper (contrast '+ct.toFixed(1)+':1). Pick a darker one so labels stay readable.');
+  var short=0;for(i=0;i<doc.items.length;i++){if(doc.items[i].kind==='chapter'&&doc.items[i].words<250)short++;}
+  if(short)add('info',short+' chapter(s) have fewer than 250 words. Very short chapters make a thin-looking book.');
+  var F=FONTS[S.st.font];
+  if(F&&F.fam.length&&document.fonts&&document.fonts.check&&!document.fonts.check('12px "'+F.fam[0]+'"'))add('warn','The font "'+F.fam[0]+'" did not load (offline?). The preview uses a fallback, so page breaks will differ from the final PDF.');
+  var lp=findLongParas(S.md);if(lp.length)add('info',lp.length+' very long paragraph(s) (over 180 words). Split them for easier reading.');
+  return res;
+}
+function renderPreflight(){
+  var r=lastPf,h=[],i,w=0;
+  for(i=0;i<r.length;i++){h.push('<li class="pf pf-'+r[i].l+'"><i aria-hidden="true"></i><span>'+esc(r[i].m)+'</span></li>');if(r[i].l==='warn'||r[i].l==='err')w++;}
+  $('pfList').innerHTML=h.length?'<ul class="pfl">'+h.join('')+'</ul>':'<p class="hint">Checks appear after the first typesetting.</p>';
+  $('tab-in').textContent=w?'Insights ('+w+')':'Insights';
+}
+
+/* ================= EDITOR TOOLS ================= */
+function commitTa(){var ta=$('ms');S.md=ta.value;pushHist(S.md);lastPages=0;changed();ta.focus();}
+function wrapSel(a,b,ph){
+  var ta=$('ms'),s=ta.selectionStart,e=ta.selectionEnd,v=ta.value,sel=v.slice(s,e)||ph||'text';
+  ta.value=v.slice(0,s)+a+sel+b+v.slice(e);ta.selectionStart=s+a.length;ta.selectionEnd=s+a.length+sel.length;commitTa();
+}
+function prefixLines(p,numbered){
+  var ta=$('ms'),v=ta.value,s=ta.selectionStart,e=ta.selectionEnd,ls=v.lastIndexOf('\n',s-1)+1,le=v.indexOf('\n',e);if(le<0)le=v.length;
+  var lines=v.slice(ls,le).split('\n'),n=0,allHave=lines.every(function(l){return l.replace(/\s/g,'')===''||(numbered?/^\d+\.\s/.test(l):l.indexOf(p)===0);});
+  var out=lines.map(function(l){
+    if(l.replace(/\s/g,'')==='')return l;
+    if(allHave)return numbered?l.replace(/^\d+\.\s/,''):l.slice(p.length);
+    n++;return (numbered?n+'. ':p)+l.replace(/^(#{1,6}\s+|>\s+|[-*+]\s+(\[[ x]\]\s+)?|\d+\.\s+)/,'');
+  }).join('\n');
+  ta.value=v.slice(0,ls)+out+v.slice(le);ta.selectionStart=ls;ta.selectionEnd=ls+out.length;commitTa();
+}
+function fmt(k){
+  if(k==='b')wrapSel('**','**');else if(k==='i')wrapSel('*','*');
+  else if(k==='h2')prefixLines('## ');else if(k==='h3')prefixLines('### ');
+  else if(k==='ul')prefixLines('- ');else if(k==='ol')prefixLines('',true);
+  else if(k==='task')prefixLines('- [ ] ');else if(k==='q')prefixLines('> ');
+  else if(k==='link')wrapSel('[',']( https://example.com )','link text');
+  else if(k==='hr')insertAtCursor('\n\n---\n\n');
+}
+var frPos=0;
+function frRegex(g){var q=$('frFind').value;if(!q)return null;try{return new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),($('frCase').checked?'':'i')+(g?'g':''));}catch(e){return null;}}
+function frCount(){var re=frRegex(true),m=re?($('ms').value.match(re)||[]).length:0;$('frInfo').textContent=$('frFind').value?m+' match'+(m===1?'':'es'):'';return m;}
+function frNext(back){
+  var re=frRegex(true),ta=$('ms'),v=ta.value,m,hit=null,last=null;if(!re){frCount();return;}
+  var from=back?ta.selectionStart:ta.selectionEnd;
+  re.lastIndex=0;
+  if(back){while((m=re.exec(v))){if(m.index>=from-0&&!(m.index+m[0].length>from&&m.index<from))break;if(m.index<from)last=m;if(m[0].length===0)re.lastIndex++;}hit=last||null;if(!hit){re.lastIndex=0;while((m=re.exec(v))){hit=m;if(m[0].length===0)re.lastIndex++;}}}
+  else{re.lastIndex=from;m=re.exec(v);if(!m){re.lastIndex=0;m=re.exec(v);}hit=m;}
+  if(!hit){$('frInfo').textContent='No match';return;}
+  ta.focus();ta.setSelectionRange(hit.index,hit.index+hit[0].length);
+  var before=v.slice(0,hit.index).split('\n').length-1;ta.scrollTop=Math.max(0,before*19-ta.clientHeight/3);frCount();
+}
+function frReplace(all){
+  var ta=$('ms'),re=frRegex(true);if(!re)return;
+  var rep0=$('frRepl').value;
+  if(all){var n=frCount();ta.value=ta.value.replace(re,function(){return rep0;});commitTa();$('frInfo').textContent='Replaced '+n;return;}
+  var sel=ta.value.slice(ta.selectionStart,ta.selectionEnd),re1=frRegex(false);
+  if(sel&&re1&&re1.test(sel)&&sel.length===($('frFind').value.length)){var s=ta.selectionStart;ta.value=ta.value.slice(0,s)+rep0+ta.value.slice(ta.selectionEnd);ta.selectionStart=ta.selectionEnd=s+rep0.length;commitTa();}
+  frNext(false);
+}
+function bindEditorTools(){
+  $('mdBar').addEventListener('click',function(e){var b=e.target.closest?e.target.closest('button[data-fmt]'):null;if(b){e.preventDefault();fmt(b.getAttribute('data-fmt'));}});
+  $('frFind').addEventListener('input',frCount);$('frCase').addEventListener('change',frCount);
+  $('frNext').addEventListener('click',function(){frNext(false);});$('frPrev').addEventListener('click',function(){frNext(true);});
+  $('frOne').addEventListener('click',function(){frReplace(false);});$('frAll').addEventListener('click',function(){frReplace(true);});
+  $('frFind').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();frNext(e.shiftKey);}});
+}
+
+/* ================= COMMAND PALETTE (Ctrl/Cmd+K) ================= */
+var cmds=[],cmdSel=0;
+function setSt(k,v){S.st[k]=v;if(k==='font')ensureFonts(v);lastPages=0;syncUI();changed();}
+function buildCommands(){
+  var c=[],k,i;
+  function add(n,fn){c.push({n:n,fn:fn});}
+  [['ms','Manuscript'],['bk','Book'],['st','Style'],['in','Insights'],['ex','Export']].forEach(function(t){add('Go to: '+t[1]+' tab',function(){selectTab(t[0]);});});
+  for(k in PRESETS){if(Object.prototype.hasOwnProperty.call(PRESETS,k))(function(kk){add('Style preset: '+PRESETS[kk].name,function(){applyPreset(kk);ensureFonts(S.st.font);lastPages=0;syncUI();changed();});})(k);}
+  for(k in FONTS){if(Object.prototype.hasOwnProperty.call(FONTS,k))(function(kk){add('Font pairing: '+FONTS[kk].name,function(){setSt('font',kk);});})(k);}
+  OPENERS.forEach(function(o){add('Chapter opener: '+o[1],function(){setSt('opener',o[0]);});});
+  ORNS.forEach(function(o){add('Ornament: '+o[1],function(){setSt('ornament',o[0]);});});
+  ACCENTS.forEach(function(o){add('Accent color: '+o[1],function(){setSt('accent',o[0]);});});
+  [['callout','Callouts'],['h3','Headings'],['table','Tables'],['quote','Quotes'],['title','Title page'],['head','Running head'],['folio','Page numbers']].forEach(function(g){
+    var f=schemaField(g[0]);f.opts.forEach(function(o){add(g[1]+': '+o[1],function(){setSt(g[0],o[0]);});});
+  });
+  [['drop','drop caps'],['just','justified text'],['secNum','section numbers'],['minitoc','chapter mini contents'],['leadin','small-caps lead-in'],['right','chapters on right pages'],['halfTitle','half-title page'],['padEven','even page count'],['smart','smart quotes'],['review','review request page']].forEach(function(g){
+    add('Toggle: '+g[1],function(){setSt(g[0],!S.st[g[0]]);});
+  });
+  add('View: single page',function(){setView('page');});add('View: spread (open book)',function(){setView('spread');});add('View: all pages',function(){setView('all');});
+  add('Toggle page navigator',function(){toggleNav();});
+  add('Typeset now',function(){renderNow();});add('Export: Exact Print (PDF)',exactPrint);add('Export: download EPUB',exportEpub);add('Export: save project',saveProject);add('Open the How to guide',openModal);
+  add('Undo',undo);add('Redo',redo);add('Load the sample book',function(){$('btnSample').click();});
+  if(lastDoc){for(i=0;i<lastDoc.items.length;i++){(function(it){add('Jump to: '+(it.numbered?it.num+'. ':'')+it.title,function(){jumpToId(it.id);});})(lastDoc.items[i]);}}
+  return c;
+}
+function filterCmds(){
+  var q=$('cmdIn').value.toLowerCase().split(/\s+/).filter(Boolean),out=[],i;
+  for(i=0;i<cmds.length&&out.length<60;i++){var n=cmds[i].n.toLowerCase(),ok=true,j;for(j=0;j<q.length;j++){if(n.indexOf(q[j])<0){ok=false;break;}}if(ok)out.push(cmds[i]);}
+  return out;
+}
+var cmdShown=[];
+function drawCmds(){
+  cmdShown=filterCmds();if(cmdSel>=cmdShown.length)cmdSel=Math.max(0,cmdShown.length-1);
+  $('cmdList').innerHTML=cmdShown.map(function(c,i){return '<li role="option" id="cmd'+i+'" aria-selected="'+(i===cmdSel?'true':'false')+'" data-i="'+i+'">'+esc(c.n)+'</li>';}).join('')||'<li class="none">No command matches.</li>';
+  var s=$('cmd'+cmdSel);if(s&&s.scrollIntoView)s.scrollIntoView({block:'nearest'});
+}
+var cmdFocus=null;
+function openPalette(){cmdFocus=document.activeElement;cmds=buildCommands();cmdSel=0;$('cmdIn').value='';$('cmdBg').hidden=false;drawCmds();$('cmdIn').focus();}
+function closePalette(){$('cmdBg').hidden=true;if(cmdFocus&&cmdFocus.focus)cmdFocus.focus();}
+function runCmd(i){var c=cmdShown[i];if(!c)return;closePalette();setTimeout(function(){c.fn();},0);}
+function bindPalette(){
+  $('cmdIn').addEventListener('input',function(){cmdSel=0;drawCmds();});
+  $('cmdIn').addEventListener('keydown',function(e){
+    if(e.key==='ArrowDown'){e.preventDefault();cmdSel=Math.min(cmdShown.length-1,cmdSel+1);drawCmds();}
+    else if(e.key==='ArrowUp'){e.preventDefault();cmdSel=Math.max(0,cmdSel-1);drawCmds();}
+    else if(e.key==='Enter'){e.preventDefault();runCmd(cmdSel);}
+    else if(e.key==='Escape'){e.preventDefault();closePalette();}
+  });
+  $('cmdList').addEventListener('click',function(e){var li=e.target.closest?e.target.closest('li[data-i]'):null;if(li)runCmd(+li.getAttribute('data-i'));});
+  $('cmdBg').addEventListener('click',function(e){if(e.target===this)closePalette();});
+  $('btnCmd').addEventListener('click',openPalette);
+}
+
+/* ================= INIT ================= */
+function init(){
+  var i,links=$('appLinks');
+  for(i=0;i<APP_LINKS.length;i++){var a=document.createElement(APP_LINKS[i].current?'span':'a');a.textContent=APP_LINKS[i].label;if(APP_LINKS[i].current){a.className='cur';a.setAttribute('aria-current','page');}else{a.href=APP_LINKS[i].url;a.target='_blank';a.rel='noopener';}links.appendChild(a);}
+  buildRenderer();
+  buildStyleForm();buildGallery();renderMyStyles();
+  var loaded=null;
+  try{var raw=localStorage.getItem(STORE_KEY);if(raw)loaded=sanitizeState(JSON.parse(raw));}catch(e){loaded=null;}
+  var st0=loaded||defaultState();
+  S.md=st0.md;S.images=st0.images;S.meta=st0.meta;S.st=st0.st;
+  ensureFonts(S.st.font);
+  syncUI();pushHist(S.md);updUndo();
+  if(!LIBS_OK){$('pvMsg').textContent='Libraries (marked, DOMPurify, Paged.js) did not load. Reload with an internet connection.';setStatus('Libraries missing',true);}
+  $('ms').addEventListener('input',function(){S.md=this.value;lastPages=0;clearTimeout(histTimer);histTimer=setTimeout(function(){pushHist(S.md);},500);changed();});
+  for(i=0;i<META_KEYS.length;i++)$('m_'+META_KEYS[i]).addEventListener('input',onMeta);
+  bindStyleForm();bindMyStyles();bindNav();bindPalette();bindEditorTools();
+  var tabs=document.querySelectorAll('.tabs button');
+  for(i=0;i<tabs.length;i++)tabs[i].addEventListener('click',function(){selectTab(this.getAttribute('data-p'));});
+  $('btnUndo').addEventListener('click',undo);$('btnRedo').addEventListener('click',redo);
+  $('btnSample').addEventListener('click',function(){var d=defaultState();S.images=d.images;S.meta=d.meta;S.st=d.st;lastPages=0;syncUI();setMd(d.md);});
+  $('btnUploadMd').addEventListener('click',function(){$('fileMd').click();});
+  $('fileMd').addEventListener('change',function(){if(this.files[0])readTextFile(this.files[0]);this.value='';});
+  $('btnHelp').addEventListener('click',openModal);$('btnHowTop').addEventListener('click',openModal);
+  $('modal').addEventListener('click',function(e){var t=e.target;if(t.tagName==='A'&&/^#hg-/.test(t.getAttribute('href')||'')){e.preventDefault();var el=document.getElementById(t.getAttribute('href').slice(1));if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}});$('modalClose').addEventListener('click',closeModal);
+  $('modalBg').addEventListener('click',function(e){if(e.target===this)closeModal();});
+  $('btnImg').addEventListener('click',function(){$('fileImg').click();});
+  $('fileImg').addEventListener('change',function(){var j;for(j=0;j<this.files.length;j++)addImageFile(this.files[j],true);this.value='';});
+  $('imgList').addEventListener('click',function(e){var k=e.target.getAttribute&&e.target.getAttribute('data-rm');if(k){delete S.images[k];renderImgList();changed();}});
+  $('selCallout').addEventListener('change',function(){
+    var v=this.value;if(!v)return;
+    var tpl=v==='checklist'?'- [ ] First item\n- [ ] Second item\n':(v==='worksheet'?'Write your prompt here.\n':'Write the text here.\n');
+    insertAtCursor('\n\n:::'+v+' '+CALLOUTS[v]+' title\n'+tpl+':::\n\n');this.value='';
+  });
+  $('btnTable').addEventListener('click',function(){insertAtCursor('\n\nTable: Caption for the table\n\n| Column A | Column B | Column C |\n|---|---|---|\n| One | Two | Three |\n| Four | Five | Six |\n\n');});
+  var dz=document.querySelector('.gts-left');
+  dz.addEventListener('dragover',function(e){e.preventDefault();});
+  dz.addEventListener('drop',function(e){
+    e.preventDefault();
+    var fs=e.dataTransfer&&e.dataTransfer.files,j;if(!fs)return;
+    selectTab('ms');
+    for(j=0;j<fs.length;j++){if(/^image\//.test(fs[j].type))addImageFile(fs[j],true);else readTextFile(fs[j]);}
+  });
+  $('btnPrint').addEventListener('click',exactPrint);$('btnEpub').addEventListener('click',exportEpub);
+  $('btnMd').addEventListener('click',exportMd);$('btnPack').addEventListener('click',exportPack);
+  $('btnSave').addEventListener('click',saveProject);$('btnLoad').addEventListener('click',function(){$('fileProj').click();});
+  $('fileProj').addEventListener('change',function(){if(this.files[0])loadProjectFile(this.files[0]);this.value='';});
+  $('pvFirst').addEventListener('click',function(){showPage(1,false,true);});
+  $('pvPrev').addEventListener('click',function(){showPage(view==='spread'?curPage-2:curPage-1,false,true);});
+  $('pvNext').addEventListener('click',function(){showPage(view==='spread'?curPage+2:curPage+1,false,true);});
+  $('pvLast').addEventListener('click',function(){showPage(pageEls().length,false,true);});
+  $('pvNum').addEventListener('change',function(){showPage(parseInt(this.value,10)||1,false,true);});
+  $('vwPage').addEventListener('click',function(){setView('page');});$('vwSpread').addEventListener('click',function(){setView('spread');});$('vwAll').addEventListener('click',function(){setView('all');});
+  $('zIn').addEventListener('click',function(){setZoom(zoom*1.15);});$('zOut').addEventListener('click',function(){setZoom(zoom/1.15);});$('zFit').addEventListener('click',fitZoom);
+  $('btnRender').addEventListener('click',function(){renderNow();});
+  $('autoRender').addEventListener('change',function(){if(this.checked)scheduleRender(50);});
+  window.addEventListener('resize',function(){if(!zoomSet&&view!=='all')fitZoom();});
+  document.addEventListener('keydown',function(e){
+    var mod=e.ctrlKey||e.metaKey;
+    if(e.key==='Escape'&&!$('cmdBg').hidden){closePalette();return;}
+    if(e.key==='Escape'&&!$('modalBg').hidden){closeModal();return;}
+    if(mod&&(e.key==='k'||e.key==='K')){e.preventDefault();if($('cmdBg').hidden)openPalette();else closePalette();return;}
+    if(mod&&(e.key==='s'||e.key==='S')){e.preventDefault();saveProject();return;}
+    if(e.target===$('ms')&&mod){
+      if((e.key==='z'||e.key==='Z')&&!e.shiftKey){e.preventDefault();undo();return;}
+      if(((e.key==='z'||e.key==='Z')&&e.shiftKey)||e.key==='y'||e.key==='Y'){e.preventDefault();redo();return;}
+    }
+    if(e.altKey&&!mod){
+      if(e.key==='ArrowLeft'){e.preventDefault();showPage(view==='spread'?curPage-2:curPage-1,false,true);return;}
+      if(e.key==='ArrowRight'){e.preventDefault();showPage(view==='spread'?curPage+2:curPage+1,false,true);return;}
+      var map={Digit1:'ms',Digit2:'bk',Digit3:'st',Digit4:'in',Digit5:'ex'};
+      if(map[e.code]){e.preventDefault();selectTab(map[e.code]);return;}
+      if(e.code==='KeyP'){e.preventDefault();exactPrint();return;}
+      if(e.code==='KeyE'){e.preventDefault();exportEpub();return;}
+      if(e.code==='KeyR'){e.preventDefault();renderNow();return;}
+    }
+    if(e.key==='F1'){e.preventDefault();openModal();}
+  });
+  $('pvOut').addEventListener('click',function(e){var t=e.target;if(t&&t.closest)editFromPreview(t);});
+  printSteps();
+  updateStats(null);
+  startRender();
+  try{if(!localStorage.getItem('gts.guideSeen')){localStorage.setItem('gts.guideSeen','1');setTimeout(openModal,600);}}catch(e){}
+}
+
+/* ================= TEST HOOKS ================= */
+window.GTS={
+  S:S,gutterFor:gutterFor,margins:margins,parseDoc:parseDoc,buildBookHtml:buildBookHtml,buildCss:buildCss,
+  renderNow:renderNow,epubBytes:buildEpub,cleanMarkdown:cleanMarkdown,estimatePages:estimatePages,
+  setManuscript:function(md){S.md=md;$('ms').value=md;lastPages=0;return renderNow();},
+  setStyle:function(o){var k;for(k in o){if(Object.prototype.hasOwnProperty.call(o,k))S.st[k]=o[k];}lastPages=0;syncUI();},
+  setView:setView,showPage:showPage,
+  info:function(){return {pages:lastPages,margins:lastMargins,renders:renderCount,words:lastDoc?lastDoc.words:0};},
+  mulberry32:mulberry32,SCHEMA:SCHEMA,FONTS:FONTS,PRESETS:PRESETS,setSt:setSt,applyPreset:function(k){applyPreset(k);lastPages=0;syncUI();return renderNow();},
+  preflight:function(){return lastPf;},insights:function(){return {doc:lastDoc};},textStats:textStats,miniPage:miniPage,sanitizeState:sanitizeState,contrastOf:contrastOf,jumpToId:jumpToId,lastPad:function(){return lastPad;}
+};
+
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</body>
+</html>
