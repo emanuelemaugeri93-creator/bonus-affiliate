@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casebook Cover Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Oswald:wght@500;700&family=Special+Elite&family=Bebas+Neue&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root { --bg:#f3efe6; --card:#fffdf8; --ink:#1b2330; --muted:#6b6f78; --line:#e3dccd; --navy:#1e2a3a; --brass:#b9822f; --brass2:#d9a54a; --ok:#2f8f5b; --warn:#b5651d; }
+* { box-sizing:border-box; }
+html, body { margin:0; }
+body { background:var(--bg); color:var(--ink); font:15px/1.5 "DM Sans", system-ui, sans-serif; min-height:100vh; }
+button, input, select, textarea { font:inherit; color:inherit; }
+.top { position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:14px; padding:12px 22px; background:var(--navy); color:#f5efe3; }
+.mark { width:38px; height:38px; border-radius:9px; background:var(--brass); display:grid; place-items:center; flex:none; box-shadow:inset 0 0 0 2px rgba(255,255,255,.25); }
+.ttl { min-width:0; } .ttl b { display:block; font:900 1.25rem/1 "Playfair Display", serif; letter-spacing:.01em; white-space:nowrap; } .ttl small { display:block; color:#c9c1b2; font-size:.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.top .sp { flex:1; }
+.tb { padding:9px 14px; border-radius:9px; border:1px solid rgba(255,255,255,.18); background:transparent; color:#f5efe3; cursor:pointer; font-weight:600; font-size:.86rem; white-space:nowrap; }
+.tb:hover { background:rgba(255,255,255,.08); } .tb.gold { background:var(--brass); border-color:var(--brass); color:#1b1408; }
+.wrap { display:grid; grid-template-columns:minmax(0,380px) minmax(0,1fr) minmax(0,280px); gap:20px; padding:20px; max-width:1500px; margin:0 auto; align-items:start; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:0 1px 0 rgba(0,0,0,.02), 0 12px 30px -18px rgba(30,42,58,.25); }
+.tabs { display:flex; border-bottom:1px solid var(--line); padding:0 8px; }
+.tabs button { flex:1; padding:13px 6px 11px; border:0; border-bottom:2.5px solid transparent; background:none; cursor:pointer; font-weight:700; font-size:.82rem; color:var(--muted); white-space:nowrap; }
+.tabs button.on { color:var(--navy); border-color:var(--brass); }
+.pane { display:none; padding:16px 18px 20px; } .pane.on { display:block; }
+label.f { display:block; font-size:.76rem; font-weight:700; color:var(--muted); letter-spacing:.02em; margin:12px 0 5px; }
+label.f:first-child { margin-top:0; }
+.in { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:#fff; outline:none; transition:border-color .2s, box-shadow .2s; }
+.in:focus { border-color:var(--brass); box-shadow:0 0 0 3px rgba(185,130,47,.15); }
+textarea.in { resize:vertical; min-height:96px; line-height:1.45; }
+.r2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .r2 > * { min-width:0; }
+.r3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; } .r3 > * { min-width:0; }
+.tpls { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+.tpl { border:1.5px solid var(--line); border-radius:11px; padding:6px; background:#fff; cursor:pointer; text-align:center; transition:border-color .2s, transform .15s; }
+.tpl:hover { transform:translateY(-2px); } .tpl.on { border-color:var(--brass); box-shadow:0 0 0 3px rgba(185,130,47,.15); }
+.tpl canvas { width:100%; aspect-ratio:2/3; border-radius:6px; display:block; background:#ddd; }
+.tpl b { display:block; font-size:.72rem; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pals { display:flex; flex-wrap:wrap; gap:8px; }
+.pal { width:44px; height:30px; border-radius:8px; border:2px solid #fff; box-shadow:0 0 0 1px var(--line); cursor:pointer; display:flex; overflow:hidden; padding:0; }
+.pal i { flex:1; } .pal.on { box-shadow:0 0 0 2.5px var(--brass); }
+.pix { display:grid; grid-template-columns:repeat(8, minmax(0,1fr)); gap:5px; }
+.px { aspect-ratio:1; border-radius:7px; border:1.5px solid var(--line); background:#fff; cursor:pointer; padding:4px; display:grid; place-items:center; }
+.px.on { border-color:var(--brass); background:#fbf3e4; } .px canvas { width:100%; height:100%; image-rendering:pixelated; }
+.mini { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.mini button { padding:7px 11px; border-radius:9px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:.8rem; font-weight:700; }
+.mini button:hover { border-color:var(--brass); }
+.mini-reset { padding:7px 11px; border-radius:9px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:.78rem; font-weight:700; white-space:nowrap; }
+.chk { display:flex; align-items:center; gap:9px; font-size:.86rem; margin-top:10px; cursor:pointer; } .chk input { accent-color:var(--brass); width:16px; height:16px; }
+.gen { display:flex; gap:10px; padding:14px 18px 18px; border-top:1px solid var(--line); }
+#btnGen { flex:1; padding:14px; border:0; border-radius:12px; background:var(--navy); color:#fff; font-weight:700; font-size:.98rem; cursor:pointer; transition:transform .15s, box-shadow .2s; box-shadow:0 10px 24px -10px rgba(30,42,58,.6); }
+#btnGen:hover { transform:translateY(-2px); }
+#btnBlurb { padding:0 14px; border-radius:12px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; white-space:nowrap; }
+
+.stage { padding:18px; position:sticky; top:84px; }
+.stbar { display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+.stbar b { font:900 1.05rem/1 "Playfair Display", serif; } .stbar .sp { flex:1; }
+.seg { display:inline-flex; background:#efe9dc; border-radius:10px; padding:3px; }
+.seg button { border:0; background:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:.8rem; font-weight:700; color:var(--muted); white-space:nowrap; }
+.seg button.on { background:#fff; color:var(--navy); box-shadow:0 1px 3px rgba(0,0,0,.1); }
+.canvasbox { background:repeating-conic-gradient(#ebe5d8 0 25%, #f4f0e7 0 50%) 0 0/22px 22px; border-radius:12px; padding:22px; display:grid; place-items:center; min-height:300px; }
+#cv { max-width:100%; height:auto; display:block; box-shadow:0 30px 60px -20px rgba(0,0,0,.45); cursor:pointer; }
+.canvasbox { position:relative; }
+.ed { position:absolute; z-index:20; width:300px; background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 22px 50px -12px rgba(20,24,32,.45); padding:12px; }
+.ed[hidden] { display:none; }
+.edh { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; } .edh b { font:900 .95rem/1 "Playfair Display", serif; }
+.edh button { border:0; background:#efe9dc; width:28px; height:28px; border-radius:8px; cursor:pointer; }
+.ed textarea { width:100%; min-height:54px; padding:8px 10px; border-radius:9px; border:1px solid var(--line); resize:vertical; outline:none; font-size:.88rem; }
+.ed textarea:focus { border-color:var(--brass); }
+.edrow { display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.edrow > button, .edrow select { padding:6px 9px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:.8rem; font-weight:700; }
+.edrow > button:hover { border-color:var(--brass); } .edrow > button.on { background:var(--navy); color:#fff; border-color:var(--navy); }
+.edrow input[type=range] { flex:1; min-width:0; accent-color:var(--brass); }
+.edrow select { flex:1; min-width:0; }
+.sw { display:flex; gap:5px; flex-wrap:wrap; } .sw button { width:24px; height:24px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px var(--line); cursor:pointer; padding:0; }
+.sw input[type=color] { width:28px; height:28px; border:0; padding:0; background:none; cursor:pointer; }
+.edtip { font-size:.74rem; color:var(--muted); margin-top:8px; }
+.edrow .pri { margin-left:auto; background:var(--brass); border-color:var(--brass); color:#1b1408; }
+#sceneSeg { display:none; } #sceneSeg.on { display:inline-flex; flex-wrap:wrap; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:.74rem; color:var(--muted); margin-top:10px; }
+.legend span { display:flex; align-items:center; gap:6px; } .legend i { width:16px; border-top:2px dashed; }
+.side .card { padding:16px; margin-bottom:14px; }
+.side h4 { margin:0 0 10px; font:900 .98rem/1 "Playfair Display", serif; }
+.spec { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:.85rem; } .spec:last-child { border-bottom:0; }
+.spec span { color:var(--muted); } .spec b { text-align:right; }
+.warn { margin-top:10px; padding:9px 11px; border-radius:10px; background:#fbf0e2; color:var(--warn); font-size:.8rem; font-weight:600; display:none; } .warn.on { display:block; }
+.okb { margin-top:10px; padding:9px 11px; border-radius:10px; background:#e8f4ec; color:var(--ok); font-size:.8rem; font-weight:600; }
+.xb { width:100%; display:flex; gap:10px; align-items:center; text-align:left; padding:11px 12px; border-radius:11px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:.88rem; margin-top:8px; }
+.xb:hover { border-color:var(--brass); } .xb.main { background:var(--brass); border-color:var(--brass); color:#1b1408; }
+.xb small { display:block; font-weight:500; font-size:.74rem; opacity:.75; } .xb svg { flex:none; }
+.busy { position:fixed; inset:0; z-index:90; background:rgba(243,239,230,.75); display:none; place-items:center; font-weight:700; } .busy.on { display:grid; }
+.toast { position:fixed; left:50%; bottom:26px; transform:translate(-50%, 30px); opacity:0; padding:12px 18px; border-radius:12px; background:var(--navy); color:#fff; font-weight:700; font-size:.9rem; z-index:95; transition:.3s; pointer-events:none; }
+.toast.on { opacity:1; transform:translate(-50%, 0); }
+.modal { position:fixed; inset:0; z-index:80; background:rgba(20,24,32,.55); display:none; place-items:center; padding:18px; }
+.modal.on { display:grid; }
+.mbox { width:min(720px, 100%); max-height:88vh; overflow:auto; background:var(--card); border-radius:18px; padding:26px 28px; box-shadow:0 30px 80px rgba(0,0,0,.3); }
+.mbox h2 { margin:0 0 6px; font:900 1.7rem/1.1 "Playfair Display", serif; }
+.mbox h5 { margin:20px 0 6px; font-size:.78rem; letter-spacing:.12em; text-transform:uppercase; color:var(--brass); }
+.mbox p, .mbox li { font-size:.92rem; color:#323845; } .mbox ol, .mbox ul { padding-left:20px; margin:6px 0; } .mbox li { margin:4px 0; }
+.mbox .x { float:right; border:0; background:#efe9dc; width:36px; height:36px; border-radius:10px; cursor:pointer; font-size:1.05rem; }
+@media (max-width:1220px) { .wrap { grid-template-columns:minmax(0,360px) minmax(0,1fr); } .side { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; gap:14px; } .side .card { margin:0; } }
+@media (max-width:860px) { .ed { position:static; width:auto !important; margin-top:12px; } .wrap { grid-template-columns:1fr; padding:12px; } .stage { position:static; order:-1; padding:12px; } .side { grid-template-columns:1fr; }
+  .top { padding:11px 14px; } .ttl small, #btnSpecs { display:none; } .canvasbox { padding:10px; } .pix { grid-template-columns:repeat(5, minmax(0,1fr)); } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1b1408" stroke-width="2.2"><path d="M4 4h7v16H4zM13 4h7v16h-7z"/><path d="M11 4v16M13 4v16" stroke-width="1"/></svg></div>
+  <div class="ttl"><b>Casebook Cover Lab</b><small>Full KDP paperback covers for mystery puzzle books: front, spine and back</small></div>
+  <span class="sp"></span>
+  <button class="tb" id="btnSpecs" type="button">KDP sizes</button>
+  <button class="tb gold" id="btnGuide" type="button">How to use</button>
+</header>
+
+<main class="wrap">
+  <section class="card" aria-label="Settings">
+    <div class="tabs"><button class="on" data-p="words" type="button">Words</button><button data-p="look" type="button">Look</button><button data-p="book" type="button">Book</button><button data-p="back" type="button">Back</button></div>
+    <div class="pane on" id="p-words">
+      <label class="f" for="mainInput">Title</label><input class="in" id="mainInput" value="The Blackmoor Casebook" maxlength="48">
+      <label class="f" for="subIn">Subtitle</label><input class="in" id="subIn" value="Murder Mystery Picture-Logic Puzzles" maxlength="70">
+      <div class="r2"><div><label class="f" for="authIn">Author / brand</label><input class="in" id="authIn" value="Inspector Grey" maxlength="40"></div><div><label class="f" for="volIn">Series & volume</label><input class="in" id="volIn" value="Volume 1" maxlength="20"></div></div>
+      <div class="r2"><div><label class="f" for="casesIn">Cases badge</label><input class="in" id="casesIn" value="50 CASES" maxlength="20"></div><div><label class="f" for="diffIn">Difficulty line</label><input class="in" id="diffIn" value="Easy to Fiendish" maxlength="28"></div></div>
+      <label class="f" for="tagIn">Tagline</label><input class="in" id="tagIn" value="Shade the squares. Reveal the clue. Name the killer." maxlength="70">
+      <div class="mini"><button type="button" id="titleIdea">Title idea</button><button type="button" id="tagIdea">Tagline idea</button></div>
+    </div>
+    <div class="pane" id="p-look">
+      <label class="f">Cover style</label><div class="tpls" id="tpls"></div>
+      <label class="f">Palette</label><div class="pals" id="pals"></div>
+      <label class="f" for="fontSel">Title font</label>
+      <select class="in" id="fontSel"><option value="oswald">Oswald · condensed</option><option value="playfair">Playfair · classic</option><option value="bebas">Bebas Neue · poster</option><option value="elite">Special Elite · typewriter</option></select>
+      <label class="f">Clue picture</label><div class="pix" id="pix"></div>
+    </div>
+    <div class="pane" id="p-book">
+      <label class="f" for="trimSel">Trim size</label>
+      <select class="in" id="trimSel"><option value="5x8">5 × 8 in</option><option value="5.5x8.5">5.5 × 8.5 in</option><option value="6x9" selected>6 × 9 in</option><option value="7x10">7 × 10 in</option><option value="8x10">8 × 10 in</option><option value="8.25x8.25">8.25 × 8.25 in</option><option value="8.5x8.5">8.5 × 8.5 in</option><option value="8.5x11">8.5 × 11 in</option></select>
+      <div class="r2"><div><label class="f" for="pagesIn">Page count</label><input class="in" id="pagesIn" type="number" min="24" max="828" value="120"></div>
+        <div><label class="f" for="paperSel">Interior paper</label><select class="in" id="paperSel"><option value="white">Black ink · white</option><option value="cream">Black ink · cream</option><option value="std">Standard color</option><option value="prem">Premium color</option></select></div></div>
+      <label class="chk"><input type="checkbox" id="guidesOn" checked> Show trim, safe-zone and barcode guides (never printed)</label>
+      <div class="okb">Spine width, bleed and barcode area follow Amazon KDP's paperback cover rules.</div>
+    </div>
+    <div class="pane" id="p-back">
+      <label class="f" for="blurbIn">Back cover blurb</label>
+      <textarea class="in" id="blurbIn" maxlength="520"></textarea>
+      <label class="f" for="bulIn">"Inside" list (one per line)</label>
+      <textarea class="in" id="bulIn" maxlength="300" style="min-height:84px"></textarea>
+      <label class="chk"><input type="checkbox" id="sampleOn" checked> Show a sample puzzle on the back</label>
+      <label class="chk"><input type="checkbox" id="barOn" checked> Leave the white barcode box (KDP prints the barcode)</label>
+    </div>
+    <div class="gen"><button type="button" id="btnBlurb" title="Write a new back cover blurb">✎ New blurb</button><button type="button" id="btnGen">🎲 New cover design</button></div>
+  </section>
+
+  <section class="card stage" aria-label="Cover preview">
+    <div class="stbar"><b id="stTitle">Full cover · 6 × 9 in</b><span class="sp"></span>
+      <div class="seg" id="viewSeg"><button type="button" data-v="wrap" class="on">Full wrap</button><button type="button" data-v="front">Front</button><button type="button" data-v="mock">Mockups</button></div></div>
+    <div class="stbar"><div class="seg" id="sceneSeg"></div><span class="sp"></span><button type="button" class="mini-reset" id="resetAll">↺ Reset text edits</button></div>
+    <div class="canvasbox" id="cbox"><canvas id="cv" width="1200" height="900" aria-label="Cover preview (click a text to edit it)"></canvas>
+      <div class="ed" id="ed" hidden>
+        <div class="edh"><b id="edName">Title</b><button type="button" id="edX" aria-label="Close">✕</button></div>
+        <textarea id="edText" aria-label="Text"></textarea>
+        <div class="edrow"><button type="button" data-a="smaller" title="Smaller">A−</button><input type="range" id="edSize" min="40" max="240" value="100" aria-label="Size"><button type="button" data-a="bigger" title="Bigger">A+</button></div>
+        <div class="edrow sw" id="edCols"></div>
+        <div class="edrow"><select id="edFont" aria-label="Font"><option value="">Design font</option><option value="Oswald">Oswald</option><option value="'Playfair Display'">Playfair Display</option><option value="'Bebas Neue'">Bebas Neue</option><option value="'Special Elite'">Special Elite</option><option value="'DM Sans'">DM Sans</option><option value="Caveat">Caveat</option></select>
+          <button type="button" data-al="left" title="Align left">⟸</button><button type="button" data-al="center" title="Center">≡</button><button type="button" data-al="right" title="Align right">⟹</button><button type="button" id="edCase" title="Uppercase">AA</button></div>
+        <div class="edtip">Drag the text on the cover to move it. Arrow keys nudge it.</div>
+        <div class="edrow"><button type="button" id="edHide">Hide</button><button type="button" id="edReset">Reset</button><button type="button" class="pri" id="edDone">Done</button></div>
+      </div></div>
+    <div class="legend"><span><i style="border-color:#e0245e"></i>Trim line</span><span><i style="border-color:#1d9bf0"></i>Safe zone</span><span><i style="border-color:#16a34a"></i>Spine</span><span>Click any text on the front or back to edit, restyle or drag it</span></div>
+  </section>
+
+  <aside class="side">
+    <div class="card"><h4>KDP specs</h4>
+      <div class="spec"><span>Trim</span><b id="sTrim">6 × 9 in</b></div>
+      <div class="spec"><span>Spine width</span><b id="sSpine">0.270 in</b></div>
+      <div class="spec"><span>Full cover with bleed</span><b id="sFull">12.520 × 9.250 in</b></div>
+      <div class="spec"><span>At 300 DPI</span><b id="sPx">3756 × 2775 px</b></div>
+      <div class="spec"><span>Spine text</span><b id="sSpTxt">Yes</b></div>
+      <div class="warn" id="warn"></div>
+    </div>
+    <div class="card"><h4>Export</h4>
+      <button class="xb main" type="button" id="xPdf"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg><span>Print-ready PDF<small>Full wrap, 300 DPI, for KDP upload</small></span></button>
+      <button class="xb" type="button" id="xFront"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="2" width="14" height="20" rx="1"/></svg><span>eBook / front cover (JPG)<small>2560 px tall, for Kindle and listings</small></span></button>
+      <button class="xb" type="button" id="xMock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6l8-4 8 4v12l-8 4-8-4z"/><path d="M12 22V10M4 6l8 4 8-4"/></svg><span>All 5 mockups (PNG)<small>Standing, series stack, desk, front &amp; back, eBook</small></span></button>
+      <button class="xb" type="button" id="xWrapPng"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="1"/><path d="M11 5v14M13 5v14"/></svg><span>Full wrap (PNG)<small>Same as the PDF, as an image</small></span></button>
+    </div>
+  </aside>
+</main>
+
+<div class="modal" id="guide" role="dialog" aria-modal="true" aria-labelledby="gT"><div class="mbox">
+  <button class="x" type="button" data-close aria-label="Close">✕</button>
+  <h2 id="gT">How to use</h2>
+  <p>Design a complete paperback cover for a mystery puzzle book (front, spine and back) sized exactly for Amazon KDP, then download the print-ready PDF.</p>
+  <h5>Quick start</h5>
+  <ol><li><b>Book</b> tab: pick the trim size, type your page count and paper. The spine width is calculated for you.</li><li><b>Words</b> tab: title, subtitle, author, volume, cases badge and tagline. <b>Look</b> tab: style, palette, font and clue picture.</li><li>Press <b>Print-ready PDF</b> and upload it to KDP as your paperback cover.</li></ol>
+  <h5>The inputs</h5>
+  <ul><li><b>Cover style</b>: twelve mystery designs (Pixel Clue, Case File, Crime Tape, Noir Poster, Notebook, Evidence Board, Pulp Magazine, Fingerprint, Blueprint, Art Deco, Spotlight, Sealed Letter). <b>New cover design</b> shuffles style, palette and picture together.</li><li><b>Edit right on the cover:</b> click any text on the front or back. A panel opens next to it: rewrite the text, make it bigger or smaller, change colour, font, alignment or capitals, hide it, or reset it. <b>Drag</b> the text to move it (arrow keys nudge it, Shift for bigger steps). <b>Reset text edits</b> puts every text back where the design had it.</li><li><b>Back</b> tab: blurb, an "Inside" list, a sample puzzle and the white barcode box. <b>New blurb</b> writes a fresh back cover text.</li><li><b>Guides</b>: red = trim line (anything past it is cut), blue = safe zone (keep text inside), green = spine. Guides never appear in exports.</li></ul>
+  <h5>KDP rules built in</h5>
+  <ul><li>Spine width = page count × paper thickness (white 0.002252 in, cream 0.0025 in, standard color 0.002252 in, premium color 0.002347 in).</li><li>0.125 in bleed on every side; the cover PDF is (bleed + back + spine + front + bleed) wide.</li><li>Spine text only appears from 79 pages, as KDP asks.</li><li>The barcode box sits on the lower right of the back cover; leave it empty and KDP prints the barcode there.</li></ul>
+  <h5>Exports</h5>
+  <ul><li><b>Print-ready PDF</b>: the full wrap at 300 DPI, exact KDP size.</li><li><b>eBook / front cover</b>: the front only, 2560 px tall, for Kindle, Etsy and listings.</li><li><b>Mockups</b>: five scenes (standing book, series stack, desk flat lay, front &amp; back, eBook + print). Preview them in the <b>Mockups</b> view; <b>All 5 mockups</b> downloads every scene as a PNG.</li></ul>
+  <h5>Troubleshooting</h5>
+  <ul><li>KDP says the cover is the wrong size? Check that the page count here matches your interior PDF exactly.</li><li>Fonts look plain for a second? They load from Google Fonts: wait a moment, the preview redraws.</li></ul>
+</div></div>
+<div class="modal" id="specs" role="dialog" aria-modal="true"><div class="mbox">
+  <button class="x" type="button" data-close aria-label="Close">✕</button>
+  <h2>KDP paperback sizes</h2>
+  <ul><li>Puzzle books sell well in <b>8.5 × 11</b> (large, easy to write in) and <b>6 × 9</b> (travel size).</li><li>Large-print editions: 8.5 × 11 with big grids.</li><li>Square 8.5 × 8.5 works for gift and activity books.</li><li>Paperbacks need at least 24 pages; spine text needs at least 79.</li></ul>
+</div></div>
+<div class="busy" id="busy">Building your 300 DPI file…</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const toast = (m) => { const e = $("toast"); e.textContent = m; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("on"), 2300); };
+const store = { get(k, d) { try { const v = localStorage.getItem("ccl_" + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem("ccl_" + k, JSON.stringify(v)); } catch {} } };
+const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+
+// ---------- clue pictures (15x15) ----------
+const LIB = [
+ ["SKULL", ["....#######....","..###########..",".#############.",".#############.","###..#####..###","##....###....##","##....###....##","###..##.##..###",".######.######.","..####...####..","...#########...","...#.#.#.#.#...","...#########...","....#######...."]],
+ ["KEY", ["..#####........",".#######.......","###...###......","##.....########","##.....########","###...###..#.##",".#######...#.##","..#####........"]],
+ ["DAGGER", [".......#.......","......###......","......###......","......###......","......###......","......###......","......###......","...#########...","...#########...",".......#.......","......###......","......###......",".......#......."]],
+ ["MAGNIFIER", ["...#######.....",".###########...",".###########...","###..########..","###.#########..","#############..","#############..","#############..",".###########...",".############..","...#######.##..","...........###.","............###",".............##"]],
+ ["CANDLE", [".......#.......","......###......","......###......",".......#.......",".......#.......",".....#####.....","....######.....",".....#####.....",".....#####.....",".....#####.....",".....#####.....","...#########...","..###########.."]],
+ ["POISON", ["......###......","......###......",".....#####.....","......###......","......###......",".....#####.....","....#######....","...#########...","...##.....##...","...#..#.#..#...","...##.....##...","...#########...","...#########...","....#######...."]],
+ ["MANOR", [".......#.......","......###......",".....#####.....","....#######....","...#########...","..###########..",".#############.","...#########...","...#..###..#...","...#..###..#...","...#########...","...####.####...","...####.####...","...####.####..."]],
+ ["TOP HAT", ["....#######....","....#######....","....#######....","....#######....","....#######....","....#.....#....","....#######....","..###########..",".#############."]],
+ ["PIPE", ["..#####........","..#...#........","..#####........","..#####........","..#####.....###","...######.####.","....########..."]],
+ ["LETTER", ["###############","###.........###","#.##.......##.#","#..##.....##..#","#...##...##...#","#....##.##....#","#.....###.....#","#......#......#","#.............#","###############"]],
+ ["CLOCK", ["....#######....","..###########..",".######.######.",".######.######.","#######.#######","#######.#######","#######.....###","###############","###############",".#############.",".#############.","..###########..","....#######...."]],
+ ["PADLOCK", [".....#####.....","....##...##....","....#.....#....","....#.....#....","..###########..","..###########..","..#####.#####..","..####...####..","..#####.#####..","..#####.#####..","..###########..","..###########.."]],
+ ["TEACUP", [".....#..#......","......#..#.....",".....#..#......","...............",".##########....",".##########.##.",".##########..#.",".##########.##.","..########.....","...######......","#############.."]],
+ ["SPIDER", ["#.....###.....#","##...#####...##",".##..#####..##.","..###########..","#....#####....#","######.#.######","....#######....","...#########...","..##.#####.##..",".##..#####..##.","##....###....##"]],
+ ["WINE GLASS", ["...#########...","...#.......#...","...#########...","...#########...","....#######....",".....#####.....","......###......",".......#.......",".......#.......",".......#.......","......###......","....#######...."]],
+ ["RAVEN", [".........##....","........####...","........#####..","......#######..",".....########..","...##########..","..###########..","..##########...",".#########.....",".########......","##..###........","#...#.#........","....#.#........"]],
+];
+const centre = (rows, N = 15) => { const h = rows.length, w = Math.max(...rows.map((r) => r.length)), top = Math.floor((N - h) / 2), left = Math.floor((N - w) / 2), g = Array.from({ length: N }, () => Array(N).fill(0));
+  rows.forEach((r, y) => [...r].forEach((c, x) => { if (c === "#") g[y + top][x + left] = 1; })); return g; };
+const PICS = LIB.map(([n, r]) => ({ name: n, grid: centre(r) }));
+const runs = (line) => { const r = []; let n = 0; line.forEach((c) => { if (c) n++; else if (n) { r.push(n); n = 0; } }); if (n) r.push(n); return r.length ? r : [0]; };
+
+// ---------- palettes, fonts, words ----------
+const PALS = [
+ { n: "Noir red", bg: "#121014", bg2: "#2b1d22", ink: "#f3ede2", acc: "#c8102e", paper: "#efe6d4" },
+ { n: "Manila", bg: "#2a1a0e", bg2: "#4a2e17", ink: "#f6ead2", acc: "#d9a54a", paper: "#e7c98e" },
+ { n: "Midnight", bg: "#0b1726", bg2: "#173556", ink: "#eef3fa", acc: "#e9b949", paper: "#e6edf6" },
+ { n: "Blood moon", bg: "#1a0606", bg2: "#45100d", ink: "#fbe9d7", acc: "#ff6b35", paper: "#f6e3cf" },
+ { n: "Gothic green", bg: "#0e1913", bg2: "#1f3b2b", ink: "#eef0e4", acc: "#c9a227", paper: "#e7e8d6" },
+ { n: "Ivory classic", bg: "#efe7d4", bg2: "#d9caa5", ink: "#1c1c1c", acc: "#7a1f1f", paper: "#fbf7ec" },
+];
+const FONTS = { oswald: ["700", "Oswald", .92], playfair: ["900", "'Playfair Display'", .98], bebas: ["400", "'Bebas Neue'", 1.05], elite: ["400", "'Special Elite'", .82] };
+const TITLES = ["The Blackmoor Casebook", "Murder at Ravenhall", "The Midnight Dossier", "Cases of the Fog City", "The Locked Room Files", "Inspector Grey's Casebook", "Death on the Night Train", "The Lighthouse Murders", "Secrets of Ashcombe Manor", "The Detective's Picture Puzzles"];
+const TAGS = ["Shade the squares. Reveal the clue. Name the killer.", "Every picture hides a clue. Every clue names a suspect.", "Solve the grid, close the case.", "Fifty crimes. Fifty pictures. One detective: you.", "The evidence is hidden in plain squares."];
+const BLURBS = [
+ "Fog rolls over {place}. A body in the {room}, a door locked from the inside, and a list of suspects who all have something to hide. The only witness is a picture, and it is hidden in a grid of numbers.\n\nShade the right squares and the clue appears: a key, a bottle, a dagger. Put the clues together and the killer has nowhere left to run.",
+ "Welcome to {place}, where nothing is quite what it seems. Each case gives you a crime, a handful of suspects and a picture-logic puzzle. Solve the grid to reveal the hidden clue, then decide who did it.\n\nPerfect for puzzle lovers, true detectives and anyone who loves a good whodunit.",
+ "Grab a pencil, detective. In every case a crime has been committed at {place}, and the proof is locked inside a nonogram. Fill in the squares row by row until the clue appears.\n\nNo guessing needed: every puzzle has exactly one solution, and the answers are at the back of the book.",
+];
+const PLACES = ["Blackmoor Manor", "the old lighthouse", "Ravenhall", "a snowed-in mountain lodge", "the midnight express", "Ashcombe Hall"];
+const ROOMS = ["library", "locked study", "wine cellar", "conservatory", "observatory"];
+const blurbNew = () => rnd(BLURBS).replace("{place}", rnd(PLACES)).replace("{room}", rnd(ROOMS));
+const BUL = "50 illustrated mystery cases\nPicture-logic grids from easy to fiendish\nSuspects, clues and a twist in every case\nFull solutions at the back";
+
+// ---------- state ----------
+const S = Object.assign({ tpl: 0, pal: 0, pic: 5, font: "oswald", view: "wrap" }, store.get("look", {}));
+const TRIMS = { "5x8": [5, 8], "5.5x8.5": [5.5, 8.5], "6x9": [6, 9], "7x10": [7, 10], "8x10": [8, 10], "8.25x8.25": [8.25, 8.25], "8.5x8.5": [8.5, 8.5], "8.5x11": [8.5, 11] };
+const THICK = { white: .002252, cream: .0025, std: .002252, prem: .002347 }, BLEED = .125, SAFE = .25;
+function geo() { const [tw, th] = TRIMS[$("trimSel").value], pages = Math.max(24, Math.min(828, Math.round(+$("pagesIn").value || 24))), sp = pages * THICK[$("paperSel").value];
+  return { tw, th, pages, sp, W: BLEED * 2 + tw * 2 + sp, H: th + BLEED * 2 }; }
+const val = (id) => $(id).value.trim();
+let hits = [];
+
+// ---------- drawing helpers ----------
+function rr(x, c, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function fitText(c, text, font, size, maxW) { let s = size; c.font = font.replace("{s}", s); while (c.measureText(text).width > maxW && s > 8) { s -= Math.max(1, s * .04); c.font = font.replace("{s}", s); } return s; }
+function wrapLines(c, text, maxW) { const out = []; text.split("\n").forEach((para) => { if (!para.trim()) { out.push(""); return; } let cur = ""; para.split(/\s+/).forEach((w) => { const t = cur ? cur + " " + w : w; if (c.measureText(t).width > maxW && cur) { out.push(cur); cur = w; } else cur = t; }); if (cur) out.push(cur); }); return out; }
+// every text element can be restyled and moved on the cover: OVR[key] = { dx, dy (in panel widths), scale, color, font, align, upper, hidden }
+let OVR = store.get("ovr", {}), PANEL = { w: 1, h: 1 };
+const OV = (k) => OVR[k] || {};
+const caseOf = (o, t, defUp) => (o.upper ?? defUp) ? t.toUpperCase() : t;
+function titleBlock(c, x, y, w, size, color, align = "center", maxLines = 3, key = "mainInput") {
+  const o = OV(key), [wt0, fam0, lh] = FONTS[S.font], wt = o.font ? "700" : wt0, fam = o.font || fam0; align = o.align || align;
+  const up = caseOf(o, val("mainInput") || "Untitled", S.font !== "playfair" && S.font !== "elite"), dx = (o.dx || 0) * PANEL.w, dy = (o.dy || 0) * PANEL.w;
+  let s = size * (o.scale || 1), lines; for (;;) { c.font = `${wt} ${s}px ${fam}`; lines = wrapLines(c, up, w); if (lines.length <= maxLines && lines.every((l) => c.measureText(l).width <= w) || s < 10) break; s *= .93; }
+  const h = s * lh * lines.length + s * .2;
+  if (!o.hidden) { c.fillStyle = o.color || color; c.textAlign = align; c.textBaseline = "alphabetic"; const ax = (align === "center" ? x + w / 2 : align === "right" ? x + w : x) + dx;
+    lines.forEach((l, i) => c.fillText(l, ax, y + dy + s * lh * (i + 1))); }
+  hits.push({ x: x + dx, y: y + dy, w, h, f: "mainInput", k: key, pw: PANEL.w }); return y + h; }
+function line(c, text, x, y, w, font, color, field, align = "center", key = field) {
+  if (!text) return y; const o = OV(key), fs = parseFloat(font.match(/(\d+(\.\d+)?)px/)[1]) * (o.scale || 1);
+  font = font.replace(/\d+(\.\d+)?px/, fs + "px"); if (o.font) font = font.replace(/px .*$/, "px " + o.font);
+  align = o.align || align; const dx = (o.dx || 0) * PANEL.w, dy = (o.dy || 0) * PANEL.w; text = caseOf(o, text, false);
+  c.font = font; const lines = wrapLines(c, text, w).slice(0, 4), H = fs * 1.18 * lines.length;
+  if (!o.hidden) { c.fillStyle = o.color || color; c.textAlign = align; c.textBaseline = "alphabetic"; const ax = (align === "center" ? x + w / 2 : align === "right" ? x + w : x) + dx;
+    lines.forEach((l, i) => c.fillText(l, ax, y + dy + fs * (i + 1) * 1.18)); }
+  hits.push({ x: x + dx, y: y + dy, w, h: H + fs * .3, f: field, k: key, pw: PANEL.w }); return y + H; }
+function pixelPic(c, x, y, size, color, grid, alpha = 1) { const N = grid.length, cs = size / N; c.save(); c.globalAlpha = alpha; c.fillStyle = color;
+  grid.forEach((r, gy) => r.forEach((v, gx) => v && c.fillRect(x + gx * cs, y + gy * cs, cs - Math.max(.5, cs * .08), cs - Math.max(.5, cs * .08)))); c.restore(); }
+function miniPuzzle(c, x, y, size, P, grid, solved = .55) { const N = grid.length, C = { r: grid.map(runs), c: Array.from({ length: N }, (_, i) => runs(grid.map((r) => r[i]))) };
+  const clueW = size * .26, cs = (size - clueW) / N; c.save(); c.fillStyle = P.paper; rr(x - size * .04, c, y - size * .04, size * 1.08, size * 1.08, size * .03); c.fill();
+  c.fillStyle = "#fff"; c.fillRect(x + clueW, y + clueW, cs * N, cs * N); const fs = cs * .55; c.font = `700 ${fs}px "DM Sans"`; c.fillStyle = "#222"; c.textAlign = "right"; c.textBaseline = "middle";
+  C.r.forEach((r, i) => c.fillText(r.join(" "), x + clueW - fs * .3, y + clueW + i * cs + cs / 2)); c.textAlign = "center";
+  C.c.forEach((col, i) => col.slice(-3).forEach((v, k, a) => c.fillText(v, x + clueW + i * cs + cs / 2, y + clueW - (a.length - k) * fs * .95)));
+  if (solved > 0) for (let gy = 0; gy < N; gy++) for (let gx = 0; gx < N; gx++) { if (grid[gy][gx]) { c.fillStyle = "#1b1b1b"; c.fillRect(x + clueW + gx * cs + .5, y + clueW + gy * cs + .5, cs - 1, cs - 1); } }
+  c.strokeStyle = "rgba(0,0,0,.25)"; c.lineWidth = Math.max(.5, cs * .04); for (let i = 0; i <= N; i++) { c.lineWidth = i % 5 ? Math.max(.4, cs * .03) : Math.max(.8, cs * .08);
+    c.beginPath(); c.moveTo(x + clueW + i * cs, y + clueW); c.lineTo(x + clueW + i * cs, y + clueW + N * cs); c.stroke(); c.beginPath(); c.moveTo(x + clueW, y + clueW + i * cs); c.lineTo(x + clueW + N * cs, y + clueW + i * cs); c.stroke(); } c.restore(); }
+function grain(c, x, y, w, h, color, n, a) { c.save(); c.globalAlpha = a; c.fillStyle = color; for (let i = 0; i < n; i++) { const px = x + ((i * 97.13) % 1) * w + ((i * 61) % w), py = y + ((i * 37) % h); c.fillRect(px % (x + w), py, 1.4, 1.4); } c.restore(); }
+
+// ---------- the six front designs ----------
+function front(c, x, y, w, h, P, k) {
+  const pic = PICS[S.pic].grid, m = (SAFE + BLEED) * k; PANEL = { w, h };
+  const t = S.tpl;
+  c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
+  if (t === 0) { // Pixel Clue
+    const g = c.createLinearGradient(x, y, x, y + h); g.addColorStop(0, P.bg2); g.addColorStop(1, P.bg); c.fillStyle = g; c.fillRect(x, y, w, h);
+    c.save(); c.globalAlpha = .07; c.strokeStyle = P.ink; c.lineWidth = 1; const gs = w / 18; for (let i = 0; i < 40; i++) { c.beginPath(); c.moveTo(x + i * gs, y); c.lineTo(x + i * gs, y + h); c.stroke(); c.beginPath(); c.moveTo(x, y + i * gs); c.lineTo(x + w, y + i * gs); c.stroke(); } c.restore();
+    let yy = titleBlock(c, x + m, y + m + h * .02, w - m * 2, w * .13, P.ink);
+    yy = line(c, val("subIn"), x + m, yy + h * .005, w - m * 2, `600 ${w * .038}px "DM Sans"`, P.acc, "subIn");
+    const ps = Math.min(w * .62, h * .42); miniPuzzle(c, x + (w - ps) / 2, y + h * .4, ps, P, pic, 1);
+    badge(c, x + w - m - w * .25, y + h * .36, w * .25, P, k);
+    line(c, val("tagIn"), x + m, y + h * .84, w - m * 2, `italic 600 ${w * .033}px "DM Sans"`, P.ink, "tagIn");
+    line(c, val("authIn"), x + m, y + h - m - w * .06, w - m * 2, `700 ${w * .042}px "DM Sans"`, P.ink, "authIn");
+  } else if (t === 1) { // Case File
+    c.fillStyle = P.bg; c.fillRect(x, y, w, h); grain(c, x, y, w, h, P.ink, 900, .05);
+    const fx = x + w * .07, fy = y + h * .13, fw = w * .86, fh = h * .74;
+    c.fillStyle = P.paper; rr(fx + fw * .62, c, fy - h * .035, fw * .32, h * .06, w * .015); c.fill();
+    c.save(); c.shadowColor = "rgba(0,0,0,.45)"; c.shadowBlur = w * .04; c.shadowOffsetY = w * .015; c.fillStyle = P.paper; rr(fx, c, fy, fw, fh, w * .015); c.fill(); c.restore();
+    c.fillStyle = "rgba(0,0,0,.08)"; c.fillRect(fx, fy + fh * .12, fw, 2);
+    c.fillStyle = "#2a1d12"; c.font = `400 ${w * .034}px "Special Elite"`; c.textAlign = "left"; c.fillText("CASE FILE No. " + (val("volIn").match(/\d+/)?.[0] || "01").padStart(2, "0"), fx + fw * .06, fy + fh * .085);
+    let yy = titleBlock(c, fx + fw * .06, fy + fh * .14, fw * .88, w * .1, "#2a1d12", "left");
+    yy = line(c, val("subIn"), fx + fw * .06, yy, fw * .88, `400 ${w * .034}px "Special Elite"`, "#5a4630", "subIn", "left");
+    const ph = fw * .44; c.save(); c.translate(fx + fw * .52, fy + fh * .52); c.rotate(.05); c.fillStyle = "#fff"; c.shadowColor = "rgba(0,0,0,.3)"; c.shadowBlur = w * .02; c.fillRect(0, 0, ph, ph * 1.12); c.shadowBlur = 0;
+    c.fillStyle = P.bg; c.fillRect(ph * .06, ph * .06, ph * .88, ph * .88); pixelPic(c, ph * .16, ph * .16, ph * .68, P.paper, pic); c.fillStyle = "#555"; c.font = `400 ${ph * .07}px "Caveat"`; c.textAlign = "center"; c.fillText("Exhibit A", ph / 2, ph * 1.06); c.restore();
+    c.save(); c.translate(fx + fw * .27, fy + fh * .7); c.rotate(-.18); c.strokeStyle = P.acc; c.lineWidth = w * .008; const sw = fw * .42; c.strokeRect(-sw / 2, -w * .055, sw, w * .11);
+    c.fillStyle = P.acc; c.font = `700 ${w * .055}px Oswald`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("CLASSIFIED", 0, 0); c.restore();
+    c.fillStyle = "#2a1d12"; c.textBaseline = "alphabetic"; line(c, val("casesIn") + " · " + val("diffIn"), fx + fw * .06, fy + fh * .86, fw * .5, `700 ${w * .03}px "DM Sans"`, "#2a1d12", "casesIn", "left");
+    line(c, val("tagIn"), x + m, y + h * .885, w - m * 2, `400 ${w * .03}px "Special Elite"`, P.ink, "tagIn");
+    line(c, val("authIn"), x + m, y + h - m - w * .05, w - m * 2, `700 ${w * .04}px "DM Sans"`, P.ink, "authIn");
+    // paperclip
+    c.save(); c.strokeStyle = "#9aa3ad"; c.lineWidth = w * .009; c.lineCap = "round"; const cx = fx + fw * .48, cy = fy - h * .02; c.beginPath(); c.moveTo(cx, cy + h * .09); c.lineTo(cx, cy + h * .01); c.arc(cx + w * .02, cy + h * .01, w * .02, Math.PI, 0); c.lineTo(cx + w * .04, cy + h * .1); c.stroke(); c.restore();
+  } else if (t === 2) { // Crime Tape
+    c.fillStyle = P.bg; c.fillRect(x, y, w, h); const rg = c.createRadialGradient(x + w / 2, y + h * .45, 0, x + w / 2, y + h * .45, w * .8); rg.addColorStop(0, P.bg2); rg.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = rg; c.fillRect(x, y, w, h);
+    pixelPic(c, x + w * .12, y + h * .3, w * .76, P.ink, pic, .12);
+    tape(c, x + w / 2, y + h * .26, -.22, w, P, "CRIME SCENE · DO NOT CROSS · ");
+    let yy = titleBlock(c, x + m, y + h * .34, w - m * 2, w * .15, P.ink, "center", 3);
+    yy = line(c, val("subIn"), x + m, yy + h * .01, w - m * 2, `600 ${w * .038}px "DM Sans"`, P.acc, "subIn");
+    tape(c, x + w / 2, y + h * .79, .14, w, P, val("casesIn").toUpperCase() + " · " + val("diffIn").toUpperCase() + " · ");
+    line(c, val("tagIn"), x + m, y + h * .855, w - m * 2, `italic 600 ${w * .032}px "DM Sans"`, P.ink, "tagIn");
+    line(c, val("authIn"), x + m, y + h - m - w * .06, w - m * 2, `700 ${w * .042}px "DM Sans"`, P.ink, "authIn");
+  } else if (t === 3) { // Noir Poster
+    c.fillStyle = P.bg; c.fillRect(x, y, w, h); const rg = c.createRadialGradient(x + w * .5, y + h * .55, w * .05, x + w * .5, y + h * .55, w * .75); rg.addColorStop(0, P.acc); rg.addColorStop(.45, P.bg2); rg.addColorStop(1, P.bg); c.globalAlpha = .9; c.fillStyle = rg; c.fillRect(x, y, w, h); c.globalAlpha = 1;
+    const ps = w * .7; pixelPic(c, x + (w - ps) / 2, y + h * .36, ps, P.bg, pic, .92);
+    line(c, val("volIn").toUpperCase(), x + m, y + m, w - m * 2, `700 ${w * .032}px Oswald`, P.acc, "volIn");
+    let yy = titleBlock(c, x + m, y + m + w * .05, w - m * 2, w * .17, P.ink, "center", 3);
+    line(c, val("subIn"), x + m, yy, w - m * 2, `600 ${w * .036}px "DM Sans"`, P.ink, "subIn");
+    badge(c, x + m, y + h * .8, w * .26, P, k);
+    line(c, val("authIn").toUpperCase(), x + m, y + h - m - w * .06, w - m * 2, `700 ${w * .045}px Oswald`, P.ink, "authIn");
+  } else if (t === 4) { // Detective Notebook
+    c.fillStyle = P.paper; c.fillRect(x, y, w, h); grain(c, x, y, w, h, "#000", 1200, .04);
+    c.strokeStyle = "rgba(60,90,140,.22)"; c.lineWidth = Math.max(1, w * .002); for (let ly = y + h * .1; ly < y + h; ly += h * .032) { c.beginPath(); c.moveTo(x, ly); c.lineTo(x + w, ly); c.stroke(); }
+    c.strokeStyle = "rgba(200,30,40,.45)"; c.beginPath(); c.moveTo(x + w * .12, y); c.lineTo(x + w * .12, y + h); c.stroke();
+    c.save(); c.globalAlpha = .18; c.strokeStyle = "#5a3418"; c.lineWidth = w * .02; c.beginPath(); c.arc(x + w * .8, y + h * .14, w * .12, .3, 5.6); c.stroke(); c.restore();
+    let yy = titleBlock(c, x + w * .16, y + h * .1, w * .76, w * .12, P.bg, "left");
+    yy = line(c, val("subIn"), x + w * .16, yy, w * .76, `700 ${w * .045}px "Caveat"`, P.acc, "subIn", "left");
+    const ph = w * .48; c.save(); c.translate(x + w * .42, y + h * .5); c.rotate(-.06); c.fillStyle = "#fff"; c.shadowColor = "rgba(0,0,0,.25)"; c.shadowBlur = w * .02; c.fillRect(0, 0, ph, ph); c.shadowBlur = 0;
+    c.fillStyle = P.bg; c.fillRect(ph * .07, ph * .07, ph * .86, ph * .86); pixelPic(c, ph * .17, ph * .17, ph * .66, P.paper, pic);
+    c.fillStyle = "rgba(240,220,150,.75)"; c.fillRect(ph * .3, -ph * .05, ph * .4, ph * .1); c.restore();
+    line(c, val("casesIn"), x + w * .16, y + h * .56, w * .24, `700 ${w * .05}px "Caveat"`, P.acc, "casesIn", "left");
+    line(c, val("diffIn"), x + w * .16, y + h * .62, w * .24, `700 ${w * .036}px "Caveat"`, P.bg, "diffIn", "left");
+    line(c, val("tagIn"), x + w * .16, y + h * .86, w * .76, `400 ${w * .03}px "Special Elite"`, P.bg, "tagIn", "left");
+    line(c, val("authIn"), x + w * .16, y + h - m - w * .05, w * .76, `700 ${w * .04}px "DM Sans"`, P.bg, "authIn", "left");
+  } else if (t === 5) { // Evidence Board
+    const cg = c.createLinearGradient(x, y, x + w, y + h); cg.addColorStop(0, "#b48a5a"); cg.addColorStop(1, "#8d6538"); c.fillStyle = cg; c.fillRect(x, y, w, h); grain(c, x, y, w, h, "#3b2410", 2600, .25);
+    const pins = [[.13, .46], [.89, .47], [.5, .86], [.12, .12]]; const card = (cx, cy, cw, chh, rot, fn) => { c.save(); c.translate(x + cx * w, y + cy * h); c.rotate(rot); c.shadowColor = "rgba(0,0,0,.35)"; c.shadowBlur = w * .02; c.shadowOffsetY = w * .008; fn(cw * w, chh * h); c.restore(); };
+    c.strokeStyle = P.acc; c.lineWidth = w * .006; c.beginPath(); pins.forEach(([px, py], i) => i ? c.lineTo(x + px * w, y + py * h) : c.moveTo(x + px * w, y + py * h)); c.closePath(); c.stroke();
+    card(.08, .1, .84, .3, -.015, (cw, ch) => { c.fillStyle = P.paper; c.fillRect(0, 0, cw, ch); c.shadowBlur = 0; });
+    let yy = titleBlock(c, x + w * .13, y + h * .12, w * .74, w * .11, P.bg, "center"); line(c, val("subIn"), x + w * .13, yy, w * .74, `600 ${w * .032}px "DM Sans"`, P.acc, "subIn");
+    card(.08, .44, .4, .27, .04, (cw) => { c.fillStyle = "#fff"; c.fillRect(0, 0, cw, cw * 1.05); c.shadowBlur = 0; c.fillStyle = P.bg; c.fillRect(cw * .07, cw * .07, cw * .86, cw * .86); pixelPic(c, cw * .17, cw * .17, cw * .66, P.paper, pic); });
+    card(.54, .46, .38, .17, -.05, (cw, ch) => { c.fillStyle = "#fff59a"; c.fillRect(0, 0, cw, ch); c.shadowBlur = 0; c.fillStyle = "#2a2a2a"; c.textAlign = "center"; c.font = `700 ${w * .052}px "Caveat"`; c.fillText(val("casesIn"), cw / 2, ch * .45); c.font = `700 ${w * .036}px "Caveat"`; c.fillText(val("diffIn"), cw / 2, ch * .8); });
+    hits.push({ x: x + w * .54, y: y + h * .46, w: w * .38, h: h * .17, f: "casesIn" });
+    pins.forEach(([px, py]) => { c.fillStyle = P.acc; c.beginPath(); c.arc(x + px * w, y + py * h, w * .016, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.5)"; c.beginPath(); c.arc(x + px * w - w * .005, y + py * h - w * .005, w * .005, 0, 7); c.fill(); });
+    c.fillStyle = "rgba(0,0,0,.55)"; c.fillRect(x, y + h * .79, w, h * .21);
+    line(c, val("tagIn"), x + m, y + h * .81, w - m * 2, `italic 600 ${w * .03}px "DM Sans"`, "#fff", "tagIn");
+    line(c, val("authIn"), x + m, y + h - m - w * .05, w - m * 2, `700 ${w * .042}px "DM Sans"`, "#fff", "authIn");
+  } else if (t === 6) { // Pulp Magazine
+    c.fillStyle = "#f1e3c0"; c.fillRect(x, y, w, h);
+    c.save(); c.fillStyle = P.acc; c.globalAlpha = .22; const st = w * .028; for (let yy2 = y + h * .3; yy2 < y + h; yy2 += st) for (let xx = x; xx < x + w; xx += st) { const r = st * .42 * ((yy2 - y) / h); c.beginPath(); c.arc(xx + ((yy2 / st) % 2) * st / 2, yy2, r, 0, 7); c.fill(); } c.restore();
+    c.fillStyle = P.acc; c.fillRect(x, y, w, h * .25); c.fillStyle = P.bg; c.fillRect(x, y + h * .25, w, h * .012);
+    titleBlock(c, x + m, y + m * .7, w - m * 2 - w * .16, w * .13, "#fff8e7", "left", 2);
+    c.save(); c.translate(x + w - m - w * .07, y + h * .125); c.fillStyle = "#f4c400"; c.beginPath(); c.arc(0, 0, w * .075, 0, 7); c.fill(); c.fillStyle = "#151515"; c.font = `400 ${w * .07}px "Bebas Neue"`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("25¢", 0, w * .005); c.restore();
+    line(c, val("volIn").toUpperCase(), x + m, y + h * .275, w * .45, `700 ${w * .032}px Oswald`, P.bg, "volIn", "left");
+    line(c, val("diffIn").toUpperCase(), x + w * .5, y + h * .275, w * .5 - m, `700 ${w * .032}px Oswald`, P.bg, "diffIn", "right");
+    const cx = x + w * .5, cy = y + h * .55, R0 = w * .3; c.fillStyle = P.bg; c.beginPath(); c.arc(cx, cy, R0, 0, 7); c.fill();
+    c.save(); c.strokeStyle = P.acc; c.lineWidth = w * .006; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; c.beginPath(); c.moveTo(cx + Math.cos(a) * R0 * 1.06, cy + Math.sin(a) * R0 * 1.06); c.lineTo(cx + Math.cos(a) * R0 * 1.22, cy + Math.sin(a) * R0 * 1.22); c.stroke(); } c.restore();
+    const ps = R0 * 1.25; pixelPic(c, cx - ps / 2 + w * .012, cy - ps / 2 + w * .012, ps, "#000", pic, .55); pixelPic(c, cx - ps / 2, cy - ps / 2, ps, "#f4c400", pic);
+    badge(c, x + w - m - w * .21, y + h * .6, w * .21, P, k);
+    line(c, val("subIn"), x + m, y + h * .79, w - m * 2, `italic 700 ${w * .038}px "DM Sans"`, P.bg, "subIn");
+    line(c, val("tagIn"), x + m, y + h * .855, w - m * 2, `400 ${w * .03}px "Special Elite"`, P.bg, "tagIn");
+    line(c, val("authIn").toUpperCase(), x + m, y + h - m - w * .06, w - m * 2, `700 ${w * .045}px Oswald`, P.acc, "authIn");
+  } else if (t === 7) { // Fingerprint
+    const g2 = c.createLinearGradient(x, y, x, y + h); g2.addColorStop(0, P.bg2); g2.addColorStop(1, P.bg); c.fillStyle = g2; c.fillRect(x, y, w, h);
+    const fx0 = x + w * .5, fy0 = y + h * .56; c.save(); c.strokeStyle = P.acc; c.globalAlpha = .45; c.lineWidth = w * .007; c.lineCap = "round";
+    for (let i = 1; i < 24; i++) { const r = w * .02 * i; for (let j = 0; j < 4; j++) { const a0 = j * 1.65 + (i % 3) * .37, a1 = a0 + 1.15 + (i % 2) * .2; c.beginPath(); c.ellipse(fx0, fy0, r * .78, r, .08, a0, a1); c.stroke(); } } c.restore();
+    let yy = titleBlock(c, x + m, y + m + h * .02, w - m * 2, w * .14, P.ink); line(c, val("subIn"), x + m, yy, w - m * 2, `600 ${w * .036}px "DM Sans"`, P.acc, "subIn");
+    c.save(); c.translate(x + w * .6, y + h * .58); c.rotate(.12); const tw2 = w * .3, th2 = w * .38; c.shadowColor = "rgba(0,0,0,.45)"; c.shadowBlur = w * .03; c.fillStyle = P.paper;
+    c.beginPath(); c.moveTo(tw2 * .18, 0); c.lineTo(tw2, 0); c.lineTo(tw2, th2); c.lineTo(0, th2); c.lineTo(0, tw2 * .18); c.closePath(); c.fill(); c.shadowBlur = 0;
+    c.fillStyle = P.bg; c.beginPath(); c.arc(tw2 * .16, tw2 * .16, tw2 * .045, 0, 7); c.fill(); c.fillStyle = "#333"; c.font = `700 ${tw2 * .11}px Oswald`; c.textAlign = "center"; c.fillText("EVIDENCE", tw2 * .58, tw2 * .2);
+    c.fillStyle = P.bg; c.fillRect(tw2 * .14, th2 * .3, tw2 * .72, tw2 * .72); pixelPic(c, tw2 * .22, th2 * .3 + tw2 * .08, tw2 * .56, P.paper, pic); c.restore();
+    badge(c, x + m, y + h * .6, w * .25, P, k);
+    line(c, val("tagIn"), x + m, y + h * .86, w - m * 2, `italic 600 ${w * .03}px "DM Sans"`, P.ink, "tagIn");
+    line(c, val("authIn"), x + m, y + h - m - w * .05, w - m * 2, `700 ${w * .042}px "DM Sans"`, P.ink, "authIn");
+  } else if (t === 8) { // Blueprint
+    c.fillStyle = "#123a6b"; c.fillRect(x, y, w, h); c.save(); c.strokeStyle = "#cfe3ff"; const gs = w * .025;
+    for (let i = 0; i * gs < Math.max(w, h); i++) { c.globalAlpha = i % 5 ? .1 : .22; c.lineWidth = i % 5 ? 1 : 1.6; c.beginPath(); c.moveTo(x + i * gs, y); c.lineTo(x + i * gs, y + h); c.stroke(); c.beginPath(); c.moveTo(x, y + i * gs); c.lineTo(x + w, y + i * gs); c.stroke(); } c.restore();
+    line(c, "CASE PLAN · SHEET " + (val("volIn").match(/\d+/)?.[0] || "1").padStart(2, "0"), x + m, y + m, w - m * 2, `400 ${w * .028}px "Special Elite"`, "#9fc3ff", "volIn", "left");
+    let yy = titleBlock(c, x + m, y + m + w * .05, w - m * 2, w * .12, "#f4f8ff", "left"); line(c, val("subIn"), x + m, yy, w - m * 2, `400 ${w * .032}px "Special Elite"`, "#9fc3ff", "subIn", "left");
+    const px0 = x + w * .1, py0 = y + h * .44, pw = w * .8, ph = h * .32; c.save(); c.strokeStyle = "#e8f1ff"; c.lineWidth = w * .006; c.strokeRect(px0, py0, pw, ph); c.lineWidth = w * .003;
+    [[.42, 0, .42, .55], [.42, .7, .42, 1], [0, .5, .3, .5], [.42, .45, 1, .45], [.75, .45, .75, 1]].forEach(([a, b, cc, d]) => { c.beginPath(); c.moveTo(px0 + a * pw, py0 + b * ph); c.lineTo(px0 + cc * pw, py0 + d * ph); c.stroke(); });
+    c.beginPath(); c.arc(px0 + .42 * pw, py0 + .55 * ph, .15 * ph, -Math.PI / 2, 0); c.stroke(); c.font = `400 ${w * .022}px "Special Elite"`; c.fillStyle = "#cfe3ff"; c.textAlign = "center";
+    [["STUDY", .2, .25], ["HALL", .2, .78], ["LIBRARY", .7, .22], ["CELLAR", .58, .75], ["GARDEN", .88, .75]].forEach(([n, a, b]) => c.fillText(n, px0 + a * pw, py0 + b * ph));
+    const mx = px0 + .7 * pw, my = py0 + .5 * ph; c.strokeStyle = "#ff5a5a"; c.lineWidth = w * .006; c.beginPath(); c.arc(mx, my, w * .085, 0, 7); c.stroke();
+    c.fillStyle = "#0e2e55"; c.beginPath(); c.arc(mx, my, w * .075, 0, 7); c.fill(); pixelPic(c, mx - w * .05, my - w * .05, w * .1, "#ffffff", pic); c.restore();
+    badge(c, x + m, y + h * .76, w * .22, P, k);
+    line(c, val("tagIn"), x + m + w * .24, y + h * .8, w - m * 2 - w * .24, `400 ${w * .03}px "Special Elite"`, "#e8f1ff", "tagIn", "left");
+    line(c, val("authIn").toUpperCase(), x + m, y + h - m - w * .05, w - m * 2, `700 ${w * .04}px Oswald`, "#f4f8ff", "authIn", "left");
+  } else if (t === 9) { // Art Deco
+    const gold = "#d4af37"; c.fillStyle = "#0d0d0d"; c.fillRect(x, y, w, h);
+    c.save(); const ox = x + w / 2, oy = y + h * 1.02; for (let i = 0; i < 28; i++) { if (i % 2) continue; const a0 = Math.PI + i / 28 * Math.PI, a1 = Math.PI + (i + 1) / 28 * Math.PI; c.fillStyle = "rgba(212,175,55,.07)"; c.beginPath(); c.moveTo(ox, oy); c.arc(ox, oy, h * 1.2, a0, a1); c.closePath(); c.fill(); } c.restore();
+    c.strokeStyle = gold; c.lineWidth = w * .004; const f1 = m * .7; c.strokeRect(x + f1, y + f1, w - f1 * 2, h - f1 * 2); c.lineWidth = w * .0015; c.strokeRect(x + f1 * 1.4, y + f1 * 1.4, w - f1 * 2.8, h - f1 * 2.8);
+    [[x + f1, y + f1], [x + w - f1, y + f1], [x + f1, y + h - f1], [x + w - f1, y + h - f1]].forEach(([a, b]) => { c.save(); c.translate(a, b); c.rotate(Math.PI / 4); c.fillStyle = gold; c.fillRect(-w * .018, -w * .018, w * .036, w * .036); c.restore(); });
+    line(c, val("volIn").toUpperCase(), x + m, y + m + w * .02, w - m * 2, `700 ${w * .028}px Oswald`, gold, "volIn");
+    let yy = titleBlock(c, x + m + w * .03, y + m + w * .06, w - m * 2 - w * .06, w * .12, "#f3e6c4"); line(c, val("subIn"), x + m, yy, w - m * 2, `italic 700 ${w * .034}px "Playfair Display"`, gold, "subIn");
+    const ds = w * .3, dcx = x + w / 2, dcy = y + h * .6; c.save(); c.translate(dcx, dcy); c.rotate(Math.PI / 4); c.fillStyle = "#1c1810"; c.fillRect(-ds / 2, -ds / 2, ds, ds); c.strokeStyle = gold; c.lineWidth = w * .005; c.strokeRect(-ds / 2, -ds / 2, ds, ds); c.lineWidth = w * .002; c.strokeRect(-ds * .42, -ds * .42, ds * .84, ds * .84); c.restore();
+    pixelPic(c, dcx - ds * .32, dcy - ds * .32, ds * .64, gold, pic);
+    line(c, val("casesIn").toUpperCase() + "  ·  " + val("diffIn").toUpperCase(), x + m, y + h * .8, w - m * 2, `700 ${w * .03}px Oswald`, gold, "casesIn");
+    line(c, val("tagIn"), x + m, y + h * .85, w - m * 2, `italic 400 ${w * .03}px "Playfair Display"`, "#e8dcb8", "tagIn");
+    line(c, val("authIn").toUpperCase(), x + m, y + h - m - w * .06, w - m * 2, `700 ${w * .04}px Oswald`, "#f3e6c4", "authIn");
+  } else if (t === 10) { // Spotlight
+    c.fillStyle = P.bg; c.fillRect(x, y, w, h); const lx = x + w * .46, ly = y + h * .56, lr = w * .3;
+    c.save(); c.globalAlpha = .1; miniPuzzle(c, x + w * .08, y + h * .42, w * .84, P, pic, 0); c.restore();
+    const vg = c.createRadialGradient(lx, ly, lr * .6, lx, ly, w); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.7)"); c.fillStyle = vg; c.fillRect(x, y, w, h);
+    c.save(); c.translate(lx + lr * .7, ly + lr * .7); c.rotate(Math.PI / 4); c.fillStyle = "#2a1c12"; rr(-lr * .09, c, 0, lr * .18, lr * .9, lr * .06); c.fill(); c.fillStyle = "rgba(255,255,255,.12)"; c.fillRect(-lr * .05, lr * .05, lr * .03, lr * .8); c.restore();
+    c.save(); c.beginPath(); c.arc(lx, ly, lr, 0, 7); c.clip(); c.fillStyle = P.paper; c.fillRect(lx - lr, ly - lr, lr * 2, lr * 2); miniPuzzle(c, lx - lr * 1.05, ly - lr * 1.05, lr * 2.1, P, pic, 1);
+    const gl = c.createLinearGradient(lx - lr, ly - lr, lx + lr, ly + lr); gl.addColorStop(0, "rgba(255,255,255,.35)"); gl.addColorStop(.45, "rgba(255,255,255,0)"); c.fillStyle = gl; c.fillRect(lx - lr, ly - lr, lr * 2, lr * 2); c.restore();
+    c.strokeStyle = P.acc; c.lineWidth = w * .022; c.beginPath(); c.arc(lx, ly, lr, 0, 7); c.stroke(); c.strokeStyle = "rgba(255,255,255,.35)"; c.lineWidth = w * .004; c.beginPath(); c.arc(lx, ly, lr - w * .008, 3.6, 4.6); c.stroke();
+    let yy = titleBlock(c, x + m, y + m + h * .01, w - m * 2, w * .13, P.ink); line(c, val("subIn"), x + m, yy, w - m * 2, `600 ${w * .035}px "DM Sans"`, P.acc, "subIn");
+    badge(c, x + w - m - w * .2, y + h * .7, w * .2, P, k);
+    line(c, val("tagIn"), x + m, y + h * .87, w - m * 2, `italic 600 ${w * .03}px "DM Sans"`, P.ink, "tagIn");
+    line(c, val("authIn"), x + m, y + h - m - w * .05, w - m * 2, `700 ${w * .042}px "DM Sans"`, P.ink, "authIn");
+  } else { // Sealed Letter
+    c.fillStyle = P.bg; c.fillRect(x, y, w, h); grain(c, x, y, w, h, P.ink, 700, .05);
+    c.save(); c.translate(x + w * .09, y + h * .09); c.rotate(-.025); const lw2 = w * .82, lh2 = h * .72; c.shadowColor = "rgba(0,0,0,.5)"; c.shadowBlur = w * .04; c.shadowOffsetY = w * .012; c.fillStyle = P.paper; c.fillRect(0, 0, lw2, lh2); c.shadowBlur = 0;
+    c.strokeStyle = "rgba(0,0,0,.08)"; c.lineWidth = 1; c.beginPath(); c.moveTo(0, lh2 * .5); c.lineTo(lw2, lh2 * .5); c.stroke(); c.fillStyle = "rgba(40,40,40,.28)";
+    for (let i = 0; i < 9; i++) { const ly2 = lh2 * (.5 + i * .045); c.fillRect(lw2 * .08, ly2, lw2 * (.84 - (i % 3) * .12 - (i === 8 ? .3 : 0)), lw2 * .009); } c.restore();
+    line(c, "TO THE DETECTIVE IN CHARGE", x + w * .16, y + h * .14, w * .7, `400 ${w * .028}px "Special Elite"`, "#5a4a3a", "", "left", "letterHead");
+    let yy = titleBlock(c, x + w * .16, y + h * .17, w * .68, w * .11, "#1f1a16", "left"); line(c, val("subIn"), x + w * .16, yy, w * .68, `400 ${w * .032}px "Special Elite"`, "#6a5240", "subIn", "left");
+    const sx2 = x + w * .7, sy2 = y + h * .74, sr = w * .13; c.save(); c.fillStyle = P.acc; c.beginPath(); for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2, r = sr * (1 + (i % 3 ? .04 : -.05)); c.lineTo(sx2 + Math.cos(a) * r, sy2 + Math.sin(a) * r); } c.closePath(); c.fill();
+    c.strokeStyle = "rgba(0,0,0,.25)"; c.lineWidth = w * .006; c.beginPath(); c.arc(sx2, sy2, sr * .78, 0, 7); c.stroke(); pixelPic(c, sx2 - sr * .5, sy2 - sr * .5, sr, "rgba(0,0,0,.35)", pic); c.restore();
+    line(c, val("casesIn") + " · " + val("diffIn"), x + w * .16, y + h * .72, w * .48, `700 ${w * .032}px "Special Elite"`, "#1f1a16", "casesIn", "left");
+    line(c, val("tagIn"), x + m, y + h * .875, w - m * 2, `italic 600 ${w * .03}px "DM Sans"`, P.ink, "tagIn");
+    line(c, val("authIn"), x + m, y + h - m - w * .05, w - m * 2, `700 ${w * .042}px "DM Sans"`, P.ink, "authIn");
+  }
+  c.restore();
+}
+function badge(c, x, y, s, P) { const o = OV("casesIn"); s *= o.scale || 1; x += (o.dx || 0) * PANEL.w; y += (o.dy || 0) * PANEL.w;
+  hits.push({ x, y, w: s, h: s, f: "casesIn", k: "casesIn", pw: PANEL.w }); if (o.hidden) return;
+  c.save(); c.translate(x + s / 2, y + s / 2); c.rotate(-.12); const fill = o.color || P.acc; c.fillStyle = fill; c.beginPath(); for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, r = i % 2 ? s * .44 : s * .5; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill();
+  c.fillStyle = lum(fill) > .55 ? "#1b1408" : "#fff"; c.textAlign = "center"; c.textBaseline = "middle"; const fam = o.font || "Oswald";
+  const parts = val("casesIn").split(/\s+/); c.font = `700 ${s * .26}px ${fam}`; c.fillText(parts[0] || "", 0, -s * .07); c.font = `700 ${s * .11}px ${fam}`; c.fillText(parts.slice(1).join(" "), 0, s * .14); c.restore(); }
+const lum = (h) => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!m) return .5; const n = parseInt(m[1], 16); return (.3 * (n >> 16) + .59 * (n >> 8 & 255) + .11 * (n & 255)) / 255; };
+function tape(c, cx, cy, rot, w, P, text) { c.save(); c.translate(cx, cy); c.rotate(rot); const th = w * .085; c.fillStyle = "#f4c400"; c.fillRect(-w, -th / 2, w * 2, th); c.fillStyle = "#151515"; c.font = `700 ${th * .52}px Oswald`; c.textAlign = "left"; c.textBaseline = "middle";
+  let s = text.repeat(6); c.fillText(s, -w, 0); c.restore(); }
+
+// ---------- back + spine ----------
+function back(c, x, y, w, h, P, k) {
+  const m = (SAFE + BLEED) * k; PANEL = { w, h }; c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
+  const BK = { 4: [P.paper, false], 5: ["#2b1d12", true], 6: ["#f1e3c0", false], 8: ["#123a6b", true], 9: ["#0d0d0d", true] }, [bgc, dark] = BK[S.tpl] || [P.bg, true];
+  c.fillStyle = bgc; c.fillRect(x, y, w, h);
+  if (S.tpl === 4) { c.strokeStyle = "rgba(60,90,140,.18)"; for (let ly = y + h * .06; ly < y + h; ly += h * .032) { c.beginPath(); c.moveTo(x, ly); c.lineTo(x + w, ly); c.stroke(); } }
+  else { const g = c.createLinearGradient(x, y, x, y + h); g.addColorStop(0, "rgba(255,255,255,.04)"); g.addColorStop(1, "rgba(0,0,0,.25)"); c.fillStyle = g; c.fillRect(x, y, w, h); }
+  const ink = dark ? (S.tpl === 9 ? "#f3e6c4" : S.tpl === 8 ? "#e8f1ff" : P.ink) : P.bg, acc = S.tpl === 9 ? "#d4af37" : S.tpl === 8 ? "#9fc3ff" : P.acc;
+  line(c, val("tagIn"), x + m, y + m + h * .01, w - m * 2, `700 ${w * .052}px ${FONTS[S.font][1]}`, acc, "tagIn", "center", "backTag");
+  // blurb
+  { const o = OV("blurbIn"), fs = w * .034 * (o.scale || 1), dx = (o.dx || 0) * w, dy = (o.dy || 0) * w, al = o.align || "left";
+    c.font = `400 ${fs}px ${o.font || '"DM Sans"'}`; const bl = wrapLines(c, val("blurbIn"), w - m * 2); let yy = y + m + h * .13 + dy; const y0 = yy;
+    if (!o.hidden) { c.fillStyle = o.color || ink; c.textAlign = al; c.textBaseline = "alphabetic"; const ax = (al === "center" ? x + w / 2 : al === "right" ? x + w - m : x + m) + dx; bl.slice(0, 18).forEach((l) => { yy += fs * 1.35; if (l) c.fillText(l, ax, yy); }); }
+    else yy += fs * 1.35 * Math.min(18, bl.length);
+    hits.push({ x: x + m + dx, y: y0, w: w - m * 2, h: yy - y0 + fs * .4, f: "blurbIn", k: "blurbIn", pw: w }); S._by = yy - dy; }
+  // inside list
+  { const o = OV("bulIn"), sc = o.scale || 1, dx = (o.dx || 0) * w, dy = (o.dy || 0) * w, fam = o.font || '"DM Sans"'; let yy = S._by + w * .085 + dy; const y0 = yy - w * .04;
+    if (!o.hidden) { c.textAlign = "left"; c.font = `700 ${w * .032 * sc}px ${fam}`; c.fillStyle = acc; c.fillText("INSIDE THIS CASEBOOK", x + m + dx, yy);
+      c.font = `500 ${w * .032 * sc}px ${fam}`; val("bulIn").split("\n").filter(Boolean).slice(0, 6).forEach((b) => { yy += w * .048 * sc; c.fillStyle = acc; c.fillRect(x + m + dx, yy - w * .018 * sc, w * .014 * sc, w * .014 * sc); c.fillStyle = o.color || ink; c.fillText(b, x + m + dx + w * .035 * sc, yy); }); }
+    hits.push({ x: x + m + dx, y: y0, w: w - m * 2, h: yy - y0 + 10, f: "bulIn", k: "bulIn", pw: w }); }
+  if ($("sampleOn").checked) { const ps = w * .42; miniPuzzle(c, x + m + w * .02, y + h - m - ps - w * .02, ps, P, PICS[(S.pic + 3) % PICS.length].grid, 0);
+    line(c, "Try a case from inside:", x + m, y + h - m - ps - w * .11, w * .6, `400 ${w * .03}px "Special Elite"`, ink, "", "left", "tryLine"); }
+  if ($("barOn").checked) { const bw = 2 * k, bh = 1.2 * k, bx = x + w - m - bw, by = y + h - m - bh; c.fillStyle = "#fff"; c.fillRect(bx, by, bw, bh); if (S._g) { c.fillStyle = "#999"; c.font = `600 ${bh * .13}px "DM Sans"`; c.textAlign = "center"; c.fillText("BARCODE AREA", bx + bw / 2, by + bh / 2); } }
+  c.restore();
+}
+function spine(c, x, y, w, h, P, k, g) {
+  const SPC = { 4: [P.bg, P.paper], 5: ["#5e4026", P.ink], 6: [P.acc, "#fff8e7"], 8: ["#0d2c52", "#f4f8ff"], 9: ["#151515", "#d4af37"] }, [sbg, sink] = SPC[S.tpl] || [P.bg2, P.ink];
+  c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); c.fillStyle = sbg; c.fillRect(x, y, w, h);
+  if (g.pages >= 79 && w > .2 * k) { const fs = Math.min(w * .5, k * .3); c.translate(x + w / 2, y + h / 2); c.rotate(Math.PI / 2); c.textBaseline = "middle";
+    const [wt, fam] = FONTS[S.font]; c.textAlign = "left"; c.fillStyle = sink; const avail = h - 2 * k * .5;
+    const tsz = fitText(c, val("mainInput").toUpperCase(), `${wt} {s}px ${fam}`, fs, avail * .62); c.fillText(val("mainInput").toUpperCase(), -avail / 2, 0);
+    c.font = `600 ${tsz * .62}px "DM Sans"`; c.textAlign = "right"; c.fillStyle = P.acc; c.fillText(val("authIn"), avail / 2, 0); }
+  c.restore();
+}
+
+// ---------- render ----------
+function render(target, dpi, mode = S.view, guides = S.guides) {
+  const g = geo(), P = PALS[S.pal]; hits = []; S._g = guides;
+  const k = dpi, Wp = Math.round(g.W * k), Hp = Math.round(g.H * k), c = target.getContext("2d");
+  if (mode === "front") { const fw = Math.round((g.tw + BLEED) * k); target.width = fw; target.height = Hp; front(c, 0, 0, fw, Hp, P, k); if (guides) guide(c, 0, 0, fw, Hp, k, true); return g; }
+  target.width = Wp; target.height = Hp;
+  const bx = 0, bw = (BLEED + g.tw) * k, sx = bw, sw = g.sp * k, fx = sx + sw, fw = Wp - fx;
+  back(c, bx, 0, bw, Hp, P, k); spine(c, sx, 0, sw, Hp, P, k, g); front(c, fx, 0, fw, Hp, P, k);
+  if (guides) { c.save(); c.setLineDash([k * .06, k * .04]); c.lineWidth = Math.max(1, k * .012);
+    c.strokeStyle = "#e0245e"; c.strokeRect(BLEED * k, BLEED * k, Wp - 2 * BLEED * k, Hp - 2 * BLEED * k);
+    c.strokeStyle = "#1d9bf0"; c.strokeRect((BLEED + SAFE) * k, (BLEED + SAFE) * k, g.tw * k - 2 * SAFE * k, g.th * k - 2 * SAFE * k); c.strokeRect(fx + SAFE * k, (BLEED + SAFE) * k, g.tw * k - 2 * SAFE * k, g.th * k - 2 * SAFE * k);
+    c.strokeStyle = "#16a34a"; c.beginPath(); c.moveTo(sx, 0); c.lineTo(sx, Hp); c.moveTo(fx, 0); c.lineTo(fx, Hp); c.stroke(); c.restore(); }
+  return g;
+}
+function guide(c, x, y, w, h, k) { c.save(); c.setLineDash([k * .06, k * .04]); c.lineWidth = Math.max(1, k * .012); c.strokeStyle = "#e0245e"; c.strokeRect(x, y + BLEED * k, w - BLEED * k, h - 2 * BLEED * k);
+  c.strokeStyle = "#1d9bf0"; c.strokeRect(x + SAFE * k, y + (BLEED + SAFE) * k, w - (BLEED + 2 * SAFE) * k, h - 2 * (BLEED + SAFE) * k); c.restore(); }
+const SCENES = [["stand", "Standing"], ["stack", "Series stack"], ["desk", "Desk flat lay"], ["spread", "Front & back"], ["tablet", "eBook + print"]];
+function coverImg(dpi = 160) { const g = geo(), t = document.createElement("canvas"); render(t, dpi, "front", false); const o = document.createElement("canvas"); o.width = Math.round(g.tw * dpi); o.height = Math.round(g.th * dpi); o.getContext("2d").drawImage(t, 0, -BLEED * dpi); return o; }
+function book(c, img, x0, y0, bh, P, g, shade = 0) { const bw = bh * g.tw / g.th, dep = Math.max(16, bw * g.sp / g.tw * 1.5);
+  c.save(); c.fillStyle = "rgba(0,0,0,.2)"; c.beginPath(); c.ellipse(x0 + bw * .5, y0 + bh + bh * .02, bw * .62, bh * .035, 0, 0, 7); c.fill(); c.restore();
+  c.fillStyle = P.bg2; c.beginPath(); c.moveTo(x0 - dep, y0 + dep * .3); c.lineTo(x0, y0); c.lineTo(x0, y0 + bh); c.lineTo(x0 - dep, y0 + bh - dep * .05); c.closePath(); c.fill(); c.fillStyle = "rgba(0,0,0,.4)"; c.fill();
+  c.save(); c.shadowColor = "rgba(0,0,0,.35)"; c.shadowBlur = 30; c.shadowOffsetX = 14; c.shadowOffsetY = 18; c.drawImage(img, x0, y0, bw, bh); c.restore();
+  const sh = c.createLinearGradient(x0, 0, x0 + bw * .07, 0); sh.addColorStop(0, "rgba(0,0,0,.4)"); sh.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = sh; c.fillRect(x0, y0, bw * .07, bh);
+  const gl = c.createLinearGradient(x0, y0, x0 + bw, y0 + bh); gl.addColorStop(0, "rgba(255,255,255,.16)"); gl.addColorStop(.4, "rgba(255,255,255,0)"); c.fillStyle = gl; c.fillRect(x0, y0, bw, bh);
+  if (shade) { c.fillStyle = `rgba(0,0,0,${shade})`; c.fillRect(x0 - dep, y0, bw + dep, bh); } return bw; }
+function mock(target, scene = S.scene || "stand") {
+  const g = geo(), P = PALS[S.pal], W = 1600, H = 1200; target.width = W; target.height = H; const c = target.getContext("2d"), img = coverImg();
+  const studio = (a, b) => { const bg = c.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, a); bg.addColorStop(1, b); c.fillStyle = bg; c.fillRect(0, 0, W, H); };
+  if (scene === "stand") { studio("#efe9dd", "#d8cfbf"); const bh = H * .72, bw = bh * g.tw / g.th; book(c, img, (W - bw) / 2 + 30, H * .12, bh, P, g); }
+  else if (scene === "stack") { studio("#2a2730", "#141218"); const bh = H * .62, bw = bh * g.tw / g.th;
+    c.fillStyle = "rgba(255,255,255,.05)"; c.beginPath(); c.ellipse(W / 2, H * .3, W * .5, H * .4, 0, 0, 7); c.fill();
+    book(c, img, W / 2 - bw * 1.25, H * .2, bh * .9, P, g, .25); book(c, img, W / 2 + bw * .35, H * .2, bh * .9, P, g, .25); book(c, img, W / 2 - bw / 2, H * .17, bh, P, g); }
+  else if (scene === "desk") { const wd = c.createLinearGradient(0, 0, W, H); wd.addColorStop(0, "#5a3a22"); wd.addColorStop(1, "#3a2414"); c.fillStyle = wd; c.fillRect(0, 0, W, H);
+    c.strokeStyle = "rgba(0,0,0,.18)"; c.lineWidth = 3; for (let i = 0; i < 26; i++) { c.beginPath(); c.moveTo(0, i * 50 + 10); c.bezierCurveTo(W * .3, i * 50 + 30, W * .6, i * 50 - 15, W, i * 50 + 12); c.stroke(); }
+    c.save(); c.translate(W * .78, H * .25); c.rotate(.2); c.fillStyle = "#f5f0e1"; c.shadowColor = "rgba(0,0,0,.4)"; c.shadowBlur = 20; c.fillRect(-150, -110, 300, 220); c.shadowBlur = 0; c.fillStyle = "rgba(40,40,40,.45)";
+    for (let i = 0; i < 6; i++) c.fillRect(-120, -70 + i * 28, 240 - (i % 2) * 70, 6); c.fillStyle = "#c8102e"; c.font = "700 34px Caveat"; c.fillText("Who did it?", -110, 95); c.restore();
+    c.save(); c.translate(W * .5, H * .53); c.rotate(-.1); const bh = H * .74, bw = bh * g.tw / g.th; c.shadowColor = "rgba(0,0,0,.55)"; c.shadowBlur = 40; c.shadowOffsetX = 20; c.shadowOffsetY = 26;
+    c.fillStyle = "#f3eee2"; c.fillRect(-bw / 2 + 6, -bh / 2 + 8, bw, bh); c.shadowBlur = 0; c.drawImage(img, -bw / 2, -bh / 2, bw, bh); c.restore();
+    c.save(); c.translate(W * .2, H * .72); c.rotate(-.55); c.fillStyle = "#f2c230"; c.fillRect(-180, -14, 330, 28); c.fillStyle = "#e9a3a3"; c.fillRect(150, -14, 36, 28); c.fillStyle = "#e7c9a0"; c.beginPath(); c.moveTo(-180, -14); c.lineTo(-235, 0); c.lineTo(-180, 14); c.fill(); c.fillStyle = "#333"; c.beginPath(); c.moveTo(-218, -5); c.lineTo(-235, 0); c.lineTo(-218, 5); c.fill(); c.restore();
+    c.save(); c.translate(W * .83, H * .78); c.rotate(.7); c.fillStyle = "#2b1d12"; c.fillRect(-14, 70, 28, 170); c.strokeStyle = "#c7a24a"; c.lineWidth = 16; c.beginPath(); c.arc(0, 0, 80, 0, 7); c.stroke(); c.fillStyle = "rgba(200,230,255,.18)"; c.beginPath(); c.arc(0, 0, 72, 0, 7); c.fill(); c.restore(); }
+  else if (scene === "spread") { studio("#e9e4da", "#cfc6b6"); const t = document.createElement("canvas"); render(t, 140, "wrap", false); const k = 140, bwp = g.tw * k, thp = g.th * k;
+    const bh = H * .68, bw = bh * g.tw / g.th, gap = 70, x0 = (W - bw * 2 - gap) / 2, y0 = H * .15;
+    [[BLEED * k, x0, -.02], [(BLEED + g.tw + g.sp) * k, x0 + bw + gap, .02]].forEach(([sx, dx, rot]) => { c.save(); c.translate(dx + bw / 2, y0 + bh / 2); c.rotate(rot); c.shadowColor = "rgba(0,0,0,.35)"; c.shadowBlur = 36; c.shadowOffsetY = 20;
+      c.drawImage(t, sx, BLEED * k, bwp, thp, -bw / 2, -bh / 2, bw, bh); c.restore(); });
+    c.fillStyle = "#6b6257"; c.font = "600 30px 'DM Sans'"; c.textAlign = "center"; c.fillText("BACK", x0 + bw / 2, y0 + bh + 70); c.fillText("FRONT", x0 + bw * 1.5 + gap, y0 + bh + 70); }
+  else { studio("#1d2733", "#0c1117"); const tw = W * .36, th = tw * 1.38, tx = W * .14, ty = (H - th) / 2;
+    c.save(); c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = 50; c.fillStyle = "#0a0a0a"; rr(tx, c, ty, tw, th, 46); c.fill(); c.restore(); c.strokeStyle = "#2e3640"; c.lineWidth = 4; rr(tx, c, ty, tw, th, 46); c.stroke();
+    const pad = 30, sw = tw - pad * 2, sh = th - pad * 2; c.fillStyle = "#111"; c.fillRect(tx + pad, ty + pad, sw, sh); const r = Math.min(sw / img.width, sh / img.height), iw = img.width * r, ih = img.height * r;
+    c.drawImage(img, tx + pad + (sw - iw) / 2, ty + pad + (sh - ih) / 2, iw, ih); const gl = c.createLinearGradient(tx, ty, tx + tw, ty + th); gl.addColorStop(0, "rgba(255,255,255,.1)"); gl.addColorStop(.35, "rgba(255,255,255,0)"); c.fillStyle = gl; rr(tx, c, ty, tw, th, 46); c.fill();
+    const bh = H * .62; book(c, img, W * .62, H * .2, bh, P, g); }
+}
+
+const cv = $("cv");
+let pending = 0;
+function draw() { cancelAnimationFrame(pending); pending = requestAnimationFrame(() => {
+  $("sceneSeg").classList.toggle("on", S.view === "mock");
+  if (S.view === "mock") { mock(cv); hits = []; closeEd(); } else { render(cv, S.view === "front" ? 140 : 100, S.view, S.guides);
+    const hs = hits.filter((h) => h.k === SEL); if (SEL && hs.length) { const c = cv.getContext("2d"); c.save(); c.setLineDash([6, 4]); c.lineWidth = 2; c.strokeStyle = "#b9822f"; hs.forEach((h) => c.strokeRect(h.x - 4, h.y - 4, h.w + 8, h.h + 8)); c.restore(); placeEd(hs[0]); } }
+  const g = geo(); $("stTitle").textContent = (S.view === "wrap" ? "Full cover · " : S.view === "front" ? "Front cover · " : "3D mockup · ") + `${g.tw} × ${g.th} in`;
+  $("sTrim").textContent = `${g.tw} × ${g.th} in`; $("sSpine").textContent = `${g.sp.toFixed(3)} in (${(g.sp * 25.4).toFixed(1)} mm)`; $("sFull").textContent = `${g.W.toFixed(3)} × ${g.H.toFixed(3)} in`;
+  $("sPx").textContent = `${Math.round(g.W * 300)} × ${Math.round(g.H * 300)} px`; $("sSpTxt").textContent = g.pages >= 79 ? "Yes" : "No (needs 79+ pages)";
+  const pg = +$("pagesIn").value, w = $("warn"); const msg = pg < 24 ? "KDP paperbacks need at least 24 pages: using 24." : pg > 828 ? "KDP's maximum is 828 pages: using 828." : g.pages < 79 ? "Under 79 pages: KDP doesn't allow spine text, so the spine stays plain." : "";
+  w.textContent = msg; w.classList.toggle("on", !!msg);
+  store.set("look", { tpl: S.tpl, pal: S.pal, pic: S.pic, font: S.font, scene: S.scene }); store.set("ovr", OVR); saveTexts(); }); }
+
+// ---------- UI ----------
+function thumbs() { $("tpls").innerHTML = ["Pixel Clue", "Case File", "Crime Tape", "Noir Poster", "Notebook", "Evidence Board", "Pulp Magazine", "Fingerprint", "Blueprint", "Art Deco", "Spotlight", "Sealed Letter"].map((n, i) => `<button type="button" class="tpl${S.tpl === i ? " on" : ""}" data-i="${i}"><canvas width="120" height="180"></canvas><b>${n}</b></button>`).join("");
+  $("tpls").querySelectorAll("canvas").forEach((cc, i) => { const save = S.tpl; S.tpl = i; const c = cc.getContext("2d"); hits = []; front(c, 0, 0, 120, 180, PALS[S.pal], 13); S.tpl = save; }); }
+$("pals").innerHTML = PALS.map((p, i) => `<button type="button" class="pal${S.pal === i ? " on" : ""}" data-i="${i}" title="${p.n}"><i style="background:${p.bg}"></i><i style="background:${p.paper}"></i><i style="background:${p.acc}"></i></button>`).join("");
+$("pix").innerHTML = PICS.map((p, i) => `<button type="button" class="px${S.pic === i ? " on" : ""}" data-i="${i}" title="${p.name}"><canvas width="15" height="15"></canvas></button>`).join("");
+$("pix").querySelectorAll("canvas").forEach((cc, i) => { const c = cc.getContext("2d"); c.fillStyle = "#1e2a3a"; PICS[i].grid.forEach((r, y) => r.forEach((v, x) => v && c.fillRect(x, y, 1, 1))); });
+const mark = (box, cls, i) => box.querySelectorAll(cls).forEach((b) => b.classList.toggle("on", +b.dataset.i === i));
+$("tpls").addEventListener("click", (e) => { const b = e.target.closest(".tpl"); if (!b) return; S.tpl = +b.dataset.i; mark($("tpls"), ".tpl", S.tpl); draw(); });
+$("pals").addEventListener("click", (e) => { const b = e.target.closest(".pal"); if (!b) return; S.pal = +b.dataset.i; mark($("pals"), ".pal", S.pal); thumbs(); draw(); });
+$("pix").addEventListener("click", (e) => { const b = e.target.closest(".px"); if (!b) return; S.pic = +b.dataset.i; mark($("pix"), ".px", S.pic); thumbs(); draw(); });
+$("fontSel").onchange = () => { S.font = $("fontSel").value; thumbs(); draw(); };
+document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => { document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("on", x === b)); document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("on", p.id === "p-" + b.dataset.p)); });
+$("viewSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; closeEd(); $("viewSeg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); draw(); });
+["mainInput", "subIn", "authIn", "volIn", "casesIn", "diffIn", "tagIn", "blurbIn", "bulIn", "pagesIn"].forEach((id) => $(id).addEventListener("input", () => { draw(); if (id === "mainInput" || id === "casesIn") thumbs(); }));
+["trimSel", "paperSel", "sampleOn", "barOn"].forEach((id) => $(id).addEventListener("change", draw));
+$("guidesOn").onchange = () => { S.guides = $("guidesOn").checked; draw(); };
+$("titleIdea").onclick = () => { $("mainInput").value = rnd(TITLES.filter((t) => t !== $("mainInput").value)); thumbs(); draw(); };
+$("tagIdea").onclick = () => { $("tagIn").value = rnd(TAGS.filter((t) => t !== $("tagIn").value)); draw(); };
+$("btnBlurb").onclick = () => { $("blurbIn").value = blurbNew(); draw(); toast("New blurb written: edit it in the Back tab"); };
+$("btnGen").onclick = () => { S.tpl = (S.tpl + 1 + Math.floor(Math.random() * 11)) % 12; S.pal = Math.floor(Math.random() * PALS.length); S.pic = Math.floor(Math.random() * PICS.length);
+  S.font = rnd(Object.keys(FONTS)); $("fontSel").value = S.font; mark($("tpls"), ".tpl", S.tpl); mark($("pals"), ".pal", S.pal); mark($("pix"), ".px", S.pic); thumbs(); draw(); };
+// ---------- edit texts right on the cover ----------
+const NAMES = { mainInput: "Title", subIn: "Subtitle", authIn: "Author", volIn: "Volume line", casesIn: "Cases badge", diffIn: "Difficulty", tagIn: "Tagline", backTag: "Back headline", blurbIn: "Back blurb", bulIn: "Inside list", tryLine: "Sample label", letterHead: "Letter heading" };
+let SEL = null, SELF = "", drag = null;
+const toCanvas = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+const hitAt = (x, y) => [...hits].reverse().find((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+function openEd(h) { SEL = h.k; SELF = h.f; const o = OV(SEL); $("ed").hidden = false; $("edName").textContent = NAMES[SEL] || "Text";
+  const ta = $("edText"); ta.style.display = SELF ? "" : "none"; if (SELF) ta.value = $(SELF).value;
+  $("edSize").value = Math.round((o.scale || 1) * 100); $("edFont").value = o.font || ""; $("edHide").textContent = o.hidden ? "Show" : "Hide";
+  document.querySelectorAll("#ed [data-al]").forEach((b) => b.classList.toggle("on", o.align === b.dataset.al)); $("edCase").classList.toggle("on", !!o.upper);
+  const P = PALS[S.pal]; $("edCols").innerHTML = [...new Set([P.ink, P.acc, P.paper, P.bg, P.bg2, "#ffffff", "#111111", "#d4af37", "#f4c400"])].map((c) => `<button type="button" data-c="${c}" style="background:${c}" title="${c}"></button>`).join("") + `<input type="color" id="edColor" value="${/^#[0-9a-f]{6}$/i.test(o.color || "") ? o.color : "#c8102e"}" title="Any colour"><button type="button" data-c="" title="Design colour" style="background:linear-gradient(135deg,#fff 45%,#e0245e 45%,#e0245e 55%,#fff 55%)"></button>`;
+  draw(); }
+function closeEd() { SEL = null; $("ed").hidden = true; }
+function placeEd(h) { if (matchMedia("(max-width:860px)").matches) { $("ed").style.left = $("ed").style.top = ""; return; } const box = $("cbox").getBoundingClientRect(), r = cv.getBoundingClientRect(), sc = r.width / cv.width, ed = $("ed");
+  const ew = Math.min(300, box.width - 16); ed.style.width = ew + "px"; let left = r.left - box.left + (h.x + h.w / 2) * sc - ew / 2; left = Math.max(8, Math.min(box.width - ew - 8, left));
+  let top = r.top - box.top + (h.y + h.h) * sc + 12; const eh = ed.offsetHeight || 260; if (top + eh > box.height + 120) top = Math.max(8, r.top - box.top + h.y * sc - eh - 12); ed.style.left = left + "px"; ed.style.top = top + "px"; }
+const setO = (patch) => { if (!SEL) return; OVR[SEL] = Object.assign({}, OVR[SEL], patch); Object.keys(OVR[SEL]).forEach((k2) => OVR[SEL][k2] === undefined && delete OVR[SEL][k2]); draw(); };
+cv.addEventListener("pointerdown", (e) => { if (S.view === "mock") return; const [x, y] = toCanvas(e), h = hitAt(x, y); if (!h) { closeEd(); draw(); return; }
+  if (h.k !== SEL) openEd(h); const o = OV(h.k); drag = { x, y, dx: o.dx || 0, dy: o.dy || 0, pw: h.pw, moved: false }; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener("pointermove", (e) => { const [x, y] = toCanvas(e);
+  if (drag) { const ddx = x - drag.x, ddy = y - drag.y; if (Math.abs(ddx) + Math.abs(ddy) > 3) drag.moved = true; if (drag.moved) { OVR[SEL] = Object.assign({}, OVR[SEL], { dx: drag.dx + ddx / drag.pw, dy: drag.dy + ddy / drag.pw }); draw(); } return; }
+  cv.style.cursor = S.view !== "mock" && hitAt(x, y) ? "move" : "default"; });
+addEventListener("pointerup", () => { drag = null; });
+$("edText").addEventListener("input", () => { if (!SELF) return; $(SELF).value = $("edText").value; draw(); if (SELF === "mainInput" || SELF === "casesIn") thumbs(); });
+$("edSize").addEventListener("input", () => setO({ scale: +$("edSize").value / 100 }));
+document.querySelectorAll("#ed [data-a]").forEach((b) => b.onclick = () => { const v = Math.max(40, Math.min(240, +$("edSize").value + (b.dataset.a === "bigger" ? 10 : -10))); $("edSize").value = v; setO({ scale: v / 100 }); });
+$("edCols").addEventListener("click", (e) => { const b = e.target.closest("[data-c]"); if (b) setO({ color: b.dataset.c || undefined }); });
+$("edCols").addEventListener("input", (e) => { if (e.target.id === "edColor") setO({ color: e.target.value }); });
+$("edFont").onchange = () => setO({ font: $("edFont").value || undefined });
+document.querySelectorAll("#ed [data-al]").forEach((b) => b.onclick = () => { const on = OV(SEL).align === b.dataset.al; setO({ align: on ? undefined : b.dataset.al }); document.querySelectorAll("#ed [data-al]").forEach((x) => x.classList.toggle("on", !on && x === b)); });
+$("edCase").onclick = () => { const v = !OV(SEL).upper; setO({ upper: v || undefined }); $("edCase").classList.toggle("on", v); };
+$("edHide").onclick = () => { const v = !OV(SEL).hidden; setO({ hidden: v || undefined }); $("edHide").textContent = v ? "Show" : "Hide"; };
+$("edReset").onclick = () => { if (SEL) { delete OVR[SEL]; const h = hits.find((x) => x.k === SEL); draw(); if (h) openEd(h); } };
+$("edDone").onclick = $("edX").onclick = () => { closeEd(); draw(); };
+$("resetAll").onclick = () => { if (!Object.keys(OVR).length) { toast("No text edits to reset"); return; } if (confirm("Reset every text position, size, colour and font to the design's defaults?")) { OVR = {}; closeEd(); draw(); toast("Text edits reset"); } };
+addEventListener("keydown", (e) => { if (!SEL || e.target.matches("input,textarea,select")) return; const st = e.shiftKey ? .02 : .005, o = OV(SEL);
+  const mv = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] }[e.key]; if (mv) { e.preventDefault(); setO({ dx: (o.dx || 0) + mv[0], dy: (o.dy || 0) + mv[1] }); } });
+$("sceneSeg").innerHTML = SCENES.map(([id, n]) => `<button type="button" data-s="${id}"${(S.scene || "stand") === id ? ' class="on"' : ""}>${n}</button>`).join("");
+$("sceneSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; S.scene = b.dataset.s; $("sceneSeg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); draw(); });
+
+// ---------- exports ----------
+const fileBase = () => (val("mainInput") || "cover").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+function dl(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+const busy = (on) => $("busy").classList.toggle("on", on);
+const later = (fn) => { busy(true); setTimeout(() => { try { fn(); } catch (e) { console.error(e); toast("Export failed: " + e.message); } busy(false); }, 60); };
+$("xPdf").onclick = () => later(() => { const c = document.createElement("canvas"), g = render(c, 300, "wrap", false); const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: g.W > g.H ? "landscape" : "portrait", unit: "in", format: [g.W, g.H], compress: true }); pdf.addImage(c.toDataURL("image/jpeg", .95), "JPEG", 0, 0, g.W, g.H);
+  pdf.setProperties({ title: val("mainInput") + " cover", creator: "Casebook Cover Lab" }); dl(pdf.output("blob"), `${fileBase()}-cover-${$("trimSel").value}-${g.pages}p.pdf`); toast("Print-ready PDF saved"); draw(); });
+$("xFront").onclick = () => later(() => { const g = geo(), c = document.createElement("canvas"), dpi = 2560 / g.th; render(c, dpi, "front", false);
+  const o = document.createElement("canvas"); o.width = Math.round(g.tw * dpi); o.height = 2560; o.getContext("2d").drawImage(c, 0, -BLEED * dpi); o.toBlob((b) => { dl(b, `${fileBase()}-front-cover.jpg`); toast("Front cover saved"); }, "image/jpeg", .93); draw(); });
+$("xMock").onclick = () => later(() => { SCENES.forEach(([id], i) => { const c = document.createElement("canvas"); mock(c, id); setTimeout(() => c.toBlob((b) => dl(b, `${fileBase()}-mockup-${id}.png`), "image/png"), i * 450); }); toast("5 mockups saved"); draw(); });
+$("xWrapPng").onclick = () => later(() => { const c = document.createElement("canvas"); render(c, 300, "wrap", false); c.toBlob((b) => { dl(b, `${fileBase()}-full-wrap.png`); toast("Full wrap PNG saved"); }, "image/png"); draw(); });
+
+// modals
+const openM = (id) => $(id).classList.add("on"); document.querySelectorAll("[data-close]").forEach((b) => b.onclick = () => b.closest(".modal").classList.remove("on"));
+document.querySelectorAll(".modal").forEach((m) => m.addEventListener("click", (e) => { if (e.target === m) m.classList.remove("on"); }));
+addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelectorAll(".modal").forEach((m) => m.classList.remove("on")); });
+$("btnGuide").onclick = () => openM("guide"); $("btnSpecs").onclick = () => openM("specs");
+// texts persistence
+const TXT = ["mainInput", "subIn", "authIn", "volIn", "casesIn", "diffIn", "tagIn", "blurbIn", "bulIn", "pagesIn", "trimSel", "paperSel"];
+function saveTexts() { store.set("texts", Object.fromEntries(TXT.map((id) => [id, $(id).value]))); }
+const savedT = store.get("texts", null); if (savedT) TXT.forEach((id) => { if (savedT[id] != null) $(id).value = savedT[id]; });
+if (!$("blurbIn").value) $("blurbIn").value = blurbNew().replace(/^Fog.*?place/, (m) => m);
+if (!$("bulIn").value) $("bulIn").value = BUL;
+$("fontSel").value = S.font; S.guides = true;
+Promise.race([Promise.all(["700 30px Oswald", "900 30px 'Playfair Display'", "30px 'Special Elite'", "30px 'Bebas Neue'", "700 30px Caveat", "700 30px 'DM Sans'"].map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 2500))]).then(() => {
+  thumbs(); draw(); if (!store.get("seen", false) && !navigator.webdriver) { openM("guide"); store.set("seen", true); } });
+thumbs(); draw();
+})();
+</script>
+</body>
+</html>
