@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gift Edition Personalizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Playfair+Display:wght@700;900&family=Oswald:wght@500;700&family=Special+Elite&family=Great+Vibes&family=Caveat:wght@700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+  --bg: #f7f1ea;
+  --card: #ffffff;
+  --ink: #26131c;
+  --muted: #7b6670;
+  --line: #ecdfe3;
+  --wine: #7a1636;
+  --wine2: #a32049;
+  --gold: #c9a24a;
+  --ok: #2c7a4b;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 Outfit, system-ui, sans-serif;
+  min-height: 100vh;
+  background-image: radial-gradient(800px 420px at 100% 0, rgba(201, 162, 74, .18), transparent 60%), radial-gradient(700px 420px at 0 100%, rgba(122, 22, 54, .1), transparent 60%);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* ---------- top bar ---------- */
+.top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; padding: 12px 22px; background: rgba(255, 255, 255, .86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.mark { width: 40px; height: 40px; border-radius: 12px; flex: none; display: grid; place-items: center; background: linear-gradient(135deg, var(--wine), var(--wine2)); box-shadow: 0 8px 20px -8px rgba(122, 22, 54, .7); }
+.ttl { min-width: 0; }
+.ttl b { display: block; font: 700 1.35rem/1 "Cormorant Garamond", serif; white-space: nowrap; }
+.ttl small { display: block; color: var(--muted); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top .sp { flex: 1; }
+.tb { padding: 9px 15px; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 600; font-size: .85rem; white-space: nowrap; }
+.tb.wine { background: var(--wine); border-color: var(--wine); color: #fff; }
+.hist { display: flex; gap: 6px; }
+.hist button { padding: 8px 11px; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 700; font-size: .8rem; }
+.hist button:disabled { opacity: .35; cursor: default; }
+
+/* ---------- layout ---------- */
+.wrap { display: grid; grid-template-columns: minmax(0, 350px) minmax(0, 1fr) minmax(0, 320px); gap: 18px; padding: 18px; max-width: 1600px; margin: 0 auto; align-items: start; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 18px 40px -30px rgba(38, 19, 28, .45); }
+.tabs { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; padding: 9px 4px; border: 0; border-radius: 12px; background: none; cursor: pointer; font-weight: 700; font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.tabs button.on { background: var(--wine); color: #fff; }
+.pane { display: none; padding: 14px 16px 18px; }
+.pane.on { display: block; }
+label.f { display: block; font-size: .74rem; font-weight: 700; color: var(--muted); margin: 12px 0 5px; }
+label.f:first-child { margin-top: 0; }
+.in { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: #fff; outline: none; }
+.in:focus { border-color: var(--wine2); box-shadow: 0 0 0 3px rgba(163, 32, 73, .12); }
+textarea.in { resize: vertical; min-height: 84px; line-height: 1.45; }
+.r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.r2 > * { min-width: 0; }
+.mini { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.mini button { padding: 7px 11px; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: .78rem; font-weight: 700; }
+.mini button:hover { border-color: var(--wine2); }
+.drop { display: flex; gap: 10px; align-items: center; border: 2px dashed #e3c9d2; border-radius: 14px; padding: 10px; cursor: pointer; background: #fff9fb; font-size: .82rem; color: var(--muted); }
+.drop img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; background: #f1e4e8; }
+.drop b { display: block; color: var(--ink); }
+.drop input { display: none; }
+.themes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.th { border: 2px solid var(--line); border-radius: 14px; overflow: hidden; cursor: pointer; padding: 0; background: #fff; text-align: left; }
+.th.on { border-color: var(--wine2); }
+.th canvas { width: 100%; aspect-ratio: 1.7; display: block; }
+.th b { display: block; padding: 5px 8px; font-size: .74rem; }
+.seg { display: flex; gap: 5px; flex-wrap: wrap; }
+.seg button { flex: 1; padding: 8px 6px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; cursor: pointer; font-weight: 700; font-size: .78rem; white-space: nowrap; }
+.seg button.on { border-color: var(--wine2); background: #fff2f6; }
+.crop { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.crop label { font-size: .7rem; font-weight: 700; color: var(--muted); }
+.crop input { width: 100%; accent-color: var(--wine); }
+.chk { display: flex; align-items: center; gap: 8px; font-size: .86rem; margin-top: 9px; cursor: pointer; }
+.chk input { accent-color: var(--wine); width: 16px; height: 16px; }
+.gen { display: flex; gap: 8px; padding: 14px 16px; border-top: 1px solid var(--line); }
+#btnGen { flex: 1; padding: 14px; border: 0; border-radius: 14px; background: linear-gradient(135deg, var(--wine), var(--wine2)); color: #fff; font-weight: 800; font-size: .95rem; cursor: pointer; box-shadow: 0 12px 26px -12px rgba(122, 22, 54, .8); }
+#btnGen:hover { filter: brightness(1.06); }
+#btnSurprise { padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 700; white-space: nowrap; }
+
+/* ---------- studio ---------- */
+.studio { padding: 16px; position: sticky; top: 80px; }
+.pieces { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; }
+.pc { flex: none; width: 104px; border: 2px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer; padding: 6px; text-align: center; position: relative; }
+.pc.on { border-color: var(--wine2); box-shadow: 0 0 0 3px rgba(163, 32, 73, .12); }
+.pc canvas { width: 100%; height: 70px; object-fit: contain; display: block; background: #f7efe9; border-radius: 6px; }
+.pc b { display: block; font-size: .7rem; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc input { position: absolute; top: 4px; left: 4px; accent-color: var(--wine); }
+.sbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.sbar b { font: 700 1.15rem/1 "Cormorant Garamond"; }
+.sbar .sp { flex: 1; }
+.tip { color: var(--muted); font-size: .78rem; margin: 6px 0 0; }
+.stage { position: relative; background: repeating-conic-gradient(#efe4dc 0 25%, #f7efe9 0 50%) 0 0 / 22px 22px; border-radius: 16px; padding: 18px; display: grid; place-items: center; }
+#cv { display: block; max-width: 100%; max-height: calc(100vh - 290px); width: auto; height: auto; box-shadow: 0 24px 50px -18px rgba(38, 19, 28, .55); touch-action: none; }
+.ed { position: absolute; z-index: 25; width: 290px; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 22px 50px -12px rgba(38, 19, 28, .5); padding: 12px; }
+.ed[hidden] { display: none; }
+.edh { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.edh b { font: 700 1.05rem/1 "Cormorant Garamond"; }
+.edh button { border: 0; background: #f6ecef; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; }
+.ed textarea { width: 100%; min-height: 54px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); resize: vertical; outline: none; font-size: .86rem; }
+.edrow { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.edrow > button, .edrow select { padding: 6px 9px; border-radius: 9px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: .78rem; font-weight: 700; }
+.edrow > button.on { background: var(--ink); color: #fff; }
+.edrow input[type=range] { flex: 1; min-width: 0; accent-color: var(--wine); }
+.edrow select { flex: 1; min-width: 0; }
+.sw { display: flex; gap: 5px; flex-wrap: wrap; }
+.sw button { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.sw input { width: 28px; height: 28px; border: 0; padding: 0; background: none; }
+.edrow .pri { margin-left: auto; background: var(--wine); border-color: var(--wine); color: #fff; }
+
+/* ---------- right column ---------- */
+.side .card { padding: 14px 16px; margin-bottom: 14px; }
+.side h4 { margin: 0 0 10px; font: 700 1.15rem/1 "Cormorant Garamond"; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.xb { width: 100%; display: flex; gap: 10px; align-items: center; text-align: left; padding: 11px 12px; border-radius: 14px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 700; font-size: .86rem; margin-top: 7px; }
+.xb:hover { border-color: var(--wine2); }
+.xb.main { background: var(--wine); border-color: var(--wine); color: #fff; }
+.xb small { display: block; font-weight: 500; font-size: .72rem; opacity: .78; }
+.xb svg { flex: none; }
+.etsy label.f { margin-top: 10px; }
+.cnt { float: right; font-weight: 600; color: var(--muted); }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tags span { padding: 4px 9px; border-radius: 999px; background: #fbeff3; border: 1px solid #f0d7df; font-size: .74rem; font-weight: 600; }
+.tags span.long { background: #fff1e6; border-color: #f3c9a6; }
+.projs { display: flex; flex-direction: column; gap: 6px; max-height: 190px; overflow: auto; }
+.projs div { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 10px; font-size: .82rem; }
+.projs span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.projs button { border: 1px solid var(--line); background: #fff; border-radius: 7px; padding: 3px 7px; cursor: pointer; font-size: .74rem; font-weight: 700; }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 30px); opacity: 0; padding: 12px 18px; border-radius: 14px; background: var(--ink); color: #fff; font-weight: 600; font-size: .9rem; z-index: 95; transition: .3s; pointer-events: none; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.modal { position: fixed; inset: 0; z-index: 80; background: rgba(38, 19, 28, .5); display: none; place-items: center; padding: 18px; }
+.modal.on { display: grid; }
+.mbox { width: min(740px, 100%); max-height: 88vh; overflow: auto; background: #fff; border-radius: 22px; padding: 26px 28px; box-shadow: 0 30px 80px rgba(0, 0, 0, .3); }
+.mbox h2 { margin: 0 0 6px; font: 700 2rem/1.05 "Cormorant Garamond"; }
+.mbox h5 { margin: 18px 0 6px; font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; color: var(--wine2); }
+.mbox p, .mbox li { font-size: .92rem; color: #3f2b33; }
+.mbox ul, .mbox ol { padding-left: 20px; margin: 6px 0; }
+.mbox li { margin: 4px 0; }
+.mbox .x { float: right; border: 0; background: #f6ecef; width: 36px; height: 36px; border-radius: 10px; cursor: pointer; }
+.lgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.lgrid figure { margin: 0; }
+.lgrid img { width: 100%; aspect-ratio: 1; border-radius: 12px; display: block; box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .5); }
+.lgrid figcaption { display: flex; justify-content: space-between; align-items: center; font-size: .78rem; font-weight: 700; margin-top: 6px; }
+.lgrid figcaption button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 3px 8px; cursor: pointer; font-size: .74rem; font-weight: 700; }
+.drop img:not([src]) { background: #f1e4e8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a32049' stroke-width='1.8'%3E%3Ccircle cx='12' cy='9' r='4'/%3E%3Cpath d='M4 21c1-4 4.5-6 8-6s7 2 8 6'/%3E%3C/svg%3E") center / 60% no-repeat; }
+.busy { position: fixed; inset: 0; z-index: 90; background: rgba(247, 241, 234, .82); display: none; place-items: center; font-weight: 700; }
+.busy.on { display: grid; }
+@media (max-width: 1260px) {
+  .wrap { grid-template-columns: minmax(0, 330px) minmax(0, 1fr); }
+  .side { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .side .card { margin: 0; }
+}
+@media (max-width: 880px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); padding: 10px; }
+  .lgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .studio { position: static; order: -1; }
+  .side { grid-template-columns: minmax(0, 1fr); }
+  .top { padding: 10px 14px; flex-wrap: wrap; }
+  .ttl small, #btnAbout { display: none; }
+  #cv { max-height: none; }
+  .ed { position: fixed; left: 10px !important; right: 10px; bottom: 10px; top: auto !important; width: auto; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 13h18M12 9v12"/><path d="M12 9C10 5 6 5 7 8s5 1 5 1zM12 9c2-4 6-4 5-1s-5 1-5 1z"/></svg></div>
+  <div class="ttl"><b>Gift Edition Personalizer</b><small>Personalised casebook gifts: cover, dedication, detective ID, certificate, wanted poster, a case starring them, and Etsy-ready listings</small></div>
+  <span class="sp"></span>
+  <div class="hist"><button type="button" id="undo" title="Undo (Ctrl+Z)">↶ Undo</button><button type="button" id="redo" title="Redo (Ctrl+Shift+Z)">↷ Redo</button></div>
+  <button class="tb" id="btnAbout" type="button">Print sizes</button>
+  <button class="tb wine" id="btnGuide" type="button">How to use</button>
+</header>
+
+<main class="wrap">
+  <!-- ===== left: who the gift is for ===== -->
+  <section class="card" aria-label="Settings">
+    <div class="tabs">
+      <button class="on" data-p="who" type="button">Recipient</button>
+      <button data-p="case" type="button">Their case</button>
+      <button data-p="style" type="button">Style</button>
+      <button data-p="orders" type="button">Orders</button>
+    </div>
+
+    <div class="pane on" id="p-who">
+      <div class="r2">
+        <div><label class="f" for="mainInput">Their name</label><input class="in" id="mainInput" value="Emma" maxlength="24"></div>
+        <div><label class="f" for="titleIn">Title</label><select class="in" id="titleIn"><option>Detective</option><option>Inspector</option><option>Agent</option><option>Sergeant</option><option>Chief Inspector</option><option>Private Eye</option><option>Junior Detective</option></select></div>
+      </div>
+      <label class="f" for="occIn">Occasion</label>
+      <select class="in" id="occIn">
+        <option value="birthday">Birthday</option><option value="christmas">Christmas</option><option value="retire">Retirement</option><option value="anniv">Anniversary</option>
+        <option value="valentine">Valentine's Day</option><option value="wedding">Wedding</option><option value="mother">Mother's Day</option><option value="father">Father's Day</option>
+        <option value="grad">Graduation</option><option value="teacher">Thank you, teacher</option><option value="getwell">Get well soon</option><option value="just">Just because</option>
+      </select>
+      <label class="f" for="msgIn">Dedication message</label>
+      <textarea class="in" id="msgIn" maxlength="360"></textarea>
+      <div class="r2">
+        <div><label class="f" for="fromIn">From</label><input class="in" id="fromIn" value="Love, Mum and Dad" maxlength="40"></div>
+        <div><label class="f" for="dateIn">Date</label><input class="in" id="dateIn" maxlength="30"></div>
+      </div>
+      <label class="f">Photo (for the detective ID)</label>
+      <label class="drop"><input type="file" id="photoIn" accept="image/*"><img id="photoPrev" alt=""><span><b>Upload a photo</b>Any face photo; it is cropped for you</span></label>
+      <div class="seg" id="photoFx" style="margin-top:8px"><button type="button" data-fx="none" class="on">Colour</button><button type="button" data-fx="bw">Black &amp; white</button><button type="button" data-fx="sepia">Sepia</button></div>
+      <div class="crop" id="cropBox"><label>Zoom<input type="range" id="pz" min="100" max="300" value="100"></label><label>Left / right<input type="range" id="px" min="-50" max="50" value="0"></label><label>Up / down<input type="range" id="py" min="-50" max="50" value="0"></label></div>
+      <div class="mini"><button type="button" id="msgIdea">New message</button><button type="button" id="photoClear">Remove photo</button></div>
+    </div>
+
+    <div class="pane" id="p-case">
+      <p class="tip" style="margin:0 0 8px">A one-page mystery where they are the detective and the people they know are the suspects.</p>
+      <label class="f" for="caseSel">Case</label>
+      <select class="in" id="caseSel"></select>
+      <label class="f">Suspects (friends or family)</label>
+      <div class="r2"><input class="in" id="s1" value="Uncle Tom" maxlength="22"><input class="in" id="s2" value="Grandma Rose" maxlength="22"></div>
+      <div class="r2" style="margin-top:8px"><input class="in" id="s3" value="Cousin Leo" maxlength="22"><input class="in" id="s4" value="Mrs. Patel" maxlength="22"></div>
+      <label class="f" for="culpritSel">Who did it?</label>
+      <select class="in" id="culpritSel"><option value="1">Suspect 1</option><option value="2">Suspect 2</option><option value="3">Suspect 3</option><option value="4">Suspect 4</option><option value="0">Nobody: it was the cat</option></select>
+      <label class="f" for="placeIn">Where it happens</label>
+      <input class="in" id="placeIn" value="the family kitchen" maxlength="40">
+      <div class="mini"><button type="button" id="caseIdea">Random case</button></div>
+    </div>
+
+    <div class="pane" id="p-style">
+      <label class="f">Style</label>
+      <div class="themes" id="themes"></div>
+      <label class="f">Book size (cover, dedication, case page)</label>
+      <div class="seg" id="trimSeg"><button type="button" data-t="6x9" class="on">6 × 9</button><button type="button" data-t="8.5x11">8.5 × 11</button><button type="button" data-t="8x10">8 × 10</button></div>
+      <label class="f" for="bookIn">Book name on the cover</label>
+      <input class="in" id="bookIn" value="Casebook" maxlength="30">
+      <label class="f" for="accIn">Accent colour</label>
+      <div class="r2"><input class="in" type="color" id="accIn" value="#a32049" style="height:42px;padding:4px"><button type="button" id="accReset" style="border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font-weight:700">Style colour</button></div>
+    </div>
+
+    <div class="pane" id="p-orders">
+      <p class="tip" style="margin:0 0 8px">Selling personalised editions? Paste one order per line: <b>Name | Occasion | Message | From</b>. Each order becomes its own print-ready PDF, all in one ZIP.</p>
+      <textarea class="in" id="ordersIn" style="min-height:150px" placeholder="Emma | birthday | Happy 10th birthday, detective! | Love, Mum
+Oliver | christmas |  | From Grandpa
+Sophie | retire | Your best case yet: retirement! | The office team"></textarea>
+      <label class="chk"><input type="checkbox" id="orderKeepMsg" checked> Empty message = write one for the occasion</label>
+      <button class="xb main" type="button" id="xOrders" style="margin-top:10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span>Make all orders (ZIP)<small id="ordersCount">0 orders</small></span></button>
+    </div>
+
+    <div class="gen">
+      <button type="button" id="btnSurprise" title="Random style, case and message">🎲</button>
+      <button type="button" id="btnGen">✨ Personalise everything</button>
+    </div>
+  </section>
+
+  <!-- ===== centre: the pieces ===== -->
+  <section class="card studio" aria-label="Preview">
+    <div class="pieces" id="pieces"></div>
+    <div class="sbar"><b id="pName">Cover</b><span class="tip" id="pSize" style="margin:0"></span><span class="sp"></span><span class="tip" style="margin:0">Click a text on the page to edit, restyle or drag it</span></div>
+    <div class="stage" id="stage">
+      <canvas id="cv" width="900" height="1350" aria-label="Piece preview"></canvas>
+      <div class="ed" id="ed" hidden>
+        <div class="edh"><b id="edName">Text</b><button type="button" id="edX" aria-label="Close">✕</button></div>
+        <textarea id="edText" aria-label="Text"></textarea>
+        <div class="edrow"><button type="button" data-a="-">A−</button><input type="range" id="edSize" min="40" max="240" value="100" aria-label="Size"><button type="button" data-a="+">A+</button></div>
+        <div class="edrow sw" id="edCols"></div>
+        <div class="edrow"><select id="edFont" aria-label="Font"><option value="">Style font</option><option value="'Cormorant Garamond'">Cormorant</option><option value="'Playfair Display'">Playfair</option><option value="'Great Vibes'">Great Vibes</option><option value="Caveat">Caveat</option><option value="'Special Elite'">Typewriter</option><option value="Oswald">Oswald</option><option value="'Bebas Neue'">Bebas Neue</option><option value="Outfit">Outfit</option></select><button type="button" id="edCase">AA</button></div>
+        <p class="tip">Drag the text on the page to move it.</p>
+        <div class="edrow"><button type="button" id="edHide">Hide</button><button type="button" id="edReset">Reset</button><button type="button" class="pri" id="edDone">Done</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== right: exports, Etsy, saved gifts ===== -->
+  <aside class="side">
+    <div class="card"><h4>Print &amp; download</h4>
+      <button class="xb main" type="button" id="xPack"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg><span>Gift pack PDF<small>Every ticked piece at real size, ready to print</small></span></button>
+      <button class="xb" type="button" id="xPiece"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 5 5 3-3 5 5"/></svg><span>This piece (PNG, 300 DPI)<small>For your book file or a print shop</small></span></button>
+      <button class="xb" type="button" id="xListing"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg><span>Etsy listing images<small>6 square 2000 px photos: mockups, kit, styles, "how it works"</small></span></button>
+    </div>
+    <div class="card etsy"><h4>Etsy listing text <span class="mini" style="margin:0"><button type="button" id="etsyNew">New</button></span></h4>
+      <label class="f" for="eTitle">Title <span class="cnt" id="eTitleC"></span></label><textarea class="in" id="eTitle" style="min-height:112px"></textarea>
+      <label class="f">13 tags <span class="cnt">max 20 characters each</span></label><div class="tags" id="eTags"></div>
+      <label class="f" for="eDesc">Description</label><textarea class="in" id="eDesc" style="min-height:120px"></textarea>
+      <label class="f" for="ePers">Personalisation box</label><textarea class="in" id="ePers" style="min-height:62px"></textarea>
+      <div class="mini"><button type="button" id="eCopy">Copy everything</button></div>
+    </div>
+    <div class="card"><h4>My gifts</h4><div class="projs" id="projs"></div>
+      <div class="mini"><button type="button" id="projSave">💾 Save gift</button><button type="button" id="projExp">Export</button><button type="button" id="projImp">Import</button></div>
+      <input type="file" id="projFile" accept=".json,application/json" hidden>
+    </div>
+  </aside>
+</main>
+
+<div class="modal" id="guide" role="dialog" aria-modal="true" aria-labelledby="gT"><div class="mbox">
+  <button class="x" type="button" data-close aria-label="Close">✕</button>
+  <h2 id="gT">How to use</h2>
+  <p>Turn your casebook into a personalised gift: a cover with their name, a dedication page, a detective ID card with their photo, a certificate, bookplates, a greeting card, a wanted poster and a one-page mystery where they are the detective. Sell it on Etsy or give it yourself.</p>
+  <h5>Quick start</h5>
+  <ol>
+    <li><b>Recipient</b>: type their name, pick a title and one of 12 occasions. A dedication is written for you; edit it or press <b>New message</b>. Add a photo for the ID card and the wanted poster, then zoom and move it to frame the face.</li>
+    <li><b>Their case</b>: put friends or family in as suspects and choose who did it.</li>
+    <li><b>Style</b>: pick one of 10 styles (each has its own cover layout and decoration) and the book size. Then press <b>Gift pack PDF</b> and print.</li>
+  </ol>
+  <h5>The pieces</h5>
+  <ul>
+    <li><b>Cover</b> and <b>Dedication page</b> and <b>Their case</b> are book pages at your trim size (add them to your book file, or print and slip them in).</li>
+    <li><b>Detective ID</b>: front and back, credit-card size, with cut marks. <b>Certificate</b>: letter landscape. <b>Bookplates</b>: a sheet of 8 stickers. <b>Greeting card</b>: 5 × 7 folded card. <b>Wanted poster</b>: letter size, with their photo, what they are "wanted" for and a reward that matches the occasion.</li>
+    <li>Tick the box on each piece to put it in the gift pack.</li>
+  </ul>
+  <h5>Edit on the page</h5>
+  <ul>
+    <li>Click any text on the preview: rewrite it, change size, colour, font or capitals, drag it, hide it or reset it. <b>Undo / Redo</b> (Ctrl or Cmd + Z) for everything.</li>
+  </ul>
+  <h5>Selling on Etsy</h5>
+  <ul>
+    <li><b>Etsy listing images</b>: 6 square images (2000 × 2000): a desk mockup, the whole kit, how personalisation works, close-ups, their own case with the wanted poster, and every style. Preview them, download one, or get all in a ZIP with the listing text.</li>
+    <li><b>Etsy listing text</b>: a title, 13 tags (each under 20 characters), a description and the personalisation instructions to paste into Etsy.</li>
+    <li><b>Orders</b>: paste your orders (Name | Occasion | Message | From), press <b>Make all orders</b> and get one PDF per customer in a ZIP.</li>
+  </ul>
+  <h5>Saving</h5>
+  <ul><li><b>My gifts</b> keeps every gift (with its photo) on this device; Export makes a backup file.</li></ul>
+</div></div>
+<div class="modal" id="about" role="dialog" aria-modal="true"><div class="mbox">
+  <button class="x" type="button" data-close aria-label="Close">✕</button>
+  <h2>Print sizes</h2>
+  <ul>
+    <li><b>Cover, dedication, case page</b>: your trim size (6 × 9, 8.5 × 11 or 8 × 10 in), 300 DPI.</li>
+    <li><b>Detective ID</b>: 3.375 × 2.125 in (credit card), front and back on one letter page with cut marks.</li>
+    <li><b>Certificate</b>: 11 × 8.5 in landscape.</li>
+    <li><b>Bookplates</b>: 8 labels of 3.5 × 2.25 in on a letter sheet (fits most full-sheet sticker paper).</li>
+    <li><b>Greeting card</b>: 5 × 7 in folded (10 × 7 flat), front and inside.</li>
+    <li><b>Wanted poster</b>: 8.5 × 11 in portrait.</li>
+    <li>Print at "actual size" / 100% for exact measurements.</li>
+  </ul>
+</div></div>
+<div class="modal" id="listing" role="dialog" aria-modal="true" aria-labelledby="lT"><div class="mbox" style="width:min(980px,100%)">
+  <button class="x" type="button" data-close aria-label="Close">✕</button>
+  <h2 id="lT">Etsy listing images</h2>
+  <p>Six square 2000 × 2000 images made from this gift. Use them as your listing photos (Etsy shows the first one in search).</p>
+  <div class="lgrid" id="lgrid"></div>
+  <div class="mini" style="margin-top:14px"><button type="button" class="tb wine" id="xListingZip">Download all (ZIP + listing text)</button></div>
+</div></div>
+<div class="busy" id="busy">Making your files…</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+
+/* =========================================================
+   Basics
+   ========================================================= */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function toast(msg) { const e = $("toast"); e.textContent = msg; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("on"), 2400); }
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("gep_" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("gep_" + k, JSON.stringify(v)); } catch {} },
+};
+function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function dl(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+const loadImg = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+const val = (id) => $(id).value.trim();
+const today = () => new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+
+/* =========================================================
+   Words: dedications, certificate lines, cases, Etsy copy
+   ========================================================= */
+const MSG = {
+  birthday: [
+    "Happy birthday, {title} {name}! Here is a whole book of mysteries only you can solve. Sharpen your pencil, trust your instincts, and never stop asking questions.",
+    "Another year older, another year wiser, and twice as sharp. Happy birthday, {name}: the case files are waiting for you.",
+    "To the cleverest detective we know. May this birthday be full of surprises, and every mystery be solved by teatime.",
+    "Happy birthday, {name}! We found the perfect gift: a book full of crimes, a pencil, and one brilliant detective.",
+    "The evidence is in: you are another year more wonderful. Happy birthday, {title} {name}. Case closed.",
+  ],
+  christmas: [
+    "Merry Christmas, {title} {name}! Someone has been leaving clues under the tree. Time to crack the case.",
+    "For the long winter evenings: a fire, a cup of cocoa, and a mystery only you can solve. Merry Christmas, {name}.",
+    "Santa checked his list twice, but you'll check every clue. Merry Christmas, detective.",
+    "Wishing you a cosy Christmas full of puzzles, plot twists and the joy of a case well solved.",
+    "This year's top-secret file is addressed to you. Merry Christmas, {name}: open it by the fire.",
+  ],
+  retire: [
+    "Congratulations on your retirement, {name}! The office has lost its best detective, but the world's mysteries just gained one.",
+    "Your final case at work is closed. Here are plenty of new ones for the years ahead. Happy retirement!",
+    "Retirement plan: coffee, sunshine, and a pencil. Enjoy every case, {title} {name}.",
+    "After all those years solving problems at work, it's time to solve some for fun. Happy retirement!",
+    "No more deadlines, only cases. Enjoy your well-earned retirement, {name}.",
+  ],
+  anniv: [
+    "To my favourite partner in crime. Happy anniversary, {name}: every year with you is the best mystery I've ever solved.",
+    "We've cracked plenty of cases together. Here's to many more. Happy anniversary, my love.",
+    "The evidence is clear: I'd choose you again. Happy anniversary, {name}.",
+    "Case file: two people, one story, endless happy endings. Happy anniversary.",
+    "You stole my heart years ago and I never filed a report. Happy anniversary, {name}.",
+  ],
+  valentine: [
+    "You stole my heart, {name}. I've been investigating ever since. Happy Valentine's Day.",
+    "Prime suspect in the theft of my heart: you. Happy Valentine's Day, detective.",
+    "Roses are red, clues are hidden, solving them with you is my favourite mission.",
+    "The only mystery I never want to solve is how I got so lucky. Happy Valentine's Day, {name}.",
+    "For my partner in crime and in everything else. Love you, {name}.",
+  ],
+  wedding: [
+    "Congratulations on your wedding! May your marriage be full of happy mysteries solved together.",
+    "Two detectives, one case for life. Wishing you both every happiness, {name}.",
+    "For the newlyweds: a book of cases for cosy nights in. Congratulations!",
+    "The case of true love: solved. Congratulations on your wedding day.",
+    "Here's to a lifetime of teamwork, puzzles and plot twists. Congratulations, {name}!",
+  ],
+  mother: [
+    "To the best detective in the family: you always knew who ate the last biscuit. Happy Mother's Day, {name}!",
+    "Happy Mother's Day! You solved every mystery of our childhood; now these ones are just for you.",
+    "For a mum with eyes in the back of her head. Enjoy every case, {title} {name}.",
+    "Thank you for always finding the clues we couldn't. Happy Mother's Day.",
+    "Nobody ever got anything past you, Mum. Here are some cases worthy of your talent.",
+  ],
+  father: [
+    "Happy Father's Day, {title} {name}! You always found the missing remote; now find the missing culprit.",
+    "To the dad who can solve anything (except where he left his glasses). Enjoy your cases!",
+    "Every family needs a detective. Ours is the best one. Happy Father's Day.",
+    "For quiet afternoons and sharp thinking. Happy Father's Day, {name}.",
+    "You taught us to ask good questions. Now it's your turn to find the answers. Happy Father's Day!",
+  ],
+  grad: [
+    "Congratulations, graduate! You've proven you can solve anything. Here are more cases to keep that brain sharp.",
+    "Case closed: you did it! Happy graduation, {title} {name}.",
+    "Big achievements deserve a clever gift. Congratulations on your graduation, {name}.",
+    "From one finished chapter to a book of new mysteries. So proud of you.",
+    "Your degree says you're clever. This casebook will prove it. Congratulations!",
+  ],
+  teacher: [
+    "Thank you for a wonderful year, {title} {name}! You helped us solve so many puzzles. Now here are some just for you.",
+    "To the teacher who always knew who forgot their homework. Thank you for everything!",
+    "Thank you for teaching us to think like detectives. Enjoy your cases this summer.",
+    "Best teacher, best detective. Thank you, {name}!",
+    "For quiet holidays and sharp minds. Thank you for an amazing year.",
+  ],
+  getwell: [
+    "Get well soon, {name}! Here's a case file to keep your mind busy while you rest.",
+    "Doctor's orders: rest, tea, and one mystery a day. Feel better soon, detective.",
+    "Thinking of you, {name}. May these puzzles make the days go by a little faster.",
+    "A little something to solve while you recover. We miss you!",
+    "Sending love and a stack of cases. Get well soon, {title} {name}.",
+  ],
+  just: [
+    "Because you love a good mystery, {name}. Enjoy every case, detective.",
+    "No reason, no occasion, just a book of puzzles for the sharpest mind we know.",
+    "For {title} {name}, who never leaves a question unanswered.",
+    "Thought you'd enjoy a little crime-solving. Happy sleuthing!",
+    "To the person who always reads the last page first: not this time. Enjoy!",
+  ],
+};
+const CERT = [
+  "has shown outstanding powers of deduction and is hereby appointed",
+  "has solved every case in this book with skill, patience and a sharp pencil, and is hereby named",
+  "has proven beyond reasonable doubt to be a brilliant mind, and is awarded the title of",
+  "has followed every clue, questioned every suspect and never given up, and is hereby promoted to",
+  "has cracked the toughest cases in the land with style, and is officially recognised as",
+];
+const RANKS = ["Master Detective", "Chief Inspector", "Head of the Case Room", "Senior Investigator", "Grand Master of Mysteries", "First-Class Sleuth"];
+// "Wanted" poster: what they are wanted for, and the reward, per occasion
+const WANTED = {
+  birthday: ["being far too clever for their age", "One giant slice of birthday cake"],
+  christmas: ["solving every mystery before Christmas dinner", "A stocking full of chocolate coins"],
+  retire: ["escaping the office for good", "A lifetime supply of coffee"],
+  anniv: ["stealing a heart and never giving it back", "One romantic dinner for two"],
+  valentine: ["stealing my heart in broad daylight", "A box of chocolates and a kiss"],
+  wedding: ["running off with the love of their life", "Happily ever after"],
+  mother: ["knowing everything before anyone tells her", "Breakfast in bed"],
+  father: ["hiding the TV remote (again)", "One peaceful afternoon nap"],
+  grad: ["graduating with suspicious brilliance", "One very proud family"],
+  teacher: ["making learning look easy", "A summer of rest and puzzles"],
+  getwell: ["skipping work to drink tea in bed", "Hugs, soup and a speedy recovery"],
+  just: ["being a brilliant detective", "Fame, glory and a cup of tea"],
+};
+const CASES = [
+  { n: "The Missing Birthday Cake", text: "At {time}, the birthday cake vanished from {place}. Only crumbs and a single fork remained. {s1} says they were in the garden. {s2} insists they were wrapping presents. {s3} claims to have been asleep, and {s4} was 'just passing by'. {title} {name} spotted a trail of icing leading to the culprit's shoes.", clue: "A smear of blue icing", time: "4:15 pm" },
+  { n: "The Case of the Vanished Remote", text: "The TV remote disappeared from {place} just before the big match. {s1} was reading, {s2} was making tea, {s3} was on the phone and {s4} kept looking under cushions. {title} {name} noticed something odd: one person's chair was still warm, and the remote's battery cover was in their pocket.", clue: "A tiny battery cover", time: "7:55 pm" },
+  { n: "Who Stole the Last Biscuit?", text: "The biscuit tin in {place} was full at noon. By {time} it was empty. {s1} had crumbs on their sleeve, {s2} was 'on a diet', {s3} said the dog did it and {s4} offered to help search. {title} {name} checked the tin for fingerprints and found a sticky thumbprint.", clue: "A sticky thumbprint", time: "3:30 pm" },
+  { n: "The Midnight Garden Mystery", text: "Someone dug up the prize roses outside {place} at {time}. {s1} heard footsteps, {s2} saw a torch, {s3} was 'stargazing' and {s4} had muddy boots by the door. {title} {name} measured the footprints and matched them to just one pair of shoes.", clue: "Muddy size-9 boots", time: "midnight" },
+  { n: "The Secret of the Locked Drawer", text: "The drawer in {place} was locked at breakfast and open by {time}. The only key hangs by the door. {s1} was cooking, {s2} was on a walk, {s3} was doing the crossword and {s4} borrowed a pen. {title} {name} found the key still warm and a pen missing its cap.", clue: "A pen without its cap", time: "11:20 am" },
+  { n: "The Great Holiday Present Swap", text: "Every label under the tree in {place} was swapped at {time}. {s1} was singing carols, {s2} was baking, {s3} was 'checking the lights' and {s4} wrapped the last gift. {title} {name} spotted the same tape on every label, and only one person had that tape.", clue: "Glittery gold tape", time: "9:00 pm" },
+  { n: "The Disappearing Diamond Earring", text: "A diamond earring vanished from the dressing table in {place} at {time}. {s1} was ironing, {s2} was watering plants, {s3} was taking selfies and {s4} was 'tidying up'. {title} {name} zoomed in on a photo and spotted a sparkle where no sparkle should be.", clue: "A sparkle in a selfie", time: "6:40 pm" },
+  { n: "The Ghost in the Attic", text: "Strange knocks came from the attic above {place} at {time}. {s1} blamed the pipes, {s2} blamed the wind, {s3} hid under a blanket and {s4} said 'ghosts aren't real'. {title} {name} climbed the ladder and found a torch that was still warm.", clue: "A torch that was still warm", time: "10:10 pm" },
+  { n: "The Muddy Paw Print Puzzle", text: "Muddy paw prints crossed the clean floor of {place} at {time}, but the dog was locked outside. {s1} was mopping, {s2} was in the bath, {s3} was walking the neighbour's cat and {s4} was 'just looking for a sock'. {title} {name} noticed the prints were too evenly spaced.", clue: "A rubber paw-print stamp", time: "2:05 pm" },
+  { n: "The Missing Concert Tickets", text: "Two concert tickets vanished from the fridge door in {place} at {time}. {s1} was making a sandwich, {s2} was on a video call, {s3} was practising guitar and {s4} said they hate that band. {title} {name} found the fridge magnet on the wrong side of the kitchen.", clue: "A misplaced fridge magnet", time: "5:25 pm" },
+  { n: "The Pie Contest Sabotage", text: "Someone added salt instead of sugar to the prize pie in {place} at {time}. {s1} was judging, {s2} was icing cupcakes, {s3} was setting the table and {s4} entered a pie of their own. {title} {name} tasted the evidence and checked whose apron had salt on it.", clue: "Salt on an apron pocket", time: "12:45 pm" },
+  { n: "The Lighthouse Letter", text: "An unsigned letter appeared in {place} at {time}: 'Meet me at the lighthouse'. {s1} said they can't write that neatly, {s2} was out of ink, {s3} had never heard of a lighthouse and {s4} smelled of sea air. {title} {name} compared the handwriting with a shopping list.", clue: "Matching handwriting on a shopping list", time: "8:30 am" },
+];
+const ETSY_TITLES = [
+  "Personalized Detective Puzzle Book Gift, Custom Name Mystery Casebook, {occ} Gift for Puzzle Lovers, Detective ID Card & Certificate",
+  "Custom Murder Mystery Puzzle Book with Name, Personalised {occ} Gift, Detective Kit with ID Card, Certificate & Dedication",
+  "Personalized Mystery Casebook for Detectives, Custom {occ} Gift, Puzzle Book with Name, Printable Detective ID & Certificate",
+  "Detective Gift Set with Their Name, Personalised Mystery Puzzle Book, {occ} Gift for Mystery Lovers, Wanted Poster & ID Card",
+  "Custom Name Detective Casebook Gift, {occ} Present for Puzzle Fans, Personalised Mystery Book, Certificate, Bookplates & Card",
+];
+const ETSY_TAGS = ["detective gift", "mystery puzzle book", "personalized book", "custom name gift", "puzzle lover gift", "murder mystery", "detective kit", "nonogram puzzles", "logic puzzle book", "gift for reader", "true crime gift", "{occ} gift", "sleuth gift", "custom casebook", "puzzle gift adult", "mystery lover gift", "wanted poster", "detective id card", "gift for mom", "gift for dad"];
+const OCC = { birthday: "Birthday", christmas: "Christmas", retire: "Retirement", anniv: "Anniversary", valentine: "Valentine's", wedding: "Wedding", mother: "Mother's Day", father: "Father's Day", grad: "Graduation", teacher: "Teacher", getwell: "Get Well", just: "" };
+
+/* =========================================================
+   Styles (8)
+   ========================================================= */
+const THEMES = [
+  // layout: how the cover is arranged · motif: the decoration drawn behind · icon: the emblem
+  { id: "noir", n: "Noir classic", bg: ["#141114", "#2a1d24"], paper: "#f6efe4", ink: "#f6efe4", dark: "#1d1418", acc: "#c2273f", head: "'Playfair Display'", script: "'Great Vibes'", layout: "center", motif: "print", icon: "lens" },
+  { id: "sherlock", n: "Vintage Sherlock", bg: ["#3b2a1a", "#1f150c"], paper: "#f2e5c9", ink: "#f2e5c9", dark: "#2a1d10", acc: "#c99a3f", pacc: "#8a5f1e", head: "'Cormorant Garamond'", script: "'Great Vibes'", layout: "badge", motif: "skyline", icon: "pipe" },
+  { id: "kids", n: "Junior detective", bg: ["#1f6fd1", "#123f8a"], paper: "#fffdf4", ink: "#ffffff", dark: "#12305e", acc: "#ffc83d", pacc: "#1f6fd1", head: "'Bebas Neue'", script: "Caveat", layout: "band", motif: "stars", icon: "lens" },
+  { id: "rose", n: "Rose noir", bg: ["#3a1424", "#1d0a12"], paper: "#fbf0f2", ink: "#fbe8ee", dark: "#3a1424", acc: "#e86f8f", pacc: "#b8375a", head: "'Cormorant Garamond'", script: "'Great Vibes'", layout: "center", motif: "petals", icon: "key" },
+  { id: "gold", n: "Gold luxe", bg: ["#0f0f10", "#232323"], paper: "#faf6ec", ink: "#f3e6c4", dark: "#151515", acc: "#d4af37", pacc: "#9c7a1c", head: "'Playfair Display'", script: "'Great Vibes'", layout: "badge", motif: "deco", icon: "lens" },
+  { id: "blue", n: "Blueprint", bg: ["#123a6b", "#0b2647"], paper: "#eef4fb", ink: "#f2f7ff", dark: "#0e2e55", acc: "#ffcf3d", pacc: "#1d5fa8", head: "'Special Elite'", script: "Caveat", layout: "band", motif: "plan", icon: "pin" },
+  { id: "file", n: "Case file", bg: ["#d8b273", "#b98f52"], paper: "#fbf4e2", ink: "#2a1a0e", dark: "#2a1a0e", acc: "#9c1c1c", head: "'Special Elite'", script: "Caveat", layout: "band", motif: "folder", icon: "stamp" },
+  { id: "green", n: "Library green", bg: ["#163326", "#0b1d15"], paper: "#f4efe2", ink: "#efe8d2", dark: "#163326", acc: "#c9a24a", pacc: "#7d5f1d", head: "'Cormorant Garamond'", script: "'Great Vibes'", layout: "badge", motif: "books", icon: "key" },
+  { id: "crimson", n: "Crimson thriller", bg: ["#5c0a14", "#24040a"], paper: "#f8eeea", ink: "#fff3ef", dark: "#2b080d", acc: "#ffffff", pacc: "#a3121f", head: "'Bebas Neue'", script: "'Great Vibes'", layout: "band", motif: "tape", icon: "lens" },
+  { id: "mint", n: "Cosy cottage", bg: ["#dfeee6", "#bcd9cb"], paper: "#fbfaf4", ink: "#1f3a30", dark: "#1f3a30", acc: "#c0573e", head: "'Playfair Display'", script: "Caveat", layout: "center", motif: "teacup", icon: "key" },
+];
+const S = Object.assign({ theme: "noir", acc: "", trim: "6x9", piece: "cover", fx: "none", pz: 1, px: 0, py: 0 }, store.get("look", {}));
+const T = () => THEMES.find((t) => t.id === S.theme) || THEMES[0];
+const ACC = () => S.acc || T().acc;
+// accent used on light paper pieces (some styles use a pale accent on their dark covers)
+const ACCP = () => S.acc || T().pacc || T().acc;
+const TRIM = { "6x9": [6, 9], "8.5x11": [8.5, 11], "8x10": [8, 10] };
+
+/* =========================================================
+   The pieces (each draws at k pixels per inch)
+   ========================================================= */
+const PIECES = [
+  { id: "cover", n: "Cover", size: () => TRIM[S.trim] },
+  { id: "dedication", n: "Dedication", size: () => TRIM[S.trim] },
+  { id: "case", n: "Their case", size: () => TRIM[S.trim] },
+  { id: "id", n: "Detective ID", size: () => [3.375 * 2 + .6, 2.125 + .5] },
+  { id: "cert", n: "Certificate", size: () => [11, 8.5] },
+  { id: "plates", n: "Bookplates", size: () => [8.5, 11] },
+  { id: "card", n: "Greeting card", size: () => [10, 7] },
+  { id: "wanted", n: "Wanted poster", size: () => [8.5, 11] },
+];
+let INCLUDE = Object.assign({ cover: true, dedication: true, case: true, id: true, cert: true, plates: true, card: true, wanted: true }, store.get("include", {}));
+let PHOTO = null;
+let TX = {}, OVR = {}, EDITED = {};
+let HITS = new WeakMap();
+
+// the words that personalise each piece; {tokens} are filled live from the form
+function defaults() {
+  return {
+    "cover.over": "THE PERSONAL CASEBOOK OF",
+    "cover.name": "{title} {name}",
+    "cover.book": "{book}",
+    "cover.sub": "Murder mysteries & picture-logic puzzles",
+    "cover.tag": "SPECIAL EDITION",
+    "dedication.head": "For {name}",
+    "dedication.msg": "{msg}",
+    "dedication.from": "{from}",
+    "dedication.date": "{date}",
+    "case.over": "CASE FILE · ASSIGNED TO {TITLE} {NAME}",
+    "case.title": "{casename}",
+    "case.text": "{casetext}",
+    "case.q": "Who did it? Write your answer, then turn the page upside down.",
+    "case.answer": "{answer}",
+    "id.agency": "BUREAU OF PUZZLING CRIMES",
+    "id.name": "{NAME}",
+    "id.rank": "{title}",
+    "id.no": "BADGE No. {badge}",
+    "id.issued": "ISSUED {date}",
+    "id.back": "The bearer of this card is authorised to examine clues, question suspects and close any case found in this book.",
+    "cert.head": "Certificate of Detection",
+    "cert.pre": "This certifies that",
+    "cert.name": "{title} {name}",
+    "cert.line": "{certline}",
+    "cert.rank": "{rank}",
+    "cert.sign": "Chief of the Case Room",
+    "cert.date": "{date}",
+    "plates.top": "THIS CASEBOOK BELONGS TO",
+    "plates.name": "{title} {name}",
+    "plates.bottom": "Return to the detective at once",
+    "card.front": "A mystery for {name}",
+    "card.frontSub": "Open with care. Evidence inside.",
+    "card.inside": "{msg}",
+    "card.from": "{from}",
+    "wanted.head": "WANTED",
+    "wanted.sub": "BY ORDER OF THE BUREAU OF PUZZLING CRIMES",
+    "wanted.name": "{TITLE} {NAME}",
+    "wanted.for": "For {wantedfor}",
+    "wanted.reward": "REWARD: {reward}",
+    "wanted.note": "Approach with caution: this detective solves everything.",
+  };
+}
+const CASEIDX = () => +$("caseSel").value || 0;
+function tokens() {
+  const name = val("mainInput") || "Emma", title = $("titleIn").value, c = CASES[CASEIDX()], sus = ["s1", "s2", "s3", "s4"].map((id) => val(id) || "Someone");
+  const culprit = +$("culpritSel").value, place = val("placeIn") || "the kitchen";
+  const t = { name, NAME: name.toUpperCase(), title, TITLE: title.toUpperCase(), from: val("fromIn"), date: val("dateIn") || today(), book: val("bookIn") || "Casebook",
+    msg: val("msgIn"), badge: String(1000 + (name.length * 739 + name.charCodeAt(0) * 17) % 9000), rank: RANKS[(name.length + 1) % RANKS.length],
+    certline: CERT[name.length % CERT.length], wantedfor: (WANTED[$("occIn").value] || WANTED.just)[0], reward: (WANTED[$("occIn").value] || WANTED.just)[1], casename: c.n, answer: culprit ? `Answer: it was ${sus[culprit - 1]}. ${c.clue} gave them away.` : `Answer: nobody! It was the cat. ${c.clue} gave it away.` };
+  t.casetext = c.text.replace(/\{(\w+)\}/g, (_, k) => ({ s1: sus[0], s2: sus[1], s3: sus[2], s4: sus[3], place, time: c.time, title, name }[k] ?? `{${k}}`));
+  return t;
+}
+const fillT = (s, t) => String(s).replace(/\{(\w+)\}/g, (_, k) => t[k] ?? "");
+const word = (key, t) => fillT(TX[key] ?? defaults()[key] ?? "", t);
+
+// text with style overrides, click-to-edit hit areas, wrapping, optional box
+function put(x, key, text, X, Y, maxW, font, color, opt = {}) {
+  if (text == null || text === "") return Y;
+  const o = OVR[key] || {}, k = x.__k || 100;
+  let fs = parseFloat(font.match(/(\d+(\.\d+)?)px/)[1]) * (o.scale || 1);
+  if (o.font) font = font.replace(/px .*$/, "px " + o.font);
+  const t = o.upper ? String(text).toUpperCase() : String(text);
+  const dx = (o.dx || 0) * k, dy = (o.dy || 0) * k, align = opt.align || "center", max = opt.max || 30;
+  x.save(); x.textAlign = align; x.textBaseline = "alphabetic";
+  // wrap into lines; if the text needs more lines than allowed or one word is wider
+  // than the box (long names), shrink the font step by step until it fits
+  let lines = [];
+  const wrap = () => {
+    x.font = font.replace(/\d+(\.\d+)?px/, fs + "px");
+    if ("letterSpacing" in x) x.letterSpacing = opt.spacing ? opt.spacing * fs + "px" : "0px";
+    lines = [];
+    t.split("\n").forEach((para) => { let cur = ""; para.split(/\s+/).forEach((w) => { const tt = cur ? cur + " " + w : w; if (x.measureText(tt).width > maxW && cur) { lines.push(cur); cur = w; } else cur = tt; }); lines.push(cur); });
+  };
+  for (let i = 0; i < 30; i++) {
+    wrap();
+    const widest = Math.max(...lines.map((l) => x.measureText(l).width));
+    if (lines.length <= max && widest <= maxW * 1.01) break;
+    fs *= 0.93;
+  }
+  const lh = fs * (opt.lh || 1.22), use = lines.slice(0, max);
+  if (!o.hidden) { x.fillStyle = o.color || color; use.forEach((l, i) => x.fillText(l, X + dx, Y + dy + i * lh)); }
+  x.restore();
+  const left = align === "center" ? X - maxW / 2 : align === "right" ? X - maxW : X;
+  const list = HITS.get(x.canvas) || []; list.push({ k: key, x: left + dx, y: Y + dy - fs, w: maxW, h: lh * use.length + fs * .3 }); HITS.set(x.canvas, list);
+  return Y + lh * (use.length - 1) + fs * .35;
+}
+function bg(x, X, Y, w, h) { const t = T(), g = x.createLinearGradient(X, Y, X + w * .3, Y + h); g.addColorStop(0, t.bg[0]); g.addColorStop(1, t.bg[1]); x.fillStyle = g; x.fillRect(X, Y, w, h);
+  if (t.id === "blue") { x.strokeStyle = "rgba(255,255,255,.08)"; x.lineWidth = 1; const s = w / 30; for (let i = 0; i <= 30; i++) { x.beginPath(); x.moveTo(X + i * s, Y); x.lineTo(X + i * s, Y + h); x.stroke(); } for (let j = 0; j * s <= h; j++) { x.beginPath(); x.moveTo(X, Y + j * s); x.lineTo(X + w, Y + j * s); x.stroke(); } }
+  else { x.save(); x.globalAlpha = .06; x.fillStyle = "#000"; for (let i = 0; i < 900; i++) x.fillRect(X + (i * 97.31) % w, Y + (i * 61.73) % h, 1.5, 1.5); x.restore(); } }
+function paper(x, X, Y, w, h) { x.fillStyle = T().paper; x.fillRect(X, Y, w, h); x.save(); x.globalAlpha = .05; x.fillStyle = "#5a3e2a"; for (let i = 0; i < 1400; i++) x.fillRect(X + (i * 97.31) % w, Y + (i * 61.73) % h, 1.4, 1.4); x.restore(); }
+function frame(x, X, Y, w, h, k, col) { x.save(); x.strokeStyle = col; x.lineWidth = k * .025; x.strokeRect(X + k * .3, Y + k * .3, w - k * .6, h - k * .6); x.lineWidth = k * .01; x.strokeRect(X + k * .38, Y + k * .38, w - k * .76, h - k * .76);
+  [[X + k * .3, Y + k * .3], [X + w - k * .3, Y + k * .3], [X + k * .3, Y + h - k * .3], [X + w - k * .3, Y + h - k * .3]].forEach(([a, b]) => { x.save(); x.translate(a, b); x.rotate(Math.PI / 4); x.fillStyle = col; x.fillRect(-k * .07, -k * .07, k * .14, k * .14); x.restore(); }); x.restore(); }
+function magnifier(x, cx, cy, r, col) { x.save(); x.strokeStyle = col; x.lineWidth = r * .16; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke(); x.translate(cx + r * .72, cy + r * .72); x.rotate(-Math.PI / 4); x.fillStyle = col; rr(x, -r * .14, 0, r * .28, r * 1.1, r * .1); x.fill(); x.restore(); }
+function fingerprint(x, cx, cy, r, col, a = .25) { x.save(); x.strokeStyle = col; x.globalAlpha = a; x.lineWidth = r * .035; for (let i = 1; i < 14; i++) for (let j = 0; j < 3; j++) { const a0 = j * 2.1 + (i % 3) * .4; x.beginPath(); x.ellipse(cx, cy, r * i / 14 * .78, r * i / 14, .1, a0, a0 + 1.5); x.stroke(); } x.restore(); }
+// deterministic "random" so every render of the same gift looks identical
+const R = (i) => { const v = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return v - Math.floor(v); };
+function star(x, cx, cy, r) { x.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr2 = i % 2 ? r * .45 : r; x.lineTo(cx + Math.cos(a) * rr2, cy + Math.sin(a) * rr2); } x.closePath(); x.fill(); }
+// the decoration each style draws behind its pieces
+function motif(x, X, Y, w, h, k) {
+  const th = T(), acc = ACC(), m = Math.min(w, h);
+  x.save(); x.beginPath(); x.rect(X, Y, w, h); x.clip();
+  switch (th.motif) {
+    case "skyline": {
+      x.fillStyle = "rgba(0,0,0,.42)"; let px = X; let i = 0;
+      while (px < X + w) { const bw = m * (.06 + R(i) * .08), bh = h * (.1 + R(i + 9) * .12); x.fillRect(px, Y + h - bh, bw, bh); px += bw + m * .005; i++; }
+      const tx = X + w * .7, tw = m * .07; x.fillRect(tx, Y + h * .58, tw, h * .42); x.beginPath(); x.moveTo(tx - m * .01, Y + h * .58); x.lineTo(tx + tw / 2, Y + h * .5); x.lineTo(tx + tw + m * .01, Y + h * .58); x.fill();
+      x.fillStyle = acc; x.globalAlpha = .7; x.beginPath(); x.arc(tx + tw / 2, Y + h * .62, tw * .32, 0, 7); x.fill();
+      x.globalAlpha = .12; x.strokeStyle = th.ink; x.lineWidth = m * .006; for (let j = 0; j < 4; j++) { x.beginPath(); x.moveTo(X, Y + h * (.8 + j * .04)); x.bezierCurveTo(X + w * .3, Y + h * (.78 + j * .04), X + w * .7, Y + h * (.83 + j * .04), X + w, Y + h * (.8 + j * .04)); x.stroke(); }
+      break; }
+    case "stars": {
+      x.fillStyle = acc; for (let i = 0; i < 26; i++) { x.globalAlpha = .15 + R(i) * .35; star(x, X + R(i + 1) * w, Y + R(i + 2) * h, m * (.012 + R(i + 3) * .02)); }
+      x.globalAlpha = .16; x.fillStyle = "#fff"; for (let i = 0; i < 9; i++) { const fx = X + w * (.08 + i * .1), fy = Y + h * (.95 - i * .045), side = i % 2 ? 1 : -1; x.save(); x.translate(fx + side * m * .02, fy); x.rotate(-.5); x.beginPath(); x.ellipse(0, 0, m * .018, m * .03, 0, 0, 7); x.fill(); x.beginPath(); x.arc(0, -m * .045, m * .012, 0, 7); x.fill(); x.restore(); }
+      x.globalAlpha = .12; x.font = `700 ${m * .2}px 'Bebas Neue'`; x.fillText("?", X + w * .8, Y + h * .3); x.font = `700 ${m * .12}px 'Bebas Neue'`; x.fillText("?", X + w * .1, Y + h * .5);
+      break; }
+    case "petals": {
+      x.fillStyle = acc; for (let i = 0; i < 22; i++) { x.save(); x.globalAlpha = .12 + R(i) * .25; x.translate(X + R(i + 4) * w, Y + R(i + 5) * h); x.rotate(R(i + 6) * 6); x.beginPath(); x.ellipse(0, 0, m * .025, m * .012, 0, 0, 7); x.fill(); x.restore(); }
+      x.globalAlpha = .12; x.fillStyle = acc; const kx = X + w * .8, ky = Y + h * .66, kr = m * .2; x.beginPath(); x.arc(kx, ky, kr * .45, 0, 7); x.fill(); x.beginPath(); x.moveTo(kx - kr * .22, ky); x.lineTo(kx - kr * .4, ky + kr * 1.1); x.lineTo(kx + kr * .4, ky + kr * 1.1); x.lineTo(kx + kr * .22, ky); x.fill();
+      break; }
+    case "deco": {
+      x.strokeStyle = acc; x.globalAlpha = .22; x.lineWidth = m * .004; const cx = X + w / 2, cy = Y + h * 1.02;
+      for (let i = 0; i < 36; i++) { const a = Math.PI + i * Math.PI / 35; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * h * .7, cy + Math.sin(a) * h * .7); x.stroke(); }
+      x.globalAlpha = .5; x.lineWidth = m * .005; [[X, Y, 1, 1], [X + w, Y, -1, 1], [X, Y + h, 1, -1], [X + w, Y + h, -1, -1]].forEach(([a, b, sx, sy]) => { for (let j = 1; j <= 3; j++) { const s = m * .05 * j; x.beginPath(); x.moveTo(a + sx * s, b + sy * m * .02); x.lineTo(a + sx * s, b + sy * s); x.lineTo(a + sx * m * .02, b + sy * s); x.stroke(); } });
+      break; }
+    case "plan": {
+      x.strokeStyle = "rgba(255,255,255,.28)"; x.lineWidth = m * .006; const px = X + w * .7, py = Y + h * .68, pw = w * .25, ph = h * .2;
+      x.strokeRect(px, py, pw, ph); x.beginPath(); x.moveTo(px + pw * .45, py); x.lineTo(px + pw * .45, py + ph * .6); x.moveTo(px, py + ph * .55); x.lineTo(px + pw * .3, py + ph * .55); x.moveTo(px + pw * .45, py + ph * .4); x.lineTo(px + pw, py + ph * .4); x.stroke();
+      x.beginPath(); x.arc(px + pw * .45, py + ph * .6, pw * .12, -Math.PI / 2, 0); x.stroke();
+      x.fillStyle = acc; x.globalAlpha = .8; x.font = `700 ${m * .04}px Caveat`; x.textAlign = "center"; x.fillText("X", px + pw * .72, py + ph * .8);
+      icon(x, X + w * .14, Y + h * .1, m * .06, "rgba(255,255,255,.35)", "compass");
+      break; }
+    case "folder": {
+      x.fillStyle = "rgba(0,0,0,.1)"; rr(x, X + w * .06, Y - m * .05, w * .34, m * .12, m * .03); x.fill();
+      x.save(); x.strokeStyle = "#6b4520"; x.globalAlpha = .22; x.lineWidth = m * .012; x.beginPath(); x.arc(X + w * .16, Y + h * .8, m * .1, .3, 5.9); x.stroke(); x.lineWidth = m * .005; x.beginPath(); x.arc(X + w * .16, Y + h * .8, m * .085, 1, 6.5); x.stroke(); x.restore();
+      x.strokeStyle = "#8c8c8c"; x.lineWidth = m * .008; x.globalAlpha = .9; const cx = X + w * .82, cy = Y; x.beginPath(); rr(x, cx, cy - m * .02, m * .05, m * .16, m * .025); x.stroke(); x.beginPath(); rr(x, cx + m * .012, cy, m * .026, m * .11, m * .013); x.stroke();
+      break; }
+    case "books": {
+      const sy = Y + h * .9; let bx = X + m * .04, i = 0; x.globalAlpha = .55;
+      while (bx < X + w - m * .06) { const bw = m * (.035 + R(i) * .03), bh = h * (.05 + R(i + 3) * .045); x.fillStyle = [acc, th.ink, "#7a3b2e", "#2f5d4a"][i % 4]; x.globalAlpha = .12 + R(i + 7) * .14; x.fillRect(bx, sy - bh, bw, bh); bx += bw + m * .004; i++; }
+      x.globalAlpha = .4; x.fillStyle = acc; x.fillRect(X, sy, w, m * .01);
+      break; }
+    case "tape": {
+      const corner = (ax, ay, bx2, by2) => { const L = Math.hypot(bx2 - ax, by2 - ay); x.save(); x.translate(X + (ax + bx2) / 2, Y + (ay + by2) / 2); x.rotate(Math.atan2(by2 - ay, bx2 - ax)); x.fillStyle = "#ffd400"; x.fillRect(-L / 2 - m * .1, -m * .03, L + m * .2, m * .06); x.fillStyle = "#111"; x.font = `700 ${m * .034}px 'Bebas Neue'`; x.textAlign = "center"; x.textBaseline = "middle"; for (let i = -3; i <= 3; i++) x.fillText("DO NOT CROSS", i * m * .3, m * .003); x.restore(); };
+      corner(0, h * .15, w * .22, 0); corner(w * .78, 0, w, h * .15);
+      break; }
+    case "teacup": {
+      x.fillStyle = acc; x.globalAlpha = .1; for (let i = 0; i < 40; i++) { x.beginPath(); x.arc(X + (i % 8 + .5) * w / 8 + (Math.floor(i / 8) % 2) * w / 16, Y + (Math.floor(i / 8) + .5) * h / 5, m * .01, 0, 7); x.fill(); }
+      const cx = X + w * .8, cy = Y + h * .86, r = m * .09; x.globalAlpha = .35; x.strokeStyle = th.dark; x.lineWidth = m * .008;
+      x.beginPath(); x.moveTo(cx - r, cy - r * .5); x.quadraticCurveTo(cx - r, cy + r * .8, cx, cy + r * .8); x.quadraticCurveTo(cx + r, cy + r * .8, cx + r, cy - r * .5); x.closePath(); x.stroke();
+      x.beginPath(); x.arc(cx + r * 1.1, cy - r * .05, r * .3, -1.4, 1.4); x.stroke(); x.beginPath(); x.ellipse(cx, cy + r * .95, r * 1.3, r * .18, 0, 0, 7); x.stroke();
+      for (let j = -1; j <= 1; j++) { x.beginPath(); x.moveTo(cx + j * r * .4, cy - r * .7); x.bezierCurveTo(cx + j * r * .4 - r * .25, cy - r * 1.1, cx + j * r * .4 + r * .25, cy - r * 1.3, cx + j * r * .4, cy - r * 1.7); x.stroke(); }
+      break; }
+    default: fingerprint(x, X + w * .72, Y + h * .62, m * .45 * (w > h ? 1.3 : 1), acc, .18);
+  }
+  x.restore();
+}
+// the emblem of each style
+function icon(x, cx, cy, r, col, kind = T().icon) {
+  x.save(); x.strokeStyle = col; x.fillStyle = col;
+  if (kind === "pipe") {
+    x.lineWidth = r * .3; x.lineCap = "round"; x.beginPath(); x.moveTo(cx - r * 1.2, cy - r * .35); x.quadraticCurveTo(cx - r * .2, cy - r * .1, cx + r * .2, cy + r * .1); x.stroke();
+    rr(x, cx + r * .05, cy - r * .6, r * .95, r * 1.25, r * .35); x.fill(); x.globalAlpha = .4; x.lineWidth = r * .08; for (let j = 0; j < 3; j++) { x.beginPath(); x.moveTo(cx + r * (.3 + j * .18), cy - r * .6); x.bezierCurveTo(cx + r * (.1 + j * .18), cy - r * 1, cx + r * (.5 + j * .18), cy - r * 1.2, cx + r * (.3 + j * .18), cy - r * 1.6); x.stroke(); }
+  } else if (kind === "key") {
+    x.lineWidth = r * .16; x.beginPath(); x.arc(cx - r * .7, cy, r * .42, 0, 7); x.stroke(); x.beginPath(); x.arc(cx - r * .7, cy, r * .16, 0, 7); x.fill();
+    x.fillRect(cx - r * .3, cy - r * .08, r * 1.5, r * .16); x.fillRect(cx + r * .9, cy, r * .14, r * .4); x.fillRect(cx + r * .6, cy, r * .14, r * .3);
+  } else if (kind === "compass") {
+    x.lineWidth = r * .1; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke(); x.lineWidth = r * .04; x.beginPath(); x.arc(cx, cy, r * .8, 0, 7); x.stroke();
+    [[0, 1], [Math.PI / 2, .6], [Math.PI, .6], [Math.PI * 1.5, .6]].forEach(([a, l], i) => { x.save(); x.translate(cx, cy); x.rotate(a); x.globalAlpha = i ? .6 : 1; x.beginPath(); x.moveTo(0, -r * .85 * l / (i ? .75 : 1)); x.lineTo(r * .14, 0); x.lineTo(-r * .14, 0); x.fill(); x.restore(); });
+    x.font = `700 ${r * .35}px Outfit`; x.textAlign = "center"; x.fillText("N", cx, cy - r * 1.15);
+  } else if (kind === "pin") {
+    x.beginPath(); x.arc(cx, cy - r * .35, r * .62, Math.PI * .85, Math.PI * 2.15); x.lineTo(cx, cy + r * .9); x.closePath(); x.fill();
+    x.globalCompositeOperation = "destination-out"; x.beginPath(); x.arc(cx, cy - r * .35, r * .26, 0, 7); x.fill(); x.globalCompositeOperation = "source-over";
+    x.globalAlpha = .4; x.beginPath(); x.ellipse(cx, cy + r * .98, r * .45, r * .1, 0, 0, 7); x.fill();
+  } else if (kind === "stamp") {
+    x.save(); x.translate(cx, cy); x.rotate(-.18); x.lineWidth = r * .1; x.beginPath(); x.arc(0, 0, r, 0, 7); x.stroke(); x.lineWidth = r * .04; x.beginPath(); x.arc(0, 0, r * .82, 0, 7); x.stroke();
+    x.font = `700 ${r * .3}px 'Special Elite'`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("CASE", 0, -r * .2); x.fillText("CLOSED", 0, r * .2); x.restore();
+  } else magnifier(x, cx, cy, r, col);
+  x.restore();
+}
+const lum = (hex) => { const n = parseInt(hex.slice(1), 16), c = [n >> 16, n >> 8 & 255, n & 255].map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+const onAcc = () => lum(ACC()) > .45 ? T().dark : "#ffffff";
+function photoBox(x, X, Y, w, h, round) {
+  x.save(); if (round) { x.beginPath(); x.arc(X + w / 2, Y + h / 2, Math.min(w, h) / 2, 0, 7); x.clip(); } else { rr(x, X, Y, w, h, w * .06); x.clip(); }
+  if (PHOTO) { const k = Math.max(w / PHOTO.width, h / PHOTO.height) * (S.pz || 1), iw = PHOTO.width * k, ih = PHOTO.height * k; x.filter = S.fx === "bw" ? "grayscale(1) contrast(1.1)" : S.fx === "sepia" ? "sepia(.85) contrast(1.05)" : "none"; x.drawImage(PHOTO, X + (w - iw) / 2 - (S.px || 0) / 100 * iw, Y + (h - ih) / 3 - (S.py || 0) / 100 * ih, iw, ih); x.filter = "none"; }
+  else { x.fillStyle = "#d9cdc3"; x.fillRect(X, Y, w, h); x.fillStyle = "#b5a497"; x.beginPath(); x.arc(X + w / 2, Y + h * .4, w * .2, 0, 7); x.fill(); x.beginPath(); x.ellipse(X + w / 2, Y + h * .95, w * .36, h * .32, 0, 0, 7); x.fill(); }
+  x.restore(); }
+
+const DRAW = {
+  // ---------- cover: three layouts (center / band / badge) chosen by the style ----------
+  cover(x, W, H, k, t) {
+    const th = T(), acc = ACC();
+    bg(x, 0, 0, W, H); motif(x, 0, 0, W, H, k);
+    if (th.layout === "band") {
+      let y = put(x, "cover.over", word("cover.over", t), W / 2, H * .1, W * .84, `600 ${k * .15}px Outfit`, th.ink, { spacing: .18, max: 2 });
+      y = put(x, "cover.book", word("cover.book", t), W / 2, y + k * .85, W * .86, `900 ${k * .8}px ${th.head}`, th.ink, { max: 2, lh: 1.05 });
+      const bh = k * 1.45, by = Math.max(y + bh / 2 + k * .45, H * .4);
+      x.fillStyle = acc; x.fillRect(0, by - bh / 2, W, bh);
+      x.fillStyle = th.ink; x.globalAlpha = .5; x.fillRect(0, by - bh / 2 - k * .1, W, k * .025); x.fillRect(0, by + bh / 2 + k * .075, W, k * .025); x.globalAlpha = 1;
+      put(x, "cover.name", word("cover.name", t), W / 2, by + k * .2, W * .86, `400 ${k * .62}px ${th.script}`, onAcc(), { max: 1 });
+      const sy = put(x, "cover.sub", word("cover.sub", t), W / 2, by + bh / 2 + k * .5, W * .8, `500 ${k * .17}px Outfit`, th.ink, { max: 2 });
+      icon(x, W / 2, (sy + H * .93) / 2, k * .5, acc);
+      put(x, "cover.tag", word("cover.tag", t), W / 2, H * .93, W * .6, `700 ${k * .15}px Outfit`, th.ink, { spacing: .25, max: 1 });
+    } else if (th.layout === "badge") {
+      frame(x, 0, 0, W, H, k, acc);
+      put(x, "cover.over", word("cover.over", t), W / 2, H * .12, W * .8, `600 ${k * .15}px Outfit`, th.ink, { spacing: .18, max: 2 });
+      const cx = W / 2, cy = H * .4, r = W * .33;
+      x.save(); x.fillStyle = "rgba(0,0,0,.28)"; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
+      x.strokeStyle = acc; x.lineWidth = k * .035; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke(); x.lineWidth = k * .012; x.beginPath(); x.arc(cx, cy, r * .9, 0, 7); x.stroke();
+      x.fillStyle = acc; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; x.beginPath(); x.arc(cx + Math.cos(a) * r * .95, cy + Math.sin(a) * r * .95, k * .018, 0, 7); x.fill(); } x.restore();
+      icon(x, cx, cy - r * .5, k * .26, acc);
+      put(x, "cover.name", word("cover.name", t), cx, cy + k * .12, r * 1.55, `400 ${k * .52}px ${th.script}`, acc, { max: 2, lh: 1.05 });
+      let y = put(x, "cover.book", word("cover.book", t), W / 2, cy + r + k * .85, W * .84, `900 ${k * .66}px ${th.head}`, th.ink, { max: 2, lh: 1.05 });
+      put(x, "cover.sub", word("cover.sub", t), W / 2, Math.min(y + k * .42, H * .86), W * .8, `500 ${k * .17}px Outfit`, th.ink, { max: 2 });
+      put(x, "cover.tag", word("cover.tag", t), W / 2, H * .935, W * .6, `700 ${k * .14}px Outfit`, th.ink, { spacing: .25, max: 1 });
+    } else {
+      frame(x, 0, 0, W, H, k, acc);
+      let y = put(x, "cover.over", word("cover.over", t), W / 2, H * .16, W * .8, `600 ${k * .16}px Outfit`, th.ink, { spacing: .18, max: 2 });
+      y = put(x, "cover.name", word("cover.name", t), W / 2, y + k * .62, W * .84, `400 ${k * .62}px ${th.script}`, acc, { max: 2 });
+      y = put(x, "cover.book", word("cover.book", t), W / 2, y + k * .78, W * .84, `900 ${k * .74}px ${th.head}`, th.ink, { max: 2, lh: 1.08 });
+      put(x, "cover.sub", word("cover.sub", t), W / 2, y + k * .42, W * .8, `500 ${k * .17}px Outfit`, th.ink, { max: 2 });
+      icon(x, W / 2, Math.max(H * .7, y + k * 1.2), k * .5, acc);
+      put(x, "cover.tag", word("cover.tag", t), W / 2, H * .92, W * .6, `700 ${k * .15}px Outfit`, th.ink, { spacing: .25, max: 1 });
+    }
+  },
+  // ---------- dedication page ----------
+  dedication(x, W, H, k, t) {
+    paper(x, 0, 0, W, H); const th = T(), acc = ACCP();
+    frame(x, 0, 0, W, H, k, acc);
+    icon(x, W / 2, H * .13, k * .22, acc);
+    put(x, "dedication.head", word("dedication.head", t), W / 2, H * .26, W * .8, `400 ${k * .55}px ${th.script}`, acc, { max: 2 });
+    x.save(); x.strokeStyle = acc; x.lineWidth = k * .015; x.beginPath(); x.moveTo(W * .36, H * .31); x.lineTo(W * .64, H * .31); x.stroke(); x.restore();
+    const y = put(x, "dedication.msg", word("dedication.msg", t), W / 2, H * .41, W * .7, `italic 600 ${k * .24}px 'Cormorant Garamond'`, th.dark, { lh: 1.4, max: 11 });
+    put(x, "dedication.from", word("dedication.from", t), W / 2, Math.max(y + k * .7, H * .72), W * .7, `400 ${k * .4}px ${th.script}`, acc, { max: 2 });
+    put(x, "dedication.date", word("dedication.date", t), W / 2, H * .88, W * .6, `600 ${k * .13}px Outfit`, th.dark, { spacing: .2, max: 1 });
+  },
+  // ---------- one-page mystery starring them ----------
+  case(x, W, H, k, t) {
+    paper(x, 0, 0, W, H); const th = T(), acc = ACCP(), m = k * .6;
+    x.fillStyle = acc; x.fillRect(0, 0, W, k * .12);
+    icon(x, W - m - k * .2, k * .62, k * .2, acc);
+    put(x, "case.over", word("case.over", t), m, k * .6, W - m * 2 - k * .6, `400 ${k * .15}px 'Special Elite'`, acc, { align: "left", max: 2 });
+    let y = put(x, "case.title", word("case.title", t), m, k * 1.15, W - m * 2, `900 ${k * .42}px ${th.head}`, th.dark, { align: "left", max: 2 });
+    x.fillStyle = acc; x.fillRect(m, y + k * .12, k * .8, k * .04);
+    y = put(x, "case.text", word("case.text", t), m, y + k * .6, W - m * 2, `500 ${k * .17}px Outfit`, th.dark, { align: "left", lh: 1.55, max: 14 });
+    // the suspects board
+    const sus = ["s1", "s2", "s3", "s4"].map((id) => val(id) || "Someone"), cw = (W - m * 2 - k * .3) / 4, cy = clamp(y + k * .45, H * .5, H - k * 1.6 - cw * 1.25);
+    sus.forEach((s, i) => {
+      const cx = m + i * (cw + k * .1);
+      x.save(); x.translate(cx + cw / 2, cy + cw * .6); x.rotate((i % 2 ? 1 : -1) * .03);
+      x.fillStyle = "#fff"; x.shadowColor = "rgba(0,0,0,.25)"; x.shadowBlur = k * .06; x.fillRect(-cw / 2, -cw * .6, cw, cw * 1.25); x.shadowBlur = 0;
+      x.fillStyle = ["#d9cdc3", "#cfd6dc", "#d8d1c0", "#dccbd0"][i]; x.fillRect(-cw * .42, -cw * .52, cw * .84, cw * .8);
+      x.fillStyle = "rgba(0,0,0,.22)"; x.beginPath(); x.arc(0, -cw * .22, cw * .17, 0, 7); x.fill(); x.beginPath(); x.ellipse(0, cw * .2, cw * .3, cw * .18, 0, Math.PI, 0); x.fill();
+      x.fillStyle = th.dark; x.font = `700 ${k * .12}px 'Special Elite'`; x.textAlign = "center"; x.fillText("No. " + (i + 1), 0, -cw * .44 + k * .1);
+      x.font = `700 ${k * .15}px Caveat`; let fs = k * .15; while (x.measureText(s).width > cw * .9 && fs > k * .08) { fs *= .92; x.font = `700 ${fs}px Caveat`; } x.fillText(s, 0, cw * .52);
+      x.restore(); pinDot(x, cx + cw / 2, cy, k * .07, acc);
+    });
+    put(x, "case.q", word("case.q", t), m, H - k * 1.25, W - m * 2, `700 ${k * .17}px Outfit`, th.dark, { align: "left", max: 2 });
+    x.save(); x.strokeStyle = th.dark; x.lineWidth = 1; x.setLineDash([k * .05, k * .05]); x.beginPath(); x.moveTo(m, H - k * .8); x.lineTo(W - m, H - k * .8); x.stroke(); x.restore();
+    x.save(); x.translate(W / 2, H - k * .45); x.rotate(Math.PI); put(x, "case.answer", word("case.answer", t), 0, 0, W - m * 2, `italic 600 ${k * .14}px 'Cormorant Garamond'`, th.dark, { max: 2 }); x.restore();
+    // the upside-down answer can't be clicked reliably: keep its hit box at its real place
+    const hl = HITS.get(x.canvas) || []; const ha = hl.find((h) => h.k === "case.answer"); if (ha) Object.assign(ha, { x: m, y: H - k * .7, w: W - m * 2, h: k * .4 });
+  },
+  // ---------- detective ID, front + back, credit-card size ----------
+  id(x, W, H, k, t) {
+    x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+    const cw = 3.375 * k, ch = 2.125 * k, X1 = k * .2, Y1 = k * .25, X2 = X1 + cw + k * .2, th = T(), acc = ACC();
+    cut(x, X1, Y1, cw, ch, k); cut(x, X2, Y1, cw, ch, k);
+    x.save(); rr(x, X1, Y1, cw, ch, k * .12); x.clip(); bg(x, X1, Y1, cw, ch); motif(x, X1, Y1, cw, ch, k);
+    x.fillStyle = acc; x.fillRect(X1, Y1, cw, ch * .2);
+    put(x, "id.agency", word("id.agency", t), X1 + cw / 2, Y1 + ch * .135, cw * .9, `700 ${k * .1}px Outfit`, onAcc(), { spacing: .12, max: 1 });
+    photoBox(x, X1 + cw * .06, Y1 + ch * .28, cw * .3, ch * .58, false);
+    x.strokeStyle = th.ink; x.lineWidth = k * .01; x.strokeRect(X1 + cw * .06, Y1 + ch * .28, cw * .3, ch * .58);
+    let y = put(x, "id.name", word("id.name", t), X1 + cw * .42, Y1 + ch * .42, cw * .54, `700 ${k * .2}px ${th.head}`, th.ink, { align: "left", max: 2, lh: 1.05 });
+    y = put(x, "id.rank", word("id.rank", t), X1 + cw * .42, y + k * .2, cw * .54, `600 ${k * .12}px Outfit`, acc, { align: "left", max: 1 });
+    y = put(x, "id.no", word("id.no", t), X1 + cw * .42, y + k * .2, cw * .54, `400 ${k * .1}px 'Special Elite'`, th.ink, { align: "left", max: 1 });
+    put(x, "id.issued", word("id.issued", t), X1 + cw * .42, y + k * .17, cw * .54, `400 ${k * .09}px 'Special Elite'`, th.ink, { align: "left", max: 1 });
+    // hologram sticker
+    const hg = x.createLinearGradient(X1 + cw * .84, Y1 + ch * .7, X1 + cw * .96, Y1 + ch * .9); ["#ffd1f0", "#c4f1ff", "#fff4b8", "#d6ffd1"].forEach((c, i) => hg.addColorStop(i / 3, c)); x.globalAlpha = .75; x.fillStyle = hg; x.beginPath(); x.arc(X1 + cw * .9, Y1 + ch * .8, ch * .09, 0, 7); x.fill(); x.globalAlpha = 1;
+    x.restore();
+    x.save(); rr(x, X2, Y1, cw, ch, k * .12); x.clip(); paper(x, X2, Y1, cw, ch); x.fillStyle = th.dark; x.fillRect(X2, Y1 + ch * .12, cw, ch * .14);
+    put(x, "id.back", word("id.back", t), X2 + cw / 2, Y1 + ch * .45, cw * .84, `500 ${k * .1}px Outfit`, th.dark, { lh: 1.4, max: 4 });
+    x.strokeStyle = th.dark; x.lineWidth = 1; x.beginPath(); x.moveTo(X2 + cw * .12, Y1 + ch * .86); x.lineTo(X2 + cw * .55, Y1 + ch * .86); x.stroke();
+    x.fillStyle = th.dark; x.font = `600 ${k * .07}px Outfit`; x.textAlign = "left"; x.fillText("SIGNATURE", X2 + cw * .12, Y1 + ch * .93);
+    icon(x, X2 + cw * .8, Y1 + ch * .78, ch * .1, ACCP()); x.restore();
+    x.fillStyle = "#999"; x.font = `500 ${k * .08}px Outfit`; x.textAlign = "left"; x.fillText("Cut along the marks · front and back · glue or laminate together", X1, H - k * .1);
+  },
+  // ---------- certificate ----------
+  cert(x, W, H, k, t) {
+    paper(x, 0, 0, W, H); const th = T(), acc = ACCP();
+    frame(x, 0, 0, W, H, k * 1.2, acc); fingerprint(x, W * .14, H * .76, k * 1.2, acc, .1);
+    put(x, "cert.head", word("cert.head", t), W / 2, H * .2, W * .8, `900 ${k * .58}px ${th.head}`, th.dark, { max: 1 });
+    put(x, "cert.pre", word("cert.pre", t), W / 2, H * .32, W * .7, `italic 600 ${k * .24}px 'Cormorant Garamond'`, th.dark, { max: 1 });
+    put(x, "cert.name", word("cert.name", t), W / 2, H * .46, W * .76, `400 ${k * .72}px ${th.script}`, acc, { max: 1 });
+    x.strokeStyle = acc; x.lineWidth = k * .015; x.beginPath(); x.moveTo(W * .25, H * .5); x.lineTo(W * .75, H * .5); x.stroke();
+    put(x, "cert.line", word("cert.line", t), W / 2, H * .58, W * .62, `italic 600 ${k * .2}px 'Cormorant Garamond'`, th.dark, { max: 2 });
+    put(x, "cert.rank", word("cert.rank", t), W / 2, H * .71, W * .62, `700 ${k * .34}px ${th.head}`, acc, { spacing: .06, max: 1 });
+    const sx = W * .78, sy = H * .81, sr = k * .62; x.fillStyle = acc; x.beginPath(); for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2, r = sr * (i % 2 ? .9 : 1); x.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } x.fill();
+    x.strokeStyle = "rgba(255,255,255,.6)"; x.lineWidth = k * .02; x.beginPath(); x.arc(sx, sy, sr * .72, 0, 7); x.stroke(); icon(x, sx, sy, sr * .32, "#fff");
+    x.strokeStyle = th.dark; x.lineWidth = 1.5; x.beginPath(); x.moveTo(W * .2, H * .845); x.lineTo(W * .46, H * .845); x.stroke();
+    put(x, "cert.date", word("cert.date", t), W * .33, H * .825, W * .26, `400 ${k * .26}px ${th.script}`, th.dark, { max: 1 });
+    put(x, "cert.sign", word("cert.sign", t), W * .33, H * .885, W * .3, `600 ${k * .14}px Outfit`, th.dark, { max: 1 });
+  },
+  // ---------- 8 bookplates on a letter sheet (the first one is the editable master) ----------
+  plates(x, W, H, k, t) {
+    x.fillStyle = "#fff"; x.fillRect(0, 0, W, H); const th = T(), acc = ACC(), pw = 3.5 * k, ph = 2.25 * k, mx = (W - pw * 2 - k * .25) / 2, my = (H - ph * 4 - k * .75) / 2;
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++) {
+      const X = mx + c * (pw + k * .25), Y = my + r * (ph + k * .25), master = r === 0 && c === 0, sfx = master ? "" : `.${r}${c}`;
+      x.save(); rr(x, X, Y, pw, ph, k * .14); x.clip(); bg(x, X, Y, pw, ph); motif(x, X, Y, pw, ph, k); x.restore();
+      x.strokeStyle = acc; x.lineWidth = k * .015; rr(x, X + k * .08, Y + k * .08, pw - k * .16, ph - k * .16, k * .1); x.stroke();
+      icon(x, X + pw * .14, Y + ph * .5, ph * .13, acc);
+      if (!master) ["plates.top", "plates.name", "plates.bottom"].forEach((key) => { if (OVR[key]) OVR[key + sfx] = OVR[key]; });
+      put(x, "plates.top" + sfx, word("plates.top", t), X + pw * .58, Y + ph * .3, pw * .7, `700 ${k * .1}px Outfit`, th.ink, { spacing: .14, max: 1 });
+      put(x, "plates.name" + sfx, word("plates.name", t), X + pw * .58, Y + ph * .62, pw * .72, `400 ${k * .3}px ${th.script}`, acc, { max: 1 });
+      put(x, "plates.bottom" + sfx, word("plates.bottom", t), X + pw * .58, Y + ph * .84, pw * .7, `500 ${k * .085}px Outfit`, th.ink, { max: 1 });
+      if (!master) ["plates.top", "plates.name", "plates.bottom"].forEach((key) => delete OVR[key + sfx]);
+    }
+    HITS.set(x.canvas, (HITS.get(x.canvas) || []).filter((h) => !/\.\d\d$/.test(h.k)));
+  },
+  // ---------- 5x7 folded greeting card (inside left, front right) ----------
+  card(x, W, H, k, t) {
+    x.fillStyle = "#fff"; x.fillRect(0, 0, W, H); const th = T(), acc = ACC(), half = W / 2;
+    paper(x, 0, 0, half, H);
+    icon(x, half / 2, H * .14, k * .2, ACCP());
+    put(x, "card.inside", word("card.inside", t), half / 2, H * .3, half * .76, `italic 600 ${k * .24}px 'Cormorant Garamond'`, th.dark, { lh: 1.4, max: 10 });
+    put(x, "card.from", word("card.from", t), half / 2, H * .84, half * .8, `400 ${k * .38}px ${th.script}`, ACCP(), { max: 2 });
+    bg(x, half, 0, half, H); motif(x, half, 0, half, H, k); frame(x, half, 0, half, H, k * .8, acc);
+    put(x, "card.front", word("card.front", t), half + half / 2, H * .3, half * .8, `400 ${k * .5}px ${th.script}`, acc, { max: 3 });
+    icon(x, half + half / 2, H * .58, k * .5, acc);
+    put(x, "card.frontSub", word("card.frontSub", t), half + half / 2, H * .85, half * .8, `600 ${k * .16}px Outfit`, th.ink, { spacing: .08, max: 2 });
+    x.save(); x.setLineDash([k * .06, k * .06]); x.strokeStyle = "#bbb"; x.lineWidth = 1; x.beginPath(); x.moveTo(half, 0); x.lineTo(half, H); x.stroke(); x.restore();
+  },
+  // ---------- old-west style "Wanted" poster with their photo ----------
+  wanted(x, W, H, k, t) {
+    const th = T(), acc = ACCP(), ink = "#2b1a0c";
+    const g = x.createRadialGradient(W / 2, H / 2, W * .2, W / 2, H / 2, W * .8); g.addColorStop(0, "#f3e3c0"); g.addColorStop(1, "#d9bf8c"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.save(); for (let i = 0; i < 14; i++) { x.globalAlpha = .05 + R(i) * .06; x.fillStyle = "#7a5022"; x.beginPath(); x.ellipse(R(i + 1) * W, R(i + 2) * H, k * (.3 + R(i + 3) * .8), k * (.2 + R(i + 4) * .5), R(i) * 3, 0, 7); x.fill(); } x.restore();
+    x.save(); x.strokeStyle = ink; x.lineWidth = k * .05; x.strokeRect(k * .35, k * .35, W - k * .7, H - k * .7); x.lineWidth = k * .015; x.strokeRect(k * .48, k * .48, W - k * .96, H - k * .96); x.restore();
+    [[k * .6, k * .6], [W - k * .6, k * .6], [k * .6, H - k * .6], [W - k * .6, H - k * .6]].forEach(([a, b]) => { x.fillStyle = "#6b6b6b"; x.beginPath(); x.arc(a, b, k * .07, 0, 7); x.fill(); x.fillStyle = "#bdbdbd"; x.beginPath(); x.arc(a - k * .02, b - k * .02, k * .025, 0, 7); x.fill(); });
+    put(x, "wanted.head", word("wanted.head", t), W / 2, k * 2, W * .82, `400 ${k * 1.7}px 'Bebas Neue'`, ink, { max: 1, spacing: .04 });
+    put(x, "wanted.sub", word("wanted.sub", t), W / 2, k * 2.45, W * .8, `700 ${k * .16}px 'Special Elite'`, ink, { max: 1, spacing: .1 });
+    const pw = W * .52, ph = pw * 1.05, px = (W - pw) / 2, py = k * 2.8;
+    x.save(); x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = k * .12; x.fillStyle = "#fff"; x.fillRect(px - k * .1, py - k * .1, pw + k * .2, ph + k * .2); x.restore();
+    const keepFx = S.fx; if (S.fx === "none") S.fx = "sepia"; photoBox(x, px, py, pw, ph, false); S.fx = keepFx;
+    let y = put(x, "wanted.name", word("wanted.name", t), W / 2, py + ph + k * .85, W * .82, `400 ${k * .72}px 'Bebas Neue'`, acc, { max: 1, spacing: .03 });
+    y = put(x, "wanted.for", word("wanted.for", t), W / 2, y + k * .45, W * .76, `italic 700 ${k * .28}px 'Cormorant Garamond'`, ink, { max: 2 });
+    x.save(); x.strokeStyle = ink; x.lineWidth = k * .015; x.beginPath(); x.moveTo(W * .2, y + k * .22); x.lineTo(W * .8, y + k * .22); x.stroke(); x.restore();
+    y = put(x, "wanted.reward", word("wanted.reward", t), W / 2, y + k * .65, W * .8, `400 ${k * .42}px 'Bebas Neue'`, ink, { max: 2, spacing: .03 });
+    put(x, "wanted.note", word("wanted.note", t), W / 2, H - k * .85, W * .76, `500 ${k * .13}px 'Special Elite'`, ink, { max: 2 });
+  },
+};
+function pinDot(x, X, Y, r, col) { x.fillStyle = col; x.beginPath(); x.arc(X, Y, r, 0, 7); x.fill(); x.fillStyle = "rgba(255,255,255,.5)"; x.beginPath(); x.arc(X - r * .3, Y - r * .3, r * .3, 0, 7); x.fill(); }
+function cut(x, X, Y, w, h, k) { x.save(); x.strokeStyle = "#999"; x.lineWidth = 1; const L = k * .15; [[X, Y], [X + w, Y], [X, Y + h], [X + w, Y + h]].forEach(([a, b]) => { x.beginPath(); x.moveTo(a - L, b); x.lineTo(a - L * .3, b); x.moveTo(a + L * .3, b); x.lineTo(a + L, b); x.moveTo(a, b - L); x.lineTo(a, b - L * .3); x.moveTo(a, b + L * .3); x.lineTo(a, b + L); x.stroke(); }); x.restore(); }
+
+/* render a piece into a canvas at k px/inch */
+function renderPiece(id, k, canvas) {
+  const p = PIECES.find((q) => q.id === id), [wi, hi] = p.size(), c = canvas || document.createElement("canvas");
+  c.width = Math.round(wi * k); c.height = Math.round(hi * k);
+  const x = c.getContext("2d"); x.__k = k; HITS.set(c, []);
+  DRAW[id](x, c.width, c.height, k, tokens());
+  return c;
+}
+
+/* =========================================================
+   Studio: piece strip + big preview
+   ========================================================= */
+const cv = $("cv");
+let previewK = 100;
+function drawPreview() {
+  const p = PIECES.find((q) => q.id === S.piece), [wi, hi] = p.size();
+  previewK = Math.round(Math.min(1100 / wi, 1300 / hi));
+  renderPiece(S.piece, previewK, cv);
+  if (SEL) { const h = (HITS.get(cv) || []).find((q) => q.k === SEL); if (h) { const x = cv.getContext("2d"); x.save(); x.setLineDash([10, 6]); x.lineWidth = 3; x.strokeStyle = "#a32049"; x.strokeRect(h.x - 8, h.y - 8, h.w + 16, h.h + 16); x.restore(); placeEd(h); } }
+  $("pName").textContent = p.n; $("pSize").textContent = `${wi} × ${hi} in`;
+}
+function drawStrip() {
+  $("pieces").innerHTML = PIECES.map((p) => `<div class="pc${S.piece === p.id ? " on" : ""}" data-p="${p.id}"><input type="checkbox" data-inc="${p.id}" ${INCLUDE[p.id] ? "checked" : ""} title="Include in the gift pack"><canvas></canvas><b>${p.n}</b></div>`).join("");
+  $("pieces").querySelectorAll(".pc").forEach((el) => { const id = el.dataset.p, c = renderPiece(id, 14), t = el.querySelector("canvas"); t.width = c.width; t.height = c.height; t.getContext("2d").drawImage(c, 0, 0); });
+}
+let stripTimer = 0;
+function draw() { drawPreview(); clearTimeout(stripTimer); stripTimer = setTimeout(drawStrip, 250); etsy(false); save(); }
+$("pieces").addEventListener("click", (e) => { const inc = e.target.closest("[data-inc]"); if (inc) { INCLUDE[inc.dataset.inc] = inc.checked; store.set("include", INCLUDE); return; } const pc = e.target.closest(".pc"); if (!pc) return; S.piece = pc.dataset.p; closeEd(); $("pieces").querySelectorAll(".pc").forEach((q) => q.classList.toggle("on", q === pc)); drawPreview(); });
+
+/* =========================================================
+   Edit text on the page
+   ========================================================= */
+let SEL = null, drag = null;
+const NAMES = { "cover.over": "Line above the name", "cover.name": "Their name", "cover.book": "Book name", "cover.sub": "Subtitle", "cover.tag": "Edition tag", "dedication.head": "Heading", "dedication.msg": "Message", "dedication.from": "From", "dedication.date": "Date", "case.over": "File label", "case.title": "Case title", "case.text": "Case story", "case.q": "Question", "case.answer": "Answer (upside down)", "id.agency": "Agency", "id.name": "Name", "id.rank": "Rank", "id.no": "Badge number", "id.issued": "Issued", "id.back": "Back text", "cert.head": "Certificate title", "cert.pre": "Line before the name", "cert.name": "Name", "cert.line": "Citation", "cert.rank": "Title awarded", "cert.sign": "Signature line", "cert.date": "Date", "plates.top": "Top line", "plates.name": "Name", "plates.bottom": "Bottom line", "card.front": "Card front", "card.frontSub": "Front small line", "card.inside": "Inside message", "card.from": "From", "wanted.head": "Poster title", "wanted.sub": "Line under the title", "wanted.name": "Name", "wanted.for": "Wanted for", "wanted.reward": "Reward", "wanted.note": "Small print" };
+const xy = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+const hitAt = (x, y) => [...(HITS.get(cv) || [])].reverse().find((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+function openEd(k) { SEL = k; const o = OVR[k] || {}; $("ed").hidden = false; $("edName").textContent = NAMES[k] || "Text";
+  $("edText").value = fillT(TX[k] ?? defaults()[k] ?? "", tokens());
+  $("edSize").value = Math.round((o.scale || 1) * 100); $("edFont").value = o.font || ""; $("edHide").textContent = o.hidden ? "Show" : "Hide"; $("edCase").classList.toggle("on", !!o.upper);
+  $("edCols").innerHTML = [...new Set([T().ink, T().dark, ACC(), "#ffffff", "#1d1418", "#d4af37", "#c2273f", "#1f6fd1"])].map((c) => `<button type="button" data-c="${c}" style="background:${c}"></button>`).join("") + `<input type="color" id="edColor" value="${/^#[0-9a-f]{6}$/i.test(o.color || "") ? o.color : "#a32049"}"><button type="button" data-c="" title="Style colour" style="background:linear-gradient(135deg,#fff 45%,#e0245e 45%,#e0245e 55%,#fff 55%)"></button>`; }
+function closeEd() { SEL = null; $("ed").hidden = true; }
+function placeEd(h) { if (matchMedia("(max-width:880px)").matches) return; const box = $("stage").getBoundingClientRect(), r = cv.getBoundingClientRect(), sc = r.width / cv.width, ed = $("ed"), ew = 290;
+  let left = r.left - box.left + (h.x + h.w / 2) * sc - ew / 2; left = clamp(left, 8, box.width - ew - 8); let top = r.top - box.top + (h.y + h.h) * sc + 12; const eh = ed.offsetHeight || 260; if (top + eh > box.height) top = Math.max(8, r.top - box.top + h.y * sc - eh - 12);
+  ed.style.left = left + "px"; ed.style.top = top + "px"; }
+const setO = (p) => { if (!SEL) return; OVR[SEL] = Object.assign({}, OVR[SEL], p); Object.keys(OVR[SEL]).forEach((k) => OVR[SEL][k] === undefined && delete OVR[SEL][k]); draw(); };
+cv.addEventListener("pointerdown", (e) => { const [x, y] = xy(e), h = hitAt(x, y); if (!h) { closeEd(); drawPreview(); return; } snap(); if (h.k !== SEL) openEd(h.k); const o = OVR[h.k] || {}; drag = { x, y, dx: o.dx || 0, dy: o.dy || 0, moved: false }; cv.setPointerCapture(e.pointerId); drawPreview(); });
+cv.addEventListener("pointermove", (e) => { const [x, y] = xy(e); if (drag) { const ddx = x - drag.x, ddy = y - drag.y; if (Math.abs(ddx) + Math.abs(ddy) > 3) drag.moved = true; if (drag.moved) { OVR[SEL] = Object.assign({}, OVR[SEL], { dx: drag.dx + ddx / previewK, dy: drag.dy + ddy / previewK }); drawPreview(); } return; } cv.style.cursor = hitAt(x, y) ? "move" : "default"; });
+addEventListener("pointerup", () => { if (drag) { drag = null; draw(); } });
+$("edText").addEventListener("focus", () => snap());
+$("edText").addEventListener("input", () => { if (!SEL) return; TX[SEL] = $("edText").value; EDITED[SEL] = true; draw(); });
+$("edSize").addEventListener("pointerdown", () => snap()); $("edSize").oninput = () => setO({ scale: +$("edSize").value / 100 });
+document.querySelectorAll("#ed [data-a]").forEach((b) => b.onclick = () => { snap(); const v = clamp(+$("edSize").value + (b.dataset.a === "+" ? 10 : -10), 40, 240); $("edSize").value = v; setO({ scale: v / 100 }); });
+$("edCols").addEventListener("click", (e) => { const b = e.target.closest("[data-c]"); if (b) { snap(); setO({ color: b.dataset.c || undefined }); } }); $("edCols").addEventListener("input", (e) => { if (e.target.id === "edColor") setO({ color: e.target.value }); });
+$("edFont").onchange = () => { snap(); setO({ font: $("edFont").value || undefined }); };
+$("edCase").onclick = () => { snap(); const v = !(OVR[SEL] || {}).upper; setO({ upper: v || undefined }); $("edCase").classList.toggle("on", v); };
+$("edHide").onclick = () => { snap(); const v = !(OVR[SEL] || {}).hidden; setO({ hidden: v || undefined }); $("edHide").textContent = v ? "Show" : "Hide"; };
+$("edReset").onclick = () => { snap(); delete OVR[SEL]; delete TX[SEL]; delete EDITED[SEL]; openEd(SEL); draw(); };
+$("edDone").onclick = $("edX").onclick = () => { closeEd(); drawPreview(); };
+
+/* =========================================================
+   Form wiring
+   ========================================================= */
+function newMessage() { const occ = $("occIn").value, t = tokens(); $("msgIn").value = fillT(rnd(MSG[occ].filter((m) => fillT(m, t) !== $("msgIn").value)), t); }
+$("caseSel").innerHTML = CASES.map((c, i) => `<option value="${i}">${c.n}</option>`).join("");
+const FORM = ["mainInput", "titleIn", "occIn", "msgIn", "fromIn", "dateIn", "caseSel", "s1", "s2", "s3", "s4", "culpritSel", "placeIn", "bookIn"];
+FORM.forEach((id) => { $(id).addEventListener("focus", () => snap()); $(id).addEventListener("input", () => draw()); $(id).addEventListener("change", () => draw()); });
+$("occIn").addEventListener("change", () => { newMessage(); draw(); });
+$("msgIdea").onclick = () => { snap(); newMessage(); draw(); };
+$("caseIdea").onclick = () => { snap(); $("caseSel").value = Math.floor(Math.random() * CASES.length); $("culpritSel").value = String(1 + Math.floor(Math.random() * 4)); S.piece = "case"; draw(); drawStrip(); };
+$("photoIn").onchange = async () => { const f = $("photoIn").files[0]; if (!f) return; snap(); const img = await loadImg(URL.createObjectURL(f)); const c = document.createElement("canvas"), k = Math.min(1, 900 / Math.max(img.width, img.height)); c.width = img.width * k; c.height = img.height * k; c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); PHOTO = c; S.pz = 1; S.px = 0; S.py = 0; syncCrop(); $("photoPrev").src = c.toDataURL("image/jpeg", .7); S.piece = "id"; draw(); drawStrip(); toast("Photo added to the detective ID"); $("photoIn").value = ""; };
+["pz", "px", "py"].forEach((id) => { $(id).addEventListener("pointerdown", () => snap()); $(id).addEventListener("input", () => { S[id] = id === "pz" ? +$(id).value / 100 : +$(id).value; draw(); }); });
+$("photoClear").onclick = () => { snap(); PHOTO = null; $("photoPrev").removeAttribute("src"); draw(); };
+$("photoFx").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; snap(); S.fx = b.dataset.fx; $("photoFx").querySelectorAll("button").forEach((q) => q.classList.toggle("on", q === b)); draw(); });
+$("trimSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; snap(); S.trim = b.dataset.t; $("trimSeg").querySelectorAll("button").forEach((q) => q.classList.toggle("on", q === b)); draw(); drawStrip(); });
+$("accIn").addEventListener("focus", () => snap()); $("accIn").oninput = () => { S.acc = $("accIn").value; draw(); };
+$("accReset").onclick = () => { snap(); S.acc = ""; $("accIn").value = T().acc; draw(); };
+function themeThumbs() { $("themes").innerHTML = THEMES.map((t) => `<button type="button" class="th${S.theme === t.id ? " on" : ""}" data-t="${t.id}"><canvas width="200" height="118"></canvas><b>${t.n}</b></button>`).join("");
+  $("themes").querySelectorAll("canvas").forEach((c, i) => { const keep = S.theme, keepA = S.acc; S.theme = THEMES[i].id; S.acc = ""; const x = c.getContext("2d"); x.__k = 30; bg(x, 0, 0, 200, 118); motif(x, 0, 0, 200, 118, 30); x.fillStyle = THEMES[i].acc; x.font = `400 34px ${THEMES[i].script}`; x.textAlign = "center"; x.fillText(val("mainInput") || "Emma", 100, 58); x.fillStyle = THEMES[i].ink; x.font = `700 15px ${THEMES[i].head}`; x.fillText("CASEBOOK", 100, 84); S.theme = keep; S.acc = keepA; }); }
+$("themes").addEventListener("click", (e) => { const b = e.target.closest(".th"); if (!b) return; snap(); S.theme = b.dataset.t; S.acc = ""; $("accIn").value = T().acc; themeThumbs(); draw(); drawStrip(); });
+$("btnGen").onclick = () => { snap(); TX = {}; EDITED = {}; newMessage(); draw(); drawStrip(); toast("Every piece is personalised"); };
+$("btnSurprise").onclick = () => { snap(); S.theme = rnd(THEMES).id; S.acc = ""; $("accIn").value = T().acc; $("caseSel").value = Math.floor(Math.random() * CASES.length); $("titleIn").value = rnd([...$("titleIn").options].map((o) => o.value)); newMessage(); themeThumbs(); draw(); drawStrip(); };
+
+/* =========================================================
+   Exports: gift pack PDF, single piece, Etsy images, orders
+   ========================================================= */
+const base = () => ((val("mainInput") || "gift") + "-" + (val("bookIn") || "casebook")).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+function packPdf() {
+  const { jsPDF } = window.jspdf; let pdf = null;
+  PIECES.filter((p) => INCLUDE[p.id]).forEach((p) => {
+    const [wi, hi] = p.size(), land = wi > hi, pw = p.id === "id" ? 8.5 : wi, ph = p.id === "id" ? 11 : hi;
+    if (!pdf) pdf = new jsPDF({ orientation: land && p.id !== "id" ? "landscape" : "portrait", unit: "in", format: [pw, ph] }); else pdf.addPage([pw, ph], land && p.id !== "id" ? "landscape" : "portrait");
+    const c = renderPiece(p.id, 300); pdf.addImage(c.toDataURL("image/jpeg", .93), "JPEG", p.id === "id" ? (8.5 - wi) / 2 : 0, p.id === "id" ? 1 : 0, wi, hi);
+  });
+  return pdf;
+}
+$("xPack").onclick = () => { if (!PIECES.some((p) => INCLUDE[p.id])) { toast("Tick at least one piece"); return; } $("busy").classList.add("on"); closeEd(); setTimeout(() => { try { dl(packPdf().output("blob"), `${base()}-gift-pack.pdf`); toast("Gift pack saved"); } catch (err) { console.error(err); toast("Couldn't make the PDF"); } $("busy").classList.remove("on"); drawPreview(); }, 60); };
+$("xPiece").onclick = () => { closeEd(); renderPiece(S.piece, 300).toBlob((b) => { dl(b, `${base()}-${S.piece}.png`); toast("Saved at 300 DPI"); }, "image/png"); drawPreview(); };
+const blobOf = (c, type = "image/png", q) => new Promise((res) => c.toBlob(res, type, q));
+function listingImages() {
+  const out = [], S2 = 2000, mk = () => { const c = document.createElement("canvas"); c.width = c.height = S2; return [c, c.getContext("2d")]; }, k = 160;
+  const cover = renderPiece("cover", k), ded = renderPiece("dedication", k), id = renderPiece("id", k), cert = renderPiece("cert", k), plates = renderPiece("plates", k), card = renderPiece("card", k), cs = renderPiece("case", k);
+  const shadow = (x, f) => { x.save(); x.shadowColor = "rgba(0,0,0,.4)"; x.shadowBlur = 50; x.shadowOffsetY = 24; f(); x.restore(); };
+  const fit = (img, maxW, maxH) => { const s = Math.min(maxW / img.width, maxH / img.height); return [img.width * s, img.height * s]; };
+  // 1: hero, the personalised cover on a desk with the ID card
+  { const [c, x] = mk(); const g = x.createLinearGradient(0, 0, S2, S2); g.addColorStop(0, "#6b4423"); g.addColorStop(1, "#2e1c10"); x.fillStyle = g; x.fillRect(0, 0, S2, S2);
+    x.strokeStyle = "rgba(0,0,0,.18)"; x.lineWidth = 4; for (let i = 0; i < 40; i++) { x.beginPath(); x.moveTo(0, i * 52); x.bezierCurveTo(600, i * 52 + 30, 1300, i * 52 - 24, S2, i * 52 + 10); x.stroke(); }
+    const [w, h] = fit(cover, 1000, 1500); shadow(x, () => { x.save(); x.translate(820, 1000); x.rotate(-.06); x.drawImage(cover, -w / 2, -h / 2, w, h); x.restore(); });
+    const cw = 880, ch = cw * 2.125 / 3.375; shadow(x, () => { x.save(); x.translate(1420, 1400); x.rotate(.12); x.drawImage(id, .2 * k, .25 * k, 3.375 * k, 2.125 * k, -cw / 2, -ch / 2, cw, ch); x.restore(); });
+    banner(x, "Personalised with their name"); out.push(["01-hero", c]); }
+  // 2: everything in the kit
+  { const [c, x] = mk(); x.fillStyle = "#f4ece2"; x.fillRect(0, 0, S2, S2);
+    const items = [[cover, 120, 260, 560, 840, -.04], [ded, 700, 220, 560, 840, .03], [cs, 1300, 260, 560, 840, -.02], [cert, 140, 1180, 860, 660, .02], [card, 1050, 1250, 820, 574, -.03]];
+    items.forEach(([img, X, Y, mw, mh, r]) => { const [w, h] = fit(img, mw, mh); shadow(x, () => { x.save(); x.translate(X + mw / 2, Y + mh / 2); x.rotate(r); x.drawImage(img, -w / 2, -h / 2, w, h); x.restore(); }); });
+    title(x, "Everything in the gift kit", 150); out.push(["02-kit", c]); }
+  // 3: how personalisation works
+  { const [c, x] = mk(); const th = T(); const g = x.createLinearGradient(0, 0, 0, S2); g.addColorStop(0, th.bg[0]); g.addColorStop(1, th.bg[1]); x.fillStyle = g; x.fillRect(0, 0, S2, S2);
+    x.fillStyle = th.ink; x.font = `900 120px ${th.head}`; x.textAlign = "center"; x.fillText("How it works", S2 / 2, 260);
+    [["1", "Tell us their name", "and the occasion, plus an optional message"], ["2", "We personalise", "the cover, dedication, ID card, certificate and their own case"], ["3", "Print or gift", "a ready-to-print PDF in your inbox"]].forEach(([n, h, d], i) => {
+      const y = 520 + i * 470; x.fillStyle = ACC(); x.beginPath(); x.arc(420, y, 140, 0, 7); x.fill(); x.fillStyle = "#fff"; x.font = `900 150px ${th.head}`; x.fillText(n, 420, y + 52);
+      x.textAlign = "left"; x.fillStyle = th.ink; x.font = `800 96px Outfit`; x.fillText(h, 640, y - 10); x.font = `500 56px Outfit`; x.globalAlpha = .85; wrapFill(x, d, 640, y + 80, 1200, 68); x.globalAlpha = 1; x.textAlign = "center"; });
+    out.push(["03-how-it-works", c]); }
+  // 4: details close-up: ID, bookplates, certificate seal
+  { const [c, x] = mk(); x.fillStyle = "#efe6dc"; x.fillRect(0, 0, S2, S2);
+    const [w1, h1] = fit(plates, 820, 1060); shadow(x, () => { x.save(); x.translate(560, 1100); x.rotate(-.05); x.drawImage(plates, -w1 / 2, -h1 / 2, w1, h1); x.restore(); });
+    const [w2, h2] = fit(id, 1050, 600); shadow(x, () => { x.save(); x.translate(1400, 700); x.rotate(.05); x.drawImage(id, -w2 / 2, -h2 / 2, w2, h2); x.restore(); });
+    const [w3, h3] = fit(cert, 980, 760); shadow(x, () => { x.save(); x.translate(1400, 1450); x.rotate(-.03); x.drawImage(cert, -w3 / 2, -h3 / 2, w3, h3); x.restore(); });
+    title(x, "Detective ID · bookplates · certificate", 150); out.push(["04-details", c]); }
+  // 5: the case starring them + the wanted poster
+  { const [c, x] = mk(); const g = x.createLinearGradient(0, 0, S2, S2); g.addColorStop(0, "#2b2b30"); g.addColorStop(1, "#141417"); x.fillStyle = g; x.fillRect(0, 0, S2, S2);
+    const wp = renderPiece("wanted", k); const [w1, h1] = fit(cs, 860, 1290); shadow(x, () => { x.save(); x.translate(560, 1100); x.rotate(-.04); x.drawImage(cs, -w1 / 2, -h1 / 2, w1, h1); x.restore(); });
+    const [w2, h2] = fit(wp, 860, 1112); shadow(x, () => { x.save(); x.translate(1440, 1080); x.rotate(.05); x.drawImage(wp, -w2 / 2, -h2 / 2, w2, h2); x.restore(); });
+    x.save(); x.fillStyle = "#fff"; x.font = "700 92px 'Cormorant Garamond'"; x.textAlign = "center"; x.fillText("They star in their own mystery", 1000, 230); x.restore(); out.push(["05-their-case", c]); }
+  // 6: every style (shows buyers the choice)
+  { const [c, x] = mk(); x.fillStyle = "#f4ece2"; x.fillRect(0, 0, S2, S2); const keep = S.theme, keepA = S.acc, cols = 5, cw = 330, chh = 495, gap = 40, x0 = (S2 - cols * cw - (cols - 1) * gap) / 2;
+    THEMES.forEach((th, i) => { S.theme = th.id; S.acc = ""; const cv2 = renderPiece("cover", 60), X = x0 + (i % cols) * (cw + gap), Y = 380 + Math.floor(i / cols) * (chh + 170);
+      shadow(x, () => x.drawImage(cv2, X, Y, cw, chh)); x.fillStyle = "#26131c"; x.font = "700 38px Outfit"; x.textAlign = "center"; x.fillText(th.n, X + cw / 2, Y + chh + 60); });
+    S.theme = keep; S.acc = keepA; title(x, `Choose from ${THEMES.length} styles`, 220); out.push(["06-styles", c]); }
+  return out;
+}
+function title(x, t, y) { x.save(); x.fillStyle = "#26131c"; x.font = "700 96px 'Cormorant Garamond'"; x.textAlign = "center"; x.fillText(t, 1000, y); x.restore(); }
+function banner(x, t) { x.save(); x.fillStyle = ACC(); rr(x, 500, 1780, 1000, 130, 65); x.fill(); x.fillStyle = "#fff"; x.font = "800 64px Outfit"; x.textAlign = "center"; x.fillText(t, 1000, 1866); x.restore(); }
+function wrapFill(x, text, X, Y, maxW, lh) { let line = "", y = Y; text.split(" ").forEach((w) => { const t = line ? line + " " + w : w; if (x.measureText(t).width > maxW && line) { x.fillText(line, X, y); line = w; y += lh; } else line = t; }); if (line) x.fillText(line, X, y); }
+let LISTING = [];
+$("xListing").onclick = async () => { $("busy").classList.add("on"); closeEd(); await new Promise((r) => setTimeout(r, 50));
+  try { LISTING = listingImages(); } catch (err) { console.error(err); toast("Couldn't make the images"); $("busy").classList.remove("on"); return; }
+  $("lgrid").innerHTML = LISTING.map(([n, c], i) => { const t = document.createElement("canvas"); t.width = t.height = 600; t.getContext("2d").drawImage(c, 0, 0, 600, 600);
+    return `<figure><img alt="${esc(n)}" src="${t.toDataURL("image/jpeg", .85)}"><figcaption><span>${i + 1}. ${esc(n.replace(/^\d+-/, "").replace(/-/g, " "))}</span><button type="button" data-li="${i}">Download</button></figcaption></figure>`; }).join("");
+  $("busy").classList.remove("on"); openM("listing"); drawPreview(); };
+$("lgrid").addEventListener("click", async (e) => { const b = e.target.closest("[data-li]"); if (!b) return; const [n, c] = LISTING[+b.dataset.li]; dl(await blobOf(c, "image/jpeg", .92), `${base()}-${n}.jpg`); });
+$("xListingZip").onclick = async () => { if (!window.JSZip) { toast("The ZIP library didn't load"); return; } if (!LISTING.length) LISTING = listingImages(); $("busy").classList.add("on"); await new Promise((r) => setTimeout(r, 50));
+  const zip = new JSZip(); for (const [n, c] of LISTING) zip.file(`${n}.jpg`, await blobOf(c, "image/jpeg", .9));
+  zip.file("etsy-listing.txt", etsyText()); dl(await zip.generateAsync({ type: "blob" }), `${base()}-etsy-listing.zip`); $("busy").classList.remove("on"); toast(`${LISTING.length} listing images + text saved`); };
+
+// batch orders
+function parseOrders() { return val("ordersIn").split(/\n+/).map((l) => l.trim()).filter(Boolean).map((l) => { const p = l.split(/\s*[|;]\s*/); return { name: p[0], occ: (p[1] || "").toLowerCase(), msg: p[2] || "", from: p[3] || "" }; }).filter((o) => o.name); }
+$("ordersIn").addEventListener("input", () => $("ordersCount").textContent = `${parseOrders().length} orders`);
+const OCCMAP = { valentine: "valentine", "valentine's": "valentine", "valentine's day": "valentine", wedding: "wedding", teacher: "teacher", "thank you teacher": "teacher", "get well": "getwell", getwell: "getwell", "get well soon": "getwell", birthday: "birthday", bday: "birthday", christmas: "christmas", xmas: "christmas", retirement: "retire", retire: "retire", anniversary: "anniv", anniv: "anniv", "mother's day": "mother", mother: "mother", mom: "mother", mum: "mother", "father's day": "father", father: "father", dad: "father", graduation: "grad", grad: "grad" };
+$("xOrders").onclick = async () => { const orders = parseOrders(); if (!orders.length) { toast("Paste at least one order"); return; } if (!window.JSZip) { toast("The ZIP library didn't load"); return; }
+  $("busy").classList.add("on"); closeEd(); await new Promise((r) => setTimeout(r, 50));
+  const keep = Object.fromEntries(["mainInput", "occIn", "msgIn", "fromIn"].map((id) => [id, $(id).value])), zip = new JSZip();
+  for (const [i, o] of orders.entries()) { $("mainInput").value = o.name; $("occIn").value = OCCMAP[o.occ] || "just"; $("fromIn").value = o.from || keep.fromIn;
+    if (o.msg) $("msgIn").value = o.msg; else if ($("orderKeepMsg").checked) newMessage(); else $("msgIn").value = keep.msgIn;
+    zip.file(`${String(i + 1).padStart(3, "0")}-${o.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`, packPdf().output("blob")); await new Promise((r) => setTimeout(r, 10)); }
+  Object.entries(keep).forEach(([id, v]) => $(id).value = v); dl(await zip.generateAsync({ type: "blob" }), `orders-${new Date().toISOString().slice(0, 10)}.zip`);
+  $("busy").classList.remove("on"); draw(); toast(`${orders.length} personalised PDFs saved`); };
+
+/* =========================================================
+   Etsy listing text
+   ========================================================= */
+let ETSY = null;
+function etsy(fresh) {
+  const occ = OCC[$("occIn").value] || "Gift";
+  if (!ETSY || fresh) { ETSY = { t: Math.floor(Math.random() * ETSY_TITLES.length), tags: ETSY_TAGS.slice().sort(() => Math.random() - .5).slice(0, 13) }; if (!fresh) ETSY.t = 0; if (!fresh) ETSY.tags = ETSY_TAGS.slice(0, 13); }
+  const title = ETSY_TITLES[ETSY.t].replace(/\{occ\}/g, occ || "Unique").replace(/\s{2,}/g, " ");
+  if (!$("eTitle").matches(":focus")) $("eTitle").value = title.slice(0, 140);
+  $("eTitleC").textContent = $("eTitle").value.length + " / 140";
+  const tags = ETSY.tags.map((t) => t.replace("{occ}", (occ || "unique").toLowerCase()));
+  $("eTags").innerHTML = tags.map((t) => `<span class="${t.length > 20 ? "long" : ""}">${esc(t)}</span>`).join("");
+  if (!$("eDesc").matches(":focus")) $("eDesc").value = `A personalised mystery casebook made just for them.\n\nWhat's included:\n• A cover with their name\n• A dedication page with your message\n• A one-page mystery where they are the detective and friends or family are the suspects\n• A detective ID card (front and back) with their photo\n• A Master Detective certificate\n• A "Wanted" poster with their photo\n• A sheet of 8 bookplates and a 5 × 7 greeting card\n\nPerfect ${occ ? occ.toLowerCase() + " " : ""}gift for puzzle lovers, mystery readers and curious minds.`;
+  if (!$("ePers").matches(":focus")) $("ePers").value = "Please add: their name, the occasion, your message (optional), who it's from, and up to 4 names for the suspects. Send a photo by message for the ID card and wanted poster.";
+}
+function etsyText() { return `TITLE\n${$("eTitle").value}\n\nTAGS\n${[...$("eTags").children].map((s) => s.textContent).join(", ")}\n\nDESCRIPTION\n${$("eDesc").value}\n\nPERSONALISATION\n${$("ePers").value}\n`; }
+$("etsyNew").onclick = () => etsy(true);
+$("eTitle").addEventListener("input", () => $("eTitleC").textContent = $("eTitle").value.length + " / 140");
+$("eCopy").onclick = () => navigator.clipboard?.writeText(etsyText()).then(() => toast("Listing text copied"), () => dl(new Blob([etsyText()], { type: "text/plain" }), "etsy-listing.txt"));
+
+/* =========================================================
+   Undo / redo, saving, gifts library
+   ========================================================= */
+let hist = [], fut = [];
+const state = () => JSON.stringify({ form: Object.fromEntries(FORM.map((id) => [id, $(id).value])), TX, OVR, EDITED, look: { theme: S.theme, acc: S.acc, trim: S.trim, fx: S.fx, pz: S.pz, px: S.px, py: S.py } });
+function apply(st, photo) { const d = JSON.parse(st); Object.entries(d.form).forEach(([id, v]) => $(id).value = v); ({ TX, OVR, EDITED } = d); Object.assign(S, d.look); if (photo !== undefined) PHOTO = photo;
+  $("accIn").value = ACC(); $("trimSeg").querySelectorAll("button").forEach((q) => q.classList.toggle("on", q.dataset.t === S.trim)); $("photoFx").querySelectorAll("button").forEach((q) => q.classList.toggle("on", q.dataset.fx === S.fx)); syncCrop(); themeThumbs(); draw(); drawStrip(); }
+function snap() { const s = state(); if (hist[hist.length - 1]?.s === s) return; hist.push({ s, photo: PHOTO }); if (hist.length > 80) hist.shift(); fut = []; hb(); }
+function undo() { if (!hist.length) return; fut.push({ s: state(), photo: PHOTO }); const h = hist.pop(); apply(h.s, h.photo); hb(); }
+function redo() { if (!fut.length) return; hist.push({ s: state(), photo: PHOTO }); const h = fut.pop(); apply(h.s, h.photo); hb(); }
+function hb() { $("undo").disabled = !hist.length; $("redo").disabled = !fut.length; }
+$("undo").onclick = undo; $("redo").onclick = redo;
+addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.target.matches("input,textarea")) { e.preventDefault(); e.shiftKey ? redo() : undo(); } if (e.key === "Escape") { document.querySelectorAll(".modal").forEach((m) => m.classList.remove("on")); closeEd(); drawPreview(); } });
+function syncCrop() { $("pz").value = Math.round((S.pz || 1) * 100); $("px").value = S.px || 0; $("py").value = S.py || 0; }
+function save() { store.set("look", { theme: S.theme, acc: S.acc, trim: S.trim, piece: S.piece, fx: S.fx, pz: S.pz, px: S.px, py: S.py }); store.set("state", JSON.parse(state())); }
+const DB = { db: null,
+  open() { return new Promise((res) => { try { const r = indexedDB.open("gift-personalizer", 1); r.onupgradeneeded = () => r.result.createObjectStore("p", { keyPath: "id" }); r.onsuccess = () => { this.db = r.result; res(); }; r.onerror = () => res(); } catch { res(); } }); },
+  all() { return new Promise((res) => { if (!this.db) return res([]); const q = this.db.transaction("p").objectStore("p").getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); }); },
+  put(v) { return new Promise((res) => { if (!this.db) return res(); const q = this.db.transaction("p", "readwrite").objectStore("p").put(v); q.onsuccess = q.onerror = () => res(); }); },
+  del(id) { return new Promise((res) => { if (!this.db) return res(); const q = this.db.transaction("p", "readwrite").objectStore("p").delete(id); q.onsuccess = q.onerror = () => res(); }); },
+};
+async function renderProjs() { const list = (await DB.all()).sort((a, b) => b.id - a.id); $("projs").innerHTML = list.length ? list.map((p) => `<div><span>${esc(p.name)}</span><button type="button" data-o="${p.id}">Open</button><button type="button" data-d="${p.id}">✕</button></div>`).join("") : '<p class="tip" style="margin:0">Saved gifts keep the photo and every edit on this device. Export makes a backup file.</p>'; }
+$("projSave").onclick = async () => { await DB.put({ id: Date.now(), name: `${$("titleIn").value} ${val("mainInput")} · ${$("occIn").selectedOptions[0].text}`, state: state(), photo: PHOTO ? PHOTO.toDataURL("image/jpeg", .85) : null }); renderProjs(); toast("Gift saved"); };
+$("projs").addEventListener("click", async (e) => { const o = e.target.closest("[data-o]"), d = e.target.closest("[data-d]"), list = await DB.all();
+  if (o) { const p = list.find((q) => q.id === +o.dataset.o); if (!p) return; snap(); let ph = null; if (p.photo) { const img = await loadImg(p.photo), c = document.createElement("canvas"); c.width = img.width; c.height = img.height; c.getContext("2d").drawImage(img, 0, 0); ph = c; $("photoPrev").src = p.photo; } else $("photoPrev").removeAttribute("src"); apply(p.state, ph); toast("Gift opened"); }
+  if (d && confirm("Delete this saved gift?")) { await DB.del(+d.dataset.d); renderProjs(); } });
+$("projExp").onclick = async () => { const list = await DB.all(); if (!list.length) { toast("Save a gift first"); return; } dl(new Blob([JSON.stringify({ app: "gift-edition-personalizer", gifts: list })], { type: "application/json" }), "my-gifts.json"); };
+$("projImp").onclick = () => $("projFile").click();
+$("projFile").onchange = async () => { const f = $("projFile").files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); for (const p of j.gifts || []) await DB.put(p); renderProjs(); toast(`${(j.gifts || []).length} gifts imported`); } catch { toast("That file isn't a gifts backup"); } $("projFile").value = ""; };
+
+/* =========================================================
+   Tabs, modals, start
+   ========================================================= */
+document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => { document.querySelectorAll(".tabs button").forEach((q) => q.classList.toggle("on", q === b)); document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("on", p.id === "p-" + b.dataset.p)); });
+const openM = (id) => $(id).classList.add("on");
+document.querySelectorAll("[data-close]").forEach((b) => b.onclick = () => b.closest(".modal").classList.remove("on"));
+document.querySelectorAll(".modal").forEach((m) => m.addEventListener("click", (e) => { if (e.target === m) m.classList.remove("on"); }));
+$("btnGuide").onclick = () => openM("guide"); $("btnAbout").onclick = () => openM("about");
+
+Promise.race([Promise.all(["700 30px 'Cormorant Garamond'", "900 30px 'Playfair Display'", "30px 'Great Vibes'", "700 30px Caveat", "30px 'Special Elite'", "700 30px Oswald", "30px 'Bebas Neue'", "700 30px Outfit"].map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 2500))]).then(async () => {
+  const st = store.get("state", null);
+  if (st && st.form) { Object.entries(st.form).forEach(([id, v]) => { if ($(id) && v != null) $(id).value = v; }); TX = st.TX || {}; OVR = st.OVR || {}; EDITED = st.EDITED || {}; }
+  if (!$("msgIn").value) newMessage();
+  if (!$("dateIn").value) $("dateIn").value = today();
+  $("accIn").value = ACC(); $("trimSeg").querySelectorAll("button").forEach((q) => q.classList.toggle("on", q.dataset.t === S.trim)); $("photoFx").querySelectorAll("button").forEach((q) => q.classList.toggle("on", q.dataset.fx === S.fx));
+  syncCrop(); themeThumbs(); etsy(false); drawPreview(); drawStrip(); hb();
+  await DB.open(); renderProjs();
+  if (!store.get("seen", false) && !navigator.webdriver) { openM("guide"); store.set("seen", true); }
+});
+})();
+</script>
+</body>
+</html>
