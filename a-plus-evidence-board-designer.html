@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A+ Evidence Board Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Oswald:wght@500;700&family=Special+Elite&family=Bebas+Neue&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root {
+  --bg: #f1ece4;
+  --card: #fffdf9;
+  --ink: #23180f;
+  --muted: #7a6a59;
+  --line: #e4d9c9;
+  --red: #b3261e;
+  --red2: #d6453b;
+  --cork: #b48a5a;
+  --ok: #2f7d4e;
+  --warn: #b5651d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 Manrope, system-ui, sans-serif;
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 1px 1px, rgba(120, 90, 50, .12) 1px, transparent 0);
+  background-size: 18px 18px;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* ---------- top bar ---------- */
+.top {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 22px;
+  background: #23180f; color: #f6eee2;
+  box-shadow: 0 2px 0 var(--red);
+}
+.mark {
+  width: 40px; height: 40px; border-radius: 10px; flex: none;
+  background: var(--cork); display: grid; place-items: center;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .2);
+}
+.ttl { min-width: 0; }
+.ttl b { display: block; font: 900 1.2rem/1 "Playfair Display", serif; white-space: nowrap; }
+.ttl small { display: block; color: #cbb9a3; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top .sp { flex: 1; }
+.tb {
+  padding: 9px 14px; border-radius: 9px; cursor: pointer; white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, .2); background: transparent; color: #f6eee2;
+  font-weight: 700; font-size: .85rem;
+}
+.tb.red { background: var(--red); border-color: var(--red); }
+.hist { display: flex; gap: 6px; }
+.hist button { padding: 8px 11px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .2); background: transparent; color: #f6eee2; cursor: pointer; font-weight: 700; font-size: .8rem; }
+.hist button:disabled { opacity: .35; cursor: default; }
+
+/* ---------- layout ---------- */
+.wrap {
+  display: grid; gap: 18px; padding: 18px; max-width: 1600px; margin: 0 auto; align-items: start;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr) minmax(0, 330px);
+}
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 14px 34px -26px rgba(35, 24, 15, .45); }
+.tabs { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; padding: 9px 4px; border: 0; border-radius: 10px; background: none; cursor: pointer; font-weight: 800; font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.tabs button.on { background: var(--ink); color: #fff; }
+.pane { display: none; padding: 14px 16px 18px; }
+.pane.on { display: block; }
+label.f { display: block; font-size: .74rem; font-weight: 800; color: var(--muted); margin: 12px 0 5px; }
+label.f:first-child { margin-top: 0; }
+.in { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; outline: none; }
+.in:focus { border-color: var(--red2); box-shadow: 0 0 0 3px rgba(214, 69, 59, .12); }
+textarea.in { resize: vertical; min-height: 70px; line-height: 1.45; }
+.r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.r2 > * { min-width: 0; }
+.mini { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.mini button { padding: 7px 11px; border-radius: 9px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: .78rem; font-weight: 700; }
+.mini button:hover { border-color: var(--red2); }
+.drop { display: block; border: 2px dashed #d5c3a8; border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; background: #fffaf2; font-size: .82rem; color: var(--muted); }
+.drop.over { border-color: var(--red2); background: #fff1ec; }
+.drop b { color: var(--ink); display: block; font-size: .88rem; }
+.drop input { display: none; }
+.thumbs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.thumbs div { position: relative; aspect-ratio: .77; border-radius: 7px; overflow: hidden; border: 1px solid var(--line); background: #f3ece1; }
+.thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumbs button { position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border: 0; border-radius: 50%; background: rgba(35, 24, 15, .8); color: #fff; font-size: .6rem; cursor: pointer; }
+.vols { display: flex; flex-direction: column; gap: 8px; }
+.vol { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; padding: 6px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.vol img { width: 44px; height: 60px; object-fit: cover; border-radius: 5px; }
+.vol input { padding: 6px 8px; font-size: .8rem; }
+.vol button { border: 0; background: none; cursor: pointer; color: var(--red); font-weight: 800; }
+.mods { display: flex; flex-direction: column; gap: 6px; }
+.mod { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: .84rem; }
+.mod small { display: block; color: var(--muted); font-size: .72rem; }
+.mod input { accent-color: var(--red); width: 16px; height: 16px; }
+.mod .mv { display: flex; gap: 3px; }
+.mod .mv button { border: 1px solid var(--line); background: #fff; border-radius: 6px; width: 24px; height: 24px; cursor: pointer; font-size: .7rem; }
+.themes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.th { border: 2px solid var(--line); border-radius: 11px; overflow: hidden; cursor: pointer; padding: 0; background: #fff; text-align: left; }
+.th.on { border-color: var(--red2); }
+.th canvas { width: 100%; aspect-ratio: 1.62; display: block; }
+.th b { display: block; padding: 4px 7px; font-size: .7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chk { display: flex; align-items: center; gap: 8px; font-size: .86rem; margin-top: 9px; cursor: pointer; }
+.chk input { accent-color: var(--red); width: 16px; height: 16px; }
+.gen { display: flex; gap: 8px; padding: 14px 16px; border-top: 1px solid var(--line); }
+#btnGen { flex: 1; padding: 13px; border: 0; border-radius: 12px; background: var(--red); color: #fff; font-weight: 800; font-size: .95rem; cursor: pointer; box-shadow: 0 10px 24px -12px rgba(179, 38, 30, .7); }
+#btnGen:hover { background: var(--red2); }
+
+/* ---------- the A+ page ---------- */
+.page { padding: 16px; }
+.pbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.pbar b { font: 900 1.05rem/1 "Playfair Display", serif; }
+.pbar .sp { flex: 1; }
+.seg { display: inline-flex; background: #efe6d8; border-radius: 10px; padding: 3px; }
+.seg button { border: 0; background: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .78rem; font-weight: 800; color: var(--muted); white-space: nowrap; }
+.seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+.amz { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 18px; position: relative; }
+.amz h3 { margin: 0 0 4px; font: 700 1.2rem/1.2 Arial, sans-serif; color: #0f1111; }
+.amz .from { font: 700 .95rem Arial, sans-serif; color: #0f1111; margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid #e7e7e7; }
+.amz.mobile { max-width: 414px; margin: 0 auto; }
+.blk { position: relative; margin: 0 auto 14px; }
+.blk.sel { outline: 3px solid var(--red2); outline-offset: 4px; border-radius: 3px; }
+.blk .lab { position: absolute; left: -2px; top: -26px; font: 800 .68rem Manrope; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; display: flex; gap: 6px; align-items: center; }
+.blk .lab button { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 1px 6px; cursor: pointer; font-size: .68rem; font-weight: 800; color: var(--ink); }
+.row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.row canvas, .blk > canvas { display: block; max-width: 100%; height: auto; cursor: pointer; }
+.under { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+.under p { margin: 0; font: 13px/1.35 Arial, sans-serif; color: #0f1111; text-align: center; }
+.under b { display: block; font: 700 14px Arial, sans-serif; margin-bottom: 2px; }
+
+/* ---------- editor popover ---------- */
+.ed { position: absolute; z-index: 25; width: 290px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 22px 50px -12px rgba(35, 24, 15, .5); padding: 12px; }
+.ed[hidden] { display: none; }
+.edh { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.edh b { font: 900 .95rem/1 "Playfair Display"; }
+.edh button { border: 0; background: #f2ebe0; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; }
+.ed textarea { width: 100%; min-height: 50px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); resize: vertical; outline: none; font-size: .86rem; }
+.edrow { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.edrow > button, .edrow select { padding: 6px 9px; border-radius: 9px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: .78rem; font-weight: 700; }
+.edrow > button.on { background: var(--ink); color: #fff; }
+.edrow input[type=range] { flex: 1; min-width: 0; accent-color: var(--red); }
+.edrow select { flex: 1; min-width: 0; }
+.sw { display: flex; gap: 5px; flex-wrap: wrap; }
+.sw button { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.sw input { width: 28px; height: 28px; border: 0; padding: 0; background: none; }
+.edrow .pri { margin-left: auto; background: var(--red); border-color: var(--red); color: #fff; }
+
+/* ---------- right column ---------- */
+.side .card { padding: 14px 16px; margin-bottom: 14px; }
+.side h4 { margin: 0 0 10px; font: 900 1rem/1 "Playfair Display"; display: flex; align-items: center; gap: 8px; }
+.side h4 small { font: 700 .72rem Manrope; color: var(--muted); }
+.kdp label.f { margin-top: 10px; }
+.cnt { float: right; font-weight: 600; color: var(--muted); }
+.copy { margin-top: 6px; }
+.checks { display: flex; flex-direction: column; gap: 6px; }
+.checks div { display: grid; grid-template-columns: 18px 1fr; gap: 7px; font-size: .82rem; align-items: start; }
+.checks i { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .66rem; color: #fff; margin-top: 2px; }
+.checks .ok i { background: var(--ok); }
+.checks .bad i { background: var(--warn); }
+.xb { width: 100%; display: flex; gap: 10px; align-items: center; text-align: left; padding: 11px 12px; border-radius: 12px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-weight: 800; font-size: .86rem; margin-top: 7px; }
+.xb:hover { border-color: var(--red2); }
+.xb.main { background: var(--ink); border-color: var(--ink); color: #fff; }
+.xb small { display: block; font-weight: 500; font-size: .72rem; opacity: .75; }
+.xb svg { flex: none; }
+.projs { display: flex; flex-direction: column; gap: 6px; max-height: 190px; overflow: auto; }
+.projs div { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 10px; font-size: .82rem; }
+.projs span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.projs button { border: 1px solid var(--line); background: #fff; border-radius: 7px; padding: 3px 7px; cursor: pointer; font-size: .74rem; font-weight: 700; }
+.tip { color: var(--muted); font-size: .78rem; margin: 6px 0 0; }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 30px); opacity: 0; padding: 12px 18px; border-radius: 12px; background: var(--ink); color: #fff; font-weight: 700; font-size: .9rem; z-index: 95; transition: .3s; pointer-events: none; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.modal { position: fixed; inset: 0; z-index: 80; background: rgba(35, 24, 15, .55); display: none; place-items: center; padding: 18px; }
+.modal.on { display: grid; }
+.mbox { width: min(740px, 100%); max-height: 88vh; overflow: auto; background: #fff; border-radius: 18px; padding: 26px 28px; box-shadow: 0 30px 80px rgba(0, 0, 0, .3); }
+.mbox h2 { margin: 0 0 6px; font: 900 1.7rem/1.1 "Playfair Display"; }
+.mbox h5 { margin: 18px 0 6px; font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; color: var(--red); }
+.mbox p, .mbox li { font-size: .92rem; color: #3d3127; }
+.mbox ul, .mbox ol { padding-left: 20px; margin: 6px 0; }
+.mbox li { margin: 4px 0; }
+.mbox .x { float: right; border: 0; background: #f2ebe0; width: 36px; height: 36px; border-radius: 10px; cursor: pointer; }
+.mbox table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+.mbox td, .mbox th { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: left; }
+.busy { position: fixed; inset: 0; z-index: 90; background: rgba(241, 236, 228, .8); display: none; place-items: center; font-weight: 800; }
+.busy.on { display: grid; }
+
+@media (max-width: 1260px) {
+  .wrap { grid-template-columns: minmax(0, 320px) minmax(0, 1fr); }
+  .side { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .side .card { margin: 0; }
+}
+@media (max-width: 880px) {
+  .wrap { grid-template-columns: 1fr; padding: 10px; }
+  .side { grid-template-columns: 1fr; }
+  .top { padding: 10px 14px; flex-wrap: wrap; }
+  .ttl small, #btnSizes { display: none; }
+  .ed { position: fixed; left: 10px !important; right: 10px; bottom: 10px; top: auto !important; width: auto; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#23180f" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="1"/><path d="M7 8h4v4H7zM14 9h4M14 12h3"/><circle cx="9" cy="4" r="1.5" fill="#b3261e" stroke="none"/><circle cx="17" cy="4" r="1.5" fill="#b3261e" stroke="none"/></svg></div>
+  <div class="ttl"><b>A+ Evidence Board Designer</b><small>Amazon A+ Content images and texts for your book, in exact KDP sizes</small></div>
+  <span class="sp"></span>
+  <div class="hist"><button type="button" id="undo" title="Undo (Ctrl+Z)">↶</button><button type="button" id="redo" title="Redo (Ctrl+Shift+Z)">↷</button></div>
+  <button class="tb" id="btnSizes" type="button">KDP sizes &amp; rules</button>
+  <button class="tb red" id="btnGuide" type="button">How to use</button>
+</header>
+
+<main class="wrap">
+  <!-- ===== left: settings ===== -->
+  <section class="card" aria-label="Settings">
+    <div class="tabs">
+      <button class="on" data-p="book" type="button">Book</button>
+      <button data-p="mods" type="button">Modules</button>
+      <button data-p="style" type="button">Style</button>
+      <button data-p="series" type="button">Series</button>
+    </div>
+
+    <div class="pane on" id="p-book">
+      <label class="f" for="genreSel">Book type</label>
+      <select class="in" id="genreSel">
+        <option value="mystery">Mystery puzzle book</option>
+        <option value="puzzle">Puzzle book (logic, word, number)</option>
+        <option value="activity">Activity or coloring book</option>
+      </select>
+      <label class="f" for="mainInput">Book title</label>
+      <input class="in" id="mainInput" value="The Blackmoor Casebook" maxlength="60">
+      <label class="f" for="subIn">Subtitle</label>
+      <input class="in" id="subIn" value="Murder Mystery Picture-Logic Puzzles" maxlength="80">
+      <div class="r2">
+        <div><label class="f" for="authIn">Author / brand</label><input class="in" id="authIn" value="Inspector Grey" maxlength="40"></div>
+        <div><label class="f" for="countIn">Puzzles / cases</label><input class="in" id="countIn" value="50" maxlength="6"></div>
+      </div>
+      <div class="r2">
+        <div><label class="f" for="levelIn">Difficulty</label><input class="in" id="levelIn" value="Easy to Fiendish" maxlength="30"></div>
+        <div><label class="f" for="forIn">For</label><input class="in" id="forIn" value="adults and teens" maxlength="40"></div>
+      </div>
+      <label class="f">Front cover</label>
+      <label class="drop" id="coverDrop"><input type="file" id="coverIn" accept="image/*"><b>⬆ Upload the front cover</b>JPG or PNG</label>
+      <label class="f">Interior pages (up to 8)</label>
+      <label class="drop" id="pageDrop"><input type="file" id="pageIn" accept="image/*,application/pdf" multiple><b>⬆ Drop the interior PDF or page images</b>The first 8 pages of a PDF are used</label>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="mini"><button type="button" id="samples">Load sample book</button></div>
+    </div>
+
+    <div class="pane" id="p-mods">
+      <p class="tip" style="margin:0 0 10px">Tick the modules you want, set their order, and click a module on the page to change its layout.</p>
+      <div class="mods" id="mods"></div>
+    </div>
+
+    <div class="pane" id="p-style">
+      <label class="f">Style</label>
+      <div class="themes" id="themes"></div>
+      <label class="f" for="accIn">Accent colour</label>
+      <div class="r2"><input class="in" type="color" id="accIn" value="#b3261e" style="height:42px;padding:4px"><button type="button" class="mini" id="accReset" style="margin:0;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font-weight:700">Style default</button></div>
+      <label class="f" for="fontSel">Headline font</label>
+      <select class="in" id="fontSel">
+        <option value="">Style default</option>
+        <option value="'Playfair Display'">Playfair Display</option>
+        <option value="Oswald">Oswald</option>
+        <option value="'Bebas Neue'">Bebas Neue</option>
+        <option value="'Special Elite'">Special Elite</option>
+        <option value="Caveat">Caveat</option>
+        <option value="Manrope">Manrope</option>
+      </select>
+    </div>
+
+    <div class="pane" id="p-series">
+      <p class="tip" style="margin:0 0 10px">The comparison chart shows the volumes of your series side by side. Volume 1 uses your cover.</p>
+      <div class="vols" id="vols"></div>
+      <label class="drop" style="margin-top:8px"><input type="file" id="volIn" accept="image/*"><b>＋ Add a volume cover</b>Up to 5 volumes</label>
+      <div class="mini"><button type="button" id="volSamples">Sample series</button></div>
+    </div>
+
+    <div class="gen">
+      <button type="button" id="btnGen">✨ Rewrite all texts</button>
+    </div>
+  </section>
+
+  <!-- ===== centre: the A+ page ===== -->
+  <section class="card page" aria-label="A+ page preview">
+    <div class="pbar">
+      <b>Your A+ Content</b>
+      <span class="sp"></span>
+      <div class="seg" id="viewSeg"><button type="button" data-v="desk" class="on">Desktop</button><button type="button" data-v="mob">Mobile</button></div>
+    </div>
+    <div class="amz" id="amz">
+      <h3 id="amzTitle">The Blackmoor Casebook</h3>
+      <p class="from">From the Publisher</p>
+      <div id="blocks"></div>
+      <div class="ed" id="ed" hidden>
+        <div class="edh"><b id="edName">Text</b><button type="button" id="edX" aria-label="Close">✕</button></div>
+        <textarea id="edText" aria-label="Text"></textarea>
+        <div class="edrow"><button type="button" data-a="-">A−</button><input type="range" id="edSize" min="40" max="240" value="100" aria-label="Size"><button type="button" data-a="+">A+</button></div>
+        <div class="edrow sw" id="edCols"></div>
+        <div class="edrow"><select id="edFont" aria-label="Font"><option value="">Style font</option><option value="'Playfair Display'">Playfair Display</option><option value="Oswald">Oswald</option><option value="'Bebas Neue'">Bebas Neue</option><option value="'Special Elite'">Special Elite</option><option value="Caveat">Caveat</option><option value="Manrope">Manrope</option></select><button type="button" id="edCase">AA</button></div>
+        <p class="tip">Drag the text on the image to move it.</p>
+        <div class="edrow"><button type="button" id="edHide">Hide</button><button type="button" id="edReset">Reset</button><button type="button" class="pri" id="edDone">Done</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== right: KDP texts, checks, export ===== -->
+  <aside class="side">
+    <div class="card kdp" id="kdp"><h4>KDP text fields <small id="kdpMod">select a module</small></h4><div id="kdpBody"><p class="tip">Click a module on the page: its headline, body text and image keywords (alt text) for the KDP A+ editor appear here, ready to copy.</p></div></div>
+    <div class="card"><h4>A+ checks</h4><div class="checks" id="checks"></div></div>
+    <div class="card"><h4>Export</h4>
+      <button class="xb main" type="button" id="xZip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16v16H4z"/><path d="M12 4v4M12 10v2M12 14v2"/></svg><span>All modules (ZIP)<small>Every image at its exact KDP size + all texts</small></span></button>
+      <button class="xb" type="button" id="xMod"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-5 5 5 3-3 5 5"/></svg><span>Selected module (PNG)<small>Its image(s), ready to upload</small></span></button>
+      <button class="xb" type="button" id="xText"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 4h14M5 9h14M5 14h9"/></svg><span>Copy all KDP texts<small>Headlines, bodies and image keywords</small></span></button>
+      <button class="xb" type="button" id="xPreview"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18"/></svg><span>Page preview (PNG)<small>How the A+ section will look, for approvals and promos</small></span></button>
+    </div>
+    <div class="card"><h4>My A+ sets</h4><div class="projs" id="projs"></div>
+      <div class="mini"><button type="button" id="projSave">💾 Save set</button><button type="button" id="projExp">Export</button><button type="button" id="projImp">Import</button></div>
+      <input type="file" id="projFile" accept=".json,application/json" hidden>
+    </div>
+  </aside>
+</main>
+
+<!-- ===== guide ===== -->
+<div class="modal" id="guide" role="dialog" aria-modal="true" aria-labelledby="gT"><div class="mbox">
+  <button class="x" type="button" data-close aria-label="Close">✕</button>
+  <h2 id="gT">How to use</h2>
+  <p>A+ Content is the image section under "From the Publisher" on your Amazon book page. This tool designs the whole section for you: every image at the exact size KDP asks for, plus the headline, body text and image keywords to paste into the KDP A+ editor.</p>
+  <h5>Quick start</h5>
+  <ol>
+    <li><b>Book</b>: pick the type of book (mystery puzzle, puzzle, activity or coloring), type your title and details, upload the cover and drop your interior PDF (or page images). A sample book is loaded so you can try first.</li>
+    <li><b>Modules</b>: tick the modules you want and put them in order. <b>Style</b>: pick one of 12 looks and an accent colour.</li>
+    <li>Click a module on the page to change its layout (◀ ▶), edit any text right on the image, then press <b>All modules (ZIP)</b>.</li>
+    <li>In KDP: Marketing → A+ Content → create content, add the same modules in the same order, upload each image and paste the texts from the right panel.</li>
+  </ol>
+  <h5>The modules</h5>
+  <ul>
+    <li><b>Brand banner</b> (970 × 600), <b>Headline strip</b> (970 × 300), <b>Difficulty ladder</b> (970 × 300), <b>Perfect gift for</b> (970 × 300).</li>
+    <li><b>Look inside</b> (4 × 220 × 220), <b>Three highlights</b> (3 × 300 × 300), <b>How to solve</b> (3 × 300 × 300), <b>Zoom on a page</b> (300 × 300).</li>
+    <li><b>Series comparison</b> (150 × 300 per volume) and <b>Author logo</b> (600 × 180).</li>
+  </ul>
+  <h5>Editing</h5>
+  <ul>
+    <li>Click any text on an image: rewrite it, change size, colour, font or capitals, drag it, hide it or reset it.</li>
+    <li><b>Rewrite all texts</b> writes fresh headlines and lines for every module from your book details. <b>Undo / Redo</b> (Ctrl or Cmd + Z) for every change.</li>
+    <li>The right panel holds the <b>KDP text fields</b> of the selected module: copy each one into the A+ editor. Image keywords (alt text) are required by KDP for every image.</li>
+  </ul>
+  <h5>A+ checks</h5>
+  <ul>
+    <li>The checks warn you about words Amazon rejects in A+ Content (prices, "free", "sale", "bestseller", customer reviews, time-limited offers), missing image keywords and text that is too small to read on a phone.</li>
+  </ul>
+  <h5>Exports and sets</h5>
+  <ul>
+    <li><b>All modules (ZIP)</b>: every image named in page order, plus a text file with all KDP texts. <b>Page preview</b>: a picture of the finished A+ section.</li>
+    <li><b>My A+ sets</b>: save a set (with its images) and reopen it later; Export makes a backup file.</li>
+  </ul>
+</div></div>
+<div class="modal" id="sizes" role="dialog" aria-modal="true"><div class="mbox">
+  <button class="x" type="button" data-close aria-label="Close">✕</button>
+  <h2>KDP A+ sizes &amp; rules</h2>
+  <table>
+    <tr><th>Module in KDP</th><th>Image size</th><th>In this tool</th></tr>
+    <tr><td>Standard Image Header With Text</td><td>970 × 600</td><td>Brand banner</td></tr>
+    <tr><td>Standard Image &amp; Dark/Light Text Overlay</td><td>970 × 300</td><td>Headline strip, Difficulty ladder, Perfect gift for</td></tr>
+    <tr><td>Standard Four Image &amp; Text</td><td>220 × 220 (×4)</td><td>Look inside</td></tr>
+    <tr><td>Standard Three Images &amp; Text</td><td>300 × 300 (×3)</td><td>Three highlights, How to solve</td></tr>
+    <tr><td>Standard Single Image &amp; Highlights</td><td>300 × 300</td><td>Zoom on a page</td></tr>
+    <tr><td>Standard Comparison Chart</td><td>150 × 300 (per item)</td><td>Series comparison</td></tr>
+    <tr><td>Standard Company Logo</td><td>600 × 180</td><td>Author logo</td></tr>
+  </table>
+  <h5>Content rules to remember</h5>
+  <ul>
+    <li>No prices, discounts, "free", promotions or time-limited language ("new", "limited time", "sale").</li>
+    <li>No customer reviews, star ratings or "bestseller" claims.</li>
+    <li>No links, emails or contact details.</li>
+    <li>Every image needs image keywords (alt text).</li>
+  </ul>
+</div></div>
+<div class="busy" id="busy">Working…</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+
+/* =========================================================
+   Basics
+   ========================================================= */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function toast(msg) {
+  const e = $("toast");
+  e.textContent = msg;
+  e.classList.add("on");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => e.classList.remove("on"), 2400);
+}
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("apl_" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("apl_" + k, JSON.stringify(v)); } catch {} },
+};
+
+function rr(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+function dl(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+
+const loadImg = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+
+function toCanvas(img, maxW = 1200) {
+  const k = Math.min(1, maxW / img.width);
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * k);
+  c.height = Math.round(img.height * k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+
+/* =========================================================
+   Sample book (so the tool looks finished before any upload)
+   ========================================================= */
+const PIX = {
+  skull: ["....#######....", "..###########..", ".#############.", ".#############.", "###..#####..###", "##....###....##", "##....###....##", "###..##.##..###", ".######.######.", "..####...####..", "...#########...", "...#.#.#.#.#...", "...#########...", "....#######...."],
+  key: ["..#####........", ".#######.......", "###...###......", "##.....########", "##.....########", "###...###..#.##", ".#######...#.##", "..#####........"],
+  bottle: ["......###......", "......###......", ".....#####.....", "......###......", "......###......", ".....#####.....", "....#######....", "...#########...", "...##.....##...", "...#..#.#..#...", "...##.....##...", "...#########...", "...#########...", "....#######...."],
+  candle: [".......#.......", "......###......", "......###......", ".......#.......", ".......#.......", ".....#####.....", "....######.....", ".....#####.....", ".....#####.....", ".....#####.....", ".....#####.....", "...#########...", "..###########.."],
+  dagger: [".......#.......", "......###......", "......###......", "......###......", "......###......", "......###......", "......###......", "...#########...", "...#########...", ".......#.......", "......###......", "......###......", ".......#......."],
+};
+
+function grid15(rows) {
+  const g = Array.from({ length: 15 }, () => Array(15).fill(0));
+  const top = Math.floor((15 - rows.length) / 2);
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === "#") g[y + top][x] = 1; }));
+  return g;
+}
+const runs = (l) => { const r = []; let n = 0; l.forEach((v) => { if (v) n++; else if (n) { r.push(n); n = 0; } }); if (n) r.push(n); return r.length ? r : [0]; };
+
+// draws a nonogram; solved: 0 = empty, 0..1 = partly solved (top rows first), 1 = solved
+function nonogram(x, X, Y, size, grid, solved = 0, ink = "#1b1b1b", paper = "#ffffff") {
+  const N = grid.length, clueW = size * .26, cs = (size - clueW) / N;
+  const rowsC = grid.map(runs), colsC = Array.from({ length: N }, (_, k) => runs(grid.map((r) => r[k])));
+  x.fillStyle = paper;
+  x.fillRect(X + clueW, Y + clueW, cs * N, cs * N);
+  x.fillStyle = ink;
+  x.font = `700 ${cs * .5}px Manrope`;
+  x.textAlign = "right";
+  x.textBaseline = "middle";
+  rowsC.forEach((r, k) => x.fillText(r.join(" "), X + clueW - cs * .2, Y + clueW + k * cs + cs / 2));
+  x.textAlign = "center";
+  colsC.forEach((col, k) => col.slice(-3).forEach((v, j, a) => x.fillText(v, X + clueW + k * cs + cs / 2, Y + clueW - (a.length - j) * cs * .55)));
+  const limit = Math.round(N * solved);
+  grid.forEach((r, gy) => r.forEach((v, gx) => {
+    if (v && gy < limit) x.fillRect(X + clueW + gx * cs + 1, Y + clueW + gy * cs + 1, cs - 2, cs - 2);
+  }));
+  x.strokeStyle = "rgba(0,0,0,.3)";
+  for (let k = 0; k <= N; k++) {
+    x.lineWidth = k % 5 ? Math.max(.5, cs * .04) : Math.max(1, cs * .1);
+    x.beginPath(); x.moveTo(X + clueW + k * cs, Y + clueW); x.lineTo(X + clueW + k * cs, Y + clueW + N * cs); x.stroke();
+    x.beginPath(); x.moveTo(X + clueW, Y + clueW + k * cs); x.lineTo(X + clueW + N * cs, Y + clueW + k * cs); x.stroke();
+  }
+  x.textBaseline = "alphabetic";
+}
+
+function sampleCover(title, sub, col1, col2, pic) {
+  const W = 800, H = 1200, c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, col1); g.addColorStop(1, col2);
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#f3ede2"; x.textAlign = "center";
+  x.font = "700 98px Oswald";
+  title.toUpperCase().split(" ").reduce((lines, w) => {
+    const last = lines[lines.length - 1];
+    if (last && (last + " " + w).length <= 11) lines[lines.length - 1] = last + " " + w; else lines.push(w);
+    return lines;
+  }, []).slice(0, 3).forEach((l, i) => x.fillText(l, W / 2, 190 + i * 105));
+  x.fillStyle = "#e9b949"; x.font = "600 30px Manrope"; x.fillText(sub, W / 2, 545);
+  x.fillStyle = "#efe6d4"; x.fillRect(W / 2 - 200, 600, 400, 400);
+  const g2 = grid15(PIX[pic]), cs = 24;
+  x.fillStyle = "#1b1b1b";
+  g2.forEach((r, yy) => r.forEach((v, xx) => v && x.fillRect(W / 2 - 180 + xx * cs, 620 + yy * cs, cs - 2, cs - 2)));
+  x.fillStyle = "#f3ede2"; x.font = "700 34px Manrope"; x.fillText("Inspector Grey", W / 2, 1130);
+  return c;
+}
+
+function samplePage(kind, n, title, pic) {
+  const W = 1000, H = 1294, c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  x.fillStyle = "#fbf8f1"; x.fillRect(0, 0, W, H);
+  x.textAlign = "center";
+  x.fillStyle = "#8a1c1c"; x.font = "30px 'Special Elite'"; x.fillText(`CASE ${String(n).padStart(2, "0")}`, W / 2, 110);
+  x.fillStyle = "#1c1a22"; x.font = "900 56px 'Playfair Display'"; x.fillText(title, W / 2, 182);
+  if (kind === "story") {
+    x.textAlign = "left"; x.font = "28px Manrope"; x.fillStyle = "#3a3540";
+    ["Lady Ashcombe was found in the locked study at 11:40 pm.", "The window was latched from the inside. A teacup lay", "shattered by the fireplace, and the clock had stopped.", "", "Three guests were still in the house: the colonel, the", "doctor and the young heir. Each swears they were", "asleep. One of them is lying.", "", "Solve the picture grid on the next page: the shaded", "squares reveal the object that names the killer."]
+      .forEach((l, k) => x.fillText(l, 90, 290 + k * 46));
+    x.strokeStyle = "#c9bfa8"; x.lineWidth = 3; x.strokeRect(90, 820, 820, 360);
+    x.font = "800 30px Manrope"; x.fillStyle = "#1c1a22"; x.fillText("SUSPECTS", 120, 870);
+    ["Colonel Hart · retired, owes money", "Dr. Vane · the family doctor", "Edmund Ashcombe · the heir"].forEach((s, k) => { x.font = "26px Manrope"; x.fillText("◆  " + s, 120, 930 + k * 60); });
+    return c;
+  }
+  nonogram(x, 170, 300, 700, grid15(PIX[pic]), kind === "solution" ? 1 : 0);
+  x.fillStyle = "#6a6370"; x.font = "26px 'Special Elite'"; x.textAlign = "center";
+  x.fillText(kind === "solution" ? "SOLUTION · the clue was the " + pic.toUpperCase() : "Shade the squares to reveal the clue", W / 2, 1210);
+  return c;
+}
+
+/* =========================================================
+   Book assets
+   ========================================================= */
+let COVER = null;      // canvas
+let PAGES = [];        // canvases
+let VOLS = [];         // { img: canvas, name }
+function loadSamples() {
+  COVER = sampleCover("The Blackmoor Casebook", "Murder Mystery Picture-Logic Puzzles", "#2a1d22", "#0f0d11", "bottle");
+  PAGES = [
+    samplePage("story", 1, "The Locked Study"),
+    samplePage("puzzle", 1, "The Locked Study", "bottle"),
+    samplePage("solution", 1, "The Locked Study", "bottle"),
+    samplePage("puzzle", 2, "Midnight at the Manor", "key"),
+    samplePage("solution", 2, "Midnight at the Manor", "key"),
+    samplePage("puzzle", 3, "The Last Candle", "candle"),
+  ];
+  sampleSeries();
+}
+function sampleSeries() {
+  VOLS = [
+    { img: sampleCover("Death on the Night Train", "Volume 2", "#0b1726", "#173556", "skull"), name: "Volume 2 · Night Train" },
+    { img: sampleCover("The Lighthouse Murders", "Volume 3", "#1a2d22", "#0e1913", "dagger"), name: "Volume 3 · Lighthouse" },
+  ];
+}
+function renderAssets() {
+  $("thumbs").innerHTML = PAGES.map((p, i) => `<div><img src="${p.toDataURL("image/jpeg", .6)}" alt=""><button type="button" data-rm="${i}" aria-label="Remove page">✕</button></div>`).join("");
+  $("vols").innerHTML = `<div class="vol"><img src="${COVER ? COVER.toDataURL("image/jpeg", .6) : ""}" alt=""><input class="in" value="Volume 1 · ${esc(val("mainInput"))}" disabled><span></span></div>` +
+    VOLS.map((v, i) => `<div class="vol"><img src="${v.img.toDataURL("image/jpeg", .6)}" alt=""><input class="in" data-vn="${i}" value="${esc(v.name)}" maxlength="40"><button type="button" data-vr="${i}" aria-label="Remove volume">✕</button></div>`).join("");
+}
+$("thumbs").addEventListener("click", (e) => { const b = e.target.closest("[data-rm]"); if (!b) return; snap(); PAGES.splice(+b.dataset.rm, 1); renderAssets(); draw(); });
+$("vols").addEventListener("click", (e) => { const b = e.target.closest("[data-vr]"); if (!b) return; snap(); VOLS.splice(+b.dataset.vr, 1); renderAssets(); draw(); });
+$("vols").addEventListener("input", (e) => { const i = e.target.dataset.vn; if (i == null) return; VOLS[+i].name = e.target.value; draw(); });
+
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+async function addPages(files) {
+  const list = [...files];
+  if (!list.length) return;
+  $("busy").classList.add("on");
+  snap();
+  const fresh = [];
+  try {
+    for (const f of list) {
+      if (/pdf$/i.test(f.type) || /\.pdf$/i.test(f.name)) {
+        if (!window.pdfjsLib) { toast("The PDF reader didn't load: check your connection"); continue; }
+        const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+        for (let n = 1; n <= Math.min(pdf.numPages, 8); n++) {
+          const pg = await pdf.getPage(n), v1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: Math.min(2, 1100 / v1.width) });
+          const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+          const cx = c.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, c.width, c.height);
+          await pg.render({ canvasContext: cx, viewport: vp }).promise;
+          fresh.push(c);
+        }
+      } else if (f.type.startsWith("image/")) {
+        fresh.push(toCanvas(await loadImg(URL.createObjectURL(f))));
+      }
+    }
+  } catch (err) { console.error(err); toast("Couldn't read that file: try PDF, PNG or JPG"); }
+  $("busy").classList.remove("on");
+  if (fresh.length) { PAGES = fresh.slice(0, 8); renderAssets(); draw(); toast(`${PAGES.length} pages loaded`); }
+}
+function dropZone(id, onFiles) {
+  const z = $(id);
+  ["dragenter", "dragover"].forEach((ev) => z.addEventListener(ev, (e) => { e.preventDefault(); z.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => z.addEventListener(ev, (e) => { e.preventDefault(); z.classList.remove("over"); }));
+  z.addEventListener("drop", (e) => onFiles(e.dataTransfer.files));
+}
+$("pageIn").onchange = () => { addPages($("pageIn").files); $("pageIn").value = ""; };
+dropZone("pageDrop", addPages);
+async function setCover(files) { const f = files[0]; if (!f || !f.type.startsWith("image/")) return; snap(); COVER = toCanvas(await loadImg(URL.createObjectURL(f))); renderAssets(); draw(); toast("Cover set"); }
+$("coverIn").onchange = () => { setCover($("coverIn").files); $("coverIn").value = ""; };
+dropZone("coverDrop", setCover);
+$("volIn").onchange = async () => {
+  const f = $("volIn").files[0]; if (!f) return;
+  if (VOLS.length >= 4) { toast("Up to 5 volumes"); return; }
+  snap(); VOLS.push({ img: toCanvas(await loadImg(URL.createObjectURL(f)), 600), name: `Volume ${VOLS.length + 2}` });
+  renderAssets(); draw(); $("volIn").value = "";
+};
+$("volSamples").onclick = () => { snap(); sampleSeries(); renderAssets(); draw(); };
+$("samples").onclick = () => { snap(); loadSamples(); renderAssets(); draw(); toast("Sample book loaded"); };
+
+/* =========================================================
+   Styles (12)
+   ========================================================= */
+const THEMES = [
+  { id: "board", n: "Evidence board", light: false, ink: "#fffaf0", sub: "#f3e2c4", acc: "#b3261e", head: "'Playfair Display'", note: "#fff59a" },
+  { id: "file", n: "Case file", light: true, ink: "#2a1a0e", sub: "#6b4d2c", acc: "#9c1c1c", head: "'Special Elite'", note: "#f6ead2" },
+  { id: "noir", n: "Noir spotlight", light: false, ink: "#f6f1e8", sub: "#c9bba8", acc: "#e0453a", head: "Oswald", note: "#2a2228" },
+  { id: "blue", n: "Blueprint", light: false, ink: "#f2f7ff", sub: "#a9c8ee", acc: "#ffcf3d", head: "'Special Elite'", note: "#0e2e55" },
+  { id: "pulp", n: "Pulp magazine", light: true, ink: "#1d1410", sub: "#5a3e2a", acc: "#d23a1d", head: "'Bebas Neue'", note: "#f4c400" },
+  { id: "deco", n: "Art deco", light: false, ink: "#f3e6c4", sub: "#c9b37c", acc: "#d4af37", head: "'Playfair Display'", note: "#1c1810" },
+  { id: "type", n: "Typewriter", light: true, ink: "#1f1f1f", sub: "#5a5a5a", acc: "#a8231b", head: "'Special Elite'", note: "#fffdf6" },
+  { id: "chalk", n: "Chalkboard", light: false, ink: "#f1f1e6", sub: "#bfc8bb", acc: "#ffd166", head: "Caveat", note: "#273a30" },
+  { id: "tape", n: "Crime tape", light: false, ink: "#ffffff", sub: "#d7d1c8", acc: "#f4c400", head: "'Bebas Neue'", note: "#1b1b1b" },
+  { id: "clean", n: "Clean white", light: true, ink: "#161616", sub: "#555555", acc: "#c8102e", head: "Manrope", note: "#f4f4f4" },
+  { id: "map", n: "Old map", light: true, ink: "#3e260f", sub: "#7a5530", acc: "#7b1e12", head: "'Playfair Display'", note: "#f4e6c4" },
+  { id: "neon", n: "Neon noir", light: false, ink: "#f4f0ff", sub: "#b9addd", acc: "#ff3cac", head: "Oswald", note: "#1a1433" },
+];
+const S = Object.assign({ theme: "board", acc: "", font: "", view: "desk" }, store.get("look", {}));
+const T = () => THEMES.find((t) => t.id === S.theme) || THEMES[0];
+const ACC = () => S.acc || T().acc;
+const HEAD = () => S.font || T().head;
+
+function grain(x, w, h, color, n, a) {
+  x.save(); x.globalAlpha = a; x.fillStyle = color;
+  for (let i = 0; i < n; i++) x.fillRect((i * 97.31) % w, (i * 61.73) % h, 1.6, 1.6);
+  x.restore();
+}
+// paints the style's background on any module size
+function paintBg(x, w, h) {
+  const t = T().id;
+  const lin = (a, b, dx = w, dy = h) => { const g = x.createLinearGradient(0, 0, dx, dy); g.addColorStop(0, a); g.addColorStop(1, b); return g; };
+  if (t === "board") { x.fillStyle = lin("#b48a5a", "#8d6538"); x.fillRect(0, 0, w, h); grain(x, w, h, "#3b2410", w * h / 60, .3); }
+  else if (t === "file") { x.fillStyle = lin("#e7c98e", "#d8b273"); x.fillRect(0, 0, w, h); grain(x, w, h, "#6b4d2c", w * h / 90, .12); }
+  else if (t === "noir") { const g = x.createRadialGradient(w * .5, h * .35, 10, w * .5, h * .5, Math.max(w, h) * .8); g.addColorStop(0, "#3a2d33"); g.addColorStop(1, "#0d0b0e"); x.fillStyle = g; x.fillRect(0, 0, w, h); }
+  else if (t === "blue") { x.fillStyle = "#123a6b"; x.fillRect(0, 0, w, h); x.strokeStyle = "rgba(255,255,255,.1)"; x.lineWidth = 1; for (let i = 0; i < w; i += 20) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, h); x.stroke(); } for (let j = 0; j < h; j += 20) { x.beginPath(); x.moveTo(0, j); x.lineTo(w, j); x.stroke(); } }
+  else if (t === "pulp") { x.fillStyle = "#f1e3c0"; x.fillRect(0, 0, w, h); x.fillStyle = "rgba(210,58,29,.18)"; for (let yy = 0; yy < h; yy += 12) for (let xx = 0; xx < w; xx += 12) { x.beginPath(); x.arc(xx + (yy / 12 % 2) * 6, yy, 3.2 * (yy / h), 0, 7); x.fill(); } }
+  else if (t === "deco") { x.fillStyle = "#0d0d0d"; x.fillRect(0, 0, w, h); x.fillStyle = "rgba(212,175,55,.08)"; for (let i = 0; i < 24; i += 2) { x.beginPath(); x.moveTo(w / 2, h * 1.1); x.arc(w / 2, h * 1.1, Math.max(w, h) * 1.3, Math.PI + i / 24 * Math.PI, Math.PI + (i + 1) / 24 * Math.PI); x.closePath(); x.fill(); } x.strokeStyle = "#d4af37"; x.lineWidth = 2; x.strokeRect(8, 8, w - 16, h - 16); }
+  else if (t === "type") { x.fillStyle = "#f7f2e6"; x.fillRect(0, 0, w, h); grain(x, w, h, "#000", w * h / 120, .05); x.strokeStyle = "rgba(60,90,140,.12)"; for (let j = 24; j < h; j += 24) { x.beginPath(); x.moveTo(0, j); x.lineTo(w, j); x.stroke(); } }
+  else if (t === "chalk") { x.fillStyle = lin("#22332a", "#17231d"); x.fillRect(0, 0, w, h); x.fillStyle = "rgba(255,255,255,.035)"; for (let i = 0; i < 30; i++) { x.beginPath(); x.ellipse((i * 131) % w, (i * 71) % h, 60, 20, i, 0, 7); x.fill(); } }
+  else if (t === "tape") { x.fillStyle = "#151515"; x.fillRect(0, 0, w, h); x.save(); x.translate(w * .9, h * .1); x.rotate(.5); x.fillStyle = "#f4c400"; x.fillRect(-w, -14, w * 2, 28); x.fillStyle = "#111"; x.font = "700 16px Oswald"; x.fillText("CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE", -w * .8, 6); x.restore(); }
+  else if (t === "clean") { x.fillStyle = "#ffffff"; x.fillRect(0, 0, w, h); }
+  else if (t === "map") { x.fillStyle = "#ecdcb6"; x.fillRect(0, 0, w, h); x.strokeStyle = "rgba(110,70,20,.12)"; x.lineWidth = 1.2; for (let i = 0; i < 8; i++) { x.beginPath(); x.ellipse(w * .7, h * .5, 40 + i * 40, 20 + i * 24, .3, 0, 7); x.stroke(); } }
+  else { x.fillStyle = lin("#120d24", "#07060f"); x.fillRect(0, 0, w, h); x.strokeStyle = "rgba(255,60,172,.35)"; x.lineWidth = 2; x.strokeRect(6, 6, w - 12, h - 12); }
+}
+function themeThumbs() {
+  $("themes").innerHTML = THEMES.map((t) => `<button type="button" class="th${S.theme === t.id ? " on" : ""}" data-t="${t.id}"><canvas width="160" height="100"></canvas><b>${t.n}</b></button>`).join("");
+  $("themes").querySelectorAll("canvas").forEach((cv, i) => {
+    const keep = S.theme; S.theme = THEMES[i].id;
+    const x = cv.getContext("2d"); paintBg(x, 160, 100);
+    x.fillStyle = THEMES[i].ink; x.font = `700 22px ${THEMES[i].head}`; x.textAlign = "center"; x.fillText("Case files", 80, 48);
+    x.fillStyle = S.acc || THEMES[i].acc; x.fillRect(50, 62, 60, 8);
+    S.theme = keep;
+  });
+}
+$("themes").addEventListener("click", (e) => { const b = e.target.closest(".th"); if (!b) return; snap(); S.theme = b.dataset.t; themeThumbs(); draw(); });
+$("accIn").oninput = () => { S.acc = $("accIn").value; draw(); };
+$("accIn").onfocus = () => snap();
+$("accReset").onclick = () => { snap(); S.acc = ""; draw(); };
+$("fontSel").onchange = () => { snap(); S.font = $("fontSel").value; draw(); };
+
+/* =========================================================
+   Texts: words on the images (TX) and KDP text fields (KT)
+   ========================================================= */
+const val = (id) => $(id).value.trim();
+const B = () => ({ title: val("mainInput") || "Your book", sub: val("subIn"), author: val("authIn"), n: val("countIn") || "50", level: val("levelIn"), for: val("forIn") });
+
+// libraries of lines (each module rewrites from these on "Rewrite all texts")
+const LIBS = {
+  mystery: {
+    bannerHead: ["{n} murders. One picture solves each one.", "Every page hides a crime. Every grid hides the clue.", "Shade the squares. Catch the killer.", "The detective's puzzle book you can't put down", "{n} cases. {n} hidden clues. One detective: you.", "Read the crime. Solve the grid. Name the culprit.", "A whodunit on every page", "Your pencil is the only witness"],
+    bannerSub: ["{sub} · {level}", "A mystery story and a picture-logic grid in every case", "For {for} who love a good whodunit", "Solve the grid, reveal the clue, name the culprit", "Short crimes, clever clues, satisfying answers"],
+    stripHead: ["Look inside the casebook", "A crime on every page", "Read the case. Solve the grid. Close the file.", "Story first, puzzle second, twist at the end", "Open the file, study the scene"],
+    ladderHead: ["From easy to fiendish", "Start as a rookie, finish as chief inspector", "Every case a little harder than the last", "Climb the ranks, case by case"],
+    ladderSteps: ["Rookie|Detective|Inspector|Chief", "Easy|Medium|Hard|Fiendish", "Warm-up|Tricky|Devious|Fiendish", "Constable|Sergeant|Inspector|Superintendent"],
+    giftHead: ["The perfect gift for…", "Made for puzzle lovers", "Who will love this book?", "A clever gift for curious minds"],
+    giftList: ["Mystery readers|Puzzle fans|Book clubs|Rainy weekends", "True-crime lovers|Logic fans|Travel days|Gift baskets", "Detective-story fans|Nonogram solvers|Quiet evenings|Birthdays", "Agatha Christie fans|Escape-room fans|Holidays|Long flights"],
+    insideLab: ["The case|The suspects|The grid|The solution", "Read the crime|Meet the suspects|Solve the picture|Name the killer", "Case file|Evidence|Puzzle|Answer"],
+    hi: [["A story in every case", "Each puzzle opens with a short crime story."], ["Picture-logic grids", "Shade the squares to reveal a hidden clue."], ["One solution each", "Every grid has exactly one answer."], ["Answers at the back", "Check your work, no spoilers on the page."], ["{level}", "Cases get harder as you go."], ["Large, clear grids", "Easy on the eyes, made for pencil."], ["Suspects and motives", "Every case has a cast to question."], ["A twist to finish", "The final clue changes everything."]],
+    howTo: ["Read the numbers|Each number is a run of shaded squares.", "Shade the squares|Use logic, row by row and column by column.", "Reveal the clue|The finished picture points to the culprit."],
+    detail: ["Every square counts", "Zoom in: crisp grids, clear numbers", "Made to be solved in pencil"],
+    body: "{title} brings together {n} short mystery cases. Each one opens with a crime, a list of suspects and a picture-logic grid: shade the squares to reveal the clue that names the culprit.",
+    stripBody: "Read the case, study the suspects, then solve the grid. The finished picture is the clue.",
+    tag: "{n} CASES",
+  },
+  puzzle: {
+    bannerHead: ["{n} puzzles to sharpen your mind", "Grab a pencil. Your brain will thank you.", "Hours of clever, satisfying puzzles", "From quick warm-ups to real brain-burners", "The puzzle book you'll actually finish", "One page a day keeps boredom away"],
+    bannerSub: ["{sub} · {level}", "Large print, clear grids, answers in the back", "For {for} who love a good challenge", "Logic, patience and that 'got it!' moment"],
+    stripHead: ["Look inside", "A new challenge on every page", "Clean pages, clear grids, real puzzles", "Turn the page, start a puzzle"],
+    ladderHead: ["Four levels of challenge", "From easy to expert", "Warm up, then go further"],
+    ladderSteps: ["Easy|Medium|Hard|Expert", "Warm-up|Steady|Tricky|Brain-burner", "Level 1|Level 2|Level 3|Level 4"],
+    giftHead: ["The perfect gift for…", "Who will love it?", "Great for every puzzle fan"],
+    giftList: ["Puzzle fans|Grandparents|Commutes|Lazy Sundays", "Brain-training fans|Students|Travel days|Gift baskets", "Logic lovers|Retirees|Waiting rooms|Birthdays"],
+    insideLab: ["Warm-up|Challenge|Expert|Answers", "Easy page|Medium page|Hard page|Solution", "Start|Keep going|Go further|Check it"],
+    hi: [["{n} puzzles", "A big book that lasts for weeks."], ["{level}", "Levels that grow with you."], ["Answers in the back", "Check every puzzle when you're done."], ["Large, clear print", "Easy to read, easy to write in."], ["One puzzle per page", "No cramped grids, no squinting."], ["Pencil friendly paper", "Erase, rethink, solve."]],
+    howTo: ["Read the rules|A quick example opens the book.", "Solve with logic|No guessing needed.", "Check the answer|Solutions are at the back."],
+    detail: ["Crisp, clear grids", "Zoom in: made for pencil", "Space to think on every page"],
+    body: "{title} gives you {n} puzzles, from quick warm-ups to real challenges, with every answer at the back.",
+    stripBody: "Each page holds one puzzle with room to work. Solutions are at the back.",
+    tag: "{n} PUZZLES",
+  },
+  activity: {
+    bannerHead: ["{n} pages of fun to color and solve", "Screen-free fun on every page", "Color, trace, solve and smile", "Big pictures, bold lines, happy hours", "The activity book kids reach for first"],
+    bannerSub: ["{sub} · {level}", "Bold lines, single-sided pages, lots of variety", "For {for} who love to create", "Coloring, mazes, dot-to-dots and more"],
+    stripHead: ["Look inside", "Something new on every page", "Bold, clear pages made for little hands", "Color it, solve it, love it"],
+    ladderHead: ["Fun that grows with them", "From easy to a little tricky", "Something for every age"],
+    ladderSteps: ["Easy|Fun|Tricky|Challenge", "Start|Grow|Explore|Master", "Little|Bigger|Clever|Champion"],
+    giftHead: ["The perfect gift for…", "Who will love it?", "A gift that keeps them busy"],
+    giftList: ["Birthdays|Road trips|Rainy days|Quiet time", "Classrooms|Grandkids|Waiting rooms|Holidays", "Little artists|Puzzle starters|Bedtime|Stocking fillers"],
+    insideLab: ["Color|Trace|Solve|Create", "Coloring page|Maze|Dot-to-dot|Puzzle", "Draw|Play|Learn|Win"],
+    hi: [["{n} pages of fun", "A big book with lots of variety."], ["Bold, clear lines", "Easy for little hands to color."], ["Single-sided pages", "No bleed-through when using markers."], ["Screen-free time", "Quiet fun for home and travel."], ["{level}", "Activities that grow with them."]],
+    howTo: ["Pick a page|Every page is a new activity.", "Color and solve|Pencils, crayons or markers.", "Show it off|Tear it out and hang it up."],
+    detail: ["Bold, clear lines", "Zoom in: made for little hands", "Big shapes, easy to color"],
+    body: "{title} is packed with {n} pages of coloring, mazes, dot-to-dots and puzzles for {for}.",
+    stripBody: "Every page is a new activity with bold lines and big shapes.",
+    tag: "{n} PAGES",
+  },
+};
+// shared lines every book type can use
+Object.values(LIBS).forEach((L) => { L.logo = ["{author}", "{author} Books", "The {author} Collection"]; });
+LIBS.mystery.logo = ["{author}", "{author} Mysteries", "The {author} Casebooks"];
+let LIB = LIBS.mystery;
+const fill = (s) => { const b = B(); return s.replace(/\{(\w+)\}/g, (_, k) => b[k] ?? ""); };
+
+let TX = {};      // text on images: key -> string
+let KT = {};      // KDP text fields: module id -> { head, body, alts: [] }
+let OVR = {};     // per-text style overrides: key -> { scale, color, font, dx, dy, hidden, upper }
+let VAR = {};     // module id -> layout variant 0..2
+
+function writeTexts(fresh = false) {
+  LIB = LIBS[$("genreSel").value] || LIBS.mystery;
+  const b = B(), pick = (arr, i) => fresh ? rnd(arr) : arr[i || 0];
+  TX["banner.head"] = fill(pick(LIB.bannerHead));
+  TX["banner.sub"] = fill(pick(LIB.bannerSub));
+  TX["banner.tag"] = fill(LIB.tag);
+  TX["strip.head"] = fill(pick(LIB.stripHead));
+  TX["ladder.head"] = fill(pick(LIB.ladderHead));
+  pick(LIB.ladderSteps).split("|").forEach((s, i) => TX[`ladder.s${i}`] = s);
+  TX["gift.head"] = fill(pick(LIB.giftHead));
+  pick(LIB.giftList).split("|").forEach((s, i) => TX[`gift.g${i}`] = s);
+  pick(LIB.insideLab).split("|").forEach((s, i) => TX[`inside.l${i}`] = s);
+  const his = fresh ? LIB.hi.slice().sort(() => Math.random() - .5) : LIB.hi;
+  his.slice(0, 3).forEach(([h], i) => { TX[`high.h${i}`] = fill(h); });
+  LIB.howTo.forEach((s, i) => TX[`how.h${i}`] = s.split("|")[0]);
+  TX["detail.head"] = fill(pick(LIB.detail));
+  TX["logo.name"] = fill(pick(LIB.logo));
+  TX["logo.tag"] = "MYSTERY · PUZZLES · CASEBOOKS";
+  // KDP fields (text that goes into the A+ editor, next to the images)
+  KT = {
+    banner: { head: TX["banner.head"], body: fill(LIB.body), alts: [`${b.title} ${$("genreSel").selectedOptions[0].text.toLowerCase()} banner`] },
+    strip: { head: TX["strip.head"], body: fill(LIB.stripBody), alts: [`Pages from inside ${b.title}`] },
+    inside: { head: "Look inside", body: "", alts: [0, 1, 2, 3].map((i) => `${b.title} ${TX[`inside.l${i}`].toLowerCase()} page`), labs: [0, 1, 2, 3].map((i) => TX[`inside.l${i}`]) },
+    high: { head: "Why solvers love it", body: "", alts: [0, 1, 2].map((i) => `${TX[`high.h${i}`]} - ${b.title}`), items: (fresh ? his : LIB.hi).slice(0, 3).map(([h, d]) => ({ h: fill(h), d: fill(d) })) },
+    how: { head: $("genreSel").value === "activity" ? "How it works" : "How to solve", body: "", alts: ["Empty picture-logic grid with clue numbers", "Half-solved picture-logic grid", "Solved grid revealing the clue"], items: LIB.howTo.map((s) => { const [h, d] = s.split("|"); return { h, d }; }) },
+    ladder: { head: TX["ladder.head"], body: `Pages are ordered from ${b.level.toLowerCase() || "easy to hard"}, so beginners can start right away and experts get a real challenge at the end.`, alts: ["Difficulty levels in the book"] },
+    gift: { head: TX["gift.head"], body: `A clever gift for ${b.for || "puzzle lovers"}.`, alts: [`Who ${b.title} is for`] },
+    detail: { head: TX["detail.head"], body: "Clear clue numbers and generous squares, printed for pencil and eraser.", alts: [`Close-up of a puzzle grid in ${b.title}`], items: [{ h: "Clear numbers" }, { h: "Pencil friendly" }, { h: "Answers in the back" }] },
+    compare: { head: "Collect the whole series", body: "", alts: ["Volume 1 cover", ...VOLS.map((v) => v.name + " cover")] },
+    logo: { head: "", body: "", alts: [`${b.author} logo`] },
+  };
+}
+
+/* =========================================================
+   Modules
+   ========================================================= */
+const MODS = [
+  { id: "banner", n: "Brand banner", kdp: "Standard Image Header With Text", w: 970, h: 600, count: 1 },
+  { id: "strip", n: "Headline strip", kdp: "Image & Text Overlay", w: 970, h: 300, count: 1 },
+  { id: "inside", n: "Look inside", kdp: "Standard Four Image & Text", w: 220, h: 220, count: 4 },
+  { id: "high", n: "Three highlights", kdp: "Standard Three Images & Text", w: 300, h: 300, count: 3 },
+  { id: "how", n: "How to solve", kdp: "Standard Three Images & Text", w: 300, h: 300, count: 3 },
+  { id: "ladder", n: "Difficulty ladder", kdp: "Image & Text Overlay", w: 970, h: 300, count: 1 },
+  { id: "detail", n: "Zoom on a page", kdp: "Single Image & Highlights", w: 300, h: 300, count: 1 },
+  { id: "gift", n: "Perfect gift for", kdp: "Image & Text Overlay", w: 970, h: 300, count: 1 },
+  { id: "compare", n: "Series comparison", kdp: "Standard Comparison Chart", w: 150, h: 300, count: 0 },
+  { id: "logo", n: "Author logo", kdp: "Standard Company Logo", w: 600, h: 180, count: 1 },
+];
+let ORDER = MODS.map((m) => m.id);
+let ON = { banner: true, strip: true, inside: true, high: true, how: true, ladder: true, detail: false, gift: true, compare: true, logo: false };
+const modById = (id) => MODS.find((m) => m.id === id);
+const countOf = (m) => m.id === "compare" ? 1 + VOLS.length : m.count;
+
+function renderModList() {
+  $("mods").innerHTML = ORDER.map((id, i) => { const m = modById(id); return `<div class="mod"><input type="checkbox" data-on="${id}" ${ON[id] ? "checked" : ""} aria-label="${m.n}"><span><b>${m.n}</b><small>${m.w} × ${m.h}${countOf(m) > 1 ? " × " + countOf(m) : ""} · ${m.kdp}</small></span><span class="mv"><button type="button" data-up="${i}" title="Move up">▲</button><button type="button" data-dn="${i}" title="Move down">▼</button></span></div>`; }).join("");
+}
+$("mods").addEventListener("click", (e) => {
+  const up = e.target.closest("[data-up]"), dn = e.target.closest("[data-dn]");
+  if (!up && !dn) return;
+  snap();
+  const i = +(up || dn).dataset[up ? "up" : "dn"], j = up ? i - 1 : i + 1;
+  if (j < 0 || j >= ORDER.length) return;
+  [ORDER[i], ORDER[j]] = [ORDER[j], ORDER[i]];
+  renderModList(); draw();
+});
+$("mods").addEventListener("change", (e) => { const id = e.target.dataset.on; if (!id) return; snap(); ON[id] = e.target.checked; draw(); });
+
+/* ---------- drawing helpers for modules ---------- */
+let HITS = new Map();   // canvas -> [{ k, x, y, w, h }]
+function put(x, key, text, X, Y, maxW, font, color, opt = {}) {
+  if (text == null || text === "") return Y;
+  const o = OVR[key] || {}, hits = HITS.get(x.canvas) || [];
+  let fs = parseFloat(font.match(/(\d+(\.\d+)?)px/)[1]) * (o.scale || 1);
+  font = font.replace(/\d+(\.\d+)?px/, fs + "px");
+  if (o.font) font = font.replace(/px .*$/, "px " + o.font);
+  const t = o.upper ? String(text).toUpperCase() : String(text);
+  const W0 = x.canvas.width, dx = (o.dx || 0) * W0, dy = (o.dy || 0) * W0, align = opt.align || "center";
+  x.save();
+  x.font = font; x.textAlign = align; x.textBaseline = "alphabetic";
+  const lines = []; let cur = "";
+  t.split(/\s+/).forEach((w) => { const tt = cur ? cur + " " + w : w; if (x.measureText(tt).width > maxW && cur) { lines.push(cur); cur = w; } else cur = tt; });
+  if (cur) lines.push(cur);
+  const lh = fs * (opt.lh || 1.15), use = lines.slice(0, opt.max || 4);
+  const left = align === "center" ? X - maxW / 2 : align === "right" ? X - maxW : X;
+  if (!o.hidden) {
+    if (opt.box) { const bw = Math.max(...use.map((l) => x.measureText(l).width)) + fs * .9, bh = lh * use.length + fs * .35, bx = align === "center" ? X + dx - bw / 2 : align === "right" ? X + dx - bw : X + dx - fs * .45; x.fillStyle = opt.box; rr(x, bx, Y + dy - fs * .95, bw, bh, fs * .3); x.fill(); }
+    if (opt.shadow) { x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = fs * .35; }
+    x.fillStyle = o.color || color;
+    use.forEach((l, i) => x.fillText(l, X + dx, Y + dy + i * lh));
+  }
+  x.restore();
+  hits.push({ k: key, x: left + dx, y: Y + dy - fs, w: maxW, h: lh * use.length + fs * .3, fs, hidden: !!o.hidden });
+  HITS.set(x.canvas, hits);
+  return Y + lh * (use.length - 1) + fs * .3;
+}
+function pagePic(x, img, X, Y, w, h, rot = 0, opt = {}) {
+  if (!img) return;
+  x.save(); x.translate(X + w / 2, Y + h / 2); x.rotate(rot);
+  x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = Math.max(6, w * .08); x.shadowOffsetY = Math.max(2, w * .03);
+  if (opt.polaroid) { const p = w * .06; x.fillStyle = "#fff"; x.fillRect(-w / 2 - p, -h / 2 - p, w + p * 2, h + p * 3.2); x.shadowColor = "transparent"; }
+  x.fillStyle = "#fff"; x.fillRect(-w / 2, -h / 2, w, h); x.shadowColor = "transparent";
+  if (opt.crop) { const [sx, sy, sw, sh] = opt.crop; x.drawImage(img, sx, sy, sw, sh, -w / 2, -h / 2, w, h); } else x.drawImage(img, -w / 2, -h / 2, w, h);
+  x.restore();
+}
+function pin(x, X, Y, r, col) { x.fillStyle = col; x.beginPath(); x.arc(X, Y, r, 0, 7); x.fill(); x.fillStyle = "rgba(255,255,255,.5)"; x.beginPath(); x.arc(X - r * .3, Y - r * .3, r * .3, 0, 7); x.fill(); }
+function stamp(x, text, X, Y, size, col, rot = -.15) { x.save(); x.translate(X, Y); x.rotate(rot); x.font = `700 ${size}px Oswald`; const w = x.measureText(text).width + size; x.strokeStyle = col; x.lineWidth = size * .12; x.strokeRect(-w / 2, -size * .8, w, size * 1.5); x.fillStyle = col; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, 0, 0); x.restore(); }
+function noteCard(x, X, Y, w, h, rot, col) { x.save(); x.translate(X + w / 2, Y + h / 2); x.rotate(rot); x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 12; x.shadowOffsetY = 4; x.fillStyle = col; x.fillRect(-w / 2, -h / 2, w, h); x.restore(); }
+const pg = (i) => PAGES.length ? PAGES[i % PAGES.length] : null;
+const ink = () => T().ink, sub = () => T().sub, light = () => T().light;
+
+/* ---------- module painters (each has 3 layouts) ---------- */
+const PAINT = {
+  banner(x, w, h, v) {
+    paintBg(x, w, h);
+    const acc = ACC(), cover = COVER;
+    if (v === 0) {                         // evidence board: cover pinned, pages around, red string
+      pagePic(x, cover, w * .06, h * .12, h * .5, h * .75, -.04);
+      pagePic(x, pg(1), w * .33, h * .5, h * .3, h * .39, .07, { polaroid: true });
+      pagePic(x, pg(2), w * .78, h * .52, h * .3, h * .39, -.06, { polaroid: true });
+      x.strokeStyle = acc; x.lineWidth = 3; x.beginPath(); x.moveTo(w * .2, h * .14); x.lineTo(w * .41, h * .52); x.lineTo(w * .86, h * .55); x.stroke();
+      [[w * .2, h * .14], [w * .41, h * .52], [w * .86, h * .55]].forEach(([a, b]) => pin(x, a, b, 8, acc));
+      noteCard(x, w * .42, h * .08, w * .5, h * .42, -.015, T().note);
+      const ny = put(x, "banner.head", TX["banner.head"], w * .67, h * .19, w * .44, `900 38px ${HEAD()}`, light() || T().id === "board" ? "#1f1a16" : ink(), { max: 3 });
+      put(x, "banner.sub", TX["banner.sub"], w * .67, ny + 30, w * .44, "600 18px Manrope", T().id === "board" ? "#5a4630" : sub(), { max: 2 });
+      stamp(x, TX["banner.tag"], w * .62, h * .84, 26, acc, -.08);
+    } else if (v === 1) {                  // desk: cover + fanned pages, big headline left
+      const g = x.createLinearGradient(0, 0, w * .55, 0); g.addColorStop(0, "rgba(0,0,0,.35)"); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = light() ? "rgba(255,255,255,0)" : g; x.fillRect(0, 0, w, h);
+      [pg(3), pg(1), pg(0)].forEach((p, i) => pagePic(x, p, w * .6 + i * 40, h * .14 + i * 8, h * .46, h * .6, -.12 + i * .1));
+      pagePic(x, cover, w * .5, h * .2, h * .44, h * .66, -.05);
+      let ny = put(x, "banner.head", TX["banner.head"], w * .06, h * .3, w * .4, `900 46px ${HEAD()}`, ink(), { align: "left", shadow: !light() });
+      ny = put(x, "banner.sub", TX["banner.sub"], w * .06, ny + 40, w * .38, "600 21px Manrope", sub(), { align: "left" });
+      put(x, "banner.tag", TX["banner.tag"], w * .06, ny + 70, w * .3, "800 22px Manrope", "#fff", { align: "left", box: acc });
+    } else {                               // spotlight: cover centred in a light beam, text above
+      const rg = x.createRadialGradient(w / 2, h * .62, 10, w / 2, h * .62, h * .7); rg.addColorStop(0, "rgba(255,240,210,.35)"); rg.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = rg; x.fillRect(0, 0, w, h);
+      pagePic(x, pg(0), w * .2, h * .4, h * .3, h * .4, -.1); pagePic(x, pg(2), w * .68, h * .4, h * .3, h * .4, .1);
+      pagePic(x, cover, w / 2 - h * .22, h * .3, h * .44, h * .64, 0);
+      const ny = put(x, "banner.head", TX["banner.head"], w / 2, h * .13, w * .86, `900 40px ${HEAD()}`, ink(), { shadow: !light(), max: 2 });
+      put(x, "banner.sub", TX["banner.sub"], w / 2, ny + 30, w * .8, "600 19px Manrope", sub());
+      put(x, "banner.tag", TX["banner.tag"], w * .86, h * .9, w * .2, "800 20px Manrope", "#fff", { box: acc });
+    }
+  },
+  strip(x, w, h, v) {
+    paintBg(x, w, h);
+    if (v === 0) { for (let i = 0; i < 5; i++) pagePic(x, pg(i), w * .05 + i * w * .19, h * .3, h * .5, h * .64, (i % 2 ? .04 : -.04)); x.fillStyle = light() ? "rgba(255,255,255,.75)" : "rgba(0,0,0,.55)"; x.fillRect(0, 0, w, h * .26); put(x, "strip.head", TX["strip.head"], w / 2, h * .17, w * .9, `900 34px ${HEAD()}`, ink(), { max: 1 }); }
+    else if (v === 1) { pagePic(x, COVER, w * .05, h * .08, h * .56, h * .84, -.03); const ny = put(x, "strip.head", TX["strip.head"], w * .3, h * .4, w * .38, `900 34px ${HEAD()}`, ink(), { align: "left" }); x.fillStyle = ACC(); x.fillRect(w * .3, ny + 14, 60, 5); pagePic(x, pg(1), w * .72, h * .1, h * .6, h * .78, .05); }
+    else { x.fillStyle = ACC(); x.fillRect(0, 0, w * .42, h); put(x, "strip.head", TX["strip.head"], w * .21, h * .42, w * .36, `900 32px ${HEAD()}`, "#fff"); [0, 1, 2].forEach((i) => pagePic(x, pg(i), w * .47 + i * w * .17, h * .12, h * .58, h * .76, (i - 1) * .04)); }
+  },
+  inside(x, w, h, v, i) {
+    paintBg(x, w, h);
+    const p = pg(i), lab = TX[`inside.l${i}`];
+    if (v === 0) { pagePic(x, p, w * .14, h * .1, w * .72, h * .66, (i % 2 ? .05 : -.05), { polaroid: true }); put(x, `inside.l${i}`, lab, w / 2, h * .93, w * .9, "700 21px Caveat", light() ? "#2a2a2a" : ink()); }
+    else if (v === 1) { const ph = p ? p.height : 1294, pw = p ? p.width : 1000; pagePic(x, p, 8, 8, w - 16, h - 16, 0, { crop: [pw * .1, ph * .18, pw * .8, ph * .62] }); put(x, `inside.l${i}`, lab, w / 2, h - 22, w * .9, "800 17px Manrope", "#fff", { box: "rgba(0,0,0,.7)" }); }
+    else { noteCard(x, w * .08, h * .08, w * .84, h * .84, 0, "#f4ecd9"); pagePic(x, p, w * .2, h * .14, w * .6, h * .56, 0); x.fillStyle = ACC(); x.beginPath(); x.moveTo(w * .08, h * .08); x.lineTo(w * .3, h * .08); x.lineTo(w * .08, h * .3); x.fill(); put(x, `inside.l${i}`, lab, w / 2, h * .85, w * .8, "400 16px 'Special Elite'", "#2a1d12"); }
+  },
+  high(x, w, h, v, i) {
+    paintBg(x, w, h);
+    const acc = ACC(), num = String(i + 1);
+    if (v === 0) { x.fillStyle = acc; x.beginPath(); x.arc(w / 2, h * .34, w * .2, 0, 7); x.fill(); x.fillStyle = "#fff"; x.font = `900 ${w * .2}px ${HEAD()}`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(["✎", "▦", "✓"][i], w / 2, h * .35); x.textBaseline = "alphabetic"; put(x, `high.h${i}`, TX[`high.h${i}`], w / 2, h * .72, w * .84, `800 24px ${HEAD()}`, ink(), { max: 2 }); }
+    else if (v === 1) { const p = pg(i + 1), pw = p ? p.width : 1000, ph = p ? p.height : 1294; pagePic(x, p, 12, 12, w - 24, h * .62, 0, { crop: [pw * .15, ph * .22, pw * .7, ph * .45] }); put(x, `high.h${i}`, TX[`high.h${i}`], w / 2, h * .84, w * .9, `800 22px ${HEAD()}`, ink(), { max: 2 }); }
+    else { x.fillStyle = acc; x.font = `900 ${w * .42}px ${HEAD()}`; x.textAlign = "left"; x.globalAlpha = .9; x.fillText(num, w * .08, h * .48); x.globalAlpha = 1; put(x, `high.h${i}`, TX[`high.h${i}`], w * .08, h * .7, w * .84, `800 26px ${HEAD()}`, ink(), { align: "left", max: 2 }); }
+  },
+  how(x, w, h, v, i) {
+    paintBg(x, w, h);
+    const g = grid15(PIX.bottle), size = w * .68, solved = [0, .55, 1][i];
+    const X = (w - size) / 2, Y = v === 0 ? h * .1 : h * .06;
+    if (v === 0) { noteCard(x, X - 10, Y - 10, size + 20, size + 20, (i - 1) * .03, "#fffdf6"); }
+    else { x.fillStyle = light() ? "#fff" : "rgba(255,255,255,.95)"; rr(x, X - 8, Y - 8, size + 16, size + 16, 10); x.fill(); }
+    if ($("genreSel").value === "activity" && pg(i)) pagePic(x, pg(i), X, Y, size, size, 0, { crop: [0, pg(i).height * .1, pg(i).width, pg(i).width] });
+    else nonogram(x, X, Y, size, g, solved);
+    if (v === 0) { x.fillStyle = ACC(); x.beginPath(); x.arc(w * .12, h * .1, 20, 0, 7); x.fill(); x.fillStyle = "#fff"; x.font = "900 22px Manrope"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(i + 1, w * .12, h * .1); x.textBaseline = "alphabetic"; }
+    put(x, `how.h${i}`, `${v === 2 ? "" : (i + 1) + ". "}${TX[`how.h${i}`]}`, w / 2, h * .95, w * .9, `800 21px ${HEAD()}`, ink(), { max: 1 });
+  },
+  ladder(x, w, h, v) {
+    paintBg(x, w, h);
+    const acc = ACC();
+    put(x, "ladder.head", TX["ladder.head"], w / 2, h * .2, w * .9, `900 32px ${HEAD()}`, ink(), { max: 1, shadow: !light() });
+    for (let i = 0; i < 4; i++) {
+      const cx = w * (.16 + i * .227), cy = h * .62, a = .35 + i * .22;
+      if (v === 0) { x.fillStyle = acc; x.globalAlpha = a; rr(x, cx - w * .09, cy - h * .18 + (3 - i) * 8, w * .18, h * .36 - (3 - i) * 8, 12); x.fill(); x.globalAlpha = 1; for (let s = 0; s <= i; s++) { x.fillStyle = "#fff"; x.font = "18px Manrope"; x.textAlign = "center"; x.fillText("★", cx - (i * 10) + s * 20, cy - 4); } }
+      else if (v === 1) { const bh = h * (.12 + i * .08); x.fillStyle = acc; x.globalAlpha = a + .2; x.fillRect(cx - w * .07, h * .86 - bh, w * .14, bh); x.globalAlpha = 1; }
+      else { x.strokeStyle = acc; x.lineWidth = 4; x.beginPath(); x.arc(cx, cy - 6, 34, 0, 7); x.stroke(); x.fillStyle = acc; x.globalAlpha = a; x.beginPath(); x.arc(cx, cy - 6, 28, -Math.PI / 2, -Math.PI / 2 + (i + 1) / 4 * Math.PI * 2); x.lineTo(cx, cy - 6); x.fill(); x.globalAlpha = 1; }
+      put(x, `ladder.s${i}`, TX[`ladder.s${i}`], cx, v === 1 ? h * .95 : h * .93, w * .2, "800 20px Manrope", ink(), { max: 1 });
+    }
+  },
+  gift(x, w, h, v) {
+    paintBg(x, w, h);
+    const acc = ACC();
+    if (v === 2) pagePic(x, COVER, w * .04, h * .08, h * .56, h * .84, -.04);
+    const left = v === 2 ? w * .25 : w * .05, span = v === 2 ? w * .71 : w * .9;
+    put(x, "gift.head", TX["gift.head"], left + span / 2, h * .25, span, `900 32px ${HEAD()}`, ink(), { max: 1, shadow: !light() });
+    for (let i = 0; i < 4; i++) {
+      const cx = left + span * (.125 + i * .25), cy = h * .62;
+      if (v === 0) { noteCard(x, cx - span * .1, cy - h * .2, span * .2, h * .4, (i % 2 ? .04 : -.04), T().note); put(x, `gift.g${i}`, TX[`gift.g${i}`], cx, cy + 6, span * .18, `700 22px Caveat`, light() || T().note.startsWith("#f") ? "#2a2a2a" : ink(), { max: 3 }); pin(x, cx, cy - h * .2 + 6, 7, acc); }
+      else { x.fillStyle = acc; x.beginPath(); x.arc(cx, cy - h * .08, 22, 0, 7); x.fill(); x.fillStyle = "#fff"; x.font = "900 20px Manrope"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("✓", cx, cy - h * .08); x.textBaseline = "alphabetic"; put(x, `gift.g${i}`, TX[`gift.g${i}`], cx, cy + h * .14, span * .22, "700 19px Manrope", ink(), { max: 2 }); }
+    }
+  },
+  detail(x, w, h, v) {
+    paintBg(x, w, h);
+    const p = pg(1) || pg(0), pw = p ? p.width : 1000, ph = p ? p.height : 1294;
+    if (v === 0) { pagePic(x, p, w * .1, h * .08, w * .55, h * .7, -.04); x.save(); x.beginPath(); x.arc(w * .62, h * .5, w * .25, 0, 7); x.clip(); if (p) x.drawImage(p, pw * .35, ph * .3, pw * .3, ph * .23, w * .37, h * .25, w * .5, w * .5); x.restore(); x.strokeStyle = ACC(); x.lineWidth = 8; x.beginPath(); x.arc(w * .62, h * .5, w * .25, 0, 7); x.stroke(); }
+    else if (v === 1) { pagePic(x, p, 10, 10, w - 20, h * .7, 0, { crop: [pw * .3, ph * .3, pw * .4, ph * .28] }); }
+    else { pagePic(x, p, w * .2, h * .06, w * .6, h * .74, 0); x.strokeStyle = ACC(); x.lineWidth = 4; x.strokeRect(w * .38, h * .3, w * .28, w * .2); }
+    put(x, "detail.head", TX["detail.head"], w / 2, h * .93, w * .9, `800 20px ${HEAD()}`, ink(), { max: 2 });
+  },
+  compare(x, w, h, v, i) {
+    paintBg(x, w, h);
+    const img = i === 0 ? COVER : VOLS[i - 1]?.img, lab = i === 0 ? "Volume 1" : (VOLS[i - 1]?.name || "").split("·")[0].trim();
+    if (v === 0) pagePic(x, img, w * .1, h * .1, w * .8, h * .66, 0);
+    else if (v === 1) pagePic(x, img, w * .14, h * .06, w * .72, h * .62, (i % 2 ? .04 : -.04), { polaroid: true });
+    else { x.fillStyle = ACC(); x.fillRect(0, 0, w, h * .14); x.fillStyle = "#fff"; x.font = "800 16px Manrope"; x.textAlign = "center"; x.fillText(String(i + 1).padStart(2, "0"), w / 2, h * .09); pagePic(x, img, w * .1, h * .2, w * .8, h * .62, 0); }
+    put(x, `compare.l${i}`, TX[`compare.l${i}`] || lab, w / 2, h * .93, w * .92, "800 15px Manrope", ink(), { max: 2 });
+  },
+  logo(x, w, h, v) {
+    if (v === 0) paintBg(x, w, h); else { x.fillStyle = light() ? "#ffffff" : "#111"; x.fillRect(0, 0, w, h); }
+    const acc = ACC(), dark = v === 0 ? light() : v === 1 ? true : false;
+    if (v === 2) { x.strokeStyle = acc; x.lineWidth = 6; x.beginPath(); x.arc(h * .55, h / 2, h * .36, 0, 7); x.stroke(); const g = grid15(PIX.key), cs = h * .036; x.fillStyle = acc; g.forEach((r, yy) => r.forEach((vv, xx) => vv && x.fillRect(h * .55 - cs * 7.5 + xx * cs, h / 2 - cs * 7.5 + yy * cs, cs - 1, cs - 1))); }
+    else { x.fillStyle = acc; x.fillRect(w * .06, h * .3, 8, h * .4); }
+    const lx = v === 2 ? h * 1.05 : w * .1;
+    const ny = put(x, "logo.name", TX["logo.name"], lx, h * .52, w - lx - 20, `900 46px ${HEAD()}`, v === 1 ? (light() ? "#111" : "#fff") : ink(), { align: "left", max: 1 });
+    put(x, "logo.tag", TX["logo.tag"], lx, ny + 30, w - lx - 20, "700 15px Manrope", acc, { align: "left", max: 1 });
+  },
+};
+
+/* =========================================================
+   Building the page
+   ========================================================= */
+let SELM = null;           // selected module id
+const CANV = {};           // module id -> [canvas]
+function renderModule(m) {
+  const n = countOf(m), list = [];
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement("canvas");
+    c.width = m.w; c.height = m.h; c.dataset.m = m.id; c.dataset.i = i;
+    const x = c.getContext("2d");
+    HITS.set(c, []);
+    PAINT[m.id](x, m.w, m.h, VAR[m.id] || 0, i);
+    list.push(c);
+  }
+  CANV[m.id] = list;
+  return list;
+}
+function draw() {
+  const box = $("blocks"), mob = S.view === "mob";
+  box.innerHTML = "";
+  $("amzTitle").textContent = val("mainInput") || "Your book";
+  $("amz").classList.toggle("mobile", mob);
+  ORDER.filter((id) => ON[id]).forEach((id) => {
+    const m = modById(id), list = renderModule(m), blk = document.createElement("div");
+    blk.className = "blk" + (SELM === id ? " sel" : ""); blk.dataset.m = id; blk.style.marginTop = "34px";
+    blk.innerHTML = `<div class="lab">${m.n} <span style="font-weight:600;text-transform:none">${m.w}×${m.h}</span><button type="button" data-vp="${id}" title="Previous layout">◀</button><span>Layout ${(VAR[id] || 0) + 1}/3</span><button type="button" data-vn="${id}" title="Next layout">▶</button></div>`;
+    const maxW = mob ? 380 : 970;
+    if (list.length === 1 && m.w >= 600) { list[0].style.width = Math.min(maxW, m.w) + "px"; blk.append(list[0]); }
+    else {
+      const row = document.createElement("div"); row.className = "row";
+      list.forEach((c) => { c.style.width = (mob ? Math.min(m.w, 170) : m.w) + "px"; row.append(c); });
+      blk.append(row);
+      const items = id === "high" || id === "how" ? KT[id].items : null;
+      if (items) blk.insertAdjacentHTML("beforeend", `<div class="under">${items.map((it) => `<p style="width:${mob ? 170 : m.w}px"><b>${esc(it.h)}</b>${esc(it.d || "")}</p>`).join("")}</div>`);
+    }
+    box.append(blk);
+  });
+  if (SELM) { const h = currentHit(); if (h) placeEd(h); }
+  kdpPanel(); checks(); save();
+}
+$("blocks").addEventListener("click", (e) => {
+  const p = e.target.closest("[data-vp]"), n = e.target.closest("[data-vn]");
+  if (p || n) { snap(); const id = (p || n).dataset[p ? "vp" : "vn"]; VAR[id] = ((VAR[id] || 0) + (n ? 1 : 2)) % 3; SELM = id; draw(); }
+});
+
+/* =========================================================
+   Editing text right on the images
+   ========================================================= */
+let SELK = null, SELC = null, drag = null;
+const NAMES = (k) => ({ "banner.head": "Banner headline", "banner.sub": "Banner line", "banner.tag": "Banner tag", "strip.head": "Strip headline", "ladder.head": "Ladder headline", "gift.head": "Gift headline", "detail.head": "Zoom caption", "logo.name": "Logo name", "logo.tag": "Logo tagline" }[k] || (k.startsWith("inside") ? "Look-inside label" : k.startsWith("high") ? "Highlight" : k.startsWith("how") ? "Step" : k.startsWith("ladder") ? "Level" : k.startsWith("gift") ? "Gift idea" : k.startsWith("compare") ? "Volume label" : "Text"));
+function canvasXY(e, c) { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; }
+function hitIn(c, x, y) { return [...(HITS.get(c) || [])].reverse().find((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h); }
+function currentHit() { if (!SELK) return null; for (const list of Object.values(CANV)) for (const c of list) { const h = (HITS.get(c) || []).find((q) => q.k === SELK); if (h) { SELC = c; return h; } } return null; }
+function openEd(k) {
+  SELK = k; const o = OVR[k] || {};
+  $("ed").hidden = false; $("edName").textContent = NAMES(k);
+  $("edText").value = TX[k] ?? "";
+  $("edSize").value = Math.round((o.scale || 1) * 100); $("edFont").value = o.font || "";
+  $("edHide").textContent = o.hidden ? "Show" : "Hide"; $("edCase").classList.toggle("on", !!o.upper);
+  $("edCols").innerHTML = [...new Set([T().ink, ACC(), "#ffffff", "#1f1a16", "#b3261e", "#d4af37", "#f4c400"])].map((c) => `<button type="button" data-c="${c}" style="background:${c}"></button>`).join("") + `<input type="color" id="edColor" value="${/^#[0-9a-f]{6}$/i.test(o.color || "") ? o.color : "#b3261e"}"><button type="button" data-c="" title="Style colour" style="background:linear-gradient(135deg,#fff 45%,#e0245e 45%,#e0245e 55%,#fff 55%)"></button>`;
+}
+function closeEd() { SELK = null; SELC = null; $("ed").hidden = true; }
+function placeEd(h) {
+  if (matchMedia("(max-width:880px)").matches || !SELC) return;
+  const box = $("amz").getBoundingClientRect(), r = SELC.getBoundingClientRect(), sc = r.width / SELC.width, ed = $("ed"), ew = 290;
+  let left = r.left - box.left + (h.x + h.w / 2) * sc - ew / 2; left = clamp(left, 8, box.width - ew - 8);
+  ed.style.left = left + "px"; ed.style.top = (r.top - box.top + (h.y + h.h) * sc + 12) + "px";
+}
+const setO = (p) => { if (!SELK) return; OVR[SELK] = Object.assign({}, OVR[SELK], p); Object.keys(OVR[SELK]).forEach((k) => OVR[SELK][k] === undefined && delete OVR[SELK][k]); draw(); };
+$("blocks").addEventListener("pointerdown", (e) => {
+  const c = e.target.closest("canvas"); if (!c) return;
+  SELM = c.dataset.m;
+  const [x, y] = canvasXY(e, c), h = hitIn(c, x, y);
+  if (!h) { closeEd(); draw(); return; }
+  snap(); if (h.k !== SELK) openEd(h.k); SELC = c;
+  const o = OVR[h.k] || {}; drag = { c, x, y, dx: o.dx || 0, dy: o.dy || 0, moved: false };
+  c.setPointerCapture(e.pointerId); draw();
+});
+$("blocks").addEventListener("pointermove", (e) => {
+  const c = e.target.closest("canvas");
+  if (drag) { const [x, y] = canvasXY(e, drag.c), ddx = x - drag.x, ddy = y - drag.y; if (Math.abs(ddx) + Math.abs(ddy) > 3) drag.moved = true; if (drag.moved) { OVR[SELK] = Object.assign({}, OVR[SELK], { dx: drag.dx + ddx / drag.c.width, dy: drag.dy + ddy / drag.c.width }); redrawOne(drag.c); } return; }
+  if (c) { const [x, y] = canvasXY(e, c); c.style.cursor = hitIn(c, x, y) ? "move" : "pointer"; }
+});
+addEventListener("pointerup", () => { if (drag) { drag = null; draw(); } });
+function redrawOne(c) { const m = modById(c.dataset.m), i = +c.dataset.i, x = c.getContext("2d"); HITS.set(c, []); x.clearRect(0, 0, c.width, c.height); PAINT[m.id](x, m.w, m.h, VAR[m.id] || 0, i); }
+$("edText").addEventListener("input", () => { if (!SELK) return; TX[SELK] = $("edText").value; syncKdpFromTx(SELK); draw(); });
+$("edText").addEventListener("focus", () => snap());
+$("edSize").oninput = () => setO({ scale: +$("edSize").value / 100 });
+$("edSize").addEventListener("pointerdown", () => snap());
+document.querySelectorAll("#ed [data-a]").forEach((b) => b.onclick = () => { snap(); const v = clamp(+$("edSize").value + (b.dataset.a === "+" ? 10 : -10), 40, 240); $("edSize").value = v; setO({ scale: v / 100 }); });
+$("edCols").addEventListener("click", (e) => { const b = e.target.closest("[data-c]"); if (b) { snap(); setO({ color: b.dataset.c || undefined }); } });
+$("edCols").addEventListener("input", (e) => { if (e.target.id === "edColor") setO({ color: e.target.value }); });
+$("edFont").onchange = () => { snap(); setO({ font: $("edFont").value || undefined }); };
+$("edCase").onclick = () => { snap(); const v = !(OVR[SELK] || {}).upper; setO({ upper: v || undefined }); $("edCase").classList.toggle("on", v); };
+$("edHide").onclick = () => { snap(); const v = !(OVR[SELK] || {}).hidden; setO({ hidden: v || undefined }); $("edHide").textContent = v ? "Show" : "Hide"; };
+$("edReset").onclick = () => { snap(); delete OVR[SELK]; draw(); };
+$("edDone").onclick = $("edX").onclick = () => { closeEd(); draw(); };
+// headlines shown on images are also the KDP headline fields: keep them in step
+function syncKdpFromTx(k) { const m = k.split(".")[0]; if (k.endsWith(".head") && KT[m]) KT[m].head = TX[k]; if (k.startsWith("inside.l")) KT.inside.labs[+k.slice(-1)] = TX[k]; }
+
+/* =========================================================
+   KDP text panel + checks
+   ========================================================= */
+function kdpPanel() {
+  const id = SELM && ON[SELM] ? SELM : null, box = $("kdpBody");
+  if (!id) { $("kdpMod").textContent = "select a module"; box.innerHTML = '<p class="tip">Click a module on the page: its headline, body text and image keywords (alt text) for the KDP A+ editor appear here, ready to copy.</p>'; return; }
+  const m = modById(id), k = KT[id] || { head: "", body: "", alts: [] };
+  $("kdpMod").textContent = m.kdp;
+  const alts = (k.alts || []).slice(0, countOf(m));
+  while (alts.length < countOf(m)) alts.push("");
+  box.innerHTML = `${m.id !== "logo" ? `<label class="f" for="kHead">Headline <span class="cnt" id="kHeadC"></span></label><input class="in" id="kHead" value="${esc(k.head)}">` : ""}
+    ${["banner", "strip", "ladder", "gift", "detail"].includes(m.id) ? `<label class="f" for="kBody">Body text <span class="cnt" id="kBodyC"></span></label><textarea class="in" id="kBody">${esc(k.body)}</textarea>` : ""}
+    ${(k.items || []).map((it, i) => `<label class="f">Item ${i + 1} title / text</label><input class="in" data-ih="${i}" value="${esc(it.h)}">${it.d != null ? `<textarea class="in" data-id="${i}" style="min-height:50px;margin-top:5px">${esc(it.d)}</textarea>` : ""}`).join("")}
+    ${alts.map((a, i) => `<label class="f">Image ${i + 1} keywords (alt text)</label><input class="in" data-alt="${i}" value="${esc(a)}">`).join("")}
+    <div class="mini copy"><button type="button" id="kCopy">Copy this module's texts</button><button type="button" id="kNew">New wording</button></div>`;
+  const cnt = () => { if ($("kHeadC")) $("kHeadC").textContent = $("kHead").value.length + " chars"; if ($("kBodyC")) $("kBodyC").textContent = $("kBody").value.length + " chars"; };
+  cnt();
+  box.oninput = (e) => {
+    const t = e.target;
+    if (t.id === "kHead") { k.head = t.value; const key = id + ".head"; if (key in TX) { TX[key] = t.value; draw(); return; } }
+    if (t.id === "kBody") k.body = t.value;
+    if (t.dataset.alt != null) { k.alts[+t.dataset.alt] = t.value; checks(); }
+    if (t.dataset.ih != null) { k.items[+t.dataset.ih].h = t.value; if (id === "high") TX[`high.h${t.dataset.ih}`] = t.value; if (id === "how") TX[`how.h${t.dataset.ih}`] = t.value; draw(); return; }
+    if (t.dataset.id != null) { k.items[+t.dataset.id].d = t.value; draw(); return; }
+    cnt(); checks(); save();
+  };
+  box.addEventListener("focusin", () => snap(), { once: true });
+  $("kCopy").onclick = () => copyText(moduleText(id));
+  $("kNew").onclick = () => { snap(); const keep = JSON.parse(JSON.stringify(TX)); writeTexts(true); Object.keys(keep).forEach((key) => { if (!key.startsWith(id + ".")) TX[key] = keep[key]; }); draw(); toast("New wording for this module"); };
+}
+function moduleText(id) {
+  const m = modById(id), k = KT[id] || {};
+  const lines = [`== ${m.n} (${m.kdp}) ==`];
+  if (k.head) lines.push("Headline: " + k.head);
+  if (k.body) lines.push("Body: " + k.body);
+  (k.items || []).forEach((it, i) => lines.push(`Item ${i + 1}: ${it.h}${it.d ? " — " + it.d : ""}`));
+  (k.alts || []).slice(0, countOf(m)).forEach((a, i) => lines.push(`Image ${i + 1} keywords: ${a}`));
+  return lines.join("\n");
+}
+function copyText(t) { navigator.clipboard?.writeText(t).then(() => toast("Copied: paste it in the KDP A+ editor"), () => dl(new Blob([t], { type: "text/plain" }), "a-plus-texts.txt")); }
+const BANNED = [[/\$\s?\d|\d\s?(usd|dollars?)\b|price|\bcheap/i, "a price"], [/\bfree\b/i, '"free"'], [/\bsale\b|discount|% off|deal\b/i, "a sale or discount"], [/best ?sell|#\s?1\b|number one/i, 'a "bestseller" claim'], [/review|★{3,}|\bstars?\b|rated/i, "reviews or ratings"], [/new release|brand new|just released|limited time|today only|order now|while stocks/i, "time-limited wording"], [/https?:|www\.|@\w+\.\w+/i, "a link or email"]];
+function checks() {
+  const out = [], texts = [...Object.entries(TX).filter(([k]) => ON[k.split(".")[0]]).map(([, v]) => v), ...Object.entries(KT).filter(([id]) => ON[id]).flatMap(([, k]) => [k.head, k.body, ...(k.items || []).flatMap((it) => [it.h, it.d])])].filter(Boolean).join(" \n ");
+  out.push([true, "Every image is exported at its exact KDP size."]);
+  BANNED.forEach(([rx, what]) => { if (rx.test(texts)) out.push([false, `Remove ${what}: Amazon rejects it in A+ Content.`]); });
+  const missingAlt = MODS.filter((m) => ON[m.id]).some((m) => (KT[m.id]?.alts || []).slice(0, countOf(m)).filter((a) => a && a.trim()).length < countOf(m));
+  out.push(missingAlt ? [false, "Some images have no keywords (alt text): KDP asks for them."] : [true, "All images have keywords (alt text)."]);
+  let small = false; Object.values(CANV).flat().forEach((c) => (HITS.get(c) || []).forEach((h) => { if (!h.hidden && h.fs < (c.width <= 300 ? 15 : 18)) small = true; }));
+  out.push(small ? [false, "Some text is very small: it may be hard to read on phones."] : [true, "Text sizes are readable on phones."]);
+  if (ON.compare && VOLS.length < 1) out.push([false, "The comparison chart needs at least 2 volumes (Series tab)."]);
+  if (!ORDER.some((id) => ON[id])) out.push([false, "Tick at least one module."]);
+  $("checks").innerHTML = out.map(([ok, t]) => `<div class="${ok ? "ok" : "bad"}"><i>${ok ? "✓" : "!"}</i><span>${t}</span></div>`).join("");
+}
+
+/* =========================================================
+   Exports
+   ========================================================= */
+const base = () => (val("mainInput") || "book").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+const blobOf = (c) => new Promise((res) => c.toBlob(res, "image/png"));
+async function exportZip() {
+  if (!window.JSZip) { toast("The ZIP library didn't load: check your connection"); return; }
+  $("busy").classList.add("on"); closeEd(); draw();
+  const zip = new JSZip(); let n = 0;
+  for (const id of ORDER.filter((q) => ON[q])) { n++; const m = modById(id); for (const [i, c] of CANV[id].entries()) zip.file(`${String(n).padStart(2, "0")}-${id}${CANV[id].length > 1 ? "-" + (i + 1) : ""}-${m.w}x${m.h}.png`, await blobOf(c)); }
+  zip.file("kdp-a-plus-texts.txt", allTexts());
+  dl(await zip.generateAsync({ type: "blob" }), `${base()}-a-plus.zip`);
+  $("busy").classList.remove("on"); toast(`${n} modules saved in one ZIP`);
+}
+function allTexts() { return `A+ Content for ${val("mainInput")}\nModules in page order. Add them in KDP in the same order.\n\n` + ORDER.filter((id) => ON[id]).map(moduleText).join("\n\n"); }
+$("xZip").onclick = exportZip;
+$("xMod").onclick = async () => { if (!SELM || !ON[SELM]) { toast("Click a module on the page first"); return; } closeEd(); draw(); const m = modById(SELM); for (const [i, c] of CANV[SELM].entries()) { dl(await blobOf(c), `${base()}-${SELM}${CANV[SELM].length > 1 ? "-" + (i + 1) : ""}-${m.w}x${m.h}.png`); await new Promise((r) => setTimeout(r, 300)); } toast("Module saved"); };
+$("xText").onclick = () => copyText(allTexts());
+$("xPreview").onclick = async () => {
+  closeEd(); draw(); const W = 1100, pad = 65, ids = ORDER.filter((q) => ON[q]); let H = 160;
+  ids.forEach((id) => { const m = modById(id); H += (m.w >= 600 && countOf(m) === 1 ? m.h : m.h + (["high", "how"].includes(id) ? 70 : 0)) + 40; });
+  const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
+  x.fillStyle = "#fff"; x.fillRect(0, 0, W, H); x.fillStyle = "#0f1111"; x.font = "700 26px Arial"; x.fillText(val("mainInput"), pad, 60); x.font = "700 20px Arial"; x.fillText("From the Publisher", pad, 110); x.fillStyle = "#e7e7e7"; x.fillRect(pad, 126, W - pad * 2, 1);
+  let y = 150;
+  for (const id of ids) { const m = modById(id), list = CANV[id];
+    if (m.w >= 600 && list.length === 1) { x.drawImage(list[0], (W - m.w) / 2, y); y += m.h + 40; continue; }
+    const gap = 14, total = list.length * m.w + (list.length - 1) * gap; list.forEach((cv, i) => x.drawImage(cv, (W - total) / 2 + i * (m.w + gap), y)); y += m.h + 10;
+    if (["high", "how"].includes(id)) { x.fillStyle = "#0f1111"; x.textAlign = "center"; KT[id].items.forEach((it, i) => { const cx = (W - total) / 2 + i * (m.w + gap) + m.w / 2; x.font = "700 15px Arial"; x.fillText(it.h, cx, y + 18); x.font = "13px Arial"; x.fillText((it.d || "").slice(0, 46), cx, y + 40); }); x.textAlign = "left"; y += 60; }
+    y += 30; }
+  dl(await blobOf(c), `${base()}-a-plus-preview.png`); toast("Page preview saved");
+};
+$("viewSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; $("viewSeg").querySelectorAll("button").forEach((q) => q.classList.toggle("on", q === b)); closeEd(); draw(); });
+
+/* =========================================================
+   Undo / redo, saving, projects
+   ========================================================= */
+let hist = [], fut = [];
+const stateStr = () => JSON.stringify({ TX, KT, OVR, VAR, ORDER, ON, look: { theme: S.theme, acc: S.acc, font: S.font }, book: ["mainInput", "subIn", "authIn", "countIn", "levelIn", "forIn"].map((id) => $(id).value), nP: PAGES.length, nV: VOLS.length });
+const ASSET_POOL = { pages: [], vols: [], cover: null };
+function snap() { const s = stateStr(); if (hist[hist.length - 1]?.s === s) return; hist.push({ s, pages: PAGES.slice(), vols: VOLS.slice(), cover: COVER }); if (hist.length > 80) hist.shift(); fut = []; hb(); }
+function restoreState(st) { const d = JSON.parse(st.s); ({ TX, KT, OVR, VAR, ORDER, ON } = d); Object.assign(S, d.look); ["mainInput", "subIn", "authIn", "countIn", "levelIn", "forIn"].forEach((id, i) => $(id).value = d.book[i]); PAGES = st.pages; VOLS = st.vols; COVER = st.cover; renderModList(); renderAssets(); themeThumbs(); draw(); }
+function undo() { if (!hist.length) return; fut.push({ s: stateStr(), pages: PAGES.slice(), vols: VOLS.slice(), cover: COVER }); restoreState(hist.pop()); hb(); }
+function redo() { if (!fut.length) return; hist.push({ s: stateStr(), pages: PAGES.slice(), vols: VOLS.slice(), cover: COVER }); restoreState(fut.pop()); hb(); }
+function hb() { $("undo").disabled = !hist.length; $("redo").disabled = !fut.length; }
+$("undo").onclick = undo; $("redo").onclick = redo;
+addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.target.matches("input,textarea")) { e.preventDefault(); e.shiftKey ? redo() : undo(); } if (e.key === "Escape") { document.querySelectorAll(".modal").forEach((m) => m.classList.remove("on")); closeEd(); draw(); } });
+["mainInput", "subIn", "authIn", "countIn", "levelIn", "forIn"].forEach((id) => { $(id).addEventListener("focus", () => snap()); $(id).addEventListener("input", () => { if (id === "mainInput") renderAssets(); draw(); }); });
+$("btnGen").onclick = () => { snap(); writeTexts(true); draw(); toast("Every module has fresh wording"); };
+$("genreSel").onchange = () => { snap(); writeTexts(false); draw(); toast("Texts rewritten for this type of book"); };
+
+function save() { store.set("look", { theme: S.theme, acc: S.acc, font: S.font, view: S.view }); store.set("state", { TX, KT, OVR, VAR, ORDER, ON, book: ["mainInput", "subIn", "authIn", "countIn", "levelIn", "forIn"].map((id) => $(id).value), genre: $("genreSel").value }); }
+function loadState() { const d = store.get("state", null); if (!d || !d.KT || !d.KT.how || !d.KT.how.items || !d.TX || !d.ORDER) return false; ({ TX, KT, OVR, VAR } = d); ORDER = d.ORDER.filter((id) => modById(id)); MODS.forEach((m) => { if (!ORDER.includes(m.id)) ORDER.push(m.id); }); ON = d.ON; ["mainInput", "subIn", "authIn", "countIn", "levelIn", "forIn"].forEach((id, i) => { if (d.book[i] != null) $(id).value = d.book[i]; }); if (d.genre) $("genreSel").value = d.genre; LIB = LIBS[$("genreSel").value] || LIBS.mystery; return true; }
+
+// projects in IndexedDB (they carry images)
+const DB = { db: null,
+  open() { return new Promise((res) => { try { const r = indexedDB.open("a-plus-designer", 1); r.onupgradeneeded = () => r.result.createObjectStore("p", { keyPath: "id" }); r.onsuccess = () => { this.db = r.result; res(); }; r.onerror = () => res(); } catch { res(); } }); },
+  all() { return new Promise((res) => { if (!this.db) return res([]); const q = this.db.transaction("p").objectStore("p").getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); }); },
+  put(v) { return new Promise((res) => { if (!this.db) return res(); const q = this.db.transaction("p", "readwrite").objectStore("p").put(v); q.onsuccess = q.onerror = () => res(); }); },
+  del(id) { return new Promise((res) => { if (!this.db) return res(); const q = this.db.transaction("p", "readwrite").objectStore("p").delete(id); q.onsuccess = q.onerror = () => res(); }); },
+};
+async function renderProjs() { const list = (await DB.all()).sort((a, b) => b.id - a.id); $("projs").innerHTML = list.length ? list.map((p) => `<div><span>${esc(p.name)}</span><button type="button" data-o="${p.id}">Open</button><button type="button" data-d="${p.id}">✕</button></div>`).join("") : '<p class="tip" style="margin:0">Saved sets keep their images and texts on this device. Export makes a backup file.</p>'; }
+$("projSave").onclick = async () => { await DB.put({ id: Date.now(), name: val("mainInput") || "A+ set", state: JSON.parse(stateStr()), cover: COVER?.toDataURL("image/jpeg", .85) || null, pages: PAGES.map((p) => p.toDataURL("image/jpeg", .85)), vols: VOLS.map((v) => ({ name: v.name, img: v.img.toDataURL("image/jpeg", .85) })) }); renderProjs(); toast("A+ set saved"); };
+$("projs").addEventListener("click", async (e) => {
+  const o = e.target.closest("[data-o]"), d = e.target.closest("[data-d]"), list = await DB.all();
+  if (o) { const p = list.find((q) => q.id === +o.dataset.o); if (!p) return; $("busy").classList.add("on"); snap(); const mk = async (u) => toCanvas(await loadImg(u));
+    COVER = p.cover ? await mk(p.cover) : null; PAGES = []; for (const u of p.pages) PAGES.push(await mk(u)); VOLS = []; for (const v of p.vols) VOLS.push({ name: v.name, img: await mk(v.img) });
+    restoreState({ s: JSON.stringify(p.state), pages: PAGES, vols: VOLS, cover: COVER }); $("busy").classList.remove("on"); toast("A+ set opened"); }
+  if (d && confirm("Delete this saved set?")) { await DB.del(+d.dataset.d); renderProjs(); }
+});
+$("projExp").onclick = async () => { const list = await DB.all(); if (!list.length) { toast("Save a set first"); return; } dl(new Blob([JSON.stringify({ app: "a-plus-evidence-board-designer", sets: list })], { type: "application/json" }), "my-a-plus-sets.json"); };
+$("projImp").onclick = () => $("projFile").click();
+$("projFile").onchange = async () => { const f = $("projFile").files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); for (const p of j.sets || []) await DB.put(p); renderProjs(); toast(`${(j.sets || []).length} sets imported`); } catch { toast("That file isn't a sets backup"); } $("projFile").value = ""; };
+
+/* =========================================================
+   Tabs, modals, start
+   ========================================================= */
+document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => { document.querySelectorAll(".tabs button").forEach((q) => q.classList.toggle("on", q === b)); document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("on", p.id === "p-" + b.dataset.p)); });
+const openM = (id) => $(id).classList.add("on");
+document.querySelectorAll("[data-close]").forEach((b) => b.onclick = () => b.closest(".modal").classList.remove("on"));
+document.querySelectorAll(".modal").forEach((m) => m.addEventListener("click", (e) => { if (e.target === m) m.classList.remove("on"); }));
+$("btnGuide").onclick = () => openM("guide"); $("btnSizes").onclick = () => openM("sizes");
+
+Promise.race([Promise.all(["900 30px 'Playfair Display'", "700 30px Oswald", "30px 'Special Elite'", "30px 'Bebas Neue'", "700 30px Caveat", "700 30px Manrope"].map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 2500))]).then(async () => {
+  loadSamples();
+  if (!loadState()) writeTexts(false);
+  $("accIn").value = S.acc || T().acc; $("fontSel").value = S.font || "";
+  $("viewSeg").querySelectorAll("button").forEach((q) => q.classList.toggle("on", q.dataset.v === S.view));
+  themeThumbs(); renderModList(); renderAssets(); SELM = "banner"; draw(); hb();
+  await DB.open(); renderProjs();
+  if (!store.get("seen", false) && !navigator.webdriver) { openM("guide"); store.set("seen", true); }
+});
+})();
+</script>
+</body>
+</html>
