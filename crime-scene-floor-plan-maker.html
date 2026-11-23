@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crime Scene Floor Plan Maker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Special+Elite&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root { --paper:#f4f6f8; --card:#ffffff; --ink:#0f2238; --muted:#5d6b7c; --line:#dbe2ea; --blue:#1f5fa8; --blue2:#2f7fd8; --red:#d0343a; --amber:#f2b632; }
+* { box-sizing:border-box; }
+html, body { margin:0; }
+body { color:var(--ink); font:15px/1.5 "Space Grotesk", system-ui, sans-serif; min-height:100vh; background:var(--paper);
+  background-image:linear-gradient(rgba(31,95,168,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(31,95,168,.06) 1px, transparent 1px); background-size:24px 24px; }
+button, input, select, textarea { font:inherit; color:inherit; }
+.top { position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:14px; padding:12px 22px; background:rgba(255,255,255,.92); backdrop-filter:blur(8px); border-bottom:1.5px solid var(--ink); }
+.mark { width:38px; height:38px; border:2px solid var(--ink); border-radius:6px; display:grid; place-items:center; flex:none; background:#fff; }
+.ttl { min-width:0; } .ttl b { display:block; font:700 1.08rem/1 "IBM Plex Mono", monospace; letter-spacing:.02em; text-transform:uppercase; white-space:nowrap; } .ttl small { display:block; color:var(--muted); font-size:.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.top .sp { flex:1; }
+.tb { padding:9px 14px; border-radius:6px; border:1.5px solid var(--ink); background:#fff; cursor:pointer; font-weight:600; font-size:.86rem; white-space:nowrap; }
+.tb.blue { background:var(--blue); border-color:var(--blue); color:#fff; }
+.wrap { display:grid; grid-template-columns:minmax(0,320px) minmax(0,1fr) minmax(0,290px); gap:18px; padding:18px; max-width:1560px; margin:0 auto; align-items:start; }
+.card { background:var(--card); border:1.5px solid var(--ink); border-radius:8px; box-shadow:4px 4px 0 rgba(15,34,56,.12); }
+.sec { padding:14px 16px; border-bottom:1px dashed var(--line); } .sec:last-child { border-bottom:0; }
+.sec h3 { margin:0 0 10px; font:700 .74rem/1 "IBM Plex Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); display:flex; align-items:center; gap:8px; }
+.sec h3 i { font-style:normal; width:20px; height:20px; border:1.5px solid var(--blue); border-radius:4px; display:grid; place-items:center; font-size:.7rem; }
+label.f { display:block; font:600 .74rem/1.2 "IBM Plex Mono", monospace; color:var(--muted); margin:10px 0 5px; text-transform:uppercase; letter-spacing:.04em; }
+.in { width:100%; padding:9px 11px; border-radius:6px; border:1.5px solid var(--line); background:#fff; outline:none; }
+.in:focus { border-color:var(--blue2); }
+.sets { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.set { padding:9px 8px; border-radius:6px; border:1.5px solid var(--line); background:#fff; cursor:pointer; font-weight:600; font-size:.82rem; text-align:left; display:flex; gap:7px; align-items:center; white-space:nowrap; overflow:hidden; }
+.set.on { border-color:var(--blue); background:#eaf2fc; } .set span { font-size:1rem; }
+.styles { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:6px; } .styles .sty b { font-size:.5rem; }
+.hist { display:flex; gap:6px; } .hist button { padding:7px 11px; border-radius:6px; border:1.5px solid var(--ink); background:#fff; cursor:pointer; font-weight:700; font-size:.8rem; } .hist button:disabled { opacity:.35; cursor:default; }
+.plans { display:flex; flex-direction:column; gap:6px; max-height:220px; overflow:auto; }
+.plans div { display:flex; align-items:center; gap:6px; padding:7px 8px; border:1.5px solid var(--line); border-radius:6px; font-size:.82rem; }
+.plans div span { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .plans div small { color:var(--muted); font-size:.7rem; white-space:nowrap; }
+.plans button { border:1px solid var(--line); background:#fff; border-radius:5px; padding:3px 7px; cursor:pointer; font-size:.74rem; font-weight:600; }
+.sty { aspect-ratio:1; border-radius:6px; border:2px solid var(--line); cursor:pointer; position:relative; overflow:hidden; padding:0; }
+.sty.on { border-color:var(--blue); box-shadow:0 0 0 2px #fff inset; }
+.sty b { position:absolute; left:0; right:0; bottom:0; font:600 .56rem/1.6 "IBM Plex Mono", monospace; background:rgba(255,255,255,.85); color:#0f2238; }
+.pal { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; }
+.pal button { aspect-ratio:1; border-radius:6px; border:1.5px solid var(--line); background:#fff; cursor:pointer; display:grid; place-items:center; padding:4px; }
+.pal button:hover { border-color:var(--blue); background:#eaf2fc; }
+.pal canvas { width:100%; height:100%; }
+.pal small { display:none; }
+.chk { display:flex; align-items:center; gap:8px; font-size:.86rem; margin-top:8px; cursor:pointer; } .chk input { accent-color:var(--blue); width:16px; height:16px; }
+.seg { display:flex; gap:5px; } .seg button { flex:1; padding:8px 4px; border-radius:6px; border:1.5px solid var(--line); background:#fff; cursor:pointer; font-weight:600; font-size:.78rem; white-space:nowrap; }
+.seg button.on { border-color:var(--blue); background:#eaf2fc; }
+.gen { display:flex; gap:8px; padding:14px 16px; }
+#btnGen { flex:1; padding:13px; border:0; border-radius:6px; background:var(--blue); color:#fff; font:700 .92rem/1 "IBM Plex Mono", monospace; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; box-shadow:3px 3px 0 var(--ink); transition:transform .12s, box-shadow .12s; }
+#btnGen:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+.board { padding:14px; position:sticky; top:78px; }
+.bbar { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.bbar b { font:700 .82rem/1 "IBM Plex Mono", monospace; text-transform:uppercase; letter-spacing:.06em; } .bbar .sp { flex:1; }
+.tip { font-size:.76rem; color:var(--muted); }
+.cbox { background:#e7ecf1; border-radius:6px; padding:16px; display:grid; place-items:center; }
+#cv { max-width:100%; max-height:calc(100vh - 210px); height:auto; width:auto; display:block; box-shadow:0 18px 40px -18px rgba(15,34,56,.55); touch-action:none; }
+.props .empty { color:var(--muted); font-size:.86rem; }
+.props h4 { margin:0 0 6px; font:700 .9rem/1.2 "Space Grotesk"; }
+.btns { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.btns button { padding:7px 10px; border-radius:6px; border:1.5px solid var(--line); background:#fff; cursor:pointer; font-size:.8rem; font-weight:600; }
+.btns button:hover { border-color:var(--blue); } .btns .del { color:var(--red); }
+.leg { display:flex; flex-direction:column; gap:6px; }
+.leg div { display:grid; grid-template-columns:26px 1fr; gap:6px; align-items:center; }
+.leg b { width:24px; height:24px; border-radius:4px; background:var(--amber); display:grid; place-items:center; font:700 .78rem "IBM Plex Mono"; }
+.xb { width:100%; display:flex; gap:10px; align-items:center; text-align:left; padding:11px 12px; border-radius:6px; border:1.5px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:.86rem; margin-top:7px; }
+.xb:hover { border-color:var(--blue); } .xb.main { background:var(--blue); border-color:var(--blue); color:#fff; }
+.xb small { display:block; font-weight:500; font-size:.72rem; opacity:.8; } .xb svg { flex:none; }
+.toast { position:fixed; left:50%; bottom:26px; transform:translate(-50%, 30px); opacity:0; padding:12px 18px; border-radius:8px; background:var(--ink); color:#fff; font-weight:600; font-size:.9rem; z-index:95; transition:.3s; pointer-events:none; }
+.toast.on { opacity:1; transform:translate(-50%, 0); }
+.modal { position:fixed; inset:0; z-index:80; background:rgba(15,34,56,.5); display:none; place-items:center; padding:18px; } .modal.on { display:grid; }
+.mbox { width:min(720px, 100%); max-height:88vh; overflow:auto; background:#fff; border:2px solid var(--ink); border-radius:10px; padding:24px 26px; box-shadow:6px 6px 0 rgba(15,34,56,.25); }
+.mbox h2 { margin:0 0 6px; font:700 1.4rem/1.1 "IBM Plex Mono", monospace; text-transform:uppercase; }
+.mbox h5 { margin:18px 0 6px; font:700 .74rem/1 "IBM Plex Mono", monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); }
+.mbox p, .mbox li { font-size:.92rem; color:#2b3a4c; } .mbox ul, .mbox ol { padding-left:20px; margin:6px 0; } .mbox li { margin:4px 0; }
+.mbox .x { float:right; border:1.5px solid var(--ink); background:#fff; width:34px; height:34px; border-radius:6px; cursor:pointer; }
+@media (max-width:1240px) { .wrap { grid-template-columns:minmax(0,300px) minmax(0,1fr); } .side { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; } .side .card { margin:0 !important; } }
+@media (max-width:880px) { .wrap { grid-template-columns:1fr; padding:10px; } .board { position:static; order:-1; } .side { grid-template-columns:1fr; } .top { padding:10px 14px; } .ttl small, #btnAbout { display:none; } #cv { max-height:none; } .cbox { padding:8px; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="mark"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f2238" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><path d="M3 12h8M11 3v12M15 12h6M15 12v4"/><circle cx="17" cy="7" r="1.6" fill="#d0343a" stroke="none"/></svg></div>
+  <div class="ttl"><b>Crime Scene Floor Plan Maker</b><small>Top-down crime scene maps with evidence markers, suspects and a legend</small></div>
+  <span class="sp"></span>
+  <button class="tb" id="btnAbout" type="button">Page sizes</button>
+  <button class="tb blue" id="btnGuide" type="button">How to use</button>
+</header>
+<main class="wrap">
+  <section class="card" aria-label="Settings">
+    <div class="sec"><h3><i>1</i>Setting</h3><div class="sets" id="sets"></div></div>
+    <div class="sec"><h3><i>2</i>The case</h3>
+      <label class="f" for="mainInput">Case title</label><input class="in" id="mainInput" value="Case #07 · Murder at Blackmoor Manor" maxlength="60">
+      <div class="btns" style="margin-top:6px"><button type="button" id="titleIdea">Title idea</button></div>
+      <label class="f" for="subIn">Note under the title</label><input class="in" id="subIn" value="Ground floor, 11:40 pm. Study the scene before you solve the grid." maxlength="90">
+      <label class="f">Rooms</label><div class="seg" id="roomSeg"><button type="button" data-r="few">Fewer</button><button type="button" data-r="mid" class="on">Normal</button><button type="button" data-r="many">More</button></div>
+      <label class="chk"><input type="checkbox" id="legendOn" checked> Evidence legend</label>
+      <label class="chk"><input type="checkbox" id="suspOn" checked> Suspects on the map ("who was where?")</label>
+      <label class="chk"><input type="checkbox" id="furnOn" checked> Furniture</label>
+      <label class="chk"><input type="checkbox" id="gridOn"> Measuring grid</label>
+      <label class="chk"><input type="checkbox" id="qOn"> Detective questions on the page</label>
+    </div>
+    <div class="sec"><h3><i>3</i>Style</h3><div class="styles" id="styles"></div>
+      <label class="f">Page</label><div class="seg" id="pageSeg"><button type="button" data-p="square" class="on">Square</button><button type="button" data-p="letter">8.5×11</button><button type="button" data-p="6x9">6×9</button><button type="button" data-p="wide">Wide</button></div></div>
+    <div class="sec"><h3><i>4</i>Add to the map</h3><div class="pal" id="pal"></div><p class="tip" style="margin:8px 0 0">Click to add in the middle of the selected room. Drag items to move them.</p></div>
+    <div class="gen"><button type="button" id="btnGen">🎲 New floor plan</button></div>
+  </section>
+
+  <section class="card board" aria-label="Floor plan">
+    <div class="bbar"><b id="bTitle">Manor house · square</b><div class="hist"><button type="button" id="undo" title="Undo (Ctrl+Z)">↶ Undo</button><button type="button" id="redo" title="Redo (Ctrl+Shift+Z)">↷ Redo</button></div><span class="sp"></span><span class="tip">Click to select · drag to move · double-click a room or note to edit it</span></div>
+    <div class="cbox"><canvas id="cv" width="1200" height="1200" aria-label="Floor plan"></canvas></div>
+  </section>
+
+  <aside class="side">
+    <div class="card props" style="padding:14px 16px;margin-bottom:14px" id="props"><div class="empty">Select an item, a room or the title on the map to edit it.</div></div>
+    <div class="card" style="padding:14px 16px;margin-bottom:14px"><h3 style="margin:0 0 10px;font:700 .74rem/1 'IBM Plex Mono';letter-spacing:.12em;text-transform:uppercase;color:#1f5fa8">Evidence legend</h3><div class="leg" id="leg"></div>
+      <div class="btns"><button type="button" id="legShuffle">New descriptions</button></div></div>
+    <div class="card" style="padding:14px 16px;margin-bottom:14px"><h3 style="margin:0 0 10px;font:700 .74rem/1 'IBM Plex Mono';letter-spacing:.12em;text-transform:uppercase;color:#1f5fa8">My plans</h3>
+      <div class="plans" id="plans"></div><div class="btns"><button type="button" id="planSave">💾 Save this plan</button><button type="button" id="planExp">Export</button><button type="button" id="planImp">Import</button></div><input type="file" id="planFile" accept=".json,application/json" hidden></div>
+    <div class="card" style="padding:14px 16px"><h3 style="margin:0 0 4px;font:700 .74rem/1 'IBM Plex Mono';letter-spacing:.12em;text-transform:uppercase;color:#1f5fa8">Export</h3>
+      <button class="xb main" type="button" id="xPng"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18"/><path d="M3 15l5-5 5 5 3-3 5 5"/></svg><span>Page as PNG<small>300 DPI, ready to drop into your book</small></span></button>
+      <button class="xb" type="button" id="xPdf"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg><span>Page as PDF<small>Exact page size for KDP interiors</small></span></button>
+      <button class="xb" type="button" id="xPlan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16v16H4z" stroke-dasharray="3 2"/><path d="M4 12h8V4"/></svg><span>Plan only, transparent PNG<small>To place on any page or cover</small></span></button>
+      <button class="xb" type="button" id="xKey"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7M16 6l3 3"/></svg><span>Answer key (PNG)<small>Detective questions with their answers</small></span></button>
+      <button class="xb" type="button" id="xMock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6l8-4 8 4v12l-8 4-8-4z"/></svg><span>Mockups (2 PNG)<small>Pinned on an evidence board, inside a case folder</small></span></button>
+      <button class="xb" type="button" id="xAnswer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12l5 5L20 6"/></svg><span>Clean version (PNG)<small>Same map with no markers, for "before" pages</small></span></button>
+    </div>
+  </aside>
+</main>
+
+<div class="modal" id="guide" role="dialog" aria-modal="true" aria-labelledby="gT"><div class="mbox">
+  <button class="x" type="button" data-close aria-label="Close">✕</button>
+  <h2 id="gT">How to use</h2>
+  <p>Make a top-down map of a crime scene for a mystery book page, a case file or a puzzle: rooms, furniture, the body, numbered evidence markers, footprints, suspects and a legend.</p>
+  <h5>Quick start</h5>
+  <ol><li>Pick a <b>setting</b> (manor, night train, ski lodge…). A floor plan appears.</li><li>Press <b>New floor plan</b> until you like the layout. Every press draws a different building and a new crime.</li><li>Type the case title, choose a style and a page size, then export the page.</li></ol>
+  <h5>Editing the map</h5>
+  <ul><li><b>Click</b> anything to select it; <b>drag</b> to move it. The right panel lets you rename, rotate, resize, duplicate or delete it.</li><li><b>Double-click a room</b> to rename it. Select a room and press <b>Make this the crime room</b> to move the body and the evidence there.</li><li><b>Add to the map</b>: body outline, evidence marker, footprints, broken glass, blood drops, suspect, and furniture. New items land in the selected room.</li><li><b>Evidence legend</b>: write what each numbered marker is. <b>New descriptions</b> suggests a fresh set.</li><li><b>Suspects</b>: name them in the right panel. With "who was where?" on, your map becomes a deduction puzzle.</li><li><b>Handwritten note</b>: a red note with an arrow ("Window forced open?"); double-click it to change the words, rotate it to point the arrow.</li>
+  <li><b>Rooms</b>: Fewer / Normal / More changes how many rooms the next plan has. <b>Title idea</b> writes a new case title.</li>
+  <li><b>Undo / Redo</b> (Ctrl or Cmd + Z, Shift for redo) for every change. Keys: <b>Delete</b> removes the selected item, <b>R</b> rotates it, arrows nudge it.</li>
+  <li><b>Detective questions</b>: tick it to print up to 5 questions under the map, worked out from your plan (where the body was, who was where, which rooms connect). <b>Answer key</b> exports the same page with the answers filled in.</li>
+  <li><b>My plans</b>: save as many plans as you like and reopen them later; <b>Export</b> makes a backup file, <b>Import</b> loads it on another computer.</li></ul>
+  <h5>Styles and pages</h5>
+  <ul><li>9 styles: Blueprint, Pencil, Ink noir, Case file, Chalkboard, Neon, Old map, Police report, Print B&amp;W.</li><li><b>Print B&amp;W</b> is pure black on white: best for KDP interiors (cheaper ink, crisp lines).</li><li>Square suits inserts and social posts; 8.5×11 and 6×9 are full book pages with safe margins.</li></ul>
+  <h5>Exports</h5>
+  <ul><li><b>Page as PNG</b>: 300 DPI image, ready for an image page in your book software.</li><li><b>Page as PDF</b>: exact page size, ready to merge into your interior.</li><li><b>Plan only</b>: transparent background, to place on covers or other designs.</li><li><b>Clean version</b>: the same rooms without body, markers or suspects, for a "before" page or a spot-the-difference.</li><li><b>Mockups</b>: your page pinned on an evidence board and inside a case folder, for listings and social posts.</li></ul>
+</div></div>
+<div class="modal" id="about" role="dialog" aria-modal="true"><div class="mbox"><button class="x" type="button" data-close aria-label="Close">✕</button><h2>Page sizes</h2>
+  <ul><li><b>Square</b> · 8 × 8 in (2400 px): inserts, social posts, Etsy.</li><li><b>8.5 × 11</b> · large puzzle books, 0.5 in margins.</li><li><b>6 × 9</b> · travel size, 0.5 in margins.</li><li><b>Wide</b> · 11 × 8.5 landscape: two-page spreads and posters.</li></ul></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const toast = (m) => { const e = $("toast"); e.textContent = m; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("on"), 2300); };
+const store = { get(k, d) { try { const v = localStorage.getItem("csf_" + k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem("csf_" + k, JSON.stringify(v)); } catch {} } };
+let seed = Date.now() % 1e9; const rand = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+const ri = (a, b) => a + Math.floor(rand() * (b - a + 1)), pick = (a) => a[Math.floor(rand() * a.length)];
+const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+// ---------- settings ----------
+const SETS = {
+  manor: { n: "Manor house", e: "🏰", W: 40, H: 28, rooms: ["Drawing room", "Study", "Library", "Dining room", "Kitchen", "Conservatory", "Hall", "Billiard room", "Morning room", "Gun room"], title: "Murder at Blackmoor Manor" },
+  train: { n: "Night train", e: "🚂", W: 64, H: 14, train: true, rooms: ["Dining car", "Compartment A", "Compartment B", "Compartment C", "Compartment D", "Lounge car", "Baggage car"], title: "Death on the Midnight Express" },
+  lodge: { n: "Ski lodge", e: "🏔️", W: 38, H: 26, rooms: ["Great room", "Bunk room", "Kitchen", "Drying room", "Library nook", "Sauna", "Boot room", "Guest room"], title: "Snowed In at Pine Ridge" },
+  light: { n: "Lighthouse", e: "🗼", W: 34, H: 30, rooms: ["Keeper's room", "Lamp store", "Radio room", "Oil store", "Galley", "Log room", "Workshop"], title: "The Lighthouse Murders" },
+  theatre: { n: "Theatre", e: "🎭", W: 44, H: 30, rooms: ["Stage", "Green room", "Dressing room 1", "Dressing room 2", "Prop store", "Wings", "Box office", "Orchestra pit"], title: "Curtain Call for Murder" },
+  museum: { n: "Museum", e: "🏛️", W: 44, H: 30, rooms: ["Egyptian gallery", "Portrait gallery", "Curator's office", "Vault", "Gift shop", "Restoration lab", "Lobby", "Map room"], title: "The Midnight Museum" },
+  ship: { n: "Cruise ship", e: "🚢", W: 60, H: 18, ship: true, rooms: ["Ballroom", "Cabin 12", "Cabin 14", "Captain's quarters", "Galley", "Casino", "Library", "Spa"], title: "Murder on the Ocean Star" },
+  inn: { n: "Village inn", e: "🍺", W: 38, H: 26, rooms: ["Taproom", "Snug", "Kitchen", "Cellar stairs", "Parlour", "Guest room", "Landlord's office", "Scullery"], title: "Death at the Crooked Lantern" },
+};
+// furniture by room words
+const FURN = [[/study|office|keeper|curator|radio|log room|landlord/i, ["desk", "chair", "shelf", "shelf", "rug"]], [/library|map room|nook/i, ["shelf", "shelf", "shelf", "armchair", "table"]],
+  [/bed|guest|bunk|cabin|compartment|quarters|dressing/i, ["bed", "night", "wardrobe"]], [/dining|galley|taproom|kitchen|scullery/i, ["longtable", "counter", "stove"]],
+  [/drawing|lounge|parlour|great room|morning|snug|green room|ballroom/i, ["sofa", "armchair", "armchair", "fire", "rug", "piano"]], [/bath|sauna|spa|drying/i, ["tub", "sink", "bench"]],
+  [/hall|lobby|box office|boot/i, ["stairs", "plant", "bench"]], [/conservatory|garden/i, ["plant", "plant", "plant", "table"]], [/cellar|store|baggage|vault|stairs|pit|oil|workshop|prop/i, ["crate", "crate", "barrel", "barrel", "shelf"]],
+  [/stage|wings/i, ["piano", "crate", "bench"]], [/gallery|restoration|gift/i, ["pedestal", "pedestal", "pedestal", "bench"]], [/billiard|casino|gun/i, ["pooltable", "armchair", "shelf"]]];
+const FSIZE = { desk: [3, 1.6], chair: [1, 1], shelf: [3.4, .8], rug: [4, 2.6], armchair: [1.6, 1.6], table: [2, 2], bed: [2.4, 3.6], night: [.9, .9], wardrobe: [2.4, 1], longtable: [5, 1.8],
+  counter: [4, .9], stove: [1.4, 1.2], sofa: [3.4, 1.4], fire: [2.4, .9], piano: [2.6, 2], tub: [1.6, 3], sink: [1.1, .8], bench: [2.6, .8], stairs: [2.4, 4], plant: [1.1, 1.1], crate: [1.4, 1.4], barrel: [1.2, 1.2],
+  pedestal: [1.2, 1.2], pooltable: [4.4, 2.4], body: [2.6, 4.4], marker: [1.1, 1.1], steps: [1.2, 3.6], glass: [1.4, 1.2], blood: [1.2, 1], suspect: [1.6, 1.6], note: [5, 1.6] };
+const EVID = ["Shattered teacup", "Muddy footprint", "Torn letter", "Spent match", "Missing key", "Broken watch, stopped at 11:40", "Drop of candle wax", "Glove with no pair", "Overturned chair", "Ash from a foreign cigar", "Lipstick on a glass", "Burned photograph", "Scratches on the lock", "A single pearl", "Open window latch", "Smell of bitter almonds"];
+const SUSPECTS = ["Colonel Hart", "Lady Ashcombe", "Dr. Vane", "Miss Pennywhistle", "The butler", "Captain Morrow", "Madame Rosalind", "Professor Ellery", "The young heir", "The cook"];
+
+// ---------- plan generation ----------
+let P = null, sel = null, setKey = "manor", roomsMode = "mid";
+function generate() {
+  const st = SETS[setKey], W = st.W, H = st.H; const rooms = [], splits = [];
+  if (st.train || st.ship) { // carriages / decks: a corridor along one side, compartments in a row
+    const cor = st.train ? 3 : 4, side = rand() < .5; const ry = side ? 0 : cor; rooms.push({ x: 0, y: side ? H - cor : 0, w: W, h: cor, name: "Corridor", corr: true });
+    let x = 0; const names = shuffle(st.rooms.slice()); let i = 0; while (x < W - 4) { let w = ri(7, 11); if (x + w > W - 5) w = W - x; rooms.push({ x, y: ry, w, h: H - cor, name: names[i++ % names.length] }); if (x > 0) splits.push({ v: true, at: x, a: ry, b: ry + H - cor }); x += w; }
+    splits.push({ v: false, at: side ? H - cor : cor, a: 0, b: W });
+  } else {
+    const target = { few: ri(4, 5), mid: ri(6, 8), many: ri(9, 11) }[roomsMode], regions = [{ x: 0, y: 0, w: W, h: H }];
+    while (regions.length < target) { regions.sort((a, b) => b.w * b.h - a.w * a.h); const r = regions.shift(); const vert = r.w / r.h > 1.15 ? true : r.h / r.w > 1.15 ? false : rand() < .5;
+      const len = vert ? r.w : r.h; if (len < (roomsMode === "many" ? 9 : 12)) { regions.push(r); if (regions.every((q) => Math.max(q.w, q.h) < (roomsMode === "many" ? 9 : 12))) break; continue; }
+      const cut = Math.round(len * (.35 + rand() * .3));
+      if (vert) { regions.push({ x: r.x, y: r.y, w: cut, h: r.h }, { x: r.x + cut, y: r.y, w: r.w - cut, h: r.h }); splits.push({ v: true, at: r.x + cut, a: r.y, b: r.y + r.h }); }
+      else { regions.push({ x: r.x, y: r.y, w: r.w, h: cut }, { x: r.x, y: r.y + cut, w: r.w, h: r.h - cut }); splits.push({ v: false, at: r.y + cut, a: r.x, b: r.x + r.w }); } }
+    const names = shuffle(st.rooms.slice()); regions.sort((a, b) => b.w * b.h - a.w * a.h).forEach((r, i) => rooms.push({ ...r, name: names[i % names.length] }));
+  }
+  // one door on every dividing wall, between the two rooms that share it the most
+  const doors = [];
+  splits.forEach((sp) => { let best = null;
+    rooms.forEach((a) => rooms.forEach((b) => { if (a === b) return; let lo, hi;
+      if (sp.v) { if (a.x + a.w !== sp.at || b.x !== sp.at) return; lo = Math.max(a.y, b.y, sp.a); hi = Math.min(a.y + a.h, b.y + b.h, sp.b); }
+      else { if (a.y + a.h !== sp.at || b.y !== sp.at) return; lo = Math.max(a.x, b.x, sp.a); hi = Math.min(a.x + a.w, b.x + b.w, sp.b); }
+      if (hi - lo >= 3 && (!best || hi - lo > best.hi - best.lo)) best = { lo, hi, a, b }; }));
+    if (best) { const pos = best.lo + 1 + rand() * (best.hi - best.lo - 3); doors.push({ v: sp.v, x: sp.v ? sp.at : pos, y: sp.v ? pos : sp.at, w: 1.6 }); } });
+  // extra doors so corridors reach every room
+  rooms.filter((r) => r.corr).forEach((c) => rooms.forEach((r) => { if (r.corr) return; const ov = Math.min(r.x + r.w, c.x + c.w) - Math.max(r.x, c.x); if (ov < 3) return;
+    const y = r.y + r.h === c.y ? c.y : c.y + c.h === r.y ? r.y : null; if (y == null || doors.some((d) => !d.v && d.y === y && d.x > r.x && d.x < r.x + r.w)) return; doors.push({ v: false, x: Math.max(r.x, c.x) + 1 + rand() * (ov - 3), y, w: 1.6 }); }));
+  // windows on outer walls
+  const wins = []; rooms.forEach((r) => { [[r.y === 0, false, r.x, 0, r.w], [r.y + r.h === H, false, r.x, H, r.w], [r.x === 0, true, 0, r.y, r.h], [r.x + r.w === W, true, W, r.y, r.h]].forEach(([on, v, x, y, len]) => {
+    if (!on || len < 5 || rand() < .25) return; const p = (v ? y : x) + len * (.3 + rand() * .4); wins.push({ v, x: v ? x : p, y: v ? p : y, w: Math.min(3, len * .3) }); }); });
+  // furniture
+  const items = []; let id = 1; const free = (r, w, h) => { for (let t = 0; t < 30; t++) { const x = r.x + 1 + w / 2 + rand() * Math.max(0, r.w - w - 2), y = r.y + 1 + h / 2 + rand() * Math.max(0, r.h - h - 2);
+    if (!items.some((o) => o.room === r && Math.abs(o.x - x) < (o.w + w) / 2 + .3 && Math.abs(o.y - y) < (o.h + h) / 2 + .3)) return [x, y]; } return null; };
+  rooms.forEach((r) => { if (r.corr) return; const set = (FURN.find(([rx]) => rx.test(r.name)) || [0, ["table", "chair", "shelf"]])[1];
+    set.forEach((t) => { let [w, h] = FSIZE[t]; if (r.w < r.h && w > h && rand() < .6) [w, h] = [h, w]; if (w > r.w - 2 || h > r.h - 2) return; const p = free(r, w, h); if (p) items.push({ id: id++, t, x: p[0], y: p[1], w, h, rot: 0, room: r, furn: true }); }); });
+  P = { W, H, rooms, doors, wins, items, nextId: id }; placeCrime(pick(rooms.filter((r) => !r.corr && r.w >= 7 && r.h >= 6)) || rooms[0]);
+  if (!$("mainInput").dataset.touched) $("mainInput").value = `Case #${String(ri(2, 60)).padStart(2, "0")} · ${st.title}`;
+  sel = null; props(); legend(); draw();
+}
+function placeCrime(r) { P.items = P.items.filter((o) => o.furn || o.t === "suspect"); P.crime = r;
+  const add = (t, x, y, extra = {}) => { const [w, h] = FSIZE[t]; const o = { id: P.nextId++, t, x, y, w, h, rot: 0, room: r, ...extra }; P.items.push(o); return o; };
+  let cx = r.x + r.w / 2, cy = r.y + r.h / 2, best = 1e9; for (let t = 0; t < 40; t++) { const x = r.x + 2.2 + rand() * Math.max(0, r.w - 4.4), y = r.y + 2.6 + rand() * Math.max(0, r.h - 5.2);
+    const ov = P.items.filter((o) => o.furn).reduce((a, o) => a + Math.max(0, (o.w + 2.6) / 2 - Math.abs(o.x - x)) * Math.max(0, (o.h + 4.4) / 2 - Math.abs(o.y - y)), 0); if (ov < best) { best = ov; cx = x; cy = y; } }
+  add("body", cx, cy, { rot: pick([0, 90, 180, 270]) });
+  const n = ri(3, 5), ev = shuffle(EVID.slice());
+  for (let i = 0; i < n; i++) { const a = rand() * Math.PI * 2, d = 2.2 + rand() * 2.6; add("marker", Math.max(r.x + 1, Math.min(r.x + r.w - 1, cx + Math.cos(a) * d)), Math.max(r.y + 1, Math.min(r.y + r.h - 1, cy + Math.sin(a) * d)), { note: ev[i] }); }
+  const door = P.doors.find((d) => d.v ? (d.x === r.x || d.x === r.x + r.w) && d.y > r.y && d.y < r.y + r.h : (d.y === r.y || d.y === r.y + r.h) && d.x > r.x && d.x < r.x + r.w);
+  if (door) { const ang = Math.atan2(door.y - cy, door.x - cx); add("steps", cx + (door.x - cx) * .55, cy + (door.y - cy) * .55, { rot: ang * 180 / Math.PI + 90 }); }
+  if (rand() < .7) add("glass", cx + (rand() < .5 ? -2 : 2), cy + 2.4); if (rand() < .5) add("blood", cx + 1.6, cy - 1.8);
+  renumber(); placeSuspects(); }
+function placeSuspects() { P.items = P.items.filter((o) => o.t !== "suspect"); const names = shuffle(SUSPECTS.slice()).slice(0, 4), rs = shuffle(P.rooms.filter((r) => !r.corr && r !== P.crime));
+  names.forEach((n, i) => { const r = rs[i % rs.length]; if (!r) return; P.items.push({ id: P.nextId++, t: "suspect", x: r.x + 2 + rand() * (r.w - 4), y: r.y + 2 + rand() * (r.h - 4), w: 1.6, h: 1.6, rot: 0, room: r, name: n }); }); }
+function renumber() { let n = 1; P.items.filter((o) => o.t === "marker").forEach((o) => o.n = n++); }
+
+// ---------- styles ----------
+const STYLES = [
+  { id: "blue", n: "Blueprint", bg: "#123a6b", grid: "rgba(255,255,255,.08)", wall: "#f2f7ff", room: "rgba(255,255,255,.03)", furn: "rgba(220,235,255,.75)", txt: "#f2f7ff", sub: "#9fc3ff", ev: "#ffcf3d", evtxt: "#10223a", body: "#ffffff", acc: "#ff6b6b", paper: false },
+  { id: "pencil", n: "Pencil", bg: "#f6f1e4", grid: "rgba(60,60,60,.07)", wall: "#2b2b2b", room: "rgba(0,0,0,0)", furn: "rgba(60,60,60,.55)", txt: "#232323", sub: "#5a5a5a", ev: "#f2b632", evtxt: "#1b1b1b", body: "#2b2b2b", acc: "#b3261e", paper: true },
+  { id: "noir", n: "Ink noir", bg: "#0f0e12", grid: "rgba(255,255,255,.05)", wall: "#f3efe6", room: "rgba(255,255,255,.02)", furn: "rgba(243,239,230,.55)", txt: "#f3efe6", sub: "#b8b0a2", ev: "#e23b3b", evtxt: "#ffffff", body: "#ffffff", acc: "#e23b3b", paper: false },
+  { id: "file", n: "Case file", bg: "#e6d3a8", grid: "rgba(90,60,20,.08)", wall: "#3b2614", room: "rgba(255,250,235,.35)", furn: "rgba(59,38,20,.55)", txt: "#2d1c0e", sub: "#6b4d2c", ev: "#9c1c1c", evtxt: "#fff3dc", body: "#2d1c0e", acc: "#9c1c1c", paper: true },
+  { id: "chalk", n: "Chalkboard", bg: "#1f2a24", grid: "rgba(255,255,255,.05)", wall: "#eef0e6", room: "rgba(255,255,255,.02)", furn: "rgba(238,240,230,.5)", txt: "#eef0e6", sub: "#b9c4b8", ev: "#ffd166", evtxt: "#1f2a24", body: "#ffffff", acc: "#ff8fa3", paper: false },
+  { id: "neon", n: "Neon", bg: "#0b0a1a", grid: "rgba(34,227,242,.07)", wall: "#22e3f2", room: "rgba(34,227,242,.03)", furn: "rgba(34,227,242,.45)", txt: "#f4f0ff", sub: "#a99dd0", ev: "#ff3cac", evtxt: "#ffffff", body: "#ffffff", acc: "#ff3cac", paper: false },
+  { id: "map", n: "Old map", bg: "#ecdcb6", grid: "rgba(110,70,20,.08)", wall: "#5a3818", room: "rgba(255,246,220,.3)", furn: "rgba(90,56,24,.5)", txt: "#3e260f", sub: "#7a5530", ev: "#7b1e12", evtxt: "#f6e7c4", body: "#3e260f", acc: "#7b1e12", paper: true },
+  { id: "report", n: "Police report", bg: "#eef1f5", grid: "rgba(20,40,80,.06)", wall: "#13284a", room: "rgba(255,255,255,.6)", furn: "rgba(19,40,74,.45)", txt: "#13284a", sub: "#4e6283", ev: "#f2c230", evtxt: "#13284a", body: "#13284a", acc: "#c62f2f", paper: true },
+  { id: "bw", n: "Print B&W", bg: "#ffffff", grid: "rgba(0,0,0,.06)", wall: "#000000", room: "rgba(0,0,0,0)", furn: "rgba(0,0,0,.55)", txt: "#000000", sub: "#333333", ev: "#000000", evtxt: "#ffffff", body: "#000000", acc: "#000000", paper: true },
+];
+let STY = STYLES[0], page = "square";
+const PAGES = { square: [8, 8, .4], letter: [8.5, 11, .5], "6x9": [6, 9, .5], wide: [11, 8.5, .5] };
+
+// ---------- drawing ----------
+const cv = $("cv"); let L = null;
+function layout(Wp, Hp, dpi) { const [pw, ph, mg] = PAGES[page], m = mg * dpi, titleH = dpi * (page === "6x9" ? .9 : 1), legH = ($("legendOn").checked ? dpi * (page === "wide" ? 1.25 : page === "square" ? 1.45 : 1.9) : dpi * .35) + ($("qOn").checked ? dpi * (page === "wide" || page === "square" ? .9 : 1.25) : 0);
+  const aw = Wp - 2 * m, ah = Hp - 2 * m - titleH - legH, s = Math.min(aw / P.W, ah / P.H); const pw2 = P.W * s, ph2 = P.H * s;
+  return { m, s, ox: (Wp - pw2) / 2, oy: m + titleH + (ah - ph2) / 2, titleH, legH, dpi, Wp, Hp }; }
+function render(c, Wp, Hp, dpi, opt = {}) {
+  const S = STY; L = layout(Wp, Hp, dpi); const { s, ox, oy, m } = L, X = (u) => ox + u * s, Y = (u) => oy + u * s;
+  c.clearRect(0, 0, Wp, Hp); if (!opt.transparent) { c.fillStyle = S.bg; c.fillRect(0, 0, Wp, Hp);
+    if (S.paper) { c.save(); c.globalAlpha = .05; c.fillStyle = "#000"; for (let i = 0; i < 1600; i++) c.fillRect((i * 137.5) % Wp, (i * 241.7) % Hp, 1.5, 1.5); c.restore(); } }
+  const grid = $("gridOn").checked || S.id === "blue"; if (grid && !opt.transparent) { c.save(); c.strokeStyle = S.grid; c.lineWidth = 1; for (let i = 0; i <= P.W; i++) { c.beginPath(); c.moveTo(X(i), Y(0)); c.lineTo(X(i), Y(P.H)); c.stroke(); } for (let j = 0; j <= P.H; j++) { c.beginPath(); c.moveTo(X(0), Y(j)); c.lineTo(X(P.W), Y(j)); c.stroke(); } c.restore(); }
+  // rooms
+  P.rooms.forEach((r) => { c.fillStyle = r === P.crime && !opt.clean && S.id !== "bw" ? hexA(S.acc, .1) : S.room; c.fillRect(X(r.x), Y(r.y), r.w * s, r.h * s); if (r.corr && S.paper) { c.save(); c.fillStyle = "rgba(0,0,0,.04)"; c.fillRect(X(r.x), Y(r.y), r.w * s, r.h * s); c.restore(); } });
+  // furniture
+  if ($("furnOn").checked) P.items.filter((o) => o.furn).forEach((o) => item(c, o, X, Y, s, S, opt));
+  // walls
+  const wt = Math.max(2, s * .32); c.strokeStyle = S.wall; c.lineCap = "square"; c.lineWidth = wt;
+  P.rooms.forEach((r) => c.strokeRect(X(r.x), Y(r.y), r.w * s, r.h * s)); c.lineWidth = wt * 1.6; c.strokeRect(X(0), Y(0), P.W * s, P.H * s);
+  // doors: gap + swing
+  P.doors.forEach((d) => { const half = d.w / 2 * s; c.save(); c.strokeStyle = opt.transparent ? "rgba(0,0,0,0)" : S.bg; c.lineWidth = wt * 1.9; c.globalCompositeOperation = opt.transparent ? "destination-out" : "source-over"; c.strokeStyle = opt.transparent ? "#000" : S.bg;
+    c.beginPath(); if (d.v) { c.moveTo(X(d.x), Y(d.y) - half); c.lineTo(X(d.x), Y(d.y) + half); } else { c.moveTo(X(d.x) - half, Y(d.y)); c.lineTo(X(d.x) + half, Y(d.y)); } c.stroke(); c.restore();
+    c.save(); c.strokeStyle = S.furn; c.lineWidth = Math.max(1, s * .08); c.beginPath(); if (d.v) { c.moveTo(X(d.x), Y(d.y) - half); c.lineTo(X(d.x) + half * 2, Y(d.y) - half); c.arc(X(d.x), Y(d.y) - half, half * 2, 0, Math.PI / 2); }
+    else { c.moveTo(X(d.x) - half, Y(d.y)); c.lineTo(X(d.x) - half, Y(d.y) + half * 2); c.arc(X(d.x) - half, Y(d.y), half * 2, Math.PI / 2, 0, true); } c.stroke(); c.restore(); });
+  // windows
+  P.wins.forEach((w) => { const half = w.w / 2 * s; c.save(); c.strokeStyle = opt.transparent ? "#fff" : S.bg; c.lineWidth = wt * 1.7; c.beginPath(); if (w.v) { c.moveTo(X(w.x), Y(w.y) - half); c.lineTo(X(w.x), Y(w.y) + half); } else { c.moveTo(X(w.x) - half, Y(w.y)); c.lineTo(X(w.x) + half, Y(w.y)); } c.stroke();
+    c.strokeStyle = S.wall; c.lineWidth = Math.max(1, s * .08); [-.18, .18].forEach((k) => { c.beginPath(); if (w.v) { c.moveTo(X(w.x) + k * s * 1.6, Y(w.y) - half); c.lineTo(X(w.x) + k * s * 1.6, Y(w.y) + half); } else { c.moveTo(X(w.x) - half, Y(w.y) + k * s * 1.6); c.lineTo(X(w.x) + half, Y(w.y) + k * s * 1.6); } c.stroke(); }); c.restore(); });
+  // room names
+  P.rooms.forEach((r) => { const fs = Math.max(9, Math.min(s * .78, r.w * s / Math.max(6, r.name.length) * 1.5)); c.font = `600 ${fs}px "IBM Plex Mono"`; c.fillStyle = S.sub; c.textAlign = "center"; c.textBaseline = "top";
+    c.fillText(r.name.toUpperCase(), X(r.x + r.w / 2), Y(r.y) + wt + s * .35); });
+  // crime items
+  if (!opt.clean) P.items.filter((o) => !o.furn && (o.t !== "suspect" || $("suspOn").checked)).forEach((o) => item(c, o, X, Y, s, S, opt));
+  // selection
+  if (sel && !opt.export) { c.save(); c.setLineDash([6, 4]); c.lineWidth = 2; c.strokeStyle = S.acc === "#000000" ? "#1f5fa8" : S.acc;
+    if (sel.room) c.strokeRect(X(sel.room.x) + 4, Y(sel.room.y) + 4, sel.room.w * s - 8, sel.room.h * s - 8);
+    else if (sel.item) { const o = sel.item, a = o.rot % 180 ? [o.h, o.w] : [o.w, o.h]; c.strokeRect(X(o.x - a[0] / 2) - 5, Y(o.y - a[1] / 2) - 5, a[0] * s + 10, a[1] * s + 10); }
+    else if (sel.title) c.strokeRect(m - 6, m - 6, L.Wp - 2 * m + 12, L.titleH); c.restore(); }
+  if (opt.transparent) return;
+  // title block
+  const tFs = L.titleH * .36; c.textAlign = "left"; c.textBaseline = "alphabetic"; c.fillStyle = S.txt; c.font = `700 ${tFs}px "Special Elite"`;
+  let t = $("mainInput").value; while (c.measureText(t).width > Wp - 2 * m - dpi * .45 && t.length > 4) t = t.slice(0, -2) + "…"; c.fillText(t, m, m + tFs);
+  c.font = `500 ${tFs * .46}px "Space Grotesk"`; c.fillStyle = S.sub; c.fillText($("subIn").value, m, m + tFs * 1.75);
+  c.strokeStyle = S.sub; c.lineWidth = Math.max(1, dpi * .006); c.beginPath(); c.moveTo(m, m + L.titleH - dpi * .14); c.lineTo(Wp - m, m + L.titleH - dpi * .14); c.stroke();
+  // north arrow + scale
+  const na = dpi * .22, nx = Wp - m - na, ny = m + tFs * .3; c.fillStyle = S.txt; c.beginPath(); c.moveTo(nx, ny); c.lineTo(nx + na * .45, ny + na * 1.1); c.lineTo(nx, ny + na * .8); c.lineTo(nx - na * .45, ny + na * 1.1); c.closePath(); c.fill();
+  c.font = `700 ${na * .5}px "IBM Plex Mono"`; c.textAlign = "center"; c.fillText("N", nx, ny + na * 1.7);
+  const sbY = oy + P.H * s + dpi * .14, sbL = 5 * s, sbX = ox + P.W * s - sbL; c.fillStyle = S.txt; c.fillRect(sbX, sbY, sbL / 2, dpi * .035); c.strokeStyle = S.txt; c.lineWidth = 1; c.strokeRect(sbX, sbY, sbL, dpi * .035);
+  c.font = `500 ${dpi * .07}px "IBM Plex Mono"`; c.textAlign = "right"; c.fillText("0", sbX - dpi * .04, sbY + dpi * .04); c.textAlign = "left"; c.fillText("5 m", sbX + sbL + dpi * .04, sbY + dpi * .04);
+  // legend
+  if ($("legendOn").checked && !opt.clean) { const ms = P.items.filter((o) => o.t === "marker"), cols = page === "6x9" || page === "letter" ? 1 : 2, ly = Math.max(L.Hp - m - L.legH + dpi * .3, oy + P.H * s + dpi * .42), fs = dpi * (page === "6x9" ? .09 : .105), rowH = fs * 1.75;
+    c.font = `700 ${fs * .9}px "IBM Plex Mono"`; c.fillStyle = S.sub; c.textAlign = "left"; c.fillText("EVIDENCE", m, ly - fs * .6);
+    const colW = (Wp - 2 * m) / cols; ms.forEach((o, i) => { const col = cols === 1 ? 0 : i % cols, row = cols === 1 ? i : Math.floor(i / cols), x = m + col * colW, y = ly + row * rowH;
+      c.fillStyle = S.ev; rr(c, x, y, fs * 1.3, fs * 1.3, fs * .2); c.fill(); c.fillStyle = S.evtxt; c.font = `700 ${fs * .8}px "IBM Plex Mono"`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(o.n, x + fs * .65, y + fs * .68);
+      c.fillStyle = S.txt; c.font = `500 ${fs}px "Space Grotesk"`; c.textAlign = "left"; let tx = o.note || ""; while (c.measureText(tx).width > colW - fs * 2.4 && tx.length > 4) tx = tx.slice(0, -2) + "…"; c.fillText(tx, x + fs * 1.8, y + fs * .68); c.textBaseline = "alphabetic"; });
+  }
+  if ($("qOn").checked && !opt.clean) { const qs = questions(), fs = dpi * (page === "6x9" ? .085 : .095), qy = L.Hp - m - (page === "wide" || page === "square" ? .85 : 1.2) * dpi;
+    c.font = `700 ${fs * .9}px "IBM Plex Mono"`; c.fillStyle = S.sub; c.textAlign = "left"; c.textBaseline = "alphabetic"; c.fillText(opt.answers ? "ANSWER KEY" : "DETECTIVE QUESTIONS", m, qy);
+    qs.forEach((q, i) => { const y = qy + fs * 1.55 * (i + 1); c.fillStyle = S.txt; c.font = `500 ${fs}px "Space Grotesk"`; let t = `${i + 1}. ${q.q}`; c.fillText(t, m, y);
+      if (opt.answers) { const tw = c.measureText(t + "  ").width; c.fillStyle = S.acc === "#000000" ? "#000" : S.acc; c.font = `700 ${fs}px "Space Grotesk"`; let a = q.a; while (c.measureText(a).width > Wp - 2 * m - tw && a.length > 4) a = a.slice(0, -2) + "…"; c.fillText(a, m + tw, y); }
+      else { c.strokeStyle = S.sub; c.lineWidth = 1; const tw = c.measureText(t + "  ").width; c.beginPath(); c.moveTo(m + tw, y + 2); c.lineTo(Wp - m, y + 2); c.stroke(); } }); }
+}
+function hexA(h, a) { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${a})`; }
+function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function item(c, o, X, Y, s, S) {
+  c.save(); c.translate(X(o.x), Y(o.y)); c.rotate(o.rot * Math.PI / 180); const w = o.w * s, h = o.h * s, lw = Math.max(1, s * .07); c.lineWidth = lw; c.strokeStyle = S.furn; c.fillStyle = S.furn;
+  const box = (x, y, ww, hh, f) => { c.beginPath(); c.rect(x, y, ww, hh); f ? c.fill() : c.stroke(); };
+  switch (o.t) {
+    case "desk": box(-w / 2, -h / 2, w, h); box(-w * .3, -h * .1, w * .25, h * .35); break;
+    case "chair": c.strokeRect(-w * .4, -h * .4, w * .8, h * .8); c.beginPath(); c.moveTo(-w * .4, -h * .4); c.lineTo(w * .4, -h * .4); c.lineWidth = lw * 2.5; c.stroke(); break;
+    case "shelf": box(-w / 2, -h / 2, w, h); for (let i = 1; i < 6; i++) { c.beginPath(); c.moveTo(-w / 2 + w * i / 6, -h / 2); c.lineTo(-w / 2 + w * i / 6, h / 2); c.stroke(); } break;
+    case "rug": c.setLineDash([lw * 3, lw * 2]); box(-w / 2, -h / 2, w, h); c.setLineDash([]); box(-w * .42, -h * .38, w * .84, h * .76); break;
+    case "armchair": rr(c, -w / 2, -h / 2, w, h, w * .2); c.stroke(); box(-w * .3, -h * .15, w * .6, h * .55); break;
+    case "table": c.beginPath(); c.arc(0, 0, w * .42, 0, 7); c.stroke(); [0, 1, 2, 3].forEach((k) => { c.beginPath(); c.arc(Math.cos(k * 1.57) * w * .55, Math.sin(k * 1.57) * w * .55, w * .1, 0, 7); c.stroke(); }); break;
+    case "bed": box(-w / 2, -h / 2, w, h); box(-w * .42, -h * .44, w * .36, h * .16); box(w * .06, -h * .44, w * .36, h * .16); c.beginPath(); c.moveTo(-w / 2, -h * .15); c.lineTo(w / 2, -h * .15); c.stroke(); break;
+    case "night": box(-w / 2, -h / 2, w, h); c.beginPath(); c.arc(0, 0, w * .2, 0, 7); c.stroke(); break;
+    case "wardrobe": box(-w / 2, -h / 2, w, h); c.beginPath(); c.moveTo(0, -h / 2); c.lineTo(0, h / 2); c.stroke(); break;
+    case "longtable": box(-w / 2, -h / 2, w, h); for (let i = 0; i < 4; i++) { const x = -w / 2 + w * (i + .5) / 4; box(x - w * .05, -h / 2 - h * .35, w * .1, h * .25); box(x - w * .05, h / 2 + h * .1, w * .1, h * .25); } break;
+    case "counter": box(-w / 2, -h / 2, w, h); c.beginPath(); c.arc(w * .2, 0, h * .25, 0, 7); c.stroke(); break;
+    case "stove": box(-w / 2, -h / 2, w, h); [[-.22, -.22], [.22, -.22], [-.22, .22], [.22, .22]].forEach(([a, b]) => { c.beginPath(); c.arc(a * w, b * h, w * .13, 0, 7); c.stroke(); }); break;
+    case "sofa": rr(c, -w / 2, -h / 2, w, h, h * .25); c.stroke(); box(-w * .42, -h * .1, w * .84, h * .5); break;
+    case "fire": box(-w / 2, -h / 2, w, h); c.beginPath(); c.moveTo(-w * .2, h / 2); c.quadraticCurveTo(0, -h * .5, w * .2, h / 2); c.stroke(); break;
+    case "piano": c.beginPath(); c.moveTo(-w / 2, -h / 2); c.lineTo(w / 2, -h / 2); c.quadraticCurveTo(w / 2, h / 2, 0, h / 2); c.lineTo(-w / 2, h / 2); c.closePath(); c.stroke(); box(-w / 2, -h / 2 - h * .02, w, h * .14); break;
+    case "tub": rr(c, -w / 2, -h / 2, w, h, w * .4); c.stroke(); rr(c, -w * .36, -h * .4, w * .72, h * .8, w * .3); c.stroke(); break;
+    case "sink": rr(c, -w / 2, -h / 2, w, h, w * .2); c.stroke(); c.beginPath(); c.ellipse(0, 0, w * .3, h * .25, 0, 0, 7); c.stroke(); break;
+    case "bench": box(-w / 2, -h / 2, w, h); break;
+    case "stairs": box(-w / 2, -h / 2, w, h); for (let i = 1; i < 8; i++) { c.beginPath(); c.moveTo(-w / 2, -h / 2 + h * i / 8); c.lineTo(w / 2, -h / 2 + h * i / 8); c.stroke(); } c.beginPath(); c.moveTo(0, h * .4); c.lineTo(0, -h * .35); c.lineTo(-w * .12, -h * .25); c.moveTo(0, -h * .35); c.lineTo(w * .12, -h * .25); c.stroke(); break;
+    case "plant": for (let i = 0; i < 6; i++) { c.beginPath(); c.ellipse(Math.cos(i) * w * .22, Math.sin(i) * w * .22, w * .22, w * .1, i, 0, 7); c.stroke(); } break;
+    case "crate": box(-w / 2, -h / 2, w, h); c.beginPath(); c.moveTo(-w / 2, -h / 2); c.lineTo(w / 2, h / 2); c.moveTo(w / 2, -h / 2); c.lineTo(-w / 2, h / 2); c.stroke(); break;
+    case "barrel": c.beginPath(); c.arc(0, 0, w * .45, 0, 7); c.stroke(); c.beginPath(); c.arc(0, 0, w * .3, 0, 7); c.stroke(); break;
+    case "pedestal": box(-w / 2, -h / 2, w, h); c.beginPath(); c.arc(0, 0, w * .25, 0, 7); c.fill(); break;
+    case "pooltable": box(-w / 2, -h / 2, w, h); box(-w * .44, -h * .38, w * .88, h * .76); [[-.5, -.5], [0, -.5], [.5, -.5], [-.5, .5], [0, .5], [.5, .5]].forEach(([a, b]) => { c.beginPath(); c.arc(a * w * .9, b * h * .8, s * .2, 0, 7); c.fill(); }); break;
+    case "body": { c.strokeStyle = S.body; c.lineWidth = Math.max(1.5, s * .12); c.setLineDash([s * .25, s * .12]); const u = h / 10; c.beginPath();
+      c.moveTo(-u * .9, -u * 3.5); c.arc(0, -u * 3.8, u * .95, Math.PI * .75, Math.PI * 2.25); c.lineTo(u * .9, -u * 2.7); c.lineTo(u * 2.6, -u * 1.4); c.lineTo(u * 3.4, u * .2); c.lineTo(u * 2.6, u * .4); c.lineTo(u * 1.4, -u * 1); c.lineTo(u * 1.3, u * 1.6);
+      c.lineTo(u * 2.1, u * 4.8); c.lineTo(u * 1.1, u * 5); c.lineTo(0, u * 2.3); c.lineTo(-u * 1.1, u * 5); c.lineTo(-u * 2.1, u * 4.8); c.lineTo(-u * 1.3, u * 1.6); c.lineTo(-u * 1.4, -u * 1); c.lineTo(-u * 2.8, -u * .2); c.lineTo(-u * 3.3, -u * 1.1); c.lineTo(-u * 2.4, -u * 1.6); c.lineTo(-u * .9, -u * 2.7); c.closePath(); c.stroke(); c.setLineDash([]); break; }
+    case "marker": { c.rotate(-o.rot * Math.PI / 180); c.fillStyle = S.ev; c.beginPath(); c.moveTo(-w / 2, h / 2); c.lineTo(0, -h / 2); c.lineTo(w / 2, h / 2); c.closePath(); c.fill(); c.strokeStyle = S.id === "bw" ? "#fff" : "rgba(0,0,0,.35)"; c.lineWidth = lw; c.stroke();
+      c.fillStyle = S.evtxt; c.font = `700 ${h * .5}px "IBM Plex Mono"`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(o.n || "?", 0, h * .14); break; }
+    case "steps": { c.fillStyle = S.acc; for (let i = 0; i < 4; i++) { const yy = h / 2 - (i + .5) * h / 4, xx = (i % 2 ? 1 : -1) * w * .2; c.beginPath(); c.ellipse(xx, yy, w * .14, h * .09, 0, 0, 7); c.fill(); c.beginPath(); c.ellipse(xx, yy - h * .1, w * .1, h * .04, 0, 0, 7); c.fill(); } break; }
+    case "glass": { c.strokeStyle = S.acc; for (let i = 0; i < 7; i++) { const a = i * 0.9, r1 = w * .1, r2 = w * (.3 + (i % 3) * .07); c.beginPath(); c.moveTo(Math.cos(a) * r1, Math.sin(a) * r1); c.lineTo(Math.cos(a + .25) * r2, Math.sin(a + .25) * r2); c.lineTo(Math.cos(a - .1) * r2 * .8, Math.sin(a - .1) * r2 * .8); c.closePath(); c.stroke(); } break; }
+    case "blood": { c.fillStyle = S.acc; [[0, 0, .32], [.3, .2, .14], [-.28, .25, .1], [.2, -.3, .09], [-.15, -.28, .07]].forEach(([a, b, r]) => { c.beginPath(); c.arc(a * w, b * h, r * w, 0, 7); c.fill(); }); break; }
+    case "note": { c.rotate(-o.rot * Math.PI / 180); const fs = Math.max(9, s * .9 * (o.fs || 1)); c.font = `700 ${fs}px Caveat`; c.fillStyle = S.acc; c.textAlign = "left"; c.textBaseline = "middle"; const t = o.text || "Note";
+      c.fillText(t, -w / 2, 0); const tw = c.measureText(t).width; o.w = Math.max(1, (tw / s)); c.strokeStyle = S.acc; c.lineWidth = Math.max(1.5, s * .1); const dir = o.rot * Math.PI / 180, ax = -w / 2 + tw + s * .4;
+      c.beginPath(); c.moveTo(ax, 0); c.quadraticCurveTo(ax + s * 1.4, -s * .2, ax + s * 2 * Math.cos(dir + .6), s * 2 * Math.sin(dir + .6)); c.stroke(); const ex = ax + s * 2 * Math.cos(dir + .6), ey = s * 2 * Math.sin(dir + .6);
+      c.beginPath(); c.moveTo(ex, ey); c.lineTo(ex - s * .5, ey - s * .1); c.moveTo(ex, ey); c.lineTo(ex - s * .1, ey - s * .5); c.stroke(); break; }
+    case "suspect": { c.rotate(-o.rot * Math.PI / 180); const r = w / 2; c.fillStyle = S.id === "bw" ? "#fff" : S.bg; c.strokeStyle = S.txt; c.lineWidth = Math.max(1.5, s * .1); c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.stroke();
+      const ini = (o.name || "?").replace(/^(the|dr\.|miss|lady|lord|colonel|captain|madame|professor|mr\.|mrs\.)\s+/i, "").split(/\s+/).map((x) => x[0]).join("").slice(0, 2).toUpperCase();
+      c.fillStyle = S.txt; c.font = `700 ${r * .9}px "IBM Plex Mono"`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(ini, 0, r * .05);
+      c.font = `600 ${Math.max(8, s * .55)}px "Space Grotesk"`; c.textBaseline = "top"; c.fillText(o.name || "", 0, r + s * .2); break; }
+  }
+  c.restore();
+}
+
+// ---------- preview + interaction ----------
+let raf = 0;
+function draw() { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { const [pw, ph] = PAGES[page], dpi = 1200 / Math.max(pw, ph); cv.width = Math.round(pw * dpi); cv.height = Math.round(ph * dpi); render(cv.getContext("2d"), cv.width, cv.height, dpi);
+  $("bTitle").textContent = `${SETS[setKey].n} · ${page === "square" ? "square" : page === "wide" ? "wide 11×8.5" : page}`; save(); }); }
+const toUnits = (e) => { const r = cv.getBoundingClientRect(), px = (e.clientX - r.left) * cv.width / r.width, py = (e.clientY - r.top) * cv.height / r.height; return [(px - L.ox) / L.s, (py - L.oy) / L.s, px, py]; };
+function hitItem(u, v) { return [...P.items].reverse().find((o) => { if (o.furn && !$("furnOn").checked) return false; if (o.t === "suspect" && !$("suspOn").checked) return false; const a = o.rot % 180 ? [o.h, o.w] : [o.w, o.h]; return Math.abs(u - o.x) <= a[0] / 2 + .3 && Math.abs(v - o.y) <= a[1] / 2 + .3; }); }
+const roomAt = (u, v) => P.rooms.find((r) => u >= r.x && u <= r.x + r.w && v >= r.y && v <= r.y + r.h);
+let drag = null;
+cv.addEventListener("pointerdown", (e) => { const [u, v, , py] = toUnits(e); const it = hitItem(u, v);
+  if (it) { snap(); sel = { item: it }; drag = { it, du: u - it.x, dv: v - it.y }; cv.setPointerCapture(e.pointerId); }
+  else if (py < L.m + L.titleH) sel = { title: true }; else { const r = roomAt(u, v); sel = r ? { room: r } : null; }
+  props(); draw(); });
+cv.addEventListener("pointermove", (e) => { const [u, v] = toUnits(e); if (drag) { const o = drag.it; o.x = Math.round((u - drag.du) * 4) / 4; o.y = Math.round((v - drag.dv) * 4) / 4; o.x = Math.max(0, Math.min(P.W, o.x)); o.y = Math.max(0, Math.min(P.H, o.y)); o.room = roomAt(o.x, o.y) || o.room; draw(); return; }
+  cv.style.cursor = hitItem(u, v) ? "move" : "default"; });
+addEventListener("pointerup", () => { if (drag) { drag = null; legend(); } });
+cv.addEventListener("dblclick", (e) => { const [u, v] = toUnits(e); const it = hitItem(u, v); if (it && ["note", "marker", "suspect"].includes(it.t)) { sel = { item: it }; props(); setTimeout(() => { const i = $("pText") || $("pNote") || $("pName"); if (i) { i.focus(); i.select(); } }, 30); return; }
+  const r = roomAt(u, v); if (!r || it) return; sel = { room: r }; props(); setTimeout(() => { const i = $("pRoom"); if (i) { i.focus(); i.select(); } }, 30); });
+addEventListener("keydown", (e) => { if (!sel?.item || e.target.matches("input,textarea,select")) return; const o = sel.item;
+  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); delItem(); } else if (e.key === "r" || e.key === "R") { o.rot = (o.rot + 90) % 360; draw(); }
+  else { const mv = { ArrowLeft: [-.25, 0], ArrowRight: [.25, 0], ArrowUp: [0, -.25], ArrowDown: [0, .25] }[e.key]; if (mv) { e.preventDefault(); o.x += mv[0] * (e.shiftKey ? 4 : 1); o.y += mv[1] * (e.shiftKey ? 4 : 1); draw(); } } });
+const NAMES = { desk: "Desk", chair: "Chair", shelf: "Bookshelf", rug: "Rug", armchair: "Armchair", table: "Round table", bed: "Bed", night: "Night stand", wardrobe: "Wardrobe", longtable: "Dining table", counter: "Counter", stove: "Stove", sofa: "Sofa", fire: "Fireplace", piano: "Piano", tub: "Bathtub", sink: "Sink", bench: "Bench", stairs: "Stairs", plant: "Plant", crate: "Crate", barrel: "Barrel", pedestal: "Display stand", pooltable: "Billiard table", body: "Body outline", marker: "Evidence marker", steps: "Footprints", glass: "Broken glass", blood: "Blood drops", suspect: "Suspect", note: "Handwritten note" };
+function props() { const el = $("props");
+  if (!sel) { el.innerHTML = '<div class="empty">Select an item, a room or the title on the map to edit it.</div>'; return; }
+  if (sel.title) { el.innerHTML = `<h4>Title</h4><label class="f" for="pT">Case title</label><input class="in" id="pT" value="${esc($("mainInput").value)}"><label class="f" for="pS">Note</label><input class="in" id="pS" value="${esc($("subIn").value)}">`;
+    $("pT").oninput = () => { $("mainInput").value = $("pT").value; $("mainInput").dataset.touched = 1; draw(); }; $("pS").oninput = () => { $("subIn").value = $("pS").value; draw(); }; return; }
+  if (sel.room) { const r = sel.room; el.innerHTML = `<h4>Room</h4><label class="f" for="pRoom">Name</label><input class="in" id="pRoom" value="${esc(r.name)}" maxlength="24"><div class="btns"><button type="button" id="pCrime">Make this the crime room</button></div>`;
+    $("pRoom").onfocus = () => snap(); $("pRoom").oninput = () => { r.name = $("pRoom").value; draw(); }; $("pCrime").onclick = () => { snap(); placeCrime(r); legend(); draw(); toast(`The crime now happened in the ${r.name}`); }; return; }
+  const o = sel.item; let extra = "";
+  if (o.t === "marker") extra = `<label class="f" for="pNote">What is evidence ${o.n}?</label><input class="in" id="pNote" value="${esc(o.note || "")}" maxlength="48">`;
+  if (o.t === "suspect") extra = `<label class="f" for="pName">Suspect name</label><input class="in" id="pName" value="${esc(o.name || "")}" maxlength="24">`;
+  if (o.t === "note") extra = `<label class="f" for="pText">Note text</label><input class="in" id="pText" value="${esc(o.text || "")}" maxlength="40">`;
+  el.innerHTML = `<h4>${NAMES[o.t] || o.t}</h4>${extra}<div class="btns"><button type="button" id="pRot">↻ Rotate</button><button type="button" id="pBig">＋ Bigger</button><button type="button" id="pSmall">－ Smaller</button><button type="button" id="pDup">Duplicate</button><button type="button" class="del" id="pDel">Delete</button></div>`;
+  if ($("pNote")) $("pNote").oninput = () => { o.note = $("pNote").value; legend(false); draw(); };
+  if ($("pName")) $("pName").oninput = () => { o.name = $("pName").value; draw(); };
+  if ($("pText")) $("pText").oninput = () => { o.text = $("pText").value; draw(); };
+  $("pRot").onclick = () => { snap(); o.rot = (o.rot + 90) % 360; draw(); };
+  $("pBig").onclick = () => { snap(); if (o.t === "note") o.fs = (o.fs || 1) * 1.15; o.w *= 1.15; o.h *= 1.15; draw(); }; $("pSmall").onclick = () => { snap(); if (o.t === "note") o.fs = (o.fs || 1) / 1.15; o.w /= 1.15; o.h /= 1.15; draw(); };
+  $("pDup").onclick = () => { snap(); const n = { ...o, id: P.nextId++, x: o.x + 1.5, y: o.y + 1.5 }; P.items.push(n); if (n.t === "marker") n.note = "New clue"; renumber(); sel = { item: n }; props(); legend(); draw(); };
+  $("pDel").onclick = delItem; }
+function delItem() { if (!sel?.item) return; snap(); P.items = P.items.filter((x) => x !== sel.item); renumber(); sel = null; props(); legend(); draw(); }
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function legend(rebuild = true) { if (!rebuild) return; const ms = P.items.filter((o) => o.t === "marker");
+  $("leg").innerHTML = ms.length ? ms.map((o) => `<div><b>${o.n}</b><input class="in" data-id="${o.id}" value="${esc(o.note || "")}" maxlength="48" aria-label="Evidence ${o.n}"></div>`).join("") : '<p class="tip" style="margin:0">No evidence markers yet: add one from "Add to the map".</p>'; }
+$("leg").addEventListener("input", (e) => { const o = P.items.find((x) => x.id === +e.target.dataset.id); if (o) { o.note = e.target.value; draw(); } });
+$("legShuffle").onclick = () => { snap(); const ev = shuffle(EVID.slice()); P.items.filter((o) => o.t === "marker").forEach((o, i) => o.note = ev[i % ev.length]); legend(); draw(); };
+
+// palette
+const PAL = ["body", "marker", "steps", "glass", "blood", "suspect", "note", "sofa", "armchair", "table", "desk", "bed", "shelf", "piano", "stairs", "plant"];
+$("pal").innerHTML = PAL.map((t) => `<button type="button" data-t="${t}" title="${NAMES[t]}"><canvas width="60" height="60"></canvas><small>${NAMES[t]}</small></button>`).join("");
+function palIcons() { $("pal").querySelectorAll("canvas").forEach((cc, i) => { const c = cc.getContext("2d"), t = PAL[i], [w, h] = FSIZE[t], s = 44 / Math.max(w, h); c.clearRect(0, 0, 60, 60);
+  item(c, { t, x: 0, y: 0, w, h, rot: 0, n: 1, name: "" }, () => 30, () => 30, s, { furn: "#0f2238", body: "#0f2238", ev: "#f2b632", evtxt: "#0f2238", acc: "#d0343a", txt: "#0f2238", bg: "#ffffff", id: "pal" }); }); }
+$("pal").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; snap(); const t = b.dataset.t, [w, h] = FSIZE[t], r = sel?.room || sel?.item?.room || P.crime || P.rooms[0];
+  const o = { id: P.nextId++, t, x: r.x + r.w / 2 + (Math.random() - .5) * 2, y: r.y + r.h / 2 + (Math.random() - .5) * 2, w, h, rot: 0, room: r, furn: !["body", "marker", "steps", "glass", "blood", "suspect", "note"].includes(t) };
+  if (t === "note") o.text = pick(["Window forced open?", "Who moved the chair?", "Still warm!", "Look here", "The clock stopped"]);
+  if (t === "marker") o.note = "New clue"; if (t === "suspect") o.name = "New suspect"; P.items.push(o); renumber(); sel = { item: o }; props(); legend(); draw(); toast(`${NAMES[t]} added: drag it into place`); });
+
+// settings + styles UI
+$("sets").innerHTML = Object.entries(SETS).map(([k, v]) => `<button type="button" class="set${k === setKey ? " on" : ""}" data-k="${k}"><span>${v.e}</span>${v.n}</button>`).join("");
+$("sets").addEventListener("click", (e) => { const b = e.target.closest(".set"); if (!b) return; snap(); setKey = b.dataset.k; $("sets").querySelectorAll(".set").forEach((x) => x.classList.toggle("on", x === b));
+  const wideSet = SETS[setKey].train || SETS[setKey].ship; if (wideSet && page !== "wide") { page = "wide"; toast("Long layout: switched the page to Wide"); } else if (!wideSet && page === "wide") page = "square";
+  $("pageSeg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.p === page)); delete $("mainInput").dataset.touched; generate(); });
+$("styles").innerHTML = STYLES.map((s2, i) => `<button type="button" class="sty${i ? "" : " on"}" data-i="${i}" style="background:${s2.bg}" title="${s2.n}"><svg viewBox="0 0 40 40" width="100%" height="100%"><path d="M6 6h28v28H6zM6 20h14V6M20 20v14" fill="none" stroke="${s2.wall}" stroke-width="2.4"/><path d="M27 25l3-6 3 6z" fill="${s2.ev}"/></svg><b>${s2.n}</b></button>`).join("");
+$("styles").addEventListener("click", (e) => { const b = e.target.closest(".sty"); if (!b) return; STY = STYLES[+b.dataset.i]; $("styles").querySelectorAll(".sty").forEach((x) => x.classList.toggle("on", x === b)); draw(); });
+$("pageSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; page = b.dataset.p; $("pageSeg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); draw(); });
+["legendOn", "suspOn", "furnOn", "gridOn", "qOn"].forEach((id) => $(id).onchange = draw);
+$("roomSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; snap(); roomsMode = b.dataset.r; $("roomSeg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); generate(); });
+const T1 = ["Murder", "Death", "Poison", "Blood", "Silence", "Shadows", "Secrets", "A Body"], T2 = ["at", "in", "aboard", "behind", "beneath"];
+$("titleIdea").onclick = () => { snap(); const st = SETS[setKey], place = st.title.split(/ (?:at|on|in|aboard) /).pop() || st.n; $("mainInput").value = `Case #${String(ri(2, 60)).padStart(2, "0")} · ${pick(T1)} ${pick(T2)} ${place.replace(/^the /i, "the ")}`; $("mainInput").dataset.touched = 1; draw(); };
+$("mainInput").addEventListener("input", () => { $("mainInput").dataset.touched = 1; draw(); }); $("subIn").addEventListener("input", draw);
+$("btnGen").onclick = () => { snap(); seed = (Date.now() + Math.floor(Math.random() * 1e6)) % 1e9; generate(); };
+
+// exports
+const fileBase = () => ($("mainInput").value || "floor-plan").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+function dl(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+function hires(opt = {}) { const qWas = $("qOn").checked; if (opt.keyQ) $("qOn").checked = true; const [pw, ph] = PAGES[page], c = document.createElement("canvas"); c.width = Math.round(pw * 300); c.height = Math.round(ph * 300); const keep = sel; sel = null; render(c.getContext("2d"), c.width, c.height, 300, { export: true, ...opt }); sel = keep; $("qOn").checked = qWas; return c; }
+$("xPng").onclick = () => { hires().toBlob((b) => { dl(b, `${fileBase()}-${page}.png`); toast("Page saved as PNG (300 DPI)"); }, "image/png"); draw(); };
+$("xPdf").onclick = () => { const [pw, ph] = PAGES[page], c = hires(), { jsPDF } = window.jspdf, pdf = new jsPDF({ orientation: pw > ph ? "landscape" : "portrait", unit: "in", format: [pw, ph] });
+  pdf.addImage(c.toDataURL("image/jpeg", .94), "JPEG", 0, 0, pw, ph); dl(pdf.output("blob"), `${fileBase()}-${page}.pdf`); toast("Page saved as PDF"); draw(); };
+$("xPlan").onclick = () => { const c = hires({ transparent: true }), x = c.getContext("2d"), ox = Math.floor(L.ox - 20), oy = Math.floor(L.oy - 20), w = Math.ceil(P.W * L.s + 40), h = Math.ceil(P.H * L.s + 40);
+  const o = document.createElement("canvas"); o.width = w; o.height = h; o.getContext("2d").drawImage(c, ox, oy, w, h, 0, 0, w, h); o.toBlob((b) => { dl(b, `${fileBase()}-plan.png`); toast("Transparent plan saved"); }, "image/png"); draw(); };
+$("xKey").onclick = () => { hires({ answers: true, keyQ: true }).toBlob((b) => { dl(b, `${fileBase()}-answer-key.png`); toast("Answer key saved"); }, "image/png"); draw(); };
+$("xMock").onclick = () => { mockups().forEach(([n, c], i) => setTimeout(() => c.toBlob((b) => dl(b, `${fileBase()}-mockup-${n}.png`), "image/png"), i * 450)); toast("2 mockups saved"); draw(); };
+$("xAnswer").onclick = () => { hires({ clean: true }).toBlob((b) => { dl(b, `${fileBase()}-clean.png`); toast("Clean version saved"); }, "image/png"); draw(); };
+
+// modals, persistence, start
+const openM = (id) => $(id).classList.add("on"); document.querySelectorAll("[data-close]").forEach((b) => b.onclick = () => b.closest(".modal").classList.remove("on"));
+document.querySelectorAll(".modal").forEach((m) => m.addEventListener("click", (e) => { if (e.target === m) m.classList.remove("on"); }));
+addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelectorAll(".modal").forEach((m) => m.classList.remove("on")); });
+$("btnGuide").onclick = () => openM("guide"); $("btnAbout").onclick = () => openM("about");
+function serialize() { const rooms = P.rooms; return { setKey, page, roomsMode, sty: STYLES.indexOf(STY), title: $("mainInput").value, sub: $("subIn").value, touched: !!$("mainInput").dataset.touched,
+  P: { ...P, crime: rooms.indexOf(P.crime), items: P.items.map((o) => ({ ...o, room: rooms.indexOf(o.room) })) } }; }
+function applyData(d) { if (!d || !d.P || !SETS[d.setKey]) return false; setKey = d.setKey; page = d.page || "square"; roomsMode = d.roomsMode || "mid"; STY = STYLES[d.sty] || STYLES[0];
+  $("mainInput").value = d.title || ""; $("subIn").value = d.sub || ""; if (d.touched) $("mainInput").dataset.touched = 1; else delete $("mainInput").dataset.touched;
+  const rooms = d.P.rooms.map((r) => ({ ...r })); P = { ...d.P, rooms, crime: rooms[d.P.crime] || rooms[0], items: d.P.items.map((o) => ({ ...o, room: rooms[o.room] || rooms[0] })) };
+  $("sets").querySelectorAll(".set").forEach((x) => x.classList.toggle("on", x.dataset.k === setKey)); $("styles").querySelectorAll(".sty").forEach((x) => x.classList.toggle("on", +x.dataset.i === STYLES.indexOf(STY)));
+  $("pageSeg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.p === page)); $("roomSeg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.r === roomsMode)); sel = null; return true; }
+function save() { try { store.set("plan", serialize()); } catch {} }
+const load = () => applyData(store.get("plan", null));
+// ---- undo / redo ----
+let hist = [], fut = [];
+function snap() { if (!P) return; hist.push(JSON.stringify(serialize())); if (hist.length > 60) hist.shift(); fut = []; histBtns(); }
+function histBtns() { $("undo").disabled = !hist.length; $("redo").disabled = !fut.length; }
+function undo() { if (!hist.length) return; fut.push(JSON.stringify(serialize())); applyData(JSON.parse(hist.pop())); props(); legend(); draw(); histBtns(); }
+function redo() { if (!fut.length) return; hist.push(JSON.stringify(serialize())); applyData(JSON.parse(fut.pop())); props(); legend(); draw(); histBtns(); }
+$("undo").onclick = undo; $("redo").onclick = redo;
+addEventListener("keydown", (e) => { if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z" || e.target.matches("input,textarea")) return; e.preventDefault(); e.shiftKey ? redo() : undo(); });
+// ---- my plans ----
+let PLANS = store.get("plans", []);
+function renderPlans() { $("plans").innerHTML = PLANS.length ? PLANS.map((pl, i) => `<div><span title="${esc(pl.name)}">${esc(pl.name)}</span><small>${pl.date}</small><button type="button" data-o="${i}">Open</button><button type="button" data-d="${i}" title="Delete">✕</button></div>`).join("")
+  : '<p class="tip" style="margin:0">Save plans here to come back to them later. They stay on this device; Export makes a backup file.</p>'; }
+$("planSave").onclick = () => { PLANS.unshift({ name: $("mainInput").value || "Untitled plan", date: new Date().toLocaleDateString(), data: serialize() }); PLANS = PLANS.slice(0, 40); store.set("plans", PLANS); renderPlans(); toast("Plan saved in My plans"); };
+$("plans").addEventListener("click", (e) => { const o = e.target.closest("[data-o]"), d = e.target.closest("[data-d]");
+  if (o) { snap(); applyData(PLANS[+o.dataset.o].data); props(); legend(); draw(); toast("Plan opened"); }
+  if (d && confirm(`Delete "${PLANS[+d.dataset.d].name}" from My plans?`)) { PLANS.splice(+d.dataset.d, 1); store.set("plans", PLANS); renderPlans(); } });
+$("planExp").onclick = () => { if (!PLANS.length) { toast("Save a plan first"); return; } dl(new Blob([JSON.stringify({ app: "crime-scene-floor-plan-maker", plans: PLANS })], { type: "application/json" }), "my-floor-plans.json"); };
+$("planImp").onclick = () => $("planFile").click();
+$("planFile").onchange = async () => { const f = $("planFile").files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); const list = (j.plans || []).filter((x) => x && x.data && x.data.P); PLANS = [...list, ...PLANS].slice(0, 80); store.set("plans", PLANS); renderPlans(); toast(`${list.length} plans imported`); } catch { toast("That file isn't a plans backup"); } $("planFile").value = ""; };
+// ---- detective questions ----
+function questions() { const out = [], sus = P.items.filter((o) => o.t === "suspect"), ms = P.items.filter((o) => o.t === "marker"), cr = P.crime;
+  out.push({ q: "In which room was the body found?", a: cr.name });
+  sus.slice(0, 2).forEach((o) => { const r = roomAt(o.x, o.y); if (r) out.push({ q: `Where was ${o.name} at the time of the crime?`, a: r.name }); });
+  const inCrime = ms.filter((o) => roomAt(o.x, o.y) === cr).length; out.push({ q: `How many evidence markers were found in the ${cr.name.toLowerCase()}?`, a: String(inCrime) });
+  const adj = P.rooms.filter((r) => r !== cr && P.doors.some((d) => { const on = (rm) => d.v ? (d.x === rm.x || d.x === rm.x + rm.w) && d.y > rm.y && d.y < rm.y + rm.h : (d.y === rm.y || d.y === rm.y + rm.h) && d.x > rm.x && d.x < rm.x + rm.w; return on(cr) && on(r); }));
+  if (adj.length) out.push({ q: `Which room${adj.length > 1 ? "s" : ""} can you reach from the ${cr.name.toLowerCase()} through a door?`, a: adj.map((r) => r.name).join(", ") });
+  const near = sus.map((o) => [o, Math.hypot(o.x - (cr.x + cr.w / 2), o.y - (cr.y + cr.h / 2))]).sort((a, b2) => a[1] - b2[1])[0]; if (near) out.push({ q: "Which suspect was closest to the crime room?", a: near[0].name });
+  return out.slice(0, 5); }
+// ---- mockups ----
+function mockups() { const [pw, ph] = PAGES[page], pg = document.createElement("canvas"); pg.width = Math.round(pw * 150); pg.height = Math.round(ph * 150); const keep = sel; sel = null; render(pg.getContext("2d"), pg.width, pg.height, 150, { export: true }); sel = keep;
+  const scenes = []; const W = 1600, H = 1200;
+  { const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d"); const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#b48a5a"); g.addColorStop(1, "#8d6538"); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.globalAlpha = .25; x.fillStyle = "#3b2410"; for (let i = 0; i < 5000; i++) x.fillRect((i * 97.3) % W, (i * 61.7) % H, 2, 2); x.globalAlpha = 1;
+    const sc = Math.min(W * .62 / pg.width, H * .8 / pg.height), w = pg.width * sc, h = pg.height * sc; x.save(); x.translate(W * .44, H * .5); x.rotate(-.04); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 30; x.shadowOffsetY = 14; x.drawImage(pg, -w / 2, -h / 2, w, h); x.restore();
+    x.save(); x.translate(W * .84, H * .32); x.rotate(.08); x.fillStyle = "#fff59a"; x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 16; x.fillRect(-120, -90, 240, 180); x.shadowBlur = 0; x.fillStyle = "#222"; x.font = "700 40px Caveat"; x.textAlign = "center"; x.fillText("Who was where?", 0, -20); x.font = "700 30px Caveat"; x.fillText("Check the doors!", 0, 30); x.restore();
+    x.strokeStyle = "#c8102e"; x.lineWidth = 4; x.beginPath(); x.moveTo(W * .44, H * .14); x.lineTo(W * .84, H * .25); x.lineTo(W * .7, H * .86); x.stroke();
+    [[W * .44, H * .14], [W * .84, H * .25], [W * .7, H * .86]].forEach(([a, b2]) => { x.fillStyle = "#c8102e"; x.beginPath(); x.arc(a, b2, 13, 0, 7); x.fill(); }); scenes.push(["evidence-board", c]); }
+  { const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d"); x.fillStyle = "#2a2624"; x.fillRect(0, 0, W, H);
+    x.save(); x.translate(W / 2, H / 2); x.rotate(-.03); x.fillStyle = "#c9a15f"; x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 40; x.fillRect(-W * .44, -H * .4, W * .88, H * .82); x.shadowBlur = 0; x.fillStyle = "#b88f4e"; x.fillRect(-W * .44, -H * .4 - 30, W * .2, 34);
+    x.fillStyle = "rgba(0,0,0,.08)"; x.fillRect(-4, -H * .4, 8, H * .82); x.fillStyle = "#3a2a14"; x.font = "400 34px 'Special Elite'"; x.fillText("CASE FILE", -W * .4, -H * .3);
+    const sc = Math.min(W * .4 / pg.width, H * .72 / pg.height), w = pg.width * sc, h = pg.height * sc; x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 18; x.drawImage(pg, W * .03, -h / 2 + 10, w, h); x.shadowBlur = 0;
+    x.fillStyle = "#f6f1e4"; x.fillRect(-W * .4, -H * .2, W * .36, H * .5); x.fillStyle = "rgba(40,40,40,.4)"; for (let i = 0; i < 10; i++) x.fillRect(-W * .37, -H * .15 + i * 38, W * .3 - (i % 3) * 40, 7);
+    x.strokeStyle = "#c8102e"; x.lineWidth = 5; x.strokeRect(-W * .34, H * .19, 220, 64); x.fillStyle = "#c8102e"; x.font = "700 40px 'Space Grotesk'"; x.fillText("CLASSIFIED", -W * .34 + 10, H * .19 + 46); x.restore(); scenes.push(["case-folder", c]); }
+  return scenes; }
+palIcons(); renderPlans(); histBtns();
+if (!load()) generate(); else { props(); legend(); draw(); }
+document.fonts.ready.then(() => { draw(); palIcons(); });
+if (!store.get("seen", false) && !navigator.webdriver) { openM("guide"); store.set("seen", true); }
+})();
+</script>
+</body>
+</html>
