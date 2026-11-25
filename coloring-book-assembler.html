@@ -1,0 +1,2055 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coloring Book Assembler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style id="kit-css">
+/* ==========================================================================
+   Creator Space Lab - Studio Kit 2.0 (shared shell for every tool)
+   Each tool sets its own look by overriding the --k-* variables on :root.
+   All kit classes start with "k-" so they never collide with tool styles.
+   ========================================================================== */
+:root {
+  --k-bg: #f4f1ea;
+  --k-panel: #ffffff;
+  --k-panel-2: #f7f5f0;
+  --k-ink: #1d1b16;
+  --k-muted: #6f6a5e;
+  --k-line: #e3ded2;
+  --k-accent: #e8a400;
+  --k-accent-ink: #1d1b16;
+  --k-accent-soft: #fff4d1;
+  --k-danger: #c8372d;
+  --k-ok: #1f8a4c;
+  --k-stage: #e9e5da;
+  --k-radius: 12px;
+  --k-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --k-display: var(--k-font);
+  --k-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .08);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--k-font);
+  color: var(--k-ink);
+  background: var(--k-bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+.k-ico { width: 18px; height: 18px; flex: none; display: block; }
+
+/* ---------- App frame ---------- */
+.k-app { display: grid; grid-template-rows: auto 1fr; height: 100dvh; }
+.k-top {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--k-panel);
+  border-bottom: 1px solid var(--k-line); min-width: 0;
+}
+.k-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.k-logo {
+  width: 38px; height: 38px; border-radius: 10px; flex: none;
+  background: var(--k-accent); color: var(--k-accent-ink);
+  display: grid; place-items: center;
+}
+.k-logo svg { width: 24px; height: 24px; }
+.k-titles { min-width: 0; }
+.k-title {
+  font-family: var(--k-display); font-weight: 800; font-size: 16px;
+  line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.k-tagline {
+  font-size: 12px; color: var(--k-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.k-spacer { flex: 1; }
+.k-pname {
+  width: 190px; min-width: 90px; padding: 8px 10px; border-radius: 9px;
+  border: 1px solid transparent; background: var(--k-panel-2); font-weight: 600; font-size: 13px;
+}
+.k-pname:hover, .k-pname:focus { border-color: var(--k-line); outline: none; background: var(--k-panel); }
+.k-saved { font-size: 11px; color: var(--k-muted); white-space: nowrap; }
+
+/* ---------- Buttons ---------- */
+.k-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 8px 12px; border-radius: 9px; border: 1px solid var(--k-line);
+  background: var(--k-panel); font-weight: 600; font-size: 13px; cursor: pointer;
+  white-space: nowrap; transition: transform .12s, background .12s, border-color .12s, box-shadow .12s;
+}
+.k-btn:hover { border-color: var(--k-ink); }
+.k-btn:active { transform: translateY(1px); }
+.k-btn:disabled { opacity: .4; cursor: default; border-color: var(--k-line); }
+.k-btn.k-icon { padding: 8px; }
+.k-btn.k-primary {
+  background: var(--k-accent); color: var(--k-accent-ink); border-color: transparent;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .18);
+}
+.k-btn.k-primary:hover { filter: brightness(1.05); }
+.k-btn.k-ghost { border-color: transparent; background: transparent; }
+.k-btn.k-ghost:hover { background: var(--k-panel-2); }
+.k-btn.k-danger { color: var(--k-danger); }
+.k-btn.k-big { width: 100%; padding: 13px 14px; font-size: 15px; border-radius: 11px; }
+.k-btn.k-sm { padding: 5px 9px; font-size: 12px; border-radius: 8px; }
+.k-group-btns { display: inline-flex; }
+.k-group-btns .k-btn { border-radius: 0; margin-left: -1px; }
+.k-group-btns .k-btn:first-child { border-radius: 9px 0 0 9px; margin-left: 0; }
+.k-group-btns .k-btn:last-child { border-radius: 0 9px 9px 0; }
+
+/* ---------- Body: side panel + stage ---------- */
+.k-body { display: grid; grid-template-columns: 340px 1fr; min-height: 0; }
+.k-side {
+  display: grid; grid-template-rows: auto 1fr auto; min-height: 0;
+  background: var(--k-panel); border-right: 1px solid var(--k-line);
+}
+.k-tabs { display: flex; gap: 2px; padding: 8px 8px 0; border-bottom: 1px solid var(--k-line); overflow-x: auto; }
+.k-tab {
+  padding: 9px 11px; border: 0; background: none; cursor: pointer; white-space: nowrap;
+  font-weight: 700; font-size: 12.5px; color: var(--k-muted);
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.k-tab.is-on { color: var(--k-ink); border-bottom-color: var(--k-accent); }
+.k-scroll { overflow-y: auto; padding: 14px; min-height: 0; }
+.k-foot { padding: 12px 14px; border-top: 1px solid var(--k-line); display: grid; gap: 8px; }
+.k-foot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.k-group { margin-bottom: 18px; }
+.k-group-title {
+  font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--k-muted); margin: 0 0 9px;
+}
+.k-field { margin-bottom: 12px; }
+.k-field[hidden] { display: none; }
+.k-label { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 700; margin-bottom: 5px; }
+.k-label small { font-weight: 600; color: var(--k-muted); }
+.k-hint { font-size: 11.5px; color: var(--k-muted); margin-top: 4px; line-height: 1.4; }
+.k-input, .k-select, .k-textarea {
+  width: 100%; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--k-line);
+  background: var(--k-panel); font-size: 13px;
+}
+.k-textarea { min-height: 120px; resize: vertical; line-height: 1.45; }
+.k-input:focus, .k-select:focus, .k-textarea:focus {
+  outline: 2px solid var(--k-accent); outline-offset: 1px; border-color: transparent;
+}
+.k-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; background: var(--k-panel-2); padding: 4px; border-radius: 10px; }
+.k-seg button {
+  border: 0; background: none; padding: 7px 6px; border-radius: 7px; cursor: pointer;
+  font-weight: 700; font-size: 12px; color: var(--k-muted);
+}
+.k-seg button.is-on { background: var(--k-panel); color: var(--k-ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+.k-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.k-chip {
+  border: 1px solid var(--k-line); background: var(--k-panel); border-radius: 999px;
+  padding: 6px 11px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.k-chip.is-on { background: var(--k-ink); color: var(--k-panel); border-color: var(--k-ink); }
+.k-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.k-card {
+  position: relative; text-align: left; border: 1.5px solid var(--k-line); background: var(--k-panel);
+  border-radius: 10px; padding: 9px 10px; cursor: pointer; font-size: 12px; font-weight: 700; line-height: 1.25;
+}
+.k-card small { display: block; font-weight: 500; color: var(--k-muted); margin-top: 2px; font-size: 11px; }
+.k-card.is-on { border-color: var(--k-accent); background: var(--k-accent-soft); }
+.k-card.is-on::after {
+  content: ""; position: absolute; top: 7px; right: 7px; width: 9px; height: 9px;
+  border-radius: 50%; background: var(--k-accent);
+}
+.k-swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+.k-swatch {
+  border: 2px solid transparent; border-radius: 10px; padding: 0; cursor: pointer; background: none;
+  display: grid; gap: 3px; justify-items: center; font-size: 10px; font-weight: 700; color: var(--k-muted);
+}
+.k-swatch i { display: block; width: 100%; height: 30px; border-radius: 8px; border: 1px solid rgba(0, 0, 0, .12); }
+.k-swatch.is-on i { outline: 2.5px solid var(--k-ink); outline-offset: 2px; }
+.k-swatch.is-on { color: var(--k-ink); }
+.k-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.k-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.k-toggle span {
+  width: 38px; height: 22px; border-radius: 999px; background: var(--k-line); position: relative; flex: none; transition: background .15s;
+}
+.k-toggle span::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+}
+.k-toggle input:checked + span { background: var(--k-accent); }
+.k-toggle input:checked + span::after { transform: translateX(16px); }
+.k-toggle input:focus-visible + span { outline: 2px solid var(--k-ink); outline-offset: 2px; }
+.k-range { width: 100%; accent-color: var(--k-accent); }
+
+/* ---------- Stage ---------- */
+.k-stage { display: grid; grid-template-rows: auto 1fr auto; min-width: 0; min-height: 0; background: var(--k-stage); }
+.k-bar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px; overflow-x: auto;
+  background: color-mix(in srgb, var(--k-panel) 70%, transparent); border-bottom: 1px solid var(--k-line);
+}
+.k-bar .k-chips { flex-wrap: nowrap; }
+.k-canvas { overflow: auto; min-height: 0; padding: 26px; position: relative; }
+.k-pages { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+.k-pages.is-work { display: block; }
+.k-work { width: 100%; min-height: 100%; }
+.k-pages.is-grid { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 18px; }
+.k-slot { position: relative; flex: none; }
+.k-slot-label {
+  position: absolute; left: 0; top: -18px; font-size: 11px; font-weight: 700; color: var(--k-muted); white-space: nowrap;
+}
+.k-pages.is-grid .k-slot { cursor: pointer; }
+.k-pages.is-grid .k-slot:hover .k-sheet { box-shadow: 0 0 0 3px var(--k-accent), var(--k-shadow); }
+.k-sheet {
+  position: absolute; left: 0; top: 0; transform-origin: 0 0; background: #fff; color: #111;
+  box-shadow: var(--k-shadow); overflow: hidden;
+}
+.k-sheet [data-edit] { outline: none; border-radius: 3px; cursor: text; transition: box-shadow .12s, background .12s; }
+.k-sheet [data-edit]:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--k-accent) 55%, transparent); }
+.k-sheet [data-edit]:focus { box-shadow: 0 0 0 2px var(--k-accent); background: rgba(255, 255, 255, .7); }
+.k-pager {
+  display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 12px;
+  background: var(--k-panel); border-top: 1px solid var(--k-line); font-size: 12.5px; font-weight: 700;
+}
+.k-pager span { min-width: 150px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.k-empty { max-width: 420px; margin: 8vh auto; text-align: center; color: var(--k-muted); }
+.k-empty h3 { color: var(--k-ink); font-family: var(--k-display); margin: 12px 0 6px; }
+
+/* ---------- Menus, modals, toasts ---------- */
+.k-menu-wrap { position: relative; }
+.k-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; min-width: 250px;
+  background: var(--k-panel); border: 1px solid var(--k-line); border-radius: 12px;
+  box-shadow: var(--k-shadow); padding: 6px; display: none;
+}
+.k-menu.is-open { display: block; animation: k-pop .14s ease-out; }
+.k-menu button {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none;
+  padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.k-menu button small { display: block; font-weight: 500; color: var(--k-muted); font-size: 11.5px; }
+.k-menu button:hover { background: var(--k-panel-2); }
+.k-menu hr { border: 0; border-top: 1px solid var(--k-line); margin: 5px 0; }
+
+.k-veil {
+  position: fixed; inset: 0; z-index: 100; background: rgba(15, 14, 12, .5);
+  display: grid; place-items: center; padding: 16px; animation: k-fade .15s ease-out;
+}
+.k-modal {
+  width: min(680px, 100%); max-height: min(86dvh, 820px); display: grid; grid-template-rows: auto 1fr auto;
+  background: var(--k-panel); border-radius: 16px; box-shadow: 0 30px 80px rgba(0, 0, 0, .35); animation: k-pop .18s ease-out;
+}
+.k-modal.is-narrow { width: min(430px, 100%); }
+.k-modal-head { display: flex; align-items: center; gap: 10px; padding: 16px 18px 12px; }
+.k-modal-head h2 { font-family: var(--k-display); font-size: 18px; margin: 0; flex: 1; }
+.k-modal-body { padding: 4px 18px 16px; overflow-y: auto; font-size: 13.5px; line-height: 1.55; }
+.k-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px 16px; flex-wrap: wrap; }
+.k-modal-body h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--k-muted); margin: 18px 0 8px; }
+.k-steps { counter-reset: s; display: grid; gap: 9px; padding: 0; margin: 0; list-style: none; }
+.k-steps li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.k-steps li::before {
+  content: counter(s); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--k-accent); color: var(--k-accent-ink); font-weight: 800; font-size: 13px;
+}
+.k-dl { display: grid; grid-template-columns: minmax(110px, 34%) 1fr; gap: 6px 14px; margin: 0; }
+.k-dl dt { font-weight: 700; }
+.k-dl dd { margin: 0; color: var(--k-muted); }
+.k-kbd {
+  display: inline-block; padding: 1px 6px; border: 1px solid var(--k-line); border-bottom-width: 2px;
+  border-radius: 6px; font-size: 11.5px; font-weight: 700; background: var(--k-panel-2);
+}
+.k-list { display: grid; gap: 8px; }
+.k-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--k-line); border-radius: 11px;
+}
+.k-row b { display: block; font-size: 13.5px; }
+.k-row small { color: var(--k-muted); font-size: 11.5px; }
+.k-row > div:first-child { flex: 1; min-width: 0; }
+.k-row b, .k-row small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+.k-toasts { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 200; display: grid; gap: 8px; justify-items: center; pointer-events: none; }
+.k-toast {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: var(--k-ink); color: var(--k-panel); box-shadow: var(--k-shadow); animation: k-pop .18s ease-out; max-width: 92vw;
+}
+.k-toast.is-ok .k-ico { color: #6fe39b; }
+.k-toast.is-err { background: var(--k-danger); color: #fff; }
+.k-progress { position: fixed; inset: 0; z-index: 150; background: rgba(15, 14, 12, .55); display: grid; place-items: center; }
+.k-progress-box { width: min(360px, 88vw); background: var(--k-panel); border-radius: 16px; padding: 20px; text-align: center; font-weight: 700; font-size: 14px; }
+.k-progress-bar { height: 8px; border-radius: 999px; background: var(--k-line); overflow: hidden; margin-top: 12px; }
+.k-progress-bar i { display: block; height: 100%; width: 0; background: var(--k-accent); transition: width .2s; }
+.k-confetti { position: fixed; inset: 0; z-index: 210; pointer-events: none; }
+.k-offscreen { position: fixed; left: -100000px; top: 0; }
+.k-offscreen .k-sheet { position: relative; box-shadow: none; }
+.k-mnav { display: none; }
+
+@keyframes k-pop { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes k-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- Tablet and phone ---------- */
+@media (max-width: 1100px) {
+  .k-body { grid-template-columns: 300px 1fr; }
+  .k-tagline, .k-saved { display: none; }
+}
+@media (max-width: 760px) {
+  .k-app { grid-template-rows: auto 1fr auto; }
+  .k-body { grid-template-columns: 1fr; }
+  .k-body[data-pane="design"] .k-stage { display: none; }
+  .k-body[data-pane="preview"] .k-side { display: none; }
+  .k-side { border-right: 0; }
+  .k-top { padding: 8px 10px; gap: 6px; }
+  .k-pname, .k-hide-m { display: none; }
+  .k-title { font-size: 14px; }
+  .k-logo { width: 32px; height: 32px; }
+  .k-canvas { padding: 22px 12px 16px; }
+  .k-mnav { display: grid; grid-template-columns: 1fr 1fr; background: var(--k-panel); border-top: 1px solid var(--k-line); }
+  .k-mnav button {
+    border: 0; background: none; padding: 11px 0 calc(11px + env(safe-area-inset-bottom)); font-weight: 800; font-size: 13px;
+    color: var(--k-muted); display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 46px;
+  }
+  .k-mnav button.is-on { color: var(--k-ink); box-shadow: inset 0 3px 0 var(--k-accent); }
+  .k-btn { min-height: 38px; }
+  .k-menu { position: fixed; left: 10px; right: 10px; top: 56px; min-width: 0; }
+  .k-dl { grid-template-columns: 1fr; gap: 2px 0; }
+  .k-dl dd { margin-bottom: 8px; }
+  .k-pager span { min-width: 0; flex: 1; }
+}
+
+/* ---------- Exact print: one sheet per page, nothing else ---------- */
+@media print {
+  body { overflow: visible; background: #fff; }
+  .k-app, .k-veil, .k-toasts, .k-progress { display: none !important; }
+  .k-offscreen { position: static; left: 0; }
+  .k-offscreen .k-sheet { page-break-after: always; break-after: page; }
+}
+</style>
+<style>
+/* Direction: Sidebar + Canvas in a risograph print-shop language (off-white newsprint, fluoro pink and teal ink,
+   Bricolage Grotesque + Space Mono), because coloring book makers live between line art and the print run. */
+:root {
+  --k-bg: #f4f1ea;
+  --k-panel: #fffdf8;
+  --k-panel-2: #f1ede3;
+  --k-ink: #1f1d24;
+  --k-muted: #6d6873;
+  --k-line: #e2dccf;
+  --k-accent: #ff4f8b;
+  --k-accent-ink: #ffffff;
+  --k-accent-soft: #ffe1ec;
+  --k-stage: #e6e1d5;
+  --k-font: "Bricolage Grotesque", system-ui, sans-serif;
+  --k-display: "Bricolage Grotesque", system-ui, sans-serif;
+}
+.k-title { font-weight: 800; letter-spacing: -.01em; font-size: 17px; }
+.k-group-title { color: #0e8f8a; font-family: "Space Mono", monospace; letter-spacing: .06em; }
+.k-stats { font-family: "Space Mono", monospace; font-size: 11px; }
+.cb-drop { border: 2px dashed #c9bfae; border-radius: 12px; padding: 14px 10px; text-align: center; cursor: pointer; font-size: 12.5px; color: var(--k-muted); background: var(--k-panel-2); line-height: 1.45; }
+.cb-drop b { display: block; color: var(--k-ink); font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+.cb-drop.is-over { border-color: var(--k-accent); background: var(--k-accent-soft); }
+.cb-gal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 10px; }
+.cb-it { position: relative; border: 1px solid var(--k-line); border-radius: 9px; background: #fff; padding: 4px 4px 0; cursor: grab; }
+.cb-it.is-drag { opacity: .4; }
+.cb-it.is-over { outline: 3px solid #0e8f8a; }
+.cb-th { aspect-ratio: 3 / 4; background: #fff center / contain no-repeat; border-radius: 5px; }
+.cb-no { position: absolute; left: 6px; top: 6px; font: 700 10px "Space Mono", monospace; background: var(--k-ink); color: #fff; border-radius: 4px; padding: 1px 4px; }
+.cb-warn { position: absolute; right: 6px; top: 6px; width: 16px; height: 16px; border-radius: 50%; background: #e98a00; color: #fff; font: 800 11px/16px sans-serif; text-align: center; }
+.cb-bt { display: flex; justify-content: space-between; }
+.cb-bt button { border: 0; background: none; padding: 4px 2px; cursor: pointer; color: var(--k-muted); }
+.cb-bt button:hover { color: var(--k-accent); }
+.cb-bt .k-ico { width: 15px; height: 15px; }
+.cb-sum { font-size: 12px; color: var(--k-muted); margin-top: 8px; line-height: 1.45; }
+.cb-sum b { color: var(--k-ink); }
+.pc-list { display: grid; gap: 8px; }
+.pc-head { padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; font-weight: 800; font-size: 13px; }
+.pc-head.is-ok { background: #ddf3ea; color: #0e6b52; } .pc-head.is-warn { background: #fff0d6; color: #8a5300; }
+.pc-row { display: grid; grid-template-columns: 20px 1fr; gap: 8px; font-size: 12.5px; line-height: 1.4; }
+.pc-row > i { width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 800; color: #fff; }
+.pc-row > i .k-ico { width: 12px; height: 12px; stroke-width: 3; }
+.pc-ok > i { background: #10936f; } .pc-warn > i { background: #e98a00; } .pc-info > i { background: #8d8794; }
+.pc-row small { display: block; color: var(--k-muted); font-size: 11.5px; }
+.vp { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; color: #222; }
+.vp > div, .vp > svg { position: absolute; }
+.vp .tl { white-space: pre; }
+.vp .im { background-size: 100% 100%; background-repeat: no-repeat; }
+.vp .ld { display: flex; align-items: center; justify-content: center; left: 0; top: 0; width: 100%; height: 100%; color: #b7aea2; font: 700 2.2em "Bricolage Grotesque", sans-serif; text-align: center; }
+</style>
+</head>
+<body>
+<script id="kit-js">
+/* ==========================================================================
+   Creator Space Lab - Studio Kit 2.0
+   Shared engine for every tool: controls, pages, click-to-edit, undo/redo,
+   autosave, saved projects, PDF / PNG / ZIP / print / listing mockups,
+   guide, shortcuts, toasts and dialogs. A tool only describes its controls
+   and how to draw its pages: Kit.app({ ... }).
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  var LIBS = {
+    html2canvas: "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+    jspdf: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+    jszip: "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+  };
+
+  /* Page sizes in inches (KDP trim sizes plus A4 / A5). */
+  var SIZES = {
+    letter: { label: "US Letter 8.5 x 11 in", w: 8.5, h: 11 },
+    a4: { label: "A4 210 x 297 mm", w: 8.27, h: 11.69 },
+    "8x10": { label: "8 x 10 in", w: 8, h: 10 },
+    "7x10": { label: "7 x 10 in", w: 7, h: 10 },
+    "6x9": { label: "6 x 9 in", w: 6, h: 9 },
+    "8.25x8.25": { label: "Square 8.25 x 8.25 in", w: 8.25, h: 8.25 },
+    a5: { label: "A5 148 x 210 mm", w: 5.83, h: 8.27 },
+    "letter-land": { label: "Letter landscape 11 x 8.5 in", w: 11, h: 8.5 }
+  };
+
+  /* ---------- Icons (inline SVG, no emoji) ---------- */
+  var ICONS = {
+    undo: "M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3",
+    redo: "m15 14 5-5-5-5M20 9H10a6 6 0 0 0 0 12h3",
+    download: "M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3",
+    printer: "M7 8V3h10v5M7 17H4v-7h16v7h-3M7 14h10v7H7z",
+    help: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-2.5-11.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 17h.01",
+    folder: "M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z",
+    save: "M5 3h11l4 4v14H4V3Zm3 0v6h8V3M8 21v-7h8v7",
+    plus: "M12 5v14M5 12h14",
+    trash: "M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13",
+    copy: "M9 9h11v11H9zM5 15H4V4h11v1",
+    shuffle: "M3 7h4l8 10h6m0 0-3-3m3 3-3 3M3 17h4l2.5-3M14 8.5 15 7h6m0 0-3-3m3 3-3 3",
+    zoomIn: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm10 2-4.3-4.3M11 8v6M8 11h6",
+    zoomOut: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm10 2-4.3-4.3M8 11h6",
+    grid: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+    page: "M6 3h9l4 4v14H6zM15 3v4h4",
+    left: "m15 5-7 7 7 7",
+    right: "m9 5 7 7-7 7",
+    close: "M6 6l12 12M18 6 6 18",
+    check: "m5 12 5 5 9-10",
+    image: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M9 9.5h.01",
+    upload: "M12 16V4m0 0-4 4m4-4 4 4M4 17v3h16v-3",
+    edit: "M4 20h4L19 9l-4-4L4 16zM13 7l4 4",
+    eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+    sparkles: "M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8zM18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z",
+    sliders: "M4 6h10m4 0h2M4 12h4m4 0h8M4 18h12m4 0h0M16 4v4M10 10v4M18 16v4",
+    star: "m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z",
+    file: "M6 3h9l4 4v14H6zM9 12h7M9 16h7M9 8h3",
+    reset: "M4 5v5h5M4.5 10a8 8 0 1 1-.5 4",
+    layers: "m12 3 9 5-9 5-9-5zM3 13l9 5 9-5M3 17l9 5 9-5"
+  };
+
+  function icon(name) {
+    return '<svg class="k-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + (ICONS[name] || "") + '"/></svg>';
+  }
+
+  /* ---------- Small helpers ---------- */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function el(html) { var t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function debounce(fn, ms) { var t; return function () { var a = arguments; clearTimeout(t); t = setTimeout(function () { fn.apply(null, a); }, ms); }; }
+  function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "project"; }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  /* Seeded random numbers: the same seed always draws the same pages. */
+  function hashSeed(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function rng(seed) {
+    var a = hashSeed(String(seed));
+    function next() {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    return {
+      next: next,
+      int: function (lo, hi) { return lo + Math.floor(next() * (hi - lo + 1)); },
+      pick: function (arr) { return arr[Math.floor(next() * arr.length)]; },
+      chance: function (p) { return next() < p; },
+      shuffle: function (arr) {
+        var out = arr.slice();
+        for (var i = out.length - 1; i > 0; i--) { var j = Math.floor(next() * (i + 1)); var t = out[i]; out[i] = out[j]; out[j] = t; }
+        return out;
+      }
+    };
+  }
+  function newSeed() { return Math.random().toString(36).slice(2, 8).toUpperCase(); }
+
+  /* localStorage, always guarded. */
+  var store = {
+    get: function (k, fallback) { try { var v = localStorage.getItem(k); return v == null ? fallback : JSON.parse(v); } catch (e) { return fallback; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+  };
+
+  var loaded = {};
+  function loadScript(url) {
+    if (!loaded[url]) {
+      loaded[url] = new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = url; s.onload = ok;
+        s.onerror = function () { delete loaded[url]; fail(new Error("Could not load " + url)); };
+        document.head.appendChild(s);
+      });
+    }
+    return loaded[url];
+  }
+
+  function download(name, data, mime) {
+    var blob = data instanceof Blob ? data : new Blob([data], { type: mime || "text/plain;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () { return legacyCopy(text); });
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+  function legacyCopy(text) {
+    var t = document.createElement("textarea");
+    t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
+    document.body.appendChild(t); t.select();
+    try { document.execCommand("copy"); } catch (e) { /* ignore */ }
+    t.remove();
+  }
+
+  /* ---------- Toasts, dialogs, progress, confetti ---------- */
+  function toast(msg, kind) {
+    var box = $(".k-toasts") || document.body.appendChild(el('<div class="k-toasts" role="status" aria-live="polite"></div>'));
+    var t = el('<div class="k-toast ' + (kind === "err" ? "is-err" : "is-ok") + '">' + icon(kind === "err" ? "close" : "check") + "<span>" + esc(msg) + "</span></div>");
+    box.appendChild(t);
+    setTimeout(function () { t.style.transition = "opacity .3s"; t.style.opacity = "0"; setTimeout(function () { t.remove(); }, 320); }, kind === "err" ? 4200 : 2200);
+  }
+
+  function modal(opts) {
+    var veil = el('<div class="k-veil" role="dialog" aria-modal="true"><div class="k-modal ' + (opts.narrow ? "is-narrow" : "") + '">' +
+      '<div class="k-modal-head"><h2>' + esc(opts.title) + '</h2><button class="k-btn k-icon k-ghost" data-x aria-label="Close">' + icon("close") + "</button></div>" +
+      '<div class="k-modal-body"></div><div class="k-modal-foot"></div></div></div>');
+    var body = $(".k-modal-body", veil), foot = $(".k-modal-foot", veil);
+    if (typeof opts.body === "string") body.innerHTML = opts.body; else if (opts.body) body.appendChild(opts.body);
+    function close(v) { document.removeEventListener("keydown", onKey, true); veil.remove(); if (opts.onClose) opts.onClose(v); }
+    function onKey(e) { if (e.key === "Escape") { e.stopPropagation(); close(); } }
+    (opts.buttons || []).forEach(function (b) {
+      var btn = el('<button class="k-btn ' + (b.primary ? "k-primary" : "") + (b.danger ? " k-danger" : "") + '">' + (b.icon ? icon(b.icon) : "") + esc(b.label) + "</button>");
+      btn.addEventListener("click", function () { var r = b.run ? b.run(veil) : undefined; if (r !== false) close(b.value); });
+      foot.appendChild(btn);
+    });
+    if (!foot.children.length) foot.remove();
+    $("[data-x]", veil).addEventListener("click", function () { close(); });
+    veil.addEventListener("mousedown", function (e) { if (e.target === veil) close(); });
+    document.addEventListener("keydown", onKey, true);
+    document.body.appendChild(veil);
+    var first = $("input,textarea,select", body) || $(".k-primary", veil);
+    if (first) setTimeout(function () { first.focus(); if (first.select) first.select(); }, 30);
+    return { el: veil, body: body, close: close };
+  }
+  function confirmDlg(title, text, okLabel, danger) {
+    return new Promise(function (res) {
+      var done = false;
+      modal({
+        title: title, narrow: true, body: "<p>" + esc(text) + "</p>",
+        onClose: function (v) { if (!done) { done = true; res(v === true); } },
+        buttons: [{ label: "Cancel", value: false }, { label: okLabel || "OK", primary: !danger, danger: !!danger, value: true }]
+      });
+    });
+  }
+  function promptDlg(title, value, label) {
+    return new Promise(function (res) {
+      var done = false;
+      var m = modal({
+        title: title, narrow: true,
+        body: '<label class="k-label">' + esc(label || "Name") + '</label><input class="k-input" maxlength="80" value="' + esc(value || "") + '">',
+        onClose: function (v) { if (!done) { done = true; res(v === true ? $("input", m.body).value.trim() || null : null); } },
+        buttons: [{ label: "Cancel", value: false }, { label: "Save", primary: true, value: true }]
+      });
+      $("input", m.body).addEventListener("keydown", function (e) { if (e.key === "Enter") { done = true; var v = e.target.value.trim(); m.close(); res(v || null); } });
+    });
+  }
+  var prog = null;
+  function progress(text, frac) {
+    if (text == null) { if (prog) { prog.remove(); prog = null; } return; }
+    if (!prog) prog = document.body.appendChild(el('<div class="k-progress"><div class="k-progress-box"><div data-t></div><div class="k-progress-bar"><i></i></div></div></div>'));
+    $("[data-t]", prog).textContent = text;
+    $("i", prog).style.width = Math.round((frac || 0) * 100) + "%";
+  }
+  function confetti() {
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var c = document.body.appendChild(el('<canvas class="k-confetti"></canvas>'));
+    var x = c.getContext("2d"), W = (c.width = innerWidth), H = (c.height = innerHeight);
+    var cols = ["#ffbe0b", "#fb5607", "#ff006e", "#8338ec", "#3a86ff", "#2ec4b6"], parts = [];
+    for (var i = 0; i < 110; i++) parts.push({ x: W / 2, y: H * 0.35, vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 13 - 3, r: Math.random() * 6 + 3, c: cols[i % cols.length], a: Math.random() * 6 });
+    var t0 = performance.now();
+    (function tick(t) {
+      var k = (t - t0) / 1500;
+      x.clearRect(0, 0, W, H);
+      parts.forEach(function (p) {
+        p.vy += 0.38; p.x += p.vx; p.y += p.vy; p.a += 0.2;
+        x.save(); x.globalAlpha = Math.max(0, 1 - k); x.translate(p.x, p.y); x.rotate(p.a);
+        x.fillStyle = p.c; x.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6); x.restore();
+      });
+      if (k < 1) requestAnimationFrame(tick); else c.remove();
+    })(t0);
+  }
+
+  /* ==========================================================================
+     Kit.app(cfg) - builds the whole studio around a tool definition.
+     ========================================================================== */
+  function app(cfg) {
+    var KEY = "csl." + cfg.slug;
+    var prefs = window.CSL_PREFS || {};
+    var S = null;                      // { params, seed, edits, name, pid }
+    var hist = [], hi = -1;            // undo stack of JSON strings
+    var ui = { tab: cfg.tabs[0].id, view: "all", zoom: "fit", grid: false, page: 0, pane: "design", work: !!(cfg.workspace && cfg.workspace.startOpen) };
+    var pages = [], shown = [], dims = null, root, api;
+    /* Assets: big items such as uploaded pictures. Kept outside the undo history, saved with projects. */
+    var assets = store.get(KEY + ".assets", {});
+    function usedAssets() {
+      var ids = cfg.usedAssets ? cfg.usedAssets(S.params) : Object.keys(assets), out = {};
+      ids.forEach(function (id) { if (assets[id]) out[id] = assets[id]; });
+      return out;
+    }
+    function mergeAssets(extra) {
+      if (!extra) return;
+      Object.keys(extra).forEach(function (id) { assets[id] = extra[id]; });
+      store.set(KEY + ".assets", assets);
+    }
+
+    function defaults() {
+      var p = {};
+      cfg.tabs.forEach(function (t) { t.groups.forEach(function (g) { g.fields.forEach(function (f) { if (f.id && f.def !== undefined) p[f.id] = JSON.parse(JSON.stringify(f.def)); }); }); });
+      if (p.pageSize !== undefined && prefs.pageSize === "a4" && SIZES.a4) p.pageSize = "a4";
+      return { params: p, seed: newSeed(), edits: {}, name: cfg.projectName || "Untitled project", pid: null };
+    }
+
+    /* ----- state, history, autosave ----- */
+    function snap() { return JSON.stringify(S); }
+    function commit() {
+      var s = snap();
+      if (hist[hi] === s) return;
+      hist = hist.slice(0, hi + 1); hist.push(s);
+      if (hist.length > 80) hist.shift();
+      hi = hist.length - 1;
+      saveSoon(); paintTop();
+    }
+    function restore(s) { S = JSON.parse(s); buildSide(); render(); saveSoon(); paintTop(); }
+    function undo() { if (hi > 0) { hi--; restore(hist[hi]); } }
+    function redo() { if (hi < hist.length - 1) { hi++; restore(hist[hi]); } }
+    var saveSoon = debounce(function () {
+      var ok = store.set(KEY + ".auto", S);
+      var s = $(".k-saved", root);
+      if (s) s.textContent = ok ? "Saved" : "Storage is full";
+    }, 350);
+
+    /* ----- page building ----- */
+    function getDims() {
+      var sz = SIZES[S.params.pageSize] || SIZES[cfg.pageSize || "letter"];
+      var bleed = S.params.bleed ? 0.125 : 0;
+      return { key: S.params.pageSize, inW: sz.w + bleed, inH: sz.h + bleed * 2, W: Math.round((sz.w + bleed) * 96), H: Math.round((sz.h + bleed * 2) * 96), bleed: Math.round(bleed * 96), label: sz.label };
+    }
+    function makeCtx() {
+      return {
+        p: S.params, seed: S.seed, size: dims, esc: esc, icon: icon,
+        rng: function (salt) { return rng(S.seed + "|" + (salt || "")); },
+        /* Editable text: click it on the page to change it. */
+        ed: function (key, text, cls, tag) {
+          var v = Object.prototype.hasOwnProperty.call(S.edits, key) ? S.edits[key] : text;
+          return "<" + (tag || "span") + ' data-edit="' + esc(key) + '" data-def="' + esc(text) + '"' + (cls ? ' class="' + cls + '"' : "") + ">" + esc(v) + "</" + (tag || "span") + ">";
+        }
+      };
+    }
+    function sheetHTML(pg) {
+      return '<div class="k-sheet ' + (cfg.sheetClass || "") + " " + (pg.cls || "") + '" style="width:' + dims.W + "px;height:" + dims.H + "px;font-size:" + (dims.W / 100) + 'px">' + pg.html + "</div>";
+    }
+    function currentView() { return (cfg.views || []).filter(function (v) { return v.id === ui.view; })[0]; }
+
+    function render() {
+      dims = getDims();
+      try { pages = cfg.pages(makeCtx()) || []; } catch (e) { console.error(e); pages = []; toast("Something went wrong while building the pages.", "err"); }
+      var v = currentView();
+      shown = v && v.filter ? pages.filter(v.filter) : pages;
+      ui.page = clamp(ui.page, 0, Math.max(0, shown.length - 1));
+      paintStage();
+    }
+    var renderSoon = debounce(render, 220);
+
+    function fitScale() {
+      var cv = $(".k-canvas", root);
+      var availW = cv.clientWidth - (innerWidth <= 760 ? 24 : 52), availH = cv.clientHeight - 60;
+      if (ui.grid) return clamp((innerWidth <= 760 ? (availW - 18) / 2 : 230) / dims.W, 0.1, 1);
+      if (ui.zoom === "fit") return clamp(Math.min(availW / dims.W, innerWidth <= 760 ? 9 : Math.max(availH / dims.H, 0.62)), 0.15, 1.4);
+      return ui.zoom;
+    }
+    function paintStage() {
+      var wrap = $(".k-pages", root), sc = fitScale();
+      var wb = $("[data-act=work]", root);
+      if (wb) wb.classList.toggle("k-primary", ui.work);
+      wrap.classList.toggle("is-work", ui.work);
+      if (ui.work) {
+        /* interactive workspace drawn by the tool (boards, editors); printable pages stay one click away */
+        wrap.classList.remove("is-grid");
+        wrap.innerHTML = '<div class="k-work"></div>';
+        cfg.workspace.render(wrap.firstChild, api);
+        $(".k-pager span", root).textContent = cfg.workspace.label;
+        $("[data-act=prev]", root).disabled = $("[data-act=next]", root).disabled = true;
+        var st0 = $(".k-stats", root);
+        if (st0) st0.textContent = cfg.stats ? cfg.stats(makeCtx(), pages) : "";
+        return;
+      }
+      wrap.classList.toggle("is-grid", ui.grid);
+      if (!shown.length) {
+        wrap.innerHTML = '<div class="k-empty">' + (cfg.empty || "<h3>Nothing to show yet</h3><p>Change the settings on the left to build your pages.</p>") + "</div>";
+      } else {
+        var list = ui.grid ? shown : [shown[ui.page]];
+        wrap.innerHTML = list.map(function (pg, i) {
+          var n = ui.grid ? i : ui.page;
+          return '<div class="k-slot" data-n="' + n + '" style="width:' + dims.W * sc + "px;height:" + dims.H * sc + 'px">' +
+            (ui.grid ? '<div class="k-slot-label">' + (n + 1) + ". " + esc(pg.title || "Page") + "</div>" : "") +
+            sheetHTML(pg).replace('style="', 'style="transform:scale(' + sc + ");") + "</div>";
+        }).join("");
+        if (!ui.grid) {
+          $$("[data-edit]", wrap).forEach(function (n) {
+            n.setAttribute("contenteditable", "plaintext-only");
+            if (n.contentEditable !== "plaintext-only") n.setAttribute("contenteditable", "true");
+            n.setAttribute("spellcheck", "false");
+          });
+          if (cfg.onRender) cfg.onRender(wrap, api);
+        }
+      }
+      var pg = shown[ui.page];
+      $(".k-pager span", root).textContent = shown.length ? (ui.grid ? shown.length + " pages" : "Page " + (ui.page + 1) + " of " + shown.length + (pg && pg.title ? "  ·  " + pg.title : "")) : "No pages";
+      $("[data-act=prev]", root).disabled = ui.grid || ui.page <= 0;
+      $("[data-act=next]", root).disabled = ui.grid || ui.page >= shown.length - 1;
+      var st = $(".k-stats", root);
+      if (st) st.textContent = cfg.stats ? cfg.stats(makeCtx(), pages) : pages.length + " pages  ·  " + dims.label;
+      $$(".k-bar [data-view]", root).forEach(function (b) { b.classList.toggle("is-on", b.dataset.view === ui.view); });
+      $("[data-act=grid]", root).classList.toggle("k-primary", ui.grid);
+    }
+    function paintTop() {
+      $("[data-act=undo]", root).disabled = hi <= 0;
+      $("[data-act=redo]", root).disabled = hi >= hist.length - 1;
+      var n = $(".k-pname", root);
+      if (document.activeElement !== n) n.value = S.name;
+    }
+
+    /* ----- side panel: controls built from the tool schema ----- */
+    function opts(f) { return typeof f.options === "function" ? f.options(S.params, api) : f.options || []; }
+    function fieldHTML(f) {
+      var v = S.params[f.id], h = "";
+      var label = f.label ? '<div class="k-label"><span>' + esc(f.label) + "</span>" + (f.type === "range" ? "<small data-val>" + esc(v) + (f.unit || "") + "</small>" : f.side ? "<small>" + esc(typeof f.side === "function" ? f.side(S.params) : f.side) + "</small>" : "") + "</div>" : "";
+      if (f.type === "text") h = label + '<input class="k-input" data-f="' + f.id + '" maxlength="' + (f.max || 120) + '" placeholder="' + esc(f.placeholder || "") + '" value="' + esc(v) + '">';
+      else if (f.type === "textarea") h = label + '<textarea class="k-textarea" data-f="' + f.id + '" rows="' + (f.rows || 6) + '" placeholder="' + esc(f.placeholder || "") + '">' + esc(v) + "</textarea>";
+      else if (f.type === "select") h = label + '<select class="k-select" data-f="' + f.id + '">' + opts(f).map(function (o) { return o.group ? '<optgroup label="' + esc(o.group) + '">' + o.items.map(optHTML).join("") + "</optgroup>" : optHTML(o); }).join("") + "</select>";
+      else if (f.type === "seg") h = label + '<div class="k-seg" role="radiogroup">' + opts(f).map(function (o) { return '<button type="button" data-set="' + f.id + '" data-v="' + esc(o.v) + '" class="' + (String(o.v) === String(v) ? "is-on" : "") + '">' + esc(o.l) + "</button>"; }).join("") + "</div>";
+      else if (f.type === "chips") h = label + '<div class="k-chips">' + opts(f).map(function (o) { return '<button type="button" class="k-chip ' + ((v || []).indexOf(o.v) >= 0 ? "is-on" : "") + '" data-multi="' + f.id + '" data-v="' + esc(o.v) + '">' + esc(o.l) + "</button>"; }).join("") + "</div>";
+      else if (f.type === "cards") h = label + '<div class="k-cards">' + opts(f).map(function (o) { var on = f.multi ? (v || []).indexOf(o.v) >= 0 : o.v === v; return '<button type="button" class="k-card ' + (on ? "is-on" : "") + '" ' + (f.multi ? "data-multi" : "data-set") + '="' + f.id + '" data-v="' + esc(o.v) + '">' + esc(o.l) + (o.d ? "<small>" + esc(o.d) + "</small>" : "") + "</button>"; }).join("") + "</div>";
+      else if (f.type === "swatches") h = label + '<div class="k-swatches">' + opts(f).map(function (o) { return '<button type="button" class="k-swatch ' + (o.v === v ? "is-on" : "") + '" data-set="' + f.id + '" data-v="' + esc(o.v) + '" title="' + esc(o.l) + '"><i style="background:' + o.c + '"></i>' + esc(o.l) + "</button>"; }).join("") + "</div>";
+      else if (f.type === "toggle") h = '<label class="k-toggle">' + esc(f.label) + '<input type="checkbox" data-f="' + f.id + '" ' + (v ? "checked" : "") + "><span></span></label>";
+      else if (f.type === "range") h = label + '<input type="range" class="k-range" data-f="' + f.id + '" min="' + f.min + '" max="' + f.max + '" step="' + (f.step || 1) + '" value="' + esc(v) + '">';
+      else if (f.type === "html") h = label + '<div data-html="' + (f.key || "") + '">' + f.render(S.params, api) + "</div>";
+      else if (f.type === "buttons") h = label + '<div class="k-chips">' + f.buttons.map(function (b, i) { return '<button type="button" class="k-btn k-sm" data-run="' + i + '">' + (b.icon ? icon(b.icon) : "") + esc(b.label) + "</button>"; }).join("") + "</div>";
+      var hidden = f.show && !f.show(S.params) ? " hidden" : "";
+      return '<div class="k-field" data-field="' + (f.id || f.key || "") + '"' + hidden + ">" + h + (f.hint ? '<div class="k-hint">' + esc(typeof f.hint === "function" ? f.hint(S.params) : f.hint) + "</div>" : "") + "</div>";
+      function optHTML(o) { return '<option value="' + esc(o.v) + '"' + (String(o.v) === String(v) ? " selected" : "") + ">" + esc(o.l) + "</option>"; }
+    }
+    function findField(id) {
+      var hit = null;
+      cfg.tabs.forEach(function (t) { t.groups.forEach(function (g) { g.fields.forEach(function (f) { if (f.id === id) hit = f; }); }); });
+      return hit;
+    }
+    function buildSide() {
+      var tab = cfg.tabs.filter(function (t) { return t.id === ui.tab; })[0] || cfg.tabs[0];
+      var sc = $(".k-scroll", root), top = sc.scrollTop;
+      $$(".k-tab", root).forEach(function (b) { b.classList.toggle("is-on", b.dataset.tab === tab.id); });
+      sc.innerHTML = tab.groups.map(function (g) {
+        if (g.show && !g.show(S.params)) return "";
+        return '<div class="k-group">' + (g.title ? '<div class="k-group-title">' + esc(g.title) + "</div>" : "") + g.fields.map(fieldHTML).join("") + "</div>";
+      }).join("");
+      /* custom wiring for html / buttons fields */
+      tab.groups.forEach(function (g) {
+        g.fields.forEach(function (f) {
+          var box = f.type === "html" || f.type === "buttons" ? $('[data-field="' + (f.id || f.key || "") + '"]', sc) : null;
+          if (!box) return;
+          if (f.type === "html" && f.wire) f.wire(box, api);
+          if (f.type === "buttons") $$("[data-run]", box).forEach(function (b) { b.addEventListener("click", function () { f.buttons[+b.dataset.run].run(api); }); });
+        });
+      });
+      sc.scrollTop = top;
+    }
+    function setParam(id, v, opts2) {
+      S.params[id] = v;
+      var f = findField(id);
+      if (f && f.onChange) f.onChange(S.params, api);
+      if (!opts2 || !opts2.quiet) { buildSide(); render(); commit(); }
+    }
+    function wireSide() {
+      var sc = $(".k-scroll", root);
+      sc.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-set],[data-multi]");
+        if (!b || !sc.contains(b)) return;
+        if (b.dataset.set) {
+          var f = findField(b.dataset.set), raw = b.dataset.v;
+          var o = opts(f).filter(function (x) { return String(x.v) === raw; })[0];
+          setParam(f.id, o ? o.v : raw);
+        } else {
+          var id = b.dataset.multi, f2 = findField(id), arr = (S.params[id] || []).slice(), i = arr.indexOf(b.dataset.v);
+          if (i >= 0) { if (arr.length > (f2.minSel || 0)) arr.splice(i, 1); else return toast("Keep at least " + f2.minSel + " selected.", "err"); }
+          else arr.push(b.dataset.v);
+          /* keep the order of the option list */
+          var order = opts(f2).map(function (x) { return x.v; });
+          arr.sort(function (a, b2) { return order.indexOf(a) - order.indexOf(b2); });
+          setParam(id, arr);
+        }
+      });
+      sc.addEventListener("input", function (e) {
+        var t = e.target, id = t.dataset.f;
+        if (!id) return;
+        var f = findField(id);
+        if (t.type === "checkbox" || t.tagName === "SELECT") return;
+        S.params[id] = t.type === "range" ? +t.value : t.value;
+        if (t.type === "range") { var lab = t.parentNode.querySelector("[data-val]"); if (lab) lab.textContent = t.value + (f.unit || ""); }
+        if (f && f.onChange) f.onChange(S.params, api);
+        renderSoon();
+      });
+      sc.addEventListener("change", function (e) {
+        var t = e.target, id = t.dataset.f;
+        if (!id) return;
+        if (t.type === "checkbox") return setParam(id, t.checked);
+        if (t.tagName === "SELECT") return setParam(id, t.value);
+        render(); commit();
+      });
+    }
+
+    /* ----- click-to-edit text on the page ----- */
+    function wireEdits() {
+      var cv = $(".k-canvas", root);
+      cv.addEventListener("focusout", function (e) {
+        var n = e.target.closest && e.target.closest("[data-edit]");
+        if (!n) return;
+        var key = n.dataset.edit, txt = n.textContent.replace(/\s+/g, " ").trim(), def = n.dataset.def;
+        var had = Object.prototype.hasOwnProperty.call(S.edits, key);
+        if (txt === def || txt === "") { if (had) delete S.edits[key]; if (txt === "") n.textContent = def; }
+        else S.edits[key] = txt;
+        commit();
+      });
+      cv.addEventListener("keydown", function (e) {
+        if (e.target.closest && e.target.closest("[data-edit]") && e.key === "Enter") { e.preventDefault(); e.target.blur(); }
+      });
+      cv.addEventListener("paste", function (e) {
+        if (!(e.target.closest && e.target.closest("[data-edit]"))) return;
+        e.preventDefault();
+        document.execCommand("insertText", false, (e.clipboardData.getData("text/plain") || "").replace(/\s+/g, " "));
+      });
+      cv.addEventListener("click", function (e) {
+        var slot = e.target.closest(".k-slot");
+        if (ui.grid && slot) { ui.grid = false; ui.page = +slot.dataset.n; paintStage(); }
+      });
+    }
+
+    /* ----- exports ----- */
+    function exportSheets() {
+      var box = document.body.appendChild(el('<div class="k-offscreen"></div>'));
+      box.innerHTML = shown.map(sheetHTML).join("");
+      return box;
+    }
+    function fontsReady() { return document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(); }
+    function capture(scale, onStep, limit) {
+      return loadScript(LIBS.html2canvas).then(fontsReady).then(function () {
+        var box = exportSheets(), sheets = $$(".k-sheet", box).slice(0, limit || 9999), out = [], i = 0;
+        function step() {
+          if (i >= sheets.length) { box.remove(); return out; }
+          if (onStep) onStep(i, sheets.length);
+          return window.html2canvas(sheets[i], { scale: scale, backgroundColor: "#ffffff", useCORS: true, logging: false }).then(function (c) { out.push(c); i++; return new Promise(function (r) { setTimeout(r, 0); }).then(step); });
+        }
+        return Promise.resolve(step()).catch(function (e) { box.remove(); throw e; });
+      });
+    }
+    function fileBase() { return slugify(S.name); }
+    function guardEmpty() { if (!shown.length) { toast("There are no pages to export in this view.", "err"); return true; } return false; }
+    function fail(e) { console.error(e); progress(null); toast("Export failed. Check your connection and try again.", "err"); }
+
+    function exportPDF() {
+      if (guardEmpty()) return;
+      progress("Preparing your PDF...", 0);
+      Promise.all([loadScript(LIBS.jspdf), capture(300 / 96, function (i, n) { progress("Rendering page " + (i + 1) + " of " + n, i / n); })]).then(function (r) {
+        var wpt = dims.inW * 72, hpt = dims.inH * 72, orient = wpt > hpt ? "l" : "p", pdf = null;
+        r[1].forEach(function (c) {
+          if (!pdf) pdf = new window.jspdf.jsPDF({ unit: "pt", format: [wpt, hpt], orientation: orient, compress: true });
+          else pdf.addPage([wpt, hpt], orient);
+          pdf.addImage(c.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, wpt, hpt);
+        });
+        pdf.save(fileBase() + ".pdf");
+        progress(null); confetti(); toast("PDF saved: " + r[1].length + " pages at 300 DPI");
+      }).catch(fail);
+    }
+    function exportZIP() {
+      if (guardEmpty()) return;
+      progress("Preparing images...", 0);
+      Promise.all([loadScript(LIBS.jszip), capture(2.5, function (i, n) { progress("Rendering page " + (i + 1) + " of " + n, i / n); })]).then(function (r) {
+        var zip = new window.JSZip();
+        return Promise.all(r[1].map(function (c, i) {
+          return new Promise(function (ok) { c.toBlob(function (b) { zip.file(String(i + 1).padStart(2, "0") + "-" + slugify(shown[i].title || "page") + ".png", b); ok(); }, "image/png"); });
+        })).then(function () { return zip.generateAsync({ type: "blob" }); });
+      }).then(function (blob) { download(fileBase() + "-png.zip", blob); progress(null); confetti(); toast("ZIP saved with every page as PNG"); }).catch(fail);
+    }
+    function exportPNG() {
+      if (guardEmpty()) return;
+      var keep = shown, n = ui.page;
+      shown = [keep[n]];
+      progress("Rendering this page...", 0.4);
+      capture(2.5).then(function (cs) {
+        shown = keep;
+        cs[0].toBlob(function (b) { download(fileBase() + "-page-" + (n + 1) + ".png", b); progress(null); toast("Page saved as PNG"); }, "image/png");
+      }).catch(function (e) { shown = keep; fail(e); });
+    }
+    function exactPrint() {
+      if (guardEmpty()) return;
+      var box = exportSheets();
+      var st = document.head.appendChild(el("<style>@page{size:" + dims.inW + "in " + dims.inH + "in;margin:0}</style>"));
+      function done() { box.remove(); st.remove(); window.removeEventListener("afterprint", done); }
+      window.addEventListener("afterprint", done);
+      fontsReady().then(function () { setTimeout(function () { window.print(); setTimeout(done, 60000); }, 120); });
+    }
+
+    /* Listing mockup: your real pages on a styled 2400 px square, ready for Etsy / TPT / social. */
+    function mockupDialog() {
+      if (guardEmpty()) return;
+      var scenes = [["fan", "Fan of three"], ["hero", "Hero page"], ["grid", "Grid of four"], ["stack", "Tall stack"]], pick = "fan";
+      var m = modal({
+        title: "Listing mockup image",
+        body: '<p>Builds a 2400 x 2400 px image from your real pages, ready for Etsy, TPT, Pinterest or your sales page.</p>' +
+          '<div class="k-label">Scene</div><div class="k-cards">' + scenes.map(function (s, i) { return '<button type="button" class="k-card ' + (i ? "" : "is-on") + '" data-scene="' + s[0] + '">' + s[1] + "</button>"; }).join("") + "</div>" +
+          '<div class="k-field" style="margin-top:12px"><div class="k-label">Headline (optional)</div><input class="k-input" data-head maxlength="60" value="' + esc(S.name) + '"></div>' +
+          '<div class="k-field"><div class="k-label">Small line (optional)</div><input class="k-input" data-sub maxlength="70" value="' + esc(pages.length + " printable pages  ·  " + dims.label) + '"></div>',
+        buttons: [{ label: "Cancel" }, { label: "Download mockup", primary: true, icon: "image", run: function (v) { buildMockup(pick, $("[data-head]", v).value, $("[data-sub]", v).value); } }]
+      });
+      m.body.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-scene]");
+        if (!b) return;
+        pick = b.dataset.scene;
+        $$("[data-scene]", m.body).forEach(function (x) { x.classList.toggle("is-on", x === b); });
+      });
+    }
+    function buildMockup(scene, head, sub) {
+      progress("Building your mockup...", 0.2);
+      capture(1.3, null, 4).then(function (cs) {
+        var Z = 2400, c = document.createElement("canvas"); c.width = c.height = Z;
+        var x = c.getContext("2d"), cssv = getComputedStyle(document.documentElement);
+        var a = (cfg.mockColors && cfg.mockColors(S.params)) || [cssv.getPropertyValue("--k-accent-soft").trim() || "#fff4d1", cssv.getPropertyValue("--k-accent").trim() || "#e8a400"];
+        var g = x.createLinearGradient(0, 0, Z, Z); g.addColorStop(0, a[0]); g.addColorStop(1, a[1]);
+        x.fillStyle = g; x.fillRect(0, 0, Z, Z);
+        x.globalAlpha = 0.16; x.fillStyle = "#fff";
+        for (var i = 0; i < 9; i++) { x.beginPath(); x.arc((i * 577) % Z, (i * 911) % Z, 120 + ((i * 97) % 260), 0, 7); x.fill(); }
+        x.globalAlpha = 1;
+        var hasHead = !!(head || sub), top = hasHead ? 430 : 150, areaH = Z - top - 150, ratio = dims.W / dims.H;
+        function put(cv, cx, cy, h, rot) {
+          var w = h * ratio;
+          x.save(); x.translate(cx, cy); x.rotate(rot * Math.PI / 180);
+          x.shadowColor = "rgba(0,0,0,.28)"; x.shadowBlur = 60; x.shadowOffsetY = 26;
+          x.fillStyle = "#fff"; x.fillRect(-w / 2, -h / 2, w, h);
+          x.shadowColor = "transparent"; x.drawImage(cv, -w / 2, -h / 2, w, h); x.restore();
+        }
+        var mid = top + areaH / 2, n = cs.length;
+        if (scene === "hero" || n === 1) { if (n > 2) put(cs[2], Z / 2 + 300, mid + 20, areaH * 0.82, 9); if (n > 1) put(cs[1], Z / 2 - 300, mid + 20, areaH * 0.82, -9); put(cs[0], Z / 2, mid, areaH * 0.98, 0); }
+        else if (scene === "grid") { var h4 = areaH * 0.49; cs.slice(0, 4).forEach(function (cv, k) { put(cv, Z / 2 + (k % 2 ? 1 : -1) * (h4 * ratio / 2 + 40), top + h4 / 2 + Math.floor(k / 2) * (h4 + 40), h4, 0); }); }
+        else if (scene === "stack") { cs.slice(0, 4).reverse().forEach(function (cv, k, arr) { var o = arr.length - 1 - k; put(cv, Z / 2 + o * 70 - 100, mid + o * 34 - 50, areaH * 0.86, o * 2.5 - 3); }); }
+        else { if (n > 2) put(cs[2], Z / 2 + 560, mid + 60, areaH * 0.8, 11); put(cs[Math.min(1, n - 1)], Z / 2 - 560, mid + 60, areaH * 0.8, -11); put(cs[0], Z / 2, mid, areaH * 0.92, 0); }
+        if (hasHead) {
+          var fam = cssv.getPropertyValue("--k-display").split(",")[0].replace(/["']/g, "").trim() || "sans-serif";
+          x.textAlign = "center"; x.fillStyle = cssv.getPropertyValue("--k-ink").trim() || "#111";
+          var fs = 150; x.font = "800 " + fs + 'px "' + fam + '", sans-serif';
+          while (x.measureText(head).width > Z - 260 && fs > 60) { fs -= 6; x.font = "800 " + fs + 'px "' + fam + '", sans-serif'; }
+          x.fillText(head, Z / 2, 230);
+          x.font = '600 62px "' + fam + '", sans-serif'; x.globalAlpha = 0.75; x.fillText(sub, Z / 2, 335); x.globalAlpha = 1;
+        }
+        c.toBlob(function (b) { download(fileBase() + "-mockup-" + scene + ".png", b); progress(null); confetti(); toast("Mockup saved (2400 x 2400 px)"); }, "image/png");
+      }).catch(fail);
+    }
+
+    /* ----- projects ----- */
+    function projList() { return store.get(KEY + ".projects", []); }
+    function saveProject(asNew) {
+      var list = projList();
+      function write(name) {
+        if (asNew || !S.pid) S.pid = uid();
+        S.name = name;
+        var rec = { id: S.pid, name: name, at: Date.now(), pages: pages.length, data: JSON.parse(snap()), assets: usedAssets() };
+        list = list.filter(function (p) { return p.id !== S.pid; }); list.unshift(rec);
+        if (!store.set(KEY + ".projects", list)) return toast("Browser storage is full. Export the project file instead.", "err");
+        commit(); toast('Saved to My projects: "' + name + '"');
+      }
+      if (asNew || !S.pid) promptDlg(asNew ? "Save as a new project" : "Save project", S.name, "Project name").then(function (n) { if (n) write(n); });
+      else write(S.name);
+    }
+    function loadData(data) { S = Object.assign(defaults(), data); S.params = Object.assign(defaults().params, data.params || {}); hist = []; hi = -1; ui.page = 0; buildSide(); render(); commit(); }
+    function projectsDialog() {
+      var m = modal({ title: "My projects", body: "<div data-list></div>", buttons: [
+        { label: "Import file", icon: "upload", run: function () { importFile(); } },
+        { label: "Export this project", icon: "download", run: function () { download(fileBase() + ".project.json", JSON.stringify({ tool: cfg.slug, v: 2, data: JSON.parse(snap()), assets: usedAssets() }), "application/json"); toast("Project file saved"); return false; } },
+        { label: "Save current", icon: "save", primary: true, run: function () { saveProject(false); } }
+      ] });
+      function paint() {
+        var list = projList();
+        $("[data-list]", m.body).innerHTML = list.length ? '<div class="k-list">' + list.map(function (p) {
+          return '<div class="k-row"><div><b>' + esc(p.name) + "</b><small>" + new Date(p.at).toLocaleString() + "  ·  " + p.pages + " pages" + (p.id === S.pid ? "  ·  open now" : "") + '</small></div>' +
+            '<button class="k-btn k-sm k-primary" data-open="' + p.id + '">Open</button><button class="k-btn k-sm k-icon" data-dup="' + p.id + '" title="Duplicate">' + icon("copy") + '</button><button class="k-btn k-sm k-icon k-danger" data-del="' + p.id + '" title="Delete">' + icon("trash") + "</button></div>";
+        }).join("") + "</div>" : '<div class="k-empty" style="margin:20px auto"><h3>No saved projects yet</h3><p>Your work is always autosaved in this browser. Save a project to keep several versions side by side, or export a project file to move it to another device.</p></div>';
+      }
+      m.body.addEventListener("click", function (e) {
+        var b = e.target.closest("button"); if (!b) return;
+        var list = projList(), id = b.dataset.open || b.dataset.dup || b.dataset.del, rec = list.filter(function (p) { return p.id === id; })[0];
+        if (!rec) return;
+        if (b.dataset.open) { mergeAssets(rec.assets); loadData(rec.data); m.close(); toast('Opened "' + rec.name + '"'); }
+        if (b.dataset.dup) { var cp = JSON.parse(JSON.stringify(rec)); cp.id = cp.data.pid = uid(); cp.name = cp.data.name = rec.name + " copy"; cp.at = Date.now(); list.unshift(cp); store.set(KEY + ".projects", list); paint(); }
+        if (b.dataset.del) confirmDlg("Delete this project?", '"' + rec.name + '" will be removed from this browser.', "Delete", true).then(function (y) { if (y) { store.set(KEY + ".projects", projList().filter(function (p) { return p.id !== id; })); paint(); } });
+      });
+      paint();
+    }
+    function importFile() {
+      var inp = el('<input type="file" accept=".json,application/json" hidden>');
+      inp.addEventListener("change", function () {
+        var f = inp.files[0]; if (!f) return;
+        var r = new FileReader();
+        r.onload = function () {
+          try {
+            var j = JSON.parse(r.result);
+            if (j.tool !== cfg.slug || !j.data || !j.data.params) throw new Error("wrong file");
+            j.data.pid = null; mergeAssets(j.assets); loadData(j.data); toast('Imported "' + S.name + '"');
+          } catch (e) { toast("That file is not a project from this tool.", "err"); }
+        };
+        r.readAsText(f);
+      });
+      document.body.appendChild(inp); inp.click(); setTimeout(function () { inp.remove(); }, 60000);
+    }
+    function newProject() {
+      confirmDlg("Start a new project?", "Your current work stays in My projects if you saved it. Unsaved changes on this one will be cleared.", "Start new").then(function (y) {
+        if (y) { S = defaults(); hist = []; hi = -1; ui.page = 0; buildSide(); render(); commit(); toast("New project started"); }
+      });
+    }
+
+    /* ----- guide ----- */
+    function guide() {
+      var g = cfg.guide || {}, mod = /Mac|iPhone|iPad/.test(navigator.platform) ? "Cmd" : "Ctrl";
+      function dl(rows) { return '<dl class="k-dl">' + rows.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") + "</dl>"; }
+      var keys = [[mod + " + Z", "Undo"], [mod + " + Shift + Z", "Redo"], [mod + " + S", "Save to My projects"], [mod + " + E", "Download the PDF"], [mod + " + P", "Exact print"], ["R", "New variation"], ["Left / Right", "Previous / next page"], ["G", "All pages overview"], ["?", "Open this guide"]];
+      modal({
+        title: "How to use " + cfg.title,
+        body: (g.intro ? "<p>" + esc(g.intro) + "</p>" : "") +
+          "<h3>Quick start</h3><ol class=\"k-steps\">" + (g.steps || []).map(function (s) { return "<li><div>" + esc(s) + "</div></li>"; }).join("") + "</ol>" +
+          (g.controls ? "<h3>What each setting does</h3>" + dl(g.controls) : "") +
+          "<h3>Editing on the page</h3><p>Click any title, instruction or label on the page and type to change it. Press Enter to finish. Clear the text to bring back the original. Every change can be undone.</p>" +
+          "<h3>Exports</h3>" + dl([["PDF", "Print-ready file at 300 DPI in the exact page size you picked. Upload it to KDP, Etsy, TPT or print it."], ["PNG images (ZIP)", "Every page as a separate image for listings and previews."], ["Listing mockup", "A 2400 px square image that shows your real pages on a styled background."], ["Exact print", "Sends the pages to your printer with no browser margins."], ["Project file", "A small .json file you can import on another device or keep as a backup."]].concat(g.exports || [])) +
+          (g.tips ? "<h3>Tips</h3><ul>" + g.tips.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" : "") +
+          "<h3>Keyboard shortcuts</h3><dl class=\"k-dl\">" + keys.map(function (k) { return '<dt><span class="k-kbd">' + k[0] + "</span></dt><dd>" + k[1] + "</dd>"; }).join("") + "</dl>" +
+          "<h3>If something looks wrong</h3>" + dl([["Fonts look different in the PDF", "Wait a second after opening the tool so the fonts finish loading, then export again."], ["Export does nothing", "The first export downloads a small library, so it needs an internet connection."], ["My work is gone", "Work is saved per browser. Open My projects, or import the project file you exported."]].concat(g.trouble || [])),
+        buttons: [{ label: "Got it", primary: true }]
+      });
+      store.set(KEY + ".seen", 1);
+    }
+
+    /* ----- shell ----- */
+    function shuffle() { S.seed = newSeed(); if (cfg.onShuffle) cfg.onShuffle(S.params, api); render(); commit(); if (innerWidth <= 760) setPane("preview"); }
+    function setPane(p) { ui.pane = p; $(".k-body", root).dataset.pane = p; $$(".k-mnav button", root).forEach(function (b) { b.classList.toggle("is-on", b.dataset.pane === p); }); if (p === "preview") paintStage(); }
+    function build() {
+      var main = cfg.mainAction || { label: "New variation", icon: "shuffle" };
+      root = document.body.appendChild(el(
+        '<div class="k-app">' +
+        '<header class="k-top"><div class="k-brand"><div class="k-logo">' + (cfg.logo || icon("sparkles")) + '</div><div class="k-titles"><div class="k-title">' + esc(cfg.title) + '</div><div class="k-tagline">' + esc(cfg.tagline || "") + "</div></div></div>" +
+        '<div class="k-spacer"></div><input class="k-pname" aria-label="Project name" maxlength="80"><span class="k-saved">Saved</span>' +
+        '<div class="k-group-btns"><button class="k-btn k-icon" data-act="undo" title="Undo">' + icon("undo") + '</button><button class="k-btn k-icon" data-act="redo" title="Redo">' + icon("redo") + "</button></div>" +
+        '<button class="k-btn k-hide-m" data-act="projects">' + icon("folder") + '<span>My projects</span></button>' +
+        '<button class="k-btn" data-act="guide" id="btnGuide">' + icon("help") + '<span class="k-hide-m">How to use</span></button>' +
+        '<div class="k-menu-wrap"><button class="k-btn k-primary" data-act="menu" id="btnExport">' + icon("download") + "<span>Export</span></button><div class=\"k-menu\"></div></div></header>" +
+        '<div class="k-body" data-pane="design"><aside class="k-side"><nav class="k-tabs">' + cfg.tabs.map(function (t) { return '<button class="k-tab" data-tab="' + t.id + '">' + esc(t.label) + "</button>"; }).join("") + '</nav><div class="k-scroll"></div>' +
+        '<div class="k-foot"><button class="k-btn k-primary k-big" data-act="shuffle" id="btnGen">' + icon(main.icon || "shuffle") + esc(main.label) + '</button><div class="k-foot-row"><button class="k-btn" data-act="save">' + icon("save") + 'Save</button><button class="k-btn" data-act="new">' + icon("plus") + "New</button></div></div></aside>" +
+        '<main class="k-stage"><div class="k-bar"><div class="k-chips">' + (cfg.views || []).map(function (v) { return '<button class="k-chip" data-view="' + v.id + '">' + esc(v.label) + "</button>"; }).join("") + '</div><div class="k-spacer"></div><span class="k-saved k-stats"></span>' +
+        '' + (cfg.workspace ? '<button class="k-btn k-sm" data-act="work">' + icon(cfg.workspace.icon || "edit") + esc(cfg.workspace.label) + "</button>" : "") + '<button class="k-btn k-icon k-sm" data-act="grid" title="All pages">' + icon("grid") + '</button><div class="k-group-btns"><button class="k-btn k-icon k-sm" data-act="zout" title="Zoom out">' + icon("zoomOut") + '</button><button class="k-btn k-sm" data-act="fit">Fit</button><button class="k-btn k-icon k-sm" data-act="zin" title="Zoom in">' + icon("zoomIn") + "</button></div></div>" +
+        '<div class="k-canvas"><div class="k-pages"></div></div>' +
+        '<div class="k-pager"><button class="k-btn k-icon k-sm" data-act="prev" aria-label="Previous page">' + icon("left") + '</button><span></span><button class="k-btn k-icon k-sm" data-act="next" aria-label="Next page">' + icon("right") + "</button></div></main></div>" +
+        '<nav class="k-mnav"><button data-pane="design" class="is-on">' + icon("sliders") + 'Design</button><button data-pane="preview">' + icon("eye") + "Preview</button></nav></div>"));
+
+      var menu = $(".k-menu", root);
+      var items = [
+        ["pdf", "download", "PDF, print ready", "300 DPI, exact page size, pages in this view", exportPDF],
+        ["zip", "layers", "PNG images (ZIP)", "Every page as its own image", exportZIP],
+        ["png", "image", "This page as PNG", "Only the page you are looking at", exportPNG],
+        ["mock", "star", "Listing mockup image", "2400 px square for Etsy, TPT, social", mockupDialog],
+        ["print", "printer", "Exact print", "No browser margins", exactPrint]
+      ].concat((cfg.exports || []).map(function (x, i) { return ["x" + i, x.icon || "file", x.label, x.hint || "", function () { x.run(api, makeCtx(), pages); }]; }));
+      menu.innerHTML = items.map(function (it, i) { return (i === 5 ? "<hr>" : "") + '<button data-item="' + it[0] + '">' + icon(it[1]) + "<span>" + esc(it[2]) + "<small>" + esc(it[3]) + "</small></span></button>"; }).join("") +
+        '<hr><button data-item="proj">' + icon("folder") + "<span>My projects<small>Open, duplicate, import, export</small></span></button>";
+      menu.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-item]"); if (!b) return;
+        menu.classList.remove("is-open");
+        if (b.dataset.item === "proj") return projectsDialog();
+        items.filter(function (it) { return it[0] === b.dataset.item; })[0][4]();
+      });
+      document.addEventListener("click", function (e) { if (!e.target.closest(".k-menu-wrap")) menu.classList.remove("is-open"); });
+
+      root.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-act],[data-tab],[data-view],[data-pane]");
+        if (!b) return;
+        if (b.dataset.tab) { ui.tab = b.dataset.tab; buildSide(); $(".k-scroll", root).scrollTop = 0; return; }
+        if (b.dataset.view) { ui.work = false; ui.view = ui.view === b.dataset.view ? "all" : b.dataset.view; ui.page = 0; render(); return; }
+        if (b.dataset.pane && b.closest(".k-mnav")) return setPane(b.dataset.pane);
+        var a = b.dataset.act;
+        if (a === "undo") undo(); else if (a === "redo") redo();
+        else if (a === "menu") menu.classList.toggle("is-open");
+        else if (a === "guide") guide(); else if (a === "projects") projectsDialog();
+        else if (a === "shuffle") shuffle(); else if (a === "save") saveProject(false); else if (a === "new") newProject();
+        else if (a === "prev") { ui.page--; paintStage(); } else if (a === "next") { ui.page++; paintStage(); }
+        else if (a === "work") { ui.work = !ui.work; paintStage(); }
+        else if (a === "grid") { ui.work = false; ui.grid = !ui.grid; paintStage(); }
+        else if (a === "fit") { ui.zoom = "fit"; ui.grid = false; paintStage(); }
+        else if (a === "zin" || a === "zout") { ui.grid = false; ui.zoom = clamp(Math.round((fitScaleNow() + (a === "zin" ? 0.15 : -0.15)) * 100) / 100, 0.2, 2.2); paintStage(); }
+      });
+      function fitScaleNow() { return ui.zoom === "fit" ? fitScale() : ui.zoom; }
+
+      var pn = $(".k-pname", root);
+      pn.addEventListener("input", function () { S.name = pn.value || "Untitled project"; });
+      pn.addEventListener("change", function () { commit(); });
+
+      document.addEventListener("keydown", function (e) {
+        var typing = /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.target.isContentEditable, mod = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
+        if ($(".k-veil")) return;
+        if (mod && k === "z" && !typing) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
+        else if (mod && k === "y" && !typing) { e.preventDefault(); redo(); }
+        else if (mod && k === "s") { e.preventDefault(); saveProject(false); }
+        else if (mod && k === "e") { e.preventDefault(); exportPDF(); }
+        else if (mod && k === "p") { e.preventDefault(); exactPrint(); }
+        else if (!typing && !mod) {
+          if (k === "arrowleft" && ui.page > 0) { ui.page--; paintStage(); }
+          else if (k === "arrowright" && ui.page < shown.length - 1) { ui.page++; paintStage(); }
+          else if (k === "r") shuffle(); else if (k === "g") { ui.grid = !ui.grid; paintStage(); }
+          else if (e.key === "?") guide();
+        }
+      });
+      window.addEventListener("resize", debounce(paintStage, 120));
+      wireSide(); wireEdits();
+    }
+
+    api = {
+      get S() { return S; }, get p() { return S.params; }, get pages() { return pages; },
+      set: setParam, render: render, commit: commit, rebuild: function () { buildSide(); render(); commit(); },
+      toast: toast, confirm: confirmDlg, prompt: promptDlg, modal: modal, store: store, key: KEY,
+      download: download, copy: copyText, icon: icon, esc: esc, shuffle: shuffle, fileBase: fileBase,
+      assets: {
+        get: function (id) { return assets[id]; },
+        set: function (id, v) { assets[id] = v; return store.set(KEY + ".assets", assets); },
+        del: function (id) { delete assets[id]; store.set(KEY + ".assets", assets); }
+      },
+      /* building blocks for a tool's own exports */
+      capture: capture, progress: progress, confetti: confetti, dims: function () { return dims; },
+      loadLib: function (name) { return loadScript(LIBS[name] || name); },
+      shown: function () { return shown; },
+      openWork: function (on) { ui.work = on !== false; paintStage(); },
+      resetEdits: function () { S.edits = {}; render(); commit(); toast("All text edits were reset"); },
+      goto: function (n) { ui.grid = false; ui.page = n; paintStage(); }
+    };
+
+    S = defaults();
+    var auto = store.get(KEY + ".auto", null);
+    if (auto && auto.params) { S = Object.assign(S, auto); S.params = Object.assign(defaults().params, auto.params); }
+    if (cfg.init) cfg.init(api);
+    build(); buildSide(); render(); commit();
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () { paintStage(); });
+    if (!store.get(KEY + ".seen", 0) && !/[?&]noguide/.test(location.search)) setTimeout(guide, 500);
+    return api;
+  }
+
+  window.Kit = {
+    app: app, esc: esc, icon: icon, rng: rng, store: store, toast: toast, modal: modal, download: download, copy: copyText,
+    confirm: confirmDlg, prompt: promptDlg, sizes: SIZES,
+    sizeOptions: function (keys) { return (keys || Object.keys(SIZES)).map(function (k) { return { v: k, l: SIZES[k].label }; }); }
+  };
+})();
+</script>
+<script>
+(function () {
+  "use strict";
+  var API = null;
+  var E = Kit.esc;
+  var PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+  var PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  Kit.sizes["8.5x8.5"] = { label: "Square 8.5 x 8.5 in", w: 8.5, h: 8.5 };
+  var SIZE_KEYS = ["letter", "8x10", "8.5x8.5", "8.25x8.25", "a4", "7x10", "6x9"];
+
+  /* ==========================================================================
+     Fonts (TTF, same files for preview and PDF) and the page engine
+     ========================================================================== */
+  var GS = "https://fonts.gstatic.com/s/";
+  var TTF = {
+    "Comfortaa|700|normal": "comfortaa/v47/1Pt_g8LJRfWJmhDAuUsSQamb1W0lwk4S4Y_LDrMfJQ.ttf",
+    "Nunito|400|normal": "nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshdTQ3ig.ttf",
+    "Playfair Display|700|normal": "playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiunDXbtY.ttf",
+    "Lora|400|normal": "lora/v37/0QI6MX1D_JOuGQbT0gvTJPa787weuxJBkqg.ttf",
+    "Amatic SC|700|normal": "amaticsc/v28/TUZ3zwprpvBS1izr_vOMscGKfrUH.ttf",
+    "Quicksand|400|normal": "quicksand/v37/6xK-dSZaM9iE8KbpRA_LJ3z8mH9BOJvgkP8o58a-xw.ttf",
+    "Quicksand|700|normal": "quicksand/v37/6xK-dSZaM9iE8KbpRA_LJ3z8mH9BOJvgkBgv58a-xw.ttf",
+    "Montserrat|400|normal": "montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw5aX8.ttf",
+    "Montserrat|700|normal": "montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCuM73w5aX8.ttf",
+    "Cinzel|700|normal": "cinzel/v26/8vIU7ww63mVu7gtR-kwKxNvkNOjw-jHgfY3lCA.ttf",
+    "Dancing Script|700|normal": "dancingscript/v29/If2cXTr6YS-zF4S-kcSWSVi_sxjsohD9F50Ruu7B1i03Sup5.ttf",
+    "Josefin Sans|400|normal": "josefinsans/v34/Qw3PZQNVED7rKGKxtqIqX5E-AVSJrOCfjY46_DjQbMZhKg.ttf",
+    "Caveat|700|normal": "caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6eIWpZA.ttf"
+  };
+  var FONT = {};
+  function loadFont(k) {
+    if (FONT[k]) return FONT[k].p;
+    var f = FONT[k] = { name: "cb-" + k.replace(/[^a-z0-9]+/gi, "-").toLowerCase(), buf: null, ready: false };
+    f.p = fetch(GS + TTF[k]).then(function (r) { if (!r.ok) throw new Error("font"); return r.arrayBuffer(); }).then(function (buf) {
+      f.buf = buf;
+      return new FontFace(f.name, buf).load().then(function (ff) { document.fonts.add(ff); f.ready = true; });
+    }).catch(function (e) { console.warn(e); f.failed = true; });
+    return f.p;
+  }
+  var MC = document.createElement("canvas").getContext("2d");
+  if ("fontKerning" in MC) MC.fontKerning = "none";
+  var WC = {}, BASE = {};
+  function cssFont(k, s) { var f = FONT[k]; return s + "px \"" + (f && f.ready ? f.name : "sans-serif") + "\""; }
+  function tw(t, k, s) { var c = k + "|" + s + "|" + t; if (WC[c] == null) { MC.font = cssFont(k, s); WC[c] = MC.measureText(t).width; } return WC[c]; }
+  function baseOff(k, s, lh) { var c = k + "|" + s; if (!BASE[c]) { MC.font = cssFont(k, s); var m = MC.measureText("Hg"); BASE[c] = [m.fontBoundingBoxAscent || s * 0.9, m.fontBoundingBoxDescent || s * 0.25]; } return (lh - BASE[c][0] - BASE[c][1]) / 2 + BASE[c][0]; }
+  function wrap(text, k, s, maxW) {
+    var out = [];
+    String(text).split("\n").forEach(function (para) {
+      var words = para.split(/\s+/).filter(Boolean), line = "";
+      if (!words.length) { out.push(""); return; }
+      words.forEach(function (w) { var t = line ? line + " " + w : w; if (line && tw(t, k, s) > maxW) { out.push(line); line = w; } else line = t; });
+      out.push(line);
+    });
+    return out;
+  }
+  function P() { this.ops = []; }
+  P.prototype.text = function (x, y, w, s, k, c, a, lh, txt, max) {
+    var lines = wrap(txt, k, s, w);
+    if (max && lines.length > max) lines = lines.slice(0, max);
+    lh = lh || s * 1.3;
+    this.ops.push({ t: "text", x: x, y: y, w: w, s: s, k: k, c: c || "#222222", a: a || "left", lh: lh, lines: lines });
+    return lines.length * lh;
+  };
+  P.prototype.line = function (x1, y1, x2, y2, lw, c, dash) { this.ops.push({ t: "line", x1: x1, y1: y1, x2: x2, y2: y2, lw: lw || 0.75, c: c || "#999999", dash: dash || null }); };
+  P.prototype.rect = function (x, y, w, h, lw, c, fill, r, dash) { this.ops.push({ t: "rect", x: x, y: y, w: w, h: h, lw: lw || 0, c: c || null, fill: fill || null, r: r || 0, dash: dash || null }); };
+  P.prototype.dot = function (x, y, r, c) { this.ops.push({ t: "dot", x: x, y: y, r: r, c: c }); };
+  P.prototype.img = function (x, y, w, h, id) { this.ops.push({ t: "img", x: x, y: y, w: w, h: h, id: id }); };
+  function r2(n) { return Math.round(n * 100) / 100; }
+  function toHTML(pg) {
+    var out = "";
+    pg.ops.forEach(function (o) {
+      if (o.t === "text") {
+        var f = FONT[o.k], fam = f && f.ready ? f.name : "sans-serif";
+        o.lines.forEach(function (ln, i) { out += '<div class="tl" style="left:' + r2(o.x) + "px;top:" + r2(o.y + i * o.lh) + "px;width:" + r2(o.w) + "px;font:" + r2(o.s) + "px/" + r2(o.lh) + "px '" + fam + "';color:" + o.c + ";text-align:" + o.a + '">' + E(ln) + "</div>"; });
+      } else if (o.t === "line") {
+        var hz = Math.abs(o.y1 - o.y2) < 0.01, st = o.dash ? "dashed" : "solid";
+        if (hz) out += '<div style="left:' + r2(Math.min(o.x1, o.x2)) + "px;top:" + r2(o.y1 - o.lw / 2) + "px;width:" + r2(Math.abs(o.x2 - o.x1)) + "px;height:0;border-top:" + r2(o.lw) + "px " + st + " " + o.c + '"></div>';
+        else out += '<div style="left:' + r2(o.x1 - o.lw / 2) + "px;top:" + r2(Math.min(o.y1, o.y2)) + "px;height:" + r2(Math.abs(o.y2 - o.y1)) + "px;width:0;border-left:" + r2(o.lw) + "px " + st + " " + o.c + '"></div>';
+      } else if (o.t === "rect") {
+        out += '<div style="left:' + r2(o.x) + "px;top:" + r2(o.y) + "px;width:" + r2(o.w) + "px;height:" + r2(o.h) + "px;box-sizing:border-box;" + (o.c && o.lw ? "border:" + r2(o.lw) + "px " + (o.dash ? "dashed" : "solid") + " " + o.c + ";" : "") + (o.fill ? "background:" + o.fill + ";" : "") + (o.r ? "border-radius:" + r2(o.r) + "px;" : "") + '"></div>';
+      } else if (o.t === "dot") {
+        out += '<div style="left:' + r2(o.x - o.r) + "px;top:" + r2(o.y - o.r) + "px;width:" + r2(o.r * 2) + "px;height:" + r2(o.r * 2) + "px;border-radius:50%;background:" + o.c + '"></div>';
+      } else if (o.t === "img") {
+        var u = URLS[o.id];
+        out += u ? '<div class="im" style="left:' + r2(o.x) + "px;top:" + r2(o.y) + "px;width:" + r2(o.w) + "px;height:" + r2(o.h) + "px;background-image:url(" + u + ')"></div>' : '<div class="ld" style="left:' + r2(o.x) + "px;top:" + r2(o.y) + "px;width:" + r2(o.w) + "px;height:" + r2(o.h) + 'px">Cleaning...</div>';
+      }
+    });
+    return out;
+  }
+  function hexRGB(h) { var n = parseInt(String(h).slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+  /* paints a page into jsPDF; pictures come from IndexedDB as PNG bytes */
+  function toPDF(pdf, pg, names) {
+    var K = 0.75, jobs = Promise.resolve();
+    pg.ops.forEach(function (o) {
+      jobs = jobs.then(function () {
+        if (o.t === "img") {
+          return idbGet(o.id + "c").then(function (blob) {
+            if (!blob) return;
+            return blob.arrayBuffer().then(function (buf) { pdf.addImage(new Uint8Array(buf), "PNG", o.x * K, o.y * K, o.w * K, o.h * K, undefined, "FAST"); });
+          });
+        }
+        if (o.t === "text") {
+          if (names[o.k]) pdf.setFont(names[o.k], "normal"); else pdf.setFont("helvetica", "normal");
+          pdf.setFontSize(o.s * K);
+          var c = hexRGB(o.c); pdf.setTextColor(c[0], c[1], c[2]);
+          var bo = baseOff(o.k, o.s, o.lh);
+          o.lines.forEach(function (ln, i) { if (!ln) return; var w = tw(ln, o.k, o.s), x = o.a === "center" ? o.x + (o.w - w) / 2 : o.a === "right" ? o.x + o.w - w : o.x; pdf.text(ln, x * K, (o.y + i * o.lh + bo) * K); });
+        } else if (o.t === "line") {
+          var lc = hexRGB(o.c); pdf.setDrawColor(lc[0], lc[1], lc[2]); pdf.setLineWidth(o.lw * K);
+          pdf.setLineDashPattern(o.dash ? o.dash.map(function (v) { return v * K; }) : [], 0);
+          pdf.line(o.x1 * K, o.y1 * K, o.x2 * K, o.y2 * K); pdf.setLineDashPattern([], 0);
+        } else if (o.t === "rect") {
+          if (!o.fill && !(o.c && o.lw)) return;
+          var mode = o.fill && o.c && o.lw ? "FD" : o.fill ? "F" : "S";
+          if (o.fill) { var fc = hexRGB(o.fill); pdf.setFillColor(fc[0], fc[1], fc[2]); }
+          if (o.c && o.lw) { var sc = hexRGB(o.c); pdf.setDrawColor(sc[0], sc[1], sc[2]); pdf.setLineWidth(o.lw * K); }
+          pdf.setLineDashPattern(o.dash ? o.dash.map(function (v) { return v * K; }) : [], 0);
+          var ix = o.c && o.lw ? o.lw / 2 : 0;
+          if (o.r) pdf.roundedRect((o.x + ix) * K, (o.y + ix) * K, (o.w - 2 * ix) * K, (o.h - 2 * ix) * K, o.r * K, o.r * K, mode);
+          else pdf.rect((o.x + ix) * K, (o.y + ix) * K, (o.w - 2 * ix) * K, (o.h - 2 * ix) * K, mode);
+          pdf.setLineDashPattern([], 0);
+        } else if (o.t === "dot") {
+          var dc = hexRGB(o.c); pdf.setFillColor(dc[0], dc[1], dc[2]); pdf.circle(o.x * K, o.y * K, o.r * K, "F");
+        }
+      });
+    });
+    return jobs;
+  }
+
+  /* ==========================================================================
+     Storage: originals and cleaned pages live in IndexedDB, never localStorage
+     ========================================================================== */
+  var db = null, URLS = {}, THUMBS = {};
+  function idb() {
+    if (db) return Promise.resolve(db);
+    return new Promise(function (ok) {
+      try {
+        var r = indexedDB.open("csl-coloring-book-assembler", 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore("img"); };
+        r.onsuccess = function () { db = r.result; ok(db); };
+        r.onerror = function () { ok(null); };
+      } catch (e) { ok(null); }
+    });
+  }
+  function idbPut(k, blob) { return idb().then(function (d) { if (!d) return; return new Promise(function (ok) { var t = d.transaction("img", "readwrite"); t.objectStore("img").put(blob, k); t.oncomplete = ok; t.onerror = ok; }); }); }
+  function idbGet(k) { return idb().then(function (d) { if (!d) return null; return new Promise(function (ok) { var q = d.transaction("img").objectStore("img").get(k); q.onsuccess = function () { ok(q.result || null); }; q.onerror = function () { ok(null); }; }); }); }
+  function idbDel(k) { return idb().then(function (d) { if (!d) return; var t = d.transaction("img", "readwrite"); t.objectStore("img").delete(k); }); }
+  function setURL(id, blob) {
+    if (URLS[id]) URL.revokeObjectURL(URLS[id]);
+    URLS[id] = URL.createObjectURL(blob);
+  }
+  function loadImg(src) { return new Promise(function (ok, fail) { var i = new Image(); i.onload = function () { ok(i); }; i.onerror = fail; i.src = src; }); }
+  function thumbOf(canvas) { var t = document.createElement("canvas"), k = 180 / Math.max(canvas.width, canvas.height); t.width = Math.max(1, Math.round(canvas.width * k)); t.height = Math.max(1, Math.round(canvas.height * k)); var x = t.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, t.width, t.height); x.drawImage(canvas, 0, 0, t.width, t.height); return t.toDataURL("image/png"); }
+
+  /* ==========================================================================
+     Cleaning: threshold, invert, despeckle, thicken, crop, measure lines
+     ========================================================================== */
+  var MAXPX = 3300;
+  function settingsKey(p, it) { return [p.thr, p.thrLevel, p.speck, p.thicken, p.crop, p.invert, it.rot || 0].join("|"); }
+  function otsu(hist, total) {
+    var sum = 0, i; for (i = 0; i < 256; i++) sum += i * hist[i];
+    var sB = 0, wB = 0, best = 0, th = 128;
+    for (i = 0; i < 256; i++) {
+      wB += hist[i]; if (!wB) continue;
+      var wF = total - wB; if (!wF) break;
+      sB += i * hist[i];
+      var mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) * (mB - mF);
+      if (v > best) { best = v; th = i; }
+    }
+    return th;
+  }
+  /* bitmap: Uint8Array, 1 = black */
+  function despeckle(bm, w, h, minArea) {
+    if (minArea <= 0) return 0;
+    var lab = new Int32Array(w * h), stack = new Int32Array(w * h), removed = 0, next = 1;
+    for (var s = 0; s < w * h; s++) {
+      if (!bm[s] || lab[s]) continue;
+      var sp = 0, comp = [], n = 0; stack[sp++] = s; lab[s] = next;
+      while (sp) {
+        var q = stack[--sp]; n++;
+        if (comp.length <= minArea) comp.push(q);
+        var x = q % w, y = (q - x) / w;
+        for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+          var nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          var r = ny * w + nx;
+          if (bm[r] && !lab[r]) { lab[r] = next; stack[sp++] = r; }
+        }
+      }
+      if (n < minArea) { for (var k = 0; k < comp.length; k++) bm[comp[k]] = 0; removed++; }
+      next++;
+    }
+    return removed;
+  }
+  function dilate(bm, w, h, r) {
+    var out = new Uint8Array(bm.length);
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      if (!bm[y * w + x]) continue;
+      for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) {
+        if (dx * dx + dy * dy > r * r + r) continue;
+        var nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h) out[ny * w + nx] = 1;
+      }
+    }
+    return out;
+  }
+  /* typical line weight: median length of black runs across lines (rows and columns) */
+  function lineWeight(bm, w, h) {
+    var runs = [], x, y, run;
+    for (y = 0; y < h; y += 3) { run = 0; for (x = 0; x < w; x++) { if (bm[y * w + x]) run++; else if (run) { runs.push(run); run = 0; } } }
+    for (x = 0; x < w; x += 3) { run = 0; for (y = 0; y < h; y++) { if (bm[y * w + x]) run++; else if (run) { runs.push(run); run = 0; } } }
+    if (!runs.length) return 0;
+    runs.sort(function (a, b) { return a - b; });
+    return runs[Math.floor(runs.length * 0.35)];
+  }
+  /* cleans one picture (canvas source) and returns { canvas, w, h, lw, speck, inverted } */
+  function clean(src, p, rot) {
+    var sw = src.width, sh = src.height, k = Math.min(1, MAXPX / Math.max(sw, sh));
+    var w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
+    var turned = rot % 180 !== 0, cw = turned ? h : w, ch = turned ? w : h;
+    var c = document.createElement("canvas"); c.width = cw; c.height = ch;
+    var x = c.getContext("2d", { willReadFrequently: true });
+    x.fillStyle = "#fff"; x.fillRect(0, 0, cw, ch);
+    x.save(); x.translate(cw / 2, ch / 2); x.rotate(rot * Math.PI / 180); x.drawImage(src, -w / 2, -h / 2, w, h); x.restore();
+    var im = x.getImageData(0, 0, cw, ch), d = im.data, n = cw * ch, gray = new Uint8Array(n), hist = new Array(256).fill(0), i;
+    for (i = 0; i < n; i++) { var a = d[i * 4 + 3] / 255, g = Math.round((d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114) * a + 255 * (1 - a)); gray[i] = g; hist[g]++; }
+    /* Otsu returns the last grey level of the dark class, so anything at or below it is black */
+    var th = p.thr === "manual" ? +p.thrLevel : Math.min(220, Math.max(60, otsu(hist, n) + 1));
+    var bm = new Uint8Array(n), black = 0;
+    for (i = 0; i < n; i++) { if (gray[i] < th) { bm[i] = 1; black++; } }
+    var inverted = false;
+    if (p.invert === "auto" ? black > n * 0.55 : p.invert === "on") { for (i = 0; i < n; i++) bm[i] = bm[i] ? 0 : 1; inverted = true; }
+    var scale = Math.max(cw, ch) / 3000, area = { off: 0, light: 6, medium: 24, strong: 80 }[p.speck] || 0;
+    var speck = despeckle(bm, cw, ch, Math.round(area * scale * scale) || (area ? 3 : 0));
+    var lw0 = lineWeight(bm, cw, ch);
+    if (p.thicken > 0) bm = dilate(bm, cw, ch, Math.max(1, Math.round(+p.thicken * Math.max(1, scale))));
+    /* crop to the art */
+    var x0 = 0, y0 = 0, x1 = cw - 1, y1 = ch - 1;
+    if (p.crop) {
+      x0 = cw; y0 = ch; x1 = -1; y1 = -1;
+      for (var yy = 0; yy < ch; yy++) for (var xx = 0; xx < cw; xx++) if (bm[yy * cw + xx]) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
+      if (x1 < 0) { x0 = 0; y0 = 0; x1 = cw - 1; y1 = ch - 1; }
+      var pad = Math.round(Math.max(cw, ch) * 0.01);
+      x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(cw - 1, x1 + pad); y1 = Math.min(ch - 1, y1 + pad);
+    }
+    var ow = x1 - x0 + 1, oh = y1 - y0 + 1, out = document.createElement("canvas"); out.width = ow; out.height = oh;
+    var ox = out.getContext("2d"), oi = ox.createImageData(ow, oh), od = oi.data;
+    for (var ry = 0; ry < oh; ry++) for (var rx = 0; rx < ow; rx++) {
+      var v = bm[(ry + y0) * cw + rx + x0] ? 0 : 255, o = (ry * ow + rx) * 4;
+      od[o] = od[o + 1] = od[o + 2] = v; od[o + 3] = 255;
+    }
+    ox.putImageData(oi, 0, 0);
+    c.width = c.height = 0;
+    return { canvas: out, w: ow, h: oh, lw: lw0, th: th, speck: speck, inverted: inverted };
+  }
+
+  /* ==========================================================================
+     Import: PNG, JPG, WebP, SVG, ZIP of pictures, PDF (each page)
+     ========================================================================== */
+  function canvasFrom(img, minLong) {
+    var w = img.naturalWidth || img.width || 1000, h = img.naturalHeight || img.height || 1000;
+    var k = minLong && Math.max(w, h) < minLong ? minLong / Math.max(w, h) : 1;
+    var c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+    var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    return c;
+  }
+  /* each source becomes { name, blob } of an original picture (PDF pages are rendered to PNG first) */
+  function expandFiles(files) {
+    var list = [];
+    return files.reduce(function (pr, f) {
+      return pr.then(function () {
+        var n = f.name.toLowerCase();
+        if (/\.zip$/.test(n) || f.type === "application/zip") {
+          return API.loadLib("jszip").then(function () { return window.JSZip.loadAsync(f); }).then(function (z) {
+            var names = Object.keys(z.files).filter(function (k) { return !z.files[k].dir && /\.(png|jpe?g|webp|gif|svg)$/i.test(k) && !/__MACOSX|\/\./.test(k); }).sort();
+            return names.reduce(function (p2, k) {
+              return p2.then(function () { return z.files[k].async("blob").then(function (b) { list.push({ name: k.split("/").pop(), blob: /\.svg$/i.test(k) ? new Blob([b], { type: "image/svg+xml" }) : b }); }); });
+            }, Promise.resolve());
+          });
+        }
+        if (/\.pdf$/.test(n) || f.type === "application/pdf") {
+          return API.loadLib(PDFJS).then(function () {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+            return f.arrayBuffer();
+          }).then(function (buf) { return window.pdfjsLib.getDocument({ data: buf }).promise; }).then(function (doc) {
+            var pages = [];
+            for (var i = 1; i <= doc.numPages; i++) pages.push(i);
+            return pages.reduce(function (p2, i) {
+              return p2.then(function () {
+                API.progress("Reading PDF page " + i + " of " + doc.numPages, i / doc.numPages * 0.3);
+                return doc.getPage(i).then(function (pg) {
+                  var vp0 = pg.getViewport({ scale: 1 }), sc = 3000 / Math.max(vp0.width, vp0.height), vp = pg.getViewport({ scale: sc });
+                  var c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+                  var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+                  return pg.render({ canvasContext: x, viewport: vp }).promise.then(function () {
+                    return new Promise(function (ok) { c.toBlob(function (b) { list.push({ name: f.name.replace(/\.pdf$/i, "") + " p" + i, blob: b }); c.width = c.height = 0; ok(); }, "image/png"); });
+                  });
+                });
+              });
+            }, Promise.resolve());
+          });
+        }
+        if (/^image\//.test(f.type) || /\.(png|jpe?g|webp|gif|svg)$/.test(n)) list.push({ name: f.name, blob: /\.svg$/.test(n) && f.type !== "image/svg+xml" ? new Blob([f], { type: "image/svg+xml" }) : f });
+      });
+    }, Promise.resolve()).then(function () { return list; });
+  }
+  function decode(blob) {
+    var u = URL.createObjectURL(blob);
+    return loadImg(u).then(function (im) {
+      var svg = blob.type === "image/svg+xml", c = canvasFrom(im, svg ? 3000 : 0);
+      URL.revokeObjectURL(u);
+      return c;
+    });
+  }
+  var queue = [], running = false, cancelled = false;
+  function cleanItem(it) {
+    return idbGet(it.id + "o").then(function (blob) {
+      if (!blob) { it.missing = true; return; }
+      return decode(blob).then(function (src) {
+        var r = clean(src, API.p, it.rot || 0);
+        src.width = src.height = 0;
+        it.w = r.w; it.h = r.h; it.lw = r.lw; it.th = r.th; it.speck = r.speck; it.inv = r.inverted; it.key = settingsKey(API.p, it); it.missing = false;
+        THUMBS[it.id] = thumbOf(r.canvas);
+        return new Promise(function (ok) {
+          r.canvas.toBlob(function (b) { setURL(it.id, b); idbPut(it.id + "c", b).then(ok); r.canvas.width = r.canvas.height = 0; }, "image/png");
+        });
+      });
+    }).catch(function (e) { console.warn(e); it.failed = true; });
+  }
+  /* cleans every page whose settings changed, one at a time */
+  function runQueue() {
+    if (running) return;
+    var items = (API.p.items || []).filter(function (it) { return it.key !== settingsKey(API.p, it) && !it.missing; });
+    if (!items.length) return;
+    running = true; window.toolBusy = true; cancelled = false;
+    var i = 0;
+    (function step() {
+      if (i >= items.length || cancelled) {
+        running = false; window.toolBusy = false; API.progress(null);
+        API.commit(); API.rebuild();
+        if (queue.length) { var q = queue; queue = []; q.forEach(function (f) { f(); }); }
+        return;
+      }
+      API.progress("Cleaning page " + (i + 1) + " of " + items.length, i / items.length);
+      cleanItem(items[i]).then(function () { i++; setTimeout(step, 0); });
+    })();
+  }
+  function addFiles(files) {
+    files = Array.prototype.slice.call(files || []);
+    if (!files.length) return;
+    window.toolBusy = true;
+    API.progress("Reading files...", 0.05);
+    expandFiles(files).then(function (list) {
+      if (!list.length) { window.toolBusy = false; API.progress(null); return API.toast("No pictures found. Use PNG, JPG, SVG, a ZIP of pictures or a PDF.", "err"); }
+      var items = (API.p.items || []).slice(), base = Date.now().toString(36);
+      return list.reduce(function (pr, f, i) {
+        return pr.then(function () {
+          var id = "pg" + base + i;
+          items.push({ id: id, name: f.name, rot: 0, key: "" });
+          return idbPut(id + "o", f.blob);
+        });
+      }, Promise.resolve()).then(function () {
+        API.p.items = items;
+        window.toolBusy = false;
+        API.toast(list.length + " page" + (list.length > 1 ? "s" : "") + " added. Cleaning...");
+        runQueue();
+      });
+    }).catch(function (e) { console.error(e); window.toolBusy = false; API.progress(null); API.toast("Some files could not be read.", "err"); });
+  }
+
+  /* ==========================================================================
+     Built-in sample line art (so the book is never empty on the first visit)
+     ========================================================================== */
+  function sampleArt(kind, R) {
+    var W = 2400, H = 3000, c = document.createElement("canvas"); c.width = W; c.height = H;
+    var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, W, H); x.strokeStyle = "#111"; x.lineWidth = 9; x.lineJoin = "round"; x.lineCap = "round";
+    var cx = W / 2, cy = H / 2, i, j;
+    function circ(px, py, r) { x.beginPath(); x.arc(px, py, r, 0, 7); x.stroke(); }
+    function petal(px, py, len, wd, ang) { x.save(); x.translate(px, py); x.rotate(ang); x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(wd, -len / 2, 0, -len); x.quadraticCurveTo(-wd, -len / 2, 0, 0); x.stroke(); x.restore(); }
+    if (kind === "mandala") {
+      for (i = 1; i <= 6; i++) circ(cx, cy, 120 + i * 140);
+      for (j = 0; j < 6; j++) { var n = 8 + j * 4; for (i = 0; i < n; i++) petal(cx + Math.cos(i / n * 6.283) * (120 + j * 140), cy + Math.sin(i / n * 6.283) * (120 + j * 140), 130, 50 + j * 4, i / n * 6.283 + Math.PI / 2); }
+      circ(cx, cy, 60);
+    } else if (kind === "flower") {
+      for (i = 0; i < 12; i++) petal(cx, cy - 200, 620, 190, i / 12 * 6.283);
+      for (i = 0; i < 12; i++) petal(cx, cy - 200, 360, 110, i / 12 * 6.283 + 0.26);
+      circ(cx, cy - 200, 120); circ(cx, cy - 200, 60);
+      x.beginPath(); x.moveTo(cx, cy + 420); x.bezierCurveTo(cx - 60, cy + 800, cx + 60, cy + 1100, cx, cy + 1400); x.stroke();
+      petal(cx - 10, cy + 900, 420, 160, -1.1); petal(cx + 10, cy + 1100, 420, 160, 1.1);
+    } else if (kind === "geometric") {
+      var s = 300;
+      for (j = 0; j < H / s; j++) for (i = 0; i < W / s; i++) {
+        var px = i * s + s / 2, py = j * s + s / 2;
+        x.strokeRect(px - s / 2 + 20, py - s / 2 + 20, s - 40, s - 40);
+        x.beginPath(); x.moveTo(px, py - s / 2 + 20); x.lineTo(px + s / 2 - 20, py); x.lineTo(px, py + s / 2 - 20); x.lineTo(px - s / 2 + 20, py); x.closePath(); x.stroke();
+        if ((i + j) % 2) circ(px, py, s * 0.18);
+      }
+    } else if (kind === "landscape") {
+      circ(W * 0.72, H * 0.22, 230);
+      for (i = 0; i < 16; i++) { var a = i / 16 * 6.283; x.beginPath(); x.moveTo(W * 0.72 + Math.cos(a) * 290, H * 0.22 + Math.sin(a) * 290); x.lineTo(W * 0.72 + Math.cos(a) * 400, H * 0.22 + Math.sin(a) * 400); x.stroke(); }
+      [[0.42, 900, 0], [0.55, 700, 1]].forEach(function (m) {
+        x.beginPath(); x.moveTo(0, H * m[0] + 400);
+        for (var k = 0; k <= 10; k++) x.lineTo(W * k / 10, H * m[0] + (k % 2 ? -m[1] * 0.5 : 0) + R.int(-80, 80) + 200);
+        x.stroke();
+      });
+      for (i = 0; i < 7; i++) { var tx = 200 + i * 330, ty = H * 0.86; x.beginPath(); x.moveTo(tx, ty - 520); x.lineTo(tx + 170, ty); x.lineTo(tx - 170, ty); x.closePath(); x.stroke(); x.strokeRect(tx - 30, ty, 60, 120); }
+      x.beginPath(); x.moveTo(0, H * 0.94); x.bezierCurveTo(W * 0.3, H * 0.9, W * 0.7, H * 0.98, W, H * 0.93); x.stroke();
+    } else if (kind === "ocean") {
+      for (j = 0; j < 9; j++) { x.beginPath(); for (i = 0; i <= 48; i++) x.lineTo(W * i / 48, H * 0.12 + j * 330 + Math.sin(i * 0.6 + j) * 50); x.stroke(); }
+      for (i = 0; i < 5; i++) {
+        var fx = 400 + R.int(0, 1600), fy = 600 + i * 480, fl = 300;
+        x.fillStyle = "#fff"; x.beginPath(); x.ellipse(fx, fy, fl, fl * 0.45, 0, 0, 7); x.fill(); x.stroke();
+        x.beginPath(); x.moveTo(fx + fl, fy); x.lineTo(fx + fl + 160, fy - 120); x.lineTo(fx + fl + 160, fy + 120); x.closePath(); x.fill(); x.stroke();
+        circ(fx - fl * 0.55, fy - 30, 22);
+        for (j = 0; j < 4; j++) { x.beginPath(); x.arc(fx - 60 + j * 110, fy, 90, -0.9, 0.9); x.stroke(); }
+      }
+      for (i = 0; i < 25; i++) circ(R.int(100, 2300), R.int(100, 2900), R.int(12, 40));
+    } else {
+      for (var side = -1; side <= 1; side += 2) {
+        x.save(); x.translate(cx, cy); x.scale(side, 1);
+        x.beginPath(); x.moveTo(30, -100); x.bezierCurveTo(500, -900, 1150, -700, 900, -100); x.bezierCurveTo(800, 100, 300, 50, 30, 0); x.stroke();
+        x.beginPath(); x.moveTo(30, 40); x.bezierCurveTo(700, 200, 800, 800, 400, 850); x.bezierCurveTo(150, 870, 60, 500, 30, 120); x.stroke();
+        circ(560, -420, 140); circ(560, -420, 70); circ(420, 480, 110); circ(780, -150, 55);
+        x.beginPath(); x.moveTo(10, -330); x.quadraticCurveTo(120, -620, 260, -700); x.stroke();
+        x.restore();
+      }
+      x.beginPath(); x.ellipse(cx, cy + 20, 42, 420, 0, 0, 7); x.stroke(); circ(cx, cy - 450, 60);
+    }
+    /* a little paper noise and specks so the cleaner has something to do */
+    x.fillStyle = "rgba(0,0,0,0.5)";
+    for (i = 0; i < 120; i++) x.fillRect(R.int(0, W), R.int(0, H), 3, 3);
+    return c;
+  }
+  var SAMPLES = ["mandala", "flower", "butterfly", "geometric", "landscape", "ocean"];
+  function addSamples() {
+    window.toolBusy = true;
+    var items = (API.p.items || []).slice(), R = Kit.rng("samples"), base = "smp" + Date.now().toString(36);
+    return SAMPLES.reduce(function (pr, k, i) {
+      return pr.then(function () {
+        var c = sampleArt(k, R), id = base + i;
+        return new Promise(function (ok) { c.toBlob(function (b) { c.width = c.height = 0; items.push({ id: id, name: "Sample " + k, rot: 0, key: "", sample: true }); idbPut(id + "o", b).then(ok); }, "image/png"); });
+      });
+    }, Promise.resolve()).then(function () { API.p.items = items; window.toolBusy = false; runQueue(); });
+  }
+
+  /* ==========================================================================
+     Book styles, frames and the page plan
+     ========================================================================== */
+  var STYLES = {
+    playful: { l: "Playful", d: "Rounded title, dotted trims", h: "Comfortaa|700|normal", b: "Nunito|400|normal", ac: "#ff4f8b" },
+    elegant: { l: "Elegant", d: "Serif title, fine rules", h: "Playfair Display|700|normal", b: "Lora|400|normal", ac: "#1f1d24" },
+    handdrawn: { l: "Hand drawn", d: "Tall hand lettering", h: "Amatic SC|700|normal", b: "Quicksand|400|normal", ac: "#0e8f8a" },
+    modern: { l: "Modern", d: "Clean bold sans", h: "Montserrat|700|normal", b: "Montserrat|400|normal", ac: "#1f1d24" },
+    storybook: { l: "Storybook", d: "Classic capitals", h: "Cinzel|700|normal", b: "Lora|400|normal", ac: "#6b3d8f" },
+    script: { l: "Script", d: "Flowing script title", h: "Dancing Script|700|normal", b: "Josefin Sans|400|normal", ac: "#c2410c" },
+    friendly: { l: "Friendly", d: "Soft rounded sans", h: "Quicksand|700|normal", b: "Quicksand|400|normal", ac: "#2563eb" },
+    cozy: { l: "Cozy", d: "Marker headings", h: "Caveat|700|normal", b: "Nunito|400|normal", ac: "#b45309" }
+  };
+  var FRAMES = { none: "No frame", line: "Thin line", double: "Double line", round: "Rounded", dashed: "Dashed", dots: "Dotted", corners: "Corner marks", bold: "Bold border" };
+  function fontsOf(st) { return [st.h, st.b]; }
+  function ready(st) { return fontsOf(st).every(function (k) { return FONT[k] && (FONT[k].ready || FONT[k].failed); }); }
+  function kdpGutter(n) { return n <= 150 ? 0.375 : n <= 300 ? 0.5 : n <= 500 ? 0.625 : n <= 700 ? 0.75 : 0.875; }
+
+  function plan(p) {
+    var list = [], items = (p.items || []).filter(function (it) { return !it.off; });
+    if (p.title) list.push({ k: "title" });
+    if (p.copyright) list.push({ k: "copyright" });
+    if (p.belongs) list.push({ k: "belongs" });
+    if (p.test) list.push({ k: "test" });
+    /* art always on a right-hand page when single sided */
+    if (p.backs && list.length % 2) list.push({ k: "blank", why: "keeps art on right-hand pages" });
+    items.forEach(function (it, i) {
+      list.push({ k: "art", it: it, n: i + 1 });
+      if (p.backs) list.push({ k: "back", n: i + 1 });
+    });
+    if (p.endTest && items.length) list.push({ k: "test" });
+    if (list.length % 2) list.push({ k: "blank", why: "even page count" });
+    var short = 24 - list.length;
+    for (var i = 0; i < short; i++) list.push({ k: "blank", why: "24 page minimum" });
+    return list;
+  }
+  function geometry(p, S, total) {
+    var bl = S.bleed, gut = (kdpGutter(total) + (parseFloat(p.gutterExtra) || 0)) * 96, outer = (parseFloat(p.margin) || 0.5) * 96;
+    return { bl: bl, gut: gut, outer: outer };
+  }
+  /* content box of page i (0 = first right-hand page); bleed sits on the outside edge */
+  function boxOf(G, S, i) {
+    var recto = i % 2 === 0, x = recto ? G.gut : G.bl + G.outer;
+    return { x: x, y: G.bl + G.outer, w: S.W - G.gut - G.outer - G.bl, h: S.H - 2 * G.bl - 2 * G.outer, recto: recto };
+  }
+  function frame(pg, kind, x, y, w, h, col) {
+    if (kind === "line") pg.rect(x, y, w, h, 1.2, col);
+    else if (kind === "double") { pg.rect(x, y, w, h, 2, col); pg.rect(x + 6, y + 6, w - 12, h - 12, 0.8, col); }
+    else if (kind === "round") pg.rect(x, y, w, h, 1.6, col, null, 22);
+    else if (kind === "dashed") pg.rect(x, y, w, h, 1.4, col, null, 0, [7, 5]);
+    else if (kind === "bold") pg.rect(x, y, w, h, 5, col, null, 10);
+    else if (kind === "dots") {
+      var s = 11, nx = Math.floor(w / s), ny = Math.floor(h / s), i;
+      for (i = 0; i <= nx; i++) { pg.dot(x + i * w / nx, y, 1.8, col); pg.dot(x + i * w / nx, y + h, 1.8, col); }
+      for (i = 1; i < ny; i++) { pg.dot(x, y + i * h / ny, 1.8, col); pg.dot(x + w, y + i * h / ny, 1.8, col); }
+    } else if (kind === "corners") {
+      var L = Math.min(w, h) * 0.12;
+      [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]].forEach(function (c) { pg.line(c[0], c[1], c[0] + c[2] * L, c[1], 2, col); pg.line(c[0], c[1], c[0], c[1] + c[3] * L, 2, col); });
+    }
+  }
+  function placeArt(p, it, B, reserve) {
+    var pad = (p.artPad || 0) / 100 * Math.min(B.w, B.h), bx = B.x + pad, by = B.y + pad, bw = B.w - 2 * pad, bh = B.h - 2 * pad - reserve;
+    var sc = (p.artScale || 100) / 100, ar = (it.w || 3) / (it.h || 4), w, h;
+    if (p.fit === "fill") { if (bw / bh > ar) { w = bw; h = bw / ar; } else { h = bh; w = bh * ar; } }
+    else { if (bw / bh > ar) { h = bh; w = bh * ar; } else { w = bw; h = bw / ar; } }
+    w *= sc; h *= sc;
+    return { x: bx + (bw - w) / 2, y: by + (bh - h) / 2, w: w, h: h, box: { x: bx, y: by, w: bw, h: bh } };
+  }
+  function drawPage(it, idx, C) {
+    var p = C.p, st = C.st, S = C.S, B = boxOf(C.G, S, idx), pg = new P(), ink = p.ink === "color" ? st.ac : "#1f1d24", title = p.bookTitle || "My Coloring Book";
+    var hs = Math.min(40, B.w * 0.085);
+    if (it.k === "title") {
+      if (p.frames !== "none") frame(pg, p.frames, B.x, B.y, B.w, B.h, ink);
+      var arts = (p.items || []).filter(function (x) { return !x.off; });
+      var th = pg.text(B.x + 20, B.y + B.h * 0.16, B.w - 40, hs * 1.2, st.h, ink, "center", hs * 1.4, title, 3);
+      if (p.subtitle) pg.text(B.x + 30, B.y + B.h * 0.16 + th + 10, B.w - 60, hs * 0.42, st.b, "#444444", "center", hs * 0.6, p.subtitle, 3);
+      if (arts[0] && p.titleArt) { var a = placeArt({ fit: "contain", artScale: 100, artPad: 0 }, arts[0], { x: B.x + B.w * 0.2, y: B.y + B.h * 0.42, w: B.w * 0.6, h: B.h * 0.42 }, 0); pg.img(a.x, a.y, a.w, a.h, arts[0].id); }
+      pg.text(B.x, B.y + B.h - 50, B.w, 15, st.b, "#444444", "center", 20, p.author || "", 2);
+    } else if (it.k === "copyright") {
+      var yr = new Date().getFullYear();
+      pg.text(B.x, B.y + B.h * 0.6, B.w, 11, st.b, "#555555", "left", 16, title + "\n\nCopyright " + yr + " " + (p.author || "the author") + ". All rights reserved.\n\nNo part of this book may be reproduced, scanned or shared in any form without written permission, except for personal use of the pages for colouring.\n\nPages are printed on one side so markers do not bleed onto the next design. Place a sheet of paper behind the page you are colouring.", 22);
+    } else if (it.k === "belongs") {
+      if (p.frames !== "none") frame(pg, p.frames, B.x, B.y, B.w, B.h, ink);
+      var by = B.y + B.h * 0.36;
+      pg.text(B.x, by, B.w, hs, st.h, ink, "center", hs * 1.3, "This book belongs to", 2);
+      pg.line(B.x + B.w * 0.12, by + hs * 3.6, B.x + B.w * 0.88, by + hs * 3.6, 1.2, "#555555");
+      for (var s = 0; s < 5; s++) { var sx = B.x + B.w / 2 + (s - 2) * 34, sy = by + hs * 5; pg.dot(sx, sy, s === 2 ? 6 : 4, ink); }
+    } else if (it.k === "test") {
+      var ty = B.y + 6;
+      ty += pg.text(B.x, ty, B.w, hs * 0.8, st.h, ink, "center", hs * 1.05, "Test your colours", 2) + 6;
+      ty += pg.text(B.x + B.w * 0.08, ty, B.w * 0.84, 12, st.b, "#555555", "center", 17, "Try each marker, pencil or pen here first. Write its name under the box so you can find it again.", 3) + 16;
+      var cols = B.w > 600 ? 6 : 5, gap = 12, cw = (B.w - gap * (cols - 1)) / cols, ch = cw * 0.62, rows = Math.max(1, Math.floor((B.y + B.h - ty) / (ch + 30)));
+      for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+        var bx = B.x + c * (cw + gap), byy = ty + r * (ch + 30);
+        pg.rect(bx, byy, cw, ch, 1, "#333333", null, p.frames === "round" || p.frames === "bold" ? 8 : 0);
+        pg.line(bx + 4, byy + ch + 18, bx + cw - 4, byy + ch + 18, 0.7, "#999999");
+      }
+    } else if (it.k === "art") {
+      var reserve = p.numbers === "all" || p.numbers === "art" ? 20 : 0;
+      var A = placeArt(p, it.it, B, reserve);
+      if (p.frames !== "none") { var fp = 10; frame(pg, p.frames, A.box.x - fp, A.box.y - fp, A.box.w + 2 * fp, A.box.h + 2 * fp, "#1f1d24"); }
+      pg.img(A.x, A.y, A.w, A.h, it.it.id);
+      if (p.artTitles && it.it.caption) pg.text(B.x, B.y + B.h - 16, B.w, 11, st.b, "#555555", "center", 14, it.it.caption, 1);
+    } else if (it.k === "back") {
+      if (p.backNote) pg.text(B.x, B.y + B.h * 0.48, B.w, 11, st.b, "#b0b0b0", "center", 15, "This page is left blank so colours do not bleed through.", 2);
+    }
+    var showNum = p.numbers === "all" ? it.k !== "title" && it.k !== "blank" : p.numbers === "art" ? it.k === "art" : false;
+    if (showNum) pg.text(B.recto ? B.x + B.w - 60 : B.x, B.y + B.h + 6, 60, 11, st.b, "#555555", B.recto ? "right" : "left", 14, String(idx + 1), 1);
+    return pg;
+  }
+  var LAST = null, fontWait = false;
+  function ctxOf(p, S) { var list = plan(p), st = STYLES[p.style] || STYLES.playful; return { list: list, C: { p: p, st: st, S: S, G: geometry(p, S, list.length) } }; }
+  function titleOf(it) { return { title: "Title page", copyright: "Copyright", belongs: "Belongs to", test: "Test your colours", blank: "Blank page", back: "Blank back" }[it.k] || (it.k === "art" ? "Design " + it.n + (it.it.name ? " · " + it.it.name : "") : "Page"); }
+  function pages(ctx) {
+    var p = ctx.p, X = ctxOf(p, ctx.size), st = X.C.st;
+    LAST = X;
+    if (!ready(st) && !fontWait) {
+      fontWait = true; window.toolBusy = true;
+      Promise.all(fontsOf(st).map(loadFont)).then(function () { fontWait = false; window.toolBusy = false; WC = {}; BASE = {}; API.render(); });
+    }
+    return X.list.map(function (it, i) {
+      var pg = { title: titleOf(it), kind: it.k === "art" ? "art" : it.k === "back" || it.k === "blank" ? "blank" : "extra", idx: i, it: it };
+      Object.defineProperty(pg, "html", { enumerable: true, get: function () { return ready(st) ? '<div class="vp">' + toHTML(drawPage(it, i, X.C)) + "</div>" : '<div class="vp"><div class="ld">Loading fonts...</div></div>'; } });
+      return pg;
+    });
+  }
+
+  /* ==========================================================================
+     Print check
+     ========================================================================== */
+  function checkRows(p) {
+    var X = LAST, rows = [], warn = 0;
+    if (!X) return { rows: rows, warn: 0 };
+    var list = X.list, n = list.length, arts = list.filter(function (x) { return x.k === "art"; });
+    function row(k, t, s) { rows.push({ k: k, t: t, s: s }); if (k === "warn") warn++; }
+    if (!arts.length) row("warn", "No designs yet", "Add your line art in the Pages tab.");
+    row(n >= 24 && n <= 828 ? "ok" : "warn", n + " pages", n < 24 ? "Blank pages fill the book up to the 24 page minimum." : "Inside the 24 to 828 page range for paperbacks.");
+    row(n % 2 ? "warn" : "ok", n % 2 ? "Odd page count" : "Even page count", "Books print in pairs of pages; a blank page is added when needed.");
+    if (p.backs) row("ok", "Single sided", "Every design sits on a right-hand page with a blank back.");
+    var low = [], thin = [], outside = [];
+    arts.forEach(function (a) {
+      var B = boxOf(X.C.G, X.C.S, list.indexOf(a)), A = placeArt(p, a.it, B, 0), dpi = Math.round((a.it.w || 0) / (A.w / 96));
+      a.dpi = dpi;
+      if (dpi < 250) low.push(a.n + " (" + dpi + ")");
+      var lwPt = (a.it.lw || 0) / dpi * 72 + (p.thicken > 0 ? 2 * p.thicken / dpi * 72 : 0);
+      if (a.it.lw && lwPt < 0.5) thin.push(a.n + " (" + lwPt.toFixed(2) + " pt)");
+      if (p.fit === "fill" || (p.artScale || 100) > 100) outside.push(a.n);
+    });
+    if (arts.length) {
+      if (low.length) row("warn", "Low resolution on " + low.length + " design" + (low.length > 1 ? "s" : ""), "Designs " + low.slice(0, 8).join(", ") + ". Aim for 300 DPI at the placed size: use bigger pictures or make the art smaller.");
+      else row("ok", "All designs 250 DPI or more", "Measured at the size they are placed on the page.");
+      if (thin.length) row("warn", "Very thin lines on " + thin.length + " design" + (thin.length > 1 ? "s" : ""), "Designs " + thin.slice(0, 8).join(", ") + ". Lines under 0.5 pt can break up in print. Turn on Thicken lines.");
+      else row("ok", "Line weight is fine", "Typical lines are 0.5 pt or thicker at print size.");
+      if (outside.length) row("warn", "Art can be cut at the edges", "Fill mode or a scale above 100% lets art pass the safe area on designs " + outside.slice(0, 8).join(", ") + ".");
+      else row("ok", "All art inside the safe area", "Fitted inside the margins: " + (X.C.G.outer / 96) + " in outside, " + Math.round(X.C.G.gut / 96 * 1000) / 1000 + " in inside.");
+    }
+    var missing = (p.items || []).filter(function (x) { return x.missing; }).length;
+    if (missing) row("warn", missing + " pictures are not on this device", "Pages are stored in this browser. Add the pictures again here.");
+    row("info", "Spine " + Math.round(n * 0.002252 * 1000) / 1000 + " in on white paper", n >= 80 ? "Spine text is allowed." : "No spine text under 80 pages.");
+    return { rows: rows, warn: warn };
+  }
+  function checkHTML(p) {
+    var r = checkRows(p);
+    return (r.warn ? '<div class="pc-head is-warn">' + r.warn + " thing" + (r.warn > 1 ? "s" : "") + " to look at</div>" : '<div class="pc-head is-ok">Print ready</div>') + '<div class="pc-list">' + r.rows.map(function (x) {
+      return '<div class="pc-row pc-' + x.k + '"><i>' + (x.k === "ok" ? Kit.icon("check") : x.k === "info" ? "i" : "!") + "</i><div>" + E(x.t) + "<small>" + E(x.s) + "</small></div></div>";
+    }).join("") + "</div>";
+  }
+
+  /* ==========================================================================
+     Gallery: reorder (drag or arrows), rotate, remove
+     ========================================================================== */
+  function galleryHTML(p) {
+    var items = p.items || [];
+    var gal = items.map(function (it, i) {
+      var warn = it.lw && it.w && it.lw < 2 ? '<span class="cb-warn" title="Thin lines">!</span>' : "";
+      return '<div class="cb-it" draggable="true" data-i="' + i + '"><div class="cb-th" style="background-image:url(' + (THUMBS[it.id] || "") + ')"></div><span class="cb-no">' + (i + 1) + "</span>" + warn +
+        '<div class="cb-bt"><button type="button" data-mv="-1" title="Move earlier">' + Kit.icon("left") + '</button><button type="button" data-rot title="Rotate">' + Kit.icon("reset") + '</button><button type="button" data-rm title="Remove">' + Kit.icon("trash") + '</button><button type="button" data-mv="1" title="Move later">' + Kit.icon("right") + "</button></div></div>";
+    }).join("");
+    return '<div class="cb-drop" data-drop><b>Add line art</b>PNG, JPG, SVG, a ZIP of pictures or a PDF. Drop files here or click.</div><input type="file" multiple accept="image/*,.svg,.zip,.pdf,application/pdf,application/zip" hidden>' +
+      (items.length ? '<div class="cb-gal">' + gal + "</div>" : "") +
+      '<div class="cb-sum"><b>' + items.length + "</b> designs. Drag to reorder. Pages are kept in this browser (IndexedDB), so big books do not fill up your storage.</div>";
+  }
+  function galleryWire(box, api) {
+    var inp = box.querySelector("input"), drop = box.querySelector("[data-drop]"), from = -1;
+    drop.addEventListener("click", function () { inp.click(); });
+    inp.addEventListener("change", function () { addFiles(inp.files); inp.value = ""; });
+    drop.addEventListener("dragover", function (e) { e.preventDefault(); drop.classList.add("is-over"); });
+    drop.addEventListener("dragleave", function () { drop.classList.remove("is-over"); });
+    drop.addEventListener("drop", function (e) { e.preventDefault(); drop.classList.remove("is-over"); addFiles(e.dataTransfer.files); });
+    function move(a, b) { var items = api.p.items.slice(); var it = items.splice(a, 1)[0]; items.splice(b, 0, it); api.set("items", items); }
+    box.addEventListener("click", function (e) {
+      var b = e.target.closest("button"), card = e.target.closest(".cb-it");
+      if (!card) return;
+      var i = +card.dataset.i, items = api.p.items.slice();
+      if (!b) { var X = LAST, at = X ? X.list.findIndex(function (x) { return x.k === "art" && x.it.id === items[i].id; }) : -1; if (at >= 0) api.goto(at); return; }
+      if (b.dataset.mv) { var j = i + +b.dataset.mv; if (j >= 0 && j < items.length) move(i, j); }
+      else if (b.dataset.rot != null) { items[i] = Object.assign({}, items[i], { rot: ((items[i].rot || 0) + 90) % 360 }); api.p.items = items; runQueue(); }
+      else if (b.dataset.rm != null) { var gone = items.splice(i, 1)[0]; api.set("items", items); idbDel(gone.id + "o"); idbDel(gone.id + "c"); }
+    });
+    box.querySelectorAll(".cb-it").forEach(function (el) {
+      el.addEventListener("dragstart", function () { from = +el.dataset.i; el.classList.add("is-drag"); });
+      el.addEventListener("dragend", function () { el.classList.remove("is-drag"); });
+      el.addEventListener("dragover", function (e) { e.preventDefault(); el.classList.add("is-over"); });
+      el.addEventListener("dragleave", function () { el.classList.remove("is-over"); });
+      el.addEventListener("drop", function (e) { e.preventDefault(); el.classList.remove("is-over"); var to = +el.dataset.i; if (from >= 0 && from !== to) move(from, to); from = -1; });
+    });
+  }
+
+  /* ==========================================================================
+     Exports: interior PDF (vector text + lossless art), listing grid, ZIP
+     ========================================================================== */
+  function b64(buf) { var b = new Uint8Array(buf), s = ""; for (var i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+  var busy = false;
+  function exportPDF(api) {
+    if (busy) return;
+    var p = api.p, X = ctxOf(p, api.dims()), st = X.C.st, idxs = api.shown().map(function (pg) { return pg.idx; });
+    if (!idxs.length) return api.toast("There are no pages to export in this view.", "err");
+    busy = true; window.toolBusy = true;
+    var d = api.dims(), wpt = d.inW * 72, hpt = d.inH * 72, t0 = Date.now(), stop = false;
+    api.progress("Preparing the PDF...", 0.02);
+    Promise.all([api.loadLib("jspdf")].concat(fontsOf(st).map(loadFont))).then(function () {
+      var pdf = new window.jspdf.jsPDF({ unit: "pt", format: [wpt, hpt], orientation: wpt > hpt ? "l" : "p", compress: true, putOnlyUsedFonts: true });
+      pdf.setProperties({ title: p.bookTitle || "Coloring book", author: p.author || "", creator: "Coloring Book Assembler" });
+      var names = {};
+      fontsOf(st).forEach(function (k) { var f = FONT[k]; if (f && f.buf) { pdf.addFileToVFS(f.name + ".ttf", b64(f.buf)); pdf.addFont(f.name + ".ttf", f.name, "normal"); names[k] = f.name; } });
+      var i = 0;
+      function step() {
+        if (stop) return Promise.resolve(false);
+        if (i >= idxs.length) return Promise.resolve(true);
+        api.progress("Writing page " + (i + 1) + " of " + idxs.length, i / idxs.length);
+        var pb = document.querySelector(".k-progress-box");
+        if (pb && !pb.querySelector("button")) { var b = document.createElement("button"); b.className = "k-btn k-sm"; b.style.marginTop = "12px"; b.textContent = "Cancel"; b.onclick = function () { stop = true; }; pb.appendChild(b); }
+        if (i) pdf.addPage([wpt, hpt], wpt > hpt ? "l" : "p");
+        return toPDF(pdf, drawPage(X.list[idxs[i]], idxs[i], X.C), names).then(function () { i++; return new Promise(function (r) { setTimeout(r, 0); }); }).then(step);
+      }
+      return step().then(function (ok) {
+        busy = false; window.toolBusy = false; api.progress(null);
+        if (!ok) return api.toast("Export cancelled");
+        pdf.save(api.fileBase() + "-interior.pdf");
+        window.lastExportMs = Date.now() - t0;
+        api.confetti(); api.toast("Interior PDF saved: " + idxs.length + " pages (" + Math.round((Date.now() - t0) / 100) / 10 + " s)");
+      });
+    }).catch(function (e) { console.error(e); busy = false; window.toolBusy = false; api.progress(null); api.toast("Export failed. Check your connection and try again.", "err"); });
+  }
+  function exportZIP(api) {
+    if (busy) return;
+    var list = api.shown(), d = api.dims(), zip, i = 0;
+    if (!list.length) return;
+    busy = true; window.toolBusy = true;
+    var box = document.body.appendChild(document.createElement("div")); box.className = "k-offscreen";
+    Promise.all([api.loadLib("jszip"), api.loadLib("html2canvas")]).then(function () {
+      zip = new window.JSZip();
+      function step() {
+        if (i >= list.length) return zip.generateAsync({ type: "blob", compression: "STORE" });
+        api.progress("Rendering page " + (i + 1) + " of " + list.length, i / list.length);
+        box.innerHTML = '<div class="k-sheet" style="width:' + d.W + "px;height:" + d.H + "px;font-size:" + d.W / 100 + 'px">' + list[i].html + "</div>";
+        return window.html2canvas(box.firstChild, { scale: 1.6, backgroundColor: "#ffffff", logging: false }).then(function (c) {
+          return new Promise(function (ok) { c.toBlob(function (b) { zip.file(String(i + 1).padStart(3, "0") + "-" + list[i].title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".png", b); c.width = c.height = 0; i++; ok(); }, "image/png"); });
+        }).then(step);
+      }
+      return step();
+    }).then(function (blob) { box.remove(); api.download(api.fileBase() + "-png.zip", blob); busy = false; window.toolBusy = false; api.progress(null); api.toast("ZIP saved with " + list.length + " pages"); })
+      .catch(function (e) { box.remove(); console.error(e); busy = false; window.toolBusy = false; api.progress(null); api.toast("Export failed.", "err"); });
+  }
+  /* listing preview: a grid of the designs on a soft background with the title */
+  function exportGrid(api) {
+    var p = api.p, arts = (p.items || []).filter(function (x) { return !x.off && URLS[x.id]; });
+    if (!arts.length) return api.toast("Add some designs first.", "err");
+    var n = Math.min(arts.length, +p.gridN || 9), cols = n <= 4 ? 2 : n <= 9 ? 3 : 4, rows = Math.ceil(n / cols), Z = 2400, st = STYLES[p.style] || STYLES.playful;
+    api.progress("Building the preview grid...", 0.3);
+    Promise.all(arts.slice(0, n).map(function (a) { return loadImg(URLS[a.id]); }).concat(fontsOf(st).map(loadFont))).then(function (imgs) {
+      var c = document.createElement("canvas"); c.width = c.height = Z;
+      var x = c.getContext("2d"), top = 330, gap = 36, cw = (Z - 160 - gap * (cols - 1)) / cols, ch = (Z - top - 120 - gap * (rows - 1)) / rows;
+      x.fillStyle = p.gridBg || "#fdf3f7"; x.fillRect(0, 0, Z, Z);
+      x.fillStyle = "#1f1d24"; x.textAlign = "center";
+      var fs = 140; x.font = fs + 'px "' + FONT[st.h].name + '"';
+      while (x.measureText(p.bookTitle || "").width > Z - 200 && fs > 60) { fs -= 6; x.font = fs + 'px "' + FONT[st.h].name + '"'; }
+      x.fillText(p.bookTitle || "", Z / 2, 190);
+      x.font = '56px "' + FONT[st.b].name + '"'; x.globalAlpha = 0.75;
+      x.fillText(n + " of " + arts.length + " designs  ·  single sided  ·  " + Kit.sizes[p.pageSize].label, Z / 2, 278); x.globalAlpha = 1;
+      for (var i = 0; i < n; i++) {
+        var im = imgs[i], gx = 80 + (i % cols) * (cw + gap), gy = top + Math.floor(i / cols) * (ch + gap);
+        x.save(); x.shadowColor = "rgba(0,0,0,.18)"; x.shadowBlur = 30; x.shadowOffsetY = 10; x.fillStyle = "#fff"; x.fillRect(gx, gy, cw, ch); x.restore();
+        var k = Math.min((cw - 40) / im.width, (ch - 40) / im.height), w = im.width * k, h = im.height * k;
+        x.drawImage(im, gx + (cw - w) / 2, gy + (ch - h) / 2, w, h);
+      }
+      c.toBlob(function (b) { api.download(api.fileBase() + "-preview-grid.png", b); api.progress(null); api.confetti(); api.toast("Preview grid saved (2400 x 2400 px)"); }, "image/png");
+    }).catch(function (e) { console.error(e); api.progress(null); api.toast("Could not build the grid.", "err"); });
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest('.k-menu [data-item="pdf"], .k-menu [data-item="zip"]');
+    if (!b || !API) return;
+    e.stopPropagation(); e.preventDefault();
+    b.closest(".k-menu").classList.remove("is-open");
+    if (b.dataset.item === "pdf") exportPDF(API); else exportZIP(API);
+  }, true);
+  window.addEventListener("keydown", function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "e" && API && !document.querySelector(".k-veil")) { e.preventDefault(); e.stopPropagation(); exportPDF(API); }
+  }, true);
+
+  /* restore the cleaned pages from IndexedDB when the tool opens */
+  function restore(api) {
+    var items = api.p.items || [];
+    if (!items.length) { if (!api.store.get(api.key + ".sampled", 0)) { api.store.set(api.key + ".sampled", 1); addSamples(); } return; }
+    window.toolBusy = true;
+    Promise.all(items.map(function (it) {
+      return idbGet(it.id + "c").then(function (b) {
+        if (b) { setURL(it.id, b); return loadImg(URLS[it.id]).then(function (im) { THUMBS[it.id] = thumbOf(im); }); }
+        return idbGet(it.id + "o").then(function (o) { if (o) it.key = ""; else it.missing = true; });
+      });
+    })).then(function () { window.toolBusy = false; api.rebuild(); runQueue(); });
+  }
+
+  window.cbTest = { api: function () { return API; }, clean: clean, plan: plan, check: function () { return checkRows(API.p); }, urls: URLS, addSamples: addSamples };
+
+  Kit.app({
+    slug: "coloring-book-assembler",
+    title: "Coloring Book Assembler",
+    tagline: "Turn line art into a clean, single-sided coloring book interior ready for print",
+    projectName: "My Coloring Book",
+    logo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l4 4v12H4zM8 16c2-5 6-5 8-2M9 10h.01M13 10h.01"/><path d="M20 3l-4 7"/></svg>',
+    mainAction: { label: "Add line art", icon: "upload" },
+    init: function (api) { API = api; setTimeout(function () { restore(api); }, 0); },
+    onShuffle: function () {
+      /* the big button opens the file picker */
+      var inp = document.getElementById("cbPick");
+      if (!inp) { inp = document.createElement("input"); inp.type = "file"; inp.multiple = true; inp.id = "cbPick"; inp.hidden = true; inp.accept = "image/*,.svg,.zip,.pdf,application/pdf,application/zip"; inp.addEventListener("change", function () { addFiles(inp.files); inp.value = ""; }); document.body.appendChild(inp); }
+      inp.click();
+    },
+    mockColors: function (p) { return ["#fdf3f7", (STYLES[p.style] || STYLES.playful).ac]; },
+    usedAssets: function () { return []; },
+    views: [
+      { id: "art", label: "Designs", filter: function (pg) { return pg.kind === "art"; } },
+      { id: "extra", label: "Front pages", filter: function (pg) { return pg.kind === "extra"; } }
+    ],
+    stats: function (ctx, pgs) { var a = pgs.filter(function (x) { return x.kind === "art"; }).length; return pgs.length + " pages  ·  " + a + " designs  ·  " + Kit.sizes[ctx.p.pageSize].label; },
+    pages: pages,
+    onRender: function () { var b = document.getElementById("cbCheck"); if (b && API) b.innerHTML = checkHTML(API.p); },
+    tabs: [
+      { id: "pages", label: "Pages", groups: [
+        { title: "Your designs", fields: [{ id: "items", type: "html", def: [], render: galleryHTML, wire: galleryWire }] },
+        { title: "Cleaning", fields: [
+          { id: "thr", type: "seg", label: "Black and white", def: "auto", options: [{ v: "auto", l: "Automatic" }, { v: "manual", l: "Manual level" }], onChange: function () { setTimeout(runQueue, 50); } },
+          { id: "thrLevel", type: "range", label: "Level (higher keeps lighter lines)", def: 160, min: 40, max: 240, show: function (p) { return p.thr === "manual"; }, onChange: function () { clearTimeout(window.cbT); window.cbT = setTimeout(runQueue, 600); } },
+          { id: "speck", type: "seg", label: "Remove specks", def: "medium", options: [{ v: "off", l: "Off" }, { v: "light", l: "Light" }, { v: "medium", l: "Medium" }, { v: "strong", l: "Strong" }], onChange: function () { setTimeout(runQueue, 50); } },
+          { id: "thicken", type: "seg", label: "Thicken lines", def: "0", options: [{ v: "0", l: "Off" }, { v: "1", l: "A little" }, { v: "2", l: "More" }], onChange: function () { setTimeout(runQueue, 50); } },
+          { id: "invert", type: "seg", label: "White lines on black", def: "auto", options: [{ v: "auto", l: "Detect" }, { v: "on", l: "Invert" }, { v: "off", l: "Never" }], onChange: function () { setTimeout(runQueue, 50); } },
+          { id: "crop", type: "toggle", label: "Crop to the art", def: true, onChange: function () { setTimeout(runQueue, 50); } }
+        ] },
+        { title: "Samples", fields: [
+          { type: "buttons", key: "samples", buttons: [{ label: "Add 6 sample designs", icon: "plus", run: function () { addSamples(); } }] }
+        ] }
+      ] },
+      { id: "book", label: "Book", groups: [
+        { title: "Book", fields: [
+          { id: "bookTitle", type: "text", label: "Title", def: "Calm Patterns Coloring Book" },
+          { key: "idhook", type: "html", render: function () { return ""; }, wire: function (box) { box.hidden = true; var el = document.querySelector('[data-f="bookTitle"]'); if (el) el.id = "mainInput"; } },
+          { id: "subtitle", type: "text", label: "Subtitle", def: "Relaxing designs for adults and teens" },
+          { id: "author", type: "text", label: "Author or publisher", def: "Moonlit Studio Press" },
+          { id: "pageSize", type: "select", label: "Trim size", def: "letter", options: Kit.sizeOptions(SIZE_KEYS) },
+          { id: "bleed", type: "toggle", label: "Bleed (art may touch the trim)", def: false }
+        ] },
+        { title: "Extra pages", fields: [
+          { id: "title", type: "toggle", label: "Title page", def: true },
+          { id: "titleArt", type: "toggle", label: "First design on the title page", def: true },
+          { id: "copyright", type: "toggle", label: "Copyright page", def: true },
+          { id: "belongs", type: "toggle", label: "This book belongs to page", def: true },
+          { id: "test", type: "toggle", label: "Test your colours page", def: true },
+          { id: "endTest", type: "toggle", label: "Second test page at the back", def: false },
+          { id: "backs", type: "toggle", label: "Blank backs (single-sided designs)", def: true },
+          { id: "backNote", type: "toggle", label: "Small note on the blank backs", def: false, show: function (p) { return p.backs; } }
+        ] }
+      ] },
+      { id: "look", label: "Look", groups: [
+        { title: "Style", fields: [
+          { id: "style", type: "cards", def: "playful", options: Object.keys(STYLES).map(function (k) { return { v: k, l: STYLES[k].l, d: STYLES[k].d }; }) },
+          { id: "ink", type: "seg", label: "Titles", def: "color", options: [{ v: "color", l: "Accent colour" }, { v: "bw", l: "Black only" }] },
+          { id: "frames", type: "select", label: "Page frame", def: "none", options: Object.keys(FRAMES).map(function (k) { return { v: k, l: FRAMES[k] }; }) },
+          { id: "numbers", type: "seg", label: "Page numbers", def: "off", options: [{ v: "off", l: "None" }, { v: "art", l: "Designs only" }, { v: "all", l: "All pages" }] }
+        ] },
+        { title: "Placing the art", fields: [
+          { id: "fit", type: "seg", label: "Fit", def: "contain", options: [{ v: "contain", l: "Whole design in the safe area" }, { v: "fill", l: "Fill the area (may crop)" }] },
+          { id: "artScale", type: "range", label: "Design size", def: 100, min: 60, max: 110, unit: "%" },
+          { id: "artPad", type: "range", label: "Extra space around the design", def: 2, min: 0, max: 15, unit: "%" },
+          { id: "margin", type: "seg", label: "Outside margin", def: "0.5", options: [{ v: "0.375", l: "3/8 in" }, { v: "0.5", l: "1/2 in" }, { v: "0.75", l: "3/4 in" }] },
+          { id: "gutterExtra", type: "seg", label: "Inside margin", def: "0", options: [{ v: "0", l: "KDP minimum" }, { v: "0.125", l: "+ 1/8 in" }, { v: "0.25", l: "+ 1/4 in" }] }
+        ] },
+        { title: "Listing grid", fields: [
+          { id: "gridN", type: "seg", label: "Designs in the preview grid", def: "9", options: [{ v: "4", l: "4" }, { v: "9", l: "9" }, { v: "16", l: "16" }] },
+          { id: "gridBg", type: "swatches", label: "Background", def: "#fdf3f7", options: [["#fdf3f7", "Blush"], ["#eef7f6", "Mint"], ["#f4f1ea", "Paper"], ["#eef1fb", "Sky"], ["#1f1d24", "Ink"]].map(function (a) { return { v: a[0], l: a[1], c: a[0] }; }) }
+        ] }
+      ] },
+      { id: "check", label: "Print check", groups: [{ title: "Before you upload", fields: [{ key: "chk", type: "html", render: function (p) { return '<div id="cbCheck">' + checkHTML(p) + "</div>"; } }] }] }
+    ],
+    exports: [
+      { label: "Listing preview grid (PNG)", hint: "Your designs on a 2400 px square", icon: "grid", run: exportGrid }
+    ],
+    guide: {
+      intro: "Drop in your line art and get a finished coloring book interior: every page cleaned to pure black and white, specks removed, cropped and fitted to the safe area, with blank backs, a title page, a belongs-to page and a test-your-colours page.",
+      steps: [
+        "Pages tab: drop PNG, JPG or SVG files, a ZIP of pictures or a PDF. Each page is cleaned on its own.",
+        "Reorder the designs by dragging, rotate the ones that are sideways and remove the ones you do not want.",
+        "Book tab: type the title, pick the trim size and the extra pages. Look tab: style, frames and page numbers.",
+        "Print check tab: fix anything orange, then Export > PDF for the print interior and the preview grid for your listing."
+      ],
+      controls: [
+        ["Black and white", "Automatic finds the best level for each picture. Manual lets you keep lighter pencil lines (higher) or drop grey shading (lower)."],
+        ["Remove specks", "Deletes tiny dots of dust and scanner noise. Strong also removes small dots that may be part of the art: check the result."],
+        ["Thicken lines", "Makes every line a little bolder. Use it when the print check warns about thin lines."],
+        ["White lines on black", "Detect flips pictures that are mostly black, such as chalk-style art, into black lines on white."],
+        ["Blank backs", "Each design gets a blank back page so markers never bleed onto the next design, and every design sits on a right-hand page."],
+        ["Fit", "Whole design keeps all the art inside the safe area. Fill covers the area and may trim the edges."]
+      ],
+      exports: [
+        ["PDF, print ready", "The interior at the trim size with KDP margins. Front-page text is real text with embedded fonts; designs are stored lossless."],
+        ["Listing preview grid", "A 2400 px square with 4, 9 or 16 of your designs and the title, for your product listing."]
+      ],
+      tips: [
+        "Pictures of about 2500 x 3300 px fill a letter page at 300 DPI.",
+        "Scanned drawings: use Manual level if pale lines disappear.",
+        "Your pages stay in this browser even after you close it. A saved project remembers the order and settings."
+      ],
+      trouble: [
+        ["A PDF page looks blank", "Some PDFs hold the art as very light grey. Switch to Manual level and raise it."],
+        ["The art is cut off", "Use Whole design fit and a design size of 100% or less."],
+        ["The pages are gone on another computer", "Pages are stored in this browser. Add the pictures again on the other device."]
+      ]
+    }
+  });
+})();
+</script>
+</body>
+</html>
